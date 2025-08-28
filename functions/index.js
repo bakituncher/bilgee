@@ -111,7 +111,7 @@ exports.generateDailyQuests = onSchedule(
     },
 );
 
-// Tek bir kullanıcı için görevleri yeniden oluşturan, istemciden çağrılabilir fonksiyon.
+// Tek bir kullanıcı için görevleri yeniden oluşturan, istemciden çağrılabilir fonksiyon. (BEKLEME SÜRESİ KALDIRILDI)
 exports.regenerateDailyQuests = onCall(
   {region: 'us-central1'},
   async (request) => {
@@ -126,17 +126,6 @@ exports.regenerateDailyQuests = onCall(
       throw new HttpsError('not-found', 'Kullanıcı yok');
     }
 
-    // Cooldown kontrolü
-    const data = userSnap.data() || {};
-    const last = data.lastQuestRefreshDate;
-    if (last && last.toMillis) {
-      const ageMs = Date.now() - last.toMillis();
-      if (ageMs < REGENERATE_QUEST_COOLDOWN_HOURS * 3600 * 1000) {
-        const kalanSaat = ((REGENERATE_QUEST_COOLDOWN_HOURS * 3600 * 1000 - ageMs) / 3600000).toFixed(1);
-        throw new HttpsError('failed-precondition', `Görevler yakın zamanda yenilendi. Kalan ~${kalanSaat} saat.`);
-      }
-    }
-
     const quests = pickDailyQuestsForUser(userSnap.data());
     const questsRef = userRef.collection('daily_quests');
     const existing = await questsRef.get();
@@ -144,11 +133,13 @@ exports.regenerateDailyQuests = onCall(
 
     existing.docs.forEach((d) => batch.delete(d.ref));
     quests.forEach((q) => batch.set(questsRef.doc(q.qid), q, {merge: true}));
+
     batch.update(userRef, {
       lastQuestRefreshDate: admin.firestore.FieldValue.serverTimestamp(),
     });
+
     await batch.commit();
-    return {quests, cooldownHours: REGENERATE_QUEST_COOLDOWN_HOURS};
+    return {quests};
   },
 );
 
@@ -185,8 +176,7 @@ const GEMINI_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_PROMPT_MAX_CHARS = parseInt(process.env.GEMINI_PROMPT_MAX_CHARS || '4000', 10);
 const GEMINI_MAX_OUTPUT_TOKENS = parseInt(process.env.GEMINI_MAX_OUTPUT_TOKENS || '1536', 10);
 const GEMINI_RATE_LIMIT_WINDOW_SEC = parseInt(process.env.GEMINI_RATE_LIMIT_WINDOW_SEC || '60', 10);
-const GEMINI_RATE_LIMIT_MAX = parseInt(process.env.GEMINI_RATE_LIMIT_MAX || '5', 10); // pencere başına çağrı
-const REGENERATE_QUEST_COOLDOWN_HOURS = parseInt(process.env.REGENERATE_QUEST_COOLDOWN_HOURS || '24', 10);
+const GEMINI_RATE_LIMIT_MAX = parseInt(process.env.GEMINI_RATE_LIMIT_MAX || '5', 10);
 
 async function enforceRateLimit(key, windowSeconds, maxCount) {
   const ref = db.collection('rate_limits').doc(key);
@@ -202,7 +192,6 @@ async function enforceRateLimit(key, windowSeconds, maxCount) {
     let {count, windowStart} = data;
     if (typeof windowStart !== 'number') windowStart = now;
     if (now - windowStart > windowMs) {
-      // pencereyi yenile
       tx.set(ref, {count: 1, windowStart: now});
       return;
     }
@@ -232,10 +221,8 @@ exports.generateGemini = onCall(
       throw new HttpsError('invalid-argument', `Prompt çok uzun (>${GEMINI_PROMPT_MAX_CHARS}).`);
     }
 
-    // Basit içerik / boşluk normalize
     const normalizedPrompt = prompt.replace(/\s+/g, ' ').trim();
 
-    // Oran sınırı
     await enforceRateLimit(`gemini_${request.auth.uid}`, GEMINI_RATE_LIMIT_WINDOW_SEC, GEMINI_RATE_LIMIT_MAX);
 
     try {
@@ -255,7 +242,6 @@ exports.generateGemini = onCall(
       });
 
       if (!resp.ok) {
-        // Hata gövdesini kullanıcıya tam yansıtma
         logger.warn('Gemini response not ok', {status: resp.status});
         throw new HttpsError('internal', `Gemini isteği başarısız (${resp.status}).`);
       }
@@ -270,7 +256,7 @@ exports.generateGemini = onCall(
   },
 );
 
-// Basit test fonksiyonu (YENİ NESİL v2 SÖZDİZİMİ İLE GÜNCELLENDİ)
+// Basit test fonksiyonu
 exports.helloWorld = onRequest((request, response) => {
   logger.info("Hello logs!", {structuredData: true});
   response.send("Hello from BilgeAI!");
