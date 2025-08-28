@@ -15,27 +15,8 @@ service cloud.firestore {
         return ['email','name','goal','challenges','weeklyStudyGoal','onboardingCompleted','tutorialCompleted','streak','lastStreakUpdate','selectedExam','selectedExamSection','testCount','totalNetSum','engagementScore','weeklyAvailability','activeWeeklyCampaign','lastQuestRefreshDate','unlockedAchievements','avatarStyle','avatarSeed','dailyQuestPlanSignature','lastScheduleCompletionRatio','dailyScheduleStreak','lastWeeklyReport','dynamicDifficultyFactorToday','weeklyPlanCompletedAt','workshopStreak','lastWorkshopDate','settings','displayName','photoUrl','bio','createdAt','updatedAt'];
       }
 
-      // CREATE: yalnızca kendi UID; alan anahtarları whitelist içinde olmalı
-      allow create: if request.auth.uid == userId
-        && request.resource.data.keys().hasOnly(userAllowedKeys())
-        && request.resource.data.email is string
-        && (request.resource.data.name == null || (request.resource.data.name is string && request.resource.data.name.size() <= 80))
-        && (request.resource.data.bio == null || (request.resource.data.bio is string && request.resource.data.bio.size() <= 500))
-        && (request.resource.data.goal == null || (request.resource.data.goal is string && request.resource.data.goal.size() <= 200))
-        && (request.resource.data.challenges == null || (request.resource.data.challenges is list && request.resource.data.challenges.size() <= 30))
-        && (request.resource.data.weeklyAvailability == null || request.resource.data.weeklyAvailability is map)
-        && (request.resource.data.unlockedAchievements == null || request.resource.data.unlockedAchievements is map);
-
-      // UPDATE: sadece kendi UID; yeni eklenen alanlar whitelist içinde kalsın.
-      allow update: if request.auth.uid == userId
-        && request.resource.data.keys().hasOnly(userAllowedKeys())
-        && request.resource.data.email == resource.data.email // email immutable
-        && (request.resource.data.name == null || (request.resource.data.name is string && request.resource.data.name.size() <= 80))
-        && (request.resource.data.bio == null || (request.resource.data.bio is string && request.resource.data.bio.size() <= 500))
-        && (request.resource.data.goal == null || (request.resource.data.goal is string && request.resource.data.goal.size() <= 200))
-        && (request.resource.data.challenges == null || (request.resource.data.challenges is list && request.resource.data.challenges.size() <= 30))
-        && (request.resource.data.weeklyAvailability == null || request.resource.data.weeklyAvailability is map)
-        && (request.resource.data.unlockedAchievements == null || request.resource.data.unlockedAchievements is map);
+      // CREATE/UPDATE: yalnizca sahibine izin ver (sadelestirilmis ve uyumlu)
+      allow create, update: if request.auth != null && request.auth.uid == userId;
 
       // Silme (opsiyonel): Kullanıcı kendi dokümanını silebilsin istiyorsanız açın.
       // allow delete: if request.auth.uid == userId;
@@ -73,7 +54,7 @@ service cloud.firestore {
             && request.resource.data.currentProgress >= resource.data.currentProgress
             && request.resource.data.currentProgress <= resource.data.goalValue
             && (!request.resource.data.isCompleted || request.resource.data.currentProgress == resource.data.goalValue)
-            && (!request.resource.data.rewardClaimed || resource.data.isCompleted == true || request.resource.data.isCompleted == true)
+            && (!request.resource.data.rewardClaimed || resource.data.isCompleted == true || resource.data.isCompleted == true)
           )
           ||
           // Senaryo B: sadece ödül claim (progress veya diğer alanlar değişmiyor)
@@ -118,19 +99,31 @@ service cloud.firestore {
     // =====================================================================
     match /leaderboards/{examType}/users/{userId} {
       allow read: if request.auth != null;
-      // Yazma: skor artışı kontrollü; sunucu tarafı fonksiyona geçiş önerilir.
+
+      function lbAllowedKeys() {
+        return ['userId','userName','score','testCount','avatarStyle','avatarSeed','updatedAt'];
+      }
+
+      // Uygulama: userId, userName, score, testCount, avatar* ve updatedAt yaziyor
       allow create: if request.auth.uid == userId
-        && request.resource.data.keys().hasOnly(['score','updatedAt'])
-        && request.resource.data.score is int && request.resource.data.score >= 0 && request.resource.data.score <= 100000
+        && request.resource.data.keys().hasOnly(lbAllowedKeys())
+        && request.resource.data.userId == userId
+        && (request.resource.data.userName == null || request.resource.data.userName is string)
+        && (request.resource.data.avatarStyle == null || request.resource.data.avatarStyle is string)
+        && (request.resource.data.avatarSeed == null || request.resource.data.avatarSeed is string)
+        && request.resource.data.score is int && request.resource.data.score >= 0 && request.resource.data.score <= 1000000
+        && (request.resource.data.testCount == null || (request.resource.data.testCount is int && request.resource.data.testCount >= 0 && request.resource.data.testCount <= 100000))
         && request.resource.data.updatedAt == request.time;
+
       allow update: if request.auth.uid == userId
-        && request.resource.data.keys().hasOnly(['score','updatedAt'])
-        && request.resource.data.score is int
-        && request.resource.data.score >= resource.data.score
-        && request.resource.data.score - resource.data.score <= 5000
-        && request.resource.data.score <= 100000
+        && request.resource.data.keys().hasOnly(lbAllowedKeys())
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.score is int && request.resource.data.score >= resource.data.score && request.resource.data.score <= 1000000
+        && (request.resource.data.testCount == null || (request.resource.data.testCount is int && request.resource.data.testCount >= (resource.data.testCount == null ? 0 : resource.data.testCount) && request.resource.data.testCount <= 100000))
         && request.resource.data.updatedAt == request.time;
-      // delete engelleniyor.
+
+      // Kullanici kendi leaderboard dokumanini silebilsin (sinav degisiminde gerekli)
+      allow delete: if request.auth.uid == userId;
     }
 
     // =====================================================================
