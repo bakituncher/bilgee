@@ -1,0 +1,36 @@
+{
+  "type": "kpss",
+  "name": "Kamu Personel Seçme Sınavı",
+  "sections": [
+    {
+      "name": "Genel Yetenek - Genel Kültür",
+      "penaltyCoefficient": 0.25,
+      "subjects": {
+        "Türkçe (Genel Yetenek)": {
+          "questionCount": 30,
+          "topics": ["Sözcükte Anlam", "Cümlede Anlam", "Paragrafta Anlam", "Sözel Mantık", "Ses Bilgisi", "Yazım Kuralları", "Noktalama İşaretleri", "Yapı Bilgisi", "Sözcük Türleri", "Cümlenin Öğeleri", "Cümle Türleri", "Anlatım Bozuklukları"]
+        },
+        "Matematik (Genel Yetenek)": {
+          "questionCount": 30,
+          "topics": ["Temel Kavramlar ve Sayılar", "Bölme-Bölünebilme, Asal Çarpanlar", "EBOB-EKOK", "Rasyonel ve Ondalıklı Sayılar", "Basit Eşitsizlikler ve Mutlak Değer", "Üslü ve Köklü İfadeler", "Çarpanlara Ayırma ve Özdeşlikler", "Denklem Çözme ve Oran-Orantı", "Sayı, Kesir, Yaş Problemleri", "İşçi, Havuz, Hız Problemleri", "Yüzde, Kâr-Zarar, Faiz, Karışım Problemleri", "Kümeler, Fonksiyonlar, İşlem, Modüler Aritmetik", "Permütasyon, Kombinasyon, Olasılık", "Tablo ve Grafik Yorumlama", "Sayısal Mantık", "Geometri (Açılar, Üçgenler, Dörtgenler, Çember, Analitik, Katı Cisimler)"]
+        },
+        "Tarih (Genel Kültür)": {
+          "questionCount": 27,
+          "topics": ["İslamiyet Öncesi Türk Tarihi", "İlk Müslüman Türk Devletleri ve Beylikleri", "Osmanlı Devleti Siyasi Tarihi", "Osmanlı Devleti Kültür ve Medeniyeti", "20. Yüzyılda Osmanlı Devleti", "Milli Mücadele Hazırlık Dönemi", "Kurtuluş Savaşı (Cepheler)", "Atatürk İlke ve İnkılapları", "Atatürk Dönemi İç Politika", "Atatürk Dönemi Dış Politika", "Çağdaş Türk ve Dünya Tarihi"]
+        },
+        "Coğrafya (Genel Kültür)": {
+          "questionCount": 18,
+          "topics": ["Türkiye'nin Coğrafi Konumu", "Türkiye'nin Yer Şekilleri", "Türkiye'nin İklimi ve Bitki Örtüsü", "Türkiye'de Nüfus, Yerleşme ve Göç", "Türkiye'de Tarım", "Türkiye'de Hayvancılık", "Türkiye'de Madenler ve Enerji Kaynakları", "Türkiye'de Sanayi", "Türkiye'de Ticaret", "Türkiye'de Ulaşım", "Türkiye'de Turizm", "Türkiye'nin Coğrafi Bölgeleri"]
+        },
+        "Vatandaşlık (Genel Kültür)": {
+          "questionCount": 9,
+          "topics": ["Temel Hukuk Kavramları", "Anayasa Hukukuna Giriş", "1982 Anayasası (Temel İlkeler, Hak ve Hürriyetler)", "Yasama", "Yürütme", "Yargı", "İdare Hukuku", "İnsan Hakları Hukuku"]
+        },
+        "Güncel Bilgiler (Genel Kültür)": {
+          "questionCount": 6,
+          "topics": ["Türkiye ve Dünya ile İlgili Genel, Kültürel ve Güncel Sosyoekonomik Konular", "Bilimsel ve Teknolojik Gelişmeler", "Uluslararası Kuruluşlar ve Anlaşmalar", "Sanat ve Spor Alanındaki Gelişmeler"]
+        }
+      }
+    }
+  ]
+}

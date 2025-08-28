@@ -1,0 +1,126 @@
+{
+  "type": "yks",
+  "name": "Yükseköğretim Kurumları Sınavı",
+  "sections": [
+    {
+      "name": "TYT",
+      "penaltyCoefficient": 0.25,
+      "subjects": {
+        "Türkçe": {
+          "questionCount": 40,
+          "topics": ["Sözcükte Anlam", "Cümlede Anlam", "Paragrafta Anlam", "Ses Bilgisi", "Yazım Kuralları", "Noktalama İşaretleri", "Sözcük Yapısı", "Sözcük Türleri", "Fiiller (Eylemler)", "Fiilimsiler", "Fiilde Çatı", "Cümlenin Öğeleri", "Cümle Türleri", "Anlatım Bozuklukları"]
+        },
+        "Tarih (Sosyal Bilimler)": {
+          "questionCount": 5,
+          "topics": ["Tarih ve Zaman", "İnsanlığın İlk Dönemleri", "Orta Çağ'da Dünya", "İlk ve Orta Çağlarda Türk Dünyası", "İslam Medeniyetinin Doğuşu", "Türklerin İslamiyet'i Kabulü ve İlk Türk İslam Devletleri", "Yerleşme ve Devletleşme Sürecinde Selçuklu Türkiyesi", "Beylikten Devlete Osmanlı Siyaseti (1302-1453)", "Dünya Gücü Osmanlı Devleti (1453-1600)", "Değişen Dünya Dengeleri Karşısında Osmanlı Siyaseti (1595-1774)", "Uluslararası İlişkilerde Denge Stratejisi (1774-1914)", "Milli Mücadele", "Atatürkçülük ve Türk İnkılabı"]
+        },
+        "Coğrafya (Sosyal Bilimler)": {
+          "questionCount": 5,
+          "topics": ["Doğa, İnsan ve Coğrafya", "Dünya'nın Şekli ve Hareketleri", "Harita Bilgisi", "İklim Bilgisi", "Yer'in Şekillenmesi (İç ve Dış Kuvvetler)", "Su, Toprak ve Bitki Varlığı", "Nüfus ve Yerleşme", "Ekonomik Faaliyetler", "Ulaşım Yolları", "Bölgeler ve Ülkeler", "Doğal Afetler ve Toplum"]
+        },
+        "Felsefe (Sosyal Bilimler)": {
+          "questionCount": 5,
+          "topics": ["Felsefeye Giriş", "Felsefe ile Düşünme", "Bilgi Felsefesi (Epistemoloji)", "Varlık Felsefesi (Ontoloji)", "Ahlak Felsefesi (Etik)", "Sanat Felsefesi (Estetik)", "Din Felsefesi", "Siyaset Felsefesi", "Bilim Felsefesi", "MÖ 6. Yüzyıl - MS 2. Yüzyıl Felsefesi", "MS 2. Yüzyıl - MS 15. Yüzyıl Felsefesi"]
+        },
+        "Din Kültürü ve Ahlak Bilgisi (Sosyal Bilimler)": {
+          "questionCount": 5,
+          "topics": ["Bilgi ve İnanç", "Din ve İslam", "İnsan ve Din", "Kur'an'a Göre Hz. Muhammed", "İnançla İlgili Meseleler", "İbadet", "Ahlaki Tutum ve Davranışlar", "İslam Düşüncesinde Yorumlar"]
+        },
+        "Temel Matematik": {
+          "questionCount": 40,
+          "topics": ["Temel Kavramlar", "Sayı Basamakları", "Bölme ve Bölünebilme", "EBOB-EKOK", "Rasyonel Sayılar", "Basit Eşitsizlikler", "Mutlak Değer", "Üslü Sayılar", "Köklü Sayılar", "Çarpanlara Ayırma", "Oran-Orantı", "Denklem Çözme", "Problemler", "Kümeler ve Kartezyen Çarpım", "Mantık", "Fonksiyonlar", "Polinomlar", "Permütasyon-Kombinasyon-Binom-Olasılık", "Veri ve İstatistik", "Doğruda ve Üçgende Açılar", "Özel Üçgenler", "Üçgende Alan, Açıortay, Kenarortay", "Üçgende Benzerlik ve Açı-Kenar Bağıntıları", "Çokgenler ve Dörtgenler", "Çember ve Daire", "Katı Cisimler", "Analitik Geometri"]
+        },
+        "Fizik (Fen Bilimleri)": {
+          "questionCount": 7,
+          "topics": ["Fizik Bilimine Giriş", "Madde ve Özellikleri", "Hareket ve Kuvvet", "İş, Güç ve Enerji", "Isı, Sıcaklık ve Genleşme", "Basınç ve Kaldırma Kuvveti", "Elektrik", "Manyetizma", "Dalgalar", "Optik"]
+        },
+        "Kimya (Fen Bilimleri)": {
+          "questionCount": 7,
+          "topics": ["Kimya Bilimi", "Atom ve Periyodik Sistem", "Kimyasal Türler Arası Etkileşimler", "Maddenin Halleri", "Doğa ve Kimya", "Kimyanın Temel Kanunları ve Hesaplamalar", "Karışımlar", "Asitler, Bazlar ve Tuzlar", "Kimya Her Yerde"]
+        },
+        "Biyoloji (Fen Bilimleri)": {
+          "questionCount": 6,
+          "topics": ["Canlıların Ortak Özellikleri", "Canlıların Temel Bileşenleri", "Hücre ve Organelleri", "Hücre Zarından Madde Geçişleri", "Canlıların Sınıflandırılması", "Hücre Bölünmeleri (Mitoz ve Mayoz)", "Kalıtımın Genel İlkeleri", "Ekosistem Ekolojisi ve Güncel Çevre Sorunları"]
+        }
+      }
+    },
+    {
+      "name": "AYT - Sayısal",
+      "penaltyCoefficient": 0.25,
+      "subjects": {
+        "Matematik": {
+          "questionCount": 40,
+          "topics": ["Temel Kavramlar", "Sayı Basamakları", "Bölme ve Bölünebilme", "EBOB-EKOK", "Rasyonel Sayılar", "Basit Eşitsizlikler", "Mutlak Değer", "Üslü Sayılar", "Köklü Sayılar", "Çarpanlara Ayırma", "Oran-Orantı", "Denklem Çözme", "Problemler", "Kümeler ve Kartezyen Çarpım", "Mantık", "Fonksiyonlar", "Polinomlar", "İkinci Dereceden Denklemler", "Parabol", "Eşitsizlikler", "Trigonometri", "Logaritma", "Diziler", "Permütasyon-Kombinasyon-Binom-Olasılık", "Limit ve Süreklilik", "Türev ve Uygulamaları", "İntegral ve Uygulamaları", "Çember ve Daire", "Analitik Geometri", "Çemberin Analitik İncelenmesi", "Katı Cisimler", "Dönüşümlerle Geometri"]
+        },
+        "Fizik": {
+          "questionCount": 14,
+          "topics": ["Vektörler ve Kuvvet-Denge", "Tork ve Denge", "Kütle Merkezi", "Basit Makineler", "Hareket (Doğrusal, Bağıl)", "Dinamik (Newton'un Hareket Yasaları)", "İş, Güç ve Enerji", "Atışlar", "İtme ve Çizgisel Momentum", "Çembersel Hareket", "Basit Harmonik Hareket", "Dönme, Yuvarlanma ve Açısal Momentum", "Kütle Çekim ve Kepler Kanunları", "Elektriksel Kuvvet ve Alan", "Elektriksel Potansiyel ve Enerji", "Düzgün Elektrik Alan ve Sığa", "Manyetizma ve Elektromanyetik İndüksiyon", "Alternatif Akım ve Transformatörler", "Dalga Mekaniği (Su ve Işık Dalgaları)", "Atom Fiziğine Giriş ve Radyoaktivite", "Modern Fizik", "Modern Fiziğin Teknolojideki Uygulamaları"]
+        },
+        "Kimya": {
+          "questionCount": 13,
+          "topics": ["Modern Atom Teorisi", "Gazlar", "Sıvı Çözeltiler ve Çözünürlük", "Kimyasal Tepkimelerde Enerji (Entalpi)", "Kimyasal Tepkimelerde Hız", "Kimyasal Tepkimelerde Denge", "Asit-Baz Dengesi", "Çözünürlük Dengesi (KÇÇ)", "Kimya ve Elektrik (Redoks, Piller)", "Karbon Kimyasına Giriş", "Organik Bileşikler", "Enerji Kaynakları ve Bilimsel Gelişmeler"]
+        },
+        "Biyoloji": {
+          "questionCount": 13,
+          "topics": ["Sinir Sistemi", "Endokrin Sistem", "Duyu Organları", "Destek ve Hareket Sistemi", "Sindirim Sistemi", "Dolaşım ve Bağışıklık Sistemi", "Solunum Sistemi", "Boşaltım Sistemi (Üriner Sistem)", "Üreme Sistemi ve Embriyonik Gelişim", "Komünite ve Popülasyon Ekolojisi", "Genden Proteine", "Canlılarda Enerji Dönüşümleri", "Bitki Biyolojisi", "Canlılar ve Çevre"]
+        }
+      }
+    },
+    {
+      "name": "AYT - Eşit Ağırlık",
+      "penaltyCoefficient": 0.25,
+      "subjects": {
+        "Matematik": {
+          "questionCount": 40,
+          "topics": ["Temel Kavramlar", "Sayı Basamakları", "Bölme ve Bölünebilme", "EBOB-EKOK", "Rasyonel Sayılar", "Basit Eşitsizlikler", "Mutlak Değer", "Üslü Sayılar", "Köklü Sayılar", "Çarpanlara Ayırma", "Oran-Orantı", "Denklem Çözme", "Problemler", "Kümeler ve Kartezyen Çarpım", "Mantık", "Fonksiyonlar", "Polinomlar", "İkinci Dereceden Denklemler", "Parabol", "Eşitsizlikler", "Trigonometri", "Logaritma", "Diziler", "Permütasyon-Kombinasyon-Binom-Olasılık", "Limit ve Süreklilik", "Türev ve Uygulamaları", "İntegral ve Uygulamaları", "Çember ve Daire", "Analitik Geometri", "Çemberin Analitik İncelenmesi", "Katı Cisimler", "Dönüşümlerle Geometri"]
+        },
+        "Türk Dili ve Edebiyatı": {
+          "questionCount": 24,
+          "topics": ["Anlam Bilgisi (Sözcük, Cümle, Paragraf)", "Güzel Sanatlar ve Edebiyat", "Metinlerin Sınıflandırılması", "Şiir Bilgisi", "Edebi Sanatlar", "İslamiyet Öncesi Türk Edebiyatı", "İslam Uygarlığı Çevresinde Gelişen Türk Edebiyatı", "Halk Edebiyatı", "Divan Edebiyatı", "Batı Etkisindeki Türk Edebiyatı", "Tanzimat Edebiyatı", "Servet-i Fünun Edebiyatı", "Fecr-i Ati Edebiyatı", "Milli Edebiyat", "Cumhuriyet Dönemi Türk Edebiyatı", "Edebi Akımlar", "Dünya Edebiyatı"]
+        },
+        "Tarih-1": {
+          "questionCount": 10,
+          "topics": ["Tarih ve Zaman", "İnsanlığın İlk Dönemleri", "Orta Çağ'da Dünya", "İlk ve Orta Çağlarda Türk Dünyası", "İslam Medeniyetinin Doğuşu", "Türklerin İslamiyet'i Kabulü ve İlk Türk İslam Devletleri", "Yerleşme ve Devletleşme Sürecinde Selçuklu Türkiyesi", "Beylikten Devlete Osmanlı Siyaseti (1302-1453)", "Dünya Gücü Osmanlı Devleti (1453-1600)", "Sultan ve Osmanlı Merkez Teşkilatı", "Klasik Çağda Osmanlı Toplum Düzeni", "Değişen Dünya Dengeleri Karşısında Osmanlı Siyaseti (1595-1774)", "Uluslararası İlişkilerde Denge Stratejisi (1774-1914)", "Osmanlı Devleti'nde Demokratikleşme Hareketleri", "Milli Mücadele", "Atatürkçülük ve Türk İnkılabı"]
+        },
+        "Coğrafya-1": {
+          "questionCount": 6,
+          "topics": ["Ekosistem, Madde Döngüsü ve Enerji Akışı", "Biyoçeşitlilik", "Nüfus Politikaları ve Şehirleşme", "Ekonomik Faaliyetler ve Doğal Kaynaklar", "Türkiye'de Nüfus, Yerleşme ve Göç", "Türkiye Ekonomisi", "Türkiye'nin Jeopolitik Konumu", "Bölgeler ve Ülkeler (Kültür Bölgeleri)", "Uluslararası Ulaşım Hatları", "Çevre Sorunları ve Sürdürülebilirlik"]
+        }
+      }
+    },
+    {
+      "name": "AYT - Sözel",
+      "penaltyCoefficient": 0.25,
+      "subjects": {
+        "Türk Dili ve Edebiyatı": {
+          "questionCount": 24,
+          "topics": ["Anlam Bilgisi (Sözcük, Cümle, Paragraf)", "Güzel Sanatlar ve Edebiyat", "Metinlerin Sınıflandırılması", "Şiir Bilgisi", "Edebi Sanatlar", "İslamiyet Öncesi Türk Edebiyatı", "İslam Uygarlığı Çevresinde Gelişen Türk Edebiyatı", "Halk Edebiyatı", "Divan Edebiyatı", "Batı Etkisindeki Türk Edebiyatı", "Tanzimat Edebiyatı", "Servet-i Fünun Edebiyatı", "Fecr-i Ati Edebiyatı", "Milli Edebiyat", "Cumhuriyet Dönemi Türk Edebiyatı", "Edebi Akımlar", "Dünya Edebiyatı"]
+        },
+        "Tarih-1": {
+          "questionCount": 10,
+          "topics": ["Tarih ve Zaman", "İnsanlığın İlk Dönemleri", "Orta Çağ'da Dünya", "İlk ve Orta Çağlarda Türk Dünyası", "İslam Medeniyetinin Doğuşu", "Türklerin İslamiyet'i Kabulü ve İlk Türk İslam Devletleri", "Yerleşme ve Devletleşme Sürecinde Selçuklu Türkiyesi", "Beylikten Devlete Osmanlı Siyaseti (1302-1453)", "Dünya Gücü Osmanlı Devleti (1453-1600)", "Sultan ve Osmanlı Merkez Teşkilatı", "Klasik Çağda Osmanlı Toplum Düzeni", "Değişen Dünya Dengeleri Karşısında Osmanlı Siyaseti (1595-1774)", "Uluslararası İlişkilerde Denge Stratejisi (1774-1914)", "Osmanlı Devleti'nde Demokratikleşme Hareketleri", "Milli Mücadele", "Atatürkçülük ve Türk İnkılabı"]
+        },
+        "Coğrafya-1": {
+          "questionCount": 6,
+          "topics": ["Ekosistem, Madde Döngüsü ve Enerji Akışı", "Biyoçeşitlilik", "Nüfus Politikaları ve Şehirleşme", "Ekonomik Faaliyetler ve Doğal Kaynaklar", "Türkiye'de Nüfus, Yerleşme ve Göç", "Türkiye Ekonomisi", "Türkiye'nin Jeopolitik Konumu", "Bölgeler ve Ülkeler (Kültür Bölgeleri)", "Uluslararası Ulaşım Hatları", "Çevre Sorunları ve Sürdürülebilirlik"]
+        },
+        "Tarih-2": {
+          "questionCount": 11,
+          "topics": ["İlk Çağ Medeniyetleri", "Türklerin Anayurdu ve İlk Türk Devletleri", "İslam Tarihi ve Uygarlığı", "Avrupa Tarihi (Orta Çağ, Yeni Çağ, Yakın Çağ)", "Osmanlı Devleti (Kuruluş, Yükselme, Kültür Medeniyet)", "Osmanlı Devleti (Duraklama, Gerileme, Dağılma)", "20. Yüzyıl Başlarında Osmanlı ve Dünya", "I. Dünya Savaşı ve Sonrası", "İkinci Dünya Savaşı", "Soğuk Savaş Dönemi", "Yumuşama Dönemi ve Sonrası", "Küreselleşen Dünya", "Türklerde Devlet Teşkilatı"]
+        },
+        "Coğrafya-2": {
+          "questionCount": 11,
+          "topics": ["Şehirlerin Fonksiyonları ve Etki Alanları", "Türkiye'de Arazi Kullanımı ve Kır Yerleşmeleri", "Türkiye'de Enerji Kaynakları, Sanayi ve Ticaret", "Küresel Ticaret ve Turizm", "Jeopolitik Konum ve Ülkelerin Gelişmişliği", "Kültür Bölgeleri ve Medeniyetler", "Çevre Politikaları ve Ülkeler Arası Sorunlar", "Doğal Kaynaklar ve Sürdürülebilir Kalkınma", "Bölgesel Kalkınma Projeleri"]
+        },
+        "Felsefe Grubu": {
+          "questionCount": 12,
+          "topics": ["15. Yüzyıl - 17. Yüzyıl Felsefesi", "18. Yüzyıl - 19. Yüzyıl Felsefesi", "20. Yüzyıl Felsefesi", "Psikoloji Bilimini Tanıyalım", "Psikolojinin Temel Süreçleri", "Öğrenme, Bellek, Düşünme", "Ruh Sağlığının Temelleri", "Sosyolojiye Giriş", "Birey ve Toplum", "Toplumsal Yapı", "Toplumsal Değişme ve Gelişme", "Toplum ve Kültür", "Toplumsal Kurumlar", "Mantığa Giriş", "Klasik Mantık", "Mantık ve Dil", "Sembolik (Modern) Mantık"]
+        },
+        "Din Kültürü ve Ahlak Bilgisi": {
+          "questionCount": 6,
+          "topics": ["İslam ve Bilim, Estetik, Ekonomi", "Anadolu'da İslam", "Tasavvufi Düşünce ve Yorumlar", "Güncel Dini Meseleler", "Yaşayan Dinler (Yahudilik, Hristiyanlık)", "Hint ve Çin Dinleri (Hinduizm, Budizm, Konfüçyanizm, Taoizm)"]
+        }
+      }
+    }
+  ]
+}

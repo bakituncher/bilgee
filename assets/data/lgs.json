@@ -1,0 +1,42 @@
+{
+  "type": "lgs",
+  "name": "Liselere Geçiş Sistemi",
+  "sections": [
+    {
+      "name": "Sözel Bölüm",
+      "penaltyCoefficient": 0.3333,
+      "subjects": {
+        "Türkçe": {
+          "questionCount": 20,
+          "topics": ["Sözcükte Anlam", "Cümlede Anlam", "Paragrafta Anlam", "Metin Karşılaştırma", "Görsel ve Grafik Yorumlama", "Sözel Mantık ve Muhakeme", "Fiilimsiler", "Cümlenin Öğeleri", "Fiilde Çatı", "Cümle Türleri", "Anlatım Bozuklukları", "Yazım Kuralları", "Noktalama İşaretleri", "Metin Türleri", "Söz Sanatları"]
+        },
+        "T.C. İnkılap Tarihi ve Atatürkçülük": {
+          "questionCount": 10,
+          "topics": ["Bir Kahraman Doğuyor", "Milli Uyanış: Bağımsızlık Yolunda Atılan Adımlar", "Milli Bir Destan: Ya İstiklal Ya Ölüm!", "Atatürkçülük ve Çağdaşlaşan Türkiye", "Demokratikleşme Çabaları", "Atatürk Dönemi Dış Politika", "Atatürk'ün Ölümü ve Sonrası"]
+        },
+        "Din Kültürü ve Ahlak Bilgisi": {
+          "questionCount": 10,
+          "topics": ["Kader İnancı", "Zekat ve Sadaka", "Din ve Hayat", "Hz. Muhammed'in Örnekliği", "Kur'an-ı Kerim ve Özellikleri"]
+        },
+        "İngilizce": {
+          "questionCount": 10,
+          "topics": ["Friendship", "Teen Life", "In the Kitchen", "On the Phone", "The Internet", "Adventures", "Tourism", "Chores", "Science", "Natural Forces"]
+        }
+      }
+    },
+    {
+      "name": "Sayısal Bölüm",
+      "penaltyCoefficient": 0.3333,
+      "subjects": {
+        "Matematik": {
+          "questionCount": 20,
+          "topics": ["Çarpanlar ve Katlar", "Üslü İfadeler", "Kareköklü İfadeler", "Veri Analizi", "Basit Olayların Olma Olasılığı", "Cebirsel İfadeler ve Özdeşlikler", "Doğrusal Denklemler", "Eşitsizlikler", "Üçgenler", "Eşlik ve Benzerlik", "Dönüşüm Geometrisi", "Geometrik Cisimler"]
+        },
+        "Fen Bilimleri": {
+          "questionCount": 20,
+          "topics": ["Mevsimler ve İklim", "DNA ve Genetik Kod", "Basınç", "Madde ve Endüstri", "Basit Makineler", "Canlılar ve Enerji İlişkileri", "Madde Döngüleri ve Çevre Sorunları", "Elektrik Yükleri ve Elektrik Enerjisi"]
+        }
+      }
+    }
+  ]
+}
