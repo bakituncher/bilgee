@@ -33,14 +33,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   // Tutarlı yatay boşluk
   static const double _hPad = 16;
 
-  Widget _animatedSection(Widget child, int index) => Animate(
-        delay: (70 * index).ms,
-        effects: const [
-          FadeEffect(duration: Duration(milliseconds: 300), curve: Curves.easeOut),
-          SlideEffect(begin: Offset(0, .08), duration: Duration(milliseconds: 360), curve: Curves.easeOut),
-        ],
-        child: child,
-      );
+  // Liste animasyonlarını sadece ilk yüklemede çalıştırmak için bayrak
+  bool _animateSectionsOnce = true;
+
+  Widget _animatedSection(Widget child, int index) {
+    if (!_animateSectionsOnce) return child; // İlk frame sonrasında animasyon yok
+    return Animate(
+      delay: (70 * index).ms,
+      effects: const [
+        FadeEffect(duration: Duration(milliseconds: 240), curve: Curves.easeOut),
+        SlideEffect(begin: Offset(0, .06), duration: Duration(milliseconds: 260), curve: Curves.easeOut),
+      ],
+      child: child,
+    );
+  }
 
   @override
   void initState() {
@@ -51,6 +57,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       if (user != null && !user.tutorialCompleted) {
         ref.read(tutorialProvider.notifier).start();
       }
+      // İlk çizimden sonra liste animasyonlarını kapat (kaydırma akıcılığı)
+      if (mounted) setState(() => _animateSectionsOnce = false);
     });
   }
 
@@ -64,13 +72,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         if (user == null) return const Center(child: Text('Kullanıcı verisi yüklenemedi.'));
         // final tests = testsAsync.valueOrNull ?? <TestModel>[]; // KALDIRILDI
 
-        // Hiyerarşik bölümler (YENİ AKIŞ)
+        // Hiyerarşik bölümler (YENİ AKIŞ) — ağır widget'ları izole etmek için RepaintBoundary
         final sections = <Widget>[
-          const HeroHeader(),
-          const FocusHubCard(), // Günlük Fetihlerin yerine birleşik ve kaliteli kart
-          Container(key: todaysPlanKey, child: const TodaysPlan()),
-          // Container(key: addTestKey, child: const AdaptiveActionCenter()), // KALDIRILDI: alttaki tekrar eden üçlü kart
-          const MotivationQuotesCard(), // En altta motivasyon sözleri döngüsü
+          const RepaintBoundary(child: HeroHeader()),
+          const RepaintBoundary(child: FocusHubCard()), // Günlük Fetihlerin yerine birleşik ve kaliteli kart
+          RepaintBoundary(child: Container(key: todaysPlanKey, child: const TodaysPlan())),
+          const RepaintBoundary(child: MotivationQuotesCard()), // En altta motivasyon sözleri döngüsü
         ];
 
         return SafeArea(
