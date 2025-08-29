@@ -11,7 +11,7 @@ import 'package:bilge_ai/features/home/widgets/todays_plan.dart';
 import 'package:bilge_ai/features/onboarding/providers/tutorial_provider.dart';
 import 'package:bilge_ai/features/home/widgets/hero_header.dart';
 // import 'package:bilge_ai/features/home/widgets/performance_cluster.dart'; // KALDIRILDI
-import 'package:bilge_ai/features/home/widgets/adaptive_action_center.dart';
+// import 'package:bilge_ai/features/home/widgets/adaptive_action_center.dart'; // KALDIRILDI: tekrar eden üçlü kart
 import 'package:bilge_ai/shared/constants/highlight_keys.dart';
 import 'package:bilge_ai/features/home/providers/home_providers.dart';
 import 'package:bilge_ai/features/home/widgets/focus_hub_card.dart';
@@ -69,7 +69,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           const HeroHeader(),
           const FocusHubCard(), // Günlük Fetihlerin yerine birleşik ve kaliteli kart
           Container(key: todaysPlanKey, child: const TodaysPlan()),
-          Container(key: addTestKey, child: const AdaptiveActionCenter()),
+          // Container(key: addTestKey, child: const AdaptiveActionCenter()), // KALDIRILDI: alttaki tekrar eden üçlü kart
           const MotivationQuotesCard(), // En altta motivasyon sözleri döngüsü
         ];
 

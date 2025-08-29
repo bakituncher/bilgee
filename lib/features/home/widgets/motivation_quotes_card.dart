@@ -17,11 +17,14 @@ class _MotivationQuotesCardState extends State<MotivationQuotesCard> {
   Timer? _timer;
   int _index = 0;
   final _quotes = const [
-    ('Disiplin özgürlüktür.', 'Jocko Willink'),
-    ('Süreklilik, zekayı yener.', 'Bilinmeyen'),
-    ('Bugün yaptıkların, yarınını belirler.', 'Ralph Marston'),
-    ('Küçük adımlar büyük zaferler getirir.', 'Bilinmeyen'),
-    ('Odak, zamanı güç çarpanına çevirir.', 'Bilinmeyen'),
+    ('Hayatta en hakiki mürşit ilimdir, fendir.', 'M. Kemal Atatürk'),
+    ('Geleceği tahmin etmenin en iyi yolu, onu yaratmaktır.', 'Peter Drucker'),
+    ('Başarının sırrı, sıradan işleri sıra dışı bir şekilde yapmaktır.', 'John D. Rockefeller'),
+    ('Dehanın %1\'i ilham, %99\'u alın teridir.', 'Thomas Edison'),
+    ('Şimdi acı çek ve hayatının geri kalanını bir şampiyon olarak yaşa.', 'Muhammed Ali'),
+    ('Tek bildiğim, hiçbir şey bilmediğimdir.', 'Sokrates'),
+    ('Hayal gücü bilgiden daha önemlidir. Çünkü bilgi sınırlıyken, hayal gücü tüm dünyayı kapsar.', 'Albert Einstein'),
+    ('Yenilginin en büyük zaferden tek farkı, ayağa kalkma cesaretidir.', 'Bilge Baykuş'),
   ];
 
   @override
