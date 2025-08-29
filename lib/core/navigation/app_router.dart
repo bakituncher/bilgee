@@ -14,6 +14,8 @@ import 'main_shell_routes.dart';
 import 'package:bilge_ai/features/blog/screens/blog_screen.dart';
 import 'package:bilge_ai/features/premium/screens/premium_screen.dart' as premium;
 import 'package:bilge_ai/features/stats/screens/general_overview_screen.dart';
+import '../../features/blog/screens/blog_admin_editor_screen.dart';
+import 'package:bilge_ai/features/blog/screens/blog_detail_screen.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   final rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -105,6 +107,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (c, s) => const BlogScreen(),
       ),
       GoRoute(
+        path: '/blog/:slug',
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (c, s) {
+          final slug = s.pathParameters['slug']!;
+          return BlogDetailScreen(slug: slug);
+        },
+      ),
+      GoRoute(
         path: '/premium',
         parentNavigatorKey: rootNavigatorKey,
         builder: (c, s) => const premium.PremiumView(),
@@ -113,6 +123,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/stats/overview',
         parentNavigatorKey: rootNavigatorKey,
         builder: (c, s) => const GeneralOverviewScreen(),
+      ),
+      GoRoute(
+        path: '/blog/admin/new',
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (c, s) => const BlogAdminEditorScreen(),
       ),
       ...authRoutes,
       ...onboardingRoutes(rootNavigatorKey),

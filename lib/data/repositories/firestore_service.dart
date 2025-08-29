@@ -8,7 +8,6 @@ import 'package:bilge_ai/data/models/exam_model.dart';
 import 'package:bilge_ai/data/models/topic_performance_model.dart';
 import 'package:bilge_ai/data/models/focus_session_model.dart';
 import 'package:bilge_ai/features/weakness_workshop/models/saved_workshop_model.dart';
-import 'package:bilge_ai/data/models/plan_model.dart';
 import 'package:bilge_ai/data/models/plan_document.dart';
 import 'package:bilge_ai/data/models/performance_summary.dart';
 import 'package:bilge_ai/data/models/app_state.dart';
@@ -16,6 +15,7 @@ import 'package:bilge_ai/features/arena/models/leaderboard_entry_model.dart';
 import 'package:bilge_ai/features/quests/models/quest_model.dart';
 import 'package:bilge_ai/features/stats/logic/stats_analysis.dart';
 import 'package:bilge_ai/data/models/user_stats_model.dart';
+import 'package:bilge_ai/features/blog/models/blog_post.dart';
 
 class FirestoreService {
   final FirebaseFirestore _firestore;
@@ -33,6 +33,55 @@ class FirestoreService {
   CollectionReference<Map<String, dynamic>> get _leaderboardsCollection => _firestore.collection('leaderboards');
   CollectionReference<Map<String, dynamic>> get _testsCollection => _firestore.collection('tests');
   CollectionReference<Map<String, dynamic>> get _focusSessionsCollection => _firestore.collection('focusSessions');
+  CollectionReference<Map<String, dynamic>> get _postsCollection => _firestore.collection('posts');
+
+  // BLOG: Yayımlanmış yazıları canlı dinle (locale opsiyonel)
+  Stream<List<BlogPost>> streamPublishedPosts({String? locale, int limit = 20}) {
+    Query<Map<String, dynamic>> q = _postsCollection
+        .where('status', isEqualTo: 'published')
+        .where('publishedAt', isLessThanOrEqualTo: Timestamp.now())
+        .orderBy('publishedAt', descending: true)
+        .limit(limit);
+    if (locale != null) {
+      q = q.where('locale', isEqualTo: locale);
+    }
+    return q.snapshots().map((snap) => snap.docs
+        .map((d) => BlogPost.fromDoc(d as DocumentSnapshot<Map<String, dynamic>>))
+        .toList());
+  }
+
+  // BLOG: Sayfalı okuma
+  Future<(List<BlogPost> items, DocumentSnapshot? lastDoc)> getPublishedPostsPaginated({
+    String? locale,
+    int limit = 10,
+    DocumentSnapshot? startAfter,
+  }) async {
+    Query<Map<String, dynamic>> q = _postsCollection
+        .where('status', isEqualTo: 'published')
+        .where('publishedAt', isLessThanOrEqualTo: Timestamp.now())
+        .orderBy('publishedAt', descending: true)
+        .limit(limit);
+    if (locale != null) {
+      q = q.where('locale', isEqualTo: locale);
+    }
+    if (startAfter != null) {
+      q = q.startAfterDocument(startAfter);
+    }
+    final qs = await q.get();
+    final items = qs.docs
+        .map((d) => BlogPost.fromDoc(d as DocumentSnapshot<Map<String, dynamic>>))
+        .toList();
+    final last = qs.docs.isNotEmpty ? qs.docs.last : null;
+    return (items, last);
+  }
+
+  // BLOG: Slug ile tek yazı
+  Future<BlogPost?> getPostBySlug(String slug) async {
+    final qs = await _postsCollection.where('slug', isEqualTo: slug).limit(1).get();
+    if (qs.docs.isEmpty) return null;
+    final doc = qs.docs.first as DocumentSnapshot<Map<String, dynamic>>;
+    return BlogPost.fromDoc(doc);
+  }
 
   // YENI: Kullanıcı aktivite alt koleksiyonu (Günlük dokümanlar)
   CollectionReference<Map<String, dynamic>> _userActivityCollection(String userId) => usersCollection.doc(userId).collection('user_activity');
@@ -42,11 +91,8 @@ class FirestoreService {
     return _userActivityCollection(userId).doc(id);
   }
 
-  // ESKI: Aylık referans (artık kullanılmıyor ama geriye dönük ihtiyaç olursa dursun)
-  DocumentReference<Map<String, dynamic>> _userActivityMonthlyDoc(String userId, DateTime date) {
-    final id = '${date.year.toString().padLeft(4, '0')}_${date.month.toString().padLeft(2, '0')}';
-    return _userActivityCollection(userId).doc(id);
-  }
+  // ESKI: Aylık referans (artık kullanılmıyor)
+  // KALDIRILDI: _userActivityMonthlyDoc
 
   // YENI: Stats dokümanı
   DocumentReference<Map<String, dynamic>> _userStatsDoc(String userId) => usersCollection.doc(userId).collection('state').doc('stats');
@@ -73,6 +119,25 @@ class FirestoreService {
       return MapEntry(_dateKey(d), list);
     }));
     return Map<String, List<String>>.fromEntries(results);
+  }
+
+  // YENİ: Belirli bir tarih aralığındaki (start dahil, end dahil) günlerin tamamlanan görevlerini tek sorguda getir
+  Future<Map<String, List<String>>> getCompletedTasksInRange(String userId, {required DateTime start, required DateTime end}) async {
+    final startDay = DateTime(start.year, start.month, start.day);
+    final endNextDay = DateTime(end.year, end.month, end.day).add(const Duration(days: 1));
+    final qs = await _userActivityCollection(userId)
+        .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startDay))
+        .where('date', isLessThan: Timestamp.fromDate(endNextDay))
+        .get();
+    final Map<String, List<String>> out = {};
+    for (final doc in qs.docs) {
+      final data = doc.data();
+      final v = data['completedTasks'];
+      if (v is List && v.isNotEmpty) {
+        out[doc.id] = v.map((e) => e.toString()).toList();
+      }
+    }
+    return out;
   }
 
   // GÜNCEL: Ay içindeki tüm ziyaretleri getir (günlük dokümanları aralıktan sorgula)
@@ -682,11 +747,6 @@ class FirestoreService {
     await usersCollection.doc(userId).update({'activeDailyQuests': FieldValue.delete()});
   }
 
-  String _weekdayName(int weekday) {
-    const list = ['Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi','Pazar'];
-    return list[(weekday-1).clamp(0,6)];
-  }
-
   // YENI: Analiz özetini küçük bir dokümana yaz
   Future<void> updateAnalysisSummary(String userId, StatsAnalysis analysis) {
     final summaryData = {
@@ -756,4 +816,3 @@ class FirestoreService {
     });
   }
 }
-

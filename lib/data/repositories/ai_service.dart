@@ -67,6 +67,29 @@ class AiService {
     }
   }
 
+  // Son N günün tamamlanan görevlerini Firestore'dan topla (YYYY-MM-DD -> [taskId])
+  Future<Map<String, List<String>>> _loadRecentCompletedTasks(String userId, {int days = 28}) async {
+    try {
+      final svc = _ref.read(firestoreServiceProvider);
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final start = today.subtract(Duration(days: days - 1));
+      final dates = List<DateTime>.generate(days, (i) => start.add(Duration(days: i)));
+      final lists = await Future.wait(dates.map((d) => svc.getCompletedTasksForDate(userId, d)));
+      final Map<String, List<String>> acc = {};
+      for (int i = 0; i < dates.length; i++) {
+        final list = lists[i];
+        if (list.isNotEmpty) acc[_yyyyMmDd(dates[i])] = list;
+      }
+      return acc;
+    } catch (_) {
+      return {};
+    }
+  }
+
+  String _yyyyMmDd(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
   Future<String> _callGemini(String prompt, {bool expectJson = false}) async {
     // Yeni yaklaşım: Sunucudaki Firebase Function generateGemini çağrılır.
     try {
@@ -160,7 +183,12 @@ class AiService {
     final topicPerformancesJson = _encodeTopicPerformances(performance.topicPerformances);
     final availabilityJson = jsonEncode(user.weeklyAvailability);
     final weeklyPlanJson = planDoc?.weeklyPlan != null ? jsonEncode(planDoc!.weeklyPlan!) : null;
-    final completedTasksJson = jsonEncode(user.completedDailyTasks);
+
+    // ESKİ: jsonEncode(user.completedDailyTasks) her zaman {} dönüyordu.
+    // YENİ: Son 28 günün tamamlanan görevlerini oku ve gönder.
+    final recentCompleted = await _loadRecentCompletedTasks(user.id, days: 28);
+    final completedTasksJson = jsonEncode(recentCompleted);
+
     String prompt;
     switch (examType) {
       case ExamType.yks:
@@ -182,6 +210,7 @@ class AiService {
             pacing: pacing, daysUntilExam: daysUntilExam,
             topicPerformancesJson: topicPerformancesJson, availabilityJson: availabilityJson,
             weeklyPlanJson: weeklyPlanJson,
+            completedTasksJson: completedTasksJson,
             revisionRequest: revisionRequest
         );
         break;
@@ -193,6 +222,7 @@ class AiService {
             topicPerformancesJson: topicPerformancesJson, availabilityJson: availabilityJson,
             examName: examType.displayName,
             weeklyPlanJson: weeklyPlanJson,
+            completedTasksJson: completedTasksJson,
             revisionRequest: revisionRequest
         );
         break;
