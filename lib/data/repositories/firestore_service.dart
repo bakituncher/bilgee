@@ -452,32 +452,20 @@ class FirestoreService {
   // GÜNCEL: Günlük görev tamamlama basitleştirildi (günlük doküman + stats artış)
   Future<void> updateDailyTaskCompletion({
     required String userId,
-    required String dateKey,
-    required String task,
+    required String dateKey, // yyyy-MM-dd
+    required String task,    // '${time}-${activity}'
     required bool isCompleted,
   }) async {
-    final date = DateTime.parse(dateKey);
-    final dailyDocRef = _userActivityDailyDoc(userId, date);
-
-    final batch = _firestore.batch();
-
-    final fieldUpdate = isCompleted ? FieldValue.arrayUnion([task]) : FieldValue.arrayRemove([task]);
-
-    batch.set(dailyDocRef, {
-      'completedTasks': fieldUpdate,
-      'date': Timestamp.fromDate(DateTime(date.year, date.month, date.day)),
+    final dailyRef = _userActivityCollection(userId).doc(dateKey);
+    // arrayUnion/arrayRemove ile atomik güncelleme
+    await dailyRef.set({
+      'completedTasks': isCompleted
+          ? FieldValue.arrayUnion([task])
+          : FieldValue.arrayRemove([task]),
+      'date': Timestamp.fromDate(DateTime.parse(dateKey)),
       'dateKey': dateKey,
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
-
-    // Geçici: puanlama burada, idealde Cloud Function
-    final statsDocRef = _userStatsDoc(userId);
-    batch.set(statsDocRef, {
-      'engagementScore': FieldValue.increment(isCompleted ? 10 : -10),
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
-
-    await batch.commit();
   }
 
   Future<void> updateWeeklyAvailability({
