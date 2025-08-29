@@ -33,6 +33,7 @@ SEN, LGS'DE %0.01'LİK DİLİME GİRMEK İÇİN YARATILMIŞ, KİŞİYE ÖZEL Bİ
 * **Ders Analizi:** {{SUBJECT_AVERAGES}}
 * **Konu Analizi:** {{TOPIC_PERFORMANCES_JSON}}
 * **GEÇEN HAFTANIN ANALİZİ (EĞER VARSA):** {{WEEKLY_PLAN_TEXT}}
+* **Tamamlanan Görevler (Son Dönem):** {{COMPLETED_TASKS_JSON}}
 
 **JSON ÇIKTI FORMATI (AÇIKLAMA YOK, SADECE BU):**
 {
@@ -55,4 +56,3 @@ SEN, LGS'DE %0.01'LİK DİLİME GİRMEK İÇİN YARATILMIŞ, KİŞİYE ÖZEL Bİ
     ]
   }
 }
-

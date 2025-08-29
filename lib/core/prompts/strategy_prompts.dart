@@ -2,8 +2,6 @@
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:bilge_ai/data/models/user_model.dart';
-import 'package:bilge_ai/data/models/performance_summary.dart';
-import 'package:bilge_ai/data/models/plan_document.dart';
 
 class StrategyPrompts {
   static String? _yksTemplate;
@@ -85,6 +83,7 @@ class StrategyPrompts {
     required String topicPerformancesJson,
     required String availabilityJson,
     required String? weeklyPlanJson,
+    required String completedTasksJson,
     String? revisionRequest,
   }) {
     assert(_lgsTemplate != null, 'StrategyPrompts.preload() çağrılmalı');
@@ -102,6 +101,7 @@ class StrategyPrompts {
       'SUBJECT_AVERAGES': jsonEncode(subjectAverages),
       'TOPIC_PERFORMANCES_JSON': topicPerformancesJson,
       'WEEKLY_PLAN_TEXT': weeklyPlanJson ?? 'YOK. HAREKÂT BAŞLIYOR.',
+      'COMPLETED_TASKS_JSON': completedTasksJson,
     };
     return _fillTemplate(template, replacements);
   }
@@ -116,6 +116,7 @@ class StrategyPrompts {
     required String availabilityJson,
     required String examName,
     required String? weeklyPlanJson,
+    required String completedTasksJson,
     String? revisionRequest,
   }) {
     assert(_kpssTemplate != null, 'StrategyPrompts.preload() çağrılmalı');
@@ -134,6 +135,7 @@ class StrategyPrompts {
       'SUBJECT_AVERAGES': jsonEncode(subjectAverages),
       'TOPIC_PERFORMANCES_JSON': topicPerformancesJson,
       'WEEKLY_PLAN_TEXT': weeklyPlanJson ?? 'YOK. PLANLAMA BAŞLIYOR.',
+      'COMPLETED_TASKS_JSON': completedTasksJson,
     };
     return _fillTemplate(template, replacements);
   }
