@@ -170,30 +170,35 @@ class FirestoreService {
     required String seed,
   }) async {
     final userDocRef = usersCollection.doc(userId);
-    await _firestore.runTransaction((txn) async {
-      final snap = await txn.get(userDocRef);
-      final data = snap.data();
-      final String? examType = data?['selectedExam'];
-      txn.update(userDocRef, {
-        'avatarStyle': style,
-        'avatarSeed': seed,
-      });
+    // Önce avatarı garanti kaydet (merge)
+    await userDocRef.set({
+      'avatarStyle': style,
+      'avatarSeed': seed,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+
+    // Liderlik tablosu güncellemesi: en iyi çaba, kural engellerse sessizce geç
+    try {
+      final userSnap = await userDocRef.get();
+      final data = userSnap.data();
+      final String? examType = data?['selectedExam'] as String?;
       if (examType != null) {
-        // Stats'ı da oku
-        final statsSnap = await txn.get(_userStatsDoc(userId));
+        final statsSnap = await _userStatsDoc(userId).get();
         final stats = statsSnap.data() ?? const <String, dynamic>{};
         final lbRef = _leaderboardUserDoc(examType: examType, userId: userId);
-        txn.set(lbRef, {
-          'avatarStyle': style,
-          'avatarSeed': seed,
+        await lbRef.set({
           'userId': userId,
           'userName': data?['name'],
           'score': stats['engagementScore'] ?? 0,
           'testCount': stats['testCount'] ?? 0,
+          'avatarStyle': style,
+          'avatarSeed': seed,
           'updatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
       }
-    });
+    } catch (_) {
+      // no-op: avatar zaten kullanıcı dokümanında kaydedildi
+    }
   }
 
   Future<void> saveWorkshopForUser(String userId, SavedWorkshopModel workshop) async {
