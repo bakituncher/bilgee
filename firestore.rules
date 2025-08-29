@@ -147,5 +147,16 @@ service cloud.firestore {
         && (request.resource.data.meta == null || request.resource.data.meta is map && request.resource.data.meta.size() <= 50);
       allow read, update, delete: if false;
     }
+
+    // =====================================================================
+    // BLOG: /posts koleksiyonu
+    // =====================================================================
+    match /posts/{postId} {
+      allow read: if resource.data.status == 'published' &&
+                  resource.data.publishedAt is timestamp &&
+                  resource.data.publishedAt <= request.time;
+      allow list: if true; // Filtreli sorgular yukarıdaki read koşuluna tabi
+      allow create, update, delete: if request.auth != null && request.auth.token.admin == true;
+    }
   }
 }
