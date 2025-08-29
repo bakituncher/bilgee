@@ -14,6 +14,10 @@ import 'package:bilge_ai/data/models/plan_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:bilge_ai/data/providers/firestore_providers.dart';
 import 'package:bilge_ai/shared/constants/highlight_keys.dart';
+import 'package:bilge_ai/shared/widgets/side_panel_drawer.dart';
+
+// Drawer'ı başka ekranlardan açmak için kök Scaffold anahtarı
+final GlobalKey<ScaffoldState> rootScaffoldKey = GlobalKey<ScaffoldState>();
 
 class ScaffoldWithNavBar extends ConsumerWidget {
   final StatefulNavigationShell navigationShell;
@@ -103,6 +107,7 @@ class ScaffoldWithNavBar extends ConsumerWidget {
             return Stack(
               children: [
                 Scaffold(
+                  key: rootScaffoldKey,
                   resizeToAvoidBottomInset: false,
                   body: Builder(
                     builder: (ctx){
@@ -116,6 +121,9 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                     },
                   ),
                   extendBody: true,
+                  drawer: const SidePanelDrawer(),
+                  drawerScrimColor: AppTheme.primaryColor.withValues(alpha: 0.6),
+                  drawerEdgeDragWidth: 48,
                   floatingActionButton: FloatingActionButton(
                     key: aiHubFabKey,
                     heroTag: 'main_fab',

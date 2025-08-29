@@ -129,7 +129,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('Komuta Merkezi'),
+        title: const Text('Profil'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [

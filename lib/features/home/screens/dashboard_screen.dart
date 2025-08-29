@@ -4,17 +4,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:bilge_ai/data/models/test_model.dart';
+// import 'package:bilge_ai/data/models/test_model.dart'; // KALDIRILDI
 import 'package:bilge_ai/data/providers/firestore_providers.dart';
 import 'package:bilge_ai/core/theme/app_theme.dart';
 import 'package:bilge_ai/features/home/widgets/todays_plan.dart';
 import 'package:bilge_ai/features/onboarding/providers/tutorial_provider.dart';
 import 'package:bilge_ai/features/home/widgets/hero_header.dart';
-import 'package:bilge_ai/features/home/widgets/performance_cluster.dart';
-import 'package:bilge_ai/features/home/widgets/adaptive_action_center.dart';
-import 'package:bilge_ai/features/home/widgets/resume_cta.dart';
+// import 'package:bilge_ai/features/home/widgets/performance_cluster.dart'; // KALDIRILDI
+// import 'package:bilge_ai/features/home/widgets/adaptive_action_center.dart'; // KALDIRILDI: tekrar eden üçlü kart
 import 'package:bilge_ai/shared/constants/highlight_keys.dart';
 import 'package:bilge_ai/features/home/providers/home_providers.dart';
+import 'package:bilge_ai/features/home/widgets/focus_hub_card.dart';
+import 'package:bilge_ai/shared/widgets/scaffold_with_nav_bar.dart' show rootScaffoldKey;
+import 'package:bilge_ai/features/home/widgets/motivation_quotes_card.dart';
 
 // Widget'ları vurgulamak için GlobalKey'ler artik highlight_keys.dart'tan geliyor, burada TANIM YOK.
 
@@ -31,14 +33,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   // Tutarlı yatay boşluk
   static const double _hPad = 16;
 
-  Widget _animatedSection(Widget child, int index) => Animate(
-        delay: (70 * index).ms,
-        effects: const [
-          FadeEffect(duration: Duration(milliseconds: 300), curve: Curves.easeOut),
-          SlideEffect(begin: Offset(0, .08), duration: Duration(milliseconds: 360), curve: Curves.easeOut),
-        ],
-        child: child,
-      );
+  // Liste animasyonlarını sadece ilk yüklemede çalıştırmak için bayrak
+  bool _animateSectionsOnce = true;
+
+  Widget _animatedSection(Widget child, int index) {
+    if (!_animateSectionsOnce) return child; // İlk frame sonrasında animasyon yok
+    return Animate(
+      delay: (70 * index).ms,
+      effects: const [
+        FadeEffect(duration: Duration(milliseconds: 240), curve: Curves.easeOut),
+        SlideEffect(begin: Offset(0, .06), duration: Duration(milliseconds: 260), curve: Curves.easeOut),
+      ],
+      child: child,
+    );
+  }
 
   @override
   void initState() {
@@ -49,35 +57,54 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       if (user != null && !user.tutorialCompleted) {
         ref.read(tutorialProvider.notifier).start();
       }
+      // İlk çizimden sonra liste animasyonlarını kapat (kaydırma akıcılığı)
+      if (mounted) setState(() => _animateSectionsOnce = false);
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final userAsync = ref.watch(userProfileProvider);
-    final testsAsync = ref.watch(testsProvider);
+    // final testsAsync = ref.watch(testsProvider); // KALDIRILDI
 
     return userAsync.when(
       data: (user) {
         if (user == null) return const Center(child: Text('Kullanıcı verisi yüklenemedi.'));
-        final tests = testsAsync.valueOrNull ?? <TestModel>[];
+        // final tests = testsAsync.valueOrNull ?? <TestModel>[]; // KALDIRILDI
 
-        // Hiyerarşik bölümler
+        // Hiyerarşik bölümler (YENİ AKIŞ) — ağır widget'ları izole etmek için RepaintBoundary
         final sections = <Widget>[
-          const HeroHeader(),
-          const ResumeCta(),
-          Container(key: addTestKey, child: const AdaptiveActionCenter()),
-          Container(key: todaysPlanKey, child: const TodaysPlan()),
-          _DailyQuestsCard(),
-          PerformanceCluster(tests: tests, user: user),
+          const RepaintBoundary(child: HeroHeader()),
+          const RepaintBoundary(child: FocusHubCard()), // Günlük Fetihlerin yerine birleşik ve kaliteli kart
+          RepaintBoundary(child: Container(key: todaysPlanKey, child: const TodaysPlan())),
+          const RepaintBoundary(child: MotivationQuotesCard()), // En altta motivasyon sözleri döngüsü
         ];
 
         return SafeArea(
           child: CustomScrollView(
             physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
             slivers: [
+              // Üstte menüyü açan kompakt AppBar
+              SliverAppBar(
+                pinned: false,
+                floating: true,
+                snap: false,
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                toolbarHeight: 56,
+                leading: Builder(
+                  builder: (ctx) => IconButton(
+                    icon: const Icon(Icons.menu_rounded, color: AppTheme.secondaryColor),
+                    onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
+                    tooltip: 'Menü',
+                  ),
+                ),
+                title: const Text('Komuta Merkezi'),
+                centerTitle: true,
+              ),
+
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(_hPad, 16, _hPad, 8),
+                padding: const EdgeInsets.fromLTRB(_hPad, 8, _hPad, 8),
                 sliver: SliverList.separated(
                   itemCount: sections.length,
                   itemBuilder: (c, i) {
@@ -85,8 +112,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     return _animatedSection(w, i);
                   },
                   separatorBuilder: (_, i) {
-                    if (i == 3) return const SizedBox(height: 12); // Plan -> Günlük Görevler
-                    if (i == 4) return const SizedBox(height: 20); // Görevler -> Performans
+                    // HeroHeader -> Günlük Fetihler -> Plan -> Aksiyon -> Performans
+                    if (i == 0) return const SizedBox(height: 12);
+                    if (i == 1) return const SizedBox(height: 16);
+                    if (i == 2) return const SizedBox(height: 14);
                     return const SizedBox(height: 12);
                   },
                 ),
@@ -102,7 +131,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 }
 
-// --- GÜNLÜK GÖREVLER KARTI (dokunulmadı) ---
+// --- GÜNLÜK GÖREVLER KARTI (zenginleştirildi) ---
 class _DailyQuestsCard extends ConsumerWidget {
   _DailyQuestsCard();
   String _formatRemaining(Duration d) { final h = d.inHours; final m = d.inMinutes.remainder(60); if (h == 0) return '${m}dk'; return '${h}sa ${m}dk'; }
@@ -133,6 +162,8 @@ class _DailyQuestsCard extends ConsumerWidget {
     final showShimmer = progress < 1.0;
     final card = Card(
       clipBehavior: Clip.antiAlias,
+      elevation: progress >= 1.0 ? 10 : 6,
+      shadowColor: progress >= 1.0 ? AppTheme.successColor.withValues(alpha: .6) : AppTheme.lightSurfaceColor.withValues(alpha: .35),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24), side: BorderSide(color: _progressColor(progress), width: 2)),
       child: InkWell(
         onTap: () => context.go('/home/quests'),

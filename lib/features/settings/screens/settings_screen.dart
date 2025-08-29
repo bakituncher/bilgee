@@ -394,9 +394,23 @@ class SettingsScreen extends ConsumerWidget {
 
     final user = ref.watch(userProfileProvider).value;
 
+    Future<void> _handleBack() async {
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      } else {
+        context.go('/home');
+      }
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Ayarlar"),
+        automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Geri',
+          onPressed: _handleBack,
+        ),
       ),
       body: user == null
           ? const Center(child: CircularProgressIndicator())

@@ -156,8 +156,10 @@ class _TaskListViewState extends ConsumerState<_TaskListView> with AutomaticKeep
   Widget build(BuildContext context) {
     super.build(context);
     final dailyPlan = widget.dailyPlan; final userId = widget.userId;
-    final today = DateTime.now();
-    final startOfWeek = today.subtract(Duration(days: today.weekday - 1));
+    // Haftabaşını gün başına normalize et (00:00)
+    final now = DateTime.now();
+    final today0 = DateTime(now.year, now.month, now.day);
+    final startOfWeek = today0.subtract(Duration(days: today0.weekday - 1));
     final dayIndex = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'].indexOf(dailyPlan.day);
     final dateForTab = startOfWeek.add(Duration(days: dayIndex));
     final dateKey = DateFormat('yyyy-MM-dd').format(dateForTab);
@@ -303,10 +305,11 @@ class WeeklyOverviewCard extends ConsumerWidget {
   const WeeklyOverviewCard({super.key, required this.weeklyPlan, required this.userId});
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final today = DateTime.now();
-    final startOfWeek = today.subtract(Duration(days: today.weekday - 1));
+    final now = DateTime.now();
+    final today0 = DateTime(now.year, now.month, now.day);
+    final startOfWeek = today0.subtract(Duration(days: today0.weekday - 1));
     final dates = List.generate(7, (i)=> startOfWeek.add(Duration(days: i)));
-    final todayIndex = today.weekday - 1;
+    final todayIndex = today0.weekday - 1;
     final dateKeys = dates.map((d)=> DateFormat('yyyy-MM-dd').format(d)).toList();
 
     // Haftalık tamamlanan görevleri tek seferde oku

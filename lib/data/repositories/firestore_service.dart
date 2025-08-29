@@ -170,30 +170,35 @@ class FirestoreService {
     required String seed,
   }) async {
     final userDocRef = usersCollection.doc(userId);
-    await _firestore.runTransaction((txn) async {
-      final snap = await txn.get(userDocRef);
-      final data = snap.data();
-      final String? examType = data?['selectedExam'];
-      txn.update(userDocRef, {
-        'avatarStyle': style,
-        'avatarSeed': seed,
-      });
+    // Önce avatarı garanti kaydet (merge)
+    await userDocRef.set({
+      'avatarStyle': style,
+      'avatarSeed': seed,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+
+    // Liderlik tablosu güncellemesi: en iyi çaba, kural engellerse sessizce geç
+    try {
+      final userSnap = await userDocRef.get();
+      final data = userSnap.data();
+      final String? examType = data?['selectedExam'] as String?;
       if (examType != null) {
-        // Stats'ı da oku
-        final statsSnap = await txn.get(_userStatsDoc(userId));
+        final statsSnap = await _userStatsDoc(userId).get();
         final stats = statsSnap.data() ?? const <String, dynamic>{};
         final lbRef = _leaderboardUserDoc(examType: examType, userId: userId);
-        txn.set(lbRef, {
-          'avatarStyle': style,
-          'avatarSeed': seed,
+        await lbRef.set({
           'userId': userId,
           'userName': data?['name'],
           'score': stats['engagementScore'] ?? 0,
           'testCount': stats['testCount'] ?? 0,
+          'avatarStyle': style,
+          'avatarSeed': seed,
           'updatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
       }
-    });
+    } catch (_) {
+      // no-op: avatar zaten kullanıcı dokümanında kaydedildi
+    }
   }
 
   Future<void> saveWorkshopForUser(String userId, SavedWorkshopModel workshop) async {
@@ -452,32 +457,20 @@ class FirestoreService {
   // GÜNCEL: Günlük görev tamamlama basitleştirildi (günlük doküman + stats artış)
   Future<void> updateDailyTaskCompletion({
     required String userId,
-    required String dateKey,
-    required String task,
+    required String dateKey, // yyyy-MM-dd
+    required String task,    // '${time}-${activity}'
     required bool isCompleted,
   }) async {
-    final date = DateTime.parse(dateKey);
-    final dailyDocRef = _userActivityDailyDoc(userId, date);
-
-    final batch = _firestore.batch();
-
-    final fieldUpdate = isCompleted ? FieldValue.arrayUnion([task]) : FieldValue.arrayRemove([task]);
-
-    batch.set(dailyDocRef, {
-      'completedTasks': fieldUpdate,
-      'date': Timestamp.fromDate(DateTime(date.year, date.month, date.day)),
+    final dailyRef = _userActivityCollection(userId).doc(dateKey);
+    // arrayUnion/arrayRemove ile atomik güncelleme
+    await dailyRef.set({
+      'completedTasks': isCompleted
+          ? FieldValue.arrayUnion([task])
+          : FieldValue.arrayRemove([task]),
+      'date': Timestamp.fromDate(DateTime.parse(dateKey)),
       'dateKey': dateKey,
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
-
-    // Geçici: puanlama burada, idealde Cloud Function
-    final statsDocRef = _userStatsDoc(userId);
-    batch.set(statsDocRef, {
-      'engagementScore': FieldValue.increment(isCompleted ? 10 : -10),
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
-
-    await batch.commit();
   }
 
   Future<void> updateWeeklyAvailability({

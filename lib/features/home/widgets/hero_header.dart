@@ -7,7 +7,6 @@ import 'package:bilge_ai/core/theme/app_theme.dart';
 import 'package:go_router/go_router.dart';
 import 'package:bilge_ai/features/home/providers/home_providers.dart';
 import 'package:bilge_ai/data/models/test_model.dart';
-import 'dart:math' as math;
 
 class HeroHeader extends ConsumerWidget {
   const HeroHeader({super.key});
@@ -136,7 +135,7 @@ class HeroHeader extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  _ArchiveButton(),
+                  const _ArchiveButton(),
                 ],
               ),
               const SizedBox(height: 14),
@@ -169,54 +168,29 @@ class HeroHeader extends ConsumerWidget {
   }
 }
 
-class _ArchiveButton extends StatefulWidget {
-  @override
-  State<_ArchiveButton> createState() => _ArchiveButtonState();
-}
-
-class _ArchiveButtonState extends State<_ArchiveButton> with SingleTickerProviderStateMixin {
-  late AnimationController _c;
-  @override
-  void initState() {
-    super.initState();
-    _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 2400))..repeat();
-  }
-  @override
-  void dispose() { _c.dispose(); super.dispose(); }
+class _ArchiveButton extends StatelessWidget {
+  const _ArchiveButton();
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _c,
-      builder: (context, _) {
-        final glow = (0.5 + 0.5 * (1 + math.sin(_c.value * 6.283))) * 0.4; // 0..0.4
-        return InkWell(
-          onTap: () => context.go('/library'),
+    return InkWell(
+      onTap: () => context.go('/library'),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppTheme.secondaryColor.withValues(alpha: .7), width: 1.2),
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.secondaryColor.withValues(alpha: glow),
-                  blurRadius: 12,
-                  spreadRadius: 1,
-                )
-              ],
-              color: AppTheme.secondaryColor.withValues(alpha: .1),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.history_edu_rounded, size: 18, color: AppTheme.secondaryColor),
-                const SizedBox(width: 6),
-                Text('Arşiv', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.secondaryColor, fontWeight: FontWeight.w600)),
-              ],
-            ),
-          ),
-        );
-      },
+          border: Border.all(color: AppTheme.secondaryColor.withValues(alpha: .7), width: 1.2),
+          color: AppTheme.secondaryColor.withValues(alpha: .1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.history_edu_rounded, size: 18, color: AppTheme.secondaryColor),
+            const SizedBox(width: 6),
+            Text('Arşiv', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.secondaryColor, fontWeight: FontWeight.w600)),
+          ],
+        ),
+      ),
     );
   }
 }
