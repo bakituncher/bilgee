@@ -129,6 +129,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: rootNavigatorKey,
         builder: (c, s) => const BlogAdminEditorScreen(),
       ),
+      GoRoute(
+        path: '/blog/admin/edit/:slug',
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (c, s) {
+          final slug = s.pathParameters['slug']!;
+          return BlogAdminEditorScreen(initialSlug: slug);
+        },
+      ),
       ...authRoutes,
       ...onboardingRoutes(rootNavigatorKey),
       mainShellRoutes(rootNavigatorKey),

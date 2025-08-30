@@ -1,6 +1,8 @@
 // lib/features/blog/screens/blog_detail_screen.dart
 import 'package:bilge_ai/core/theme/app_theme.dart';
+import 'package:bilge_ai/data/providers/admin_providers.dart';
 import 'package:bilge_ai/features/blog/providers/blog_providers.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,7 +18,38 @@ class BlogDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final postAsync = ref.watch(blogPostBySlugProvider(slug));
+    final isAdminAsync = ref.watch(adminClaimProvider);
+    final isAdmin = isAdminAsync.asData?.value ?? false;
+    final postForActions = postAsync.asData?.value; // null olabilir
     final dateFmt = DateFormat('d MMM y', 'tr');
+
+    Future<void> _deletePost() async {
+      final post = postForActions;
+      if (post == null) return;
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (c) => AlertDialog(
+          title: const Text('Yazıyı sil'),
+          content: Text('"${post.title}" kalıcı olarak silinsin mi?'),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(c).pop(false), child: const Text('Vazgeç')),
+            ElevatedButton(onPressed: () => Navigator.of(c).pop(true), child: const Text('Sil')),
+          ],
+        ),
+      );
+      if (ok != true) return;
+      try {
+        await FirebaseFirestore.instance.collection('posts').doc(post.id).delete();
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Yazı silindi.')));
+          context.go('/blog');
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Silinemedi: $e')));
+        }
+      }
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -33,6 +66,14 @@ class BlogDetailScreen extends ConsumerWidget {
             }
           },
         ),
+        actions: [
+          if (isAdmin && postForActions != null)
+            IconButton(
+              icon: const Icon(Icons.delete_outline_rounded),
+              tooltip: 'Sil',
+              onPressed: _deletePost,
+            ),
+        ],
       ),
       body: postAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -60,9 +101,12 @@ class BlogDetailScreen extends ConsumerWidget {
                         child: Stack(
                           fit: StackFit.expand,
                           children: [
-                            CachedNetworkImage(
-                              imageUrl: post.coverImageUrl!,
-                              fit: BoxFit.cover,
+                            Hero(
+                              tag: 'post-cover-${post.slug}',
+                              child: CachedNetworkImage(
+                                imageUrl: post.coverImageUrl!,
+                                fit: BoxFit.cover,
+                              ),
                             ),
                             Container(
                               decoration: const BoxDecoration(
