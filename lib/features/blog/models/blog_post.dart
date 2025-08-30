@@ -15,6 +15,10 @@ class BlogPost {
   final DateTime updatedAt;
   final String? author;
   final int? readTime;
+  final List<String> targetExams; // Yeni: Hedef kitle (yks, lgs, kpss veya all)
+  // Yayın süresi yönetimi
+  final DateTime? expireAt; // null => süresiz
+  final String? expiryType; // 'forever' | '1d' | '7d' | '30d' | null (geri uyum)
 
   BlogPost({
     required this.id,
@@ -30,6 +34,9 @@ class BlogPost {
     this.publishedAt,
     this.author,
     this.readTime,
+    this.targetExams = const ['all'],
+    this.expireAt,
+    this.expiryType,
   });
 
   factory BlogPost.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -48,6 +55,9 @@ class BlogPost {
       updatedAt: (d['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       author: d['author'] as String?,
       readTime: (d['readTime'] as num?)?.toInt(),
+      targetExams: (d['targetExams'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? const ['all'],
+      expireAt: (d['expireAt'] as Timestamp?)?.toDate(),
+      expiryType: (d['expiryType'] as String?),
     );
   }
 }
