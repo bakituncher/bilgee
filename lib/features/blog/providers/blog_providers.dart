@@ -14,7 +14,13 @@ final blogPostsStreamProvider = StreamProvider.autoDispose<List<BlogPost>>((ref)
       .where('locale', isEqualTo: 'tr')
       .orderBy('publishedAt', descending: true)
       .limit(50);
-  return q.snapshots().map((s) => s.docs.map((d) => BlogPost.fromDoc(d as DocumentSnapshot<Map<String, dynamic>>)).toList());
+  return q.snapshots().map((s) {
+    final now = DateTime.now();
+    return s.docs
+        .map((d) => BlogPost.fromDoc(d as DocumentSnapshot<Map<String, dynamic>>))
+        .where((p) => p.expireAt == null || p.expireAt!.isAfter(now))
+        .toList();
+  });
 });
 
 // Slug ile tek yazı
@@ -22,5 +28,8 @@ final blogPostBySlugProvider = FutureProvider.family.autoDispose<BlogPost?, Stri
   final fs = ref.watch(firestoreProvider);
   final qs = await fs.collection('posts').where('slug', isEqualTo: slug).limit(1).get();
   if (qs.docs.isEmpty) return null;
-  return BlogPost.fromDoc(qs.docs.first as DocumentSnapshot<Map<String, dynamic>>);
+  final post = BlogPost.fromDoc(qs.docs.first as DocumentSnapshot<Map<String, dynamic>>);
+  final now = DateTime.now();
+  if (post.expireAt != null && !post.expireAt!.isAfter(now)) return null;
+  return post;
 });

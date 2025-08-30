@@ -44,6 +44,9 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
   bool _isLoadingExisting = false;
   bool _isUploadingCover = false;
   bool _previewMode = false;
+  // Yayın süresi
+  String _expiryType = 'forever'; // 'forever' | '1d' | '7d' | '30d'
+  DateTime? _expireAt; // sadece bilgi amaçlı, publish anında hesaplanır
 
   Future<void> _showImportSheet() async {
     await showModalBottomSheet<void>(
@@ -136,9 +139,31 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
         else if (t.any((e) => e.startsWith('kpss'))) _targetExam = 'kpss';
         _isEditing = true;
         _originalSlug = slug;
+        // Yayın süresi alanları
+        final et = (d['expiryType'] ?? 'forever').toString();
+        if (['forever','1d','7d','30d'].contains(et)) {
+          _expiryType = et;
+        } else {
+          _expiryType = 'forever';
+        }
+        _expireAt = (d['expireAt'] is Timestamp) ? (d['expireAt'] as Timestamp).toDate() : null;
       }
     } catch (_) {}
     finally { if (mounted) setState(() { _isLoadingExisting = false; }); }
+  }
+
+  DateTime? _calcExpireAt(DateTime base, String type) {
+    switch (type) {
+      case '1d':
+        return base.add(const Duration(days: 1));
+      case '7d':
+        return base.add(const Duration(days: 7));
+      case '30d':
+        return DateTime(base.year, base.month + 1, base.day, base.hour, base.minute, base.second, base.millisecond, base.microsecond);
+      case 'forever':
+      default:
+        return null;
+    }
   }
 
   String _toSlug(String input) {
@@ -228,6 +253,17 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
       final target = _targetExam.trim().toLowerCase();
       final targetArray = target == 'all' ? ['all'] : [target];
 
+      // Yayın süresi hesapla (yalnızca publish ediliyorsa expireAt belirle)
+      DateTime? expireAt;
+      String expiryType = _expiryType;
+      if (publish) {
+        expireAt = _calcExpireAt(now, expiryType);
+      } else {
+        // taslakta expireAt yazmayalım; sadece seçimi saklayalım
+        expireAt = null;
+        expiryType = _expiryType;
+      }
+
       final data = <String, dynamic>{
         'title': title,
         'slug': slug,
@@ -242,6 +278,8 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
         'author': _authorCtrl.text.trim().isEmpty ? 'BilgeAI' : _authorCtrl.text.trim(),
         'readTime': readTime,
         'targetExams': targetArray,
+        'expiryType': expiryType,
+        'expireAt': publish ? (expireAt != null ? Timestamp.fromDate(expireAt) : null) : FieldValue.delete(),
       };
 
       await fs.collection('posts').doc(slug).set(data, SetOptions(merge: true));
@@ -823,6 +861,38 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
                         ],
                         onChanged: (v) => setState(() => _locale = (v ?? 'tr')),
                         decoration: const InputDecoration(labelText: 'Dil'),
+                      ),
+                      const SizedBox(height: 16),
+                      Text('Yayın Süresi', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<String>(
+                        value: _expiryType,
+                        items: const [
+                          DropdownMenuItem(value: 'forever', child: Text('Süresiz')),
+                          DropdownMenuItem(value: '1d', child: Text('1 Gün')),
+                          DropdownMenuItem(value: '7d', child: Text('1 Hafta')),
+                          DropdownMenuItem(value: '30d', child: Text('1 Ay')),
+                        ],
+                        onChanged: (v) {
+                          setState(() {
+                            _expiryType = v ?? 'forever';
+                            _expireAt = _calcExpireAt(DateTime.now(), _expiryType);
+                          });
+                        },
+                        decoration: const InputDecoration(labelText: 'Süre'),
+                      ),
+                      const SizedBox(height: 8),
+                      Builder(
+                        builder: (_) {
+                          final info = _expiryType == 'forever'
+                              ? 'Bu yazı süresiz yayında kalır.'
+                              : 'Tahmini bitiş: ${_calcExpireAt(DateTime.now(), _expiryType)?.toLocal()}';
+                          return Row(children: [
+                            const Icon(Icons.info_outline_rounded, size: 16),
+                            const SizedBox(width: 6),
+                            Expanded(child: Text(info, style: TextStyle(color: AppTheme.secondaryTextColor))),
+                          ]);
+                        },
                       ),
                       const SizedBox(height: 16),
                       Text('İçerik', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
