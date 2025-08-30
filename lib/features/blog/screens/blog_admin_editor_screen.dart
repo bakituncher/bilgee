@@ -8,6 +8,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class BlogAdminEditorScreen extends ConsumerStatefulWidget {
   const BlogAdminEditorScreen({super.key, this.initialSlug});
@@ -36,6 +38,7 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
   bool _isEditing = false;
   String? _originalSlug;
   bool _isLoadingExisting = false;
+  bool _isUploadingCover = false;
 
   @override
   void dispose() {
@@ -341,6 +344,67 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
     context.go('/blog');
   }
 
+  Future<void> _pickAndUploadCoverImage() async {
+    try {
+      setState(() => _isUploadingCover = true);
+
+      // Auth token’ı (custom claims dahil) yenile ki Storage kurallarındaki admin kontrolü hemen geçerli olsun
+      try { await FirebaseAuth.instance.currentUser?.getIdToken(true); } catch (_) {}
+
+      final res = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: const ['jpg', 'jpeg', 'png', 'webp'],
+        withData: true,
+      );
+      if (res == null || res.files.isEmpty) return;
+      final f = res.files.first;
+      final bytes = f.bytes;
+      if (bytes == null) return;
+
+      String name = (f.name.isNotEmpty ? f.name : 'cover');
+      String ext = '';
+      final dot = name.lastIndexOf('.');
+      if (dot != -1 && dot < name.length - 1) {
+        ext = name.substring(dot + 1).toLowerCase();
+      }
+      if (!['jpg','jpeg','png','webp'].contains(ext)) {
+        ext = 'jpg';
+      }
+      String contentType = 'image/jpeg';
+      if (ext == 'png') contentType = 'image/png';
+      if (ext == 'webp') contentType = 'image/webp';
+
+      final title = _titleCtrl.text.trim();
+      final slug = (_slugCtrl.text.trim().isEmpty
+          ? (_toSlug(title).isEmpty ? 'post' : _toSlug(title))
+          : _slugCtrl.text.trim());
+      final ts = DateTime.now().millisecondsSinceEpoch;
+      final path = 'blog_covers/$slug/$ts.$ext';
+
+      final ref = FirebaseStorage.instance.ref(path);
+      final task = await ref.putData(
+        bytes,
+        SettableMetadata(contentType: contentType),
+      );
+      final url = await task.ref.getDownloadURL();
+      _coverUrlCtrl.text = url;
+      if (mounted) {
+        setState(() {});
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Görsel yüklendi ve URL alanına eklendi.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Görsel yüklenemedi: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploadingCover = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isAdminAsync = ref.watch(adminClaimProvider);
@@ -425,6 +489,30 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
                         controller: _coverUrlCtrl,
                         decoration: const InputDecoration(labelText: 'Kapak Görseli URL (opsiyonel)'),
                       ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          OutlinedButton.icon(
+                            onPressed: _isUploadingCover ? null : _pickAndUploadCoverImage,
+                            icon: const Icon(Icons.image_rounded),
+                            label: const Text('Fotoğraf Yükle'),
+                          ),
+                          const SizedBox(width: 12),
+                          if (_isUploadingCover) const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      if (_coverUrlCtrl.text.trim().isNotEmpty)
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            _coverUrlCtrl.text.trim(),
+                            height: 140,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => const SizedBox(height: 140, child: Center(child: Text('Önizleme yüklenemedi'))),
+                          ),
+                        ),
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _tagsCtrl,
