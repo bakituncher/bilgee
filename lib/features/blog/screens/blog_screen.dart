@@ -266,9 +266,12 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                           padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                           child: RepaintBoundary(
                             child: Card(
-                              elevation: 8,
-                              shadowColor: AppTheme.lightSurfaceColor.withValues(alpha: .45),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                              elevation: 0, // AppTheme.cardTheme ile uyumlu: gölgeyi kaldır
+                              shadowColor: AppTheme.lightSurfaceColor.withValues(alpha: .18),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(18),
+                                side: BorderSide(color: AppTheme.lightSurfaceColor.withValues(alpha: .45)),
+                              ),
                               clipBehavior: Clip.antiAlias,
                               child: InkWell(
                                 onTap: () => context.go('/blog/${p.slug}'),
@@ -286,10 +289,11 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                                               child: CachedNetworkImage(
                                                 imageUrl: p.coverImageUrl!,
                                                 fit: BoxFit.cover,
-                                                placeholder: (c, _) => Container(color: AppTheme.lightSurfaceColor.withValues(alpha: .3)),
+                                                placeholder: (c, _) => Container(color: AppTheme.lightSurfaceColor.withValues(alpha: .25)),
                                                 errorWidget: (c, _, __) => Container(color: AppTheme.lightSurfaceColor.withValues(alpha: .2), child: const Icon(Icons.image_not_supported_rounded)),
                                               ),
                                             ),
+                                            // Alt kısımda okunabilirlik için yumuşak degrade
                                             Container(
                                               decoration: const BoxDecoration(
                                                 gradient: LinearGradient(
@@ -305,14 +309,14 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                                               child: Container(
                                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                                 decoration: BoxDecoration(
-                                                  color: const Color(0xFF000000).withValues(alpha: .4),
-                                                  borderRadius: BorderRadius.circular(12),
+                                                  color: const Color(0xFF000000).withValues(alpha: .35),
+                                                  borderRadius: BorderRadius.circular(10),
                                                 ),
                                                 child: Row(
                                                   children: [
                                                     const Icon(Icons.schedule_rounded, size: 14, color: Colors.white),
                                                     const SizedBox(width: 4),
-                                                    Text('${p.readTime ?? 1} dk', style: const TextStyle(color: Colors.white, fontSize: 12)),
+                                                    Text('${p.readTime ?? 1} dk', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
                                                   ],
                                                 ),
                                               ),
@@ -327,10 +331,11 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                                         children: [
                                           Text(
                                             p.title,
-                                            style: GoogleFonts.playfairDisplay(
-                                              fontSize: 20,
-                                              fontWeight: FontWeight.w700,
-                                              height: 1.2,
+                                            style: GoogleFonts.montserrat(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.w800,
+                                              height: 1.25,
+                                              letterSpacing: .1,
                                               color: AppTheme.textColor,
                                             ),
                                           ),
@@ -341,8 +346,9 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                                               maxLines: 3,
                                               overflow: TextOverflow.ellipsis,
                                               style: GoogleFonts.montserrat(
-                                                fontSize: 14,
-                                                height: 1.6,
+                                                fontSize: 13.5,
+                                                height: 1.65,
+                                                letterSpacing: .05,
                                                 color: AppTheme.secondaryTextColor,
                                               ),
                                             ),
