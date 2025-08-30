@@ -15,6 +15,7 @@ class BlogPost {
   final DateTime updatedAt;
   final String? author;
   final int? readTime;
+  final List<String> targetExams; // Yeni: Hedef kitle (yks, lgs, kpss veya all)
 
   BlogPost({
     required this.id,
@@ -30,6 +31,7 @@ class BlogPost {
     this.publishedAt,
     this.author,
     this.readTime,
+    this.targetExams = const ['all'],
   });
 
   factory BlogPost.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -48,6 +50,7 @@ class BlogPost {
       updatedAt: (d['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       author: d['author'] as String?,
       readTime: (d['readTime'] as num?)?.toInt(),
+      targetExams: (d['targetExams'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? const ['all'],
     );
   }
 }

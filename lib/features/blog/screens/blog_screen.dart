@@ -71,7 +71,15 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final postsAsync = ref.watch(blogPostsStreamProvider);
+    final postsAsync = ref.watch(blogPostsStreamProvider); // genel akış (geri uyumlu)
+    final user = ref.watch(userProfileProvider).value; // sınav hedefi için
+    String? examKey;
+    final sel = user?.selectedExam?.toLowerCase();
+    if (sel != null) {
+      if (sel == 'yks') examKey = 'yks';
+      else if (sel == 'lgs') examKey = 'lgs';
+      else if (sel.startsWith('kpss')) examKey = 'kpss';
+    }
     final dateFmt = DateFormat('d MMM y', 'tr');
     final isAdminAsync = ref.watch(adminClaimProvider);
 
@@ -131,9 +139,18 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Yazılar yüklenemedi: $e')),
         data: (posts) {
-          final List<BlogPost> filtered = _filterPosts(posts);
+          // Hedef kitle filtreleme (client-side): all, tam eşleşme veya startsWith eşleşme
+          final targeted = posts.where((p) {
+            final tg = p.targetExams.map((e) => e.toLowerCase()).toList();
+            if (examKey == null) return true; // sınav seçilmemişse tümü
+            final key = examKey!; // non-null garanti
+            if (tg.contains('all')) return true;
+            if (tg.contains(key)) return true;
+            return tg.any((e) => e.startsWith(key));
+          }).toList(growable: false);
+          final List<BlogPost> filtered = _filterPosts(targeted);
           final allTags = {
-            for (final p in posts) ...p.tags.map((e) => e.trim())
+            for (final p in targeted) ...p.tags.map((e) => e.trim())
           }.where((e) => e.isNotEmpty).toList()
             ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
 

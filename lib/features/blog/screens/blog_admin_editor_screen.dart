@@ -10,6 +10,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class BlogAdminEditorScreen extends ConsumerStatefulWidget {
   const BlogAdminEditorScreen({super.key, this.initialSlug});
@@ -29,16 +31,67 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
   final _contentCtrl = TextEditingController();
   final _authorCtrl = TextEditingController(text: 'BilgeAI');
   String _locale = 'tr';
-  // Güvenli locale: yalnıza 'tr' veya 'en'
+  // Güvenli locale: yalnızca 'tr' veya 'en'
   String? get _safeLocale {
     final v = _locale.trim().toLowerCase();
     return (v == 'tr' || v == 'en') ? v : null;
   }
+  // Hedef kitle: 'all' | 'yks' | 'lgs' | 'kpss'
+  String _targetExam = 'all';
   bool _isSaving = false;
   bool _isEditing = false;
   String? _originalSlug;
   bool _isLoadingExisting = false;
   bool _isUploadingCover = false;
+  bool _previewMode = false;
+
+  Future<void> _showImportSheet() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.cardColor,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (c) {
+        Widget option({required IconData icon, required String title, required String desc, required VoidCallback onTap}) {
+          return Card(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: BorderSide(color: AppTheme.lightSurfaceColor.withValues(alpha: .35))),
+            child: ListTile(
+              leading: Icon(icon, color: AppTheme.secondaryColor),
+              title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+              subtitle: Text(desc, style: TextStyle(color: AppTheme.secondaryTextColor)),
+              onTap: () { Navigator.of(c).pop(); onTap(); },
+            ),
+          );
+        }
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(child: Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 12), decoration: BoxDecoration(color: AppTheme.lightSurfaceColor.withValues(alpha: .6), borderRadius: BorderRadius.circular(2)))),
+                Text('İçe Aktar', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+                const SizedBox(height: 8),
+                option(
+                  icon: Icons.upload_file_rounded,
+                  title: 'Markdown Dosyası (.md)',
+                  desc: 'Bilgisayarından bir markdown dosyası seç ve yükle',
+                  onTap: _importFromMarkdownFile,
+                ),
+                option(
+                  icon: Icons.link_rounded,
+                  title: 'URL’den İçe Aktar',
+                  desc: 'Bir markdown içeriğini URL ile içe aktar',
+                  onTap: _importFromUrl,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   void dispose() {
@@ -75,6 +128,12 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
         _authorCtrl.text = (d['author'] ?? 'BilgeAI').toString();
         final loc = (d['locale'] ?? 'tr').toString().trim().toLowerCase();
         _locale = (loc == 'tr' || loc == 'en') ? loc : 'tr';
+        // Hedef kitleyi oku
+        final t = (d['targetExams'] as List?)?.map((e) => e.toString().toLowerCase()).toList() ?? const ['all'];
+        if (t.contains('all')) _targetExam = 'all';
+        else if (t.contains('yks')) _targetExam = 'yks';
+        else if (t.contains('lgs')) _targetExam = 'lgs';
+        else if (t.any((e) => e.startsWith('kpss'))) _targetExam = 'kpss';
         _isEditing = true;
         _originalSlug = slug;
       }
@@ -166,6 +225,8 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
       final content = _contentCtrl.text.trim();
       final readTime = _estimateReadTime(content);
       final tags = _splitTagsToList(_tagsCtrl.text);
+      final target = _targetExam.trim().toLowerCase();
+      final targetArray = target == 'all' ? ['all'] : [target];
 
       final data = <String, dynamic>{
         'title': title,
@@ -180,6 +241,7 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
         'updatedAt': Timestamp.fromDate(now),
         'author': _authorCtrl.text.trim().isEmpty ? 'BilgeAI' : _authorCtrl.text.trim(),
         'readTime': readTime,
+        'targetExams': targetArray,
       };
 
       await fs.collection('posts').doc(slug).set(data, SetOptions(merge: true));
@@ -306,6 +368,14 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
           _locale = (loc == 'tr' || loc == 'en') ? loc : 'tr';
         }
         if (kv['author'] != null) _authorCtrl.text = kv['author']!;
+        // Hedef kitle front-matter: target veya targetExams: all|yks|lgs|kpss
+        final tgt = (kv['target'] ?? kv['targetExams']);
+        if (tgt != null) {
+          final v = tgt.toString().trim().toLowerCase();
+          if (['all','yks','lgs','kpss'].contains(v)) {
+            _targetExam = v;
+          }
+        }
         // status front-matter sadece önizleme için, kaydetmede zaten seçiyoruz
         body = rest;
       }
@@ -336,7 +406,7 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
     }
     if (_isEditing) {
       final slug = (_originalSlug ?? widget.initialSlug ?? _slugCtrl.text.trim());
-      if (slug != null && slug.isNotEmpty) {
+      if (slug.isNotEmpty) {
         context.go('/blog/$slug');
         return;
       }
@@ -405,14 +475,201 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
     }
   }
 
+  Future<bool> _pickTargetExamSheet() async {
+    String temp = _targetExam;
+    final result = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.cardColor,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (c) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            child: StatefulBuilder(
+              builder: (c, setStateSheet) {
+                Widget option(String value, String label, IconData icon) {
+                  final selected = temp == value;
+                  return Card(
+                    color: selected ? AppTheme.lightSurfaceColor.withValues(alpha: .18) : null,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: BorderSide(color: selected ? AppTheme.secondaryColor : AppTheme.lightSurfaceColor.withValues(alpha: .4))),
+                    child: ListTile(
+                      leading: Icon(icon, color: selected ? AppTheme.secondaryColor : AppTheme.secondaryTextColor),
+                      title: Text(label),
+                      trailing: selected ? const Icon(Icons.check_circle_rounded, color: AppTheme.secondaryColor) : null,
+                      onTap: () => setStateSheet(() => temp = value),
+                    ),
+                  );
+                }
+
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(child: Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 12), decoration: BoxDecoration(color: AppTheme.lightSurfaceColor.withValues(alpha: .6), borderRadius: BorderRadius.circular(2)))),
+                    Text('Hangi gruba göndermek istersiniz?', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+                    const SizedBox(height: 8),
+                    Text('Seçiminize göre yazı ilgili öğrencilerin akışına düşer.', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor)),
+                    const SizedBox(height: 12),
+                    option('all', 'Hepsi', Icons.public_rounded),
+                    option('yks', 'YKS', Icons.school_rounded),
+                    option('lgs', 'LGS', Icons.auto_stories_rounded),
+                    option('kpss', 'KPSS', Icons.workspace_premium_rounded),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () => Navigator.of(c).pop(temp),
+                        icon: const Icon(Icons.send_rounded),
+                        label: const Text('Onayla ve Yayınla'),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+    if (result == null) return false;
+    setState(() => _targetExam = result);
+    return true;
+  }
+
+  void _wrapSelection({String before = '', String after = ''}) {
+    final text = _contentCtrl.text;
+    final sel = _contentCtrl.selection;
+    final start = sel.start < 0 ? text.length : sel.start;
+    final end = sel.end < 0 ? text.length : sel.end;
+    final selected = start <= end ? text.substring(start, end) : '';
+    final newText = text.replaceRange(start, end, '$before$selected$after');
+    final newPos = start + before.length + selected.length + after.length;
+    _contentCtrl.value = TextEditingValue(text: newText, selection: TextSelection.collapsed(offset: newPos));
+    setState(() {});
+  }
+
+  void _insertLinePrefix(String prefix) {
+    final text = _contentCtrl.text;
+    final sel = _contentCtrl.selection;
+    final pos = (sel.start < 0 ? text.length : sel.start).clamp(0, text.length);
+    int lineStart = text.lastIndexOf('\n', pos - 1);
+    if (lineStart == -1) lineStart = 0; else lineStart += 1;
+    final newText = text.replaceRange(lineStart, lineStart, prefix);
+    _contentCtrl.value = TextEditingValue(text: newText, selection: TextSelection.collapsed(offset: pos + prefix.length));
+    setState(() {});
+  }
+
+  Widget _buildFormatToolbar() {
+    final btnStyle = IconButton.styleFrom(visualDensity: VisualDensity.compact);
+    return Wrap(
+      spacing: 4,
+      runSpacing: -8,
+      children: [
+        IconButton(tooltip: 'Başlık 1', style: btnStyle, onPressed: () => _insertLinePrefix('# '), icon: const Icon(Icons.title_rounded)),
+        IconButton(tooltip: 'Başlık 2', style: btnStyle, onPressed: () => _insertLinePrefix('## '), icon: const Icon(Icons.text_fields_rounded)),
+        IconButton(tooltip: 'Kalın', style: btnStyle, onPressed: () => _wrapSelection(before: '**', after: '**'), icon: const Icon(Icons.format_bold_rounded)),
+        IconButton(tooltip: 'İtalik', style: btnStyle, onPressed: () => _wrapSelection(before: '*', after: '*'), icon: const Icon(Icons.format_italic_rounded)),
+        IconButton(tooltip: 'Bağlantı', style: btnStyle, onPressed: () => _wrapSelection(before: '[', after: '](https://)'), icon: const Icon(Icons.link_rounded)),
+        IconButton(tooltip: 'Liste', style: btnStyle, onPressed: () => _insertLinePrefix('- '), icon: const Icon(Icons.format_list_bulleted_rounded)),
+        IconButton(tooltip: 'Alıntı', style: btnStyle, onPressed: () => _insertLinePrefix('> '), icon: const Icon(Icons.format_quote_rounded)),
+        IconButton(tooltip: 'Kod', style: btnStyle, onPressed: () => _wrapSelection(before: '`', after: '`'), icon: const Icon(Icons.code_rounded)),
+        // Hızlı: Markdown dosyası içe aktar
+        IconButton(tooltip: 'MD Dosyası İçe Aktar', style: btnStyle, onPressed: _importFromMarkdownFile, icon: const Icon(Icons.upload_rounded)),
+      ],
+    );
+  }
+
+  Widget _buildPreview() {
+    final title = _titleCtrl.text.trim();
+    final cover = _coverUrlCtrl.text.trim();
+    final tags = _splitTagsToList(_tagsCtrl.text);
+    final readTime = _estimateReadTime(_contentCtrl.text);
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (cover.isNotEmpty)
+                AspectRatio(
+                  aspectRatio: 16/9,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(cover, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(color: AppTheme.lightSurfaceColor.withValues(alpha: .2), child: const Center(child: Icon(Icons.image_not_supported_rounded))))
+                  ),
+                ),
+              const SizedBox(height: 12),
+              Text(title.isEmpty ? 'Başlık (önizleme)' : title, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),
+              const SizedBox(height: 6),
+              Row(children: [
+                const Icon(Icons.person_outline_rounded, size: 16, color: AppTheme.secondaryTextColor),
+                const SizedBox(width: 6),
+                Text(_authorCtrl.text.trim().isEmpty ? 'BilgeAI' : _authorCtrl.text.trim(), style: TextStyle(color: AppTheme.secondaryTextColor)),
+                const SizedBox(width: 12),
+                const Icon(Icons.schedule_rounded, size: 16, color: AppTheme.secondaryTextColor),
+                const SizedBox(width: 6),
+                Text('$readTime dk', style: TextStyle(color: AppTheme.secondaryTextColor)),
+              ]),
+              const SizedBox(height: 10),
+              if (tags.isNotEmpty)
+                Wrap(spacing: 8, runSpacing: -6, children: tags.map((t) => Chip(label: Text(t), backgroundColor: AppTheme.lightSurfaceColor.withValues(alpha: .25))).toList()),
+              const SizedBox(height: 12),
+            ],
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 96),
+            child: MarkdownBody(
+              data: _contentCtrl.text,
+              styleSheet: MarkdownStyleSheet(
+                p: GoogleFonts.montserrat(fontSize: 16, height: 1.65, letterSpacing: .05, color: AppTheme.textColor),
+                h1: GoogleFonts.montserrat(fontSize: 26, fontWeight: FontWeight.w800, height: 1.25),
+                h2: GoogleFonts.montserrat(fontSize: 22, fontWeight: FontWeight.w800, height: 1.3),
+                h3: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w700, height: 1.35),
+                h4: GoogleFonts.montserrat(fontSize: 16, fontWeight: FontWeight.w700, height: 1.4),
+                h1Padding: const EdgeInsets.only(top: 18, bottom: 8),
+                h2Padding: const EdgeInsets.only(top: 16, bottom: 8),
+                h3Padding: const EdgeInsets.only(top: 14, bottom: 6),
+                h4Padding: const EdgeInsets.only(top: 12, bottom: 6),
+                code: GoogleFonts.robotoMono(fontSize: 13.5, height: 1.5, color: AppTheme.textColor),
+                codeblockPadding: const EdgeInsets.all(12),
+                codeblockDecoration: BoxDecoration(
+                  color: AppTheme.lightSurfaceColor.withValues(alpha: .12),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.lightSurfaceColor.withValues(alpha: .3)),
+                ),
+                blockquote: GoogleFonts.montserrat(fontStyle: FontStyle.italic, color: AppTheme.secondaryTextColor),
+                blockquotePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                blockquoteDecoration: BoxDecoration(
+                  color: AppTheme.lightSurfaceColor.withValues(alpha: .08),
+                  border: Border(left: BorderSide(color: AppTheme.secondaryColor, width: 3)),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                listBullet: TextStyle(color: AppTheme.secondaryColor),
+                a: const TextStyle(color: Color(0xFF55C1FF), fontWeight: FontWeight.w600),
+                horizontalRuleDecoration: BoxDecoration(
+                  border: Border(top: BorderSide(color: AppTheme.lightSurfaceColor.withValues(alpha: .6), width: 1)),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isAdminAsync = ref.watch(adminClaimProvider);
 
-    return WillPopScope(
-      onWillPop: () async {
-        await _goBack();
-        return false; // Navigasyonu biz yönetiyoruz
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) async {
+        if (!didPop) {
+          await _goBack();
+        }
       },
       child: Scaffold(
         appBar: AppBar(
@@ -422,6 +679,48 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
             icon: const Icon(Icons.arrow_back_rounded),
             tooltip: 'Geri',
             onPressed: _goBack,
+          ),
+          actions: [
+            IconButton(
+              tooltip: 'İçe aktar',
+              icon: const Icon(Icons.file_open_rounded),
+              onPressed: _showImportSheet,
+            ),
+            IconButton(
+              tooltip: _previewMode ? 'Düzenlemeye geç' : 'Önizleme',
+              icon: Icon(_previewMode ? Icons.visibility_off_rounded : Icons.visibility_rounded),
+              onPressed: () => setState(() => _previewMode = !_previewMode),
+            ),
+          ],
+        ),
+        bottomNavigationBar: SafeArea(
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              border: Border(top: BorderSide(color: AppTheme.lightSurfaceColor.withValues(alpha: .4))),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _isSaving ? null : () => _save(publish: false),
+                    child: Text(_isEditing ? 'Taslağı Güncelle' : 'Taslak Kaydet'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _isSaving ? null : () async {
+                      final ok = await _pickTargetExamSheet();
+                      if (!ok) return;
+                      await _save(publish: true);
+                    },
+                    child: Text(_isEditing ? 'Güncellemeyi Yayınla' : 'Hemen Yayınla'),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         body: isAdminAsync.when(
@@ -434,36 +733,23 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
             if (_isLoadingExisting) {
               return const Center(child: CircularProgressIndicator());
             }
+            if (_previewMode) {
+              return _buildPreview();
+            }
             return AbsorbPointer(
               absorbing: _isSaving,
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
                 child: Form(
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // İçe aktarma kısa yolları
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          OutlinedButton.icon(
-                            onPressed: _importFromMarkdownFile,
-                            icon: const Icon(Icons.upload_file_rounded),
-                            label: const Text('MD Dosyası İçe Aktar'),
-                          ),
-                          OutlinedButton.icon(
-                            onPressed: _importFromUrl,
-                            icon: const Icon(Icons.link_rounded),
-                            label: const Text('URL\'den İçe Aktar'),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
+                      Text('Başlık ve Kapak', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
+                      const SizedBox(height: 8),
                       TextFormField(
                         controller: _titleCtrl,
-                        decoration: const InputDecoration(labelText: 'Başlık'),
+                        decoration: const InputDecoration(labelText: 'Başlık', hintText: 'Örn: Motivasyonu Nasıl Korurum?'),
                         onChanged: (v) {
                           if (_slugCtrl.text.trim().isEmpty) {
                             _slugCtrl.text = _toSlug(v);
@@ -471,20 +757,22 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
                           setState(() {});
                         },
                         validator: (v) => (v == null || v.trim().isEmpty) ? 'Gerekli' : null,
+                        maxLength: 120,
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
                       TextFormField(
                         controller: _slugCtrl,
-                        decoration: const InputDecoration(labelText: 'Slug (url-dostu)'),
+                        decoration: const InputDecoration(labelText: 'Slug (url-dostu)', hintText: 'otomatik oluşur, gerekirse düzenleyin'),
                         validator: (v) => (v == null || v.trim().isEmpty) ? 'Gerekli' : null,
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
                       TextFormField(
                         controller: _excerptCtrl,
-                        decoration: const InputDecoration(labelText: 'Özet (excerpt)'),
+                        decoration: const InputDecoration(labelText: 'Özet (excerpt)', hintText: 'Liste ve paylaşımlarda görünecek kısa açıklama'),
                         maxLines: 2,
+                        maxLength: 220,
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
                       TextFormField(
                         controller: _coverUrlCtrl,
                         decoration: const InputDecoration(labelText: 'Kapak Görseli URL (opsiyonel)'),
@@ -513,14 +801,22 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
                             errorBuilder: (_, __, ___) => const SizedBox(height: 140, child: Center(child: Text('Önizleme yüklenemedi'))),
                           ),
                         ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 16),
+                      Text('Etiketler ve Dil', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
+                      const SizedBox(height: 8),
                       TextFormField(
                         controller: _tagsCtrl,
-                        decoration: const InputDecoration(labelText: 'Etiketler (virgülle)'),
+                        decoration: const InputDecoration(labelText: 'Etiketler (virgülle)', hintText: 'Örn: motivasyon, planlama, strateji'),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
+                      if (_tagsCtrl.text.trim().isNotEmpty)
+                        Wrap(
+                          spacing: 6,
+                          children: _splitTagsToList(_tagsCtrl.text).map((t) => Chip(label: Text(t), visualDensity: VisualDensity.compact)).toList(),
+                        ),
+                      const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
-                        value: _safeLocale,
+                        initialValue: _safeLocale,
                         items: const [
                           DropdownMenuItem(value: 'tr', child: Text('Türkçe (tr)')),
                           DropdownMenuItem(value: 'en', child: Text('English (en)')),
@@ -528,45 +824,28 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
                         onChanged: (v) => setState(() => _locale = (v ?? 'tr')),
                         decoration: const InputDecoration(labelText: 'Dil'),
                       ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _authorCtrl,
-                        decoration: const InputDecoration(labelText: 'Yazar (opsiyonel)'),
-                      ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 16),
+                      Text('İçerik', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
+                      const SizedBox(height: 8),
+                      _buildFormatToolbar(),
+                      const SizedBox(height: 6),
                       TextFormField(
                         controller: _contentCtrl,
-                        decoration: const InputDecoration(labelText: 'İçerik (Markdown)'),
+                        decoration: const InputDecoration(labelText: 'İçerik (Markdown)', hintText: 'Markdown destekli içerik'),
                         minLines: 10,
                         maxLines: 24,
                         validator: (v) => (v == null || v.trim().isEmpty) ? 'Gerekli' : null,
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
                       Row(
                         children: [
-                          Icon(Icons.schedule_rounded, size: 16, color: AppTheme.secondaryTextColor),
+                          const Icon(Icons.schedule_rounded, size: 16, color: AppTheme.secondaryTextColor),
                           const SizedBox(width: 6),
                           Text('Tahmini okuma süresi: ${_estimateReadTime(_contentCtrl.text)} dk'),
                         ],
                       ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: _isSaving ? null : () => _save(publish: false),
-                              child: Text(_isEditing ? 'Taslağı Güncelle' : 'Taslak Kaydet'),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: _isSaving ? null : () => _save(publish: true),
-                              child: Text(_isEditing ? 'Güncellemeyi Yayınla' : 'Hemen Yayınla'),
-                            ),
-                          ),
-                        ],
-                      ),
+                      const SizedBox(height: 120), // alt çubuk için boşluk
+                      // Kaldırıldı: Eski butonlar (artık alt eylem çubuğunda)
                     ],
                   ),
                 ),
