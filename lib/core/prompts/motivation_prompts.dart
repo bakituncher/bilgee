@@ -11,6 +11,9 @@ String getMotivationPrompt({
   required String promptType,
   required String? emotion,
   Map<String, dynamic>? workshopContext,
+  // YENI
+  String conversationHistory = '',
+  String lastUserMessage = '',
 }) {
   final userName = user.name ?? 'Komutan';
   final testCount = user.testCount;
@@ -30,23 +33,33 @@ String getMotivationPrompt({
     promptContext = "Kullanıcı yeni bir deneme ekledi ve bu deneme ortalamasının üstünde ($lastTestNet). Onu kutlayabilirsin.";
   } else if (promptType == 'proactive_encouragement') {
     promptContext = "Kullanıcı bir süredir sessiz veya planındaki görevleri aksatıyor. Onu yeniden harekete geçirmek için proaktif bir mesaj gönder.";
-  }
-  // YENİ EKLENEN VE GÜNCELLENEN KONTEKST
-  else if (promptType == 'workshop_review') {
+  } else if (promptType == 'workshop_review') {
     final subject = workshopContext?['subject'] ?? 'belirtilmemiş';
     final topic = workshopContext?['topic'] ?? 'belirtilmemiş';
     final score = workshopContext?['score'] ?? 'N/A';
-    promptContext = "KULLANICI, CEVHER ATÖLYESİ'NDEN GELİYOR. '$subject' dersinin '$topic' konusunu bitirdi ve %$score başarı elde etti. Bu sonucu seninle değerlendirmek istiyor. Ona bu bağlamda, yapıcı ve motive edici bir şekilde yaklaş. Başarısını kutla veya eksiklerini nasıl giderebileceğine dair somut önerilerde bulun.";
+    promptContext = "Cevher Atölyesi bağlamı: '$subject' / '$topic', başarı %$score. Sonuç üzerine yapıcı değerlendirme ve somut öneri ver.";
+  } else if (promptType == 'user_chat') {
+    promptContext = "Serbest sohbet.";
   }
-  else if (promptType == 'user_chat') {
-    promptContext = "Kullanıcı sohbete başladı ve ruh hali: $emotion. Bu duruma göre ona empati kurup motive edici bir şekilde cevap ver.";
+
+  // Sınava göre ton
+  final String toneGuidance;
+  if ((examName ?? '').toLowerCase().contains('lgs')) {
+    toneGuidance = "Ton: sıcak, cesaretlendirici, sade. Öneriler 8. sınıf/LGS bağlamında (MEB temelli, temel-orta seviye).";
+  } else if ((examName ?? '').toLowerCase().contains('yks')) {
+    toneGuidance = "Ton: net, stratejik, sonuç odaklı. Öneriler TYT/AYT bağlamında (konu takviye, deneme, soru bankası, video seri).";
+  } else {
+    toneGuidance = "Ton: destekleyici ve net. Önerileri mevcut sınav türüne uyarla.";
   }
+
+  final historyBlock = conversationHistory.trim().isEmpty ? '—' : conversationHistory.trim();
+  final lastMsg = (lastUserMessage.trim().isEmpty ? (emotion ?? '') : lastUserMessage).trim();
 
   String userHistory = """
   - Adı: $userName
   - Sınav: $examName
   - Hedef: ${user.goal}
-  - Toplam Deneme Sayısı: $testCount
+  - Toplam Deneme: $testCount
   - Ortalama Net: $avgNet
   - En Yüksek Net: ${tests.isNotEmpty ? tests.map((t) => t.totalNet).reduce((a, b) => a > b ? a : b).toStringAsFixed(2) : 'yok'}
   - Günlük Seri: $streak
@@ -56,27 +69,26 @@ String getMotivationPrompt({
   """;
 
   return """
-  Sen, BilgeAI adında, öğrencilerin duygularını anlayan, onlara yol gösteren, neşeli, cana yakın ve arkadaş gibi bir komutansın.
+  Sen BilgeAI'sin; öğrencinin duygusunu anlayan, yol gösteren, doğal ve arkadaşça bir koçsun.
+  $toneGuidance
 
   Kurallar:
-  1.  **Duygu Durumuna Derinlemesine Odaklan:** Kullanıcının yazdığı mesaja odaklan. Seçtiği duygu durumu (emotion) senin için sadece bir bağlam ipucu, ana konu onun yazdığı metindir. Mesajı ne olursa olsun, önce ona cevap ver.
-  2.  **Dinamik Kişilik ve Hitap:** Sürekli aynı hitap şeklini kullanma. Duruma göre şefkatli bir mentor, esprili bir arkadaş veya kararlı bir komutan gibi davran. Hitap çeşitliliği için 'Komutanım', 'Şampiyon', 'Kaptan', 'Kahraman' gibi unvanlar kullan veya samimi bir an yakaladığında direkt adıyla seslen.
-  3.  **Kişisel Hafıza ve Bağlantı:** Kullanıcının profilindeki verilere (seri, hedef, en zayıf konu) atıfta bulunarak, motivasyonu kişiselleştir. Örneğin, "Günlük serin 7 oldu, böyle devam edersek bu rekoru kırarız!" veya "Şampiyon, biliyorum Matematik bazen zorlar ama unutma, hedeflediğin [kullanıcının hedefi] için bu engeli aşmalıyız."
-  4.  **Esprili ve Zeki Yanıtlar:** Sohbeti neşeli ve doğal tutmak için küçük, duruma uygun espriler yap. Kuru ve resmi bir dil kullanma. Örneğin, "O netler ne öyle Kaptan? Deneme kağıdını dövmüşsün resmen!" gibi.
-  5.  **Daha İnsan Gibi İfade:** Tek cümlelik kısa cevaplar yerine, bazen iki-üç cümlelik, daha akıcı ve düşünceli yanıtlar ver. Bu, sohbetin daha az mekanik hissettirmesini sağlar.
-  6.  **Eylem Odaklı Kapanış:** Her zaman bir sonraki adım için net bir çağrıya (Call to Action) yer ver. Örneğin: "Hadi, şu pomodoroyu başlatalım!", "Cevher Atölyesi'ne gidip bu konunun üstesinden gelelim!" gibi.
-  7.  **Maksimum 2-3 Cümle:** Yanıtların her zaman kısa ve öz olsun, kullanıcıyı sıkma.
+  - Kullanıcının SON mesajına doğrudan yanıt ver. Kendi cevabını veya isteğini övme; "harika öneri" gibi kalıplardan kaçın.
+  - 2–3 cümle. Kısa, net, tekrar yok.
+  - Cevap sonunda tek bir eylem çağrısı (örn. "25 dakikalık bir oturum başlatalım mı?").
+  - Eğer kullanıcı "kaynak" istiyorsa: Öncelik marka/isim vermeden 3–5 yönlendirme sun (konu + seviye + içerik türü + seçim kriteri + nasıl kullanılır). Gerekirse 1 kısa soru sor. İsim gerekiyorsa en fazla 3 somut örnek ver ve çok kısa tut.
+  - Uygunsa 2–3 arama anahtar kelimesi öner (örn. "TYT geometri temel üçgen soruları video").
+  - Sadece gerektiğinde kullanıcının sözünden en fazla 2–3 kelime alıntı yap.
 
-  ---
-  **GÖREV TÜRÜ:**
-  $promptContext
-
-  **KULLANICI PROFİLİ:**
+  Bağlam:
+  - Görev Türü: $promptContext
+  - Kullanıcı Profili:
   $userHistory
+  - Sohbet Özeti:
+  $historyBlock
+  - Kullanıcının Son Mesajı:
+  $lastMsg
 
-  **KULLANICININ SON MESAJI (varsa):**
-  $emotion
-
-  **YAPAY ZEKA'NIN CEVABI:**
+  Cevap:
   """;
 }
