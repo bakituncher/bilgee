@@ -210,6 +210,12 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
         transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
         child: _buildCurrentStepView(),
       ),
+      bottomNavigationBar: _currentStep == WorkshopStep.results
+          ? _ResultsBottomBar(
+              onBackToWorkshop: _resetToBriefing,
+              onDeepen: _handleDeepenRequest,
+            )
+          : null,
     );
   }
 
@@ -814,6 +820,7 @@ class _SummaryViewState extends ConsumerState<_SummaryView> {
           ),
           const SizedBox(height: 16),
           _ResultActionCard(title: "Sıradaki Cevhere Geç", subtitle: "Başka bir zayıf halkanı güçlendir.", icon: Icons.diamond_outlined, onTap: widget.onNextTopic),
+          // Alt çubuk eklendiği için burada Atölyeye Dön butonunu kaldırdık
         ],
       ).animate().fadeIn(duration: 500.ms),
     );
@@ -1014,3 +1021,44 @@ class _DeepenWorkshopSheet extends StatelessWidget {
     );
   }
 }
+
+class _ResultsBottomBar extends StatelessWidget {
+  final VoidCallback onBackToWorkshop;
+  final VoidCallback onDeepen;
+  const _ResultsBottomBar({required this.onBackToWorkshop, required this.onDeepen});
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        decoration: BoxDecoration(
+          color: AppTheme.cardColor,
+          border: Border(top: BorderSide(color: AppTheme.lightSurfaceColor, width: 1)),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: onDeepen,
+                icon: const Icon(Icons.auto_awesome),
+                label: const Text("Derinleş"),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: onBackToWorkshop,
+                icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                label: const Text("Atölyeye Dön"),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
