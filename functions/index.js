@@ -5,7 +5,7 @@ const {logger} = require("firebase-functions");
 const admin = require("firebase-admin");
 const fs = require("fs");
 const path = require("path");
-const {onDocumentDeleted} = require("firebase-functions/v2/firestore");
+const {onDocumentDeleted, onDocumentCreated} = require("firebase-functions/v2/firestore");
 
 // Firebase projesini başlatıyoruz.
 admin.initializeApp();
@@ -376,4 +376,41 @@ exports.onPostDeletedCleanup = onDocumentDeleted("posts/{postId}", async (event)
   const snap = event.data; // DocumentSnapshot
   const slug = (snap && snap.data()?.slug) || event.params.postId;
   await deletePostAssetsBySlug(slug);
+});
+
+// Yeni: Soru bildirimi oluşturulunca indeks güncelle
+exports.onQuestionReportCreated = onDocumentCreated("questionReports/{reportId}", async (event) => {
+  const snap = event.data;
+  if (!snap) return;
+  const d = snap.data();
+  if (!d) return;
+  const qhash = d.qhash;
+  if (!qhash) return;
+
+  const idxRef = db.collection('question_report_index').doc(qhash);
+  await db.runTransaction(async (tx) => {
+    const idx = await tx.get(idxRef);
+    if (!idx.exists) {
+      tx.set(idxRef, {
+        qhash,
+        question: d.question || '',
+        options: d.options || [],
+        correctIndex: d.correctIndex ?? -1,
+        subjects: d.subject ? [d.subject] : [],
+        topics: d.topic ? [d.topic] : [],
+        reportCount: 1,
+        sampleReasons: d.reason ? [d.reason] : [],
+        lastReportedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    } else {
+      const updates = {
+        reportCount: admin.firestore.FieldValue.increment(1),
+        lastReportedAt: admin.firestore.FieldValue.serverTimestamp(),
+      };
+      if (d.subject) updates.subjects = admin.firestore.FieldValue.arrayUnion(d.subject);
+      if (d.topic) updates.topics = admin.firestore.FieldValue.arrayUnion(d.topic);
+      if (d.reason) updates.sampleReasons = admin.firestore.FieldValue.arrayUnion(d.reason);
+      tx.update(idxRef, updates);
+    }
+  });
 });
