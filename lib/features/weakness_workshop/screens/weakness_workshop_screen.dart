@@ -211,11 +211,19 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
           Column(
             children: [
               _WSHeader(
-                showBack: _currentStep != WorkshopStep.briefing,
+                showBack: true,
                 onBack: (){
-                  if(_currentStep == WorkshopStep.results){ setState(() => _currentStep = WorkshopStep.quiz); }
-                  else if(_currentStep == WorkshopStep.quiz){ setState(() => _currentStep = WorkshopStep.study); }
-                  else { _resetToBriefing(); }
+                  if(_currentStep == WorkshopStep.briefing){
+                    if (Navigator.of(context).canPop()) {
+                      context.pop();
+                    }
+                  } else if(_currentStep == WorkshopStep.results){
+                    setState(() => _currentStep = WorkshopStep.quiz);
+                  } else if(_currentStep == WorkshopStep.quiz){
+                    setState(() => _currentStep = WorkshopStep.study);
+                  } else {
+                    _resetToBriefing();
+                  }
                 },
                 showStats: _currentStep == WorkshopStep.briefing,
                 onStats: () => context.push('/ai-hub/weakness-workshop/stats'),

@@ -23,9 +23,9 @@ class WorkshopStatsScreen extends ConsumerWidget {
           Column(
             children: [
               _WSHeader(
-                title: 'Simyacının Cevher Ocağı',
+                title: 'İstatistikler',
                 onBack: () => context.pop(),
-                onSaved: () => context.push('/ai-hub/weakness-workshop/savedWorkshops'),
+                onSaved: () => context.push('/ai-hub/weakness-workshop/saved-workshops'),
               ),
               Expanded(
                 child: perfAsync.when(

@@ -273,6 +273,14 @@ class FirestoreService {
     await workshopCollectionRef.doc(workshop.id).set(workshop.toMap());
   }
 
+  Future<void> deleteSavedWorkshop(String userId, String workshopId) async {
+    await usersCollection
+        .doc(userId)
+        .collection('savedWorkshops')
+        .doc(workshopId)
+        .delete();
+  }
+
   Stream<List<SavedWorkshopModel>> getSavedWorkshops(String userId) {
     return usersCollection
         .doc(userId)
