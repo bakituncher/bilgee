@@ -15,71 +15,70 @@ class WorkshopStatsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final perfAsync = ref.watch(performanceProvider);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Simyacının Cevher Ocağı"),
-        backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.5),
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppTheme.primaryColor,
-              AppTheme.cardColor.withValues(alpha: 0.8),
+      // Eski: AppBar + Container gradient
+      // Yeni: Özel başlık + animasyonlu arka plan
+      body: Stack(
+        children: [
+          const _FancyBackground(),
+          Column(
+            children: [
+              _WSHeader(
+                title: 'Simyacının Cevher Ocağı',
+                onBack: () => context.pop(),
+                onSaved: () => context.push('/ai-hub/weakness-workshop/savedWorkshops'),
+              ),
+              Expanded(
+                child: perfAsync.when(
+                  data: (perf) {
+                    final summary = perf ?? const PerformanceSummary();
+                    final analysis = WorkshopAnalysis(summary);
+
+                    if (analysis.totalQuestionsAnswered == 0) {
+                      return _buildEmptyState(context);
+                    }
+
+                    return ListView(
+                      padding: const EdgeInsets.all(16.0),
+                      children: [
+                        _buildAlchemistPrism(context, analysis),
+                        const SizedBox(height: 32),
+                        _buildSubjectSpectrum(context, analysis),
+                        const SizedBox(height: 32),
+                        _buildForgingBench(context, analysis),
+                      ].animate(interval: 150.ms).fadeIn(duration: 600.ms).slideY(begin: 0.3),
+                    );
+                  },
+                  loading: () => const Center(child: CircularProgressIndicator(color: AppTheme.secondaryColor)),
+                  error: (e, s) => Center(child: Text('Hata: $e')),
+                ),
+              ),
             ],
           ),
-        ),
-        child: perfAsync.when(
-          data: (perf) {
-            final summary = perf ?? const PerformanceSummary();
-            final analysis = WorkshopAnalysis(summary);
-
-            if (analysis.totalQuestionsAnswered == 0) {
-              return _buildEmptyState(context);
-            }
-
-            return ListView(
-              padding: const EdgeInsets.all(16.0),
-              children: [
-                _buildAlchemistPrism(context, analysis),
-                const SizedBox(height: 32),
-                _buildSubjectSpectrum(context, analysis),
-                const SizedBox(height: 32),
-                _buildForgingBench(context, analysis),
-              ].animate(interval: 150.ms).fadeIn(duration: 600.ms).slideY(begin: 0.3),
-            );
-          },
-          loading: () => const Center(child: CircularProgressIndicator(color: AppTheme.secondaryColor)),
-          error: (e, s) => Center(child: Text("Hata: $e")),
-        ),
+        ],
       ),
     );
   }
 
   Widget _buildEmptyState(BuildContext context) {
     return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.shield_moon_rounded, size: 80, color: AppTheme.secondaryTextColor),
-              const SizedBox(height: 16),
-              Text(
-                'Ocak Henüz Soğuk',
-                style: Theme.of(context).textTheme.headlineSmall,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Cevher Atölyesi\'nde bir konu üzerinde çalıştığında, bu ocak senin zaferlerinle alev alacak. İlk ham cevherini dövmeye başla!',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.secondaryTextColor, height: 1.5),
-              ),
-            ],
-          ).animate().fadeIn(duration: 600.ms).scale(begin: const Offset(0.8, 0.8)),
-        ));
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.diamond_rounded, size: 80, color: Colors.white),
+            const SizedBox(height: 16),
+            Text('Ocak Henüz Soğuk', style: Theme.of(context).textTheme.headlineSmall, textAlign: TextAlign.center),
+            const SizedBox(height: 8),
+            Text(
+              'Atölyede bir konuyu işlediğinde ocak alevlenecek. İlk ham cevherini dövmeye başla!',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.secondaryTextColor, height: 1.5),
+            ),
+          ],
+        ).animate().fadeIn(duration: 600.ms).scale(begin: const Offset(0.9, 0.9)),
+      ),
+    );
   }
 
   // YENİ WIDGET: Simya Prizması
@@ -456,5 +455,118 @@ class WorkshopAnalysis {
   List<Map<String, dynamic>> getWeakestTopics({int count = 3}) {
     final allTopics = _getAllTopicsSorted();
     return allTopics.reversed.take(count).toList();
+  }
+}
+
+class _WSHeader extends StatelessWidget {
+  final String title;
+  final VoidCallback onBack;
+  final VoidCallback onSaved;
+  const _WSHeader({required this.title, required this.onBack, required this.onSaved});
+
+  @override
+  Widget build(BuildContext context) {
+    final top = MediaQuery.of(context).padding.top;
+    return Container(
+      padding: EdgeInsets.fromLTRB(16, top + 8, 16, 16),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: onBack,
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+            style: IconButton.styleFrom(backgroundColor: Colors.white.withValues(alpha: 0.08), shape: const CircleBorder()),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppTheme.lightSurfaceColor),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.bar_chart_rounded, color: AppTheme.secondaryColor),
+                const SizedBox(width: 8),
+                Text(title, style: Theme.of(context).textTheme.titleMedium),
+              ],
+            ),
+          ),
+          const Spacer(),
+          IconButton(
+            tooltip: 'Cevher Kasası',
+            onPressed: onSaved,
+            icon: const Icon(Icons.inventory_2_outlined, color: Colors.white),
+            style: IconButton.styleFrom(backgroundColor: Colors.white.withValues(alpha: 0.08), shape: const CircleBorder()),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FancyBackground extends StatefulWidget {
+  const _FancyBackground();
+  @override
+  State<_FancyBackground> createState() => _FancyBackgroundState();
+}
+
+class _FancyBackgroundState extends State<_FancyBackground> with SingleTickerProviderStateMixin {
+  late AnimationController _c;
+  @override
+  void initState() {
+    super.initState();
+    _c = AnimationController(vsync: this, duration: const Duration(seconds: 10))..repeat(reverse: true);
+  }
+  @override
+  void dispose() { _c.dispose(); super.dispose(); }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _c,
+      builder: (_, __) {
+        final t = _c.value;
+        return Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color.lerp(const Color(0xFF0F172A), const Color(0xFF0B1020), t)!,
+                Color.lerp(const Color(0xFF1E293B), const Color(0xFF0F172A), 1 - t)!,
+              ],
+            ),
+          ),
+          child: Stack(
+            children: [
+              _GlowBlob(top: -40, left: -20, color: const Color(0xFF22D3EE).withValues(alpha: 0.25), size: 200 + 40 * t),
+              _GlowBlob(bottom: -60, right: -30, color: const Color(0xFFA78BFA).withValues(alpha: 0.22), size: 240 - 20 * t),
+              _GlowBlob(top: 160, right: -40, color: const Color(0xFF34D399).withValues(alpha: 0.18), size: 180 + 20 * (1 - t)),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _GlowBlob extends StatelessWidget {
+  final double? top, left, right, bottom;
+  final Color color;
+  final double size;
+  const _GlowBlob({this.top, this.left, this.right, this.bottom, required this.color, required this.size});
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      top: top, left: left, right: right, bottom: bottom,
+      child: Container(
+        width: size, height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: [BoxShadow(color: color, blurRadius: 80, spreadRadius: 40)],
+        ),
+      ),
+    );
   }
 }

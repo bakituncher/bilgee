@@ -34,6 +34,7 @@ class FirestoreService {
   CollectionReference<Map<String, dynamic>> get _testsCollection => _firestore.collection('tests');
   CollectionReference<Map<String, dynamic>> get _focusSessionsCollection => _firestore.collection('focusSessions');
   CollectionReference<Map<String, dynamic>> get _postsCollection => _firestore.collection('posts');
+  CollectionReference<Map<String, dynamic>> get _questionReportsCollection => _firestore.collection('questionReports');
 
   // BLOG: Yayımlanmış yazıları canlı dinle (locale opsiyonel)
   Stream<List<BlogPost>> streamPublishedPosts({String? locale, int limit = 20}) {
@@ -813,6 +814,29 @@ class FirestoreService {
         await userSub.cancel();
         await statsSub.cancel();
       };
+    });
+  }
+
+  Future<void> reportQuestionIssue({
+    required String userId,
+    required String subject,
+    required String topic,
+    required String question,
+    required List<String> options,
+    required int correctIndex,
+    int? selectedIndex,
+    String? reason,
+  }) async {
+    await _questionReportsCollection.add({
+      'userId': userId,
+      'subject': sanitizeKey(subject),
+      'topic': sanitizeKey(topic),
+      'question': question,
+      'options': options,
+      'correctIndex': correctIndex,
+      'selectedIndex': selectedIndex,
+      'reason': reason,
+      'createdAt': FieldValue.serverTimestamp(),
     });
   }
 }
