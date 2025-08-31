@@ -21,17 +21,35 @@ class SavedWorkshopModel {
 
   // StudyGuideAndQuiz modelinden bu modele dönüşüm
   factory SavedWorkshopModel.fromStudyGuide(String id, StudyGuideAndQuiz guide) {
+    // Güvenli kısaltmalar: Firestore 1MB limitine yaklaşmamak için içerik budama
+    const int maxStudyGuideChars = 20000; // ~20KB (UTF-16 char sayısı) — pratikte çok daha güvenli
+    const int maxExplanationChars = 400;  // her soru açıklaması için üst sınır
+
+    String trimmedStudyGuide = guide.studyGuide;
+    if (trimmedStudyGuide.length > maxStudyGuideChars) {
+      trimmedStudyGuide = trimmedStudyGuide.substring(0, maxStudyGuideChars) + "\n\n[Not: Çalışma kartı kısaltıldı]";
+    }
+
+    final trimmedQuiz = guide.quiz.map((q) {
+      final options = q.options;
+      String exp = q.explanation;
+      if (exp.length > maxExplanationChars) {
+        exp = exp.substring(0, maxExplanationChars) + " …";
+      }
+      return {
+        'question': q.question,
+        'options': options,
+        'correctOptionIndex': q.correctOptionIndex,
+        'explanation': exp,
+      };
+    }).toList();
+
     return SavedWorkshopModel(
       id: id,
       subject: guide.subject,
       topic: guide.topic,
-      studyGuide: guide.studyGuide,
-      quiz: guide.quiz.map((q) => {
-        'question': q.question,
-        'options': q.options,
-        'correctOptionIndex': q.correctOptionIndex,
-        'explanation': q.explanation,
-      }).toList(),
+      studyGuide: trimmedStudyGuide,
+      quiz: trimmedQuiz,
       savedDate: Timestamp.now(),
     );
   }

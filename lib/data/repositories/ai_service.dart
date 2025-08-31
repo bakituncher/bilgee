@@ -90,14 +90,17 @@ class AiService {
   String _yyyyMmDd(DateTime d) =>
       '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
-  Future<String> _callGemini(String prompt, {bool expectJson = false}) async {
-    // Yeni yaklaşım: Sunucudaki Firebase Function generateGemini çağrılır.
+  Future<String> _callGemini(String prompt, {bool expectJson = false, double? temperature}) async {
     try {
       final callable = FirebaseFunctions.instanceFor(region: 'us-central1').httpsCallable('generateGemini');
-      final result = await callable.call({
+      final payload = {
         'prompt': prompt,
         'expectJson': expectJson,
-      }).timeout(const Duration(seconds: 70));
+      };
+      if (temperature != null) {
+        payload['temperature'] = temperature;
+      }
+      final result = await callable.call(payload).timeout(const Duration(seconds: 70));
       final data = result.data;
       final rawResponse = (data is Map && data['raw'] is String) ? (data['raw'] as String).trim() : '';
       if (rawResponse.isEmpty) {
@@ -278,6 +281,9 @@ class AiService {
     required String promptType,
     required String? emotion,
     Map<String, dynamic>? workshopContext,
+    // YENI: sohbet geçmişi ve son kullanıcı mesajı
+    String conversationHistory = '',
+    String lastUserMessage = '',
   }) async {
     final examType = user.selectedExam != null ? ExamType.values.byName(user.selectedExam!) : null;
     // KALDIRILDI: examData kullanılmıyordu
@@ -292,8 +298,12 @@ class AiService {
       promptType: promptType,
       emotion: emotion,
       workshopContext: workshopContext,
+      conversationHistory: conversationHistory,
+      lastUserMessage: lastUserMessage,
     );
-    return _callGemini(prompt, expectJson: false);
+    // Daha deterministik yanıtlar için sıcaklık düşürüldü
+    final raw = await _callGemini(prompt, expectJson: false, temperature: 0.4);
+    return _limitSentences(raw);
   }
 
   // Hafif yardımcılar: UI dış�� tek seferlik hesaplamalarda kullanılabilir
@@ -312,5 +322,14 @@ class AiService {
       });
     }
     return subjectNets.map((k, v) => MapEntry(k, v.isEmpty ? 0.0 : v.reduce((a, b) => a + b) / v.length));
+  }
+
+  // YENI: Chat çıktısını 3 cümle ile sınırla
+  String _limitSentences(String text, {int maxSentences = 3}) {
+    final cleaned = text.trim();
+    if (cleaned.isEmpty) return cleaned;
+    final parts = cleaned.split(RegExp(r'(?<=[.!?])\s+'));
+    if (parts.length <= maxSentences) return cleaned;
+    return parts.take(maxSentences).join(' ').trim();
   }
 }

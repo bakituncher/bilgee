@@ -5,7 +5,7 @@ const {logger} = require("firebase-functions");
 const admin = require("firebase-admin");
 const fs = require("fs");
 const path = require("path");
-const {onDocumentDeleted} = require("firebase-functions/v2/firestore");
+const {onDocumentDeleted, onDocumentCreated} = require("firebase-functions/v2/firestore");
 
 // Firebase projesini başlatıyoruz.
 admin.initializeApp();
@@ -186,8 +186,8 @@ exports.completeQuest = onCall({region: "us-central1"}, async (request) => {
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
 
 // Güvenlik ve kötüye kullanım önleme ayarları
-const GEMINI_PROMPT_MAX_CHARS = parseInt(process.env.GEMINI_PROMPT_MAX_CHARS || '5000', 10);
-const GEMINI_MAX_OUTPUT_TOKENS = parseInt(process.env.GEMINI_MAX_OUTPUT_TOKENS || '3000', 10);
+const GEMINI_PROMPT_MAX_CHARS = parseInt(process.env.GEMINI_PROMPT_MAX_CHARS || '10000', 10);
+const GEMINI_MAX_OUTPUT_TOKENS = parseInt(process.env.GEMINI_MAX_OUTPUT_TOKENS || '10000', 10);
 const GEMINI_RATE_LIMIT_WINDOW_SEC = parseInt(process.env.GEMINI_RATE_LIMIT_WINDOW_SEC || '60', 10);
 const GEMINI_RATE_LIMIT_MAX = parseInt(process.env.GEMINI_RATE_LIMIT_MAX || '5', 10);
 
@@ -376,4 +376,41 @@ exports.onPostDeletedCleanup = onDocumentDeleted("posts/{postId}", async (event)
   const snap = event.data; // DocumentSnapshot
   const slug = (snap && snap.data()?.slug) || event.params.postId;
   await deletePostAssetsBySlug(slug);
+});
+
+// Yeni: Soru bildirimi oluşturulunca indeks güncelle
+exports.onQuestionReportCreated = onDocumentCreated("questionReports/{reportId}", async (event) => {
+  const snap = event.data;
+  if (!snap) return;
+  const d = snap.data();
+  if (!d) return;
+  const qhash = d.qhash;
+  if (!qhash) return;
+
+  const idxRef = db.collection('question_report_index').doc(qhash);
+  await db.runTransaction(async (tx) => {
+    const idx = await tx.get(idxRef);
+    if (!idx.exists) {
+      tx.set(idxRef, {
+        qhash,
+        question: d.question || '',
+        options: d.options || [],
+        correctIndex: d.correctIndex ?? -1,
+        subjects: d.subject ? [d.subject] : [],
+        topics: d.topic ? [d.topic] : [],
+        reportCount: 1,
+        sampleReasons: d.reason ? [d.reason] : [],
+        lastReportedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    } else {
+      const updates = {
+        reportCount: admin.firestore.FieldValue.increment(1),
+        lastReportedAt: admin.firestore.FieldValue.serverTimestamp(),
+      };
+      if (d.subject) updates.subjects = admin.firestore.FieldValue.arrayUnion(d.subject);
+      if (d.topic) updates.topics = admin.firestore.FieldValue.arrayUnion(d.topic);
+      if (d.reason) updates.sampleReasons = admin.firestore.FieldValue.arrayUnion(d.reason);
+      tx.update(idxRef, updates);
+    }
+  });
 });

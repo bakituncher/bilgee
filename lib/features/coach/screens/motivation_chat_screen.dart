@@ -32,6 +32,16 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
   bool _isTyping = false;
   late AnimationController _backgroundAnimationController;
 
+  // YENI: Son N mesajdan kısa bir özet üret
+  String _buildConversationHistory(List<ChatMessage> history, {int maxTurns = 10, int maxChars = 800}) {
+    if (history.isEmpty) return '';
+    final recent = history.length > maxTurns ? history.sublist(history.length - maxTurns) : history;
+    final lines = recent.map((m) => (m.isUser ? 'Kullanıcı: ' : 'AI: ') + m.text.replaceAll('\n', ' ').trim()).toList();
+    var out = lines.join(' | ');
+    if (out.length > maxChars) out = out.substring(out.length - maxChars);
+    return out;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -74,12 +84,19 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
     final user = ref.read(userProfileProvider).value!;
     final tests = ref.read(testsProvider).value!;
     final performance = ref.read(performanceProvider).value!;
+
+    // YENI: Sohbet geçmişini ve son kullanıcı mesajını geçir
+    final history = ref.read(chatHistoryProvider);
+    final historySummary = _buildConversationHistory(history);
+
     final aiResponse = await aiService.getPersonalizedMotivation(
       user: user,
       tests: tests,
       performance: performance,
       promptType: 'user_chat',
-      emotion: text,
+      emotion: null,
+      conversationHistory: historySummary,
+      lastUserMessage: text,
     );
 
     ref.read(chatHistoryProvider.notifier).update((state) => [...state, ChatMessage(aiResponse, isUser: false)]);
@@ -104,8 +121,14 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
     setState(() => _isTyping = true);
 
     final aiService = ref.read(aiServiceProvider);
+
+    // YENI: Başlangıçta mümkünse kısa geçmiş de gönder
+    final history = ref.read(chatHistoryProvider);
+    final historySummary = _buildConversationHistory(history);
+
     final aiResponse = await aiService.getPersonalizedMotivation(
       user: user, tests: tests, performance: performance, promptType: moodType, emotion: null, workshopContext: extraContext,
+      conversationHistory: historySummary, lastUserMessage: '',
     );
 
     ref.read(chatHistoryProvider.notifier).state = [ChatMessage(aiResponse, isUser: false)];
@@ -130,7 +153,20 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
     final history = ref.watch(chatHistoryProvider);
     final selectedMood = ref.watch(chatScreenStateProvider);
 
+    // YENI: Klavye görünürlüğüne göre arka plan animasyonu durdur/başlat
+    final keyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
+    if (keyboardVisible) {
+      if (_backgroundAnimationController.isAnimating) {
+        _backgroundAnimationController.stop();
+      }
+    } else {
+      if (!_backgroundAnimationController.isAnimating) {
+        _backgroundAnimationController.repeat(reverse: true);
+      }
+    }
+
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text('Zihinsel Harbiye'),
@@ -165,10 +201,12 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
                     ? _SmartBriefingView(onPromptSelected: _onMoodSelected)
                     : Column(
                   children: [
-                    _BattleSummaryCard(),
+                    const _BattleSummaryCard(),
                     Expanded(
                       child: ListView.builder(
                         controller: _scrollController,
+                        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                        cacheExtent: 300,
                         padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                         itemCount: history.length + (_isTyping ? 1 : 0),
                         itemBuilder: (context, index) {

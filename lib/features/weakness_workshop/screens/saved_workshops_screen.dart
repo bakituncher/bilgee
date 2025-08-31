@@ -18,54 +18,122 @@ final savedWorkshopsProvider = StreamProvider.autoDispose<List<SavedWorkshopMode
   return ref.watch(firestoreServiceProvider).getSavedWorkshops(userId);
 });
 
-class SavedWorkshopsScreen extends ConsumerWidget {
+final _searchQueryProvider = StateProvider.autoDispose<String>((ref) => '');
+
+class SavedWorkshopsScreen extends ConsumerStatefulWidget {
   const SavedWorkshopsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SavedWorkshopsScreen> createState() => _SavedWorkshopsScreenState();
+}
+
+class _SavedWorkshopsScreenState extends ConsumerState<SavedWorkshopsScreen> {
+  Future<bool> _confirmDelete(BuildContext context) async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: const Text('Silinsin mi?'),
+            content: const Text('Bu kaydı kalıcı olarak silmek istiyor musun?'),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Vazgeç')),
+              ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Sil')),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final savedWorkshopsAsync = ref.watch(savedWorkshopsProvider);
+    final query = ref.watch(_searchQueryProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Cevher Kasan"),
+        title: const Text("Cevher Kasası"),
       ),
-      body: savedWorkshopsAsync.when(
-        data: (workshops) {
-          if (workshops.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.inventory_2_outlined, size: 80, color: AppTheme.secondaryTextColor),
-                  const SizedBox(height: 16),
-                  Text('Kasan Henüz Boş', style: Theme.of(context).textTheme.headlineSmall),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                    child: Text(
-                      'Atölyede işlediğin değerli cevherleri buraya kaydederek onlara istediğin zaman geri dönebilirsin.',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.secondaryTextColor),
-                    ),
-                  ),
-                ],
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: TextField(
+              decoration: const InputDecoration(
+                hintText: 'Konu veya ders ara...',
+                prefixIcon: Icon(Icons.search_rounded),
               ),
-            );
-          }
-          return ListView.builder(
-            padding: const EdgeInsets.all(16.0),
-            itemCount: workshops.length,
-            itemBuilder: (context, index) {
-              final workshop = workshops[index];
-              return _SavedWorkshopCard(workshop: workshop)
-                  .animate()
-                  .fadeIn(delay: (100 * index).ms)
-                  .slideY(begin: 0.2);
-            },
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, s) => Center(child: Text("Hata: $e")),
+              onChanged: (v) => ref.read(_searchQueryProvider.notifier).state = v.trim(),
+            ),
+          ),
+          Expanded(
+            child: savedWorkshopsAsync.when(
+              data: (workshops) {
+                final filtered = workshops.where((w) {
+                  if (query.isEmpty) return true;
+                  final q = query.toLowerCase();
+                  return w.topic.toLowerCase().contains(q) || w.subject.toLowerCase().contains(q);
+                }).toList();
+
+                if (filtered.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.inventory_2_outlined, size: 80, color: AppTheme.secondaryTextColor),
+                        const SizedBox(height: 16),
+                        Text(query.isEmpty ? 'Kasan Henüz Boş' : 'Sonuç bulunamadı', style: Theme.of(context).textTheme.headlineSmall),
+                        const SizedBox(height: 8),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                          child: Text(
+                            query.isEmpty
+                                ? 'Atölyede işlediğin değerli cevherleri buraya kaydederek onlara istediğin zaman geri dönebilirsin.'
+                                : 'Farklı bir anahtar kelime dene.',
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.secondaryTextColor),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16.0),
+                  itemCount: filtered.length,
+                  itemBuilder: (context, index) {
+                    final workshop = filtered[index];
+                    final userId = ref.read(authControllerProvider).value?.uid;
+                    return Dismissible(
+                      key: Key(workshop.id),
+                      direction: DismissDirection.endToStart,
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        decoration: BoxDecoration(color: AppTheme.accentColor.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(16)),
+                        child: const Icon(Icons.delete_forever_rounded, color: AppTheme.accentColor),
+                      ),
+                      confirmDismiss: (_) => _confirmDelete(context),
+                      onDismissed: (_) async {
+                        if (userId != null) {
+                          await ref.read(firestoreServiceProvider).deleteSavedWorkshop(userId, workshop.id);
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kayıt silindi')));
+                          }
+                        }
+                      },
+                      child: _SavedWorkshopCard(workshop: workshop)
+                          .animate()
+                          .fadeIn(delay: (100 * index).ms)
+                          .slideY(begin: 0.2),
+                    );
+                  },
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, s) => Center(child: Text("Hata: $e")),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -118,7 +186,7 @@ class _SavedWorkshopCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(Icons.arrow_forward_ios_rounded, color: AppTheme.secondaryTextColor),
+              Icon(Icons.arrow_forward_ios_rounded, color: AppTheme.secondaryTextColor),
             ],
           ),
         ),

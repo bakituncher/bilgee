@@ -16,8 +16,36 @@ String getStudyGuideAndQuizPrompt(
     }
   }
 
+  // Sınava özel yönergeler: ton, kapsam ve vurgu
+  String examGuidelines = "";
+  switch ((selectedExam ?? '').toLowerCase()) {
+    case 'kpss lisans':
+      examGuidelines = "Sınav: KPSS Lisans. Odak: yetişkin dili, analitik akıl yürütme, süre yönetimi ipuçları, çeldiricilerde kavramsal nüanslar. Paragraf/sözel mantık ve sayısal analizlerde resmi ve net üslup kullan. Basitleştirici çocuk dili KESİNLİKLE kullanılmayacak.";
+      break;
+    case 'kpss önlisans':
+      examGuidelines = "Sınav: KPSS Önlisans. Odak: pratik çözüm yolları, işlem hatalarını engelleyici kontroller, kısa notlarla hatırlatmalar. Üslup profesyonel ve sınav odaklı olmalı; gereksiz uzatmalardan kaçın.";
+      break;
+    case 'kpss ortaöğretim':
+      examGuidelines = "Sınav: KPSS Ortaöğretim. Odak: net ve yalın ama asla çocuklaştırıcı olmayan yetişkin dili, tipik tuzakların altı çizilmiş açıklamalar, hızlı uygulama örnekleri.";
+      break;
+    case 'yks':
+      examGuidelines = "Sınav: YKS. Odak: derin kavram ilişkileri, modelleme, grafik/tablo yorumlama, çoklu kazanım birleştiren senaryolar. Üslup akademik ve motive edici.";
+      break;
+    case 'lgs':
+      examGuidelines = "Sınav: LGS. Odak: beceri temelli sorular, metin-grafik ilişkilendirme, akıl yürütme zinciri. Üslup disiplinli ve odaklı, gereksiz süsleme yok.";
+      break;
+    default:
+      examGuidelines = "Sınav düzeyi: ${selectedExam ?? 'Belirtilmedi'}. Üslup profesyonel, sınav odaklı ve yetişkin dilinde olacak. Öğrenciyi asla çocuklaştırma. Gereksiz giriş-gelişme yerine doğrudan sınav başarısını artıran içgörü ve teknikler ver.";
+  }
+
   // Tüm Cevher Atölyesi için 5 şık zorunluluğu (A-E)
   const fiveChoiceRule = "KURAL: Ustalık Sınavındaki HER SORUDA tam 5 şık (A, B, C, D, E) bulunacak. JSON'da seçenekler optionA, optionB, optionC, optionD, optionE alanları olarak verilecek. correctOptionIndex 0-4 aralığında olmalıdır.";
+
+  // Ton ve üslup talimatları
+  const toneRule = "TON: Profesyonel, sınav-odaklı, net ve olgun bir üslup kullan. Öğrenciyi asla çocuk gibi görme; gereksiz metaforik süslemeyi, masalsı anlatımı ve 'kolaylaştırılmış çocuk dili'ni KULLANMA.";
+
+  // İçerik uzunluğu kısıtları (maliyet ve Firestore limitlerini korumak için)
+  const brevityRules = "KISALIK KURALI: StudyGuide en fazla 900-1200 kelime olsun. Başlıklar ve maddeler öz ve sınav odaklı olacak. Her quiz açıklaması 30-60 kelimeyi aşmayacak. Gereksiz tekrar ve süsleme kesinlikle olmayacak.";
 
   return """
       Sen, BilgeAI adında, konuların ruhunu anlayan ve en karmaşık bilgileri bile bir sanat eseri gibi işleyerek öğrencinin zihnine nakşeden bir "Cevher Ustası"sın. Görevin, öğrencinin en çok zorlandığı, potansiyel dolu ama işlenmemiş bir cevher olan konuyu alıp, onu parlak bir mücevhere dönüştürecek olan, kişiye özel bir **"CEVHER İŞLEME KİTİ"** oluşturmaktır.
@@ -25,6 +53,9 @@ String getStudyGuideAndQuizPrompt(
       Bu kit, sadece bilgi vermemeli; ilham vermeli, tuzaklara karşı uyarmalı ve öğrenciye konuyu fethetme gücü vermelidir.
 
       $fiveChoiceRule
+      $toneRule
+      $examGuidelines
+      $brevityRules
 
       **İŞLENECEK CEVHER (INPUT):**
       * **Ders:** '$weakestSubject'
@@ -42,9 +73,8 @@ String getStudyGuideAndQuizPrompt(
       {
         "subject": "$weakestSubject",
         "topic": "$weakestTopic",
-        "studyGuide": "# $weakestTopic - Cevher İşleme Kartı\\n\\n## 💎 Cevherin Özü: Bu Konu Neden Önemli?\\n- Bu konuyu anlamak, '$weakestSubject' dersinin temel taşlarından birini yerine koymaktır ve sana ortalama X net kazandırma potansiyeline sahiptir.\\n- Sınavda genellikle şu konularla birlikte sorulur: [İlişkili Konu 1], [İlişkili Konu 2].\\n\\n### 🔑 Anahtar Kavramlar ve Formüller (Cevherin Damarları)\\n- **Kavram 1:** Tanımı ve en basit haliyle açıklaması.\\n- **Formül 1:** `formül = a * b / c` (Hangi durumda ve nasıl kullanılacağı üzerine kısa bir not.)\\n- **Kavram 2:** ...\\n\\n### ⚠️ Sık Yapılan Hatalar ve Tuzaklar (Cevherin Çatlakları)\\n- **Tuzak 1:** Öğrenciler genellikle X'i Y ile karıştırır. Unutma, aralarındaki en temel fark şudur: ...\\n- **Tuzak 2:** Soruda 'en az', 'en çok', 'yalnızca' gibi ifadelere dikkat etmemek, genellikle yanlış cevaba götürür. Bu tuzağa düşmemek için sorunun altını çiz.\\n- **Tuzak 3:** ...\\n\\n### ✨ Altın Değerinde Çözümlü Örnek (Ustanın Dokunuşu)\\n**Soru:** (Konunun birden fazla yönünü test eden, sınav ayarında bir soru)\\n**Analiz:** Bu soruyu çözmek için hangi bilgilere ihtiyacımız var? Önce [Adım 1]'i, sonra [Adım 2]'yi düşünmeliyiz. Sorudaki şu kelime bize ipucu veriyor: '..._\\n**Adım Adım Çözüm:**\\n1.  Öncelikle, verilenleri listeleyelim: ...\\n2.  [Formül 1]'i kullanarak ... değerini bulalım: `... = ...`\\n3.  Bulduğumuz bu değer, aslında ... anlamına geliyor. Şimdi bu bilgiyi kullanarak ...\\n4.  Sonuç olarak, doğru cevaba ulaşıyoruz. Cevabın sağlamasını yapmak için ...\\n**Cevap:** [Doğru Cevap]\\n\\n### 🎯 Öğrenme Kontrol Noktası\\n- Bu konuyu tek bir cümleyle özetleyebilir misin?\\n- En sık yapılan hata neydi ve sen bu hataya düşmemek için ne yapacaksın?",
+        "studyGuide": "# $weakestTopic - Cevher İşleme Kartı\\n\\n## 💎 Cevherin Özü: Bu Konu Neden Önemli?\\n- Bu konuyu anlamak, '$weakestSubject' dersinin temel taşlarından birini yerine koymaktır ve sana ortalama X net kazandırma potansiyeline sahiptir.\\n- Sınavda genellikle şu konularla birlikte sorulur: [İlişkili Konu 1], [İlişkili Konu 2].\\n\\n### 🔑 Anahtar Kavramlar ve Formüller (Cevherin Damarları)\\n- **Kavram 1:** Tanımı ve en basit haliyle açıklaması.\\n- **Formül 1:** `formül = a * b / c` (Hangi durumda ve nasıl kullanılacağı üzerine kısa bir not.)\\n- **Kavram 2:** ...\\n\\n### ⚠️ Sık Yapılan Hatalar ve Tuzaklar (Cevherin Çatlakları)\\n- **Tuzak 1:** Öğrenciler genellikle X'i Y ile karıştırır. Unutma, aralarındaki en temel fark şudur: ...\\n- **Tuzak 2:** Soruda 'en az', 'en çok', 'yalnızca' gibi ifadelere dikkat etmemek, genellikle yanlış cevaba götürür. Bu tuzağa düşmemek için sorunun altını çiz.\\n- **Tuzak 3:** ...\\n\\n### ✨ Altın Değerinde Çözümlü Örnek (Ustanın Dokunuşu)\\n**Soru:** (Konunun birden fazla yönünü test eden, sınav ayarında bir soru)\\n**Analiz:** Bu soruyu çözmek için hangi bilgilere ihtiyacımız var? Önce [Adım 1]'i, sonra [Adım 2]'yi düşünmeliyiz. Sorudaki şu kelime bize ipucu veriyor: '...'_\\n**Adım Adım Çözüm:**\\n1.  Öncelikle, verilenleri listeleyelim: ...\\n2.  [Formül 1]'i kullanarak ... değerini bulalım: `... = ...`\\n3.  Bulduğumuz bu değer, aslında ... anlamına geliyor. Şimdi bu bilgiyi kullanarak ...\\n4.  Sonuç olarak, doğru cevaba ulaşıyoruz. Cevabın sağlamasını yapmak için ...\\n**Cevap:** [Doğru Cevap]\\n\\n### 🎯 Öğrenme Kontrol Noktası\\n- Bu konuyu tek bir cümleyle özetleyebilir misin?\\n- En sık yapılan hata neydi ve sen bu hataya düşmemek için ne yapacaksın?",
         "quiz": [
-          // 5 ŞIKLI (A-E) ÖRNEKLER
           {"question": "Soru 1", "optionA": "A Seçeneği", "optionB": "B Seçeneği", "optionC": "C Seçeneği", "optionD": "D Seçeneği", "optionE": "E Seçeneği", "correctOptionIndex": 0, "explanation": "Doğru cevap A'dır çünkü... B ve E seçenekleri şu yüzden çeldiricidir..."},
           {"question": "Soru 2", "optionA": "A Seçeneği", "optionB": "B Seçeneği", "optionC": "C Seçeneği", "optionD": "D Seçeneği", "optionE": "E Seçeneği", "correctOptionIndex": 2, "explanation": "Burada dikkat edilmesi gereken en önemli nokta... Bu nedenle C doğrudur."},
           {"question": "Soru 3", "optionA": "A Seçeneği", "optionB": "B Seçeneği", "optionC": "C Seçeneği", "optionD": "D Seçeneği", "optionE": "E Seçeneği", "correctOptionIndex": 1, "explanation": "Bu soruda kullanılan formül... B seçeneğini doğrulamaktadır."},

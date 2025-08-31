@@ -1,6 +1,7 @@
 // lib/shared/widgets/side_panel_drawer.dart
 import 'package:bilge_ai/core/theme/app_theme.dart';
 import 'package:bilge_ai/data/providers/firestore_providers.dart';
+import 'package:bilge_ai/data/providers/admin_providers.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -124,6 +125,27 @@ class SidePanelDrawer extends ConsumerWidget {
                         ],
                       ),
                     ),
+                    // Admin-only section
+                    Consumer(builder: (context, ref, _) {
+                      final isAdminAsync = ref.watch(adminClaimProvider);
+                      return isAdminAsync.maybeWhen(
+                        data: (isAdmin) {
+                          if (!isAdmin) return const SizedBox.shrink();
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              const Divider(height: 1, color: Colors.white12),
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                                child: Text('Admin İşlemleri', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: AppTheme.secondaryTextColor)),
+                              ),
+                              _navTile(context, icon: Icons.report_gmailerrorred_rounded, title: 'Cevher Bildirimleri', route: '/admin/reports'),
+                            ],
+                          );
+                        },
+                        orElse: () => const SizedBox.shrink(),
+                      );
+                    }),
                   ],
                 ),
               ),

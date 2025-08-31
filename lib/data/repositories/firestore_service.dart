@@ -16,6 +16,8 @@ import 'package:bilge_ai/features/quests/models/quest_model.dart';
 import 'package:bilge_ai/features/stats/logic/stats_analysis.dart';
 import 'package:bilge_ai/data/models/user_stats_model.dart';
 import 'package:bilge_ai/features/blog/models/blog_post.dart';
+import 'package:crypto/crypto.dart' as crypto;
+import 'dart:convert' show utf8;
 
 class FirestoreService {
   final FirebaseFirestore _firestore;
@@ -34,6 +36,33 @@ class FirestoreService {
   CollectionReference<Map<String, dynamic>> get _testsCollection => _firestore.collection('tests');
   CollectionReference<Map<String, dynamic>> get _focusSessionsCollection => _firestore.collection('focusSessions');
   CollectionReference<Map<String, dynamic>> get _postsCollection => _firestore.collection('posts');
+  CollectionReference<Map<String, dynamic>> get _questionReportsCollection => _firestore.collection('questionReports');
+  CollectionReference<Map<String, dynamic>> get _questionReportsIndexCollection => _firestore.collection('question_report_index');
+
+  // Admin: rapor indeks akışı (en çok raporlananlar en üstte)
+  Stream<List<Map<String, dynamic>>> streamQuestionReportIndex({int limit = 200}) {
+    return _questionReportsIndexCollection
+        .orderBy('reportCount', descending: true)
+        .limit(limit)
+        .snapshots()
+        .map((qs) => qs.docs.map((d) => { 'id': d.id, ...d.data() }).toList());
+  }
+
+  // Admin: belirli qhash için ham raporlar
+  Stream<List<Map<String, dynamic>>> streamQuestionReportsByHash(String qhash, {int limit = 200}) {
+    return _questionReportsCollection
+        .where('qhash', isEqualTo: qhash)
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .snapshots()
+        .map((qs) => qs.docs.map((d) => { 'id': d.id, ...d.data() }).toList());
+  }
+
+  String _computeQuestionHash(String question, List<String> options) {
+    final normalized = (question.trim().toLowerCase() + '|' + options.map((o) => o.trim().toLowerCase()).join('||'));
+    final bytes = utf8.encode(normalized);
+    return crypto.sha256.convert(bytes).toString();
+  }
 
   // BLOG: Yayımlanmış yazıları canlı dinle (locale opsiyonel)
   Stream<List<BlogPost>> streamPublishedPosts({String? locale, int limit = 20}) {
@@ -270,6 +299,14 @@ class FirestoreService {
     final userDocRef = usersCollection.doc(userId);
     final workshopCollectionRef = userDocRef.collection('savedWorkshops');
     await workshopCollectionRef.doc(workshop.id).set(workshop.toMap());
+  }
+
+  Future<void> deleteSavedWorkshop(String userId, String workshopId) async {
+    await usersCollection
+        .doc(userId)
+        .collection('savedWorkshops')
+        .doc(workshopId)
+        .delete();
   }
 
   Stream<List<SavedWorkshopModel>> getSavedWorkshops(String userId) {
@@ -815,4 +852,34 @@ class FirestoreService {
       };
     });
   }
+
+  Future<void> reportQuestionIssue({
+    required String userId,
+    required String subject,
+    required String topic,
+    required String question,
+    required List<String> options,
+    required int correctIndex,
+    int? selectedIndex,
+    String? reason,
+  }) async {
+    final subjKey = sanitizeKey(subject);
+    final topicKey = sanitizeKey(topic);
+    final qhash = _computeQuestionHash(question, options);
+
+    // Sadece ham raporu kaydet (indeksi bulut fonksiyonu güncelleyecek)
+    await _questionReportsCollection.add({
+      'userId': userId,
+      'qhash': qhash,
+      'subject': subjKey,
+      'topic': topicKey,
+      'question': question,
+      'options': options,
+      'correctIndex': correctIndex,
+      'selectedIndex': selectedIndex,
+      'reason': reason,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
 }
+

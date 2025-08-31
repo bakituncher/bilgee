@@ -12,15 +12,14 @@ import 'package:bilge_ai/features/weakness_workshop/models/study_guide_model.dar
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:bilge_ai/data/models/topic_performance_model.dart';
 import 'package:go_router/go_router.dart';
-import 'package:bilge_ai/data/models/exam_model.dart';
-import 'package:bilge_ai/features/stats/logic/stats_analysis.dart';
 import 'package:bilge_ai/features/stats/logic/stats_analysis_provider.dart';
 import 'package:bilge_ai/features/auth/application/auth_controller.dart';
 import 'package:uuid/uuid.dart';
 import 'package:bilge_ai/core/navigation/app_routes.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:bilge_ai/features/quests/logic/quest_notifier.dart';
-import 'package:bilge_ai/data/models/performance_summary.dart';
+import 'package:bilge_ai/features/weakness_workshop/logic/quiz_quality_guard.dart';
+import 'package:confetti/confetti.dart';
 
 
 enum WorkshopStep { briefing, study, quiz, results }
@@ -60,7 +59,10 @@ final workshopSessionProvider = FutureProvider.autoDispose<StudyGuideAndQuiz>((r
   if (decodedJson.containsKey('error')) {
     throw Exception(decodedJson['error']);
   }
-  return StudyGuideAndQuiz.fromJson(decodedJson);
+  final raw = StudyGuideAndQuiz.fromJson(decodedJson);
+  // Soru kalite güvencesi uygula (yetersizse hata fırlatır ve üst katman retry sunar)
+  final guarded = QuizQualityGuard.apply(raw).material;
+  return guarded;
 });
 
 
@@ -74,11 +76,13 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
   WorkshopStep _currentStep = WorkshopStep.briefing;
   Map<int, int> _selectedAnswers = {};
   bool _skipStudyView = false;
+  bool _masteredAchieved = false; // bu oturumda ustalık kazan��ldı mı
 
   void _startWorkshop(Map<String, String> topic) {
     ref.read(_selectedTopicProvider.notifier).state = topic;
     ref.read(_difficultyProvider.notifier).state = ('normal', 1);
     _selectedAnswers = {};
+    _masteredAchieved = false;
     setState(() => _currentStep = WorkshopStep.study);
   }
 
@@ -119,6 +123,24 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
       performance: newPerformance,
     );
 
+    // Ustalık (konu öğrenildi) koşulları:
+    // - En az 20 birikimli soru
+    // - Birikimli doğruluk >= %75 (blank hariç)
+    // - Bu sınav skoru >= %85
+    final int cumCorrect = newPerformance.correctCount;
+    final int cumWrong = newPerformance.wrongCount;
+    final int cumAnswered = (cumCorrect + cumWrong);
+    final double cumAccuracy = cumAnswered == 0 ? 0.0 : (cumCorrect / cumAnswered);
+    final double quizScore = material.quiz.isEmpty ? 0.0 : (correct / material.quiz.length);
+
+    _masteredAchieved = false;
+    final alreadyMasteredKey = '${sanitizedSubject}-${sanitizedTopic}';
+    final alreadyMastered = performanceSummary.masteredTopics.contains(alreadyMasteredKey);
+    if (!alreadyMastered && newPerformance.questionCount >= 20 && cumAccuracy >= 0.75 && quizScore >= 0.85) {
+      firestoreService.markTopicAsMastered(userId: user.id, subject: material.subject, topic: material.topic);
+      _masteredAchieved = true;
+    }
+
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     DateTime? last = user.lastWorkshopDate?.toDate();
@@ -147,6 +169,7 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
   void _resetToBriefing(){
     ref.invalidate(workshopSessionProvider);
     ref.read(_selectedTopicProvider.notifier).state = null;
+    _masteredAchieved = false;
     setState(() => _currentStep = WorkshopStep.briefing);
   }
 
@@ -167,6 +190,7 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
   void _setDifficultyAndChangeStep(String difficulty, bool invalidate, {bool skipStudy = false}) {
     ref.read(_difficultyProvider.notifier).update((state) => (difficulty, state.$2 + 1));
     _selectedAnswers = {};
+    _masteredAchieved = false;
 
     if(skipStudy) {
       _skipStudyView = true;
@@ -181,35 +205,48 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Cevher Atölyesi'),
-        leading: _currentStep != WorkshopStep.briefing ? IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: (){
-            if(_currentStep == WorkshopStep.results){ setState(() => _currentStep = WorkshopStep.quiz); }
-            else if(_currentStep == WorkshopStep.quiz){ setState(() => _currentStep = WorkshopStep.study); }
-            else { _resetToBriefing(); }
-          },
-        ) : null,
-        actions: [
-          if (_currentStep == WorkshopStep.briefing)
-            IconButton(
-              icon: const Icon(Icons.bar_chart_rounded),
-              tooltip: "Atölye Raporunu Görüntüle",
-              onPressed: () => context.push('/ai-hub/weakness-workshop/stats'),
-            ),
-          IconButton(
-            icon: const Icon(Icons.inventory_2_outlined),
-            tooltip: "Cevher Kasanı Görüntüle",
-            onPressed: () => context.push('/ai-hub/weakness-workshop/${AppRoutes.savedWorkshops}'),
+      body: Stack(
+        children: [
+          const _FancyBackground(),
+          Column(
+            children: [
+              _WSHeader(
+                showBack: true,
+                onBack: (){
+                  if(_currentStep == WorkshopStep.briefing){
+                    if (Navigator.of(context).canPop()) {
+                      context.pop();
+                    }
+                  } else if(_currentStep == WorkshopStep.results){
+                    setState(() => _currentStep = WorkshopStep.quiz);
+                  } else if(_currentStep == WorkshopStep.quiz){
+                    setState(() => _currentStep = WorkshopStep.study);
+                  } else {
+                    _resetToBriefing();
+                  }
+                },
+                showStats: _currentStep == WorkshopStep.briefing,
+                onStats: () => context.push('/ai-hub/weakness-workshop/stats'),
+                onSaved: () => context.push('/ai-hub/weakness-workshop/${AppRoutes.savedWorkshops}'),
+                title: 'Cevher Atölyesi',
+              ),
+              Expanded(
+                child: AnimatedSwitcher(
+                  duration: 300.ms,
+                  transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
+                  child: _buildCurrentStepView(),
+                ),
+              ),
+            ],
           ),
         ],
       ),
-      body: AnimatedSwitcher(
-        duration: 300.ms,
-        transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
-        child: _buildCurrentStepView(),
-      ),
+      bottomNavigationBar: _currentStep == WorkshopStep.results
+          ? _ResultsBottomBar(
+              onBackToWorkshop: _resetToBriefing,
+              onDeepen: _handleDeepenRequest,
+            )
+          : null,
     );
   }
 
@@ -244,22 +281,138 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
 
         switch (_currentStep) {
           case WorkshopStep.study:
-            return _StudyView(key: ValueKey('study_${material.topic}_${ref.read(_difficultyProvider)}'), material: material, onStartQuiz: () => setState(() => _currentStep = WorkshopStep.quiz));
+            return _StudyView(
+              key: ValueKey('study_${material.topic}_${ref.read(_difficultyProvider)}'),
+              material: material,
+              onStartQuiz: () => setState(() => _currentStep = WorkshopStep.quiz),
+            );
           case WorkshopStep.quiz:
             return _QuizView(
-                key: ValueKey('quiz_${material.topic}_${ref.read(_difficultyProvider)}'),
-                material: material,
-                onSubmit: () => _submitQuiz(material),
-                selectedAnswers: _selectedAnswers,
-                onAnswerSelected: (q, a) => setState(() => _selectedAnswers[q] = a)
+              key: ValueKey('quiz_${material.topic}_${ref.read(_difficultyProvider)}'),
+              material: material,
+              onSubmit: () => _submitQuiz(material),
+              selectedAnswers: _selectedAnswers,
+              onAnswerSelected: (q, a) => setState(() => _selectedAnswers[q] = a),
+              onReportIssue: (qIndex) {
+                _openReportSheet(material, qIndex, _selectedAnswers[qIndex]);
+              },
             );
           case WorkshopStep.results:
-            return _ResultsView(key: ValueKey('results_${material.topic}'), material: material, selectedAnswers: _selectedAnswers, onNextTopic: _resetToBriefing,
+            return _ResultsView(
+              key: ValueKey('results_${material.topic}'),
+              material: material,
+              selectedAnswers: _selectedAnswers,
+              onNextTopic: _resetToBriefing,
               onRetryHarder: _handleDeepenRequest,
+              masteredAchieved: _masteredAchieved,
             );
-          default: return const SizedBox.shrink();
+          default:
+            return const SizedBox.shrink();
         }
       },
+    );
+  }
+
+  void _openReportSheet(StudyGuideAndQuiz material, int qIndex, int? selected) {
+    final q = material.quiz[qIndex];
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => _ReportIssueSheet(
+        subject: material.subject,
+        topic: material.topic,
+        question: q.question,
+        options: q.options,
+        correctIndex: q.correctOptionIndex,
+        selectedIndex: selected,
+        onSubmit: (reason) async {
+          final userId = ref.read(authControllerProvider).value?.uid;
+          if (userId == null) return;
+          await ref.read(firestoreServiceProvider).reportQuestionIssue(
+                userId: userId,
+                subject: material.subject,
+                topic: material.topic,
+                question: q.question,
+                options: q.options,
+                correctIndex: q.correctOptionIndex,
+                selectedIndex: selected,
+                reason: reason,
+              );
+          if (mounted) {
+            Navigator.pop(context);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Teşekkürler! İnceleme için iletildi.'), backgroundColor: AppTheme.successColor),
+            );
+          }
+        },
+      ),
+    );
+  }
+}
+
+class _FancyBackground extends StatefulWidget {
+  const _FancyBackground();
+  @override
+  State<_FancyBackground> createState() => _FancyBackgroundState();
+}
+
+class _FancyBackgroundState extends State<_FancyBackground> with SingleTickerProviderStateMixin {
+  late AnimationController _c;
+  @override
+  void initState() {
+    super.initState();
+    _c = AnimationController(vsync: this, duration: const Duration(seconds: 10))..repeat(reverse: true);
+  }
+  @override
+  void dispose() { _c.dispose(); super.dispose(); }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _c,
+      builder: (_, __) {
+        final t = _c.value;
+        return Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color.lerp(const Color(0xFF0F172A), const Color(0xFF0B1020), t)!,
+                Color.lerp(const Color(0xFF1E293B), const Color(0xFF0F172A), 1 - t)!,
+              ],
+            ),
+          ),
+          child: Stack(
+            children: [
+              _GlowBlob(top: -40, left: -20, color: const Color(0xFF22D3EE).withValues(alpha: 0.25), size: 200 + 40 * t),
+              _GlowBlob(bottom: -60, right: -30, color: const Color(0xFFA78BFA).withValues(alpha: 0.22), size: 240 - 20 * t),
+              _GlowBlob(top: 160, right: -40, color: const Color(0xFF34D399).withValues(alpha: 0.18), size: 180 + 20 * (1 - t)),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _GlowBlob extends StatelessWidget {
+  final double? top, left, right, bottom;
+  final Color color;
+  final double size;
+  const _GlowBlob({this.top, this.left, this.right, this.bottom, required this.color, required this.size});
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      top: top, left: left, right: right, bottom: bottom,
+      child: Container(
+        width: size, height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: [BoxShadow(color: color, blurRadius: 80, spreadRadius: 40)],
+        ),
+      ),
     );
   }
 }
@@ -273,18 +426,37 @@ class _LoadingCevherView extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Image.asset('assets/images/bilge_baykus.png', height: 120)
-              .animate(onPlay: (c) => c.repeat(reverse: true))
-              .moveY(duration: 1500.ms, begin: -10, end: 10, curve: Curves.easeInOut),
+          // Değiştirildi: Görsel yerine parlayan elmas simgesi
+          Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(color: AppTheme.secondaryColor.withValues(alpha: 0.25), blurRadius: 40, spreadRadius: 10),
+              ],
+              gradient: RadialGradient(colors: [
+                AppTheme.secondaryColor.withValues(alpha: 0.35),
+                Colors.transparent,
+              ], stops: const [0.5, 1.0]),
+            ),
+            child: const Center(child: Icon(Icons.diamond_rounded, size: 56, color: Colors.white)),
+          ).animate(onPlay: (c) => c.repeat(reverse: true)).scale(begin: const Offset(0.95, 0.95), end: const Offset(1.05, 1.05), duration: 1200.ms),
           const SizedBox(height: 24),
           Text(
-            "Bilge Baykuş senin için\nözel bir çalışma hazırlıyor...",
+            "Atölye ocağı kızdırılıyor...",
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppTheme.secondaryTextColor),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
+          Text(
+            "Konuya özel çalışma setin hazırlanıyor",
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor),
+          ),
+          const SizedBox(height: 20),
           const SizedBox(
-            width: 150,
+            width: 180,
             child: LinearProgressIndicator(color: AppTheme.secondaryColor),
           ),
         ],
@@ -357,53 +529,69 @@ class _TopicCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final masteryValue = topic['mastery'] as double?;
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: isRecommended ? const BorderSide(color: AppTheme.secondaryColor, width: 2) : BorderSide.none,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        gradient: isRecommended
+            ? LinearGradient(colors: [AppTheme.secondaryColor.withValues(alpha: 0.25), Colors.transparent])
+            : null,
       ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (isRecommended)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                      color: AppTheme.secondaryColor,
-                      borderRadius: BorderRadius.circular(8)
-                  ),
-                  child: Text("BİLGEAI ÖNERİSİ", style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.primaryColor, fontWeight: FontWeight.bold, letterSpacing: 1)),
-                ),
-              if (isRecommended) const SizedBox(height: 8),
-              Text(topic['topic']!, style: Theme.of(context).textTheme.titleLarge),
-              Text(topic['subject']!, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor)),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Text("Hakimiyet: ", style: Theme.of(context).textTheme.bodySmall),
-                  Expanded(
-                    child: LinearProgressIndicator(
-                      value: masteryValue == null || masteryValue < 0 ? null : masteryValue,
-                      backgroundColor: AppTheme.lightSurfaceColor.withOpacity(0.3),
-                      color: masteryValue == null || masteryValue < 0 ? AppTheme.secondaryTextColor : Color.lerp(AppTheme.accentColor, AppTheme.successColor, masteryValue),
-                      borderRadius: BorderRadius.circular(4),
+      child: Card(
+        elevation: 6,
+        color: AppTheme.cardColor.withValues(alpha: 0.85),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: isRecommended ? AppTheme.secondaryColor : AppTheme.lightSurfaceColor, width: 1.5),
+        ),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    if (isRecommended)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(color: AppTheme.secondaryColor, borderRadius: BorderRadius.circular(8)),
+                        child: Text("BİLGEAI ÖNERİSİ", style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.primaryColor, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                      ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.06),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppTheme.lightSurfaceColor),
+                      ),
+                      child: Row(children: [
+                        const Icon(Icons.bolt_rounded, size: 16, color: AppTheme.secondaryColor),
+                        const SizedBox(width: 6),
+                        Text(masteryValue == null || masteryValue < 0 ? 'Keşif' : '%${(masteryValue * 100).toStringAsFixed(0)}', style: Theme.of(context).textTheme.labelSmall),
+                      ]),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(masteryValue == null || masteryValue < 0 ? "Keşfet!" : "%${(masteryValue * 100).toStringAsFixed(0)}", style: Theme.of(context).textTheme.bodySmall)
-                ],
-              )
-            ],
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(topic['topic']!, style: Theme.of(context).textTheme.titleLarge),
+                Text(topic['subject']!, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor)),
+                const SizedBox(height: 12),
+                LinearProgressIndicator(
+                  value: masteryValue == null || masteryValue < 0 ? null : masteryValue,
+                  backgroundColor: AppTheme.lightSurfaceColor.withValues(alpha: AppTheme.lightSurfaceColor.a * 0.3),
+                  color: masteryValue == null || masteryValue < 0 ? AppTheme.secondaryTextColor : Color.lerp(AppTheme.accentColor, AppTheme.successColor, masteryValue),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ],
+            ),
           ),
         ),
       ),
-    );
+    ).animate().fadeIn(duration: 350.ms).slideY(begin: 0.1);
   }
 }
 
@@ -447,8 +635,9 @@ class _QuizView extends StatefulWidget {
   final VoidCallback onSubmit;
   final Map<int,int> selectedAnswers;
   final Function(int, int) onAnswerSelected;
+  final void Function(int questionIndex) onReportIssue;
 
-  const _QuizView({super.key, required this.material, required this.onSubmit, required this.selectedAnswers, required this.onAnswerSelected});
+  const _QuizView({super.key, required this.material, required this.onSubmit, required this.selectedAnswers, required this.onAnswerSelected, required this.onReportIssue});
 
   @override
   State<_QuizView> createState() => _QuizViewState();
@@ -511,6 +700,9 @@ class _QuizViewState extends State<_QuizView> {
                     widget.onAnswerSelected(index, optionIndex);
                   }
                 },
+                onReportIssue: () {
+                  widget.onReportIssue(index);
+                },
               );
             },
           ),
@@ -544,6 +736,7 @@ class _QuestionCard extends StatelessWidget {
   final int totalQuestions;
   final int? selectedOptionIndex;
   final Function(int) onOptionSelected;
+  final void Function()? onReportIssue;
 
   const _QuestionCard({
     required this.question,
@@ -551,6 +744,7 @@ class _QuestionCard extends StatelessWidget {
     required this.totalQuestions,
     required this.selectedOptionIndex,
     required this.onOptionSelected,
+    required this.onReportIssue,
   });
 
   @override
@@ -560,7 +754,17 @@ class _QuestionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Soru $questionNumber / $totalQuestions", style: const TextStyle(color: AppTheme.secondaryTextColor)),
+          Row(
+            children: [
+              Text("Soru $questionNumber / $totalQuestions", style: const TextStyle(color: AppTheme.secondaryTextColor)),
+              const Spacer(),
+              TextButton.icon(
+                onPressed: onReportIssue,
+                icon: const Icon(Icons.flag_outlined, size: 18, color: AppTheme.secondaryTextColor),
+                label: const Text('Sorunu Bildir', style: TextStyle(color: AppTheme.secondaryTextColor)),
+              ),
+            ],
+          ),
           const SizedBox(height: 8),
           Text(question.question, style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 32),
@@ -642,8 +846,9 @@ class _ResultsView extends StatefulWidget {
   final VoidCallback onNextTopic;
   final VoidCallback onRetryHarder;
   final Map<int, int> selectedAnswers;
+  final bool masteredAchieved;
 
-  const _ResultsView({super.key, required this.material, required this.onNextTopic, required this.onRetryHarder, required this.selectedAnswers});
+  const _ResultsView({super.key, required this.material, required this.onNextTopic, required this.onRetryHarder, required this.selectedAnswers, required this.masteredAchieved});
 
   @override
   State<_ResultsView> createState() => _ResultsViewState();
@@ -651,16 +856,24 @@ class _ResultsView extends StatefulWidget {
 
 class _ResultsViewState extends State<_ResultsView> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  late ConfettiController _confetti;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _confetti = ConfettiController(duration: const Duration(seconds: 2));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.masteredAchieved) {
+        _confetti.play();
+      }
+    });
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _confetti.dispose();
     super.dispose();
   }
 
@@ -672,32 +885,47 @@ class _ResultsViewState extends State<_ResultsView> with SingleTickerProviderSta
     });
     final score = widget.material.quiz.isEmpty ? 0.0 : (correct / widget.material.quiz.length) * 100;
 
-    return Column(
+    return Stack(
       children: [
-        TabBar(
-          controller: _tabController,
-          indicatorColor: AppTheme.secondaryColor,
-          tabs: const [
-            Tab(text: "Özet"),
-            Tab(text: "Sınav Karnesi"),
+        Column(
+          children: [
+            TabBar(
+              controller: _tabController,
+              indicatorColor: AppTheme.secondaryColor,
+              tabs: const [
+                Tab(text: "Özet"),
+                Tab(text: "Sınav Karnesi"),
+              ],
+            ),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _SummaryView(
+                    score: score,
+                    material: widget.material,
+                    onNextTopic: widget.onNextTopic,
+                    onRetryHarder: widget.onRetryHarder,
+                    onShowReview: () => _tabController.animateTo(1),
+                    masteredAchieved: widget.masteredAchieved,
+                  ),
+                  _QuizReviewView(
+                    material: widget.material,
+                    selectedAnswers: widget.selectedAnswers,
+                  )
+                ],
+              ),
+            ),
           ],
         ),
-        Expanded(
-          child: TabBarView(
-            controller: _tabController,
-            children: [
-              _SummaryView(
-                score: score,
-                material: widget.material,
-                onNextTopic: widget.onNextTopic,
-                onRetryHarder: widget.onRetryHarder,
-                onShowReview: () => _tabController.animateTo(1),
-              ),
-              _QuizReviewView(
-                material: widget.material,
-                selectedAnswers: widget.selectedAnswers,
-              )
-            ],
+        Align(
+          alignment: Alignment.topCenter,
+          child: ConfettiWidget(
+            confettiController: _confetti,
+            blastDirectionality: BlastDirectionality.explosive,
+            numberOfParticles: 24,
+            shouldLoop: false,
+            colors: const [AppTheme.successColor, AppTheme.secondaryColor, AppTheme.accentColor],
           ),
         ),
       ],
@@ -711,6 +939,7 @@ class _SummaryView extends ConsumerStatefulWidget {
   final VoidCallback onNextTopic;
   final VoidCallback onRetryHarder;
   final VoidCallback onShowReview;
+  final bool masteredAchieved;
 
   const _SummaryView({
     required this.score,
@@ -718,6 +947,7 @@ class _SummaryView extends ConsumerStatefulWidget {
     required this.onNextTopic,
     required this.onRetryHarder,
     required this.onShowReview,
+    required this.masteredAchieved,
     super.key
   });
 
@@ -738,6 +968,35 @@ class _SummaryViewState extends ConsumerState<_SummaryView> {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          if (widget.masteredAchieved) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(colors: [
+                  AppTheme.successColor.withValues(alpha: AppTheme.successColor.a * 0.3),
+                  AppTheme.successColor.withValues(alpha: AppTheme.successColor.a * 0.15)
+                ]),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppTheme.successColor.withValues(alpha: AppTheme.successColor.a * 0.8), width: 1.5),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.verified_rounded, color: AppTheme.successColor, size: 32),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Konu Ustalıkla Öğrenildi', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.successColor, fontWeight: FontWeight.bold)),
+                        Text('Tebrikler! Bu konuda hedeflenen yeterlilik seviyesine ulaştın.', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor)),
+                      ],
+                    ),
+                  )
+                ],
+              ),
+            ).animate().fadeIn(duration: 500.ms).slideY(begin: -0.2),
+            const SizedBox(height: 20),
+          ],
           if (highScore) ...[
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -767,7 +1026,6 @@ class _SummaryViewState extends ConsumerState<_SummaryView> {
             ).animate().fadeIn(duration: 500.ms).slideY(begin: -0.2),
             const SizedBox(height: 20),
           ],
-          const SizedBox(height: 20),
           Text("Ustalık Sınavı Tamamlandı!", style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center,),
           const SizedBox(height: 16),
           Text("%${widget.score.toStringAsFixed(0)}", style: Theme.of(context).textTheme.displayLarge?.copyWith(color: AppTheme.successColor, fontWeight: FontWeight.bold), textAlign: TextAlign.center,),
@@ -814,6 +1072,7 @@ class _SummaryViewState extends ConsumerState<_SummaryView> {
           ),
           const SizedBox(height: 16),
           _ResultActionCard(title: "Sıradaki Cevhere Geç", subtitle: "Başka bir zayıf halkanı güçlendir.", icon: Icons.diamond_outlined, onTap: widget.onNextTopic),
+          // Alt çubuk eklendiği için burada Atölyeye Dön butonunu kaldırdık
         ],
       ).animate().fadeIn(duration: 500.ms),
     );
@@ -1008,6 +1267,188 @@ class _DeepenWorkshopSheet extends StatelessWidget {
             icon: Icons.auto_awesome_motion_rounded,
             onTap: () => onOptionSelected('hard', true, true),
             isPrimary: true,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ResultsBottomBar extends StatelessWidget {
+  final VoidCallback onBackToWorkshop;
+  final VoidCallback onDeepen;
+  const _ResultsBottomBar({required this.onBackToWorkshop, required this.onDeepen});
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        decoration: BoxDecoration(
+          color: AppTheme.cardColor,
+          border: Border(top: BorderSide(color: AppTheme.lightSurfaceColor, width: 1)),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: onDeepen,
+                icon: const Icon(Icons.auto_awesome),
+                label: const Text("Derinleş"),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: onBackToWorkshop,
+                icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                label: const Text("Atölyeye Dön"),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ReportIssueSheet extends StatefulWidget {
+  final String subject;
+  final String topic;
+  final String question;
+  final List<String> options;
+  final int correctIndex;
+  final int? selectedIndex;
+  final Future<void> Function(String reason) onSubmit;
+  const _ReportIssueSheet({required this.subject, required this.topic, required this.question, required this.options, required this.correctIndex, this.selectedIndex, required this.onSubmit});
+
+  @override
+  State<_ReportIssueSheet> createState() => _ReportIssueSheetState();
+}
+
+class _ReportIssueSheetState extends State<_ReportIssueSheet> {
+  String _reason = '';
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      decoration: const BoxDecoration(
+        color: AppTheme.cardColor,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.flag_outlined, color: AppTheme.secondaryColor),
+                const SizedBox(width: 8),
+                Text('Sorun Bildir', style: Theme.of(context).textTheme.titleLarge),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8, runSpacing: 8,
+              children: [
+                _reasonChip('Yanlış cevap anahtarı'),
+                _reasonChip('Kötü yazım/ifade'),
+                _reasonChip('Müfredat dışı'),
+                _reasonChip('Tekrarlayan şıklar'),
+              ],
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              minLines: 2, maxLines: 4,
+              decoration: const InputDecoration(hintText: 'İstersen detay ekle...'),
+              onChanged: (v) => _reason = v,
+            ),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  final r = _reason.isEmpty ? 'Genel rapor' : _reason;
+                  await widget.onSubmit(r);
+                },
+                icon: const Icon(Icons.send_rounded),
+                label: const Text('Gönder'),
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _reasonChip(String label) {
+    return ChoiceChip(
+      label: Text(label),
+      selected: _reason == label,
+      onSelected: (_) => setState(() => _reason = label),
+    );
+  }
+}
+
+class _WSHeader extends StatelessWidget {
+  final bool showBack;
+  final VoidCallback? onBack;
+  final bool showStats;
+  final VoidCallback onStats;
+  final VoidCallback onSaved;
+  final String title;
+  const _WSHeader({required this.showBack, required this.onBack, required this.showStats, required this.onStats, required this.onSaved, required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    final top = MediaQuery.of(context).padding.top;
+    return Container(
+      padding: EdgeInsets.fromLTRB(16, top + 8, 16, 16),
+      decoration: const BoxDecoration(
+        // arka plan glow ile birleşsin diye şeffaf bırakıldı
+        color: Colors.transparent,
+      ),
+      child: Row(
+        children: [
+          if (showBack)
+            IconButton(
+              onPressed: onBack,
+              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+              style: IconButton.styleFrom(backgroundColor: Colors.white.withValues(alpha: 0.08), shape: const CircleBorder()),
+            )
+          else
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppTheme.lightSurfaceColor),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.diamond_rounded, color: AppTheme.secondaryColor),
+                  const SizedBox(width: 8),
+                  Text(title, style: Theme.of(context).textTheme.titleMedium),
+                ],
+              ),
+            ),
+          const Spacer(),
+          if (showStats)
+            IconButton(
+              tooltip: 'Atölye Raporu',
+              onPressed: onStats,
+              icon: const Icon(Icons.bar_chart_rounded, color: Colors.white),
+              style: IconButton.styleFrom(backgroundColor: Colors.white.withValues(alpha: 0.08), shape: const CircleBorder()),
+            ),
+          const SizedBox(width: 8),
+          IconButton(
+            tooltip: 'Cevher Kasası',
+            onPressed: onSaved,
+            icon: const Icon(Icons.inventory_2_outlined, color: Colors.white),
+            style: IconButton.styleFrom(backgroundColor: Colors.white.withValues(alpha: 0.08), shape: const CircleBorder()),
           ),
         ],
       ),
