@@ -47,6 +47,9 @@ String getStudyGuideAndQuizPrompt(
   // İçerik uzunluğu kısıtları (maliyet ve Firestore limitlerini korumak için)
   const brevityRules = "KISALIK KURALI: StudyGuide en fazla 900-1200 kelime olsun. Başlıklar ve maddeler öz ve sınav odaklı olacak. Her quiz açıklaması 30-60 kelimeyi aşmayacak. Gereksiz tekrar ve süsleme kesinlikle olmayacak.";
 
+  // Yeni: kalite ve sızıntı önleme kuralları
+  const antiLeakAndQuality = "KALİTE VE GİZLİLİK KURALI: Soru metninde asla 'cevap:' veya doğru seçeneği ifşa eden bir ipucu bulunmayacak. Şıklar anlam olarak birbiriyle kıyaslanabilir ve AYIRT EDİLEBİLİR olacak; tekrar eden, boş veya 'Seçenek X' gibi yer tutucu metinler KULLANILMAYACAK. Açıklamalar kısa ama neden-sonuç ve çeldirici analizi içerecek (doğru neden doğru, diğerleri neden yanlış). Matematik ve sayısal sorularda gerçekçi sayısal değerler, birden fazla adım ve işlem kontrolü yer alacak; aşırı basit sorular KULLANILMAYACAK.";
+
   return """
       Sen, BilgeAI adında, konuların ruhunu anlayan ve en karmaşık bilgileri bile bir sanat eseri gibi işleyerek öğrencinin zihnine nakşeden bir "Cevher Ustası"sın. Görevin, öğrencinin en çok zorlandığı, potansiyel dolu ama işlenmemiş bir cevher olan konuyu alıp, onu parlak bir mücevhere dönüştürecek olan, kişiye özel bir **"CEVHER İŞLEME KİTİ"** oluşturmaktır.
 
@@ -56,6 +59,7 @@ String getStudyGuideAndQuizPrompt(
       $toneRule
       $examGuidelines
       $brevityRules
+      $antiLeakAndQuality
 
       **İŞLENECEK CEVHER (INPUT):**
       * **Ders:** '$weakestSubject'

@@ -9,6 +9,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:bilge_ai/core/theme/app_theme.dart';
 import 'package:bilge_ai/features/weakness_workshop/models/saved_workshop_model.dart';
 import 'package:bilge_ai/features/weakness_workshop/models/study_guide_model.dart';
+import 'package:bilge_ai/shared/widgets/markdown_with_math.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:bilge_ai/data/models/topic_performance_model.dart';
 import 'package:go_router/go_router.dart';
@@ -43,26 +44,42 @@ final workshopSessionProvider = FutureProvider.autoDispose<StudyGuideAndQuiz>((r
     return Future.error("Analiz için kullanıcı, test veya performans verisi bulunamadı.");
   }
 
-  final jsonString = await ref.read(aiServiceProvider).generateStudyGuideAndQuiz(
-    user,
-    tests,
-    performance,
-    topicOverride: selectedTopic,
-    difficulty: difficultyInfo.$1,
-    attemptCount: difficultyInfo.$2,
-  ).timeout(
-    const Duration(seconds: 45),
-    onTimeout: () => throw TimeoutException("Yapay zeka çok uzun süredir yanıt vermiyor. Lütfen tekrar deneyin."),
-  );
+  Future<StudyGuideAndQuiz> _attempt({double? temperature}) async {
+    final jsonString = await ref.read(aiServiceProvider).generateStudyGuideAndQuiz(
+      user,
+      tests,
+      performance,
+      topicOverride: selectedTopic,
+      difficulty: difficultyInfo.$1,
+      attemptCount: difficultyInfo.$2,
+      temperature: temperature,
+    ).timeout(
+      const Duration(seconds: 45),
+      onTimeout: () => throw TimeoutException("Yapay zeka çok uzun süredir yanıt vermiyor. Lütfen tekrar deneyin."),
+    );
 
-  final decodedJson = jsonDecode(jsonString);
-  if (decodedJson.containsKey('error')) {
-    throw Exception(decodedJson['error']);
+    final decodedJson = jsonDecode(jsonString);
+    if (decodedJson.containsKey('error')) {
+      throw Exception(decodedJson['error']);
+    }
+    final raw = StudyGuideAndQuiz.fromJson(decodedJson);
+    // Soru kalite güvencesi uygula (yetersizse hata fırlatır)
+    final guarded = QuizQualityGuard.apply(raw).material;
+    return guarded;
   }
-  final raw = StudyGuideAndQuiz.fromJson(decodedJson);
-  // Soru kalite güvencesi uygula (yetersizse hata fırlatır ve üst katman retry sunar)
-  final guarded = QuizQualityGuard.apply(raw).material;
-  return guarded;
+
+  // 1) Varsayılan sıcaklıkla dene -> 2) 0.35 -> 3) 0.25
+  final attempts = <double?>[null, 0.35, 0.25];
+  Exception? lastErr;
+  for (final t in attempts) {
+    try {
+      return await _attempt(temperature: t);
+    } catch (e) {
+      lastErr = Exception(e.toString());
+      // denemeye devam
+    }
+  }
+  throw lastErr ?? Exception('Soru kalitesi yetersiz. Lütfen tekrar deneyin.');
 });
 
 
@@ -590,8 +607,10 @@ class _TopicCard extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    ).animate().fadeIn(duration: 350.ms).slideY(begin: 0.1);
+      )
+    .animate()
+    .fadeIn(duration: 350.ms)
+    .slideY(begin: 0.1));
   }
 }
 
@@ -607,13 +626,13 @@ class _StudyView extends StatelessWidget {
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
-            child: MarkdownBody(
-                data: material.studyGuide,
-                styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
-                  p: const TextStyle(fontSize: 16, height: 1.5, color: AppTheme.textColor),
-                  h1: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppTheme.secondaryColor),
-                  h3: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
-                )
+            child: MarkdownWithMath(
+              data: material.studyGuide,
+              styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                p: const TextStyle(fontSize: 16, height: 1.5, color: AppTheme.textColor),
+                h1: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppTheme.secondaryColor),
+                h3: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+              ),
             ),
           ),
         ),
@@ -766,7 +785,12 @@ class _QuestionCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Text(question.question, style: Theme.of(context).textTheme.headlineSmall),
+          MarkdownWithMath(
+            data: question.question,
+            styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+              p: Theme.of(context).textTheme.headlineSmall,
+            ),
+          ),
           const SizedBox(height: 32),
           ...List.generate(question.options.length, (index) {
             bool isSelected = selectedOptionIndex == index;
@@ -795,7 +819,12 @@ class _QuestionCard extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: 12),
               child: ListTile(
                 onTap: selectedOptionIndex == null ? () => onOptionSelected(index) : null,
-                title: Text(question.options[index]),
+                title: MarkdownWithMath(
+                  data: question.options[index],
+                  styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                    p: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                ),
                 trailing: trailingIcon != null ? Icon(trailingIcon, color: borderColor) : null,
               ),
             );
@@ -830,7 +859,12 @@ class _ExplanationCard extends StatelessWidget {
                 children: [
                   Text("Usta'nın Açıklaması", style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.secondaryColor)),
                   const SizedBox(height: 8),
-                  Text(explanation, style: const TextStyle(color: AppTheme.textColor, height: 1.5)),
+                  MarkdownWithMath(
+                    data: explanation,
+                    styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                      p: const TextStyle(color: AppTheme.textColor, height: 1.5),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -1106,17 +1140,24 @@ class _QuizReviewView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Soru ${index + 1}: ${question.question}", style: Theme.of(context).textTheme.titleLarge),
+                MarkdownWithMath(
+                  data: "Soru ${index + 1}: ${question.question}",
+                  styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                    p: Theme.of(context).textTheme.titleLarge,
+                  ),
+                ),
                 const SizedBox(height: 16),
                 ...List.generate(question.options.length, (optIndex) {
                   return ListTile(
                     dense: true,
                     contentPadding: EdgeInsets.zero,
-                    title: Text(
-                      question.options[optIndex],
-                      style: TextStyle(
-                        color: optIndex == question.correctOptionIndex ? AppTheme.successColor :
-                        (optIndex == userAnswer && !isCorrect ? AppTheme.accentColor : AppTheme.textColor),
+                    title: MarkdownWithMath(
+                      data: question.options[optIndex],
+                      styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                        p: TextStyle(
+                          color: optIndex == question.correctOptionIndex ? AppTheme.successColor :
+                          (optIndex == userAnswer && !isCorrect ? AppTheme.accentColor : AppTheme.textColor),
+                        ),
                       ),
                     ),
                     leading: Icon(

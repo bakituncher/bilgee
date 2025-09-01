@@ -10,20 +10,38 @@ class QuizQualityGuardResult {
 class QuizQualityGuard {
   static const int minQuestions = 5;
   static const int minTextLen = 20;
+  static const int minExplLen = 30;
 
   static QuizQualityGuardResult apply(StudyGuideAndQuiz raw) {
     final issues = <String>[];
     final cleaned = <QuizQuestion>[];
+    final seenQuestions = <String>{};
 
     for (final q in raw.quiz) {
-      if (_isQuestionValid(q, issues)) {
-        cleaned.add(_dedupOptions(q));
+      // Aynı soru tekrarlarını ele
+      final normQ = _normalize(q.question);
+      if (seenQuestions.contains(normQ)) {
+        issues.add('Tekrarlanan soru elendi.');
+        continue;
+      }
+      final tmpIssues = <String>[];
+      if (_isQuestionValid(q, tmpIssues)) {
+        final deduped = _dedupOptions(q);
+        // Placeholder şık fazlaysa eleriz
+        final placeholderCount = deduped.options.where((o) => _isPlaceholderOption(o)).length;
+        if (placeholderCount >= 2) {
+          issues.add('Yer tutucu/boş şıklar nedeniyle soru elendi.');
+          continue;
+        }
+        cleaned.add(deduped);
+        seenQuestions.add(normQ);
+      } else {
+        issues.addAll(tmpIssues);
       }
     }
 
     if (cleaned.length < minQuestions) {
       issues.add('Soru sayısı kalite kontrolünden sonra yetersiz kaldı (${cleaned.length}/$minQuestions).');
-      // Soru kalitesi güvence altına alınamadı -> üst katman bu durumu yakalayıp yeniden deneyecek
       throw Exception('Soru kalitesi yetersiz. Lütfen tekrar deneyin.');
     }
 
@@ -45,18 +63,20 @@ class QuizQualityGuard {
       return false;
     }
 
-    // Açık cevap işareti ya da "cevap:" sızıntıları
+    // Cevap sızıntıları
     final lower = trimmedQ.toLowerCase();
     if (lower.contains('cevap:') || lower.contains('doğru cevap') || lower.contains('(c)') || lower.contains('[doğru]')) {
       issues.add('Cevap sızıntısı içeren soru elendi.');
       return false;
     }
 
-    if (trimmedExpl.length < minTextLen || trimmedExpl.toLowerCase().contains('bulunamadı')) {
+    // Açıklama yeterliliği
+    if (trimmedExpl.length < minExplLen || trimmedExpl.toLowerCase().contains('bulunamadı')) {
       issues.add('Yetersiz açıklama nedeniyle soru elendi.');
       return false;
     }
 
+    // Şıklar ve indeks
     if (q.options.isEmpty || q.correctOptionIndex < 0 || q.correctOptionIndex >= q.options.length) {
       issues.add('Geçersiz şık/indeks nedeniyle soru elendi.');
       return false;
@@ -72,12 +92,18 @@ class QuizQualityGuard {
 
     // Doğru şık boş/placeholder olmasın
     final correct = cleaned[q.correctOptionIndex];
-    if (correct.trim().isEmpty || correct.toLowerCase().startsWith('seçenek ')) {
+    if (correct.trim().isEmpty || correct.toLowerCase().startsWith('seçenek ') || _isPlaceholderOption(correct)) {
       issues.add('Doğru şık geçersiz görünüyor.');
       return false;
     }
 
     return true;
+  }
+
+  static bool _isPlaceholderOption(String s) {
+    final l = s.trim().toLowerCase();
+    return l.isEmpty || l == 'a' || l == 'b' || l == 'c' || l == 'd' || l == 'e' ||
+        l.startsWith('seçenek') || l.startsWith('diğer seçenek') || l.startsWith('option');
   }
 
   static QuizQuestion _dedupOptions(QuizQuestion q) {
@@ -115,5 +141,6 @@ class QuizQualityGuard {
   static String _sanitizeText(String v) {
     return v.replaceAll('\r', '').replaceAll('\t', ' ').replaceAll('  ', ' ').trim();
   }
-}
 
+  static String _normalize(String v) => _sanitizeText(v).toLowerCase();
+}

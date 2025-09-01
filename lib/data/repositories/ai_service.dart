@@ -233,7 +233,7 @@ class AiService {
     return _callGemini(prompt, expectJson: true);
   }
 
-  Future<String> generateStudyGuideAndQuiz(UserModel user, List<TestModel> tests, PerformanceSummary performance, {Map<String, String>? topicOverride, String difficulty = 'normal', int attemptCount = 1}) async {
+  Future<String> generateStudyGuideAndQuiz(UserModel user, List<TestModel> tests, PerformanceSummary performance, {Map<String, String>? topicOverride, String difficulty = 'normal', int attemptCount = 1, double? temperature}) async {
     if (tests.isEmpty) {
       return '{"error":"Analiz için en az bir deneme sonucu gereklidir."}';
     }
@@ -271,7 +271,8 @@ class AiService {
 
     final prompt = getStudyGuideAndQuizPrompt(weakestSubject, weakestTopic, user.selectedExam, difficulty, attemptCount);
 
-    return _callGemini(prompt, expectJson: true);
+    // temperature parametresini _callGemini'ye geçir
+    return _callGemini(prompt, expectJson: true, temperature: temperature);
   }
 
   Future<String> getPersonalizedMotivation({

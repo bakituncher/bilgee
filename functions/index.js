@@ -226,6 +226,12 @@ exports.generateGemini = onCall(
     }
     const prompt = request.data?.prompt;
     const expectJson = !!request.data?.expectJson;
+    // Yeni: sıcaklık isteğe bağlı
+    let temperature = 0.8;
+    if (typeof request.data?.temperature === 'number' && isFinite(request.data.temperature)) {
+      // Güvenli aralık [0.1, 1.0]
+      temperature = Math.min(1.0, Math.max(0.1, request.data.temperature));
+    }
 
     if (typeof prompt !== 'string' || !prompt.trim()) {
       throw new HttpsError('invalid-argument', 'Geçerli bir prompt gerekli');
@@ -242,7 +248,7 @@ exports.generateGemini = onCall(
       const body = {
         contents: [{parts: [{text: normalizedPrompt}]}],
         generationConfig: {
-          temperature: 0.8,
+          temperature,
           maxOutputTokens: GEMINI_MAX_OUTPUT_TOKENS,
           ...(expectJson ? {responseMimeType: 'application/json'} : {}),
         },
