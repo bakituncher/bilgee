@@ -2,6 +2,7 @@
 import 'package:bilge_ai/core/theme/app_theme.dart';
 import 'package:bilge_ai/data/providers/admin_providers.dart';
 import 'package:bilge_ai/data/providers/firestore_providers.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -13,6 +14,30 @@ class QuestionReportDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isAdminAsync = ref.watch(adminClaimProvider);
 
+    Future<void> _callAdminFn(String mode, {String? reportId}) async {
+      try {
+        final callable = FirebaseFunctions.instanceFor(region: 'us-central1').httpsCallable('adminDeleteQuestionReports');
+        final payload = {
+          'mode': mode,
+          if (mode == 'single' && reportId != null) 'reportId': reportId,
+          if (mode != 'single') 'qhash': qhash,
+        };
+        final res = await callable.call(payload);
+        // ignore: use_build_context_synchronously
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Silme başarılı: ${res.data}')),
+        );
+      } on FirebaseFunctionsException catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Hata: ${e.message ?? e.code}')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Hata: $e')),
+        );
+      }
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Bildirim Detayı'),
@@ -20,6 +45,43 @@ class QuestionReportDetailScreen extends ConsumerWidget {
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (v) async {
+              if (v == 'delete_all') {
+                final ok = await showDialog<bool>(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    title: const Text('Tüm raporları sil?'),
+                    content: const Text('Bu soruya ait tüm raporlar silinecek. Emin misin?'),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Vazgeç')),
+                      FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Sil')),
+                    ],
+                  ),
+                );
+                if (ok == true) await _callAdminFn('byQhash');
+              } else if (v == 'delete_index') {
+                final ok = await showDialog<bool>(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    title: const Text('Sadece indeks kaydı kaldırılsın mı?'),
+                    content: const Text('Rapor dokümanları kalır, liste görünümünden kalkar.'),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Vazgeç')),
+                      FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Kaldır')),
+                    ],
+                  ),
+                );
+                if (ok == true) await _callAdminFn('indexOnly');
+              }
+            },
+            itemBuilder: (c) => const [
+              PopupMenuItem(value: 'delete_all', child: Text('Tüm raporları sil')),
+              PopupMenuItem(value: 'delete_index', child: Text('Sadece indeks kaydını kaldır')),
+            ],
+          ),
+        ],
       ),
       body: isAdminAsync.when(
         data: (isAdmin) {
@@ -87,10 +149,59 @@ class QuestionReportDetailScreen extends ConsumerWidget {
                     final selectedIndex = r['selectedIndex'];
                     final userId = r['userId'] ?? '-';
                     final ts = r['createdAt'];
-                    return Card(
-                      child: ListTile(
-                        title: Text(reason.isEmpty ? '(Gerekçe yok)' : reason),
-                        subtitle: Text('Kullanıcı: $userId  |  Seçim: ${selectedIndex ?? '-'}  |  Tarih: ${ts ?? '-'}'),
+                    final rid = r['id']?.toString();
+                    return Dismissible(
+                      key: ValueKey(rid ?? r.hashCode),
+                      direction: DismissDirection.endToStart,
+                      confirmDismiss: (_) async {
+                        final ok = await showDialog<bool>(
+                          context: context,
+                          builder: (_) => AlertDialog(
+                            title: const Text('Rapor silinsin mi?'),
+                            content: const Text('Bu işlem geri alınamaz.'),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Vazgeç')),
+                              FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Sil')),
+                            ],
+                          ),
+                        );
+                        return ok ?? false;
+                      },
+                      onDismissed: (_) async {
+                        if (rid != null) {
+                          await _callAdminFn('single', reportId: rid);
+                        }
+                      },
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        color: Colors.redAccent,
+                        child: const Icon(Icons.delete_forever_rounded, color: Colors.white),
+                      ),
+                      child: Card(
+                        child: ListTile(
+                          title: Text(reason.isEmpty ? '(Gerekçe yok)' : reason),
+                          subtitle: Text('Kullanıcı: $userId  |  Seçim: ${selectedIndex ?? '-'}  |  Tarih: ${ts ?? '-'}'),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
+                            onPressed: () async {
+                              final ok = await showDialog<bool>(
+                                context: context,
+                                builder: (_) => AlertDialog(
+                                  title: const Text('Rapor silinsin mi?'),
+                                  content: const Text('Bu işlem geri alınamaz.'),
+                                  actions: [
+                                    TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Vazgeç')),
+                                    FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Sil')),
+                                  ],
+                                ),
+                              );
+                              if (ok == true && rid != null) {
+                                await _callAdminFn('single', reportId: rid);
+                              }
+                            },
+                          ),
+                        ),
                       ),
                     );
                   }).toList(),
