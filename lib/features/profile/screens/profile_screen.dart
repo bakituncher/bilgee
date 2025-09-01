@@ -20,9 +20,13 @@ import 'package:bilge_ai/data/models/performance_summary.dart';
 import 'package:bilge_ai/data/models/plan_document.dart'; // EKLENDİ
 
 // ===== NovaPulse / Arena ile tutarlı premium accent renkleri =====
-const _accentProfile1 = Color(0xFF7F5BFF); // elektrik moru
-const _accentProfile2 = Color(0xFF6BFF7A); // neon lime
-const List<Color> _profileBgGradient = [Color(0xFF0B0F14), Color(0xFF2A155A), Color(0xFF061F38)];
+const _accentProfile1 = AppTheme.secondaryColor; // camgöbeği
+const _accentProfile2 = AppTheme.successColor;   // zümrüt
+const List<Color> _profileBgGradient = [
+  AppTheme.scaffoldBackgroundColor,
+  AppTheme.cardColor,
+  AppTheme.scaffoldBackgroundColor,
+];
 
 final focusSessionsProvider = StreamProvider.autoDispose<List<FocusSessionModel>>((ref) {
   final user = ref.watch(authControllerProvider).value;

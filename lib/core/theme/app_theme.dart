@@ -3,26 +3,25 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // BİLGEAI DEVRİMİ: Renk paleti, bilgeliği, odaklanmayı ve motivasyonu yansıtacak şekilde yeniden tasarlandı.
-  // Ana Renkler
-  static const Color primaryColor = Color(0xFF0D1B2A);      // Derin Gece Mavisi (Odaklanma)
-  static const Color secondaryColor = Color(0xFFFCA311);     // Canlı Turuncu (Eylem ve Motivasyon)
-  static const Color accentColor = Color(0xFFE71D36);       // Güçlü Kırmızı (Uyarı ve Hata)
-  static const Color successColor = Color(0xFF2EC4B6);      // Canlı Turkuaz (Başarı)
+  // Ana Renkler (Cevher Atölyesi paleti)
+  static const Color primaryColor = Color(0xFF0F172A);      // Derin gece mavisi (arka plan temeli)
+  static const Color secondaryColor = Color(0xFF22D3EE);    // Canlı Camgöbeği (vurgular/aksiyonlar)
+  static const Color accentColor = Color(0xFFE71D36);       // Uyarı/Kırmızı (hata)
+  static const Color successColor = Color(0xFF34D399);      // Zümrüt (başarı)
 
   // Arka Plan ve Yüzey Renkleri
-  static const Color scaffoldBackgroundColor = Color(0xFF0D1B2A); // Ana arka plan
-  static const Color cardColor = Color(0xFF1B263B);             // Kartların ve yüzeylerin rengi
-  static const Color lightSurfaceColor = Color(0xFF415A77);     // Daha açık tonlu yüzeyler (inputlar vb.)
+  static const Color scaffoldBackgroundColor = Color(0xFF0F172A); // Ana arka plan (slate-900)
+  static const Color cardColor = Color(0xFF1E293B);               // Kart yüzeyi (slate-800)
+  static const Color lightSurfaceColor = Color(0xFF334155);       // Açık yüzeyler/çerçeve (slate-700)
 
   // Metin Renkleri
-  static const Color textColor = Color(0xFFE0E1DD);              // Ana metin rengi
-  static const Color secondaryTextColor = Color(0xFFA0AEC0);      // Daha az önemli metinler için gri ton
+  static const Color textColor = Color(0xFFE2E8F0);               // Açık metin (slate-200)
+  static const Color secondaryTextColor = Color(0xFF94A3B8);      // İkincil metin (slate-400)
 
   // Merkezi Buton Stili
   static final ButtonStyle _buttonStyle = ElevatedButton.styleFrom(
     backgroundColor: secondaryColor,
-    foregroundColor: primaryColor,
+    foregroundColor: Colors.black, // camgöbeği üstünde koyu yazı okunaklı
     minimumSize: const Size(double.infinity, 52.0),
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(16.0),
@@ -45,17 +44,17 @@ class AppTheme {
     contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
   );
 
-  // BİLGEAI DEVRİMİ: Tek ve güçlü "Modern Bilge" teması.
+  // Tek ve güçlü "Modern Bilge" teması.
   static final ThemeData modernTheme = ThemeData(
     brightness: Brightness.dark,
     primaryColor: primaryColor,
     scaffoldBackgroundColor: scaffoldBackgroundColor,
     colorScheme: ColorScheme(
       brightness: Brightness.dark,
-      primary: secondaryColor, // Ana etkileşim rengi olarak turuncu
-      onPrimary: primaryColor,
-      secondary: successColor,   // İkincil etkileşim rengi olarak turkuaz
-      onSecondary: Colors.white,
+      primary: secondaryColor,        // Ana etkileşim rengi: camgöbeği
+      onPrimary: Colors.black,         // Kontrast için koyu
+      secondary: successColor,         // İkincil: başarı/zümrüt
+      onSecondary: Colors.black,
       error: accentColor,
       onError: Colors.white,
       surface: cardColor,
@@ -84,17 +83,16 @@ class AppTheme {
         fontSize: 20,
         color: textColor,
       ),
-      iconTheme: IconThemeData(color: secondaryColor),
+      iconTheme: const IconThemeData(color: secondaryColor),
     ),
-    iconTheme: IconThemeData(color: secondaryTextColor),
+    iconTheme: const IconThemeData(color: secondaryTextColor),
     tooltipTheme: TooltipThemeData(
       decoration: BoxDecoration(
         color: secondaryColor,
         borderRadius: BorderRadius.circular(8),
       ),
-      textStyle: TextStyle(color: primaryColor, fontWeight: FontWeight.bold),
+      textStyle: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
     ),
-    // *** HATA DÜZELTİLDİ: BottomAppBarTheme -> BottomAppBarThemeData ***
     bottomAppBarTheme: BottomAppBarThemeData(
       color: cardColor,
       elevation: 0,
