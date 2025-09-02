@@ -409,6 +409,10 @@ exports.regenerateDailyQuests = onCall(
     daily.forEach((q) => batch.set(dailyRef.doc(q.qid), q, {merge: true}));
     batch.update(userRef, { lastQuestRefreshDate: admin.firestore.FieldValue.serverTimestamp() });
     await batch.commit();
+
+    // Weekly/Aylık görevleri de garanti altına al
+    await ensureWeeklyAndMonthly(userRef, userSnap.data(), analysis);
+
     return {quests: daily};
   },
 );
