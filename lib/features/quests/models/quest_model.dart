@@ -5,7 +5,7 @@ import 'package:equatable/equatable.dart';
 // GÜNCELLENDİ: Yeni 'focus' kategorisi eklendi.
 enum QuestCategory { study, practice, engagement, consistency, test_submission, focus }
 
-enum QuestType { daily, weekly, achievement }
+enum QuestType { daily, weekly, monthly, achievement }
 
 enum QuestProgressType {
   increment,

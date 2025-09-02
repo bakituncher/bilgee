@@ -692,29 +692,63 @@ class FirestoreService {
   }
 
   CollectionReference<Map<String, dynamic>> dailyQuestsCollection(String userId) => usersCollection.doc(userId).collection('daily_quests');
+  CollectionReference<Map<String, dynamic>> weeklyQuestsCollection(String userId) => usersCollection.doc(userId).collection('weekly_quests');
+  CollectionReference<Map<String, dynamic>> monthlyQuestsCollection(String userId) => usersCollection.doc(userId).collection('monthly_quests');
 
+  Future<DocumentReference<Map<String, dynamic>>?> _findQuestRef(String userId, String questId) async {
+    final dailyRef = dailyQuestsCollection(userId).doc(questId);
+    final d = await dailyRef.get();
+    if (d.exists) return dailyRef;
+    final weeklyRef = weeklyQuestsCollection(userId).doc(questId);
+    final w = await weeklyRef.get();
+    if (w.exists) return weeklyRef;
+    final monthlyRef = monthlyQuestsCollection(userId).doc(questId);
+    final m = await monthlyRef.get();
+    if (m.exists) return monthlyRef;
+    return null;
+  }
+
+  // TÜM GÖREVLER: günlük+haftalık+aylık tek akış
   Stream<List<Quest>> streamDailyQuests(String userId) {
-    return dailyQuestsCollection(userId)
-        .orderBy('qid')
-        .snapshots()
-        .map((qs) => qs.docs.map((d) => Quest.fromMap(d.data(), d.id)).toList());
+    // Unified stream (isim uyumluluğu için metot adı korunmuştur)
+    return Stream<List<Quest>>.multi((controller) {
+      List<Quest> a = const [];
+      List<Quest> b = const [];
+      List<Quest> c = const [];
+      void emit() {
+        controller.add([...a, ...b, ...c]);
+      }
+      final s1 = dailyQuestsCollection(userId).orderBy('qid').snapshots().listen((qs) {
+        a = qs.docs.map((d) => Quest.fromMap(d.data(), d.id)).toList(); emit();
+      }, onError: controller.addError);
+      final s2 = weeklyQuestsCollection(userId).orderBy('qid').snapshots().listen((qs) {
+        b = qs.docs.map((d) => Quest.fromMap(d.data(), d.id)).toList(); emit();
+      }, onError: controller.addError);
+      final s3 = monthlyQuestsCollection(userId).orderBy('qid').snapshots().listen((qs) {
+        c = qs.docs.map((d) => Quest.fromMap(d.data(), d.id)).toList(); emit();
+      }, onError: controller.addError);
+      controller.onCancel = () async { await s1.cancel(); await s2.cancel(); await s3.cancel(); };
+    });
   }
 
   Future<List<Quest>> getDailyQuestsOnce(String userId) async {
-    final qs = await dailyQuestsCollection(userId).orderBy('qid').get();
-    return qs.docs.map((d) => Quest.fromMap(d.data(), d.id)).toList();
+    // Unified once read
+    final daily = await dailyQuestsCollection(userId).orderBy('qid').get();
+    final weekly = await weeklyQuestsCollection(userId).orderBy('qid').get();
+    final monthly = await monthlyQuestsCollection(userId).orderBy('qid').get();
+    return [
+      ...daily.docs.map((d) => Quest.fromMap(d.data(), d.id)),
+      ...weekly.docs.map((d) => Quest.fromMap(d.data(), d.id)),
+      ...monthly.docs.map((d) => Quest.fromMap(d.data(), d.id)),
+    ];
   }
 
   Future<void> replaceAllDailyQuests(String userId, List<Quest> quests) async {
     final col = dailyQuestsCollection(userId);
     final batch = _firestore.batch();
     final existing = await col.get();
-    for (final doc in existing.docs) {
-      batch.delete(doc.reference);
-    }
-    for (final q in quests) {
-      batch.set(col.doc(q.id), q.toMap(), SetOptions(merge: true));
-    }
+    for (final doc in existing.docs) { batch.delete(doc.reference); }
+    for (final q in quests) { batch.set(col.doc(q.id), q.toMap(), SetOptions(merge: true)); }
     await batch.commit();
   }
 
@@ -723,7 +757,9 @@ class FirestoreService {
   }
 
   Future<void> updateQuestFields(String userId, String questId, Map<String, dynamic> fields) async {
-    await dailyQuestsCollection(userId).doc(questId).update(fields);
+    final ref = await _findQuestRef(userId, questId);
+    if (ref == null) return;
+    await ref.update(fields);
   }
 
   Future<void> batchUpdateQuestFields(String userId, Map<String, Map<String, dynamic>> updates, {int? engagementDelta}) async {
@@ -735,17 +771,20 @@ class FirestoreService {
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
     }
-    updates.forEach((questId, fields) {
-      batch.update(dailyQuestsCollection(userId).doc(questId), fields);
-    });
+    for (final entry in updates.entries) {
+      final questId = entry.key; final fields = entry.value;
+      final ref = await _findQuestRef(userId, questId);
+      if (ref != null) batch.update(ref, fields);
+    }
     await batch.commit();
   }
 
   Future<void> claimQuestReward(String userId, Quest quest) async {
     final batch = _firestore.batch();
-    final questRef = dailyQuestsCollection(userId).doc(quest.id);
+    final ref = await _findQuestRef(userId, quest.id);
+    if (ref == null) return;
     // Ödül alınırken görevin tamamlanmasını garanti altına al
-    batch.update(questRef, {
+    batch.update(ref, {
       'rewardClaimed': true,
       'isCompleted': true,
       'currentProgress': quest.goalValue,
@@ -882,4 +921,3 @@ class FirestoreService {
     });
   }
 }
-

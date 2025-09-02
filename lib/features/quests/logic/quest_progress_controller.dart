@@ -36,7 +36,7 @@ class QuestProgressController {
         case QuestProgressType.increment:
           newProgress += amount; break;
         case QuestProgressType.set_to_value:
-          if (quest.id == 'consistency_01') {
+          if (quest.id == 'daily_con_01_tri_sync' || quest.id == 'consistency_01') {
             final visits = await firestoreSvc.getVisitsForMonth(user.id, DateTime.now());
             final now = DateTime.now();
             final todays = visits.where((ts){ final d=ts.toDate(); return d.year==now.year && d.month==now.month && d.day==now.day;}).length;
@@ -49,6 +49,10 @@ class QuestProgressController {
       final willComplete = newProgress >= quest.goalValue;
       if (willComplete) {
         try {
+          // Önce ilerlemeyi sunucuya yaz ki anti-fake kontrolünden geçsin
+          await firestoreSvc.updateQuestFields(user.id, quest.id, {
+            'currentProgress': newProgress.clamp(quest.currentProgress, quest.goalValue),
+          });
           await ensureAppCheckTokenReady();
           await functions.httpsCallable('completeQuest').call({'questId': quest.id});
           ref.read(sessionCompletedQuestsProvider.notifier).update((prev)=>{...prev, quest.id});
@@ -59,7 +63,7 @@ class QuestProgressController {
           });
           await _maybeAddNextChainQuest(ref, quest, user.id, onAdded: ()=> chainAdded = true);
         } catch (e) {
-          // Sunucu hatası durumunda eski lokal fallback (minimum): local tamamla
+          // Sunucu hatası durumunda lokal fallback
           updates[quest.id] = { 'currentProgress': quest.goalValue,'isCompleted': true,'completionDate': Timestamp.now(),};
         }
       } else if (newProgress > quest.currentProgress) {
@@ -113,6 +117,7 @@ class QuestProgressController {
     final Map<String, Map<String,dynamic>> updates = {};
     if (newProgress >= quest.goalValue) {
       try {
+        await firestoreSvc.updateQuestFields(user.id, quest.id, {'currentProgress': newProgress.clamp(quest.currentProgress, quest.goalValue)});
         await ensureAppCheckTokenReady();
         await functions.httpsCallable('completeQuest').call({'questId': quest.id});
         ref.read(sessionCompletedQuestsProvider.notifier).update((prev)=>{...prev, quest!.id});
@@ -147,6 +152,7 @@ class QuestProgressController {
       final willComplete = newProgress >= quest.goalValue;
       if (willComplete) {
         try {
+          await firestoreSvc.updateQuestFields(user.id, quest.id, {'currentProgress': newProgress.clamp(quest.currentProgress, quest.goalValue)});
           await ensureAppCheckTokenReady();
           await functions.httpsCallable('completeQuest').call({'questId': quest.id});
           ref.read(sessionCompletedQuestsProvider.notifier).update((prev)=>{...prev, quest.id});
@@ -199,6 +205,7 @@ class QuestProgressController {
       final willComplete = newProgress >= quest.goalValue;
       if (willComplete) {
         try {
+          await firestoreSvc.updateQuestFields(user.id, quest.id, {'currentProgress': newProgress.clamp(quest.currentProgress, quest.goalValue)});
           await ensureAppCheckTokenReady();
           await functions.httpsCallable('completeQuest').call({'questId': quest.id});
           ref.read(sessionCompletedQuestsProvider.notifier).update((prev)=>{...prev, quest.id});
