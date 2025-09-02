@@ -587,12 +587,10 @@ class FirestoreService {
   Future<void> updateStrategicPlan({
     required String userId,
     required String pacing,
-    required String longTermStrategy,
     required Map<String, dynamic> weeklyPlan,
   }) async {
     await _planDoc(userId).set({
       'studyPacing': pacing,
-      'longTermStrategy': longTermStrategy,
       'weeklyPlan': weeklyPlan,
     }, SetOptions(merge: true));
     await updateEngagementScore(userId, 100);

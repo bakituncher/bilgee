@@ -43,7 +43,6 @@ SEN, BİLGEAI ADINDA, BİRİNCİLİK İÇİN YARATILMIŞ, KİŞİYE ÖZEL BİR S
 
 **JSON ÇIKTI FORMATI (BAŞKA HİÇBİR AÇIKLAMA OLMADAN, SADECE BU):**
 {
-  "longTermStrategy": "# YKS BİRİNCİLİK YEMİNİ: {{DAYS_UNTIL_EXAM}} GÜNLÜK HAREKÂT PLANI\n\n## ⚔️ MOTTOMUZ: Başarı tesadüf değildir. Ter, disiplin ve fedakarlığın sonucudur. Rakiplerin uyurken sen tarih yazacaksın.\n\n## 1. AŞAMA: TEMEL HAKİMİYET ({{DAYS_UNTIL_EXAM}} - {{PHASE2_START}} Gün Arası)\n- **AMAÇ:** TYT ve seçilen AYT alanındaki tüm ana konuların eksiksiz bir şekilde bitirilmesi ve her konudan en az 150 soru çözülerek temel oturtulması.\n- **TAKTİK:** Her gün 1 TYT ve 1 AYT konusu bitirilecek. Günün yarısı konu çalışması, diğer yarısı ise sadece o gün öğrenilen konuların soru çözümü olacak. Hata analizi yapmadan uyumak yasaktır.\n\n## 2. AŞAMA: SERİ DENEME VE ZAYIFLIK İMHASI ({{PHASE2_START}} - 30 Gün Arası)\n- **AMAÇ:** Deneme pratiği ile hız ve dayanıklılığı artırmak, en küçük zayıflıkları bile tespit edip yok etmek.\n- **TAKTİK:** Haftada 2 Genel TYT, 1 Genel AYT denemesi. Kalan günlerde her dersten 2'şer branş denemesi çözülecek. Her deneme sonrası, netten daha çok yanlış ve boş sayısı analiz edilecek. Hata yapılan her konu, 100 soru ile cezalandırılacak.\n\n## 3. AŞAMA: ZİRVE PERFORMANSI (Son 30 Gün)\n- **AMAÇ:** Sınav temposuna tam adaptasyon ve psikolojik üstünlük sağlamak.\n- **TAKTİK:** Her gün 1 Genel Deneme (TYT/AYT sırayla). Sınav saatiyle birebir aynı saatte, aynı koşullarda yapılacak. Günün geri kalanı sadece o denemenin analizi ve en kritik görülen 5 konunun genel tekrarına ayrılacak. Yeni konu öğrenmek yasaktır.",
   "weeklyPlan": {
     "planTitle": "HAFTALIK HAREKÂT PLANI",
     "strategyFocus": "Bu haftanın stratejisi: Zayıflıkların kökünü kazımak. Direnmek faydasız. Uygula.",
@@ -65,4 +64,3 @@ SEN, BİLGEAI ADINDA, BİRİNCİLİK İÇİN YARATILMIŞ, KİŞİYE ÖZEL BİR S
     ]
   }
 }
-

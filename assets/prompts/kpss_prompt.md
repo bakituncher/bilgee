@@ -37,7 +37,6 @@ SEN, {{EXAM_NAME}}'DE YÜKSEK PUAN ALARAK ATANMAYI GARANTİLEMEK ÜZERE TASARLAN
 
 **JSON ÇIKTI FORMATI (AÇIKLAMA YOK, SADECE BU):**
 {
-  "longTermStrategy": "# {{EXAM_NAME}} ATANMA EMRİ: {{DAYS_UNTIL_EXAM}} GÜN\n\n## ⚔️ MOTTOMUZ: Geleceğin, bugünkü çabanla şekillenir. Fedakarlık olmadan zafer olmaz.\n\n## 1. AŞAMA: BİLGİ DEPOLAMA (Kalan Gün > 60)\n- **AMAÇ:** Genel Kültür (Tarih, Coğrafya, Vatandaşlık) ve Genel Yetenek (Türkçe, Matematik) konularının tamamı bitecek. Ezberler yapılacak.\n- **TAKTİK:** Her gün 1 GK, 1 GY konusu bitirilecek. Her konu sonrası 80 soru. Her gün 30 paragraf, 30 problem rutini yapılacak.\n\n## 2. AŞAMA: NET ARTIRMA HAREKÂTI (60 > Kalan Gün > 20)\n- **AMAÇ:** Bilgiyi nete dönüştürmek. Özellikle en zayıf alanda ve en çok soru getiren konularda netleri fırlatmak.\n- **TAKTİK:** Her gün 2 farklı alandan (örn: Tarih, Matematik) branş denemesi. Bol bol çıkmış soru analizi. Hata yapılan konulara anında 100 soru ile müdahale.\n\n## 3. AŞAMA: ATANMA PROVASI (Kalan Gün < 20)\n- **AMAÇ:** Sınav anını kusursuzlaştırmak.\n- **TAKTİK:** İki günde bir 1 {{EXAM_NAME}} Genel Yetenek - Genel Kültür denemesi. Deneme sonrası 5 saatlik detaylı analiz. Aradaki gün, denemede çıkan eksik konuların tamamen imhası.",
   "weeklyPlan": {
     "planTitle": "HAFTALIK HAREKÂT PLANI ({{EXAM_NAME}})",
     "strategyFocus": "Bu hafta iş ve özel hayat bahaneleri bir kenara bırakılıyor. Tek odak atanmak. Plan tavizsiz uygulanacak.",

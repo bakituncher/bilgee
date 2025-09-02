@@ -32,7 +32,6 @@ class _StrategyReviewScreenState extends ConsumerState<StrategyReviewScreen> {
   }
 
   WeeklyPlan get weeklyPlan => WeeklyPlan.fromJson(_currentStrategyData['weeklyPlan']);
-  String get longTermStrategy => _currentStrategyData['longTermStrategy'];
   String get pacing => _currentStrategyData['pacing'];
 
   void _approvePlan() {
@@ -40,11 +39,10 @@ class _StrategyReviewScreenState extends ConsumerState<StrategyReviewScreen> {
     ref.read(firestoreServiceProvider).updateStrategicPlan(
       userId: userId,
       pacing: pacing,
-      longTermStrategy: longTermStrategy,
       weeklyPlan: _currentStrategyData['weeklyPlan'],
     );
     ref.read(questNotifierProvider.notifier).userApprovedStrategy();
-    ref.refresh(userProfileProvider);
+    ref.invalidate(userProfileProvider);
     context.go('/home');
   }
 
@@ -82,7 +80,6 @@ class _StrategyReviewScreenState extends ConsumerState<StrategyReviewScreen> {
 
       setState(() {
         _currentStrategyData = {
-          'longTermStrategy': decodedData['longTermStrategy'],
           'weeklyPlan': decodedData['weeklyPlan'],
           'pacing': pacing,
         };
@@ -197,7 +194,7 @@ class _StrategyReviewScreenState extends ConsumerState<StrategyReviewScreen> {
           ),
           if (_isRevising)
             Container(
-              color: Colors.black.withOpacity(0.7),
+              color: Colors.black.withValues(alpha: Colors.black.a * 0.7),
               child: Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,

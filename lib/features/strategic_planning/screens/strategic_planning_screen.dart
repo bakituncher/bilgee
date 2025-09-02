@@ -57,7 +57,7 @@ class StrategyGenerationNotifier extends StateNotifier<AsyncValue<void>> {
       }
 
       final result = {
-        'longTermStrategy': decodedData['longTermStrategy'],
+        // long-term strateji kaldırıldı
         'weeklyPlan': decodedData['weeklyPlan'],
         'pacing': pacing.name,
       };
@@ -117,7 +117,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
           return const Scaffold(body: Center(child: Text("Kullanıcı verisi bulunamadı.")));
         }
 
-        if (planDoc?.longTermStrategy != null && planDoc?.weeklyPlan != null) {
+        if (planDoc?.weeklyPlan != null) {
           if(step != PlanningStep.confirmation && step != PlanningStep.pacing && step != PlanningStep.loading) {
             return _buildStrategyDisplay(context, ref, user, planDoc!);
           }
@@ -221,12 +221,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
                       onTap: () => context.push('/home/weekly-plan'),
                     ).animate().fadeIn(delay: 200.ms, duration: 400.ms).slideX(begin: -0.2),
                     const SizedBox(height: 16),
-                    _ActionCard(
-                      title: "Stratejik Komuta Merkezi",
-                      subtitle: "Zaferin uzun vadeli yol haritasını incele.",
-                      icon: Icons.map_rounded,
-                      onTap: () => context.push('${AppRoutes.aiHub}/${AppRoutes.commandCenter}', extra: user),
-                    ).animate().fadeIn(delay: 300.ms, duration: 400.ms).slideX(begin: 0.2),
+                    // Komuta Merkezi (uzun vadeli strateji) kaldırıldı
                   ],
                 ),
                 Column(

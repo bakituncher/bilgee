@@ -20,7 +20,6 @@ class AppRoutes {
   static const String stats = 'stats';
   static const String updateTopicPerformance = 'update-topic-performance';
   static const String strategicPlanning = 'strategic-planning';
-  static const String commandCenter = 'command-center';
   static const String weaknessWorkshop = 'weakness-workshop';
   static const String savedWorkshops = 'saved-workshops';
   static const String savedWorkshopDetail = 'saved-workshop-detail'; // Bu satırın burada olduğundan emin ol
