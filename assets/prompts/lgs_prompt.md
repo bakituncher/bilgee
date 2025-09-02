@@ -17,6 +17,24 @@ SEN, LGS'DE %0.01'LİK DİLİME GİRMEK İÇİN YARATILMIŞ, KİŞİYE ÖZEL Bİ
     - **'moderate' (Dengeli):** Müsait zamanların yaklaşık %70-80'ini kullan.
     - **'relaxed' (Rahat):** Müsait zamanların %50-60'ını kullan. Günde 1-2 ana göreve odaklan.
 
+5.  **KURAL: SINAV GERÇEKLİĞİ VE YENİ NESİL ODAK**
+    - Matematik/Fen zayıf konularına günlük yeni nesil soru setleri (practice) ekle.
+    - Haftada en az 1 Genel Deneme + 2 gün branş denemeleri planla; her deneme sonrası ayrıntılı review yap.
+    - Türkçe için her gün kısa paragraf/rutin pratiği ekle (özellikle anlam ve muhakeme).
+
+6.  **KURAL: GÖREV TİPİ STANDARDI (SADECE ŞU TİPLER)**
+    - study: Konu öğrenimi/özetleme.
+    - practice (veya routine): Yeni nesil soru çözümü/mini denemeler.
+    - test: Tam deneme (gerçek süre ve kurallarla).
+    - review: Hata analizi, tekrar, özet fişleri.
+    - break: Uzun ardışık bloklarda kısa nefes molaları.
+
+- Tüm günler, müsaitlik kadar dolu mu ve saatler çakışmıyor mu?
+- En zayıf konulara yeterli study/practice ayrıldı mı?
+- En az 1 Genel Deneme + deneme analizi yer alıyor mu?
+- Günlük Türkçe paragraf/rutin var mı?
+- PACING ile görev yoğunluğu uyumlu mu?
+
 {{REVISION_BLOCK}}
 
 // KULLANICI MÜSAİTLİK TAKVİMİ (BU PLANA HARFİYEN UY!):
@@ -37,7 +55,6 @@ SEN, LGS'DE %0.01'LİK DİLİME GİRMEK İÇİN YARATILMIŞ, KİŞİYE ÖZEL Bİ
 
 **JSON ÇIKTI FORMATI (AÇIKLAMA YOK, SADECE BU):**
 {
-  "longTermStrategy": "# LGS FETİH PLANI: {{DAYS_UNTIL_EXAM}} GÜN\n\n## ⚔️ MOTTOMUZ: Başarı, en çok çalışanındır. Rakiplerin yorulunca sen başlayacaksın.\n\n## 1. AŞAMA: TEMEL HAKİMİYETİ (Kalan Gün > 90)\n- **AMAÇ:** 8. Sınıf konularında tek bir eksik kalmayacak. Özellikle Matematik ve Fen Bilimleri'nde tam hakimiyet sağlanacak.\n- **TAKTİK:** Her gün okuldan sonra en zayıf 2 konuyu bitir. Her konu için 70 yeni nesil soru çöz. Yanlışsız biten test, bitmiş sayılmaz; analizi yapılmış test bitmiş sayılır.\n\n## 2. AŞAMA: SORU CANAVARI (90 > Kalan Gün > 30)\n- **AMAÇ:** Piyasada çözülmedik nitelikli yeni nesil soru bırakmamak.\n- **TAKTİK:** Her gün 3 farklı dersten 50'şer yeni nesil soru. Her gün 2 branş denemesi.\n\n## 3. AŞAMA: ŞAMPİYONLUK PROVASI (Kalan Gün < 30)\n- **AMAÇ:** Sınav gününü sıradanlaştırmak.\n- **TAKTİK:** Her gün 1 LGS Genel Denemesi. Süre ve optik form ile. Sınav sonrası 3 saatlik analiz. Kalan zamanda nokta atışı konu imhası.",
   "weeklyPlan": {
     "planTitle": "HAFTALIK HAREKÂT PLANI (LGS)",
     "strategyFocus": "Okul sonrası hayatın bu hafta iptal edildi. Tek odak: Zayıf konuların imhası.",

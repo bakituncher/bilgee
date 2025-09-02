@@ -101,7 +101,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       app_badge.Badge(name: 'Yükseliş', description: 'Ortalama 50 net barajını aştın. Bu daha başlangıç!', icon: Icons.trending_up, color: Colors.blueAccent, isUnlocked: avgNet > 50, hint: "Net ortalamanı 50'nin üzerine çıkar."),
       app_badge.Badge(name: 'Usta Nişancı', description: 'Ortalama 90 net! Elitler arasına hoş geldin.', icon: Icons.gps_not_fixed, color: Colors.blueAccent, isUnlocked: avgNet > 90, rarity: app_badge.BadgeRarity.rare, hint: "Net ortalamanı 90'ın üzerine çıkar."),
       app_badge.Badge(name: 'Bilge Nişancı', description: 'Ortalama 100 net barajını yıktın. Sen bir efsanesin!', icon: Icons.workspace_premium, color: Colors.blueAccent, isUnlocked: avgNet > 100, rarity: app_badge.BadgeRarity.epic, hint: "Net ortalamanı 100'ün üzerine çıkar."),
-      app_badge.Badge(name: 'Stratejist', description: 'BilgeAI ile ilk uzun vadeli stratejini oluşturdun.', icon: Icons.insights, color: Colors.purpleAccent, isUnlocked: planDoc?.longTermStrategy != null, hint: "AI Hub'da stratejini oluştur."),
+      app_badge.Badge(name: 'Stratejist', description: 'BilgeAI ile haftalık planını onayladın.', icon: Icons.insights, color: Colors.purpleAccent, isUnlocked: planDoc?.weeklyPlan != null, hint: "AI Hub'da haftalık planını oluştur."),
       app_badge.Badge(name: 'Haftanın Hakimi', description: 'Bir haftalık plandaki tüm görevleri tamamladın.', icon: Icons.checklist, color: Colors.purpleAccent, isUnlocked: (user.completedDailyTasks.values.expand((e) => e).length) >= 15, rarity: app_badge.BadgeRarity.rare, hint: "Bir haftalık plandaki tüm görevleri bitir."),
       app_badge.Badge(name: 'Odaklanma Ninjası', description: 'Toplam 10 saat Pomodoro tekniği ile odaklandın.', icon: Icons.timer, color: Colors.purpleAccent, isUnlocked: focusSessions.fold(0, (p, c) => p + c.durationInSeconds) >= 36000, rarity: app_badge.BadgeRarity.rare, hint: "Toplam 10 saat odaklan."),
       app_badge.Badge(name: 'Cevher Avcısı', description: 'Cevher Atölyesi\'nde ilk zayıf konunu işledin.', icon: Icons.construction, color: AppTheme.secondaryColor, isUnlocked: performance.topicPerformances.isNotEmpty, hint: "Cevher Atölyesi'ni kullan."),
@@ -252,7 +252,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 const SizedBox(height: 32),
                                 _ProfileQuickActions(
                                   onHonorWall: () => context.push('/profile/honor-wall', extra: allBadges),
-                                  onStrategy: () => context.push('${AppRoutes.aiHub}/${AppRoutes.commandCenter}', extra: user),
+                                  onStrategy: () {
+                                    if (planDoc?.weeklyPlan != null) {
+                                      context.push('/home/weekly-plan');
+                                    } else {
+                                      context.push('${AppRoutes.aiHub}/${AppRoutes.strategicPlanning}');
+                                    }
+                                  },
                                   onAvatar: () => context.push('/profile/avatar-selection'),
                                 ).animate().fadeIn(delay: 520.ms).slideY(begin: 0.12),
                                 const SizedBox(height: 40),

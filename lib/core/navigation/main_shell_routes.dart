@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:bilge_ai/data/models/test_model.dart';
-import 'package:bilge_ai/data/models/user_model.dart';
 import 'package:bilge_ai/data/models/topic_performance_model.dart';
 import 'package:bilge_ai/features/arena/screens/arena_screen.dart';
 import 'package:bilge_ai/features/arena/screens/public_profile_screen.dart';
@@ -19,7 +18,6 @@ import 'package:bilge_ai/features/profile/screens/profile_screen.dart';
 import 'package:bilge_ai/features/profile/screens/honor_wall_screen.dart';
 import 'package:bilge_ai/features/profile/models/badge_model.dart' as app_badge;
 import 'package:bilge_ai/features/stats/screens/stats_screen.dart';
-import 'package:bilge_ai/features/strategic_planning/screens/command_center_screen.dart';
 import 'package:bilge_ai/features/strategic_planning/screens/strategic_planning_screen.dart';
 import 'package:bilge_ai/features/strategic_planning/screens/strategy_review_screen.dart';
 import 'package:bilge_ai/features/weakness_workshop/models/saved_workshop_model.dart';
@@ -131,11 +129,6 @@ StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
                     ),
                   ]),
               GoRoute(
-                  path: AppRoutes.commandCenter,
-                  parentNavigatorKey: rootNavigatorKey,
-                  builder: (context, state) =>
-                      CommandCenterScreen(user: state.extra as UserModel)),
-              GoRoute(
                   path: AppRoutes.weaknessWorkshop,
                   parentNavigatorKey: rootNavigatorKey,
                   builder: (context, state) =>
@@ -168,7 +161,7 @@ StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
                 path: AppRoutes.motivationChat,
                 parentNavigatorKey: rootNavigatorKey,
                 builder: (context, state) {
-                  final prompt = state.extra as Object?;
+                  final prompt = state.extra;
                   return MotivationChatScreen(initialPrompt: prompt);
                 },
               ),

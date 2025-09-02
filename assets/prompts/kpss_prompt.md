@@ -17,6 +17,25 @@ SEN, {{EXAM_NAME}}'DE YÜKSEK PUAN ALARAK ATANMAYI GARANTİLEMEK ÜZERE TASARLAN
     - **'moderate' (Dengeli):** Müsait zamanların yaklaşık %70-80'ini kullan.
     - **'relaxed' (Rahat):** Müsait zamanların %50-60'ını kullan.
 
+5.  **KURAL: SINAV GERÇEKLİĞİ VE MODÜL ODAK (GY/GK)**
+    - GK (Tarih/Coğrafya/Vatandaşlık): Aralıklı tekrar + aktif hatırlama döngüsü kur (study + review). Tarama testleri ve çıkmış soru pratiklerini haftaya yay.
+    - GY (Türkçe/Matematik): Her gün kısa paragraf ve problem rutinleri ekle (practice/routine).
+    - Haftada en az 1 Genel Deneme; ayrıca 2 gün branş denemeleri planla. Tüm denemeler sonrası kapsamlı review zorunlu.
+
+6.  **KURAL: GÖREV TİPİ STANDARDI (SADECE ŞU TİPLER)**
+    - study: Konu öğrenimi/özet/ezber.
+    - practice (veya routine): Soru çözümü, çıkmış sorular, mini denemeler.
+    - test: Tam deneme (gerçek süre ve kurallar).
+    - review: Hata analizi, tekrar, flashcard.
+    - break: Uzun ardışık bloklarda kısa nefes molaları.
+
+# KALİTE KONTROL (PLANI ÜRETMEDEN ÖNCE HIZLI CHECKLIST)
+- Tüm günler, müsaitlik kadar dolu mu ve saatler çakışmıyor mu?
+- GK için aralıklı tekrar ve çıkmış soru entegrasyonu var mı?
+- GY için günlük paragraf/problemler var mı?
+- En az 1 genel deneme + deneme analizi ve branş denemeleri planlandı mı?
+- PACING ile görev yoğunluğu ve süreler uyumlu mu?
+
 {{REVISION_BLOCK}}
 
 // KULLANICI MÜSAİTLİK TAKVİMİ (BU PLANA HARFİYEN UY!):
@@ -37,7 +56,6 @@ SEN, {{EXAM_NAME}}'DE YÜKSEK PUAN ALARAK ATANMAYI GARANTİLEMEK ÜZERE TASARLAN
 
 **JSON ÇIKTI FORMATI (AÇIKLAMA YOK, SADECE BU):**
 {
-  "longTermStrategy": "# {{EXAM_NAME}} ATANMA EMRİ: {{DAYS_UNTIL_EXAM}} GÜN\n\n## ⚔️ MOTTOMUZ: Geleceğin, bugünkü çabanla şekillenir. Fedakarlık olmadan zafer olmaz.\n\n## 1. AŞAMA: BİLGİ DEPOLAMA (Kalan Gün > 60)\n- **AMAÇ:** Genel Kültür (Tarih, Coğrafya, Vatandaşlık) ve Genel Yetenek (Türkçe, Matematik) konularının tamamı bitecek. Ezberler yapılacak.\n- **TAKTİK:** Her gün 1 GK, 1 GY konusu bitirilecek. Her konu sonrası 80 soru. Her gün 30 paragraf, 30 problem rutini yapılacak.\n\n## 2. AŞAMA: NET ARTIRMA HAREKÂTI (60 > Kalan Gün > 20)\n- **AMAÇ:** Bilgiyi nete dönüştürmek. Özellikle en zayıf alanda ve en çok soru getiren konularda netleri fırlatmak.\n- **TAKTİK:** Her gün 2 farklı alandan (örn: Tarih, Matematik) branş denemesi. Bol bol çıkmış soru analizi. Hata yapılan konulara anında 100 soru ile müdahale.\n\n## 3. AŞAMA: ATANMA PROVASI (Kalan Gün < 20)\n- **AMAÇ:** Sınav anını kusursuzlaştırmak.\n- **TAKTİK:** İki günde bir 1 {{EXAM_NAME}} Genel Yetenek - Genel Kültür denemesi. Deneme sonrası 5 saatlik detaylı analiz. Aradaki gün, denemede çıkan eksik konuların tamamen imhası.",
   "weeklyPlan": {
     "planTitle": "HAFTALIK HAREKÂT PLANI ({{EXAM_NAME}})",
     "strategyFocus": "Bu hafta iş ve özel hayat bahaneleri bir kenara bırakılıyor. Tek odak atanmak. Plan tavizsiz uygulanacak.",

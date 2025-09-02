@@ -50,7 +50,7 @@ class StrategicActions extends ConsumerWidget {
     final planDoc = ref.watch(planProvider).value;
 
     return Card(
-      color: AppTheme.secondaryColor.withOpacity(0.1),
+      color: AppTheme.secondaryColor.withValues(alpha: AppTheme.secondaryColor.a * 0.1),
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: const BorderSide(color: AppTheme.secondaryColor, width: 1)
@@ -70,8 +70,8 @@ class StrategicActions extends ConsumerWidget {
               ),
             );
           } else {
-            if(planDoc?.longTermStrategy != null && planDoc?.weeklyPlan != null) {
-              context.push('${AppRoutes.aiHub}/${AppRoutes.commandCenter}', extra: user);
+            if (planDoc?.weeklyPlan != null) {
+              context.push('/home/weekly-plan');
             } else {
               context.push('${AppRoutes.aiHub}/${AppRoutes.strategicPlanning}');
             }
