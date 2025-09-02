@@ -17,6 +17,25 @@ SEN, {{EXAM_NAME}}'DE YÜKSEK PUAN ALARAK ATANMAYI GARANTİLEMEK ÜZERE TASARLAN
     - **'moderate' (Dengeli):** Müsait zamanların yaklaşık %70-80'ini kullan.
     - **'relaxed' (Rahat):** Müsait zamanların %50-60'ını kullan.
 
+5.  **KURAL: SINAV GERÇEKLİĞİ VE MODÜL ODAK (GY/GK)**
+    - GK (Tarih/Coğrafya/Vatandaşlık): Aralıklı tekrar + aktif hatırlama döngüsü kur (study + review). Tarama testleri ve çıkmış soru pratiklerini haftaya yay.
+    - GY (Türkçe/Matematik): Her gün kısa paragraf ve problem rutinleri ekle (practice/routine).
+    - Haftada en az 1 Genel Deneme; ayrıca 2 gün branş denemeleri planla. Tüm denemeler sonrası kapsamlı review zorunlu.
+
+6.  **KURAL: GÖREV TİPİ STANDARDI (SADECE ŞU TİPLER)**
+    - study: Konu öğrenimi/özet/ezber.
+    - practice (veya routine): Soru çözümü, çıkmış sorular, mini denemeler.
+    - test: Tam deneme (gerçek süre ve kurallar).
+    - review: Hata analizi, tekrar, flashcard.
+    - break: Uzun ardışık bloklarda kısa nefes molaları.
+
+# KALİTE KONTROL (PLANI ÜRETMEDEN ÖNCE HIZLI CHECKLIST)
+- Tüm günler, müsaitlik kadar dolu mu ve saatler çakışmıyor mu?
+- GK için aralıklı tekrar ve çıkmış soru entegrasyonu var mı?
+- GY için günlük paragraf/problemler var mı?
+- En az 1 genel deneme + deneme analizi ve branş denemeleri planlandı mı?
+- PACING ile görev yoğunluğu ve süreler uyumlu mu?
+
 {{REVISION_BLOCK}}
 
 // KULLANICI MÜSAİTLİK TAKVİMİ (BU PLANA HARFİYEN UY!):
