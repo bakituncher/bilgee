@@ -2,6 +2,7 @@
 import 'package:bilge_ai/core/theme/app_theme.dart';
 import 'package:bilge_ai/data/providers/admin_providers.dart';
 import 'package:bilge_ai/data/providers/firestore_providers.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -14,6 +15,19 @@ class QuestionReportsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isAdminAsync = ref.watch(adminClaimProvider);
+
+    Future<void> _callAdminFn({required String mode, required String qhash}) async {
+      try {
+        final callable = FirebaseFunctions.instanceFor(region: 'us-central1').httpsCallable('adminDeleteQuestionReports');
+        final res = await callable.call({'mode': mode, 'qhash': qhash});
+        // ignore: use_build_context_synchronously
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('İşlem başarılı: ${res.data}')));
+      } on FirebaseFunctionsException catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: ${e.message ?? e.code}')));
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $e')));
+      }
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -84,31 +98,98 @@ class QuestionReportsScreen extends ConsumerWidget {
                         final reasons = (m['sampleReasons'] ?? []) as List;
                         final subjects = (m['subjects'] ?? []) as List;
                         final topics = (m['topics'] ?? []) as List;
-                        return Card(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                          child: ListTile(
-                            onTap: () => context.push('/admin/reports/$qhash'),
-                            title: Text(question, maxLines: 2, overflow: TextOverflow.ellipsis),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(height: 4),
-                                Text('Rapor sayısı: $reportCount'),
-                                if (subjects.isNotEmpty && topics.isNotEmpty)
-                                  Text('${subjects.toSet().join(', ')} | ${topics.toSet().join(', ')}',
-                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor)),
-                                if (reasons.isNotEmpty)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 6),
-                                    child: Wrap(
-                                      spacing: 6,
-                                      runSpacing: -8,
-                                      children: reasons.take(4).map((e) => Chip(label: Text(e.toString()))).toList(),
+
+                        return Dismissible(
+                          key: ValueKey('idx_$qhash'),
+                          direction: DismissDirection.endToStart,
+                          background: Container(
+                            alignment: Alignment.centerRight,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            color: Colors.orange,
+                            child: const Icon(Icons.layers_clear_rounded, color: Colors.white),
+                          ),
+                          confirmDismiss: (_) async {
+                            final ok = await showDialog<bool>(
+                              context: context,
+                              builder: (_) => AlertDialog(
+                                title: const Text('İndeks kaydı kaldırılsın mı?'),
+                                content: const Text('Raporlar kalır; sadece listeden kaldırılır.'),
+                                actions: [
+                                  TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Vazgeç')),
+                                  FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Kaldır')),
+                                ],
+                              ),
+                            );
+                            return ok ?? false;
+                          },
+                          onDismissed: (_) async {
+                            await _callAdminFn(mode: 'indexOnly', qhash: qhash);
+                          },
+                          child: Card(
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            child: ListTile(
+                              onTap: () => context.push('/admin/reports/$qhash'),
+                              title: Text(question, maxLines: 2, overflow: TextOverflow.ellipsis),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(height: 4),
+                                  Text('Rapor sayısı: $reportCount'),
+                                  if (subjects.isNotEmpty && topics.isNotEmpty)
+                                    Text('${subjects.toSet().join(', ')} | ${topics.toSet().join(', ')}',
+                                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor)),
+                                  if (reasons.isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 6),
+                                      child: Wrap(
+                                        spacing: 6,
+                                        runSpacing: -8,
+                                        children: reasons.take(4).map((e) => Chip(label: Text(e.toString()))).toList(),
+                                      ),
                                     ),
-                                  ),
-                              ],
+                                ],
+                              ),
+                              trailing: PopupMenuButton<String>(
+                                onSelected: (v) async {
+                                  if (v == 'open') {
+                                    // navigate
+                                    // ignore: use_build_context_synchronously
+                                    context.push('/admin/reports/$qhash');
+                                  } else if (v == 'indexOnly') {
+                                    final ok = await showDialog<bool>(
+                                      context: context,
+                                      builder: (_) => AlertDialog(
+                                        title: const Text('Sadece indeks kaydı kaldırılsın mı?'),
+                                        content: const Text('Raporlar kalır; sadece listeden kaldırılır.'),
+                                        actions: [
+                                          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Vazgeç')),
+                                          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Kaldır')),
+                                        ],
+                                      ),
+                                    );
+                                    if (ok == true) await _callAdminFn(mode: 'indexOnly', qhash: qhash);
+                                  } else if (v == 'byQhash') {
+                                    final ok = await showDialog<bool>(
+                                      context: context,
+                                      builder: (_) => AlertDialog(
+                                        title: const Text('Tüm raporları sil?'),
+                                        content: const Text('Bu soruya ait tüm raporlar kalıcı olarak silinecek.'),
+                                        actions: [
+                                          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Vazgeç')),
+                                          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Sil')),
+                                        ],
+                                      ),
+                                    );
+                                    if (ok == true) await _callAdminFn(mode: 'byQhash', qhash: qhash);
+                                  }
+                                },
+                                itemBuilder: (c) => const [
+                                  PopupMenuItem(value: 'open', child: Text('Detayı aç')),
+                                  PopupMenuItem(value: 'indexOnly', child: Text('Sadece indeks kaydını kaldır')),
+                                  PopupMenuItem(value: 'byQhash', child: Text('Tüm raporları sil')),
+                                ],
+                              ),
                             ),
-                            trailing: const Icon(Icons.arrow_forward_ios_rounded),
                           ),
                         );
                       },

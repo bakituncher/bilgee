@@ -65,7 +65,7 @@ class QuestService {
         await ensureAppCheckTokenReady();
         final functions = _ref.read(functionsProvider);
         final callable = functions.httpsCallable('regenerateDailyQuests');
-        await callable.call(<String, dynamic>{});
+        await callable.call(<String, dynamic>{ 'forceWeeklyMonthly': force });
         // Üretim sonrası tekrar oku
         final refreshed = await _ref.read(firestoreServiceProvider).getDailyQuestsOnce(user.id);
         _ref.read(questGenerationIssueProvider.notifier).state = false;

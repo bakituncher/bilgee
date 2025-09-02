@@ -9,6 +9,7 @@ import 'package:bilge_ai/features/onboarding/widgets/tutorial_overlay.dart';
 import 'package:bilge_ai/features/onboarding/models/tutorial_step.dart';
 import 'package:bilge_ai/features/quests/models/quest_model.dart';
 import 'package:bilge_ai/features/quests/logic/quest_completion_notifier.dart';
+import 'package:bilge_ai/features/quests/logic/quest_notifier.dart';
 import 'package:bilge_ai/shared/widgets/quest_completion_toast.dart';
 import 'package:bilge_ai/data/models/plan_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -29,6 +30,8 @@ class ScaffoldWithNavBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // QuestNotifier'ı canlı tut (arkaplan olaylarını dinlesin)
+    ref.watch(questNotifierProvider);
     final List<TutorialStep> tutorialSteps = [
       TutorialStep(
         title: "Karargaha Hoş Geldin!",

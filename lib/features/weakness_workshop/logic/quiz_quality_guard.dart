@@ -8,22 +8,35 @@ class QuizQualityGuardResult {
 }
 
 class QuizQualityGuard {
-  static const int minQuestions = 5;
-  static const int minTextLen = 20;
+  static const int minQuestions = 3;
+  static const int minTextLen = 12;
+  static const int minExplLen = 20;
 
   static QuizQualityGuardResult apply(StudyGuideAndQuiz raw) {
     final issues = <String>[];
     final cleaned = <QuizQuestion>[];
+    final seenQuestions = <String>{};
 
     for (final q in raw.quiz) {
-      if (_isQuestionValid(q, issues)) {
-        cleaned.add(_dedupOptions(q));
+      // Aynı soru tekrarlarını ele
+      final normQ = _normalize(q.question);
+      if (seenQuestions.contains(normQ)) {
+        issues.add('Tekrarlanan soru elendi.');
+        continue;
+      }
+      final tmpIssues = <String>[];
+      if (_isQuestionValid(q, tmpIssues)) {
+        final deduped = _dedupOptions(q);
+        // Yer tutucu/boş şıklar nedeniyle elemek yerine, şıkları temizleyip eksikleri dolduruyoruz
+        cleaned.add(deduped);
+        seenQuestions.add(normQ);
+      } else {
+        issues.addAll(tmpIssues);
       }
     }
 
     if (cleaned.length < minQuestions) {
       issues.add('Soru sayısı kalite kontrolünden sonra yetersiz kaldı (${cleaned.length}/$minQuestions).');
-      // Soru kalitesi güvence altına alınamadı -> üst katman bu durumu yakalayıp yeniden deneyecek
       throw Exception('Soru kalitesi yetersiz. Lütfen tekrar deneyin.');
     }
 
@@ -45,39 +58,47 @@ class QuizQualityGuard {
       return false;
     }
 
-    // Açık cevap işareti ya da "cevap:" sızıntıları
+    // Cevap sızıntıları (yalnızca açık işaretler)
     final lower = trimmedQ.toLowerCase();
-    if (lower.contains('cevap:') || lower.contains('doğru cevap') || lower.contains('(c)') || lower.contains('[doğru]')) {
+    if (lower.contains('cevap:') || lower.contains('doğru cevap') || lower.contains('[doğru]')) {
       issues.add('Cevap sızıntısı içeren soru elendi.');
       return false;
     }
 
-    if (trimmedExpl.length < minTextLen || trimmedExpl.toLowerCase().contains('bulunamadı')) {
+    // Açıklama yeterliliği (yalnızca uzunluk)
+    if (trimmedExpl.length < minExplLen) {
       issues.add('Yetersiz açıklama nedeniyle soru elendi.');
       return false;
     }
 
+    // Şıklar ve indeks
     if (q.options.isEmpty || q.correctOptionIndex < 0 || q.correctOptionIndex >= q.options.length) {
       issues.add('Geçersiz şık/indeks nedeniyle soru elendi.');
       return false;
     }
 
-    // Şıkların temizlik ve benzersizlik kontrolü
-    final cleaned = q.options.map(_sanitizeText).toList();
+    // Şıkların temizlik ve benzersizlik kontrolü (en az 3 benzersiz şık)
+    final cleaned = q.options.map(_sanitizeText).where((e) => e.trim().isNotEmpty).toList();
     final setLower = cleaned.map((e) => e.toLowerCase()).toSet();
-    if (setLower.length < 4) {
+    if (setLower.length < 3) {
       issues.add('Tekrarlayan şıklar nedeniyle soru elendi.');
       return false;
     }
 
     // Doğru şık boş/placeholder olmasın
     final correct = cleaned[q.correctOptionIndex];
-    if (correct.trim().isEmpty || correct.toLowerCase().startsWith('seçenek ')) {
+    if (correct.trim().isEmpty || correct.toLowerCase().startsWith('seçenek ') || _isPlaceholderOption(correct)) {
       issues.add('Doğru şık geçersiz görünüyor.');
       return false;
     }
 
     return true;
+  }
+
+  static bool _isPlaceholderOption(String s) {
+    final l = s.trim().toLowerCase();
+    return l.isEmpty || l == 'a' || l == 'b' || l == 'c' || l == 'd' || l == 'e' ||
+        l.startsWith('seçenek') || l.startsWith('diğer seçenek') || l.startsWith('option');
   }
 
   static QuizQuestion _dedupOptions(QuizQuestion q) {
@@ -86,6 +107,8 @@ class QuizQualityGuard {
     for (final opt in q.options) {
       final k = _sanitizeText(opt).trim();
       final lk = k.toLowerCase();
+      // Yer tutucu/boş şıkları atla
+      if (k.isEmpty || _isPlaceholderOption(k)) continue;
       if (!seen.containsKey(lk)) {
         seen[lk] = 1;
         cleaned.add(k);
@@ -115,5 +138,6 @@ class QuizQualityGuard {
   static String _sanitizeText(String v) {
     return v.replaceAll('\r', '').replaceAll('\t', ' ').replaceAll('  ', ' ').trim();
   }
-}
 
+  static String _normalize(String v) => _sanitizeText(v).toLowerCase();
+}

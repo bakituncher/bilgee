@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:bilge_ai/features/quests/logic/quest_progress_controller.dart';
 import 'package:bilge_ai/features/quests/models/quest_model.dart';
 import 'package:bilge_ai/features/pomodoro/logic/pomodoro_notifier.dart';
+import 'package:bilge_ai/data/providers/firestore_providers.dart';
 
 // Bu provider'ın varlığı devam etmeli, arayüzden çağrılar bunun üzerinden yapılacak.
 final questNotifierProvider = StateNotifierProvider.autoDispose<QuestNotifier, bool>((ref) {
@@ -32,6 +33,17 @@ class QuestNotifier extends StateNotifier<bool> {
         }
       }
     });
+
+    // Haftalık plan tamamlamalarını dinle ve Study görevlerini ilerlet
+    final today = DateTime.now();
+    _ref.listen(completedTasksForDateProvider(today), (prev, next) {
+      final int prevCount = prev?.maybeWhen(data: (List<String> l) => l.length, orElse: () => 0) ?? 0;
+      final int nextCount = next.maybeWhen(data: (List<String> l) => l.length, orElse: () => 0);
+      final int diff = nextCount - prevCount;
+      if (diff > 0) {
+        _controller.updateQuestProgress(_ref, QuestCategory.study, amount: diff);
+      }
+    });
   }
 
   // --- YENİ EYLEM BAZLI METOTLAR ---
@@ -53,7 +65,7 @@ class QuestNotifier extends StateNotifier<bool> {
   /// Kullanıcı "Cevher Atölyesi"nde bir quiz bitirdiğinde bu metot çağrılır.
   void userCompletedWorkshopQuiz(String subject, String topic) {
     _controller.updateQuestProgress(_ref, QuestCategory.engagement, amount: 1);
-    _controller.updatePracticeWithContext(_ref, amount: 1, subject: subject, topic: topic);
+    _controller.updatePracticeWithContext(_ref, amount: 1, subject: subject, topic: topic, source: PracticeSource.workshop);
   }
 
   /// Kullanıcı yeni bir deneme sonucu eklediğinde bu metot çağrılır.

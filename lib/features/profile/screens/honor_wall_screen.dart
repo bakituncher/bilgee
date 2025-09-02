@@ -128,6 +128,20 @@ class BadgeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rarityColor = _getRarityColor(badge.rarity);
+    final bool isShiny = badge.isUnlocked && (badge.rarity == app_badge.BadgeRarity.epic || badge.rarity == app_badge.BadgeRarity.legendary);
+
+    Widget iconWidget = Icon(
+      badge.isUnlocked ? badge.icon : Icons.question_mark_rounded,
+      size: 40,
+      color: badge.isUnlocked ? rarityColor : AppTheme.secondaryTextColor,
+    );
+    if (isShiny) {
+      iconWidget = Animate(
+        effects: [ShimmerEffect(duration: 2200.ms, color: rarityColor.withValues(alpha: rarityColor.a * 0.5))],
+        child: iconWidget,
+      );
+    }
+
     Widget cardContent = Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -138,23 +152,24 @@ class BadgeCard extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          Icon( badge.isUnlocked ? badge.icon : Icons.question_mark_rounded, size: 40, color: badge.isUnlocked ? rarityColor : AppTheme.secondaryTextColor,),
+          iconWidget,
           FittedBox(
             fit: BoxFit.scaleDown,
-            child: Text( badge.name, textAlign: TextAlign.center, style: TextStyle( fontWeight: FontWeight.bold, fontSize: 13, color: badge.isUnlocked ? Colors.white : AppTheme.secondaryTextColor,)),
+            child: Text(
+              badge.name,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+                color: badge.isUnlocked ? Colors.white : AppTheme.secondaryTextColor,
+              ),
+            ),
           ),
         ],
       ),
     );
 
-    // EFSANEVİ VE DESTANSI MADALYALARA IŞILTI EFEKTİ
-    if (badge.isUnlocked && (badge.rarity == app_badge.BadgeRarity.epic || badge.rarity == app_badge.BadgeRarity.legendary)) {
-      cardContent = Animate(
-        onPlay: (c) => c.repeat(),
-        effects: [ShimmerEffect(duration: 3000.ms, color: rarityColor.withValues(alpha: rarityColor.a * 0.5))],
-        child: cardContent,
-      );
-    }
+    // Dikdörtgen parıltı veren global shimmer kaldırıldı
 
     return InkWell(
       onTap: () => _showBadgeDetails(context, rarityColor),
