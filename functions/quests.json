@@ -237,12 +237,12 @@
   {
     "id": "practice_07",
     "title": "Hız Testi: 15 Dakika",
-    "description": "15 dakika içinde çözebildiğin kadar çok soru çözerek zaman yönetimi pratiği yap.",
-    "category": "practice",
+    "description": "15 dakika odaklan ve turu tamamla.",
+    "category": "focus",
     "reward": 40,
     "goalValue": 15,
     "actionRoute": "/home/pomodoro",
-    "tags": ["focus"]
+    "tags": ["focus", "micro"]
   },
   {
     "id": "practice_08",
@@ -357,7 +357,7 @@
     "id": "weekly_04",
     "title": "Haftalık Sefer: Odaklanma Ustası",
     "description": "Bu hafta toplam 6 saat (360 dakika) Pomodoro odak süresi ile zihnini eğit.",
-    "category": "engagement",
+    "category": "focus",
     "type": "weekly",
     "reward": 380,
     "goalValue": 360,
@@ -539,22 +539,51 @@
   {
     "id": "adaptive_focus_01",
     "title": "Esnek Odak Kalkanı",
-    "description": "En az 20 dk odak seansı tamamla. 40 dk üzerine çıkarsan ekstra ödül (otomatik) alırsın.",
-    "category": "engagement",
+    "description": "En az 20 dk odak seansı tamamla.",
+    "category": "focus",
     "reward": 45,
     "goalValue": 20,
     "actionRoute": "/home/pomodoro",
     "tags": ["adaptive", "focus"]
   },
   {
-    "id": "workshop_session_01",
-    "title": "Cevher Seansı Tamamla",
-    "description": "Cevher Atölyesi'nde bir zayıf konu seç, rehberi incele ve quiz bölümünü başarıyla tamamla.",
+    "id": "focus_burst_01",
+    "title": "Kısa Odak: 5 Dakika",
+    "description": "Başlangıç ivmesi için 5 dakika odaklan.",
+    "category": "focus",
+    "reward": 12,
+    "goalValue": 5,
+    "actionRoute": "/home/pomodoro",
+    "tags": ["micro", "quick_win", "focus"]
+  },
+  {
+    "id": "focus_burst_02",
+    "title": "Hızlı Odak: 10 Dakika",
+    "description": "Hızlı bir toparlanma için 10 dakika odaklan.",
+    "category": "focus",
+    "reward": 18,
+    "goalValue": 10,
+    "actionRoute": "/home/pomodoro",
+    "tags": ["micro", "focus"]
+  },
+  {
+    "id": "paragraph_sprint_01",
+    "title": "Paragraf Sprinti",
+    "description": "Okuma hızını artırmak için 8 paragraf sorusu çöz.",
     "category": "practice",
-    "reward": 160,
-    "goalValue": 1,
-    "actionRoute": "/ai-hub/weakness-workshop",
-    "tags": ["high_value", "weakness"],
-    "triggerConditions": {"hasWeakTopic": true}
+    "reward": 20,
+    "goalValue": 8,
+    "actionRoute": "/coach",
+    "tags": ["micro", "paragraph"]
+  },
+  {
+    "id": "problem_sprint_01",
+    "title": "Problem Sprinti",
+    "description": "Akışı yakalamak için 8 problem sorusu çöz.",
+    "category": "practice",
+    "reward": 20,
+    "goalValue": 8,
+    "actionRoute": "/coach",
+    "tags": ["micro", "problem"]
   }
 ]

@@ -35,13 +35,59 @@ const QUEST_TEMPLATES = (() => {
   }
 })();
 
+function routeKeyFromPath(pathname) {
+  switch (pathname) {
+    case '/home': return 'home';
+    case '/home/pomodoro': return 'pomodoro';
+    case '/coach': return 'coach';
+    case '/home/weekly-plan': return 'weeklyPlan';
+    case '/home/stats': return 'stats';
+    case '/home/add-test': return 'addTest';
+    case '/home/quests': return 'quests';
+    case '/ai-hub/strategic-planning': return 'strategy';
+    case '/ai-hub/weakness-workshop': return 'workshop';
+    case '/availability': return 'availability';
+    case '/profile/avatar-selection': return 'avatar';
+    case '/arena': return 'arena';
+    case '/library': return 'library';
+    case '/ai-hub/motivation-chat': return 'motivationChat';
+    default: return 'home';
+  }
+}
+
+function personalizeTemplate(q, userData, analysis) {
+  let title = q.title || 'Görev';
+  let description = q.description || '';
+  const tags = Array.isArray(q.tags) ? [...q.tags] : [];
+
+  let subject = null;
+  const weakest = analysis?.weakestSubjectByNet;
+  const strongest = analysis?.strongestSubjectByNet;
+
+  const needsSubject = (typeof title === 'string' && title.includes('{subject}'))
+                    || (typeof description === 'string' && description.includes('{subject}'))
+                    || tags.some((t) => String(t).startsWith('subject:'));
+
+  if (needsSubject) {
+    if (tags.includes('weakness') && weakest && weakest !== 'Belirlenemedi') subject = weakest;
+    else if (tags.includes('strength') && strongest && strongest !== 'Belirlenemedi') subject = strongest;
+    else subject = userData?.selectedExamSection || 'Seçili Ders';
+
+    title = title.replaceAll('{subject}', subject);
+    description = description.replaceAll('{subject}', subject);
+    if (!tags.some((t) => String(t).startsWith('subject:'))) tags.push(`subject:${subject}`);
+  }
+
+  return { title, description, tags };
+}
 
 /**
- * Kullanıcı verisine göre basit bir görev seçimi yapar.
- * @param {object} userData Kullanıcının Firestore'daki verisi.
+ * Kullanıcı verisine göre basit bir görev seçimi yapar (kişiselleştirme dahil).
+ * @param {object} userData Kullanıcının Firestore'daki kök verisi.
+ * @param {object|null} analysis Kullanıcının performans/analiz özeti (opsiyonel).
  * @return {Array<object>} Seçilen yeni görevler.
  */
-function pickDailyQuestsForUser(userData) {
+function pickDailyQuestsForUser(userData, analysis) {
   const shuffled = [...QUEST_TEMPLATES].sort(() => Math.random() - 0.5);
   const selected = [];
   const usedCategories = new Set();
@@ -52,24 +98,29 @@ function pickDailyQuestsForUser(userData) {
     usedCategories.add(q.category);
   }
   const now = admin.firestore.Timestamp.now();
-  return selected.map((q) => ({
-    qid: q.id,
-    title: q.title,
-    description: q.description,
-    type: "daily",
-    category: q.category,
-    progressType: q.progressType || "increment",
-    reward: q.reward,
-    goalValue: q.goalValue,
-    currentProgress: 0,
-    isCompleted: false,
-    actionRoute: q.actionRoute,
-    routeKey: "home", // Bu alanlar modelinize göre ayarlanmalı
-    tags: [],
-    rewardClaimed: false,
-    createdAt: now,
-    schemaVersion: 2,
-  }));
+  return selected.map((q) => {
+    const { title, description, tags } = personalizeTemplate(q, userData, analysis);
+    const actionRoute = q.actionRoute || '/home';
+    const routeKey = routeKeyFromPath(actionRoute);
+    return {
+      qid: q.id,
+      title,
+      description,
+      type: q.type || 'daily',
+      category: q.category,
+      progressType: q.progressType || 'increment',
+      reward: q.reward,
+      goalValue: q.goalValue,
+      currentProgress: 0,
+      isCompleted: false,
+      actionRoute,
+      routeKey,
+      tags,
+      rewardClaimed: false,
+      createdAt: now,
+      schemaVersion: 2,
+    };
+  });
 }
 
 /**
@@ -84,7 +135,13 @@ async function generateDailyQuestsForAllUsers() {
   for (const doc of usersSnap.docs) {
     const userRef = doc.ref;
     const questsRef = userRef.collection("daily_quests");
-    const quests = pickDailyQuestsForUser(doc.data());
+    let analysis = null;
+    try {
+      const a = await userRef.collection('performance').doc('analysis_summary').get();
+      analysis = a.exists ? a.data() : null;
+    } catch (_) { analysis = null; }
+
+    const quests = pickDailyQuestsForUser(doc.data(), analysis);
 
     const existing = await questsRef.get();
     existing.docs.forEach((d) => {
@@ -139,7 +196,13 @@ exports.regenerateDailyQuests = onCall(
       throw new HttpsError('not-found', 'Kullanıcı yok');
     }
 
-    const quests = pickDailyQuestsForUser(userSnap.data());
+    let analysis = null;
+    try {
+      const a = await userRef.collection('performance').doc('analysis_summary').get();
+      analysis = a.exists ? a.data() : null;
+    } catch (_) { analysis = null; }
+
+    const quests = pickDailyQuestsForUser(userSnap.data(), analysis);
     const questsRef = userRef.collection('daily_quests');
     const existing = await questsRef.get();
     const batch = db.batch();

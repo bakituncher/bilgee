@@ -9,9 +9,9 @@ import 'package:bilge_ai/features/quests/logic/quest_service.dart';
 import 'package:bilge_ai/core/analytics/analytics_logger.dart';
 import 'dart:async';
 import 'package:bilge_ai/core/app_check/app_check_helper.dart';
+import 'package:bilge_ai/features/quests/logic/quest_session_state.dart';
 
-// Oturum içinde tamamlanan görevleri tekrarlı progressten korur
-final sessionCompletedQuestsProvider = StateProvider<Set<String>>((ref) => {});
+enum PracticeSource { general, workshop }
 
 class QuestProgressController {
   const QuestProgressController();
@@ -115,6 +115,7 @@ class QuestProgressController {
       try {
         await ensureAppCheckTokenReady();
         await functions.httpsCallable('completeQuest').call({'questId': quest.id});
+        ref.read(sessionCompletedQuestsProvider.notifier).update((prev)=>{...prev, quest!.id});
         ref.read(questCompletionProvider.notifier).show(quest.copyWith(currentProgress: quest.goalValue, isCompleted: true, completionDate: Timestamp.now()));
         HapticFeedback.mediumImpact();
         ref.read(analyticsLoggerProvider).logQuestEvent(userId: user.id, event: 'quest_completed', data: {'questId': quest.id,'category': quest.category.name,'reward': quest.reward,'difficulty': quest.difficulty.name});
@@ -166,7 +167,7 @@ class QuestProgressController {
     ref.invalidate(dailyQuestsProvider);
   }
 
-  Future<void> updatePracticeWithContext(Ref ref, {required int amount, required String subject, required String topic}) async {
+  Future<void> updatePracticeWithContext(Ref ref, {required int amount, required String subject, required String topic, PracticeSource source = PracticeSource.general}) async {
     final user = ref.read(userProfileProvider).value;
     if (user == null) return;
     final firestoreSvc = ref.read(firestoreServiceProvider);
@@ -174,7 +175,6 @@ class QuestProgressController {
     final activeQuests = await firestoreSvc.getDailyQuestsOnce(user.id);
     if (activeQuests.isEmpty) return;
     final t = topic.toLowerCase();
-    final s = subject.toLowerCase();
     String? subtype;
     if (t.contains('paragraf')) subtype = 'paragraph';
     else if (t.contains('problem')) subtype = 'problem';
@@ -187,6 +187,12 @@ class QuestProgressController {
     final Map<String, Map<String, dynamic>> updates = {};
     for (final quest in activeQuests) {
       if (quest.category != QuestCategory.practice || quest.isCompleted || sessionCompletedIds.contains(quest.id)) continue;
+
+      // Workshop zinciri/pratik görevlerinin sadece workshop kaynağından ilerlemesi
+      final isWorkshopQuest = quest.id.startsWith('chain_workshop_') || quest.actionRoute.contains('weakness-workshop') || quest.tags.contains('workshop');
+      if (source == PracticeSource.general && isWorkshopQuest) continue;
+      if (source == PracticeSource.workshop && !isWorkshopQuest) continue;
+
       int newProgress = quest.currentProgress + amount;
       if (quest.tags.contains('paragraph') && subtype != 'paragraph') continue;
       if (quest.tags.contains('problem') && subtype != 'problem') continue;

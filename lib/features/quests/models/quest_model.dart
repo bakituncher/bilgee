@@ -129,9 +129,23 @@ class Quest extends Equatable {
     }
     final rawRouteKey = map['routeKey'] as String?; // yeni şema desteği
     final rawAction = map['actionRoute'] ?? '/home';
-    final QuestRoute resolvedRoute = rawRouteKey != null ? QuestRoute.values.firstWhere(
-      (e) => e.name == rawRouteKey, orElse: () => questRouteFromPath(rawAction),
-    ) : questRouteFromPath(rawAction);
+    // Önce actionRoute'tan türet
+    final actionDerived = questRouteFromPath(rawAction);
+    // routeKey varsa çöz, fakat 'home' veya 'unknown' ise actionDerived'a öncelik ver
+    QuestRoute resolvedRoute;
+    if (rawRouteKey != null) {
+      final byKey = QuestRoute.values.firstWhere(
+        (e) => e.name == rawRouteKey,
+        orElse: () => QuestRoute.unknown,
+      );
+      if (byKey == QuestRoute.unknown || (byKey == QuestRoute.home && actionDerived != QuestRoute.home)) {
+        resolvedRoute = actionDerived;
+      } else {
+        resolvedRoute = byKey;
+      }
+    } else {
+      resolvedRoute = actionDerived;
+    }
     return Quest(
       id: id,
       title: map['title'] ?? 'İsimsiz Görev',
