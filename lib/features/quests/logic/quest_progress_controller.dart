@@ -24,84 +24,74 @@ class QuestProgressController {
     final activeQuests = await firestoreSvc.getDailyQuestsOnce(user.id);
     if (activeQuests.isEmpty) return;
     final sessionCompletedIds = ref.read(sessionCompletedQuestsProvider);
-    bool chainAdded = false;
-    bool hiddenBonusAwarded = false;
-    int engagementDelta = 0;
-    final Map<String, Map<String, dynamic>> updates = {};
 
-    for (final quest in activeQuests) {
-      if (quest.category != category || quest.isCompleted || sessionCompletedIds.contains(quest.id)) continue;
+    // Yalnızca tek hedef seç: aynı kategoride en yakın tamamlanacak olan
+    final eligible = activeQuests.where((q) => q.category == category && !q.isCompleted && !sessionCompletedIds.contains(q.id)).toList();
+    if (eligible.isEmpty) { return; }
+
+    Quest? target;
+    int? targetNewProgress;
+
+    for (final quest in eligible) {
       int newProgress = quest.currentProgress;
       switch (quest.progressType) {
         case QuestProgressType.increment:
           newProgress += amount; break;
         case QuestProgressType.set_to_value:
-          if (quest.id == 'daily_con_01_tri_sync' || quest.id == 'consistency_01') {
+          // Sadece tri-sync görevinde gün içi ziyaret sayısına set edilir.
+          if (quest.id == 'daily_con_01_tri_sync') {
             final visits = await firestoreSvc.getVisitsForMonth(user.id, DateTime.now());
             final now = DateTime.now();
             final todays = visits.where((ts){ final d=ts.toDate(); return d.year==now.year && d.month==now.month && d.day==now.day;}).length;
             newProgress = todays;
           } else {
-            newProgress = user.streak;
+            // Diğer set_to_value görevler için güvenli artış uygula
+            newProgress = quest.currentProgress + amount;
           }
           break;
       }
-      final willComplete = newProgress >= quest.goalValue;
+      // Aday seçimi: kalan hedefe en yakın olan (en küçük kalan)
+      final remaining = (quest.goalValue - newProgress).clamp(-1, quest.goalValue);
+      if (target == null) { target = quest; targetNewProgress = newProgress; }
+      else {
+        final currentRemaining = (target!.goalValue - (targetNewProgress ?? target!.currentProgress));
+        if (remaining < currentRemaining) { target = quest; targetNewProgress = newProgress; }
+      }
+    }
+
+    if (target == null) return;
+    final quest = target!;
+    final newProgress = (targetNewProgress ?? quest.currentProgress);
+    final willComplete = newProgress >= quest.goalValue;
+
+    try {
+      // Önce ilerlemeyi yaz (hedefi aşsa bile clamp'leriz)
+      await firestoreSvc.updateQuestFields(user.id, quest.id, {
+        'currentProgress': newProgress.clamp(quest.currentProgress, quest.goalValue),
+      });
       if (willComplete) {
-        try {
-          // Önce ilerlemeyi sunucuya yaz ki anti-fake kontrolünden geçsin
-          await firestoreSvc.updateQuestFields(user.id, quest.id, {
-            'currentProgress': newProgress.clamp(quest.currentProgress, quest.goalValue),
-          });
-          await ensureAppCheckTokenReady();
-          await functions.httpsCallable('completeQuest').call({'questId': quest.id});
-          ref.read(sessionCompletedQuestsProvider.notifier).update((prev)=>{...prev, quest.id});
-          ref.read(questCompletionProvider.notifier).show(quest.copyWith(currentProgress: quest.goalValue, isCompleted: true, completionDate: Timestamp.now()));
-          HapticFeedback.mediumImpact();
-          ref.read(analyticsLoggerProvider).logQuestEvent(userId: user.id, event: 'quest_completed', data: {
-            'questId': quest.id,'category': quest.category.name,'reward': quest.reward,'difficulty': quest.difficulty.name,
-          });
-          await _maybeAddNextChainQuest(ref, quest, user.id, onAdded: ()=> chainAdded = true);
-        } catch (e) {
-          // Sunucu hatası durumunda lokal fallback
-          updates[quest.id] = { 'currentProgress': quest.goalValue,'isCompleted': true,'completionDate': Timestamp.now(),};
-        }
-      } else if (newProgress > quest.currentProgress) {
-        updates[quest.id] = { 'currentProgress': newProgress };
+        await ensureAppCheckTokenReady();
+        await functions.httpsCallable('completeQuest').call({'questId': quest.id});
+        ref.read(sessionCompletedQuestsProvider.notifier).update((prev)=>{...prev, quest.id});
+        ref.read(questCompletionProvider.notifier).show(quest.copyWith(currentProgress: quest.goalValue, isCompleted: true, completionDate: Timestamp.now()));
+        HapticFeedback.mediumImpact();
+        ref.read(analyticsLoggerProvider).logQuestEvent(userId: user.id, event: 'quest_completed', data: {
+          'questId': quest.id,'category': quest.category.name,'reward': quest.reward,'difficulty': quest.difficulty.name,
+        });
+      } else {
         ref.read(analyticsLoggerProvider).logQuestEvent(userId: user.id, event: 'quest_progress', data: {
           'questId': quest.id,'progress': newProgress,'goal': quest.goalValue,
         });
       }
+    } catch (e) {
+      // Sunucu reddederse sadece ilerlemeyi güvenli şekilde güncelle, tamamlandı işaretleme yok
+      await firestoreSvc.updateQuestFields(user.id, quest.id, {
+        'currentProgress': newProgress.clamp(quest.currentProgress, quest.goalValue),
+      });
     }
-    // Gizli sandık ve diğer bonus mantığı aynı kalıyor - tamamlanmış görevler server üzerinden işaretlendiği için onları dahil et.
-    Quest? celebration;
-    for (final q in activeQuests) { if (q.id == 'celebration_01' && !q.isCompleted) { celebration = q; break; } }
-    if (celebration != null) {
-      final completedCategories = <QuestCategory>{};
-      for (final q in activeQuests) {
-        final locallyUpdated = updates.containsKey(q.id) ? (updates[q.id]!['isCompleted'] == true || q.isCompleted) : q.isCompleted;
-        final sessionCompleted = ref.read(sessionCompletedQuestsProvider).contains(q.id);
-        if (locallyUpdated || sessionCompleted) completedCategories.add(q.category);
-      }
-      if (completedCategories.length >= 4) {
-        try {
-          await functions.httpsCallable('completeQuest').call({'questId': celebration.id});
-          ref.read(questCompletionProvider.notifier).show(celebration.copyWith(currentProgress: celebration.goalValue, isCompleted: true, completionDate: Timestamp.now()));
-          HapticFeedback.mediumImpact();
-        } catch(_) {
-          updates[celebration.id] = {'currentProgress': celebration.goalValue,'isCompleted': true,'completionDate': Timestamp.now()};
-          engagementDelta += celebration.reward;
-        }
-      }
-    }
-    if (updates.isNotEmpty || engagementDelta != 0) {
-      await firestoreSvc.batchUpdateQuestFields(user.id, updates, engagementDelta: engagementDelta);
-      ref.invalidate(dailyQuestsProvider);
-    } else {
-      // yine de listeyi tazele (sunucu tamamladıysa)
-      ref.invalidate(dailyQuestsProvider);
-    }
-    if (hiddenBonusAwarded || chainAdded) {}
+
+    // Zincir/bonus mantığı server tamamlama sonrası ayrı çalışır
+    ref.invalidate(dailyQuestsProvider);
   }
 
   Future<void> updateQuestProgressById(Ref ref, String questId, {int amount = 1}) async {
@@ -114,25 +104,22 @@ class QuestProgressController {
     for (final q in activeQuests) { if (q.id == questId) { quest = q; break; } }
     if (quest == null || quest.isCompleted) return;
     int newProgress = quest.currentProgress + amount;
-    final Map<String, Map<String,dynamic>> updates = {};
-    if (newProgress >= quest.goalValue) {
-      try {
-        await firestoreSvc.updateQuestFields(user.id, quest.id, {'currentProgress': newProgress.clamp(quest.currentProgress, quest.goalValue)});
+    try {
+      await firestoreSvc.updateQuestFields(user.id, quest.id, {'currentProgress': newProgress.clamp(quest.currentProgress, quest.goalValue)});
+      if (newProgress >= quest.goalValue) {
         await ensureAppCheckTokenReady();
         await functions.httpsCallable('completeQuest').call({'questId': quest.id});
         ref.read(sessionCompletedQuestsProvider.notifier).update((prev)=>{...prev, quest!.id});
         ref.read(questCompletionProvider.notifier).show(quest.copyWith(currentProgress: quest.goalValue, isCompleted: true, completionDate: Timestamp.now()));
         HapticFeedback.mediumImpact();
         ref.read(analyticsLoggerProvider).logQuestEvent(userId: user.id, event: 'quest_completed', data: {'questId': quest.id,'category': quest.category.name,'reward': quest.reward,'difficulty': quest.difficulty.name});
-        await _maybeAddNextChainQuest(ref, quest, user.id);
-      } catch (_) {
-        updates[quest.id] = {'currentProgress': quest.goalValue,'isCompleted': true,'completionDate': Timestamp.now()};
+      } else {
+        ref.read(analyticsLoggerProvider).logQuestEvent(userId: user.id, event: 'quest_progress', data: {'questId': quest.id,'progress': newProgress,'goal': quest.goalValue});
       }
-    } else {
-      updates[quest.id] = {'currentProgress': newProgress};
-      ref.read(analyticsLoggerProvider).logQuestEvent(userId: user.id, event: 'quest_progress', data: {'questId': quest.id,'progress': newProgress,'goal': quest.goalValue});
+    } catch (_) {
+      // Tamamlama başarısızsa sadece ilerleme güncelle (tamamlandı işaretleme yok)
+      await firestoreSvc.updateQuestFields(user.id, quest.id, {'currentProgress': newProgress.clamp(quest.currentProgress, quest.goalValue)});
     }
-    if (updates.isNotEmpty) await firestoreSvc.batchUpdateQuestFields(user.id, updates);
     ref.invalidate(dailyQuestsProvider);
   }
 
@@ -144,31 +131,29 @@ class QuestProgressController {
     final activeQuests = await firestoreSvc.getDailyQuestsOnce(user.id);
     if (activeQuests.isEmpty) return;
     final sessionCompletedIds = ref.read(sessionCompletedQuestsProvider);
-    final Map<String, Map<String, dynamic>> updates = {};
-    for (final quest in activeQuests) {
-      if (quest.category != QuestCategory.engagement || quest.isCompleted || sessionCompletedIds.contains(quest.id)) continue;
-      if (quest.route != route) continue;
-      int newProgress = quest.currentProgress + amount;
-      final willComplete = newProgress >= quest.goalValue;
-      if (willComplete) {
-        try {
-          await firestoreSvc.updateQuestFields(user.id, quest.id, {'currentProgress': newProgress.clamp(quest.currentProgress, quest.goalValue)});
-          await ensureAppCheckTokenReady();
-          await functions.httpsCallable('completeQuest').call({'questId': quest.id});
-          ref.read(sessionCompletedQuestsProvider.notifier).update((prev)=>{...prev, quest.id});
-          ref.read(questCompletionProvider.notifier).show(quest.copyWith(currentProgress: quest.goalValue, isCompleted: true, completionDate: Timestamp.now()));
-          HapticFeedback.mediumImpact();
-          ref.read(analyticsLoggerProvider).logQuestEvent(userId: user.id, event: 'quest_completed', data: {'questId': quest.id,'category': quest.category.name,'reward': quest.reward,'difficulty': quest.difficulty.name});
-        } catch (_) {
-          updates[quest.id] = {'currentProgress': quest.goalValue,'isCompleted': true,'completionDate': Timestamp.now()};
-        }
-      } else if (newProgress > quest.currentProgress) {
-        updates[quest.id] = {'currentProgress': newProgress};
+
+    // Sadece ilgili route eşleşen bir görev hedefle (ilk uygun)
+    final quest = activeQuests.firstWhere(
+      (q) => q.category == QuestCategory.engagement && q.route == route && !q.isCompleted && !sessionCompletedIds.contains(q.id),
+      orElse: () => null as Quest,
+    );
+    if (quest == null) return;
+
+    final newProgress = quest.currentProgress + amount;
+    try {
+      await firestoreSvc.updateQuestFields(user.id, quest.id, {'currentProgress': newProgress.clamp(quest.currentProgress, quest.goalValue)});
+      if (newProgress >= quest.goalValue) {
+        await ensureAppCheckTokenReady();
+        await functions.httpsCallable('completeQuest').call({'questId': quest.id});
+        ref.read(sessionCompletedQuestsProvider.notifier).update((prev)=>{...prev, quest.id});
+        ref.read(questCompletionProvider.notifier).show(quest.copyWith(currentProgress: quest.goalValue, isCompleted: true, completionDate: Timestamp.now()));
+        HapticFeedback.mediumImpact();
+        ref.read(analyticsLoggerProvider).logQuestEvent(userId: user.id, event: 'quest_completed', data: {'questId': quest.id,'category': quest.category.name,'reward': quest.reward,'difficulty': quest.difficulty.name});
+      } else {
         ref.read(analyticsLoggerProvider).logQuestEvent(userId: user.id, event: 'quest_progress', data: {'questId': quest.id,'progress': newProgress,'goal': quest.goalValue});
       }
-    }
-    if (updates.isNotEmpty) {
-      await firestoreSvc.batchUpdateQuestFields(user.id, updates);
+    } catch (_) {
+      await firestoreSvc.updateQuestFields(user.id, quest.id, {'currentProgress': newProgress.clamp(quest.currentProgress, quest.goalValue)});
     }
     ref.invalidate(dailyQuestsProvider);
   }
@@ -187,47 +172,39 @@ class QuestProgressController {
     else if (t.contains('sözel mantık') || t.contains('sozel mantik')) subtype = 'verbal_logic';
     else if (t.contains('sayısal mantık') || t.contains('sayisal mantik')) subtype = 'quant_logic';
     final sessionCompletedIds = ref.read(sessionCompletedQuestsProvider);
-    bool chainAdded = false;
-    bool hiddenBonusAwarded = false;
-    int engagementDelta = 0;
-    final Map<String, Map<String, dynamic>> updates = {};
-    for (final quest in activeQuests) {
-      if (quest.category != QuestCategory.practice || quest.isCompleted || sessionCompletedIds.contains(quest.id)) continue;
 
-      // Workshop zinciri/pratik görevlerinin sadece workshop kaynağından ilerlemesi
-      final isWorkshopQuest = quest.id.startsWith('chain_workshop_') || quest.actionRoute.contains('weakness-workshop') || quest.tags.contains('workshop');
-      if (source == PracticeSource.general && isWorkshopQuest) continue;
-      if (source == PracticeSource.workshop && !isWorkshopQuest) continue;
+    // Kaynak eşleşmeyen veya alt-tip tutmayanları ele; tek uygun görevi hedefle
+    final quest = activeQuests.firstWhere(
+      (q) {
+        if (q.category != QuestCategory.practice || q.isCompleted || sessionCompletedIds.contains(q.id)) return false;
+        final isWorkshopQuest = q.id.startsWith('chain_workshop_') || q.actionRoute.contains('weakness-workshop') || q.tags.contains('workshop');
+        if (source == PracticeSource.general && isWorkshopQuest) return false;
+        if (source == PracticeSource.workshop && !isWorkshopQuest) return false;
+        if (q.tags.contains('paragraph') && subtype != 'paragraph') return false;
+        if (q.tags.contains('problem') && subtype != 'problem') return false;
+        return true;
+      },
+      orElse: () => null as Quest,
+    );
+    if (quest == null) return;
 
-      int newProgress = quest.currentProgress + amount;
-      if (quest.tags.contains('paragraph') && subtype != 'paragraph') continue;
-      if (quest.tags.contains('problem') && subtype != 'problem') continue;
-      final willComplete = newProgress >= quest.goalValue;
-      if (willComplete) {
-        try {
-          await firestoreSvc.updateQuestFields(user.id, quest.id, {'currentProgress': newProgress.clamp(quest.currentProgress, quest.goalValue)});
-          await ensureAppCheckTokenReady();
-          await functions.httpsCallable('completeQuest').call({'questId': quest.id});
-          ref.read(sessionCompletedQuestsProvider.notifier).update((prev)=>{...prev, quest.id});
-          ref.read(questCompletionProvider.notifier).show(quest.copyWith(currentProgress: quest.goalValue, isCompleted: true, completionDate: Timestamp.now()));
-          HapticFeedback.mediumImpact();
-          ref.read(analyticsLoggerProvider).logQuestEvent(userId: user.id, event: 'quest_completed', data: {'questId': quest.id,'category': quest.category.name,'reward': quest.reward,'difficulty': quest.difficulty.name});
-          await _maybeAddNextChainQuest(ref, quest, user.id, onAdded: ()=> chainAdded = true);
-        } catch (_) {
-          updates[quest.id] = {'currentProgress': quest.goalValue,'isCompleted': true,'completionDate': Timestamp.now()};
-        }
-      } else if (newProgress > quest.currentProgress) {
-        updates[quest.id] = {'currentProgress': newProgress};
+    final newProgress = quest.currentProgress + amount;
+    try {
+      await firestoreSvc.updateQuestFields(user.id, quest.id, {'currentProgress': newProgress.clamp(quest.currentProgress, quest.goalValue)});
+      if (newProgress >= quest.goalValue) {
+        await ensureAppCheckTokenReady();
+        await functions.httpsCallable('completeQuest').call({'questId': quest.id});
+        ref.read(sessionCompletedQuestsProvider.notifier).update((prev)=>{...prev, quest.id});
+        ref.read(questCompletionProvider.notifier).show(quest.copyWith(currentProgress: quest.goalValue, isCompleted: true, completionDate: Timestamp.now()));
+        HapticFeedback.mediumImpact();
+        ref.read(analyticsLoggerProvider).logQuestEvent(userId: user.id, event: 'quest_completed', data: {'questId': quest.id,'category': quest.category.name,'reward': quest.reward,'difficulty': quest.difficulty.name});
+      } else {
         ref.read(analyticsLoggerProvider).logQuestEvent(userId: user.id, event: 'quest_progress', data: {'questId': quest.id,'progress': newProgress,'goal': quest.goalValue});
       }
+    } catch (_) {
+      await firestoreSvc.updateQuestFields(user.id, quest.id, {'currentProgress': newProgress.clamp(quest.currentProgress, quest.goalValue)});
     }
-    if (updates.isNotEmpty || engagementDelta != 0) {
-      await firestoreSvc.batchUpdateQuestFields(user.id, updates, engagementDelta: engagementDelta);
-      ref.invalidate(dailyQuestsProvider);
-    } else {
-      ref.invalidate(dailyQuestsProvider);
-    }
-    if (hiddenBonusAwarded || chainAdded) {}
+    ref.invalidate(dailyQuestsProvider);
   }
 
   Future<void> _maybeAddNextChainQuest(Ref ref, Quest quest, String userId, {VoidCallback? onAdded}) async {

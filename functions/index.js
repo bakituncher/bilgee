@@ -302,7 +302,7 @@ async function upsertSet(ref, list) {
   await batch.commit();
 }
 
-async function ensureWeeklyAndMonthly(userRef, userData, analysis) {
+async function ensureWeeklyAndMonthly(userRef, userData, analysis, force = false) {
   const ctx = await getUserContext(userRef);
   // Haftalık: bu haftanın başlangıcına bak
   const now = nowIstanbul();
@@ -313,7 +313,13 @@ async function ensureWeeklyAndMonthly(userRef, userData, analysis) {
 
   const weeklyCol = userRef.collection('weekly_quests');
   const weeklySnap = await weeklyCol.where('weekKey', '==', weekKey).limit(1).get();
-  if (weeklySnap.empty) {
+  if (weeklySnap.empty || force) {
+    if (force) {
+      const toDel = await weeklyCol.where('weekKey', '==', weekKey).get();
+      const delBatch = db.batch();
+      toDel.docs.forEach((d)=> delBatch.delete(d.ref));
+      if (!toDel.empty) await delBatch.commit();
+    }
     const tpls = pickTemplatesForType('weekly', ctx, 6);
     const list = materializeTemplates(tpls, userData, analysis).map((x)=> ({...x, weekKey}));
     const batch = db.batch();
@@ -326,7 +332,13 @@ async function ensureWeeklyAndMonthly(userRef, userData, analysis) {
   const monthKey = `${monthStart.getFullYear()}-${(monthStart.getMonth()+1).toString().padStart(2,'0')}`;
   const monthlyCol = userRef.collection('monthly_quests');
   const monthlySnap = await monthlyCol.where('monthKey', '==', monthKey).limit(1).get();
-  if (monthlySnap.empty) {
+  if (monthlySnap.empty || force) {
+    if (force) {
+      const toDel = await monthlyCol.where('monthKey', '==', monthKey).get();
+      const delBatch = db.batch();
+      toDel.docs.forEach((d)=> delBatch.delete(d.ref));
+      if (!toDel.empty) await delBatch.commit();
+    }
     const tpls = pickTemplatesForType('monthly', ctx, 6);
     const list = materializeTemplates(tpls, userData, analysis).map((x)=> ({...x, monthKey}));
     const batch = db.batch();
@@ -367,7 +379,7 @@ async function generateQuestsForAllUsers() {
     batch.update(userRef, { lastQuestRefreshDate: admin.firestore.FieldValue.serverTimestamp() });
 
     // WEEKLY / MONTHLY ensure
-    await ensureWeeklyAndMonthly(userRef, doc.data(), analysis);
+    await ensureWeeklyAndMonthly(userRef, doc.data(), analysis, false);
 
     if (opCount > 400) { batchPromises.push(batch.commit()); batch = db.batch(); opCount = 0; }
   }
@@ -410,8 +422,9 @@ exports.regenerateDailyQuests = onCall(
     batch.update(userRef, { lastQuestRefreshDate: admin.firestore.FieldValue.serverTimestamp() });
     await batch.commit();
 
-    // Weekly/Aylık görevleri de garanti altına al
-    await ensureWeeklyAndMonthly(userRef, userSnap.data(), analysis);
+    // Weekly/Aylık görevler: force parametresine göre yenile
+    const forceWM = request.data && request.data.forceWeeklyMonthly === true;
+    await ensureWeeklyAndMonthly(userRef, userSnap.data(), analysis, forceWM);
 
     return {quests: daily};
   },
