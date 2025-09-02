@@ -18,7 +18,7 @@ enum Pacing { relaxed, moderate, intense }
 enum PlanningStep { dataCheck, confirmation, pacing, loading }
 
 final selectedPacingProvider = StateProvider<Pacing>((ref) => Pacing.moderate);
-final planningStepProvider = StateProvider<PlanningStep>((ref) => PlanningStep.dataCheck);
+final planningStepProvider = StateProvider.autoDispose<PlanningStep>((ref) => PlanningStep.dataCheck);
 
 // Plan oluşturma Notifier'ı
 class StrategyGenerationNotifier extends StateNotifier<AsyncValue<void>> {
@@ -123,23 +123,32 @@ class StrategicPlanningScreen extends ConsumerWidget {
           }
         }
 
-        return Scaffold(
-          appBar: AppBar(title: const Text('Strateji Oturumu')),
-          body: AnimatedSwitcher(
-            duration: 400.ms,
-            transitionBuilder: (child, animation) {
-              return FadeTransition(
-                opacity: animation,
-                child: SlideTransition(
-                  position: Tween<Offset>(
-                    begin: const Offset(0.0, 0.1),
-                    end: Offset.zero,
-                  ).animate(animation),
-                  child: child,
-                ),
-              );
-            },
-            child: _buildStep(context, ref, step, tests?.isNotEmpty ?? false),
+        final canPop = !(step == PlanningStep.pacing || step == PlanningStep.loading);
+        return PopScope(
+          canPop: canPop,
+          onPopInvoked: (didPop) {
+            if (!canPop) {
+              ref.read(planningStepProvider.notifier).state = PlanningStep.confirmation;
+            }
+          },
+          child: Scaffold(
+            appBar: AppBar(title: const Text('Strateji Oturumu')),
+            body: AnimatedSwitcher(
+              duration: 400.ms,
+              transitionBuilder: (child, animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0.0, 0.1),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: child,
+                  ),
+                );
+              },
+              child: _buildStep(context, ref, step, tests?.isNotEmpty ?? false),
+            ),
           ),
         );
       },
@@ -203,40 +212,83 @@ class StrategicPlanningScreen extends ConsumerWidget {
             stops: const [0.0, 0.7],
           ),
         ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+        child: Center(
           child: SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SizedBox.shrink(),
-                _buildSealOfCommand(context, weeklyPlan),
-                Column(
-                  children: [
-                    _ActionCard(
-                      title: "Haftalık Cephe Planı",
-                      subtitle: "Günlük görevlerini ve hedeflerini gör.",
-                      icon: Icons.calendar_view_week_rounded,
-                      onTap: () => context.push('/home/weekly-plan'),
-                    ).animate().fadeIn(delay: 200.ms, duration: 400.ms).slideX(begin: -0.2),
-                    const SizedBox(height: 16),
-                    // Komuta Merkezi (uzun vadeli strateji) kaldırıldı
-                  ],
-                ),
-                Column(
-                  children: [
-                    const SizedBox(height: 24),
-                    OutlinedButton(
-                      onPressed: () {
-                        ref.read(planningStepProvider.notifier).state = PlanningStep.confirmation;
-                      },
-                      child: const Text("Yeni Strateji Oluştur"),
+            padding: const EdgeInsets.all(24.0),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 520),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Card(
+                    elevation: 0,
+                    clipBehavior: Clip.antiAlias,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 28.0, horizontal: 24.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: AppTheme.secondaryColor.withValues(alpha: AppTheme.secondaryColor.a * 0.12),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.calendar_month_rounded, size: 40, color: AppTheme.secondaryColor),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            "Stratejik Plan Hazır",
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            "Bu haftanın odağı",
+                            style: Theme.of(context).textTheme.labelLarge?.copyWith(color: AppTheme.secondaryTextColor),
+                          ),
+                          const SizedBox(height: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: AppTheme.lightSurfaceColor.withValues(alpha: AppTheme.lightSurfaceColor.a * 0.35),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppTheme.lightSurfaceColor.withValues(alpha: AppTheme.lightSurfaceColor.a * 0.5)),
+                            ),
+                            child: Text(
+                              weeklyPlan.strategyFocus,
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            "Oluşturulma: ${DateFormat.yMMMMd('tr').format(weeklyPlan.creationDate)}",
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor),
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 20),
-                  ],
-                ),
-              ],
+                  ).animate().fadeIn(duration: 300.ms).scale(begin: const Offset(0.98, 0.98), curve: Curves.easeOut),
+
+                  const SizedBox(height: 20),
+
+                  ElevatedButton.icon(
+                    onPressed: () => context.push('/home/weekly-plan'),
+                    icon: const Icon(Icons.playlist_add_check_rounded),
+                    label: const Text("Haftalık Planı Aç"),
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      ref.read(planningStepProvider.notifier).state = PlanningStep.confirmation;
+                    },
+                    icon: const Icon(Icons.auto_awesome),
+                    label: const Text("Yeni Strateji Oluştur"),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -717,3 +769,4 @@ class _PacingCard extends StatelessWidget {
     );
   }
 }
+
