@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class GeneralOverviewScreen extends ConsumerWidget {
   const GeneralOverviewScreen({super.key});
@@ -46,24 +48,48 @@ class GeneralOverviewScreen extends ConsumerWidget {
             lastDate = sorted.first.date;
             lastNet = sorted.first.totalNet;
           }
-          String lastWhen = lastDate == null ? '—' : _humanize(lastDate!);
+          final lastWhen = lastDate == null ? '—' : _humanize(lastDate);
 
+          // Haftanın başlangıcı ve görev verisi
+          final now = DateTime.now();
+          final weekStart = DateTime(now.year, now.month, now.day).subtract(Duration(days: (now.weekday - 1)));
+          final weekTasksAsync = ref.watch(completedTasksForWeekProvider(weekStart));
+
+          // Özet kutuları
           final tiles = [
             _tile(context, icon: Icons.assignment_rounded, title: 'Toplam Deneme', value: '$testCount'),
             _tile(context, icon: Icons.show_chart_rounded, title: 'Ortalama Net', value: avgNet.toStringAsFixed(1)),
             _tile(context, icon: Icons.local_fire_department_rounded, title: 'Seri', value: '${user?.streak ?? 0} gün'),
-            _tile(context, icon: Icons.flag_rounded, title: 'Haftalık Hedef', value: user?.weeklyStudyGoal != null ? '${user!.weeklyStudyGoal!.toStringAsFixed(1)} saat' : '—'),
-            _tile(context, icon: Icons.history_edu_rounded, title: 'Son Deneme', value: lastNet != null ? '${lastNet!.toStringAsFixed(1)} net • $lastWhen' : lastWhen),
+            _tile(context, icon: Icons.history_edu_rounded, title: 'Son Deneme', value: lastNet != null ? '${lastNet.toStringAsFixed(1)} net • $lastWhen' : lastWhen),
           ];
 
-          return ListView.separated(
+          return ListView(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-            itemCount: tiles.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (_, i) => tiles[i]
-                .animate()
-                .fadeIn(duration: 200.ms, delay: (i * 60).ms)
-                .slideY(begin: .05, curve: Curves.easeOut),
+            children: [
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: tiles.map((w) => SizedBox(
+                  width: MediaQuery.of(context).size.width > 520 ? (MediaQuery.of(context).size.width - 32 - 12)/2 : double.infinity,
+                  child: w.animate().fadeIn(duration: 200.ms).slideY(begin: .05, curve: Curves.easeOut),
+                )).toList(),
+              ),
+              const SizedBox(height: 16),
+              if (tests.isNotEmpty)
+                _RecentNetSparkline(tests: tests.take(8).toList().reversed.toList())
+                    .animate().fadeIn(duration: 250.ms).slideY(begin: .05),
+              const SizedBox(height: 16),
+              weekTasksAsync.when(
+                data: (map) => _WeeklyTasksCard(weekStart: weekStart, data: map)
+                    .animate().fadeIn(duration: 250.ms).slideY(begin: .05),
+                loading: () => const Center(child: Padding(padding: EdgeInsets.all(12), child: CircularProgressIndicator(color: AppTheme.secondaryColor))),
+                error: (e, s) => const SizedBox.shrink(),
+              ),
+              const SizedBox(height: 16),
+              if (user != null)
+                _VisitsThisMonthTile(userId: user.id)
+                    .animate().fadeIn(duration: 250.ms).slideY(begin: .05),
+            ],
           );
         },
         loading: () => const Center(child: CircularProgressIndicator(color: AppTheme.secondaryColor)),
@@ -75,12 +101,12 @@ class GeneralOverviewScreen extends ConsumerWidget {
   Widget _tile(BuildContext context, {required IconData icon, required String title, required String value}) {
     return Card(
       elevation: 6,
-      shadowColor: AppTheme.lightSurfaceColor.withOpacity(.4),
+      shadowColor: AppTheme.lightSurfaceColor.withValues(alpha: AppTheme.lightSurfaceColor.a * .4),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: ListTile(
         leading: Container(
           decoration: BoxDecoration(
-            color: AppTheme.secondaryColor.withOpacity(.15),
+            color: AppTheme.secondaryColor.withValues(alpha: AppTheme.secondaryColor.a * .15),
             borderRadius: BorderRadius.circular(12),
           ),
           padding: const EdgeInsets.all(10),
@@ -98,5 +124,156 @@ class GeneralOverviewScreen extends ConsumerWidget {
     if (diff.inHours > 0) return '${diff.inHours}s önce';
     final m = diff.inMinutes;
     return m <= 1 ? 'az önce' : '${m}dk önce';
+  }
+}
+
+class _RecentNetSparkline extends StatelessWidget {
+  final List<TestModel> tests; // kronolojik (eski->yeni)
+  const _RecentNetSparkline({required this.tests});
+
+  @override
+  Widget build(BuildContext context) {
+    final nets = tests.map((t) => t.totalNet).toList();
+    if (nets.isEmpty) return const SizedBox.shrink();
+    final minY = nets.reduce((a,b)=> a < b ? a : b);
+    final maxY = nets.reduce((a,b)=> a > b ? a : b);
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(children:[
+              const Icon(Icons.trending_up_rounded, color: AppTheme.secondaryColor),
+              const SizedBox(width: 8),
+              Text('Son Deneme Net Trendi', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            ]),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 140,
+              child: LineChart(
+                LineChartData(
+                  gridData: FlGridData(show: false),
+                  titlesData: FlTitlesData(show: false),
+                  borderData: FlBorderData(show: false),
+                  minY: minY - 1,
+                  maxY: maxY + 1,
+                  lineBarsData: [
+                    LineChartBarData(
+                      spots: [for (int i=0;i<nets.length;i++) FlSpot(i.toDouble(), nets[i])],
+                      isCurved: true,
+                      color: AppTheme.secondaryColor,
+                      barWidth: 3,
+                      dotData: FlDotData(show: false),
+                      belowBarData: BarAreaData(show: true, color: AppTheme.secondaryColor.withValues(alpha: AppTheme.secondaryColor.a * .12)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _WeeklyTasksCard extends StatelessWidget {
+  final DateTime weekStart; // Pazartesi
+  final Map<String, List<String>> data; // dateKey -> tasks
+  const _WeeklyTasksCard({required this.weekStart, required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    final days = List<DateTime>.generate(7, (i) => weekStart.add(Duration(days: i)));
+    final counts = days.map((d){
+      final key = '${d.year.toString().padLeft(4,'0')}-${d.month.toString().padLeft(2,'0')}-${d.day.toString().padLeft(2,'0')}';
+      return (data[key]?.length ?? 0).toDouble();
+    }).toList();
+    final maxY = (counts.isEmpty ? 1 : counts.reduce((a,b)=> a>b?a:b)).clamp(1, 10);
+
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(children:[
+              const Icon(Icons.task_alt_rounded, color: AppTheme.secondaryColor),
+              const SizedBox(width: 8),
+              Text('Bu Hafta Görev Aktivitesi', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            ]),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 140,
+              child: BarChart(
+                BarChartData(
+                  gridData: FlGridData(show: false),
+                  titlesData: FlTitlesData(
+                    leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: (value, meta){
+                      final i = value.toInt();
+                      if (i < 0 || i >= days.length) return const SizedBox.shrink();
+                      const labels = ['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
+                      return Padding(padding: const EdgeInsets.only(top: 6), child: Text(labels[i], style: Theme.of(context).textTheme.labelSmall));
+                    })),
+                  ),
+                  borderData: FlBorderData(show: false),
+                  barGroups: [
+                    for (int i=0;i<counts.length;i++)
+                      BarChartGroupData(x: i, barRods: [
+                        BarChartRodData(toY: counts[i], width: 14, borderRadius: BorderRadius.circular(6), color: AppTheme.secondaryColor)
+                      ])
+                  ],
+                  maxY: maxY.toDouble(),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _VisitsThisMonthTile extends ConsumerWidget {
+  final String userId;
+  const _VisitsThisMonthTile({required this.userId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return FutureBuilder(
+      future: ref.read(firestoreServiceProvider).getVisitsForMonth(userId, DateTime.now()),
+      builder: (context, snap){
+        if (snap.connectionState != ConnectionState.done) {
+          return const Card(child: Padding(padding: EdgeInsets.all(16), child: Center(child: CircularProgressIndicator(color: AppTheme.secondaryColor))));
+        }
+        if (snap.hasError) {
+          return const SizedBox.shrink();
+        }
+        final visits = (snap.data ?? const <Timestamp>[]) as List;
+        return Card(
+          elevation: 6,
+          shadowColor: AppTheme.lightSurfaceColor.withValues(alpha: AppTheme.lightSurfaceColor.a * .4),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          child: ListTile(
+            leading: Container(
+              decoration: BoxDecoration(
+                color: AppTheme.secondaryColor.withValues(alpha: AppTheme.secondaryColor.a * .15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.all(10),
+              child: const Icon(Icons.calendar_month_rounded, color: AppTheme.secondaryColor),
+            ),
+            title: const Text('Bu Ay Ziyaret'),
+            trailing: Text('${visits.length}', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+          ),
+        );
+      },
+    );
   }
 }
