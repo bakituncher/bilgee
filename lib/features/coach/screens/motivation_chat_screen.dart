@@ -4,10 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:bilge_ai/data/repositories/ai_service.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:bilge_ai/core/theme/app_theme.dart';
-import 'package:bilge_ai/data/models/user_model.dart';
 import 'package:bilge_ai/data/providers/firestore_providers.dart';
-import 'package:bilge_ai/data/models/test_model.dart';
-import 'package:bilge_ai/data/models/performance_summary.dart';
+import 'package:flutter/services.dart';
 
 
 // RUH HALİ SEÇENEKLERİ
@@ -30,6 +28,7 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
   bool _isTyping = false;
+  bool _showScrollToBottom = false;
   late AnimationController _backgroundAnimationController;
 
   // YENI: Son N mesajdan kısa bir özet üret
@@ -46,6 +45,7 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
   void initState() {
     super.initState();
     _backgroundAnimationController = AnimationController(vsync: this, duration: 4.seconds)..repeat(reverse: true);
+    _scrollController.addListener(_onScroll);
     Future.microtask(() async {
       ref.read(chatHistoryProvider.notifier).state = [];
       if (widget.initialPrompt != null) {
@@ -61,6 +61,16 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
     });
   }
 
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final max = _scrollController.position.maxScrollExtent;
+    final off = _scrollController.offset;
+    final shouldShow = off < (max - 200);
+    if (_showScrollToBottom != shouldShow) {
+      setState(() => _showScrollToBottom = shouldShow);
+    }
+  }
+
   @override
   void dispose() {
     _backgroundAnimationController.dispose();
@@ -70,6 +80,7 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
   }
 
   void _sendMessage({String? quickReply}) async {
+    if (_isTyping) return; // yeniden tetiklemeyi engelle
     final text = quickReply ?? _controller.text.trim();
     if (text.isEmpty) return;
 
@@ -99,23 +110,43 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
       lastUserMessage: text,
     );
 
+    if (!mounted) return;
     ref.read(chatHistoryProvider.notifier).update((state) => [...state, ChatMessage(aiResponse, isUser: false)]);
     setState(() => _isTyping = false);
     _scrollToBottom(isNewMessage: true);
   }
 
   Future<void> _onMoodSelected(String moodType, {Map<String, dynamic>? extraContext}) async {
+    if (_isTyping) return; // yeniden tetiklemeyi engelle
     final user = ref.read(userProfileProvider).value!;
     final tests = ref.read(testsProvider).value!;
     final performance = ref.read(performanceProvider).value!;
 
-    final Map<String, Mood> moodMapping = {
-      'welcome': Mood.neutral, 'new_test_good': Mood.goodResult,
-      'new_test_bad': Mood.badResult, 'focused': Mood.focused,
-      'neutral': Mood.neutral, 'tired': Mood.tired, 'stressed': Mood.stressed,
-      'workshop_review': Mood.workshop,
-    };
-    final mood = moodMapping[moodType] ?? Mood.neutral;
+    Mood mood = Mood.neutral;
+    if (moodType == 'trial_review') {
+      if (tests.isNotEmpty && user.testCount > 0) {
+        final last = tests.first;
+        final avg = user.totalNetSum / user.testCount;
+        mood = last.totalNet >= avg ? Mood.goodResult : Mood.badResult;
+      } else {
+        mood = Mood.neutral;
+      }
+    } else if (moodType == 'strategy_consult') {
+      mood = Mood.focused;
+    } else if (moodType == 'psych_support') {
+      mood = Mood.stressed;
+    } else if (moodType == 'motivation_corner') {
+      mood = Mood.workshop;
+    } else {
+      // Eski modlar için geriye dönük destek
+      final Map<String, Mood> moodMapping = {
+        'welcome': Mood.neutral, 'new_test_good': Mood.goodResult,
+        'new_test_bad': Mood.badResult, 'focused': Mood.focused,
+        'neutral': Mood.neutral, 'tired': Mood.tired, 'stressed': Mood.stressed,
+        'workshop_review': Mood.workshop,
+      };
+      mood = moodMapping[moodType] ?? Mood.neutral;
+    }
     ref.read(chatScreenStateProvider.notifier).state = mood;
 
     setState(() => _isTyping = true);
@@ -131,6 +162,7 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
       conversationHistory: historySummary, lastUserMessage: '',
     );
 
+    if (!mounted) return;
     ref.read(chatHistoryProvider.notifier).state = [ChatMessage(aiResponse, isUser: false)];
     setState(() => _isTyping = false);
     _scrollToBottom(isNewMessage: true);
@@ -153,78 +185,65 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
     final history = ref.watch(chatHistoryProvider);
     final selectedMood = ref.watch(chatScreenStateProvider);
 
-    // YENI: Klavye görünürlüğüne göre arka plan animasyonu durdur/başlat
-    final keyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
-    if (keyboardVisible) {
-      if (_backgroundAnimationController.isAnimating) {
-        _backgroundAnimationController.stop();
-      }
-    } else {
-      if (!_backgroundAnimationController.isAnimating) {
-        _backgroundAnimationController.repeat(reverse: true);
-      }
-    }
+    // DÜZ: arka plan animasyonu yerine sade arka plan
+    // AppTheme odaklı renk paleti
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('Zihinsel Harbiye'),
-        backgroundColor: Colors.black.withOpacity(0.2),
+        title: const Text('Sohbet'),
+        backgroundColor: AppTheme.primaryColor,
         elevation: 0,
       ),
-      body: AnimatedBuilder(
-        animation: _backgroundAnimationController,
-        builder: (context, child) {
-          final color = _getMoodColor(selectedMood);
-          return Container(
-            decoration: BoxDecoration(
-              gradient: RadialGradient(
-                center: Alignment.topCenter,
-                radius: 2.5,
-                colors: [
-                  color.withOpacity(0.3 + (_backgroundAnimationController.value * 0.1)),
-                  AppTheme.primaryColor,
-                ],
-              ),
-            ),
-            child: child,
-          );
-        },
-        child: Column(
-          children: [
-            Expanded(
-              child: AnimatedSwitcher(
-                duration: 500.ms,
-                transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
-                child: selectedMood == null
-                    ? _SmartBriefingView(onPromptSelected: _onMoodSelected)
-                    : Column(
-                  children: [
-                    const _BattleSummaryCard(),
-                    Expanded(
-                      child: ListView.builder(
-                        controller: _scrollController,
-                        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                        cacheExtent: 300,
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                        itemCount: history.length + (_isTyping ? 1 : 0),
-                        itemBuilder: (context, index) {
-                          if (_isTyping && index == history.length) {
-                            return const _TypingBubble();
-                          }
-                          final message = history[index];
-                          return _MessageBubble(message: message);
-                        },
-                      ),
-                    ),
-                  ],
+      backgroundColor: AppTheme.primaryColor,
+      body: Stack(
+        children: [
+          Column(
+            children: [
+              Expanded(
+                child: AnimatedSwitcher(
+                  duration: 200.ms,
+                  transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
+                  child: selectedMood == null
+                      ? _SmartBriefingView(onPromptSelected: _onMoodSelected)
+                      : RepaintBoundary(
+                          child: ListView.builder(
+                            controller: _scrollController,
+                            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                            cacheExtent: 300,
+                            addAutomaticKeepAlives: false,
+                            addRepaintBoundaries: true,
+                            addSemanticIndexes: false,
+                            padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                            itemCount: history.length + (_isTyping ? 1 : 0),
+                            itemBuilder: (context, index) {
+                              if (_isTyping && index == history.length) {
+                                return const _TypingBubble();
+                              }
+                              final message = history[index];
+                              final bool isLastRealMessage = index == history.length - 1;
+                              return _MessageBubble(message: message, animate: isLastRealMessage);
+                            },
+                          ),
+                        ),
                 ),
               ),
+              if (selectedMood != null) _buildChatInput(),
+            ],
+          ),
+          if (_showScrollToBottom)
+            Positioned(
+              right: 16,
+              bottom: (selectedMood != null) ? 88 : 24,
+              child: FloatingActionButton.small(
+                heroTag: 'toBottom',
+                backgroundColor: AppTheme.lightSurfaceColor,
+                foregroundColor: Colors.white,
+                onPressed: () => _scrollToBottom(isNewMessage: false),
+                child: const Icon(Icons.arrow_downward_rounded),
+              ),
             ),
-            if (selectedMood != null) _buildChatInput(),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -232,52 +251,51 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
   Widget _buildChatInput() {
     return SafeArea(
       top: false,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        margin: const EdgeInsets.only(bottom: 8),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
         child: Row(
           children: [
             Expanded(
-              child: TextField(
-                controller: _controller,
-                textCapitalization: TextCapitalization.sentences,
-                decoration: InputDecoration(
-                  hintText: 'BilgeAI\'ye yaz...',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
-                  filled: true,
-                  fillColor: AppTheme.primaryColor.withOpacity(0.7),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppTheme.lightSurfaceColor,
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
                 ),
-                onSubmitted: (_) => _sendMessage(),
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                child: TextField(
+                  controller: _controller,
+                  textCapitalization: TextCapitalization.sentences,
+                  keyboardType: TextInputType.multiline,
+                  minLines: 1,
+                  maxLines: 4,
+                  decoration: const InputDecoration(
+                    hintText: 'Yaz...',
+                    border: InputBorder.none,
+                  ),
+                  onSubmitted: (_) => _sendMessage(),
+                ),
               ),
             ),
             const SizedBox(width: 8),
             IconButton.filled(
-              onPressed: () => _sendMessage(),
-              icon: const Icon(Icons.send_rounded),
+              onPressed: _isTyping ? null : () => _sendMessage(),
+              icon: _isTyping
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Icon(Icons.send_rounded),
               style: IconButton.styleFrom(
                 backgroundColor: AppTheme.secondaryColor,
                 foregroundColor: AppTheme.primaryColor,
                 padding: const EdgeInsets.all(12),
+                shape: const CircleBorder(),
               ),
             ),
           ],
         ),
-      ).animate().fadeIn(duration: 300.ms),
+      ),
     );
   }
 
-  Color _getMoodColor(Mood? mood) {
-    switch (mood) {
-      case Mood.focused: return AppTheme.secondaryColor;
-      case Mood.goodResult: return AppTheme.successColor;
-      case Mood.stressed:
-      case Mood.badResult: return AppTheme.accentColor;
-      case Mood.tired: return Colors.indigo;
-      case Mood.workshop: return Colors.purple;
-      default: return AppTheme.lightSurfaceColor;
-    }
-  }
 }
 
 class _SmartBriefingView extends ConsumerWidget {
@@ -286,43 +304,6 @@ class _SmartBriefingView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(userProfileProvider).value;
-    final tests = ref.watch(testsProvider).value;
-    final List<Widget> briefingCards = [];
-
-    if (user != null && tests != null) {
-      if (tests.isNotEmpty) {
-        briefingCards.add(_BriefingButton(
-          icon: Icons.flag_circle_rounded,
-          title: "Son Denemeyi Değerlendir",
-          subtitle: "En son eklediğin deneme sonucunu masaya yatıralım.",
-          onTap: () {
-            final lastTest = tests.first;
-            final avgNet = user.testCount > 0 ? user.totalNetSum / user.testCount : 0;
-            onPromptSelected(lastTest.totalNet > avgNet ? 'new_test_good' : 'new_test_bad');
-          },
-          delay: 400.ms,
-        ));
-      }
-      if (user.streak > 2) {
-        briefingCards.add(_BriefingButton(
-          icon: Icons.local_fire_department_rounded,
-          title: "${user.streak} Günlük Seri!",
-          subtitle: "Bu harika gidişatı ve motivasyonunu konuşalım.",
-          onTap: () => onPromptSelected('focused'),
-          delay: 500.ms,
-        ));
-      }
-    }
-
-    briefingCards.add(_BriefingButton(
-      icon: Icons.chat_bubble_outline_rounded,
-      title: "Aklında Ne Var?",
-      subtitle: "Sadece sohbet etmek ve içini dökmek için buradayım.",
-      onTap: () => onPromptSelected('neutral'),
-      delay: 600.ms,
-    ));
-
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -330,13 +311,40 @@ class _SmartBriefingView extends ConsumerWidget {
             child: Icon(Icons.auto_awesome, size: 40, color: AppTheme.primaryColor))
             .animate().fadeIn(delay: 200.ms).scale(),
         const SizedBox(height: 24),
-        Text("Zihinsel Harbiye'ye Hoş Geldin", style: Theme.of(context).textTheme.headlineSmall)
+        Text('Motivasyon Süiti', style: Theme.of(context).textTheme.headlineSmall)
             .animate().fadeIn(delay: 300.ms),
         const SizedBox(height: 8),
-        Text("Sana nasıl yardımcı olabilirim?", style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.secondaryTextColor))
+        Text('İhtiyacını seç, derin ve kişisel bir sohbet başlasın.', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.secondaryTextColor))
             .animate().fadeIn(delay: 300.ms),
         const SizedBox(height: 40),
-        ...briefingCards,
+        _BriefingButton(
+          icon: Icons.flag_circle_rounded,
+          title: 'Deneme Değerlendirme',
+          subtitle: 'Son denemeni hızlı teşhis + 48 saatlik mini plan.',
+          onTap: () => onPromptSelected('trial_review'),
+          delay: 400.ms,
+        ),
+        _BriefingButton(
+          icon: Icons.track_changes_rounded,
+          title: 'Strateji Danışma',
+          subtitle: 'Haftalık ritim, öncelik ve takip metrikleri.',
+          onTap: () => onPromptSelected('strategy_consult'),
+          delay: 500.ms,
+        ),
+        _BriefingButton(
+          icon: Icons.favorite_rounded,
+          title: 'Psikolojik Destek',
+          subtitle: 'Kısa, güvenli, nefes odaklı destek ve mikro adım.',
+          onTap: () => onPromptSelected('psych_support'),
+          delay: 600.ms,
+        ),
+        _BriefingButton(
+          icon: Icons.bolt_rounded,
+          title: 'Motivasyon Köşesi',
+          subtitle: '5 dakikalık mikro meydan okuma ve takip önerisi.',
+          onTap: () => onPromptSelected('motivation_corner'),
+          delay: 700.ms,
+        ),
       ],
     );
   }
@@ -379,90 +387,69 @@ class _BriefingButton extends StatelessWidget {
   }
 }
 
-class _BattleSummaryCard extends ConsumerWidget {
-  const _BattleSummaryCard();
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(userProfileProvider).value;
-    final tests = ref.watch(testsProvider).value;
-    if (user == null || tests == null || tests.isEmpty) return const SizedBox.shrink();
-
-    final lastTestNet = tests.first.totalNet.toStringAsFixed(1);
-    final streak = user.streak.toString();
-    final avgNet = (user.totalNetSum / user.testCount).toStringAsFixed(1);
-
-    return Card(
-      margin: const EdgeInsets.fromLTRB(16, 90, 16, 8),
-      color: Colors.black.withOpacity(0.2),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _SummaryItem(label: "Son Net", value: lastTestNet),
-            _SummaryItem(label: "Ort. Net", value: avgNet),
-            _SummaryItem(label: "Seri", value: streak),
-          ],
-        ),
-      ),
-    ).animate().fadeIn().slideY(begin: -0.5);
-  }
-}
-
-class _SummaryItem extends StatelessWidget {
-  final String label, value;
-  const _SummaryItem({required this.label, required this.value});
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(value, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-        Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor)),
-      ],
-    );
-  }
-}
-
-
 class _MessageBubble extends StatelessWidget {
   final ChatMessage message;
-  const _MessageBubble({required this.message});
+  final bool animate;
+  const _MessageBubble({required this.message, this.animate = false});
 
   @override
   Widget build(BuildContext context) {
     final isUser = message.isUser;
-    return Animate(
-      effects: [
-        FadeEffect(duration: 500.ms, curve: Curves.easeIn),
-        SlideEffect(begin: isUser ? const Offset(0.2, 0) : const Offset(-0.2, 0), curve: Curves.easeOutCubic),
-      ],
+
+    final Color bg = isUser ? AppTheme.secondaryColor : AppTheme.lightSurfaceColor;
+    final Color fg = isUser ? AppTheme.primaryColor : Colors.white;
+
+    final content = GestureDetector(
+      onLongPress: () async {
+        await Clipboard.setData(ClipboardData(text: message.text));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Mesaj kopyalandı')));
+      },
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 8),
+        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
         child: Row(
           mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            if (!isUser) const CircleAvatar(backgroundColor: AppTheme.secondaryColor,
-                child: Icon(Icons.auto_awesome, size: 20, color: AppTheme.primaryColor), radius: 16),
+            if (!isUser)
+              const CircleAvatar(
+                backgroundColor: AppTheme.secondaryColor,
+                foregroundColor: AppTheme.primaryColor,
+                radius: 14,
+                child: Icon(Icons.auto_awesome, size: 16),
+              ),
             if (!isUser) const SizedBox(width: 8),
             Flexible(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: isUser ? AppTheme.secondaryColor : AppTheme.lightSurfaceColor,
-                  borderRadius: BorderRadius.only(
-                    topLeft: const Radius.circular(20), topRight: const Radius.circular(20),
-                    bottomLeft: isUser ? const Radius.circular(20) : const Radius.circular(4),
-                    bottomRight: isUser ? const Radius.circular(4) : const Radius.circular(20),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.82),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: bg,
+                    borderRadius: BorderRadius.only(
+                      topLeft: const Radius.circular(20), topRight: const Radius.circular(20),
+                      bottomLeft: isUser ? const Radius.circular(20) : const Radius.circular(10),
+                      bottomRight: isUser ? const Radius.circular(10) : const Radius.circular(20),
+                    ),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.18), blurRadius: 10, offset: const Offset(0, 2)),
+                    ],
+                  ),
+                  child: Text(
+                    message.text,
+                    style: TextStyle(color: fg, fontSize: 16, height: 1.48),
                   ),
                 ),
-                child: Text(message.text, style: TextStyle(color: isUser ? AppTheme.primaryColor : Colors.white,
-                    fontSize: 16, height: 1.4, fontWeight: isUser ? FontWeight.w500 : FontWeight.normal)),
               ),
             ),
           ],
         ),
       ),
+    );
+
+    if (!animate) return content;
+    return Animate(
+      effects: const [FadeEffect(duration: Duration(milliseconds: 150), curve: Curves.easeIn)],
+      child: content,
     );
   }
 }
@@ -497,7 +484,7 @@ class _TypingBubble extends StatelessWidget {
                     child: Container(
                       margin: const EdgeInsets.symmetric(horizontal: 3),
                       width: 8, height: 8,
-                      decoration: BoxDecoration(color: AppTheme.secondaryTextColor.withOpacity(0.7), shape: BoxShape.circle),
+                      decoration: BoxDecoration(color: AppTheme.secondaryTextColor.withValues(alpha: 0.7), shape: BoxShape.circle),
                     ),
                   );
                 }),

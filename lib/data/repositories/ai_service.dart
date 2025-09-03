@@ -9,6 +9,7 @@ import 'package:bilge_ai/data/models/topic_performance_model.dart';
 import 'package:bilge_ai/core/prompts/strategy_prompts.dart';
 import 'package:bilge_ai/core/prompts/workshop_prompts.dart';
 import 'package:bilge_ai/core/prompts/motivation_prompts.dart';
+import 'package:bilge_ai/core/prompts/motivation_suite_prompts.dart';
 import 'package:bilge_ai/features/stats/logic/stats_analysis.dart';
 import 'package:bilge_ai/features/stats/logic/stats_analysis_provider.dart';
 import 'package:bilge_ai/core/utils/json_text_cleaner.dart';
@@ -291,20 +292,72 @@ class AiService {
     // Önbellekli analiz (varsa)
     final analysis = _ref.read(overallStatsAnalysisProvider).value;
 
-    final prompt = getMotivationPrompt(
-      user: user,
-      tests: tests,
-      analysis: analysis,
-      examName: examType?.displayName,
-      promptType: promptType,
-      emotion: emotion,
-      workshopContext: workshopContext,
-      conversationHistory: conversationHistory,
-      lastUserMessage: lastUserMessage,
-    );
+    // Yeni: Dört mod için özel promptlar
+    String prompt;
+    int maxSentences = 3;
+    switch (promptType) {
+      case 'trial_review':
+        prompt = MotivationSuitePrompts.trialReview(
+          user: user,
+          tests: tests,
+          analysis: analysis,
+          performance: performance,
+          examName: examType?.displayName,
+          conversationHistory: conversationHistory,
+          lastUserMessage: lastUserMessage,
+        );
+        maxSentences = 5;
+        break;
+      case 'strategy_consult':
+        prompt = MotivationSuitePrompts.strategyConsult(
+          user: user,
+          tests: tests,
+          analysis: analysis,
+          performance: performance,
+          examName: examType?.displayName,
+          conversationHistory: conversationHistory,
+          lastUserMessage: lastUserMessage,
+        );
+        maxSentences = 5;
+        break;
+      case 'psych_support':
+        prompt = MotivationSuitePrompts.psychSupport(
+          user: user,
+          examName: examType?.displayName,
+          emotion: emotion,
+          conversationHistory: conversationHistory,
+          lastUserMessage: lastUserMessage,
+        );
+        maxSentences = 5;
+        break;
+      case 'motivation_corner':
+        prompt = MotivationSuitePrompts.motivationCorner(
+          user: user,
+          examName: examType?.displayName,
+          conversationHistory: conversationHistory,
+          lastUserMessage: lastUserMessage,
+        );
+        maxSentences = 5;
+        break;
+      default:
+        prompt = getMotivationPrompt(
+          user: user,
+          tests: tests,
+          analysis: analysis,
+          examName: examType?.displayName,
+          promptType: promptType,
+          emotion: emotion,
+          workshopContext: workshopContext,
+          conversationHistory: conversationHistory,
+          lastUserMessage: lastUserMessage,
+        );
+        maxSentences = 3;
+        break;
+    }
+
     // Daha deterministik yanıtlar için sıcaklık düşürüldü
     final raw = await _callGemini(prompt, expectJson: false, temperature: 0.4);
-    return _limitSentences(raw);
+    return _limitSentences(raw, maxSentences: maxSentences);
   }
 
   // Hafif yardımcılar: UI dış�� tek seferlik hesaplamalarda kullanılabilir

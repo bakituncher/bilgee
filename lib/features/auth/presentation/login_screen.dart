@@ -123,98 +123,165 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Giriş Yap')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 8),
-              Text(
-                'Tekrar Hoş Geldin!',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontSize: 26, fontWeight: FontWeight.w600),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              TextFormField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(labelText: 'E-posta'),
-                validator: (value) {
-                  if (value == null || !value.contains('@')) {
-                    return 'Lütfen geçerli bir e-posta girin.';
-                  }
-                  if (_errorMessage != null) {
-                    return _errorMessage;
-                  }
-                  return null;
-                },
-                onChanged: (_) => setState(() => _errorMessage = null),
-              ),
-              const SizedBox(height: 14),
-              TextFormField(
-                controller: _passwordController,
-                obscureText: _obscurePassword,
-                decoration: InputDecoration(
-                  labelText: 'Şifre',
-                  suffixIcon: IconButton(
-                    icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined),
-                    tooltip: _obscurePassword ? 'Şifreyi göster' : 'Şifreyi gizle',
-                    onPressed: _isLoading
-                        ? null
-                        : () => setState(() => _obscurePassword = !_obscurePassword),
-                  ),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Lütfen şifrenizi girin.';
-                  }
-                  if (_errorMessage != null) {
-                    return _errorMessage;
-                  }
-                  return null;
-                },
-                onChanged: (_) => setState(() => _errorMessage = null),
-              ),
-              const SizedBox(height: 6),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: _isLoading ? null : _showResetPasswordDialog,
-                  style: TextButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    minimumSize: const Size(0, 0),
-                    visualDensity: VisualDensity.compact,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  child: Text(
-                    'Şifremi Unuttum',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 18),
-              ElevatedButton(
-                onPressed: _isLoading ? null : _submit,
-                style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
-                child: _isLoading
-                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Text('Giriş Yap'),
-              ),
-              const SizedBox(height: 12),
-              TextButton(
-                onPressed: () {
-                  context.go(AppRoutes.register);
-                },
-                child: const Text('Hesabın yok mu? Kayıt Ol'),
-              )
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Theme.of(context).colorScheme.surface,
+              Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
             ],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 520),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Logo ve başlık
+                    Column(
+                      children: [
+                        Icon(Icons.auto_awesome_rounded, size: 72, color: Theme.of(context).colorScheme.primary),
+                        const SizedBox(height: 12),
+                        Text('Tekrar Hoş Geldin!', textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),
+                        const SizedBox(height: 6),
+                        Text('Hesabına giriş yap ve kaldığın yerden devam et.', textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodyMedium),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Card(
+                      elevation: 8,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              if (_errorMessage != null && _errorMessage!.isNotEmpty)
+                                Card(
+                                  color: Theme.of(context).colorScheme.errorContainer,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.error_outline, color: Theme.of(context).colorScheme.onErrorContainer),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            _errorMessage!.replaceAll('Exception: ', ''),
+                                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onErrorContainer),
+                                          ),
+                                        ),
+                                        IconButton(
+                                          tooltip: 'Kapat',
+                                          onPressed: _isLoading ? null : () => setState(() => _errorMessage = null),
+                                          icon: Icon(Icons.close_rounded, color: Theme.of(context).colorScheme.onErrorContainer),
+                                        )
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              const SizedBox(height: 6),
+                              TextFormField(
+                                controller: _emailController,
+                                keyboardType: TextInputType.emailAddress,
+                                autofillHints: const [AutofillHints.username, AutofillHints.email],
+                                textInputAction: TextInputAction.next,
+                                decoration: const InputDecoration(labelText: 'E-posta', prefixIcon: Icon(Icons.alternate_email_rounded)),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty || !value.contains('@')) {
+                                    return 'Lütfen geçerli bir e-posta girin.';
+                                  }
+                                  if (_errorMessage != null) {
+                                    return _errorMessage;
+                                  }
+                                  return null;
+                                },
+                                onChanged: (_) => setState(() => _errorMessage = null),
+                                onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
+                              ),
+                              const SizedBox(height: 12),
+                              TextFormField(
+                                controller: _passwordController,
+                                obscureText: _obscurePassword,
+                                autofillHints: const [AutofillHints.password],
+                                textInputAction: TextInputAction.done,
+                                decoration: InputDecoration(
+                                  labelText: 'Şifre',
+                                  prefixIcon: const Icon(Icons.lock_outline_rounded),
+                                  suffixIcon: IconButton(
+                                    icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+                                    tooltip: _obscurePassword ? 'Şifreyi göster' : 'Şifreyi gizle',
+                                    onPressed: _isLoading
+                                        ? null
+                                        : () => setState(() => _obscurePassword = !_obscurePassword),
+                                  ),
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Lütfen şifrenizi girin.';
+                                  }
+                                  if (_errorMessage != null) {
+                                    return _errorMessage;
+                                  }
+                                  return null;
+                                },
+                                onChanged: (_) => setState(() => _errorMessage = null),
+                                onFieldSubmitted: (_) => _isLoading ? null : _submit(),
+                              ),
+                              const SizedBox(height: 6),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: TextButton(
+                                  onPressed: _isLoading ? null : _showResetPasswordDialog,
+                                  style: TextButton.styleFrom(
+                                    padding: EdgeInsets.zero,
+                                    minimumSize: const Size(0, 0),
+                                    visualDensity: VisualDensity.compact,
+                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                  child: Text(
+                                    'Şifremi Unuttum',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                      color: Theme.of(context).colorScheme.primary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              SizedBox(
+                                height: 48,
+                                child: ElevatedButton.icon(
+                                  icon: const Icon(Icons.login_rounded),
+                                  onPressed: _isLoading ? null : _submit,
+                                  label: _isLoading
+                                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                      : const Text('Giriş Yap'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed: _isLoading ? null : () { context.go(AppRoutes.register); },
+                      child: const Text('Hesabın yok mu? Kayıt Ol'),
+                    )
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       ),

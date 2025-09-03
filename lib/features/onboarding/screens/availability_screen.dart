@@ -19,6 +19,27 @@ final clipboardProvider = StateProvider.autoDispose<List<String>?>((ref) => null
 class AvailabilityScreen extends ConsumerWidget {
   const AvailabilityScreen({super.key});
 
+  Widget _header(BuildContext context, {double progress = 1}) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Zaman Seçimi',
+          style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: LinearProgressIndicator(
+            value: progress,
+            minHeight: 8,
+          ),
+        ),
+      ],
+    );
+  }
+
   static const List<String> days = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
   // *** KESİN ÇÖZÜM: 24 SAATLİK, AI DOSTU ZAMAN DİLİMLERİ ***
   static const Map<String, List<String>> timeSlotGroups = {
@@ -96,15 +117,7 @@ class AvailabilityScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "Harekât Zamanlarını Belirle",
-              style: textTheme.headlineSmall,
-            ).animate().fadeIn(duration: 400.ms),
-            const SizedBox(height: 8),
-            Text(
-              "Stratejik planın, sadece bu haritada işaretlediğin zamanlara göre oluşturulacak. Unutma, her saniye önemlidir.",
-              style: textTheme.bodyLarge?.copyWith(color: AppTheme.secondaryTextColor),
-            ).animate().fadeIn(delay: 200.ms, duration: 400.ms),
+            _header(context, progress: 1),
             const SizedBox(height: 24),
             ...days.map((day) {
               return _DayAvailabilityCard(

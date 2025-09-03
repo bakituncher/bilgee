@@ -12,14 +12,35 @@ import 'package:bilge_ai/core/theme/app_theme.dart';
 class ExamSelectionScreen extends ConsumerWidget {
   const ExamSelectionScreen({super.key});
 
+  Widget _header(BuildContext context, {double progress = 2 / 3}) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Sınav Seçimi',
+          style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: LinearProgressIndicator(
+            value: progress,
+            minHeight: 8,
+          ),
+        ),
+      ],
+    );
+  }
+
   // Bu fonksiyon artık hem seçim sonrası navigasyonu hem de veritabanı kaydını yönetecek.
   Future<void> _handleSelection(BuildContext context, WidgetRef ref, Function saveData) async {
     // 1. Veritabanına kaydet.
     await saveData();
 
-    // !!!İŞTE ÇÖZÜM BU SATIRDA!!!
-    // Navigasyondan önce güncel profil verisinin gelmesini bekle.
-    await ref.refresh(userProfileProvider.future);
+    // Profil verisini yenile ve okunmasını bekle.
+    ref.refresh(userProfileProvider);
+    await ref.read(userProfileProvider.future);
 
     // 2. Artık güncel veriyle navigasyonu güvenle kontrol et.
     if (!context.mounted) return;
@@ -161,44 +182,48 @@ class ExamSelectionScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
-    // Ayarlar'dan geliniyorsa geri butonu göster
     final canPop = context.canPop();
 
     return Scaffold(
       appBar: AppBar(
-        // Eğer geri dönülemiyorsa (ilk kurulumsa) başlığı gizle
-        title: canPop ? const Text("Sınavı Değiştir") : null,
+        title: canPop ? const Text("Sınavı Değiştir") : const Text('Sınav Seçimi'),
         automaticallyImplyLeading: canPop,
       ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                canPop ? 'Yeni Sınavını Seç' : 'Harika!',
-                style: textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.bold),
-              ),
+              _header(context),
+              const SizedBox(height: 12),
               Text(
                 canPop
                     ? 'Stratejilerin ve analizlerin bu seçime göre güncellenecek.'
-                    : 'Şimdi hazırlanacağın sınavı seçerek yolculuğuna başla.',
+                    : 'Hazırlanacağın sınavı seçerek yolculuğuna devam et.',
                 style: textTheme.titleMedium,
               ),
-              const SizedBox(height: 40),
-              Animate(
-                effects: const [FadeEffect(), SlideEffect(begin: Offset(0, 0.2))],
-                child: _buildExamCard(context, "YKS", () => _onExamTypeSelected(context, ref, ExamType.yks)),
-              ),
-              Animate(
-                effects: const [FadeEffect(), SlideEffect(begin: Offset(0, 0.2))],
-                child: _buildExamCard(context, "LGS", () => _onExamTypeSelected(context, ref, ExamType.lgs)),
-              ),
-              Animate(
-                effects: const [FadeEffect(), SlideEffect(begin: Offset(0, 0.2))],
-                child: _buildExamCard(context, "KPSS", () => _showKpssSubTypeSelection(context, ref)),
+              const SizedBox(height: 24),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Animate(
+                        effects: const [FadeEffect(), SlideEffect(begin: Offset(0, 0.2))],
+                        child: _buildExamCard(context, "YKS", () => _onExamTypeSelected(context, ref, ExamType.yks)),
+                      ),
+                      Animate(
+                        effects: const [FadeEffect(), SlideEffect(begin: Offset(0, 0.2))],
+                        child: _buildExamCard(context, "LGS", () => _onExamTypeSelected(context, ref, ExamType.lgs)),
+                      ),
+                      Animate(
+                        effects: const [FadeEffect(), SlideEffect(begin: Offset(0, 0.2))],
+                        child: _buildExamCard(context, "KPSS", () => _showKpssSubTypeSelection(context, ref)),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),

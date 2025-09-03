@@ -11,563 +11,335 @@ const {onDocumentDeleted, onDocumentCreated} = require("firebase-functions/v2/fi
 admin.initializeApp();
 const db = admin.firestore();
 
-async function deletePostAssetsBySlug(slug) {
-  if (!slug) return;
-  try {
-    const bucket = admin.storage().bucket();
-    const prefix = `blog_covers/${slug}/`;
-    await bucket.deleteFiles({prefix});
-    logger.info(`Storage temizlendi: ${prefix}`);
-  } catch (e) {
-    logger.warn("Storage dosyaları temizlenemedi", {slug, error: String(e)});
-  }
+// ---- FCM TOKEN KAYDI ----
+exports.registerFcmToken = onCall({region: 'us-central1'}, async (request) => {
+  if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
+  const uid = request.auth.uid;
+  const token = String(request.data?.token || '');
+  const platform = String(request.data?.platform || 'unknown');
+  const lang = String(request.data?.lang || 'tr');
+  if (!token || token.length < 10) throw new HttpsError('invalid-argument', 'Geçerli token gerekli');
+  const deviceId = token.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 140);
+  const ref = db.collection('users').doc(uid).collection('devices').doc(deviceId);
+  await ref.set({
+    uid,
+    token,
+    platform,
+    lang,
+    disabled: false,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  }, {merge: true});
+  return {ok: true};
+});
+
+async function getActiveTokens(uid) {
+  const snap = await db.collection('users').doc(uid).collection('devices').where('disabled','==', false).limit(50).get();
+  if (snap.empty) return [];
+  return snap.docs.map((d)=> (d.data()||{}).token).filter(Boolean);
 }
 
-// quests.json dosyasını okuyup bir değişkende tutuyoruz.
-const QUEST_TEMPLATES = (() => {
-  try {
-    const p = path.join(__dirname, "quests.json");
-    const raw = fs.readFileSync(p, "utf8");
-    return JSON.parse(raw);
-  } catch (error) {
-    logger.error("quests.json dosyası okunamadı!", error);
-    return []; // Hata durumunda boş bir dizi döndür
-  }
-})();
-
-function routeKeyFromPath(pathname) {
-  switch (pathname) {
-    case '/home': return 'home';
-    case '/home/pomodoro': return 'pomodoro';
-    case '/coach': return 'coach';
-    case '/home/weekly-plan': return 'weeklyPlan';
-    case '/home/stats': return 'stats';
-    case '/home/add-test': return 'addTest';
-    case '/home/quests': return 'quests';
-    case '/ai-hub/strategic-planning': return 'strategy';
-    case '/ai-hub/weakness-workshop': return 'workshop';
-    case '/availability': return 'availability';
-    case '/profile/avatar-selection': return 'avatar';
-    case '/arena': return 'arena';
-    case '/library': return 'library';
-    case '/ai-hub/motivation-chat': return 'motivationChat';
-    default: return 'home';
-  }
+function dayKeyIstanbul(d = nowIstanbul()) {
+  return `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;
 }
 
-function personalizeTemplate(q, userData, analysis) {
-  let title = q.title || 'Görev';
-  let description = q.description || '';
-  const tags = Array.isArray(q.tags) ? [...q.tags] : [];
-
-  let subject = null;
-  const weakest = analysis?.weakestSubjectByNet;
-  const strongest = analysis?.strongestSubjectByNet;
-
-  const needsSubject = (typeof title === 'string' && title.includes('{subject}'))
-                    || (typeof description === 'string' && description.includes('{subject}'))
-                    || tags.some((t) => String(t).startsWith('subject:'));
-
-  if (needsSubject) {
-    if (tags.includes('weakness') && weakest && weakest !== 'Belirlenemedi') subject = weakest;
-    else if (tags.includes('strength') && strongest && strongest !== 'Belirlenemedi') subject = strongest;
-    else subject = userData?.selectedExamSection || 'Seçili Ders';
-
-    title = title.replaceAll('{subject}', subject);
-    description = description.replaceAll('{subject}', subject);
-    if (!tags.some((t) => String(t).startsWith('subject:'))) tags.push(`subject:${subject}`);
-  }
-
-  return { title, description, tags };
-}
-
-/**
- * Kullanıcı verisine göre basit bir görev seçimi yapar (kişiselleştirme dahil).
- * @param {object} userData Kullanıcının Firestore'daki kök verisi.
- * @param {object|null} analysis Kullanıcının performans/analiz özeti (opsiyonel).
- * @return {Array<object>} Seçilen yeni görevler.
- */
-function pickDailyQuestsForUser(userData, analysis) {
-  const shuffled = [...QUEST_TEMPLATES].sort(() => Math.random() - 0.5);
-  const selected = [];
-  const usedCategories = new Set();
-  for (const q of shuffled) {
-    if (selected.length >= 5) break;
-    if (usedCategories.has(q.category) && Math.random() < 0.5) continue;
-    selected.push(q);
-    usedCategories.add(q.category);
-  }
-  const now = admin.firestore.Timestamp.now();
-  return selected.map((q) => {
-    const { title, description, tags } = personalizeTemplate(q, userData, analysis);
-    const actionRoute = q.actionRoute || '/home';
-    const routeKey = routeKeyFromPath(actionRoute);
-    return {
-      qid: q.id,
-      title,
-      description,
-      type: q.type || 'daily',
-      category: q.category,
-      progressType: q.progressType || 'increment',
-      reward: q.reward,
-      goalValue: q.goalValue,
-      currentProgress: 0,
-      isCompleted: false,
-      actionRoute,
-      routeKey,
-      tags,
-      rewardClaimed: false,
-      createdAt: now,
-      schemaVersion: 2,
-    };
+async function canSendMoreToday(uid, maxPerDay = 3) {
+  const countersRef = db.collection('users').doc(uid).collection('state').doc('notification_counters');
+  let allowed = false;
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(countersRef);
+    const today = dayKeyIstanbul();
+    if (!snap.exists) {
+      // İlk kez: bu çağrıda bir gönderim yapılacağından sent=1
+      tx.set(countersRef, {day: today, sent: 1, updatedAt: admin.firestore.FieldValue.serverTimestamp()});
+      allowed = true;
+      return;
+    }
+    const d = snap.data() || {};
+    let sent = Number(d.sent || 0);
+    let day = String(d.day || '');
+    if (day !== today) { day = today; sent = 0; }
+    if (sent < maxPerDay) {
+      tx.set(countersRef, {day, sent: sent + 1, updatedAt: admin.firestore.FieldValue.serverTimestamp()}, {merge: true});
+      allowed = true;
+    } else {
+      allowed = false;
+    }
   });
+  return allowed;
 }
 
-function nowIstanbul() {
-  const now = new Date();
+async function computeInactivityHours(userRef) {
+  // user_activity bugun ve dunden kontrol edilir; yoksa app_state.lastActiveTs kullan
   try {
-    return new Date(now.toLocaleString('en-US', {timeZone: 'Europe/Istanbul'}));
+    const now = nowIstanbul();
+    const ids = [];
+    const today = dayKeyIstanbul(now);
+    const y = new Date(now); y.setDate(now.getDate()-1);
+    const yesterday = dayKeyIstanbul(y);
+    ids.push(today, yesterday);
+    let lastTs = 0;
+    for (const id of ids) {
+      const snap = await userRef.collection('user_activity').doc(id).get();
+      if (snap.exists) {
+        const data = snap.data() || {};
+        const visits = Array.isArray(data.visits) ? data.visits : [];
+        for (const v of visits) {
+          const t = typeof v === 'number' ? v : (v?.ts || v?.t || 0);
+          if (typeof t === 'number' && t > lastTs) lastTs = t;
+        }
+      }
+    }
+    if (lastTs === 0) {
+      const app = await userRef.collection('state').doc('app_state').get();
+      const t = app.exists ? (app.data()||{}).lastActiveTs : 0;
+      if (typeof t === 'number') lastTs = t;
+    }
+    if (lastTs === 0) return 1e6; // bilinmiyorsa çok uzun kabul et
+    const diffMs = now.getTime() - lastTs;
+    return Math.max(0, Math.floor(diffMs / (1000*60*60)));
   } catch(_) {
-    return now; // fallback
+    return 1e6;
   }
 }
 
-async function getUserContext(userRef) {
-  const ctx = { analysis: null, stats: null, app: null, user: null, yesterdayInactive: false, examType: null, usedFeatures: {}, notUsedFeatures: {} };
-  const userSnap = await userRef.get();
-  ctx.user = userSnap.exists ? userSnap.data() : {};
-  ctx.examType = ctx.user?.selectedExam || null;
-  try {
-    const a = await userRef.collection('performance').doc('analysis_summary').get();
-    ctx.analysis = a.exists ? a.data() : null;
-  } catch(_) {}
-  try {
-    const s = await userRef.collection('state').doc('stats').get();
-    ctx.stats = s.exists ? s.data() : null;
-  } catch(_) {}
-  try {
-    const app = await userRef.collection('state').doc('app_state').get();
-    ctx.app = app.exists ? app.data() : null;
-  } catch(_) {}
-  // Dün aktif miydi? user_activity günlükleri üzerinden bak
-  try {
-    const d = nowIstanbul();
-    const y = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1);
-    const id = `${y.getFullYear().toString().padStart(4,'0')}-${(y.getMonth()+1).toString().padStart(2,'0')}-${y.getDate().toString().padStart(2,'0')}`;
-    const act = await userRef.collection('user_activity').doc(id).get();
-    const data = act.data() || {};
-    const visits = Array.isArray(data.visits) ? data.visits : [];
-    ctx.yesterdayInactive = visits.length === 0;
-  } catch(_) {}
-  return ctx;
-}
-
-function timeOfDayLabel(d) {
-  const h = d.getHours();
-  if (h < 12) return 'morning';
-  if (h < 18) return 'afternoon';
-  return 'night';
-}
-
-function evaluateTriggerConditions(template, ctx) {
-  const cond = template.triggerConditions || {};
-  if (!cond || Object.keys(cond).length === 0) return true;
-  const now = nowIstanbul();
-  // Zaman dilimi
-  if (cond.timeOfDay) {
-    const wanted = Array.isArray(cond.timeOfDay) ? cond.timeOfDay : [cond.timeOfDay];
-    if (!wanted.includes(timeOfDayLabel(now))) return false;
-  }
-  // Günler
-  if (cond.dayOfWeek) {
-    const map = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
-    const today = map[now.getDay()];
-    const wanted = Array.isArray(cond.dayOfWeek) ? cond.dayOfWeek : [cond.dayOfWeek];
-    if (!wanted.includes(today)) return false;
-  }
-  // Dün pasif miydi?
-  if (cond.wasInactiveYesterday === true && ctx.yesterdayInactive !== true) return false;
-  // Zayıf/güçlü ders
-  if (cond.hasWeakSubject === true) {
-    const w = ctx.analysis?.weakestSubjectByNet;
-    if (!w || w === 'Belirlenemedi') return false;
-  }
-  if (cond.hasStrongSubject === true) {
-    const s = ctx.analysis?.strongestSubjectByNet;
-    if (!s || s === 'Belirlenemedi') return false;
-  }
-  // Galaksi zayıf konu vb. (elde veri yoksa pasifle)
-  if (cond.hasWeakTopicInGalaxy === true) {
-    // Performans özeti yoksa tetikleme
-    if (!ctx.analysis) return false;
-  }
-  if (cond.hasStaleSubject === true) {
-    if (!ctx.analysis) return false;
-  }
-  // Sınav tipi
-  if (cond.examType) {
-    const wanted = Array.isArray(cond.examType) ? cond.examType : [cond.examType];
-    if (!ctx.examType || !wanted.includes(ctx.examType)) return false;
-  }
-  // Özellik kullanımına göre (basit sezgisel)
-  if (cond.notUsedFeature) {
-    // app_state üzerindeki bayraklardan basit okuma; bilinmiyorsa eliyoruz
-    const f = String(cond.notUsedFeature);
-    const used = ctx.app?.[`feature_${f}_used`];
-    if (used === true) return false;
-  }
-  if (cond.usedFeatureRecently) {
-    const f = String(cond.usedFeatureRecently);
-    const used = ctx.app?.[`feature_${f}_used`];
-    if (used !== true) return false;
-  }
-  if (cond.lowYesterdayPlanRatio === true) {
-    const r = ctx.user?.lastScheduleCompletionRatio;
-    if (!(typeof r === 'number' && r < 0.5)) return false;
-  }
-  if (cond.highYesterdayPlanRatio === true) {
-    const r = ctx.user?.lastScheduleCompletionRatio;
-    if (!(typeof r === 'number' && r >= 0.85)) return false;
-  }
-  return true;
-}
-
-function scoreTemplateForUser(t, ctx) {
-  let score = (t.reward || 0);
-  const tags = t.tags || [];
-  if (tags.includes('high_value')) score += 40;
-  if (tags.includes('weakness') && ctx.analysis?.weakestSubjectByNet && ctx.analysis.weakestSubjectByNet !== 'Belirlenemedi') score += 25;
-  if (tags.includes('strength') && ctx.analysis?.strongestSubjectByNet && ctx.analysis.strongestSubjectByNet !== 'Belirlenemedi') score += 15;
-  if (tags.includes('quick_win')) score += 5;
-  if (t.category === 'focus' && ctx.stats?.streak && ctx.stats.streak < 3) score += 8;
-  if (t.category === 'practice' && (ctx.user?.recentPracticeVolumes ? Object.keys(ctx.user.recentPracticeVolumes).length < 3 : true)) score += 6;
-  return score;
-}
-
-function pickTemplatesForType(type, ctx, desiredCount) {
-  const pool = QUEST_TEMPLATES.filter((q) => (q.type || 'daily') === type).filter((q) => evaluateTriggerConditions(q, ctx));
-  // Skorla ve çeşitlendir
-  const scored = pool.map((q) => ({q, s: scoreTemplateForUser(q, ctx)})).sort((a,b)=> b.s - a.s);
-  const selected = [];
-  const usedCategories = new Set();
-  for (const it of scored) {
-    if (selected.length >= desiredCount) break;
-    const q = it.q;
-    // kategori çeşitliliği
-    if (usedCategories.has(q.category) && Math.random() < 0.45) continue;
-    selected.push(q);
-    usedCategories.add(q.category);
-  }
-  return selected;
-}
-
-function materializeTemplates(templates, userData, analysis) {
-  const now = admin.firestore.Timestamp.now();
-  return templates.map((q) => {
-    const { title, description, tags } = personalizeTemplate(q, userData, analysis);
-    const actionRoute = q.actionRoute || '/home';
-    const routeKey = routeKeyFromPath(actionRoute);
+function buildInactivityTemplate(inactHours, examType) {
+  // Basit örnek şablonlar
+  if (inactHours >= 72) {
     return {
-      qid: q.id,
-      title,
-      description,
-      type: q.type || 'daily',
-      category: q.category,
-      progressType: q.progressType || 'increment',
-      reward: q.reward,
-      goalValue: q.goalValue,
-      currentProgress: 0,
-      isCompleted: false,
-      actionRoute,
-      routeKey,
-      tags,
-      rewardClaimed: false,
-      createdAt: now,
-      schemaVersion: 2,
+      title: 'Geri dön ve hedefini yakala! 💪',
+      body: examType ? `${examType} için kaldığın yerden devam edelim. Şimdi 1 mini görevle açılış yap!` : 'Bugün bir adım atmak için harika bir an. 10 dakikalık bir görev seni bekliyor!',
+      route: '/home/quests',
     };
-  });
-}
-
-async function upsertSet(ref, list) {
-  const existing = await ref.get();
-  const batch = db.batch();
-  const seen = new Set();
-  list.forEach((q) => { seen.add(q.qid); batch.set(ref.doc(q.qid), q, {merge: true}); });
-  // Sil: sadece aynı tip koleksiyonda olup yeni listede olmayanlar ve daily için (haftalık/aylıkta koru)
-  existing.docs.forEach((d) => {
-    const data = d.data() || {};
-    const type = data.type || 'daily';
-    if (type === 'daily' && !seen.has(d.id)) batch.delete(d.ref);
-  });
-  await batch.commit();
-}
-
-async function ensureWeeklyAndMonthly(userRef, userData, analysis, force = false) {
-  const ctx = await getUserContext(userRef);
-  // Haftalık: bu haftanın başlangıcına bak
-  const now = nowIstanbul();
-  const weekStart = new Date(now);
-  weekStart.setDate(now.getDate() - (now.getDay() === 0 ? 6 : (now.getDay()-1))); // Pazartesi başlangıç
-  weekStart.setHours(0,0,0,0);
-  const weekKey = `${weekStart.getFullYear()}-${(weekStart.getMonth()+1).toString().padStart(2,'0')}-${weekStart.getDate().toString().padStart(2,'0')}`;
-
-  const weeklyCol = userRef.collection('weekly_quests');
-  const weeklySnap = await weeklyCol.where('weekKey', '==', weekKey).limit(1).get();
-  if (weeklySnap.empty || force) {
-    if (force) {
-      const toDel = await weeklyCol.where('weekKey', '==', weekKey).get();
-      const delBatch = db.batch();
-      toDel.docs.forEach((d)=> delBatch.delete(d.ref));
-      if (!toDel.empty) await delBatch.commit();
-    }
-    const tpls = pickTemplatesForType('weekly', ctx, 6);
-    const list = materializeTemplates(tpls, userData, analysis).map((x)=> ({...x, weekKey}));
-    const batch = db.batch();
-    list.forEach((q)=> batch.set(weeklyCol.doc(q.qid), q, {merge:true}));
-    await batch.commit();
   }
-
-  // Aylık: ay başlangıcı
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const monthKey = `${monthStart.getFullYear()}-${(monthStart.getMonth()+1).toString().padStart(2,'0')}`;
-  const monthlyCol = userRef.collection('monthly_quests');
-  const monthlySnap = await monthlyCol.where('monthKey', '==', monthKey).limit(1).get();
-  if (monthlySnap.empty || force) {
-    if (force) {
-      const toDel = await monthlyCol.where('monthKey', '==', monthKey).get();
-      const delBatch = db.batch();
-      toDel.docs.forEach((d)=> delBatch.delete(d.ref));
-      if (!toDel.empty) await delBatch.commit();
-    }
-    const tpls = pickTemplatesForType('monthly', ctx, 6);
-    const list = materializeTemplates(tpls, userData, analysis).map((x)=> ({...x, monthKey}));
-    const batch = db.batch();
-    list.forEach((q)=> batch.set(monthlyCol.doc(q.qid), q, {merge:true}));
-    await batch.commit();
+  if (inactHours >= 24) {
+    return {
+      title: 'Bir gün ara verdin. Şimdi hızlanma zamanı! ⚡',
+      body: 'Hedefini 10’a çıkar: kısa bir pratikle ivme yakala! 🎯',
+      route: '/home/add-test',
+    };
   }
-}
-
-function pickDailyQuestsForUser(userData, analysis, ctx) {
-  const tpls = pickTemplatesForType('daily', ctx, 7);
-  return materializeTemplates(tpls, userData, analysis);
-}
-
-/**
- * Tüm kullanıcılar için günlük/haftalık/aylık görevleri güncelle.
- */
-async function generateQuestsForAllUsers() {
-  const usersSnap = await db.collection("users").get();
-  const batchPromises = [];
-  let batch = db.batch();
-  let opCount = 0;
-
-  for (const doc of usersSnap.docs) {
-    const userRef = doc.ref;
-    let analysis = null; let ctx = null;
-    try {
-      const a = await userRef.collection('performance').doc('analysis_summary').get();
-      analysis = a.exists ? a.data() : null;
-    } catch (_) { analysis = null; }
-    ctx = await getUserContext(userRef);
-
-    // DAILY
-    const dailyRef = userRef.collection("daily_quests");
-    const daily = pickDailyQuestsForUser(doc.data(), analysis, ctx);
-    const existing = await dailyRef.get();
-    existing.docs.forEach((d) => { batch.delete(d.ref); opCount++; });
-    daily.forEach((q) => { batch.set(dailyRef.doc(q.qid), q, {merge:true}); opCount++; });
-    batch.update(userRef, { lastQuestRefreshDate: admin.firestore.FieldValue.serverTimestamp() });
-
-    // WEEKLY / MONTHLY ensure
-    await ensureWeeklyAndMonthly(userRef, doc.data(), analysis, false);
-
-    if (opCount > 400) { batchPromises.push(batch.commit()); batch = db.batch(); opCount = 0; }
-  }
-
-  if (opCount > 0) batchPromises.push(batch.commit());
-  await Promise.all(batchPromises);
-}
-
-// Her gün gece yarısı tüm kullanıcılar için görevleri yenileyen zamanlanmış fonksiyon.
-exports.generateDailyQuests = onSchedule(
-    {schedule: "0 0 * * *", timeZone: "Europe/Istanbul"},
-    async () => {
-      await generateQuestsForAllUsers();
-      logger.info("Günlük/Haftalık/Aylık görevler güncellendi.");
-    },
-);
-
-// Tek bir kullanıcı için GÜNLÜK görevleri yeniden oluşturan callable (weekly/monthly korunur)
-exports.regenerateDailyQuests = onCall(
-  {region: 'us-central1'},
-  async (request) => {
-    if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
-    const uid = request.auth.uid;
-    const userRef = db.collection('users').doc(uid);
-    const userSnap = await userRef.get();
-    if (!userSnap.exists) throw new HttpsError('not-found', 'Kullanıcı yok');
-    let analysis = null; let ctx = null;
-    try {
-      const a = await userRef.collection('performance').doc('analysis_summary').get();
-      analysis = a.exists ? a.data() : null;
-    } catch (_) { analysis = null; }
-    ctx = await getUserContext(userRef);
-
-    const daily = pickDailyQuestsForUser(userSnap.data(), analysis, ctx);
-    const dailyRef = userRef.collection('daily_quests');
-    const existing = await dailyRef.get();
-    const batch = db.batch();
-    existing.docs.forEach((d) => batch.delete(d.ref));
-    daily.forEach((q) => batch.set(dailyRef.doc(q.qid), q, {merge: true}));
-    batch.update(userRef, { lastQuestRefreshDate: admin.firestore.FieldValue.serverTimestamp() });
-    await batch.commit();
-
-    // Weekly/Aylık görevler: force parametresine göre yenile
-    const forceWM = request.data && request.data.forceWeeklyMonthly === true;
-    await ensureWeeklyAndMonthly(userRef, userSnap.data(), analysis, forceWM);
-
-    return {quests: daily};
-  },
-);
-
-function questCollections(userId) {
-  const base = db.collection('users').doc(userId);
-  return [base.collection('daily_quests'), base.collection('weekly_quests'), base.collection('monthly_quests')];
-}
-
-async function findQuestDoc(userId, questId) {
-  const cols = questCollections(userId);
-  for (const c of cols) {
-    const d = await c.doc(questId).get();
-    if (d.exists) return d;
+  if (inactHours >= 3) {
+    return {
+      title: 'Mini odak molası ister misin? ⏱️',
+      body: 'Sadece 15 dakikalık Pomodoro ile müthiş bir geri dönüş yap. 10’a çıkarma yolunda ilk adım!',
+      route: '/home/pomodoro',
+    };
   }
   return null;
 }
 
-// Bir görevi tamamlandı olarak işaretleyen fonksiyon. (server tarafa doğrulama basit)
-exports.completeQuest = onCall({region: "us-central1"}, async (request) => {
-  if (!request.auth) throw new HttpsError("unauthenticated", "Oturum gerekli");
-  const questId = request.data?.questId;
-  if (!questId) throw new HttpsError("invalid-argument", "questId gerekli");
-  const uid = request.auth.uid;
-  const snap = await findQuestDoc(uid, questId);
-  if (!snap) throw new HttpsError("not-found", "Görev bulunamadı");
-  const qData = snap.data() || {};
-  if (qData.isCompleted) return {alreadyCompleted: true};
-
-  // Basit anti-fake: increment tipi için minimum mevcut ilerleme kontrolü
-  const currentProgress = Number(qData.currentProgress || 0);
-  const goalValue = Number(qData.goalValue || 0);
-  if ((qData.progressType || 'increment') === 'increment' && currentProgress < Math.max(1, Math.floor(goalValue*0.7))) {
-    // Çok düşük ilerlemede doğrudan tamamlamayı engelle (istemci yanlışı/hileyi kes)
-    throw new HttpsError('failed-precondition', 'Görev ilerlemesi yetersiz');
+async function sendPushToTokens(tokens, payload) {
+  if (!tokens || tokens.length === 0) return {successCount: 0, failureCount: 0};
+  logger.info('sendPushToTokens', { tokenCount: tokens.length, hasImage: !!payload.imageUrl, type: payload.type || 'unknown' });
+  const message = {
+    notification: { title: payload.title, body: payload.body },
+    data: { route: payload.route || '/home', campaignId: payload.campaignId || '', type: payload.type || 'inactivity' },
+    android: {
+      notification: {
+        channelId: 'bilge_general',
+        clickAction: 'FLUTTER_NOTIFICATION_CLICK',
+        priority: 'HIGH',
+        ...(payload.imageUrl ? { imageUrl: payload.imageUrl } : {}),
+      },
+    },
+    apns: {
+      payload: { aps: { sound: 'default', 'mutable-content': 1 } },
+      fcmOptions: payload.imageUrl ? { imageUrl: payload.imageUrl } : undefined,
+    },
+    tokens,
+  };
+  try {
+    const resp = await admin.messaging().sendEachForMulticast(message);
+    return {successCount: resp.successCount, failureCount: resp.failureCount};
+  } catch (e) {
+    logger.error('FCM send failed', { error: String(e) });
+    return {successCount: 0, failureCount: tokens.length};
   }
-
-  await snap.ref.update({
-    isCompleted: true,
-    currentProgress: goalValue,
-    completionDate: admin.firestore.Timestamp.now(),
-  });
-  return {success: true};
-});
-
-// Gemini API'sine güvenli bir şekilde istek atan proxy fonksiyonu.
-const GEMINI_KEY = process.env.GEMINI_API_KEY;
-
-// Güvenlik ve kötüye kullanım önleme ayarları
-const GEMINI_PROMPT_MAX_CHARS = parseInt(process.env.GEMINI_PROMPT_MAX_CHARS || '50000', 10);
-const GEMINI_MAX_OUTPUT_TOKENS = parseInt(process.env.GEMINI_MAX_OUTPUT_TOKENS || '50000', 10);
-const GEMINI_RATE_LIMIT_WINDOW_SEC = parseInt(process.env.GEMINI_RATE_LIMIT_WINDOW_SEC || '60', 10);
-const GEMINI_RATE_LIMIT_MAX = parseInt(process.env.GEMINI_RATE_LIMIT_MAX || '5', 10);
-
-async function enforceRateLimit(key, windowSeconds, maxCount) {
-  const ref = db.collection('rate_limits').doc(key);
-  const now = Date.now();
-  const windowMs = windowSeconds * 1000;
-  await db.runTransaction(async (tx) => {
-    const snap = await tx.get(ref);
-    if (!snap.exists) {
-      tx.set(ref, {count: 1, windowStart: now});
-      return;
-    }
-    const data = snap.data();
-    let {count, windowStart} = data;
-    if (typeof windowStart !== 'number') windowStart = now;
-    if (now - windowStart > windowMs) {
-      tx.set(ref, {count: 1, windowStart: now});
-      return;
-    }
-    if (count >= maxCount) {
-      throw new HttpsError('resource-exhausted', 'Oran sınırı aşıldı. Lütfen sonra tekrar deneyin.');
-    }
-    tx.update(ref, {count: count + 1});
-  });
 }
 
-exports.generateGemini = onCall(
-  {region: 'us-central1', timeoutSeconds: 60, memory: '512MiB'},
-  async (request) => {
-    if (!request.auth) {
-      throw new HttpsError('unauthenticated', 'Oturum gerekli');
-    }
-    if (!GEMINI_KEY) {
-      throw new HttpsError('failed-precondition', 'Sunucu Gemini anahtarı tanımlı değil.');
-    }
-    const prompt = request.data?.prompt;
-    const expectJson = !!request.data?.expectJson;
-    // Yeni: sıcaklık isteğe bağlı
-    let temperature = 0.8;
-    if (typeof request.data?.temperature === 'number' && isFinite(request.data.temperature)) {
-      // Güvenli aralık [0.1, 1.0]
-      temperature = Math.min(1.0, Math.max(0.1, request.data.temperature));
-    }
+async function dispatchInactivityPushBatch(limitUsers = 500) {
+  const usersSnap = await db.collection('users').limit(5000).get();
+  let processed = 0, sent = 0;
+  for (const doc of usersSnap.docs) {
+    if (processed >= limitUsers) break;
+    const uid = doc.id;
+    const userRef = doc.ref;
+    const inact = await computeInactivityHours(userRef);
+    const examType = (doc.data()||{}).selectedExam || null;
+    const tpl = buildInactivityTemplate(inact, examType);
+    if (!tpl) { processed++; continue; }
+    const allowed = await canSendMoreToday(uid, 3);
+    if (!allowed) { processed++; continue; }
+    const tokens = await getActiveTokens(uid);
+    if (tokens.length === 0) { processed++; continue; }
+    await sendPushToTokens(tokens, { ...tpl, type: 'inactivity' });
+    sent++;
+    processed++;
+  }
+  logger.info('dispatchInactivityPushBatch done', {processed, sent});
+  return {processed, sent};
+}
 
-    if (typeof prompt !== 'string' || !prompt.trim()) {
-      throw new HttpsError('invalid-argument', 'Geçerli bir prompt gerekli');
+function scheduleSpecAt(hour, minute = 0) {
+  return {schedule: `${minute} ${hour} * * *`, timeZone: 'Europe/Istanbul'};
+}
+
+exports.dispatchInactivityMorning = onSchedule(scheduleSpecAt(9, 0), async () => {
+  await dispatchInactivityPushBatch(1500);
+});
+exports.dispatchInactivityAfternoon = onSchedule(scheduleSpecAt(15, 0), async () => {
+  await dispatchInactivityPushBatch(1500);
+});
+exports.dispatchInactivityEvening = onSchedule(scheduleSpecAt(20, 30), async () => {
+  await dispatchInactivityPushBatch(1500);
+});
+
+// ---- ADMIN KAMPANYA GÖNDERİMİ ----
+async function selectAudienceUids(audience) {
+  let query = db.collection('users');
+  if (audience?.type === 'exam' && audience.examType) {
+    query = query.where('selectedExam', '==', audience.examType);
+    const snap = await query.select().limit(20000).get();
+    return snap.docs.map((d)=> d.id);
+  }
+  if (audience?.type === 'exams' && Array.isArray(audience.exams) && audience.exams.length > 0) {
+    const exams = audience.exams.filter((x)=> typeof x === 'string');
+    if (exams.length === 0) {
+      const snap = await db.collection('users').select().limit(20000).get();
+      return snap.docs.map((d)=> d.id);
     }
-    if (prompt.length > GEMINI_PROMPT_MAX_CHARS) {
-      throw new HttpsError('invalid-argument', `Prompt çok uzun (>${GEMINI_PROMPT_MAX_CHARS}).`);
+    if (exams.length <= 10) {
+      const snap = await db.collection('users').where('selectedExam', 'in', exams).select().limit(20000).get();
+      return snap.docs.map((d)=> d.id);
     }
+    // 10'dan fazlaysa basit filtreleme (tüm kullanıcıları çekip bellekte filtreleyin)
+    const all = await db.collection('users').select('selectedExam').limit(20000).get();
+    return all.docs.filter((d)=> exams.includes((d.data()||{}).selectedExam)).map((d)=> d.id);
+  }
+  if (audience?.type === 'uids' && Array.isArray(audience.uids)) {
+    return audience.uids.filter((x)=> typeof x === 'string');
+  }
+  const snap = await query.select().limit(20000).get();
+  return snap.docs.map((d)=> d.id);
+}
 
-    const normalizedPrompt = prompt.replace(/\s+/g, ' ').trim();
+exports.adminEstimateAudience = onCall({region: 'us-central1', timeoutSeconds: 300}, async (request) => {
+  if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
+  const isAdmin = request.auth.token && request.auth.token.admin === true;
+  if (!isAdmin) throw new HttpsError('permission-denied', 'Admin gerekli');
+  const audience = request.data?.audience || {type: 'all'};
+  let uids = await selectAudienceUids(audience);
 
-    await enforceRateLimit(`gemini_${request.auth.uid}`, GEMINI_RATE_LIMIT_WINDOW_SEC, GEMINI_RATE_LIMIT_MAX);
+  // İnaktif filtresi (opsiyonel)
+  if (audience?.type === 'inactive' && typeof audience.hours === 'number') {
+    const filtered = [];
+    for (const uid of uids) {
+      const ref = db.collection('users').doc(uid);
+      const hrs = await computeInactivityHours(ref);
+      if (hrs >= audience.hours) filtered.push(uid);
+      if (filtered.length >= 20000) break;
+    }
+    uids = filtered;
+  }
+  let tokenHolders = 0;
+  for (const uid of uids) {
+    const snap = await db.collection('users').doc(uid).collection('devices').where('disabled','==', false).limit(1).get();
+    if (!snap.empty) tokenHolders++;
+  }
+  return {users: uids.length, tokenHolders};
+});
 
+exports.adminSendPush = onCall({region: 'us-central1', timeoutSeconds: 540}, async (request) => {
+  if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
+  const isAdmin = request.auth.token && request.auth.token.admin === true;
+  if (!isAdmin) throw new HttpsError('permission-denied', 'Admin gerekli');
+
+  const title = String(request.data?.title || '').trim();
+  const body = String(request.data?.body || '').trim();
+  const imageUrl = request.data?.imageUrl ? String(request.data.imageUrl) : '';
+  const route = String(request.data?.route || '/home');
+  const audience = request.data?.audience || {type: 'all'}; // 'all'|'exam'|'uids'|'inactive'
+  const scheduledAt = typeof request.data?.scheduledAt === 'number' ? request.data.scheduledAt : null; // epoch ms
+
+  if (!title || !body) throw new HttpsError('invalid-argument', 'title ve body zorunludur');
+
+  const campaignRef = db.collection('push_campaigns').doc();
+  const baseDoc = {
+    title, body, imageUrl, route, audience,
+    createdBy: request.auth.uid,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  };
+
+  // Planlı ise dokümana yazıp çık
+  if (scheduledAt && scheduledAt > Date.now() + 15000) { // 15sn sonrası kabul
+    await campaignRef.set({ ...baseDoc, status: 'scheduled', scheduledAt });
+    return {ok: true, campaignId: campaignRef.id, scheduled: true};
+  }
+
+  // Hemen gönder
+  await campaignRef.set({ ...baseDoc, status: 'sending' });
+
+  // Alıcılar
+  let targetUids = await selectAudienceUids(audience);
+  logger.info('adminSendPush audience selected', { count: targetUids.length, type: audience?.type || 'all' });
+  if (audience?.type === 'inactive' && typeof audience.hours === 'number') {
+    const filtered = [];
+    for (const uid of targetUids) {
+      const ref = db.collection('users').doc(uid);
+      const hrs = await computeInactivityHours(ref);
+      if (hrs >= audience.hours) filtered.push(uid);
+    }
+    targetUids = filtered;
+  }
+
+  let totalSent = 0, totalFail = 0, totalUsers = 0;
+  for (const uid of targetUids) {
+    totalUsers++;
+    const tokens = await getActiveTokens(uid);
+    if (tokens.length === 0) continue;
+    const r = await sendPushToTokens(tokens, { title, body, imageUrl, route, type: 'campaign', campaignId: campaignRef.id });
+    totalSent += r.successCount; totalFail += r.failureCount;
+    await campaignRef.collection('logs').add({uid, success: r.successCount, failed: r.failureCount, ts: admin.firestore.FieldValue.serverTimestamp()});
+  }
+
+  await campaignRef.set({ status: 'completed', totalUsers, totalSent, totalFail, completedAt: admin.firestore.FieldValue.serverTimestamp() }, {merge: true});
+  return {ok: true, campaignId: campaignRef.id, totalUsers, totalSent, totalFail};
+});
+
+exports.processScheduledCampaigns = onSchedule({schedule: '*/5 * * * *', timeZone: 'Europe/Istanbul'}, async () => {
+  const now = Date.now();
+  const snap = await db.collection('push_campaigns').where('status','==','scheduled').where('scheduledAt','<=', now).limit(10).get();
+  if (snap.empty) return;
+  for (const doc of snap.docs) {
+    const d = doc.data() || {};
     try {
-      const body = {
-        contents: [{parts: [{text: normalizedPrompt}]}],
-        generationConfig: {
-          temperature,
-          maxOutputTokens: GEMINI_MAX_OUTPUT_TOKENS,
-          ...(expectJson ? {responseMimeType: 'application/json'} : {}),
-        },
-      };
-      const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=' + GEMINI_KEY;
-      const resp = await fetch(url, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(body),
-      });
-
-      if (!resp.ok) {
-        logger.warn('Gemini response not ok', {status: resp.status});
-        throw new HttpsError('internal', `Gemini isteği başarısız (${resp.status}).`);
+      await doc.ref.set({ status: 'sending' }, {merge: true});
+      const { title, body, imageUrl, route, audience } = d;
+      let targetUids = await selectAudienceUids(audience);
+      if (audience?.type === 'inactive' && typeof audience.hours === 'number') {
+        const filtered = [];
+        for (const uid of targetUids) {
+          const ref = db.collection('users').doc(uid);
+          const hrs = await computeInactivityHours(ref);
+          if (hrs >= audience.hours) filtered.push(uid);
+        }
+        targetUids = filtered;
       }
-      const data = await resp.json();
-      const candidate = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      return {raw: candidate, tokensLimit: GEMINI_MAX_OUTPUT_TOKENS};
+      let totalSent = 0, totalFail = 0, totalUsers = 0;
+      for (const uid of targetUids) {
+        totalUsers++;
+        const tokens = await getActiveTokens(uid);
+        if (tokens.length === 0) continue;
+        const r = await sendPushToTokens(tokens, { title, body, imageUrl, route, type: 'campaign', campaignId: doc.id });
+        totalSent += r.successCount; totalFail += r.failureCount;
+        await doc.ref.collection('logs').add({uid, success: r.successCount, failed: r.failureCount, ts: admin.firestore.FieldValue.serverTimestamp()});
+      }
+      await doc.ref.set({ status: 'completed', totalUsers, totalSent, totalFail, completedAt: admin.firestore.FieldValue.serverTimestamp() }, {merge: true});
     } catch (e) {
-      logger.error('Gemini çağrısı hata', e);
-      if (e instanceof HttpsError) throw e;
-      throw new HttpsError('internal', 'Gemini isteği sırasında hata oluştu');
+      logger.error('Scheduled campaign failed', {id: doc.id, error: String(e)});
+      await doc.ref.set({ status: 'failed', error: String(e), failedAt: admin.firestore.FieldValue.serverTimestamp() }, {merge: true});
     }
-  },
-);
-
-// Basit test fonksiyonu
-exports.helloWorld = onRequest((request, response) => {
-  logger.info("Hello logs!", {structuredData: true});
-  response.send("Hello from BilgeAI!");
+  }
 });
 
 // ---- ADMIN CLAIM YÖNETİMİ ----
@@ -818,4 +590,306 @@ exports.adminDeleteQuestionReports = onCall({region: 'us-central1', timeoutSecon
   }
 
   throw new HttpsError('invalid-argument', 'Geçersiz mode');
+});
+
+// Yardımcı: İstanbul saatine göre şimdi
+function nowIstanbul() {
+  const now = new Date();
+  try { return new Date(now.toLocaleString('en-US', {timeZone: 'Europe/Istanbul'})); } catch (_) { return now; }
+}
+
+// Blog kapakları için storage temizliği
+async function deletePostAssetsBySlug(slug) {
+  if (!slug) return;
+  try {
+    const bucket = admin.storage().bucket();
+    const prefix = `blog_covers/${slug}/`;
+    await bucket.deleteFiles({prefix});
+    logger.info(`Storage temizlendi: ${prefix}`);
+  } catch (e) {
+    logger.warn("Storage dosyaları temizlenemedi", {slug, error: String(e)});
+  }
+}
+
+// Görev şablonları
+const QUEST_TEMPLATES = (() => {
+  try {
+    const p = path.join(__dirname, "quests.json");
+    const raw = fs.readFileSync(p, "utf8");
+    return JSON.parse(raw);
+  } catch (error) {
+    logger.error("quests.json dosyası okunamadı!", error);
+    return [];
+  }
+})();
+
+function routeKeyFromPath(pathname) {
+  switch (pathname) {
+    case '/home': return 'home';
+    case '/home/pomodoro': return 'pomodoro';
+    case '/coach': return 'coach';
+    case '/home/weekly-plan': return 'weeklyPlan';
+    case '/home/stats': return 'stats';
+    case '/home/add-test': return 'addTest';
+    case '/home/quests': return 'quests';
+    case '/ai-hub/strategic-planning': return 'strategy';
+    case '/ai-hub/weakness-workshop': return 'workshop';
+    case '/availability': return 'availability';
+    case '/profile/avatar-selection': return 'avatar';
+    case '/arena': return 'arena';
+    case '/library': return 'library';
+    case '/ai-hub/motivation-chat': return 'motivationChat';
+    default: return 'home';
+  }
+}
+
+function personalizeTemplate(q, userData, analysis) {
+  let title = q.title || 'Görev';
+  let description = q.description || '';
+  const tags = Array.isArray(q.tags) ? [...q.tags] : [];
+
+  let subject = null;
+  const weakest = analysis?.weakestSubjectByNet;
+  const strongest = analysis?.strongestSubjectByNet;
+
+  const needsSubject = (typeof title === 'string' && title.includes('{subject}'))
+                    || (typeof description === 'string' && description.includes('{subject}'))
+                    || tags.some((t) => String(t).startsWith('subject:'));
+
+  if (needsSubject) {
+    if (tags.includes('weakness') && weakest && weakest !== 'Belirlenemedi') subject = weakest;
+    else if (tags.includes('strength') && strongest && strongest !== 'Belirlenemedi') subject = strongest;
+    else subject = userData?.selectedExamSection || 'Seçili Ders';
+
+    title = title.replaceAll('{subject}', subject);
+    description = description.replaceAll('{subject}', subject);
+    if (!tags.some((t) => String(t).startsWith('subject:'))) tags.push(`subject:${subject}`);
+  }
+
+  return { title, description, tags };
+}
+
+async function getUserContext(userRef) {
+  const ctx = { analysis: null, stats: null, app: null, user: null, yesterdayInactive: false, examType: null };
+  const userSnap = await userRef.get();
+  ctx.user = userSnap.exists ? userSnap.data() : {};
+  ctx.examType = ctx.user?.selectedExam || null;
+  try { const a = await userRef.collection('performance').doc('analysis_summary').get(); ctx.analysis = a.exists ? a.data() : null; } catch(_) {}
+  try { const s = await userRef.collection('state').doc('stats').get(); ctx.stats = s.exists ? s.data() : null; } catch(_) {}
+  try { const app = await userRef.collection('state').doc('app_state').get(); ctx.app = app.exists ? app.data() : null; } catch(_) {}
+  try {
+    const d = nowIstanbul();
+    const y = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1);
+    const id = `${y.getFullYear().toString().padStart(4,'0')}-${(y.getMonth()+1).toString().padStart(2,'0')}-${y.getDate().toString().padStart(2,'0')}`;
+    const act = await userRef.collection('user_activity').doc(id).get();
+    const data = act.data() || {};
+    const visits = Array.isArray(data.visits) ? data.visits : [];
+    ctx.yesterdayInactive = visits.length === 0;
+  } catch(_) {}
+  return ctx;
+}
+
+function timeOfDayLabel(d) { const h = d.getHours(); if (h < 12) return 'morning'; if (h < 18) return 'afternoon'; return 'night'; }
+
+function evaluateTriggerConditions(template, ctx) {
+  const cond = template.triggerConditions || {};
+  if (!cond || Object.keys(cond).length === 0) return true;
+  const now = nowIstanbul();
+  if (cond.timeOfDay) {
+    const wanted = Array.isArray(cond.timeOfDay) ? cond.timeOfDay : [cond.timeOfDay];
+    if (!wanted.includes(timeOfDayLabel(now))) return false;
+  }
+  if (cond.dayOfWeek) {
+    const map = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+    const today = map[now.getDay()];
+    const wanted = Array.isArray(cond.dayOfWeek) ? cond.dayOfWeek : [cond.dayOfWeek];
+    if (!wanted.includes(today)) return false;
+  }
+  if (cond.wasInactiveYesterday === true && ctx.yesterdayInactive !== true) return false;
+  if (cond.hasWeakSubject === true) { const w = ctx.analysis?.weakestSubjectByNet; if (!w || w === 'Belirlenemedi') return false; }
+  if (cond.hasStrongSubject === true) { const s = ctx.analysis?.strongestSubjectByNet; if (!s || s === 'Belirlenemedi') return false; }
+  if (cond.examType) { const wanted = Array.isArray(cond.examType) ? cond.examType : [cond.examType]; if (!ctx.examType || !wanted.includes(ctx.examType)) return false; }
+  if (cond.notUsedFeature) { const f = String(cond.notUsedFeature); const used = ctx.app?.[`feature_${f}_used`]; if (used === true) return false; }
+  if (cond.usedFeatureRecently) { const f = String(cond.usedFeatureRecently); const used = ctx.app?.[`feature_${f}_used`]; if (used !== true) return false; }
+  if (cond.lowYesterdayPlanRatio === true) { const r = ctx.user?.lastScheduleCompletionRatio; if (!(typeof r === 'number' && r < 0.5)) return false; }
+  if (cond.highYesterdayPlanRatio === true) { const r = ctx.user?.lastScheduleCompletionRatio; if (!(typeof r === 'number' && r >= 0.85)) return false; }
+  return true;
+}
+
+function scoreTemplateForUser(t, ctx) {
+  let score = (t.reward || 0);
+  const tags = t.tags || [];
+  if (tags.includes('high_value')) score += 40;
+  if (tags.includes('weakness') && ctx.analysis?.weakestSubjectByNet && ctx.analysis.weakestSubjectByNet !== 'Belirlenemedi') score += 25;
+  if (tags.includes('strength') && ctx.analysis?.strongestSubjectByNet && ctx.analysis.strongestSubjectByNet !== 'Belirlenemedi') score += 15;
+  if (tags.includes('quick_win')) score += 5;
+  if (t.category === 'focus' && ctx.stats?.streak && ctx.stats.streak < 3) score += 8;
+  if (t.category === 'practice' && (ctx.user?.recentPracticeVolumes ? Object.keys(ctx.user.recentPracticeVolumes).length < 3 : true)) score += 6;
+  return score;
+}
+
+function pickTemplatesForType(type, ctx, desiredCount) {
+  const pool = QUEST_TEMPLATES.filter((q) => (q.type || 'daily') === type).filter((q) => evaluateTriggerConditions(q, ctx));
+  const scored = pool.map((q) => ({q, s: scoreTemplateForUser(q, ctx)})).sort((a,b)=> b.s - a.s);
+  const selected = []; const usedCategories = new Set();
+  for (const it of scored) { if (selected.length >= desiredCount) break; const q = it.q; if (usedCategories.has(q.category) && Math.random() < 0.45) continue; selected.push(q); usedCategories.add(q.category); }
+  return selected;
+}
+
+function materializeTemplates(templates, userData, analysis) {
+  const nowTs = admin.firestore.Timestamp.now();
+  return templates.map((q) => {
+    const { title, description, tags } = personalizeTemplate(q, userData, analysis);
+    const actionRoute = q.actionRoute || '/home';
+    const routeKey = routeKeyFromPath(actionRoute);
+    return { qid: q.id, title, description, type: q.type || 'daily', category: q.category, progressType: q.progressType || 'increment', reward: q.reward, goalValue: q.goalValue, currentProgress: 0, isCompleted: false, actionRoute, routeKey, tags, rewardClaimed: false, createdAt: nowTs, schemaVersion: 2 };
+  });
+}
+
+async function ensureWeeklyAndMonthly(userRef, userData, analysis, force = false) {
+  const ctx = await getUserContext(userRef);
+  const now = nowIstanbul();
+  const weekStart = new Date(now); weekStart.setDate(now.getDate() - (now.getDay() === 0 ? 6 : (now.getDay()-1))); weekStart.setHours(0,0,0,0);
+  const weekKey = `${weekStart.getFullYear()}-${(weekStart.getMonth()+1).toString().padStart(2,'0')}-${weekStart.getDate().toString().padStart(2,'0')}`;
+  const weeklyCol = userRef.collection('weekly_quests');
+  const weeklySnap = await weeklyCol.where('weekKey', '==', weekKey).limit(1).get();
+  if (weeklySnap.empty || force) {
+    if (force) { const toDel = await weeklyCol.where('weekKey', '==', weekKey).get(); const delBatch = db.batch(); toDel.docs.forEach((d)=> delBatch.delete(d.ref)); if (!toDel.empty) await delBatch.commit(); }
+    const tpls = pickTemplatesForType('weekly', ctx, 6);
+    const list = materializeTemplates(tpls, userData, analysis).map((x)=> ({...x, weekKey}));
+    const batch = db.batch(); list.forEach((q)=> batch.set(weeklyCol.doc(q.qid), q, {merge:true})); await batch.commit();
+  }
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthKey = `${monthStart.getFullYear()}-${(monthStart.getMonth()+1).toString().padStart(2,'0')}`;
+  const monthlyCol = userRef.collection('monthly_quests');
+  const monthlySnap = await monthlyCol.where('monthKey', '==', monthKey).limit(1).get();
+  if (monthlySnap.empty || force) {
+    if (force) { const toDel = await monthlyCol.where('monthKey', '==', monthKey).get(); const delBatch = db.batch(); toDel.docs.forEach((d)=> delBatch.delete(d.ref)); if (!toDel.empty) await delBatch.commit(); }
+    const tpls = pickTemplatesForType('monthly', ctx, 6);
+    const list = materializeTemplates(tpls, userData, analysis).map((x)=> ({...x, monthKey}));
+    const batch = db.batch(); list.forEach((q)=> batch.set(monthlyCol.doc(q.qid), q, {merge:true})); await batch.commit();
+  }
+}
+
+function pickDailyQuestsForUser(userData, analysis, ctx) {
+  const tpls = pickTemplatesForType('daily', ctx, 7);
+  return materializeTemplates(tpls, userData, analysis);
+}
+
+async function generateQuestsForAllUsers() {
+  const usersSnap = await db.collection("users").get();
+  const batchPromises = []; let batch = db.batch(); let opCount = 0;
+  for (const doc of usersSnap.docs) {
+    const userRef = doc.ref; let analysis = null; let ctx = null;
+    try { const a = await userRef.collection('performance').doc('analysis_summary').get(); analysis = a.exists ? a.data() : null; } catch (_) { analysis = null; }
+    ctx = await getUserContext(userRef);
+    const dailyRef = userRef.collection("daily_quests");
+    const daily = pickDailyQuestsForUser(doc.data(), analysis, ctx);
+    const existing = await dailyRef.get(); existing.docs.forEach((d) => { batch.delete(d.ref); opCount++; });
+    daily.forEach((q) => { batch.set(dailyRef.doc(q.qid), q, {merge:true}); opCount++; });
+    batch.update(userRef, { lastQuestRefreshDate: admin.firestore.FieldValue.serverTimestamp() });
+    await ensureWeeklyAndMonthly(userRef, doc.data(), analysis, false);
+    if (opCount > 400) { batchPromises.push(batch.commit()); batch = db.batch(); opCount = 0; }
+  }
+  if (opCount > 0) batchPromises.push(batch.commit());
+  await Promise.all(batchPromises);
+}
+
+// Gemini API'sine güvenli bir şekilde istek atan proxy fonksiyonu.
+const GEMINI_KEY = process.env.GEMINI_API_KEY;
+
+// Güvenlik ve kötüye kullanım önleme ayarları
+const GEMINI_PROMPT_MAX_CHARS = parseInt(process.env.GEMINI_PROMPT_MAX_CHARS || '50000', 10);
+const GEMINI_MAX_OUTPUT_TOKENS = parseInt(process.env.GEMINI_MAX_OUTPUT_TOKENS || '50000', 10);
+const GEMINI_RATE_LIMIT_WINDOW_SEC = parseInt(process.env.GEMINI_RATE_LIMIT_WINDOW_SEC || '60', 10);
+const GEMINI_RATE_LIMIT_MAX = parseInt(process.env.GEMINI_RATE_LIMIT_MAX || '5', 10);
+
+async function enforceRateLimit(key, windowSeconds, maxCount) {
+  const ref = db.collection('rate_limits').doc(key);
+  const now = Date.now();
+  const windowMs = windowSeconds * 1000;
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) {
+      tx.set(ref, {count: 1, windowStart: now});
+      return;
+    }
+    const data = snap.data();
+    let {count, windowStart} = data;
+    if (typeof windowStart !== 'number') windowStart = now;
+    if (now - windowStart > windowMs) {
+      tx.set(ref, {count: 1, windowStart: now});
+      return;
+    }
+    if (count >= maxCount) {
+      throw new HttpsError('resource-exhausted', 'Oran sınırı aşıldı. Lütfen sonra tekrar deneyin.');
+    }
+    tx.update(ref, {count: count + 1});
+  });
+}
+
+exports.generateGemini = onCall(
+  {region: 'us-central1', timeoutSeconds: 60, memory: '512MiB'},
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'Oturum gerekli');
+    }
+    if (!GEMINI_KEY) {
+      throw new HttpsError('failed-precondition', 'Sunucu Gemini anahtarı tanımlı değil.');
+    }
+    const prompt = request.data?.prompt;
+    const expectJson = !!request.data?.expectJson;
+    // Yeni: sıcaklık isteğe bağlı
+    let temperature = 0.8;
+    if (typeof request.data?.temperature === 'number' && isFinite(request.data.temperature)) {
+      // Güvenli aralık [0.1, 1.0]
+      temperature = Math.min(1.0, Math.max(0.1, request.data.temperature));
+    }
+
+    if (typeof prompt !== 'string' || !prompt.trim()) {
+      throw new HttpsError('invalid-argument', 'Geçerli bir prompt gerekli');
+    }
+    if (prompt.length > GEMINI_PROMPT_MAX_CHARS) {
+      throw new HttpsError('invalid-argument', `Prompt çok uzun (>${GEMINI_PROMPT_MAX_CHARS}).`);
+    }
+
+    const normalizedPrompt = prompt.replace(/\s+/g, ' ').trim();
+
+    await enforceRateLimit(`gemini_${request.auth.uid}`, GEMINI_RATE_LIMIT_WINDOW_SEC, GEMINI_RATE_LIMIT_MAX);
+
+    try {
+      const body = {
+        contents: [{parts: [{text: normalizedPrompt}]}],
+        generationConfig: {
+          temperature,
+          maxOutputTokens: GEMINI_MAX_OUTPUT_TOKENS,
+          ...(expectJson ? {responseMimeType: 'application/json'} : {}),
+        },
+      };
+      const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=' + GEMINI_KEY;
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(body),
+      });
+
+      if (!resp.ok) {
+        logger.warn('Gemini response not ok', {status: resp.status});
+        throw new HttpsError('internal', `Gemini isteği başarısız (${resp.status}).`);
+      }
+      const data = await resp.json();
+      const candidate = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      return {raw: candidate, tokensLimit: GEMINI_MAX_OUTPUT_TOKENS};
+    } catch (e) {
+      logger.error('Gemini çağrısı hata', e);
+      if (e instanceof HttpsError) throw e;
+      throw new HttpsError('internal', 'Gemini isteği sırasında hata oluştu');
+    }
+  },
+);
+
+// Basit test fonksiyonu
+exports.helloWorld = onRequest((request, response) => {
+  logger.info("Hello logs!", {structuredData: true});
+  response.send("Hello from BilgeAI!");
 });

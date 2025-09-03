@@ -10,6 +10,7 @@ import 'package:bilge_ai/features/auth/application/auth_controller.dart';
 import 'package:bilge_ai/features/settings/logic/settings_notifier.dart';
 import 'package:bilge_ai/features/settings/widgets/settings_section.dart';
 import 'package:bilge_ai/features/settings/widgets/settings_tile.dart';
+import 'package:bilge_ai/data/providers/admin_providers.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -393,6 +394,8 @@ class SettingsScreen extends ConsumerWidget {
     });
 
     final user = ref.watch(userProfileProvider).value;
+    // Admin claim durumunu oku (yükleneceği için null olabilir)
+    final isAdmin = ref.watch(adminClaimProvider).value ?? false;
 
     Future<void> _handleBack() async {
       if (Navigator.of(context).canPop()) {
@@ -492,6 +495,16 @@ class SettingsScreen extends ConsumerWidget {
               );
             },
           ),
+          // --- Admin: sadece admin claim varsa göster ---
+          if (isAdmin) ...[
+            const SettingsSection(title: "Admin"),
+            SettingsTile(
+              icon: Icons.campaign_rounded,
+              title: "Bildirim Yayınla",
+              subtitle: "Başlık, açıklama, görsel, kitle ve planlama",
+              onTap: () => context.push('/admin/push'),
+            ),
+          ],
           const SettingsSection(title: "Oturum"),
           SettingsTile(
             icon: Icons.logout_rounded,

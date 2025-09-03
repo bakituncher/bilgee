@@ -51,7 +51,7 @@ class TutorialOverlay extends ConsumerWidget {
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
                   child: Container(
-                    color: Colors.black.withOpacity(0.7),
+                    color: Colors.black.withValues(alpha: 0.7),
                   ),
                 ),
               ),
@@ -118,35 +118,25 @@ class _TutorialCard extends ConsumerWidget {
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: AppTheme.secondaryColor, width: 2),
           boxShadow: [
-            BoxShadow(color: AppTheme.secondaryColor.withOpacity(0.3), blurRadius: 20)
+            BoxShadow(color: AppTheme.secondaryColor.withValues(alpha: 0.3), blurRadius: 20)
           ]
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Image.asset('assets/images/bilge_baykus.png', height: 60),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(step.title, style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppTheme.secondaryColor, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
-                    Text(step.text, style: const TextStyle(color: AppTheme.textColor, height: 1.5, fontSize: 15)),
-                  ],
-                ),
-              ),
-            ],
-          ),
+          Text(step.title, style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppTheme.secondaryColor, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          Text(step.text, style: const TextStyle(color: AppTheme.textColor, height: 1.5, fontSize: 15)),
           const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: () => ref.read(tutorialProvider.notifier).next(),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          Align(
+            alignment: Alignment.centerRight,
+            child: ElevatedButton(
+              onPressed: () => ref.read(tutorialProvider.notifier).next(),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              child: Text(step.buttonText, textAlign: TextAlign.center),
             ),
-            child: Text(step.buttonText, textAlign: TextAlign.center),
           )
         ],
       ),
