@@ -227,14 +227,14 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
         final content = _simpleMode
             ? SingleChildScrollView(
                 padding: const EdgeInsets.only(bottom: 24),
-                child: _buildLeftColumn(),
+                child: _buildLeftColumn(useFlex: false),
               )
             : (
                 isWide
                     ? Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(child: _buildLeftColumn()),
+                          Expanded(child: _buildLeftColumn(useFlex: true)),
                           const SizedBox(width: 16),
                           SizedBox(width: 360, child: _buildRightColumn(isWide: true)),
                         ],
@@ -244,7 +244,7 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            _buildLeftColumn(),
+                            _buildLeftColumn(useFlex: false),
                             const SizedBox(height: 16),
                             _buildRightColumn(isWide: false),
                           ],
@@ -280,7 +280,7 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
   }
 
   // Basit mod: hafif sihirbaz (wizard) akışı
-  Widget _buildLeftColumn() {
+  Widget _buildLeftColumn({bool useFlex = true}) {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: Padding(
@@ -290,14 +290,23 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
           children: [
             _wizardHeader(),
             const SizedBox(height: 12),
-            Expanded(
-              child: AnimatedSwitcher(
+            // Expanded sadece bounded yükseklikte (ör. geniş ekranda) kullanılmalı.
+            if (useFlex)
+              Expanded(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 250),
+                  switchInCurve: Curves.easeOut,
+                  switchOutCurve: Curves.easeIn,
+                  child: _stepContent(key: ValueKey(_currentStep)),
+                ),
+              )
+            else
+              AnimatedSwitcher(
                 duration: const Duration(milliseconds: 250),
                 switchInCurve: Curves.easeOut,
                 switchOutCurve: Curves.easeIn,
                 child: _stepContent(key: ValueKey(_currentStep)),
               ),
-            ),
             const SizedBox(height: 12),
             _wizardBottomBar(),
           ],
@@ -423,52 +432,118 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
 
   Widget _wizardBottomBar() {
     final isLast = _currentStep >= 3;
-    return Row(
-      children: [
-        if (_currentStep > 0)
-          OutlinedButton.icon(
-            onPressed: () => setState(() => _currentStep = _currentStep - 1),
-            icon: const Icon(Icons.arrow_back_rounded),
-            label: const Text('Geri'),
-          ),
-        if (_currentStep > 0) const SizedBox(width: 8),
-        const Spacer(),
-        if (isLast)
-          TextButton.icon(
-            onPressed: _sending ? null : () => _send(testToSelf: true),
-            icon: const Icon(Icons.person_outline_rounded),
-            label: const Text('Kendime Test Gönder'),
-          ),
-        const SizedBox(width: 8),
-        FilledButton.icon(
-          onPressed: _sending
-              ? null
-              : () {
-                  // İleri veya Gönder/Planla
-                  if (_currentStep == 0) {
-                    final ok = _titleCtrl.text.trim().isNotEmpty && _bodyCtrl.text.trim().isNotEmpty;
-                    if (!ok) { setState(() {}); return; }
-                    setState(() => _currentStep = 1);
-                    return;
-                  }
-                  if (_currentStep == 1) {
-                    if (_audience == 'uids' && _uidsCtrl.text.trim().isEmpty) { setState(() {}); return; }
-                    if (_audience == 'inactive' && int.tryParse(_inactiveHoursCtrl.text.trim()) == null) { setState(() {}); return; }
-                    setState(() => _currentStep = 2);
-                    return;
-                  }
-                  if (_currentStep == 2) {
-                    setState(() => _currentStep = 3);
-                    return;
-                  }
-                  _send();
-                },
-          icon: _sending
-              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-              : Icon(_currentStep >= 3 ? Icons.send_rounded : Icons.arrow_forward_rounded),
-          label: Text(_currentStep >= 3 ? (_scheduleEnabled ? 'Planla' : 'Gönder') : 'İleri'),
-        ),
-      ],
+    final uploading = _uploadProgress > 0 && _uploadProgress < 1;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final narrow = constraints.maxWidth < 360;
+        if (narrow) {
+          // Dar ekran: butonları iki satıra böl
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  if (_currentStep > 0)
+                    OutlinedButton.icon(
+                      onPressed: () => setState(() => _currentStep = _currentStep - 1),
+                      icon: const Icon(Icons.arrow_back_rounded),
+                      label: const Text('Geri'),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Spacer(),
+                  if (isLast)
+                    TextButton.icon(
+                      onPressed: (_sending || uploading) ? null : () => _send(testToSelf: true),
+                      icon: const Icon(Icons.person_outline_rounded),
+                      label: const Text('Kendime Test Gönder'),
+                    ),
+                  const SizedBox(width: 8),
+                  FilledButton.icon(
+                    onPressed: (_sending || uploading)
+                        ? null
+                        : () {
+                            // İleri veya Gönder/Planla
+                            if (_currentStep == 0) {
+                              final ok = _titleCtrl.text.trim().isNotEmpty && _bodyCtrl.text.trim().isNotEmpty;
+                              if (!ok) { setState(() {}); return; }
+                              setState(() => _currentStep = 1);
+                              return;
+                            }
+                            if (_currentStep == 1) {
+                              if (_audience == 'uids' && _uidsCtrl.text.trim().isEmpty) { setState(() {}); return; }
+                              if (_audience == 'inactive' && int.tryParse(_inactiveHoursCtrl.text.trim()) == null) { setState(() {}); return; }
+                              setState(() => _currentStep = 2);
+                              return;
+                            }
+                            if (_currentStep == 2) {
+                              setState(() => _currentStep = 3);
+                              return;
+                            }
+                            _send();
+                          },
+                    icon: _sending
+                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                        : Icon(_currentStep >= 3 ? Icons.send_rounded : Icons.arrow_forward_rounded),
+                    label: Text(_currentStep >= 3 ? (_scheduleEnabled ? 'Planla' : 'Gönder') : 'İleri'),
+                  ),
+                ],
+              ),
+            ],
+          );
+        }
+        // Geniş ekran: tek satır
+        return Row(
+          children: [
+            if (_currentStep > 0)
+              OutlinedButton.icon(
+                onPressed: () => setState(() => _currentStep = _currentStep - 1),
+                icon: const Icon(Icons.arrow_back_rounded),
+                label: const Text('Geri'),
+              ),
+            if (_currentStep > 0) const SizedBox(width: 8),
+            const Spacer(),
+            if (isLast)
+              TextButton.icon(
+                onPressed: (_sending || uploading) ? null : () => _send(testToSelf: true),
+                icon: const Icon(Icons.person_outline_rounded),
+                label: const Text('Kendime Test Gönder'),
+              ),
+            const SizedBox(width: 8),
+            FilledButton.icon(
+              onPressed: (_sending || uploading)
+                  ? null
+                  : () {
+                      // İleri veya Gönder/Planla
+                      if (_currentStep == 0) {
+                        final ok = _titleCtrl.text.trim().isNotEmpty && _bodyCtrl.text.trim().isNotEmpty;
+                        if (!ok) { setState(() {}); return; }
+                        setState(() => _currentStep = 1);
+                        return;
+                      }
+                      if (_currentStep == 1) {
+                        if (_audience == 'uids' && _uidsCtrl.text.trim().isEmpty) { setState(() {}); return; }
+                        if (_audience == 'inactive' && int.tryParse(_inactiveHoursCtrl.text.trim()) == null) { setState(() {}); return; }
+                        setState(() => _currentStep = 2);
+                        return;
+                      }
+                      if (_currentStep == 2) {
+                        setState(() => _currentStep = 3);
+                        return;
+                      }
+                      _send();
+                    },
+              icon: _sending
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                  : Icon(_currentStep >= 3 ? Icons.send_rounded : Icons.arrow_forward_rounded),
+              label: Text(_currentStep >= 3 ? (_scheduleEnabled ? 'Planla' : 'Gönder') : 'İleri'),
+            ),
+          ],
+        );
+      },
     );
   }
 

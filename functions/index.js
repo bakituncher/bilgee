@@ -130,30 +130,31 @@ function buildInactivityTemplate(inactHours, examType) {
 
 async function sendPushToTokens(tokens, payload) {
   if (!tokens || tokens.length === 0) return {successCount: 0, failureCount: 0};
+  logger.info('sendPushToTokens', { tokenCount: tokens.length, hasImage: !!payload.imageUrl, type: payload.type || 'unknown' });
   const message = {
     notification: { title: payload.title, body: payload.body },
     data: { route: payload.route || '/home', campaignId: payload.campaignId || '', type: payload.type || 'inactivity' },
     android: {
       notification: {
         channelId: 'bilge_general',
-        imageUrl: payload.imageUrl || undefined,
         clickAction: 'FLUTTER_NOTIFICATION_CLICK',
         priority: 'HIGH',
+        ...(payload.imageUrl ? { imageUrl: payload.imageUrl } : {}),
       },
     },
     apns: {
-      payload: {
-        aps: {
-          sound: 'default',
-          'mutable-content': 1,
-        },
-      },
+      payload: { aps: { sound: 'default', 'mutable-content': 1 } },
       fcmOptions: payload.imageUrl ? { imageUrl: payload.imageUrl } : undefined,
     },
     tokens,
   };
-  const resp = await admin.messaging().sendEachForMulticast(message);
-  return {successCount: resp.successCount, failureCount: resp.failureCount};
+  try {
+    const resp = await admin.messaging().sendEachForMulticast(message);
+    return {successCount: resp.successCount, failureCount: resp.failureCount};
+  } catch (e) {
+    logger.error('FCM send failed', { error: String(e) });
+    return {successCount: 0, failureCount: tokens.length};
+  }
 }
 
 async function dispatchInactivityPushBatch(limitUsers = 500) {
@@ -280,6 +281,7 @@ exports.adminSendPush = onCall({region: 'us-central1', timeoutSeconds: 540}, asy
 
   // Alıcılar
   let targetUids = await selectAudienceUids(audience);
+  logger.info('adminSendPush audience selected', { count: targetUids.length, type: audience?.type || 'all' });
   if (audience?.type === 'inactive' && typeof audience.hours === 'number') {
     const filtered = [];
     for (const uid of targetUids) {
