@@ -25,6 +25,11 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   static const int _pageSize = 10; // 20 -> 10
   DocumentSnapshot? _lastVisible; // UI tarafında doküman referansı tutacağız
 
+  // YENI: UI durumları
+  String _searchQuery = '';
+  String _selectedSection = 'Tümü';
+  _SortOption _sortOption = const _SortOption(field: _SortField.date, descending: true);
+
   @override
   void initState() {
     super.initState();
@@ -125,6 +130,14 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
         title: const Text('Performans Arşivi'),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        actions: [
+          // Sıralama
+          IconButton(
+            tooltip: 'Sırala',
+            icon: const Icon(Icons.sort_rounded),
+            onPressed: _showSortSheet,
+          ),
+        ],
       ),
       backgroundColor: AppTheme.primaryColor,
       body: Container(
@@ -140,7 +153,109 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
         ),
         child: _buildBody(textTheme),
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => context.push('/home/add-test'),
+        icon: const Icon(Icons.add_chart_rounded),
+        label: const Text('Deneme Ekle'),
+      ),
     );
+  }
+
+  // YENI: Filtre/Sıralama uygulayan yardımcı
+  List<TestModel> _applyFiltersAndSort() {
+    Iterable<TestModel> list = _tests;
+    // Arama
+    if (_searchQuery.trim().isNotEmpty) {
+      final q = _searchQuery.toLowerCase();
+      list = list.where((t) => t.testName.toLowerCase().contains(q));
+    }
+    // Bölüm filtresi
+    if (_selectedSection != 'Tümü') {
+      list = list.where((t) => t.sectionName == _selectedSection);
+    }
+
+    var tmp = list.toList();
+
+    int compareByField(TestModel a, TestModel b) {
+      switch (_sortOption.field) {
+        case _SortField.date:
+          return a.date.compareTo(b.date);
+        case _SortField.net:
+          return a.totalNet.compareTo(b.totalNet);
+        case _SortField.accuracy:
+          final accA = _accuracy(a);
+          final accB = _accuracy(b);
+          return accA.compareTo(accB);
+      }
+    }
+
+    tmp.sort(compareByField);
+    if (_sortOption.descending) {
+      tmp = tmp.reversed.toList();
+    }
+    return tmp;
+  }
+
+  double _accuracy(TestModel t) {
+    final attempted = t.totalCorrect + t.totalWrong;
+    if (attempted == 0) return 0.0;
+    return (t.totalCorrect / attempted) * 100.0;
+  }
+
+  // YENI: Mevcut bölümler
+  List<String> _availableSections() {
+    final set = <String>{}..addAll(_tests.map((e) => e.sectionName));
+    final list = set.toList()..sort();
+    return ['Tümü', ...list];
+  }
+
+  // YENI: Sıralama alt sayfası
+  void _showSortSheet() {
+    showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: AppTheme.cardColor,
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.today_rounded),
+                title: const Text('Tarih'),
+                trailing: _sortOption.field == _SortField.date ? _sortIcon() : null,
+                onTap: () => setState(() {
+                  _sortOption = _SortOption(field: _SortField.date, descending: _sortOption.field == _SortField.date ? !_sortOption.descending : true);
+                  Navigator.pop(ctx);
+                }),
+              ),
+              ListTile(
+                leading: const Icon(Icons.score_rounded),
+                title: const Text('Toplam Net'),
+                trailing: _sortOption.field == _SortField.net ? _sortIcon() : null,
+                onTap: () => setState(() {
+                  _sortOption = _SortOption(field: _SortField.net, descending: _sortOption.field == _SortField.net ? !_sortOption.descending : true);
+                  Navigator.pop(ctx);
+                }),
+              ),
+              ListTile(
+                leading: const Icon(Icons.check_circle_outline_rounded),
+                title: const Text('Doğruluk'),
+                trailing: _sortOption.field == _SortField.accuracy ? _sortIcon() : null,
+                onTap: () => setState(() {
+                  _sortOption = _SortOption(field: _SortField.accuracy, descending: _sortOption.field == _SortField.accuracy ? !_sortOption.descending : true);
+                  Navigator.pop(ctx);
+                }),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _sortIcon() {
+    return Icon(_sortOption.descending ? Icons.south_rounded : Icons.north_rounded, color: AppTheme.secondaryColor);
   }
 
   Widget _buildBody(TextTheme textTheme) {
@@ -166,7 +281,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () => context.go('/home/add-test'),
+              onPressed: () => context.push('/home/add-test'),
               child: const Text("İlk Kaydı Ekle"),
             )
           ],
@@ -174,151 +289,174 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       );
     }
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        _lastVisible = null;
-        await _loadInitial();
-      },
-      child: GridView.builder(
-        controller: _scrollController,
-        padding: const EdgeInsets.all(16.0),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: 0.75,
+    final filtered = _applyFiltersAndSort();
+
+    return Column(
+      children: [
+        // Arama ve filtre barı
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextField(
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.search_rounded),
+                  hintText: 'Deneme adı ara...',
+                  filled: true,
+                  fillColor: AppTheme.cardColor,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                ),
+                onChanged: (v) => setState(() => _searchQuery = v),
+              ),
+              const SizedBox(height: 8),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: _availableSections().map((s) {
+                    final selected = _selectedSection == s;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: ChoiceChip(
+                        label: Text(s),
+                        selected: selected,
+                        onSelected: (_) => setState(() => _selectedSection = s),
+                        selectedColor: AppTheme.secondaryColor.withValues(alpha: AppTheme.secondaryColor.a * 0.2),
+                        labelStyle: TextStyle(color: selected ? AppTheme.secondaryColor : Colors.white),
+                        backgroundColor: AppTheme.cardColor,
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+          ),
         ),
-        itemCount: _tests.length + (_isLoading || _hasMore ? 1 : 0),
-        itemBuilder: (context, index) {
-          if (index >= _tests.length) {
-            return const Center(child: CircularProgressIndicator(color: AppTheme.secondaryColor));
-          }
-          final test = _tests[index];
-          return _TriumphPlaqueCard(test: test)
-              .animate()
-              .fadeIn(delay: (100 * (index % 10)).ms, duration: 500.ms)
-              .slideY(begin: 0.5, curve: Curves.easeOutCubic);
-        },
-      ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: () async {
+              _lastVisible = null;
+              await _loadInitial();
+            },
+            child: ListView.separated(
+              controller: _scrollController,
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              itemCount: filtered.length + (_isLoading || _hasMore ? 1 : 0),
+              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              itemBuilder: (context, index) {
+                if (index >= filtered.length) {
+                  return const Padding(
+                    padding: EdgeInsets.all(12.0),
+                    child: Center(child: CircularProgressIndicator(color: AppTheme.secondaryColor)),
+                  );
+                }
+                final test = filtered[index];
+                return _ArchiveListTile(test: test);
+              },
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
 
-class _TriumphPlaqueCard extends StatefulWidget {
-  final TestModel test;
-  const _TriumphPlaqueCard({required this.test});
+// YENI: Sıralama seçenekleri
+enum _SortField { date, net, accuracy }
 
-  @override
-  State<_TriumphPlaqueCard> createState() => _TriumphPlaqueCardState();
+class _SortOption {
+  final _SortField field;
+  final bool descending;
+  const _SortOption({required this.field, required this.descending});
 }
 
-class _TriumphPlaqueCardState extends State<_TriumphPlaqueCard> {
-  bool _isHovered = false;
+// YENI: Liste görünümü satırı
+class _ArchiveListTile extends StatelessWidget {
+  final TestModel test;
+  const _ArchiveListTile({required this.test});
 
-  double _calculateWisdomScore() {
-    return widget.test.wisdomScore;
-  }
-
-  double _calculateAccuracy() {
-    final attemptedQuestions = widget.test.totalCorrect + widget.test.totalWrong;
-    if (attemptedQuestions == 0) return 0.0;
-    return (widget.test.totalCorrect / attemptedQuestions) * 100;
-  }
-
-  Color _getTierColor(double score) {
-    if (score > 85) return const Color(0xFF40E0D0); // Platin
-    if (score > 70) return const Color(0xFFFFD700); // Altın
-    if (score > 50) return const Color(0xFFC0C0C0); // Gümüş
-    return const Color(0xFFCD7F32); // Bronz
+  double _accuracy(TestModel t) {
+    final attempted = t.totalCorrect + t.totalWrong;
+    if (attempted == 0) return 0.0;
+    return (t.totalCorrect / attempted) * 100.0;
   }
 
   @override
   Widget build(BuildContext context) {
-    final wisdomScore = _calculateWisdomScore();
-    final accuracy = _calculateAccuracy();
-    final tierColor = _getTierColor(wisdomScore);
     final textTheme = Theme.of(context).textTheme;
+    final acc = _accuracy(test);
 
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: GestureDetector(
-        onTap: () => context.push('/home/test-result-summary', extra: widget.test),
-        child: AnimatedContainer(
-          duration: 300.ms,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: _isHovered
-                    ? tierColor.withValues(alpha: tierColor.a * 0.5)
-                    : Colors.black.withValues(alpha: 0.6),
-                blurRadius: _isHovered ? 25 : 10,
-              )
-            ],
-          ),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              color: AppTheme.cardColor,
-              gradient: LinearGradient(
-                colors: [
-                  AppTheme.lightSurfaceColor.withValues(alpha: AppTheme.lightSurfaceColor.a * 0.1),
-                  AppTheme.cardColor,
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+    return Material(
+      color: AppTheme.cardColor,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => context.push('/home/test-result-summary', extra: test),
+        onLongPress: () => context.push('/home/test-detail', extra: test),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Row(
+            children: [
+              // Sol rozet
+              Container(
+                width: 54,
+                height: 54,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  color: AppTheme.lightSurfaceColor.withValues(alpha: AppTheme.lightSurfaceColor.a * 0.2),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  test.totalNet.toStringAsFixed(1),
+                  style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, color: Colors.white),
+                ),
               ),
-              border: Border.all(color: AppTheme.lightSurfaceColor.withValues(alpha: AppTheme.lightSurfaceColor.a * 0.3)),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              const SizedBox(width: 12),
+              // Orta içerik
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Hero: Savaş Raporu başlığı ile akıcı geçiş
+                    Hero(
+                      tag: 'test_title_${test.id}',
+                      child: Material(
+                        color: Colors.transparent,
+                        child: Text(
+                          test.testName,
+                          style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${test.sectionName} • ${DateFormat.yMd('tr').format(test.date)}',
+                      style: textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Sağ metrikler
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    widget.test.testName,
-                    style: textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  Row(children: [
+                    const Icon(Icons.check_rounded, size: 16, color: AppTheme.successColor),
+                    const SizedBox(width: 4),
+                    Text('%${acc.toStringAsFixed(1)}', style: textTheme.bodyMedium?.copyWith(color: AppTheme.successColor, fontWeight: FontWeight.w700)),
+                  ]),
                   const SizedBox(height: 4),
-                  Text(
-                    '${widget.test.sectionName} • ${DateFormat.yMd('tr').format(widget.test.date)}',
-                    style: textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor),
-                  ),
-                  const Spacer(),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('NET', style: textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor)),
-                          Text(
-                            widget.test.totalNet.toStringAsFixed(2),
-                            style: textTheme.headlineSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text('Doğruluk', style: textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor)),
-                          Text('%${accuracy.toStringAsFixed(1)}', style: textTheme.titleLarge?.copyWith(color: tierColor, fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                    ],
-                  ),
+                  Text('${test.totalCorrect}/${test.totalWrong}/${test.totalBlank}', style: textTheme.labelSmall?.copyWith(color: AppTheme.secondaryTextColor)),
                 ],
               ),
-            ),
+            ],
           ),
         ),
       ),
     );
   }
 }
-
-
-
