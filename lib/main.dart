@@ -12,6 +12,13 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'firebase_options.dart';
 import 'package:bilge_ai/core/prompts/strategy_prompts.dart';
 import 'package:bilge_ai/features/quests/quest_armory.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'shared/notifications/notification_service.dart';
+
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await NotificationService.firebaseMessagingBackgroundHandler(message);
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,6 +44,9 @@ void main() async {
     }
   }
 
+  // FCM background handler
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
   await initializeDateFormatting('tr_TR', null);
   // Asset tabanlı içerikleri önceden yükle
   await StrategyPrompts.preload();
@@ -50,6 +60,11 @@ class BilgeAiApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(goRouterProvider);
+
+    // Bildirim servisini başlat (tek seferlik)
+    NotificationService.instance.initialize(onNavigate: (route) {
+      router.go(route);
+    });
 
     return MaterialApp.router(
       title: 'BilgeAi',

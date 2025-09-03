@@ -139,6 +139,7 @@ class SidePanelDrawer extends ConsumerWidget {
                                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                                 child: Text('Admin İşlemleri', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: AppTheme.secondaryTextColor)),
                               ),
+                              _navTile(context, icon: Icons.campaign_rounded, title: 'Bildirim Gönder', route: '/admin/push'),
                               _navTile(context, icon: Icons.report_gmailerrorred_rounded, title: 'Cevher Bildirimleri', route: '/admin/reports'),
                             ],
                           );

@@ -225,6 +225,11 @@ service cloud.firestore {
       match /topic_performance/{topicId} { allow read, write: if request.auth.uid == userId; }
       match /savedWorkshops/{workshopId} { allow read, write: if request.auth.uid == userId; }
       match /user_activity/{activityId} { allow read, write: if request.auth.uid == userId; }
+
+      // YENİ: Cihaz tokenları
+      match /devices/{deviceId} {
+        allow read, create, update, delete: if request.auth.uid == userId;
+      }
     }
 
     // =====================================================================
@@ -304,6 +309,18 @@ service cloud.firestore {
       // İndeksi sadece adminler okuyabilir. Yazma Cloud Functions tarafından yapılır.
       allow read: if request.auth != null && request.auth.token.admin == true;
       allow write: if false;
+    }
+
+    // ======================
+    // PUSH KAMPANYALARI (sadece admin okur)
+    // ======================
+    match /push_campaigns/{campaignId} {
+      allow read: if request.auth != null && request.auth.token.admin == true;
+      allow write: if false; // Yazma yalnızca Cloud Functions (Admin SDK) tarafından yapılır
+      match /logs/{logId} {
+        allow read: if request.auth != null && request.auth.token.admin == true;
+        allow write: if false;
+      }
     }
   }
 }
