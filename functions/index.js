@@ -45,31 +45,45 @@ async function getActiveTokens(uid) {
 
 async function getActiveTokensFiltered(uid, filters = {}) {
   try {
+    const platforms = Array.isArray(filters.platforms) ? filters.platforms.filter((x)=> typeof x === 'string' && x).map((s)=> s.toLowerCase()) : [];
+    // Firestore'da sadece basit filtre: disabled ve (opsiyonel) platform in
     let q = db.collection('users').doc(uid).collection('devices').where('disabled','==', false);
+    if (platforms.length > 0 && platforms.length <= 10) q = q.where('platform','in', platforms);
+
+    // Limit makul bir değerde tutulur; kullanıcı başına çok az cihaz vardır.
+    const snap = await q.limit(200).get();
+    if (snap.empty) return [];
+
     const buildMin = Number.isFinite(filters.buildMin) ? Number(filters.buildMin) : null;
     const buildMax = Number.isFinite(filters.buildMax) ? Number(filters.buildMax) : null;
-    const platforms = Array.isArray(filters.platforms) ? filters.platforms.filter((x)=> typeof x === 'string' && x) : [];
-    if (buildMin !== null) q = q.where('appBuild','>=', buildMin);
-    if (buildMax !== null) q = q.where('appBuild','<=', buildMax);
-    if (platforms.length > 0 && platforms.length <= 10) q = q.where('platform','in', platforms);
-    const snap = await q.limit(50).get();
-    if (snap.empty) return [];
-    const list = snap.docs.map((d)=> (d.data()||{}).token).filter(Boolean);
+
+    const list = [];
+    for (const d of snap.docs) {
+      const it = d.data() || {};
+      const build = typeof it.appBuild === 'number' ? it.appBuild : (typeof it.appBuild === 'string' ? Number(it.appBuild) : null);
+      // Build filtrelerini bellek içinde uygula; alan yoksa 0 varsayalım
+      const b = Number.isFinite(build) ? Number(build) : 0;
+      if (buildMin !== null && !(b >= buildMin)) continue;
+      if (buildMax !== null && !(b <= buildMax)) continue;
+      if (it.token) list.push(it.token);
+    }
     return Array.from(new Set(list));
   } catch (e) {
-    // Fallback: tüm cihazları çek ve bellek içi filtre uygula (indeks gerekmez)
-    const all = await db.collection('users').doc(uid).collection('devices').limit(200).get();
+    // Aşırı durumlarda güvenli geri dönüş
+    logger.error('getActiveTokensFiltered failed, fallback to unfiltered', { error: String(e) });
+    const all = await db.collection('users').doc(uid).collection('devices').where('disabled','==', false).limit(200).get();
     if (all.empty) return [];
     const buildMin = Number.isFinite(filters.buildMin) ? Number(filters.buildMin) : null;
     const buildMax = Number.isFinite(filters.buildMax) ? Number(filters.buildMax) : null;
-    const platforms = Array.isArray(filters.platforms) ? filters.platforms.filter((x)=> typeof x === 'string' && x) : [];
+    const platforms = Array.isArray(filters.platforms) ? filters.platforms.filter((x)=> typeof x === 'string' && x).map((s)=> s.toLowerCase()) : [];
     const list = [];
     for (const d of all.docs) {
       const it = d.data() || {};
-      if (it.disabled === true) continue;
-      if (buildMin !== null && !(typeof it.appBuild === 'number' && it.appBuild >= buildMin)) continue;
-      if (buildMax !== null && !(typeof it.appBuild === 'number' && it.appBuild <= buildMax)) continue;
-      if (platforms.length > 0 && !platforms.includes(String(it.platform || ''))) continue;
+      if (platforms.length > 0 && !platforms.includes(String(it.platform || '').toLowerCase())) continue;
+      const build = typeof it.appBuild === 'number' ? it.appBuild : (typeof it.appBuild === 'string' ? Number(it.appBuild) : null);
+      const b = Number.isFinite(build) ? Number(build) : 0;
+      if (buildMin !== null && !(b >= buildMin)) continue;
+      if (buildMax !== null && !(b <= buildMax)) continue;
       if (it.token) list.push(it.token);
     }
     return Array.from(new Set(list));
@@ -239,13 +253,15 @@ exports.dispatchInactivityEvening = onSchedule(scheduleSpecAt(20, 30), async () 
 // ---- ADMIN KAMPANYA GÖNDERİMİ ----
 async function selectAudienceUids(audience) {
   let query = db.collection('users');
+  const lc = (s) => typeof s === 'string' ? s.toLowerCase() : s;
   if (audience?.type === 'exam' && audience.examType) {
-    query = query.where('selectedExam', '==', audience.examType);
+    const exam = lc(audience.examType);
+    query = query.where('selectedExam', '==', exam);
     const snap = await query.select().limit(20000).get();
     return snap.docs.map((d)=> d.id);
   }
   if (audience?.type === 'exams' && Array.isArray(audience.exams) && audience.exams.length > 0) {
-    const exams = audience.exams.filter((x)=> typeof x === 'string');
+    const exams = audience.exams.filter((x)=> typeof x === 'string').map((s)=> s.toLowerCase());
     if (exams.length === 0) {
       const snap = await db.collection('users').select().limit(20000).get();
       return snap.docs.map((d)=> d.id);
@@ -283,13 +299,29 @@ exports.adminEstimateAudience = onCall({region: 'us-central1', timeoutSeconds: 3
     }
     uids = filtered;
   }
+
+  const baseUsers = uids.length;
+  const filters = { buildMin: audience.buildMin, buildMax: audience.buildMax, platforms: audience.platforms };
+
+  // Token sahibi kullanıcı sayısı – batched paralel
   let tokenHolders = 0;
-  for (const uid of uids) {
-    const filters = { buildMin: audience.buildMin, buildMax: audience.buildMax, platforms: audience.platforms };
-    const tokens = await getActiveTokensFiltered(uid, filters);
-    if (tokens.length > 0) tokenHolders++;
+  const batchSize = 50;
+  for (let i = 0; i < uids.length; i += batchSize) {
+    const batch = uids.slice(i, i + batchSize);
+    const results = await Promise.all(batch.map(async (uid) => {
+      const tokens = await getActiveTokensFiltered(uid, filters);
+      return tokens.length > 0 ? 1 : 0;
+    }));
+    tokenHolders += results.reduce((a,b)=> a+b, 0);
+    // Güvenli sınır – çok büyük kitelerde gereksiz uzun sürmesin
+    if (i > 0 && i % 5000 === 0) await new Promise((r)=> setTimeout(r, 50));
   }
-  return {users: uids.length, tokenHolders};
+
+  // Kullanıcı sayısı: platform/sürüm filtreleri varsa filtrelenmiş kullanıcı sayısı; aksi halde baz kitle
+  const hasDeviceFilters = (Array.isArray(filters.platforms) && filters.platforms.length > 0) || Number.isFinite(filters.buildMin) || Number.isFinite(filters.buildMax);
+  const users = hasDeviceFilters ? tokenHolders : baseUsers;
+
+  return {users, baseUsers, tokenHolders};
 });
 
 exports.adminSendPush = onCall({region: 'us-central1', timeoutSeconds: 540}, async (request) => {
