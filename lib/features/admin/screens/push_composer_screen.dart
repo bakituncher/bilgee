@@ -8,6 +8,8 @@ import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:bilge_ai/data/providers/admin_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:flutter/services.dart';
 
 class PushComposerScreen extends StatefulWidget {
   const PushComposerScreen({super.key});
@@ -161,6 +163,99 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
     }
   }
 
+  // Başarılı gönderim sonrası formu sıfırla
+  void _resetForm() {
+    _formKey.currentState?.reset();
+    _titleCtrl.clear();
+    _bodyCtrl.clear();
+    _routeCtrl.text = '/home';
+    _uidsCtrl.clear();
+    _inactiveHoursCtrl.text = '24';
+    _platformsSelected.clear();
+    _buildMinCtrl.clear();
+    _buildMaxCtrl.clear();
+    _audience = 'all';
+    _examType = null;
+    _selectedExams.clear();
+    _imageUrl = null;
+    _scheduleEnabled = false;
+    _scheduledAt = null;
+    _estimateUsers = null;
+    _estimateTokenHolders = null;
+    _currentStep = 0;
+    setState(() {});
+  }
+
+  Future<void> _showSuccessSheet({
+    required bool scheduled,
+    int? totalUsers,
+    int? totalSent,
+  }) async {
+    HapticFeedback.mediumImpact();
+    if (!mounted) return;
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: false,
+      useSafeArea: true,
+      showDragHandle: true,
+      builder: (c) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.check_circle_rounded, color: Colors.green, size: 28),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      scheduled ? 'Bildirim planlandı' : 'Bildirim gönderildi',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                scheduled
+                    ? 'Zamanlamaya alındı. Kampanyayı kampanya geçmişinden takip edebilirsin.'
+                    : 'Gönderim tamamlandı. Kapsam: ${totalSent ?? '-'} / ${totalUsers ?? '-'}',
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.of(c).pop();
+                        _resetForm();
+                      },
+                      icon: const Icon(Icons.add_rounded),
+                      label: const Text('Yeni Bildirim Oluştur'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: () {
+                        Navigator.of(c).pop();
+                        if (mounted) context.go('/home');
+                      },
+                      icon: const Icon(Icons.dashboard_rounded),
+                      label: const Text('Ana Panele Dön'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _send({bool testToSelf = false}) async {
     if (!_formKey.currentState!.validate()) return;
     setState(() { _sending = true; });
@@ -183,13 +278,43 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
       if (!mounted) return;
       final m = res.data as Map? ?? {};
       final scheduled = m['scheduled'] == true;
-      final total = m['totalUsers'];
-      final sent = m['totalSent'];
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(scheduled ? 'Planlandı' : 'Gönderildi: ${sent ?? '-'} / ${total ?? '-'}'),
-      ));
+      final total = (m['totalUsers'] as num?)?.toInt();
+      final sent = (m['totalSent'] as num?)?.toInt();
+      await _showSuccessSheet(scheduled: scheduled, totalUsers: total, totalSent: sent);
     } catch (e) {
       if (!mounted) return;
+      HapticFeedback.heavyImpact();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $e')));
+    } finally {
+      if (mounted) setState(() { _sending = false; });
+    }
+  }
+
+  Future<void> _sendTest() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() { _sending = true; });
+    try {
+      final callable = FirebaseFunctions.instance.httpsCallable('adminSendPush');
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) return;
+      final data = {
+        'title': _titleCtrl.text.trim(),
+        'body': _bodyCtrl.text.trim(),
+        'route': _routeCtrl.text.trim().isEmpty ? '/home' : _routeCtrl.text.trim(),
+        if (_imageUrl != null) 'imageUrl': _imageUrl,
+        'audience': {'type': 'uids', 'uids': [uid]},
+        if (_scheduleEnabled && _scheduledAt != null) 'scheduledAt': _scheduledAt!.millisecondsSinceEpoch,
+      };
+      final res = await callable.call(data);
+      if (!mounted) return;
+      final m = res.data as Map? ?? {};
+      final scheduled = m['scheduled'] == true;
+      final total = (m['totalUsers'] as num?)?.toInt();
+      final sent = (m['totalSent'] as num?)?.toInt();
+      await _showSuccessSheet(scheduled: scheduled, totalUsers: total, totalSent: sent);
+    } catch (e) {
+      if (!mounted) return;
+      HapticFeedback.heavyImpact();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $e')));
     } finally {
       if (mounted) setState(() { _sending = false; });
@@ -236,7 +361,17 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
         final isAdmin = ref.watch(isAdminAsync).value ?? false;
         if (!isAdmin) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Bildirim Gönder')),
+            appBar: AppBar(title: const Text('Bildirim Gönder'), leading: IconButton(
+              tooltip: 'Geri',
+              icon: const Icon(Icons.arrow_back_rounded),
+              onPressed: () {
+                if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
+                } else {
+                  context.go('/home');
+                }
+              },
+            )),
             body: const Center(child: Text('Bu sayfayı görüntülemek için yetkiniz yok.')),
           );
         }
@@ -272,6 +407,17 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
         return Scaffold(
           appBar: AppBar(
             title: const Text('Bildirim Gönder'),
+            leading: IconButton(
+              tooltip: 'Geri',
+              icon: const Icon(Icons.arrow_back_rounded),
+              onPressed: () {
+                if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
+                } else {
+                  context.go('/home');
+                }
+              },
+            ),
             actions: [
               IconButton(
                 tooltip: _simpleMode ? 'Detaylı görünüm' : 'Basit görünüm',
@@ -279,6 +425,14 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
                 icon: Icon(_simpleMode ? Icons.dashboard_customize_rounded : Icons.view_agenda_rounded),
               ),
             ],
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(3),
+              child: LinearProgressIndicator(
+                value: ((_currentStep + 1) / (_lastStep + 1)).clamp(0.0, 1.0),
+                minHeight: 3,
+                backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(.3),
+              ),
+            ),
           ),
           resizeToAvoidBottomInset: true,
           floatingActionButton: null,
@@ -461,37 +615,6 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
     return parts.join(' • ');
   }
 
-  Future<void> _sendTest() async {
-    if (!_formKey.currentState!.validate()) return;
-    setState(() { _sending = true; });
-    try {
-      final callable = FirebaseFunctions.instance.httpsCallable('adminSendPush');
-      final uid = FirebaseAuth.instance.currentUser?.uid;
-      if (uid == null) return;
-      final data = {
-        'title': _titleCtrl.text.trim(),
-        'body': _bodyCtrl.text.trim(),
-        'route': _routeCtrl.text.trim().isEmpty ? '/home' : _routeCtrl.text.trim(),
-        if (_imageUrl != null) 'imageUrl': _imageUrl,
-        'audience': {'type': 'uids', 'uids': [uid]},
-        if (_scheduleEnabled && _scheduledAt != null) 'scheduledAt': _scheduledAt!.millisecondsSinceEpoch,
-      };
-      final res = await callable.call(data);
-      if (!mounted) return;
-      final m = res.data as Map? ?? {};
-      final scheduled = m['scheduled'] == true;
-      final total = m['totalUsers'];
-      final sent = m['totalSent'];
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(scheduled ? 'Planlandı' : 'Gönderildi: ${sent ?? '-'} / ${total ?? '-'}'),
-      ));
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $e')));
-    } finally {
-      if (mounted) setState(() { _sending = false; });
-    }
-  }
 
   void _nextStep() {
     if (!_validateStep(_currentStep)) { setState(() {}); return; }
