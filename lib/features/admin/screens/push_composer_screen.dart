@@ -48,6 +48,9 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
   int? _estimateUsers;
   int? _estimateTokenHolders;
 
+  // Yeni: Gönderim türü
+  String _sendType = 'push'; // push | inapp | both
+
   // Bildirim şablonları
   final List<Map<String, String>> _templates = const [
     {
@@ -272,6 +275,7 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
         'route': _routeCtrl.text.trim().isEmpty ? '/home' : _routeCtrl.text.trim(),
         if (_imageUrl != null) 'imageUrl': _imageUrl,
         'audience': audience,
+        'sendType': _sendType,
         if (_scheduleEnabled && _scheduledAt != null) 'scheduledAt': _scheduledAt!.millisecondsSinceEpoch,
       };
       final res = await callable.call(data);
@@ -303,6 +307,7 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
         'route': _routeCtrl.text.trim().isEmpty ? '/home' : _routeCtrl.text.trim(),
         if (_imageUrl != null) 'imageUrl': _imageUrl,
         'audience': {'type': 'uids', 'uids': [uid]},
+        'sendType': _sendType,
         if (_scheduleEnabled && _scheduledAt != null) 'scheduledAt': _scheduledAt!.millisecondsSinceEpoch,
       };
       final res = await callable.call(data);
@@ -430,7 +435,7 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
               child: LinearProgressIndicator(
                 value: ((_currentStep + 1) / (_lastStep + 1)).clamp(0.0, 1.0),
                 minHeight: 3,
-                backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(.3),
+                backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: .3),
               ),
             ),
           ),
@@ -475,6 +480,8 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
               _imagePickerRow(),
               if (_uploadProgress > 0 && _uploadProgress < 1)
                 Padding(padding: const EdgeInsets.only(top: 8.0), child: LinearProgressIndicator(value: _uploadProgress)),
+              const SizedBox(height: 16),
+              _sendTypeSelector(),
             ],
           ),
         );
@@ -512,6 +519,12 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
               _inlinePreview(),
               const SizedBox(height: 12),
               Row(children: [
+                const Icon(Icons.swap_horiz_rounded, size: 18),
+                const SizedBox(width: 6),
+                Expanded(child: Text('Gönderim: ' + (_sendType == 'push' ? 'Sadece Anlık' : _sendType == 'inapp' ? 'Sadece Uygulama İçi' : 'Her İkisi'))),
+              ]),
+              const SizedBox(height: 8),
+              Row(children: [
                 const Icon(Icons.groups_rounded, size: 18),
                 const SizedBox(width: 6),
                 Expanded(child: Text(_audienceSummary())),
@@ -528,6 +541,36 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
           ),
         );
     }
+  }
+
+  Widget _sendTypeSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Gönderim Türü'),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 8,
+          children: [
+            ChoiceChip(
+              label: const Text('Sadece Anlık (Push)'),
+              selected: _sendType == 'push',
+              onSelected: (_) => setState(() => _sendType = 'push'),
+            ),
+            ChoiceChip(
+              label: const Text('Sadece Uygulama İçi'),
+              selected: _sendType == 'inapp',
+              onSelected: (_) => setState(() => _sendType = 'inapp'),
+            ),
+            ChoiceChip(
+              label: const Text('Her İkisi'),
+              selected: _sendType == 'both',
+              onSelected: (_) => setState(() => _sendType = 'both'),
+            ),
+          ],
+        ),
+      ],
+    );
   }
 
   Widget _stepCard({required String title, required IconData icon, required Widget child}) {
@@ -638,7 +681,6 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
   }
 
   // Alt eylem çubuğu – adım kontrollü
-  @override
   Widget _bottomActionBar() {
     final uploading = _uploadProgress > 0 && _uploadProgress < 1;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;

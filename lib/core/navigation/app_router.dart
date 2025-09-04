@@ -19,6 +19,7 @@ import 'package:bilge_ai/features/blog/screens/blog_detail_screen.dart';
 import 'package:bilge_ai/features/admin/screens/question_reports_screen.dart';
 import 'package:bilge_ai/features/admin/screens/question_report_detail_screen.dart';
 import 'package:bilge_ai/features/admin/screens/push_composer_screen.dart';
+import 'package:bilge_ai/shared/notifications/notification_center_screen.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   final rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -126,6 +127,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/stats/overview',
         parentNavigatorKey: rootNavigatorKey,
         builder: (c, s) => const GeneralOverviewScreen(),
+      ),
+      // Bildirim Merkezi
+      GoRoute(
+        path: '/notifications',
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (c, s) => const NotificationCenterScreen(),
       ),
       // Admin: Cevher Bildirimleri
       GoRoute(

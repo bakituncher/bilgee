@@ -101,6 +101,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
                 title: const Text('Komuta Merkezi'),
                 centerTitle: true,
+                actions: [
+                  _NotificationBell(),
+                  const SizedBox(width: 4),
+                ],
               ),
 
               SliverPadding(
@@ -199,3 +203,39 @@ class _DailyQuestsCard extends ConsumerWidget {
   }
 }
 // ------------------------------------------
+
+class _NotificationBell extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final countAsync = ref.watch(unreadInAppCountProvider);
+    final count = countAsync.value ?? 0;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        IconButton(
+          tooltip: 'Bildirimler',
+          onPressed: () => context.go('/notifications'),
+          icon: const Icon(Icons.notifications_none_rounded, color: AppTheme.secondaryColor),
+        ),
+        if (count > 0)
+          Positioned(
+            right: 8,
+            top: 8,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.redAccent,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              constraints: const BoxConstraints(minWidth: 18),
+              child: Text(
+                count > 99 ? '99+' : '$count',
+                style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}

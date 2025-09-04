@@ -11,6 +11,7 @@ import 'package:bilge_ai/data/models/plan_document.dart';
 import 'package:bilge_ai/data/models/performance_summary.dart';
 import 'package:bilge_ai/data/models/app_state.dart';
 import 'package:cloud_functions/cloud_functions.dart'; // SUNUCU GÖREVLERİ İÇİN
+import 'package:bilge_ai/shared/notifications/in_app_notification_model.dart';
 
 final firestoreProvider = Provider<FirebaseFirestore>((ref) => FirebaseFirestore.instance);
 
@@ -83,4 +84,20 @@ final completedTasksForWeekProvider = FutureProvider.family.autoDispose<Map<Stri
 final functionsProvider = Provider<FirebaseFunctions>((ref) {
   // Bölge sabit: backend onCall fonksiyonları us-central1
   return FirebaseFunctions.instanceFor(region: 'us-central1');
+});
+
+final inAppNotificationsProvider = StreamProvider<List<InAppNotification>>((ref) {
+  final user = ref.watch(authControllerProvider).value;
+  if (user != null) {
+    return ref.watch(firestoreServiceProvider).streamInAppNotifications(user.uid, limit: 100);
+  }
+  return const Stream<List<InAppNotification>>.empty();
+});
+
+final unreadInAppCountProvider = StreamProvider<int>((ref) {
+  final user = ref.watch(authControllerProvider).value;
+  if (user != null) {
+    return ref.watch(firestoreServiceProvider).streamUnreadInAppCount(user.uid);
+  }
+  return const Stream<int>.empty();
 });
