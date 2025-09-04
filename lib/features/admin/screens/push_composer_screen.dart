@@ -64,9 +64,6 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
     },
   ];
 
-  // Adım tabanlı akış için
-  int _currentStep = 0;
-
   @override
   void dispose() {
     _titleCtrl.dispose();
@@ -75,6 +72,18 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
     _uidsCtrl.dispose();
     _inactiveHoursCtrl.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Form alanları değiştikçe canlı önizleme için yeniden çiz
+    void listener() => mounted ? setState(() {}) : null;
+    _titleCtrl.addListener(listener);
+    _bodyCtrl.addListener(listener);
+    _routeCtrl.addListener(listener);
+    _uidsCtrl.addListener(listener);
+    _inactiveHoursCtrl.addListener(listener);
   }
 
   Future<void> _pickAndUploadImage() async {
@@ -224,32 +233,27 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
         }
         final width = MediaQuery.of(context).size.width;
         final isWide = width >= 900;
-        final content = _simpleMode
-            ? SingleChildScrollView(
-                padding: const EdgeInsets.only(bottom: 24),
-                child: _buildLeftColumn(useFlex: false),
+
+        final content = isWide && !_simpleMode
+            ? Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: _buildFormOnly()),
+                  const SizedBox(width: 16),
+                  SizedBox(width: 380, child: _buildRightColumn(isWide: true)),
+                ],
               )
-            : (
-                isWide
-                    ? Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(child: _buildLeftColumn(useFlex: true)),
-                          const SizedBox(width: 16),
-                          SizedBox(width: 360, child: _buildRightColumn(isWide: true)),
-                        ],
-                      )
-                    : SingleChildScrollView(
-                        padding: const EdgeInsets.only(bottom: 24),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _buildLeftColumn(useFlex: false),
-                            const SizedBox(height: 16),
-                            _buildRightColumn(isWide: false),
-                          ],
-                        ),
-                      )
+            : SingleChildScrollView(
+                padding: const EdgeInsets.only(bottom: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Mobil ve basit mod: üstte canlı önizleme
+                    _inlinePreview(),
+                    const SizedBox(height: 16),
+                    _buildFormOnly(),
+                  ],
+                ),
               );
 
         return Scaffold(
@@ -257,13 +261,12 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
             title: const Text('Bildirim Gönder'),
             actions: [
               IconButton(
-                tooltip: _simpleMode ? 'Detaylı moda geç' : 'Basit moda geç',
+                tooltip: _simpleMode ? 'Detaylı görünüm' : 'Basit görünüm',
                 onPressed: () => setState(() => _simpleMode = !_simpleMode),
                 icon: Icon(_simpleMode ? Icons.dashboard_customize_rounded : Icons.view_agenda_rounded),
               ),
             ],
           ),
-          // FAB yerine Stepper kontrolleri kullanılacak
           floatingActionButton: null,
           body: SafeArea(
             child: Form(
@@ -274,98 +277,51 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
               ),
             ),
           ),
+          bottomNavigationBar: _bottomActionBar(),
         );
       },
     );
   }
 
-  // Basit mod: hafif sihirbaz (wizard) akışı
-  Widget _buildLeftColumn({bool useFlex = true}) {
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _wizardHeader(),
-            const SizedBox(height: 12),
-            // Expanded sadece bounded yükseklikte (ör. geniş ekranda) kullanılmalı.
-            if (useFlex)
-              Expanded(
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 220),
-                  switchInCurve: Curves.easeOutCubic,
-                  switchOutCurve: Curves.easeInCubic,
-                  transitionBuilder: _fadeSlide,
-                  child: _stepContent(key: ValueKey(_currentStep)),
-                ),
-              )
-            else
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 220),
-                switchInCurve: Curves.easeOutCubic,
-                switchOutCurve: Curves.easeInCubic,
-                transitionBuilder: _fadeSlide,
-                child: _stepContent(key: ValueKey(_currentStep)),
-              ),
-            const SizedBox(height: 12),
-            _wizardBottomBar(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Hafif fade+slide geçişi (daha akıcı animasyon)
-  Widget _fadeSlide(Widget child, Animation<double> a) => FadeTransition(
-        opacity: a,
-        child: SlideTransition(
-          position: Tween<Offset>(begin: const Offset(0, 0.04), end: Offset.zero).animate(a),
-          child: child,
-        ),
-      );
-
-  Widget _wizardHeader() {
-    final titles = ['İçerik','Kitle','Zaman','Önizleme'];
-    final progress = (_currentStep + 1) / titles.length;
+  // Yeni: Tek sayfalık form bölümleri
+  Widget _buildFormOnly() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(titles[_currentStep], style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 6),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(value: progress, minHeight: 6),
-        ),
-      ],
-    );
-  }
-
-  Widget _stepContent({Key? key}) {
-    switch (_currentStep) {
-      case 0:
-        return Container(
-          key: key,
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+        Card(
+          clipBehavior: Clip.antiAlias,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Row(
+                  children: const [
+                    Icon(Icons.edit_note_rounded),
+                    SizedBox(width: 8),
+                    Text('İçerik', style: TextStyle(fontWeight: FontWeight.w700)),
+                  ],
+                ),
+                const SizedBox(height: 12),
                 TextFormField(
                   controller: _titleCtrl,
-                  autofocus: true,
                   textInputAction: TextInputAction.next,
                   decoration: InputDecoration(
                     labelText: 'Başlık',
                     helperText: 'Kısa ve net bir çağrı (≤ 60 karakter).',
-                    counterText: '', // counter gizle (klavye jank'ını azaltır)
+                    counterText: '',
                     prefixIcon: const Icon(Icons.title_rounded),
-                    suffixIcon: IconButton(
-                      tooltip: 'Şablonlar',
-                      icon: const Icon(Icons.auto_awesome_rounded),
-                      onPressed: _showTemplatePicker,
-                    ),
+                    suffixIcon: _titleCtrl.text.isEmpty
+                        ? IconButton(
+                            tooltip: 'Şablonlar',
+                            icon: const Icon(Icons.auto_awesome_rounded),
+                            onPressed: _showTemplatePicker,
+                          )
+                        : IconButton(
+                            tooltip: 'Temizle',
+                            icon: const Icon(Icons.clear_rounded),
+                            onPressed: () => setState(() => _titleCtrl.clear()),
+                          ),
                   ),
                   maxLength: 60,
                   validator: (v) => (v == null || v.trim().isEmpty) ? 'Başlık gerekli' : null,
@@ -377,13 +333,19 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
                   decoration: InputDecoration(
                     labelText: 'Açıklama',
                     helperText: 'Kısa fayda + eylem çağrısı (≤ 160 karakter).',
-                    counterText: '', // counter gizle (klavye jank'ını azaltır)
+                    counterText: '',
                     prefixIcon: const Icon(Icons.notes_rounded),
-                    suffixIcon: IconButton(
-                      tooltip: 'Şablonlar',
-                      icon: const Icon(Icons.auto_awesome_rounded),
-                      onPressed: _showTemplatePicker,
-                    ),
+                    suffixIcon: _bodyCtrl.text.isEmpty
+                        ? IconButton(
+                            tooltip: 'Şablonlar',
+                            icon: const Icon(Icons.auto_awesome_rounded),
+                            onPressed: _showTemplatePicker,
+                          )
+                        : IconButton(
+                            tooltip: 'Temizle',
+                            icon: const Icon(Icons.clear_rounded),
+                            onPressed: () => setState(() => _bodyCtrl.clear()),
+                          ),
                   ),
                   maxLength: 160,
                   maxLines: 3,
@@ -396,25 +358,39 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
                 const SizedBox(height: 12),
                 _imagePickerRow(),
                 if (_uploadProgress > 0 && _uploadProgress < 1)
-                  Padding(padding: const EdgeInsets.only(top: 8.0), child: LinearProgressIndicator(value: _uploadProgress)),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: LinearProgressIndicator(value: _uploadProgress),
+                  ),
               ],
             ),
           ),
-        );
-      case 1:
-        return Container(
-          key: key,
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+        ),
+        const SizedBox(height: 16),
+        Card(
+          clipBehavior: Clip.antiAlias,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Row(
+                  children: const [
+                    Icon(Icons.groups_3_rounded),
+                    SizedBox(width: 8),
+                    Text('Kitle', style: TextStyle(fontWeight: FontWeight.w700)),
+                  ],
+                ),
+                const SizedBox(height: 12),
                 _audienceSection(),
                 const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  onPressed: _sending ? null : _estimate,
-                  icon: const Icon(Icons.groups_3_rounded),
-                  label: const Text('Kitleyi Tahmin Et'),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: OutlinedButton.icon(
+                    onPressed: _sending ? null : _estimate,
+                    icon: const Icon(Icons.analytics_outlined),
+                    label: const Text('Kitleyi Tahmin Et'),
+                  ),
                 ),
                 if (_estimateUsers != null)
                   Padding(
@@ -424,138 +400,107 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
               ],
             ),
           ),
-        );
-      case 2:
-        return Container(
-          key: key,
-          child: SingleChildScrollView(
+        ),
+        const SizedBox(height: 16),
+        Card(
+          clipBehavior: Clip.antiAlias,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Row(
+                  children: const [
+                    Icon(Icons.schedule_rounded),
+                    SizedBox(width: 8),
+                    Text('Zamanlama', style: TextStyle(fontWeight: FontWeight.w700)),
+                  ],
+                ),
+                const SizedBox(height: 12),
                 _scheduleSection(),
               ],
             ),
           ),
-        );
-      default:
-        return Container(key: key);
-    }
+        ),
+      ],
+    );
   }
 
-  Widget _wizardBottomBar() {
-    final isLast = _currentStep >= 3;
+  // Alt eylem çubuğu
+  Widget _bottomActionBar() {
     final uploading = _uploadProgress > 0 && _uploadProgress < 1;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final narrow = constraints.maxWidth < 360;
-        if (narrow) {
-          // Dar ekran: butonları iki satıra böl
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  if (_currentStep > 0)
+    return Material(
+      elevation: 6,
+      color: Theme.of(context).colorScheme.surface,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: LayoutBuilder(
+            builder: (context, c) {
+              final narrow = c.maxWidth < 420;
+              final buttons = <Widget>[
+                OutlinedButton.icon(
+                  onPressed: (_sending || uploading) ? null : _estimate,
+                  icon: const Icon(Icons.groups_2_outlined),
+                  label: const Text('Tahmin'),
+                ),
+                const SizedBox(width: 8),
+                TextButton.icon(
+                  onPressed: (_sending || uploading) ? null : () => _send(testToSelf: true),
+                  icon: const Icon(Icons.person_outline_rounded),
+                  label: const Text('Kendime Test'),
+                ),
+                const Spacer(),
+                FilledButton.icon(
+                  onPressed: (_sending || uploading)
+                      ? null
+                      : () {
+                          if (!_formKey.currentState!.validate()) return;
+                          _send();
+                        },
+                  icon: _sending
+                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                      : Icon(_scheduleEnabled ? Icons.event_available_rounded : Icons.send_rounded),
+                  label: Text(_scheduleEnabled ? 'Planla' : 'Gönder'),
+                ),
+              ];
+              if (narrow) {
+                return Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
                     OutlinedButton.icon(
-                      onPressed: () => setState(() => _currentStep = _currentStep - 1),
-                      icon: const Icon(Icons.arrow_back_rounded),
-                      label: const Text('Geri'),
+                      onPressed: (_sending || uploading) ? null : _estimate,
+                      icon: const Icon(Icons.groups_2_outlined),
+                      label: const Text('Tahmin'),
                     ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  const Spacer(),
-                  if (isLast)
                     TextButton.icon(
                       onPressed: (_sending || uploading) ? null : () => _send(testToSelf: true),
                       icon: const Icon(Icons.person_outline_rounded),
-                      label: const Text('Kendime Test Gönder'),
+                      label: const Text('Kendime Test'),
                     ),
-                  const SizedBox(width: 8),
-                  FilledButton.icon(
-                    onPressed: (_sending || uploading)
-                        ? null
-                        : () {
-                            // İleri veya Gönder/Planla
-                            if (_currentStep == 0) {
-                              final ok = _titleCtrl.text.trim().isNotEmpty && _bodyCtrl.text.trim().isNotEmpty;
-                              if (!ok) { setState(() {}); return; }
-                              setState(() => _currentStep = 1);
-                              return;
-                            }
-                            if (_currentStep == 1) {
-                              if (_audience == 'uids' && _uidsCtrl.text.trim().isEmpty) { setState(() {}); return; }
-                              if (_audience == 'inactive' && int.tryParse(_inactiveHoursCtrl.text.trim()) == null) { setState(() {}); return; }
-                              setState(() => _currentStep = 2);
-                              return;
-                            }
-                            if (_currentStep == 2) {
-                              setState(() => _currentStep = 3);
-                              return;
-                            }
-                            _send();
-                          },
-                    icon: _sending
-                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                        : Icon(_currentStep >= 3 ? Icons.send_rounded : Icons.arrow_forward_rounded),
-                    label: Text(_currentStep >= 3 ? (_scheduleEnabled ? 'Planla' : 'Gönder') : 'İleri'),
-                  ),
-                ],
-              ),
-            ],
-          );
-        }
-        // Geniş ekran: tek satır
-        return Row(
-          children: [
-            if (_currentStep > 0)
-              OutlinedButton.icon(
-                onPressed: () => setState(() => _currentStep = _currentStep - 1),
-                icon: const Icon(Icons.arrow_back_rounded),
-                label: const Text('Geri'),
-              ),
-            if (_currentStep > 0) const SizedBox(width: 8),
-            const Spacer(),
-            if (isLast)
-              TextButton.icon(
-                onPressed: (_sending || uploading) ? null : () => _send(testToSelf: true),
-                icon: const Icon(Icons.person_outline_rounded),
-                label: const Text('Kendime Test Gönder'),
-              ),
-            const SizedBox(width: 8),
-            FilledButton.icon(
-              onPressed: (_sending || uploading)
-                  ? null
-                  : () {
-                      // İleri veya Gönder/Planla
-                      if (_currentStep == 0) {
-                        final ok = _titleCtrl.text.trim().isNotEmpty && _bodyCtrl.text.trim().isNotEmpty;
-                        if (!ok) { setState(() {}); return; }
-                        setState(() => _currentStep = 1);
-                        return;
-                      }
-                      if (_currentStep == 1) {
-                        if (_audience == 'uids' && _uidsCtrl.text.trim().isEmpty) { setState(() {}); return; }
-                        if (_audience == 'inactive' && int.tryParse(_inactiveHoursCtrl.text.trim()) == null) { setState(() {}); return; }
-                        setState(() => _currentStep = 2);
-                        return;
-                      }
-                      if (_currentStep == 2) {
-                        setState(() => _currentStep = 3);
-                        return;
-                      }
-                      _send();
-                    },
-              icon: _sending
-                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                  : Icon(_currentStep >= 3 ? Icons.send_rounded : Icons.arrow_forward_rounded),
-              label: Text(_currentStep >= 3 ? (_scheduleEnabled ? 'Planla' : 'Gönder') : 'İleri'),
-            ),
-          ],
-        );
-      },
+                    FilledButton.icon(
+                      onPressed: (_sending || uploading)
+                          ? null
+                          : () {
+                              if (!_formKey.currentState!.validate()) return;
+                              _send();
+                            },
+                      icon: _sending
+                          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                          : Icon(_scheduleEnabled ? Icons.event_available_rounded : Icons.send_rounded),
+                      label: Text(_scheduleEnabled ? 'Planla' : 'Gönder'),
+                    ),
+                  ],
+                );
+              }
+              return Row(children: buttons);
+            },
+          ),
+        ),
+      ),
     );
   }
 
@@ -635,16 +580,30 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
     );
   }
 
+  // Görsel satırını Wrap ile responsive yap
   Widget _imagePickerRow() {
-    return Row(
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        Expanded(child: Text(_imageUrl == null ? 'Görsel ekle (opsiyonel)' : 'Görsel yüklendi')),
-        const SizedBox(width: 8),
+        Text(
+          _imageUrl == null ? 'Görsel ekle (opsiyonel)' : 'Görsel yüklendi',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          softWrap: false,
+        ),
         OutlinedButton.icon(
           onPressed: _sending ? null : _pickAndUploadImage,
           icon: const Icon(Icons.image_rounded),
           label: const Text('Görsel Seç & Yükle'),
         ),
+        if (_imageUrl != null)
+          TextButton.icon(
+            onPressed: _sending ? null : () => setState(() => _imageUrl = null),
+            icon: const Icon(Icons.clear_rounded),
+            label: const Text('Kaldır'),
+          ),
       ],
     );
   }
@@ -736,35 +695,46 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
     );
   }
 
+  // Tarih & saat seçimini Wrap + LayoutBuilder ile responsive hale getir
   Widget _scheduleSection() {
-    return Row(
-      children: [
-        Switch(
-          value: _scheduleEnabled,
-          onChanged: (v) => setState(() { _scheduleEnabled = v; if (!v) _scheduledAt = null; }),
-        ),
-        const Text('Planlı gönder'),
-        const SizedBox(width: 12),
-        if (_scheduleEnabled)
-          OutlinedButton.icon(
-            onPressed: () async {
-              final now = DateTime.now().add(const Duration(minutes: 5));
-              final date = await showDatePicker(
-                context: context,
-                initialDate: now,
-                firstDate: DateTime.now(),
-                lastDate: DateTime.now().add(const Duration(days: 30)),
-              );
-              if (date == null) return;
-              final time = await showTimePicker(context: context, initialTime: TimeOfDay(hour: now.hour, minute: now.minute));
-              if (time == null) return;
-              final dt = DateTime(date.year, date.month, date.day, time.hour, time.minute);
-              setState(() { _scheduledAt = dt; });
-            },
-            icon: const Icon(Icons.schedule_rounded),
-            label: Text(_scheduledAt == null ? 'Tarih & saat seç' : DateFormat('dd.MM.yyyy HH:mm').format(_scheduledAt!)),
-          ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isNarrow = constraints.maxWidth < 360;
+        final label = _scheduleEnabled && _scheduledAt != null
+            ? DateFormat(isNarrow ? 'dd.MM HH:mm' : 'dd.MM.yyyy HH:mm').format(_scheduledAt!)
+            : 'Tarih & saat seç';
+        return Wrap(
+          spacing: 12,
+          runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Switch(
+              value: _scheduleEnabled,
+              onChanged: (v) => setState(() { _scheduleEnabled = v; if (!v) _scheduledAt = null; }),
+            ),
+            const Text('Planlı gönder'),
+            if (_scheduleEnabled)
+              OutlinedButton.icon(
+                onPressed: () async {
+                  final now = DateTime.now().add(const Duration(minutes: 5));
+                  final date = await showDatePicker(
+                    context: context,
+                    initialDate: now,
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime.now().add(const Duration(days: 30)),
+                  );
+                  if (date == null) return;
+                  final time = await showTimePicker(context: context, initialTime: TimeOfDay(hour: now.hour, minute: now.minute));
+                  if (time == null) return;
+                  final dt = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+                  setState(() { _scheduledAt = dt; });
+                },
+                icon: const Icon(Icons.schedule_rounded),
+                label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, softWrap: false),
+              ),
+          ],
+        );
+      },
     );
   }
 
@@ -774,7 +744,7 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
         Card(
           clipBehavior: Clip.antiAlias,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (_imageUrl != null)
                 AspectRatio(aspectRatio: 16/9, child: Image.network(_imageUrl!, fit: BoxFit.cover)),
