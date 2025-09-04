@@ -20,6 +20,8 @@ exports.registerFcmToken = onCall({region: 'us-central1'}, async (request) => {
   const lang = String(request.data?.lang || 'tr');
   if (!token || token.length < 10) throw new HttpsError('invalid-argument', 'Geçerli token gerekli');
   const deviceId = token.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 140);
+  const appVersion = request.data?.appVersion ? String(request.data.appVersion) : null;
+  const appBuild = request.data?.appBuild != null ? Number(request.data.appBuild) : null;
   const ref = db.collection('users').doc(uid).collection('devices').doc(deviceId);
   await ref.set({
     uid,
@@ -28,6 +30,8 @@ exports.registerFcmToken = onCall({region: 'us-central1'}, async (request) => {
     lang,
     disabled: false,
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    ...(appVersion ? { appVersion } : {}),
+    ...(Number.isFinite(appBuild) ? { appBuild } : {}),
   }, {merge: true});
   return {ok: true};
 });
@@ -35,7 +39,55 @@ exports.registerFcmToken = onCall({region: 'us-central1'}, async (request) => {
 async function getActiveTokens(uid) {
   const snap = await db.collection('users').doc(uid).collection('devices').where('disabled','==', false).limit(50).get();
   if (snap.empty) return [];
-  return snap.docs.map((d)=> (d.data()||{}).token).filter(Boolean);
+  const list = snap.docs.map((d)=> (d.data()||{}).token).filter(Boolean);
+  return Array.from(new Set(list));
+}
+
+async function getActiveTokensFiltered(uid, filters = {}) {
+  try {
+    const platforms = Array.isArray(filters.platforms) ? filters.platforms.filter((x)=> typeof x === 'string' && x).map((s)=> s.toLowerCase()) : [];
+    // Firestore'da sadece basit filtre: disabled ve (opsiyonel) platform in
+    let q = db.collection('users').doc(uid).collection('devices').where('disabled','==', false);
+    if (platforms.length > 0 && platforms.length <= 10) q = q.where('platform','in', platforms);
+
+    // Limit makul bir değerde tutulur; kullanıcı başına çok az cihaz vardır.
+    const snap = await q.limit(200).get();
+    if (snap.empty) return [];
+
+    const buildMin = Number.isFinite(filters.buildMin) ? Number(filters.buildMin) : null;
+    const buildMax = Number.isFinite(filters.buildMax) ? Number(filters.buildMax) : null;
+
+    const list = [];
+    for (const d of snap.docs) {
+      const it = d.data() || {};
+      const build = typeof it.appBuild === 'number' ? it.appBuild : (typeof it.appBuild === 'string' ? Number(it.appBuild) : null);
+      // Build filtrelerini bellek içinde uygula; alan yoksa 0 varsayalım
+      const b = Number.isFinite(build) ? Number(build) : 0;
+      if (buildMin !== null && !(b >= buildMin)) continue;
+      if (buildMax !== null && !(b <= buildMax)) continue;
+      if (it.token) list.push(it.token);
+    }
+    return Array.from(new Set(list));
+  } catch (e) {
+    // Aşırı durumlarda güvenli geri dönüş
+    logger.error('getActiveTokensFiltered failed, fallback to unfiltered', { error: String(e) });
+    const all = await db.collection('users').doc(uid).collection('devices').where('disabled','==', false).limit(200).get();
+    if (all.empty) return [];
+    const buildMin = Number.isFinite(filters.buildMin) ? Number(filters.buildMin) : null;
+    const buildMax = Number.isFinite(filters.buildMax) ? Number(filters.buildMax) : null;
+    const platforms = Array.isArray(filters.platforms) ? filters.platforms.filter((x)=> typeof x === 'string' && x).map((s)=> s.toLowerCase()) : [];
+    const list = [];
+    for (const d of all.docs) {
+      const it = d.data() || {};
+      if (platforms.length > 0 && !platforms.includes(String(it.platform || '').toLowerCase())) continue;
+      const build = typeof it.appBuild === 'number' ? it.appBuild : (typeof it.appBuild === 'string' ? Number(it.appBuild) : null);
+      const b = Number.isFinite(build) ? Number(build) : 0;
+      if (buildMin !== null && !(b >= buildMin)) continue;
+      if (buildMax !== null && !(b <= buildMax)) continue;
+      if (it.token) list.push(it.token);
+    }
+    return Array.from(new Set(list));
+  }
 }
 
 function dayKeyIstanbul(d = nowIstanbul()) {
@@ -114,7 +166,7 @@ function buildInactivityTemplate(inactHours, examType) {
   if (inactHours >= 24) {
     return {
       title: 'Bir gün ara verdin. Şimdi hızlanma zamanı! ⚡',
-      body: 'Hedefini 10’a çıkar: kısa bir pratikle ivme yakala! 🎯',
+      body: 'Hedefini 10’a çıkar: k��sa bir pratikle ivme yakala! 🎯',
       route: '/home/add-test',
     };
   }
@@ -130,11 +182,14 @@ function buildInactivityTemplate(inactHours, examType) {
 
 async function sendPushToTokens(tokens, payload) {
   if (!tokens || tokens.length === 0) return {successCount: 0, failureCount: 0};
-  logger.info('sendPushToTokens', { tokenCount: tokens.length, hasImage: !!payload.imageUrl, type: payload.type || 'unknown' });
+  const uniq = Array.from(new Set(tokens.filter(Boolean)));
+  logger.info('sendPushToTokens', { tokenCount: uniq.length, hasImage: !!payload.imageUrl, type: payload.type || 'unknown' });
+  const collapseId = payload.campaignId || (payload.route || 'bilge_general');
   const message = {
-    notification: { title: payload.title, body: payload.body },
-    data: { route: payload.route || '/home', campaignId: payload.campaignId || '', type: payload.type || 'inactivity' },
+    notification: { title: payload.title, body: payload.body, ...(payload.imageUrl ? { imageUrl: payload.imageUrl } : {}) },
+    data: { route: payload.route || '/home', campaignId: payload.campaignId || '', type: payload.type || 'inactivity', ...(payload.imageUrl ? { imageUrl: payload.imageUrl } : {}) },
     android: {
+      collapseKey: collapseId,
       notification: {
         channelId: 'bilge_general',
         clickAction: 'FLUTTER_NOTIFICATION_CLICK',
@@ -143,17 +198,18 @@ async function sendPushToTokens(tokens, payload) {
       },
     },
     apns: {
+      headers: { 'apns-collapse-id': collapseId },
       payload: { aps: { sound: 'default', 'mutable-content': 1 } },
       fcmOptions: payload.imageUrl ? { imageUrl: payload.imageUrl } : undefined,
     },
-    tokens,
+    tokens: uniq,
   };
   try {
     const resp = await admin.messaging().sendEachForMulticast(message);
     return {successCount: resp.successCount, failureCount: resp.failureCount};
   } catch (e) {
     logger.error('FCM send failed', { error: String(e) });
-    return {successCount: 0, failureCount: tokens.length};
+    return {successCount: 0, failureCount: uniq.length};
   }
 }
 
@@ -197,13 +253,15 @@ exports.dispatchInactivityEvening = onSchedule(scheduleSpecAt(20, 30), async () 
 // ---- ADMIN KAMPANYA GÖNDERİMİ ----
 async function selectAudienceUids(audience) {
   let query = db.collection('users');
+  const lc = (s) => typeof s === 'string' ? s.toLowerCase() : s;
   if (audience?.type === 'exam' && audience.examType) {
-    query = query.where('selectedExam', '==', audience.examType);
+    const exam = lc(audience.examType);
+    query = query.where('selectedExam', '==', exam);
     const snap = await query.select().limit(20000).get();
     return snap.docs.map((d)=> d.id);
   }
   if (audience?.type === 'exams' && Array.isArray(audience.exams) && audience.exams.length > 0) {
-    const exams = audience.exams.filter((x)=> typeof x === 'string');
+    const exams = audience.exams.filter((x)=> typeof x === 'string').map((s)=> s.toLowerCase());
     if (exams.length === 0) {
       const snap = await db.collection('users').select().limit(20000).get();
       return snap.docs.map((d)=> d.id);
@@ -241,12 +299,29 @@ exports.adminEstimateAudience = onCall({region: 'us-central1', timeoutSeconds: 3
     }
     uids = filtered;
   }
+
+  const baseUsers = uids.length;
+  const filters = { buildMin: audience.buildMin, buildMax: audience.buildMax, platforms: audience.platforms };
+
+  // Token sahibi kullanıcı sayısı – batched paralel
   let tokenHolders = 0;
-  for (const uid of uids) {
-    const snap = await db.collection('users').doc(uid).collection('devices').where('disabled','==', false).limit(1).get();
-    if (!snap.empty) tokenHolders++;
+  const batchSize = 50;
+  for (let i = 0; i < uids.length; i += batchSize) {
+    const batch = uids.slice(i, i + batchSize);
+    const results = await Promise.all(batch.map(async (uid) => {
+      const tokens = await getActiveTokensFiltered(uid, filters);
+      return tokens.length > 0 ? 1 : 0;
+    }));
+    tokenHolders += results.reduce((a,b)=> a+b, 0);
+    // Güvenli sınır – çok büyük kitelerde gereksiz uzun sürmesin
+    if (i > 0 && i % 5000 === 0) await new Promise((r)=> setTimeout(r, 50));
   }
-  return {users: uids.length, tokenHolders};
+
+  // Kullanıcı sayısı: platform/sürüm filtreleri varsa filtrelenmiş kullanıcı sayısı; aksi halde baz kitle
+  const hasDeviceFilters = (Array.isArray(filters.platforms) && filters.platforms.length > 0) || Number.isFinite(filters.buildMin) || Number.isFinite(filters.buildMax);
+  const users = hasDeviceFilters ? tokenHolders : baseUsers;
+
+  return {users, baseUsers, tokenHolders};
 });
 
 exports.adminSendPush = onCall({region: 'us-central1', timeoutSeconds: 540}, async (request) => {
@@ -260,6 +335,8 @@ exports.adminSendPush = onCall({region: 'us-central1', timeoutSeconds: 540}, asy
   const route = String(request.data?.route || '/home');
   const audience = request.data?.audience || {type: 'all'}; // 'all'|'exam'|'uids'|'inactive'
   const scheduledAt = typeof request.data?.scheduledAt === 'number' ? request.data.scheduledAt : null; // epoch ms
+  const sendTypeRaw = String(request.data?.sendType || 'push').toLowerCase();
+  const sendType = ['push','inapp','both'].includes(sendTypeRaw) ? sendTypeRaw : 'push';
 
   if (!title || !body) throw new HttpsError('invalid-argument', 'title ve body zorunludur');
 
@@ -268,6 +345,7 @@ exports.adminSendPush = onCall({region: 'us-central1', timeoutSeconds: 540}, asy
     title, body, imageUrl, route, audience,
     createdBy: request.auth.uid,
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    sendType,
   };
 
   // Planlı ise dokümana yazıp çık
@@ -292,18 +370,31 @@ exports.adminSendPush = onCall({region: 'us-central1', timeoutSeconds: 540}, asy
     targetUids = filtered;
   }
 
-  let totalSent = 0, totalFail = 0, totalUsers = 0;
+  const filters = { buildMin: audience.buildMin, buildMax: audience.buildMax, platforms: audience.platforms };
+
+  let totalSent = 0, totalFail = 0, totalUsers = 0, totalInApp = 0;
   for (const uid of targetUids) {
     totalUsers++;
-    const tokens = await getActiveTokens(uid);
-    if (tokens.length === 0) continue;
-    const r = await sendPushToTokens(tokens, { title, body, imageUrl, route, type: 'campaign', campaignId: campaignRef.id });
-    totalSent += r.successCount; totalFail += r.failureCount;
-    await campaignRef.collection('logs').add({uid, success: r.successCount, failed: r.failureCount, ts: admin.firestore.FieldValue.serverTimestamp()});
+
+    if (sendType === 'inapp' || sendType === 'both') {
+      const ok = await createInAppForUser(uid, { title, body, imageUrl, route, type: 'campaign', campaignId: campaignRef.id });
+      if (ok) totalInApp++;
+    }
+
+    if (sendType === 'push' || sendType === 'both') {
+      const tokens = await getActiveTokensFiltered(uid, filters);
+      if (tokens.length > 0) {
+        const r = await sendPushToTokens(tokens, { title, body, imageUrl, route, type: 'campaign', campaignId: campaignRef.id });
+        totalSent += r.successCount; totalFail += r.failureCount;
+        await campaignRef.collection('logs').add({uid, success: r.successCount, failed: r.failureCount, ts: admin.firestore.FieldValue.serverTimestamp()});
+      } else {
+        await campaignRef.collection('logs').add({uid, success: 0, failed: 0, ts: admin.firestore.FieldValue.serverTimestamp(), note: 'no_tokens'});
+      }
+    }
   }
 
-  await campaignRef.set({ status: 'completed', totalUsers, totalSent, totalFail, completedAt: admin.firestore.FieldValue.serverTimestamp() }, {merge: true});
-  return {ok: true, campaignId: campaignRef.id, totalUsers, totalSent, totalFail};
+  await campaignRef.set({ status: 'completed', totalUsers, totalSent, totalFail, totalInApp, completedAt: admin.firestore.FieldValue.serverTimestamp() }, {merge: true});
+  return {ok: true, campaignId: campaignRef.id, totalUsers, totalSent, totalFail, totalInApp};
 });
 
 exports.processScheduledCampaigns = onSchedule({schedule: '*/5 * * * *', timeZone: 'Europe/Istanbul'}, async () => {
@@ -315,6 +406,9 @@ exports.processScheduledCampaigns = onSchedule({schedule: '*/5 * * * *', timeZon
     try {
       await doc.ref.set({ status: 'sending' }, {merge: true});
       const { title, body, imageUrl, route, audience } = d;
+      const sendTypeRaw = String(d.sendType || 'push').toLowerCase();
+      const sendType = ['push','inapp','both'].includes(sendTypeRaw) ? sendTypeRaw : 'push';
+
       let targetUids = await selectAudienceUids(audience);
       if (audience?.type === 'inactive' && typeof audience.hours === 'number') {
         const filtered = [];
@@ -325,16 +419,23 @@ exports.processScheduledCampaigns = onSchedule({schedule: '*/5 * * * *', timeZon
         }
         targetUids = filtered;
       }
-      let totalSent = 0, totalFail = 0, totalUsers = 0;
+      const filters = { buildMin: audience?.buildMin, buildMax: audience?.buildMax, platforms: audience?.platforms };
+      let totalSent = 0, totalFail = 0, totalUsers = 0, totalInApp = 0;
       for (const uid of targetUids) {
         totalUsers++;
-        const tokens = await getActiveTokens(uid);
-        if (tokens.length === 0) continue;
-        const r = await sendPushToTokens(tokens, { title, body, imageUrl, route, type: 'campaign', campaignId: doc.id });
-        totalSent += r.successCount; totalFail += r.failureCount;
-        await doc.ref.collection('logs').add({uid, success: r.successCount, failed: r.failureCount, ts: admin.firestore.FieldValue.serverTimestamp()});
+        if (sendType === 'inapp' || sendType === 'both') {
+          const ok = await createInAppForUser(uid, { title, body, imageUrl, route, type: 'campaign', campaignId: doc.id });
+          if (ok) totalInApp++;
+        }
+        if (sendType === 'push' || sendType === 'both') {
+          const tokens = await getActiveTokensFiltered(uid, filters);
+          if (tokens.length === 0) continue;
+          const r = await sendPushToTokens(tokens, { title, body, imageUrl, route, type: 'campaign', campaignId: doc.id });
+          totalSent += r.successCount; totalFail += r.failureCount;
+          await doc.ref.collection('logs').add({uid, success: r.successCount, failed: r.failureCount, ts: admin.firestore.FieldValue.serverTimestamp()});
+        }
       }
-      await doc.ref.set({ status: 'completed', totalUsers, totalSent, totalFail, completedAt: admin.firestore.FieldValue.serverTimestamp() }, {merge: true});
+      await doc.ref.set({ status: 'completed', totalUsers, totalSent, totalFail, totalInApp, completedAt: admin.firestore.FieldValue.serverTimestamp() }, {merge: true});
     } catch (e) {
       logger.error('Scheduled campaign failed', {id: doc.id, error: String(e)});
       await doc.ref.set({ status: 'failed', error: String(e), failedAt: admin.firestore.FieldValue.serverTimestamp() }, {merge: true});
@@ -893,3 +994,26 @@ exports.helloWorld = onRequest((request, response) => {
   logger.info("Hello logs!", {structuredData: true});
   response.send("Hello from BilgeAI!");
 });
+
+// Uygulama içi bildirim oluşturucu
+async function createInAppForUser(uid, payload) {
+  try {
+    const ref = db.collection('users').doc(uid).collection('in_app_notifications');
+    const doc = {
+      title: payload.title || '',
+      body: payload.body || '',
+      route: payload.route || '/home',
+      imageUrl: payload.imageUrl || '',
+      type: payload.type || 'campaign',
+      campaignId: payload.campaignId || '',
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      read: false,
+      readAt: null,
+    };
+    await ref.add(doc);
+    return true;
+  } catch (e) {
+    logger.error('createInAppForUser failed', { uid, error: String(e) });
+    return false;
+  }
+}

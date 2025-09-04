@@ -18,6 +18,7 @@ import 'package:bilge_ai/data/models/user_stats_model.dart';
 import 'package:bilge_ai/features/blog/models/blog_post.dart';
 import 'package:crypto/crypto.dart' as crypto;
 import 'dart:convert' show utf8;
+import 'package:bilge_ai/shared/notifications/in_app_notification_model.dart';
 
 class FirestoreService {
   final FirebaseFirestore _firestore;
@@ -917,5 +918,44 @@ class FirestoreService {
       'reason': reason,
       'createdAt': FieldValue.serverTimestamp(),
     });
+  }
+
+  // In-App Notifications
+  Stream<List<InAppNotification>> streamInAppNotifications(String userId, {int limit = 100}) {
+    return usersCollection
+        .doc(userId)
+        .collection('in_app_notifications')
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .snapshots()
+        .map((qs) => qs.docs.map((d) => InAppNotification.fromSnapshot(d as DocumentSnapshot<Map<String, dynamic>>)).toList());
+  }
+
+  Stream<int> streamUnreadInAppCount(String userId) {
+    return usersCollection
+        .doc(userId)
+        .collection('in_app_notifications')
+        .where('read', isEqualTo: false)
+        .snapshots()
+        .map((qs) => qs.size);
+  }
+
+  Future<void> markInAppNotificationRead(String userId, String notifId) async {
+    await usersCollection
+        .doc(userId)
+        .collection('in_app_notifications')
+        .doc(notifId)
+        .set({'read': true, 'readAt': FieldValue.serverTimestamp()}, SetOptions(merge: true));
+  }
+
+  Future<void> markAllInAppNotificationsRead(String userId) async {
+    final col = usersCollection.doc(userId).collection('in_app_notifications');
+    final qs = await col.where('read', isEqualTo: false).limit(300).get();
+    if (qs.docs.isEmpty) return;
+    final batch = _firestore.batch();
+    for (final d in qs.docs) {
+      batch.set(d.reference, {'read': true, 'readAt': FieldValue.serverTimestamp()}, SetOptions(merge: true));
+    }
+    await batch.commit();
   }
 }

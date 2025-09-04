@@ -8,6 +8,8 @@ import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:bilge_ai/data/providers/admin_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:flutter/services.dart';
 
 class PushComposerScreen extends StatefulWidget {
   const PushComposerScreen({super.key});
@@ -23,6 +25,10 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
   final _routeCtrl = TextEditingController(text: '/home');
   final _uidsCtrl = TextEditingController();
   final _inactiveHoursCtrl = TextEditingController(text: '24');
+  // Platform & build filtreleri
+  final Set<String> _platformsSelected = {};
+  final _buildMinCtrl = TextEditingController();
+  final _buildMaxCtrl = TextEditingController();
 
   // Basit mod: sadece formu göster (önizleme + geçmiş gizli)
   bool _simpleMode = true;
@@ -41,6 +47,9 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
 
   int? _estimateUsers;
   int? _estimateTokenHolders;
+
+  // Yeni: Gönderim türü
+  String _sendType = 'push'; // push | inapp | both
 
   // Bildirim şablonları
   final List<Map<String, String>> _templates = const [
@@ -64,9 +73,6 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
     },
   ];
 
-  // Adım tabanlı akış için
-  int _currentStep = 0;
-
   @override
   void dispose() {
     _titleCtrl.dispose();
@@ -74,7 +80,15 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
     _routeCtrl.dispose();
     _uidsCtrl.dispose();
     _inactiveHoursCtrl.dispose();
+    _buildMinCtrl.dispose();
+    _buildMaxCtrl.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Global setState listener kullanmayalım; önizleme için lokal dinleyiciler kullanılacak
   }
 
   Future<void> _pickAndUploadImage() async {
@@ -108,23 +122,32 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
   }
 
   Map<String, dynamic> _buildAudience() {
+    Map<String, dynamic> base;
     if (_audience == 'exam') {
-      // Çoklu seçim varsa 'exams' gönder; yoksa tekli fallback
       if (_selectedExams.isNotEmpty) {
-        return {'type': 'exams', 'exams': _selectedExams.toList()};
+        base = {'type': 'exams', 'exams': _selectedExams.toList()};
+      } else {
+        base = {'type': 'exam', 'examType': _examType ?? 'YKS'};
       }
-      return {'type': 'exam', 'examType': _examType ?? 'YKS'};
-    }
-    if (_audience == 'uids') {
+    } else if (_audience == 'uids') {
       final raw = _uidsCtrl.text.trim();
       final ids = raw.split(RegExp(r'[\s,;]+')).map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
-      return {'type': 'uids', 'uids': ids};
-    }
-    if (_audience == 'inactive') {
+      base = {'type': 'uids', 'uids': ids};
+    } else if (_audience == 'inactive') {
       final hrs = int.tryParse(_inactiveHoursCtrl.text.trim());
-      return {'type': 'inactive', 'hours': (hrs == null || hrs < 1) ? 24 : hrs};
+      base = {'type': 'inactive', 'hours': (hrs == null || hrs < 1) ? 24 : hrs};
+    } else {
+      base = {'type': 'all'};
     }
-    return {'type': 'all'};
+    // Platform/sürüm filtreleri (opsiyonel)
+    if (_platformsSelected.isNotEmpty) {
+      base['platforms'] = _platformsSelected.toList();
+    }
+    final minB = int.tryParse(_buildMinCtrl.text.trim());
+    final maxB = int.tryParse(_buildMaxCtrl.text.trim());
+    if (minB != null) base['buildMin'] = minB;
+    if (maxB != null) base['buildMax'] = maxB;
+    return base;
   }
 
   Future<void> _estimate() async {
@@ -143,6 +166,99 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
     }
   }
 
+  // Başarılı gönderim sonrası formu sıfırla
+  void _resetForm() {
+    _formKey.currentState?.reset();
+    _titleCtrl.clear();
+    _bodyCtrl.clear();
+    _routeCtrl.text = '/home';
+    _uidsCtrl.clear();
+    _inactiveHoursCtrl.text = '24';
+    _platformsSelected.clear();
+    _buildMinCtrl.clear();
+    _buildMaxCtrl.clear();
+    _audience = 'all';
+    _examType = null;
+    _selectedExams.clear();
+    _imageUrl = null;
+    _scheduleEnabled = false;
+    _scheduledAt = null;
+    _estimateUsers = null;
+    _estimateTokenHolders = null;
+    _currentStep = 0;
+    setState(() {});
+  }
+
+  Future<void> _showSuccessSheet({
+    required bool scheduled,
+    int? totalUsers,
+    int? totalSent,
+  }) async {
+    HapticFeedback.mediumImpact();
+    if (!mounted) return;
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: false,
+      useSafeArea: true,
+      showDragHandle: true,
+      builder: (c) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.check_circle_rounded, color: Colors.green, size: 28),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      scheduled ? 'Bildirim planlandı' : 'Bildirim gönderildi',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                scheduled
+                    ? 'Zamanlamaya alındı. Kampanyayı kampanya geçmişinden takip edebilirsin.'
+                    : 'Gönderim tamamlandı. Kapsam: ${totalSent ?? '-'} / ${totalUsers ?? '-'}',
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.of(c).pop();
+                        _resetForm();
+                      },
+                      icon: const Icon(Icons.add_rounded),
+                      label: const Text('Yeni Bildirim Oluştur'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: () {
+                        Navigator.of(c).pop();
+                        if (mounted) context.go('/home');
+                      },
+                      icon: const Icon(Icons.dashboard_rounded),
+                      label: const Text('Ana Panele Dön'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _send({bool testToSelf = false}) async {
     if (!_formKey.currentState!.validate()) return;
     setState(() { _sending = true; });
@@ -159,19 +275,51 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
         'route': _routeCtrl.text.trim().isEmpty ? '/home' : _routeCtrl.text.trim(),
         if (_imageUrl != null) 'imageUrl': _imageUrl,
         'audience': audience,
+        'sendType': _sendType,
         if (_scheduleEnabled && _scheduledAt != null) 'scheduledAt': _scheduledAt!.millisecondsSinceEpoch,
       };
       final res = await callable.call(data);
       if (!mounted) return;
       final m = res.data as Map? ?? {};
       final scheduled = m['scheduled'] == true;
-      final total = m['totalUsers'];
-      final sent = m['totalSent'];
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(scheduled ? 'Planlandı' : 'Gönderildi: ${sent ?? '-'} / ${total ?? '-'}'),
-      ));
+      final total = (m['totalUsers'] as num?)?.toInt();
+      final sent = (m['totalSent'] as num?)?.toInt();
+      await _showSuccessSheet(scheduled: scheduled, totalUsers: total, totalSent: sent);
     } catch (e) {
       if (!mounted) return;
+      HapticFeedback.heavyImpact();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $e')));
+    } finally {
+      if (mounted) setState(() { _sending = false; });
+    }
+  }
+
+  Future<void> _sendTest() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() { _sending = true; });
+    try {
+      final callable = FirebaseFunctions.instance.httpsCallable('adminSendPush');
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) return;
+      final data = {
+        'title': _titleCtrl.text.trim(),
+        'body': _bodyCtrl.text.trim(),
+        'route': _routeCtrl.text.trim().isEmpty ? '/home' : _routeCtrl.text.trim(),
+        if (_imageUrl != null) 'imageUrl': _imageUrl,
+        'audience': {'type': 'uids', 'uids': [uid]},
+        'sendType': _sendType,
+        if (_scheduleEnabled && _scheduledAt != null) 'scheduledAt': _scheduledAt!.millisecondsSinceEpoch,
+      };
+      final res = await callable.call(data);
+      if (!mounted) return;
+      final m = res.data as Map? ?? {};
+      final scheduled = m['scheduled'] == true;
+      final total = (m['totalUsers'] as num?)?.toInt();
+      final sent = (m['totalSent'] as num?)?.toInt();
+      await _showSuccessSheet(scheduled: scheduled, totalUsers: total, totalSent: sent);
+    } catch (e) {
+      if (!mounted) return;
+      HapticFeedback.heavyImpact();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $e')));
     } finally {
       if (mounted) setState(() { _sending = false; });
@@ -218,52 +366,80 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
         final isAdmin = ref.watch(isAdminAsync).value ?? false;
         if (!isAdmin) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Bildirim Gönder')),
+            appBar: AppBar(title: const Text('Bildirim Gönder'), leading: IconButton(
+              tooltip: 'Geri',
+              icon: const Icon(Icons.arrow_back_rounded),
+              onPressed: () {
+                if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
+                } else {
+                  context.go('/home');
+                }
+              },
+            )),
             body: const Center(child: Text('Bu sayfayı görüntülemek için yetkiniz yok.')),
           );
         }
         final width = MediaQuery.of(context).size.width;
         final isWide = width >= 900;
-        final content = _simpleMode
-            ? SingleChildScrollView(
-                padding: const EdgeInsets.only(bottom: 24),
-                child: _buildLeftColumn(useFlex: false),
+        final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
+        // Adım bazlı içerik
+        final stepContent = _buildStepContent();
+
+        final content = isWide && !_simpleMode
+            ? Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: stepContent),
+                  const SizedBox(width: 16),
+                  SizedBox(width: 380, child: _buildRightColumn(isWide: true)),
+                ],
               )
-            : (
-                isWide
-                    ? Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(child: _buildLeftColumn(useFlex: true)),
-                          const SizedBox(width: 16),
-                          SizedBox(width: 360, child: _buildRightColumn(isWide: true)),
-                        ],
-                      )
-                    : SingleChildScrollView(
-                        padding: const EdgeInsets.only(bottom: 24),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _buildLeftColumn(useFlex: false),
-                            const SizedBox(height: 16),
-                            _buildRightColumn(isWide: false),
-                          ],
-                        ),
-                      )
+            : SingleChildScrollView(
+                padding: EdgeInsets.only(bottom: 24 + bottomInset),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Mobil ve basit mod: son adımda önizlemeyi ayrıca göster
+                    if (_currentStep == _lastStep) _inlinePreview(),
+                    if (_currentStep == _lastStep) const SizedBox(height: 16),
+                    stepContent,
+                  ],
+                ),
               );
 
         return Scaffold(
           appBar: AppBar(
             title: const Text('Bildirim Gönder'),
+            leading: IconButton(
+              tooltip: 'Geri',
+              icon: const Icon(Icons.arrow_back_rounded),
+              onPressed: () {
+                if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
+                } else {
+                  context.go('/home');
+                }
+              },
+            ),
             actions: [
               IconButton(
-                tooltip: _simpleMode ? 'Detaylı moda geç' : 'Basit moda geç',
+                tooltip: _simpleMode ? 'Detaylı görünüm' : 'Basit görünüm',
                 onPressed: () => setState(() => _simpleMode = !_simpleMode),
                 icon: Icon(_simpleMode ? Icons.dashboard_customize_rounded : Icons.view_agenda_rounded),
               ),
             ],
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(3),
+              child: LinearProgressIndicator(
+                value: ((_currentStep + 1) / (_lastStep + 1)).clamp(0.0, 1.0),
+                minHeight: 3,
+                backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: .3),
+              ),
+            ),
           ),
-          // FAB yerine Stepper kontrolleri kullanılacak
+          resizeToAvoidBottomInset: true,
           floatingActionButton: null,
           body: SafeArea(
             child: Form(
@@ -274,302 +450,351 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
               ),
             ),
           ),
+          bottomNavigationBar: _bottomActionBar(),
         );
       },
     );
   }
 
-  // Basit mod: hafif sihirbaz (wizard) akışı
-  Widget _buildLeftColumn({bool useFlex = true}) {
+  // Adım akışı
+  int _currentStep = 0;
+  int get _lastStep => 5;
+
+  Widget _buildStepContent() {
+    switch (_currentStep) {
+      case 0:
+        return _stepCard(title: 'Başlık', icon: Icons.title_rounded, child: _titleField(autofocus: true));
+      case 1:
+        return _stepCard(title: 'Açıklama', icon: Icons.notes_rounded, child: _bodyField(autofocus: true));
+      case 2:
+        return _stepCard(
+          title: 'Hedef & Görsel',
+          icon: Icons.link_rounded,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _routeField(),
+              const SizedBox(height: 8),
+              _quickRouteChips(),
+              const SizedBox(height: 12),
+              _imagePickerRow(),
+              if (_uploadProgress > 0 && _uploadProgress < 1)
+                Padding(padding: const EdgeInsets.only(top: 8.0), child: LinearProgressIndicator(value: _uploadProgress)),
+              const SizedBox(height: 16),
+              _sendTypeSelector(),
+            ],
+          ),
+        );
+      case 3:
+        return _stepCard(
+          title: 'Kitle',
+          icon: Icons.groups_3_rounded,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _audienceSection(),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: _sending ? null : _estimate,
+                icon: const Icon(Icons.analytics_outlined),
+                label: const Text('Kitleyi Tahmin Et'),
+              ),
+              if (_estimateUsers != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text('Tahmini kullanıcı: ${_estimateUsers ?? '-'} • Token sahibi: ${_estimateTokenHolders ?? '-'}'),
+                ),
+            ],
+          ),
+        );
+      case 4:
+        return _stepCard(title: 'Zamanlama', icon: Icons.schedule_rounded, child: _scheduleSection());
+      default:
+        return _stepCard(
+          title: 'Önizleme',
+          icon: Icons.remove_red_eye_rounded,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _inlinePreview(),
+              const SizedBox(height: 12),
+              Row(children: [
+                const Icon(Icons.swap_horiz_rounded, size: 18),
+                const SizedBox(width: 6),
+                Expanded(child: Text('Gönderim: ' + (_sendType == 'push' ? 'Sadece Anlık' : _sendType == 'inapp' ? 'Sadece Uygulama İçi' : 'Her İkisi'))),
+              ]),
+              const SizedBox(height: 8),
+              Row(children: [
+                const Icon(Icons.groups_rounded, size: 18),
+                const SizedBox(width: 6),
+                Expanded(child: Text(_audienceSummary())),
+              ]),
+              const SizedBox(height: 8),
+              Row(children: [
+                const Icon(Icons.schedule_rounded, size: 18),
+                const SizedBox(width: 6),
+                Expanded(child: Text(_scheduleEnabled && _scheduledAt != null
+                    ? 'Planlı: ${DateFormat('dd.MM.yyyy HH:mm').format(_scheduledAt!)}'
+                    : 'Anında gönderim')),
+              ]),
+            ],
+          ),
+        );
+    }
+  }
+
+  Widget _sendTypeSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Gönderim Türü'),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 8,
+          children: [
+            ChoiceChip(
+              label: const Text('Sadece Anlık (Push)'),
+              selected: _sendType == 'push',
+              onSelected: (_) => setState(() => _sendType = 'push'),
+            ),
+            ChoiceChip(
+              label: const Text('Sadece Uygulama İçi'),
+              selected: _sendType == 'inapp',
+              onSelected: (_) => setState(() => _sendType = 'inapp'),
+            ),
+            ChoiceChip(
+              label: const Text('Her İkisi'),
+              selected: _sendType == 'both',
+              onSelected: (_) => setState(() => _sendType = 'both'),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _stepCard({required String title, required IconData icon, required Widget child}) {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _wizardHeader(),
+            Row(children: [Icon(icon), const SizedBox(width: 8), Text(title, style: const TextStyle(fontWeight: FontWeight.w700))]),
             const SizedBox(height: 12),
-            // Expanded sadece bounded yükseklikte (ör. geniş ekranda) kullanılmalı.
-            if (useFlex)
-              Expanded(
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 250),
-                  switchInCurve: Curves.easeOut,
-                  switchOutCurve: Curves.easeIn,
-                  child: _stepContent(key: ValueKey(_currentStep)),
-                ),
-              )
-            else
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 250),
-                switchInCurve: Curves.easeOut,
-                switchOutCurve: Curves.easeIn,
-                child: _stepContent(key: ValueKey(_currentStep)),
-              ),
-            const SizedBox(height: 12),
-            _wizardBottomBar(),
+            child,
           ],
         ),
       ),
     );
   }
 
-  Widget _wizardHeader() {
-    final titles = ['İçerik','Kitle','Zaman','Önizleme'];
-    final progress = (_currentStep + 1) / titles.length;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(titles[_currentStep], style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 6),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(value: progress, minHeight: 6),
-        ),
-      ],
+  Widget _titleField({bool autofocus = false}) {
+    return TextFormField(
+      controller: _titleCtrl,
+      autofocus: autofocus,
+      textInputAction: TextInputAction.next,
+      decoration: InputDecoration(
+        labelText: 'Başlık',
+        helperText: 'Kısa ve net bir çağrı (≤ 60 karakter).',
+        counterText: '',
+        prefixIcon: const Icon(Icons.title_rounded),
+        suffixIcon: _titleCtrl.text.isEmpty
+            ? IconButton(tooltip: 'Şablonlar', icon: const Icon(Icons.auto_awesome_rounded), onPressed: _showTemplatePicker)
+            : IconButton(tooltip: 'Temizle', icon: const Icon(Icons.clear_rounded), onPressed: () => setState(() => _titleCtrl.clear())),
+      ),
+      maxLength: 60,
+      validator: (v) => (v == null || v.trim().isEmpty) ? 'Başlık gerekli' : null,
     );
   }
 
-  Widget _stepContent({Key? key}) {
-    switch (_currentStep) {
-      case 0:
-        return Container(
-          key: key,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextFormField(
-                  controller: _titleCtrl,
-                  autofocus: true,
-                  decoration: InputDecoration(
-                    labelText: 'Başlık',
-                    helperText: 'Kısa ve net bir çağrı (≤ 60 karakter).',
-                    prefixIcon: const Icon(Icons.title_rounded),
-                    suffixIcon: IconButton(
-                      tooltip: 'Şablonlar',
-                      icon: const Icon(Icons.auto_awesome_rounded),
-                      onPressed: _showTemplatePicker,
-                    ),
-                  ),
-                  maxLength: 60,
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Başlık gerekli' : null,
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _bodyCtrl,
-                  decoration: InputDecoration(
-                    labelText: 'Açıklama',
-                    helperText: 'Kısa fayda + eylem çağrısı (≤ 160 karakter).',
-                    prefixIcon: const Icon(Icons.notes_rounded),
-                    suffixIcon: IconButton(
-                      tooltip: 'Şablonlar',
-                      icon: const Icon(Icons.auto_awesome_rounded),
-                      onPressed: _showTemplatePicker,
-                    ),
-                  ),
-                  maxLength: 160,
-                  maxLines: 3,
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Açıklama gerekli' : null,
-                ),
-                const SizedBox(height: 8),
-                _routeField(),
-                const SizedBox(height: 8),
-                _quickRouteChips(),
-                const SizedBox(height: 12),
-                _imagePickerRow(),
-                if (_uploadProgress > 0 && _uploadProgress < 1)
-                  Padding(padding: const EdgeInsets.only(top: 8.0), child: LinearProgressIndicator(value: _uploadProgress)),
-              ],
-            ),
-          ),
-        );
-      case 1:
-        return Container(
-          key: key,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _audienceSection(),
-                const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  onPressed: _sending ? null : _estimate,
-                  icon: const Icon(Icons.groups_3_rounded),
-                  label: const Text('Kitleyi Tahmin Et'),
-                ),
-                if (_estimateUsers != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    child: Text('Tahmini kullanıcı: ${_estimateUsers ?? '-'} • Token sahibi: ${_estimateTokenHolders ?? '-'}'),
-                  ),
-              ],
-            ),
-          ),
-        );
-      case 2:
-        return Container(
-          key: key,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _scheduleSection(),
-              ],
-            ),
-          ),
-        );
-      default:
-        return Container(
-          key: key,
-          child: SingleChildScrollView(
-            child: _inlinePreview(),
-          ),
-        );
-    }
+  Widget _bodyField({bool autofocus = false}) {
+    return TextFormField(
+      controller: _bodyCtrl,
+      autofocus: autofocus,
+      textInputAction: TextInputAction.newline,
+      decoration: InputDecoration(
+        labelText: 'Açıklama',
+        helperText: 'Kısa fayda + eylem çağrısı (≤ 160 karakter).',
+        counterText: '',
+        prefixIcon: const Icon(Icons.notes_rounded),
+        suffixIcon: _bodyCtrl.text.isEmpty
+            ? IconButton(tooltip: 'Şablonlar', icon: const Icon(Icons.auto_awesome_rounded), onPressed: _showTemplatePicker)
+            : IconButton(tooltip: 'Temizle', icon: const Icon(Icons.clear_rounded), onPressed: () => setState(() => _bodyCtrl.clear())),
+      ),
+      maxLength: 160,
+      maxLines: 3,
+      validator: (v) => (v == null || v.trim().isEmpty) ? 'Açıklama gerekli' : null,
+    );
   }
 
-  Widget _wizardBottomBar() {
-    final isLast = _currentStep >= 3;
+  String _audienceSummary() {
+    // Ek: platform & build
+    final parts = <String>[];
+    // mevcut kitle kısa özeti
+    final base = (() {
+      switch (_audience) {
+        case 'exam':
+          if (_selectedExams.isNotEmpty) return 'Kitle: ' + _selectedExams.join(', ');
+          return 'Kitle: ${_examType ?? 'YKS'}';
+        case 'uids':
+          final n = _uidsCtrl.text.trim().split(RegExp(r'[\s,;]+')).where((e) => e.isNotEmpty).length;
+          return 'Kitle: UID listesi (${n})';
+        case 'inactive':
+          final hrs = int.tryParse(_inactiveHoursCtrl.text.trim()) ?? 24;
+          return 'Kitle: Son ${hrs} saattir inaktif';
+        default:
+          return 'Kitle: Tümü';
+      }
+    })();
+    parts.add(base);
+    if (_platformsSelected.isNotEmpty) parts.add('Platform: ${_platformsSelected.join(', ')}');
+    final minB = int.tryParse(_buildMinCtrl.text.trim());
+    final maxB = int.tryParse(_buildMaxCtrl.text.trim());
+    if (minB != null || maxB != null) {
+      parts.add('Build: ${minB ?? '−'}..${maxB ?? '∞'}');
+    }
+    return parts.join(' • ');
+  }
+
+
+  void _nextStep() {
+    if (!_validateStep(_currentStep)) { setState(() {}); return; }
+    if (_currentStep < _lastStep) setState(() => _currentStep++);
+  }
+
+  void _prevStep() {
+    if (_currentStep > 0) setState(() => _currentStep--);
+  }
+
+  bool _validateStep(int s) {
+    if (s == 0) return _titleCtrl.text.trim().isNotEmpty;
+    if (s == 1) return _bodyCtrl.text.trim().isNotEmpty;
+    if (s == 2) return _routeCtrl.text.trim().isNotEmpty;
+    if (s == 3) {
+      if (_audience == 'uids' && _uidsCtrl.text.trim().isEmpty) return false;
+      if (_audience == 'inactive' && int.tryParse(_inactiveHoursCtrl.text.trim()) == null) return false;
+      return true;
+    }
+    return true;
+  }
+
+  // Alt eylem çubuğu – adım kontrollü
+  Widget _bottomActionBar() {
     final uploading = _uploadProgress > 0 && _uploadProgress < 1;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final narrow = constraints.maxWidth < 360;
-        if (narrow) {
-          // Dar ekran: butonları iki satıra böl
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final isLast = _currentStep == _lastStep;
+    return AnimatedPadding(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOutCubic,
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: Material(
+        elevation: 6,
+        color: Theme.of(context).colorScheme.surface,
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: LayoutBuilder(
+              builder: (context, c) {
+                final narrow = c.maxWidth < 420;
+                final mainAction = FilledButton.icon(
+                  onPressed: (_sending || uploading)
+                      ? null
+                      : () {
+                          if (!isLast) { _nextStep(); return; }
+                          if (!_formKey.currentState!.validate()) return;
+                          _send();
+                        },
+                  icon: _sending
+                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                      : Icon(isLast ? (_scheduleEnabled ? Icons.event_available_rounded : Icons.send_rounded) : Icons.arrow_forward_rounded),
+                  label: Text(isLast ? (_scheduleEnabled ? 'Planla' : 'Gönder') : 'Devam'),
+                );
+
+                final children = <Widget>[
                   if (_currentStep > 0)
                     OutlinedButton.icon(
-                      onPressed: () => setState(() => _currentStep = _currentStep - 1),
+                      onPressed: (_sending || uploading) ? null : _prevStep,
                       icon: const Icon(Icons.arrow_back_rounded),
                       label: const Text('Geri'),
                     ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
+                  if (_currentStep > 0 && !narrow) const SizedBox(width: 8),
                   const Spacer(),
                   if (isLast)
                     TextButton.icon(
-                      onPressed: (_sending || uploading) ? null : () => _send(testToSelf: true),
+                      onPressed: (_sending || uploading) ? null : () => _sendTest(),
                       icon: const Icon(Icons.person_outline_rounded),
-                      label: const Text('Kendime Test Gönder'),
+                      label: const Text('Kendime Test'),
                     ),
-                  const SizedBox(width: 8),
-                  FilledButton.icon(
-                    onPressed: (_sending || uploading)
-                        ? null
-                        : () {
-                            // İleri veya Gönder/Planla
-                            if (_currentStep == 0) {
-                              final ok = _titleCtrl.text.trim().isNotEmpty && _bodyCtrl.text.trim().isNotEmpty;
-                              if (!ok) { setState(() {}); return; }
-                              setState(() => _currentStep = 1);
-                              return;
-                            }
-                            if (_currentStep == 1) {
-                              if (_audience == 'uids' && _uidsCtrl.text.trim().isEmpty) { setState(() {}); return; }
-                              if (_audience == 'inactive' && int.tryParse(_inactiveHoursCtrl.text.trim()) == null) { setState(() {}); return; }
-                              setState(() => _currentStep = 2);
-                              return;
-                            }
-                            if (_currentStep == 2) {
-                              setState(() => _currentStep = 3);
-                              return;
-                            }
-                            _send();
-                          },
-                    icon: _sending
-                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                        : Icon(_currentStep >= 3 ? Icons.send_rounded : Icons.arrow_forward_rounded),
-                    label: Text(_currentStep >= 3 ? (_scheduleEnabled ? 'Planla' : 'Gönder') : 'İleri'),
-                  ),
-                ],
-              ),
-            ],
-          );
-        }
-        // Geniş ekran: tek satır
-        return Row(
-          children: [
-            if (_currentStep > 0)
-              OutlinedButton.icon(
-                onPressed: () => setState(() => _currentStep = _currentStep - 1),
-                icon: const Icon(Icons.arrow_back_rounded),
-                label: const Text('Geri'),
-              ),
-            if (_currentStep > 0) const SizedBox(width: 8),
-            const Spacer(),
-            if (isLast)
-              TextButton.icon(
-                onPressed: (_sending || uploading) ? null : () => _send(testToSelf: true),
-                icon: const Icon(Icons.person_outline_rounded),
-                label: const Text('Kendime Test Gönder'),
-              ),
-            const SizedBox(width: 8),
-            FilledButton.icon(
-              onPressed: (_sending || uploading)
-                  ? null
-                  : () {
-                      // İleri veya Gönder/Planla
-                      if (_currentStep == 0) {
-                        final ok = _titleCtrl.text.trim().isNotEmpty && _bodyCtrl.text.trim().isNotEmpty;
-                        if (!ok) { setState(() {}); return; }
-                        setState(() => _currentStep = 1);
-                        return;
-                      }
-                      if (_currentStep == 1) {
-                        if (_audience == 'uids' && _uidsCtrl.text.trim().isEmpty) { setState(() {}); return; }
-                        if (_audience == 'inactive' && int.tryParse(_inactiveHoursCtrl.text.trim()) == null) { setState(() {}); return; }
-                        setState(() => _currentStep = 2);
-                        return;
-                      }
-                      if (_currentStep == 2) {
-                        setState(() => _currentStep = 3);
-                        return;
-                      }
-                      _send();
-                    },
-              icon: _sending
-                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                  : Icon(_currentStep >= 3 ? Icons.send_rounded : Icons.arrow_forward_rounded),
-              label: Text(_currentStep >= 3 ? (_scheduleEnabled ? 'Planla' : 'Gönder') : 'İleri'),
+                  if (!narrow) const SizedBox(width: 8),
+                  mainAction,
+                ];
+
+                if (narrow) {
+                  return Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      if (_currentStep > 0)
+                        OutlinedButton.icon(
+                          onPressed: (_sending || uploading) ? null : _prevStep,
+                          icon: const Icon(Icons.arrow_back_rounded),
+                          label: const Text('Geri'),
+                        ),
+                      if (isLast)
+                        TextButton.icon(
+                          onPressed: (_sending || uploading) ? null : () => _sendTest(),
+                          icon: const Icon(Icons.person_outline_rounded),
+                          label: const Text('Kendime Test'),
+                        ),
+                      mainAction,
+                    ],
+                  );
+                }
+                return Row(children: children);
+              },
             ),
-          ],
-        );
-      },
+          ),
+        ),
+      ),
     );
   }
 
   // Inline önizleme kartı (basit mod için)
   Widget _inlinePreview() {
+    final listenable = Listenable.merge([_titleCtrl, _bodyCtrl, _routeCtrl]);
     return Card(
       clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (_imageUrl != null)
-            AspectRatio(aspectRatio: 16/9, child: Image.network(_imageUrl!, fit: BoxFit.cover)),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(_titleCtrl.text.isEmpty ? 'Önizleme Başlık' : _titleCtrl.text, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                const SizedBox(height: 6),
-                Text(_bodyCtrl.text.isEmpty ? 'Önizleme metni burada görünecek.' : _bodyCtrl.text),
-                const SizedBox(height: 8),
-                Row(children: [const Icon(Icons.link_rounded, size: 16), const SizedBox(width: 6), Flexible(child: Text(_routeCtrl.text))]),
-              ],
-            ),
-          ),
-        ],
+      child: AnimatedBuilder(
+        animation: listenable,
+        builder: (context, _) {
+          final title = _titleCtrl.text.isEmpty ? 'Önizleme Başlık' : _titleCtrl.text;
+          final body = _bodyCtrl.text.isEmpty ? 'Önizleme metni burada görünecek.' : _bodyCtrl.text;
+          final route = _routeCtrl.text;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (_imageUrl != null)
+                AspectRatio(aspectRatio: 16/9, child: Image.network(_imageUrl!, fit: BoxFit.cover)),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    const SizedBox(height: 6),
+                    Text(body),
+                    const SizedBox(height: 8),
+                    Row(children: [const Icon(Icons.link_rounded, size: 16), const SizedBox(width: 6), Flexible(child: Text(route))]),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -623,16 +848,30 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
     );
   }
 
+  // Görsel satırını Wrap ile responsive yap
   Widget _imagePickerRow() {
-    return Row(
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        Expanded(child: Text(_imageUrl == null ? 'Görsel ekle (opsiyonel)' : 'Görsel yüklendi')),
-        const SizedBox(width: 8),
+        Text(
+          _imageUrl == null ? 'Görsel ekle (opsiyonel)' : 'Görsel yüklendi',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          softWrap: false,
+        ),
         OutlinedButton.icon(
           onPressed: _sending ? null : _pickAndUploadImage,
           icon: const Icon(Icons.image_rounded),
           label: const Text('Görsel Seç & Yükle'),
         ),
+        if (_imageUrl != null)
+          TextButton.icon(
+            onPressed: _sending ? null : () => setState(() => _imageUrl = null),
+            icon: const Icon(Icons.clear_rounded),
+            label: const Text('Kaldır'),
+          ),
       ],
     );
   }
@@ -720,66 +959,126 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
               return null;
             },
           ),
+        // Platform & Sürüm (opsiyonel)
+        const SizedBox(height: 12),
+        const Text('Platform/Sürüm (opsiyonel)'),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            FilterChip(
+              label: const Text('Android'),
+              selected: _platformsSelected.contains('android'),
+              onSelected: (v) => setState(() => v ? _platformsSelected.add('android') : _platformsSelected.remove('android')),
+            ),
+            FilterChip(
+              label: const Text('iOS'),
+              selected: _platformsSelected.contains('ios'),
+              onSelected: (v) => setState(() => v ? _platformsSelected.add('ios') : _platformsSelected.remove('ios')),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: _buildMinCtrl,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Build Min'),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextFormField(
+                controller: _buildMaxCtrl,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Build Max'),
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
 
+  // Tarih & saat seçimini Wrap + LayoutBuilder ile responsive hale getir
   Widget _scheduleSection() {
-    return Row(
-      children: [
-        Switch(
-          value: _scheduleEnabled,
-          onChanged: (v) => setState(() { _scheduleEnabled = v; if (!v) _scheduledAt = null; }),
-        ),
-        const Text('Planlı gönder'),
-        const SizedBox(width: 12),
-        if (_scheduleEnabled)
-          OutlinedButton.icon(
-            onPressed: () async {
-              final now = DateTime.now().add(const Duration(minutes: 5));
-              final date = await showDatePicker(
-                context: context,
-                initialDate: now,
-                firstDate: DateTime.now(),
-                lastDate: DateTime.now().add(const Duration(days: 30)),
-              );
-              if (date == null) return;
-              final time = await showTimePicker(context: context, initialTime: TimeOfDay(hour: now.hour, minute: now.minute));
-              if (time == null) return;
-              final dt = DateTime(date.year, date.month, date.day, time.hour, time.minute);
-              setState(() { _scheduledAt = dt; });
-            },
-            icon: const Icon(Icons.schedule_rounded),
-            label: Text(_scheduledAt == null ? 'Tarih & saat seç' : DateFormat('dd.MM.yyyy HH:mm').format(_scheduledAt!)),
-          ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isNarrow = constraints.maxWidth < 360;
+        final label = _scheduleEnabled && _scheduledAt != null
+            ? DateFormat(isNarrow ? 'dd.MM HH:mm' : 'dd.MM.yyyy HH:mm').format(_scheduledAt!)
+            : 'Tarih & saat seç';
+        return Wrap(
+          spacing: 12,
+          runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Switch(
+              value: _scheduleEnabled,
+              onChanged: (v) => setState(() { _scheduleEnabled = v; if (!v) _scheduledAt = null; }),
+            ),
+            const Text('Planlı gönder'),
+            if (_scheduleEnabled)
+              OutlinedButton.icon(
+                onPressed: () async {
+                  final now = DateTime.now().add(const Duration(minutes: 5));
+                  final date = await showDatePicker(
+                    context: context,
+                    initialDate: now,
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime.now().add(const Duration(days: 30)),
+                  );
+                  if (date == null) return;
+                  final time = await showTimePicker(context: context, initialTime: TimeOfDay(hour: now.hour, minute: now.minute));
+                  if (time == null) return;
+                  final dt = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+                  setState(() { _scheduledAt = dt; });
+                },
+                icon: const Icon(Icons.schedule_rounded),
+                label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, softWrap: false),
+              ),
+          ],
+        );
+      },
     );
   }
 
   Widget _buildRightColumn({required bool isWide}) {
+    final listenable = Listenable.merge([_titleCtrl, _bodyCtrl, _routeCtrl]);
     return Column(
       children: [
         Card(
           clipBehavior: Clip.antiAlias,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (_imageUrl != null)
-                AspectRatio(aspectRatio: 16/9, child: Image.network(_imageUrl!, fit: BoxFit.cover)),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(_titleCtrl.text.isEmpty ? 'Önizleme Başlık' : _titleCtrl.text, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    const SizedBox(height: 6),
-                    Text(_bodyCtrl.text.isEmpty ? 'Önizleme metni burada görünecek.' : _bodyCtrl.text),
-                    const SizedBox(height: 8),
-                    Row(children: [const Icon(Icons.link_rounded, size: 16), const SizedBox(width: 6), Flexible(child: Text(_routeCtrl.text))]),
-                  ],
-                ),
-              ),
-            ],
+          child: AnimatedBuilder(
+            animation: listenable,
+            builder: (context, _) {
+              final title = _titleCtrl.text.isEmpty ? 'Önizleme Başlık' : _titleCtrl.text;
+              final body = _bodyCtrl.text.isEmpty ? 'Önizleme metni burada görünecek.' : _bodyCtrl.text;
+              final route = _routeCtrl.text;
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (_imageUrl != null)
+                    AspectRatio(aspectRatio: 16/9, child: Image.network(_imageUrl!, fit: BoxFit.cover)),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        const SizedBox(height: 6),
+                        Text(body),
+                        const SizedBox(height: 8),
+                        Row(children: [const Icon(Icons.link_rounded, size: 16), const SizedBox(width: 6), Flexible(child: Text(route))]),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ),
         const SizedBox(height: 16),

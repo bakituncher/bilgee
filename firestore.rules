@@ -151,7 +151,7 @@ service cloud.firestore {
         allow delete: if request.auth.uid == userId;
       }
 
-      // YENI: Aylık görevler
+      // YENİ: Aylık görevler
       match /monthly_quests/{questId} {
         function monthlyAllowedKeys() { return ['qid','title','description','type','category','progressType','reward','goalValue','currentProgress','isCompleted','actionRoute','routeKey','tags','rewardClaimed','createdAt','schemaVersion','completionDate','monthKey']; }
         allow create: if request.auth.uid == userId
@@ -229,6 +229,13 @@ service cloud.firestore {
       // YENİ: Cihaz tokenları
       match /devices/{deviceId} {
         allow read, create, update, delete: if request.auth.uid == userId;
+      }
+
+      // YENİ: Uygulama içi bildirimler
+      match /in_app_notifications/{notifId} {
+        allow read: if request.auth.uid == userId;
+        allow update: if request.auth.uid == userId; // okundu işaretlemek için
+        allow create, delete: if false; // sadece Cloud Functions oluşturur/siler
       }
     }
 
