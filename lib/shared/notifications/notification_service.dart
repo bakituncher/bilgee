@@ -6,6 +6,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart' as ph;
+import 'package:package_info_plus/package_info_plus.dart';
 
 class NotificationService {
   NotificationService._();
@@ -33,9 +34,19 @@ class NotificationService {
     }
   }
 
+  String? _appVersion;
+  int? _appBuild;
+
   Future<void> initialize({required void Function(String route) onNavigate}) async {
     if (_initialized) return;
     _navigate = onNavigate;
+
+    // Uygulama sürüm bilgisi
+    try {
+      final info = await PackageInfo.fromPlatform();
+      _appVersion = info.version;
+      _appBuild = int.tryParse(info.buildNumber);
+    } catch (_) {}
 
     const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iOSInit = DarwinInitializationSettings();
@@ -76,7 +87,7 @@ class NotificationService {
 
     await _ensureAndRegisterToken();
     FirebaseMessaging.instance.onTokenRefresh.listen((t) {
-      _registerToken(t);
+      _registerToken(t, _appVersion, _appBuild);
     });
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
@@ -122,18 +133,24 @@ class NotificationService {
   Future<void> _ensureAndRegisterToken() async {
     try {
       final token = await FirebaseMessaging.instance.getToken();
-      if (token != null) await _registerToken(token);
+      if (token != null) await _registerToken(token, _appVersion, _appBuild);
     } catch (e) {
       if (kDebugMode) debugPrint('FCM token alınamadı: $e');
     }
   }
 
-  Future<void> _registerToken(String token) async {
+  Future<void> _registerToken(String token, String? appVersion, int? appBuild) async {
     try {
       final HttpsCallable fn = FirebaseFunctions.instance.httpsCallable('registerFcmToken');
       final platform = Platform.isAndroid ? 'android' : (Platform.isIOS ? 'ios' : 'other');
       final lang = Intl.getCurrentLocale();
-      await fn.call({'token': token, 'platform': platform, 'lang': lang});
+      await fn.call({
+        'token': token,
+        'platform': platform,
+        'lang': lang,
+        if (appVersion != null) 'appVersion': appVersion,
+        if (appBuild != null) 'appBuild': appBuild,
+      });
     } catch (e) {
       if (kDebugMode) debugPrint('Token kaydı başarısız: $e');
     }

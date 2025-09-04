@@ -23,6 +23,10 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
   final _routeCtrl = TextEditingController(text: '/home');
   final _uidsCtrl = TextEditingController();
   final _inactiveHoursCtrl = TextEditingController(text: '24');
+  // Platform & build filtreleri
+  final Set<String> _platformsSelected = {};
+  final _buildMinCtrl = TextEditingController();
+  final _buildMaxCtrl = TextEditingController();
 
   // Basit mod: sadece formu göster (önizleme + geçmiş gizli)
   bool _simpleMode = true;
@@ -71,6 +75,8 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
     _routeCtrl.dispose();
     _uidsCtrl.dispose();
     _inactiveHoursCtrl.dispose();
+    _buildMinCtrl.dispose();
+    _buildMaxCtrl.dispose();
     super.dispose();
   }
 
@@ -111,23 +117,32 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
   }
 
   Map<String, dynamic> _buildAudience() {
+    Map<String, dynamic> base;
     if (_audience == 'exam') {
-      // Çoklu seçim varsa 'exams' gönder; yoksa tekli fallback
       if (_selectedExams.isNotEmpty) {
-        return {'type': 'exams', 'exams': _selectedExams.toList()};
+        base = {'type': 'exams', 'exams': _selectedExams.toList()};
+      } else {
+        base = {'type': 'exam', 'examType': _examType ?? 'YKS'};
       }
-      return {'type': 'exam', 'examType': _examType ?? 'YKS'};
-    }
-    if (_audience == 'uids') {
+    } else if (_audience == 'uids') {
       final raw = _uidsCtrl.text.trim();
       final ids = raw.split(RegExp(r'[\s,;]+')).map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
-      return {'type': 'uids', 'uids': ids};
-    }
-    if (_audience == 'inactive') {
+      base = {'type': 'uids', 'uids': ids};
+    } else if (_audience == 'inactive') {
       final hrs = int.tryParse(_inactiveHoursCtrl.text.trim());
-      return {'type': 'inactive', 'hours': (hrs == null || hrs < 1) ? 24 : hrs};
+      base = {'type': 'inactive', 'hours': (hrs == null || hrs < 1) ? 24 : hrs};
+    } else {
+      base = {'type': 'all'};
     }
-    return {'type': 'all'};
+    // Platform/sürüm filtreleri (opsiyonel)
+    if (_platformsSelected.isNotEmpty) {
+      base['platforms'] = _platformsSelected.toList();
+    }
+    final minB = int.tryParse(_buildMinCtrl.text.trim());
+    final maxB = int.tryParse(_buildMaxCtrl.text.trim());
+    if (minB != null) base['buildMin'] = minB;
+    if (maxB != null) base['buildMax'] = maxB;
+    return base;
   }
 
   Future<void> _estimate() async {
@@ -418,19 +433,73 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
   }
 
   String _audienceSummary() {
-    switch (_audience) {
-      case 'exam':
-        if (_selectedExams.isNotEmpty) return 'Kitle: ${_selectedExams.join(', ')}';
-        return 'Kitle: ${_examType ?? 'YKS'}';
-      case 'uids':
-        final n = _uidsCtrl.text.trim().split(RegExp(r'[\s,;]+')).where((e) => e.isNotEmpty).length;
-        return 'Kitle: UID listesi (${n})';
-      case 'inactive':
-        final hrs = int.tryParse(_inactiveHoursCtrl.text.trim()) ?? 24;
-        return 'Kitle: Son ${hrs} saattir inaktif';
-      default:
-        return 'Kitle: Tümü';
+    // Ek: platform & build
+    final parts = <String>[];
+    // mevcut kitle kısa özeti
+    final base = (() {
+      switch (_audience) {
+        case 'exam':
+          if (_selectedExams.isNotEmpty) return 'Kitle: ' + _selectedExams.join(', ');
+          return 'Kitle: ${_examType ?? 'YKS'}';
+        case 'uids':
+          final n = _uidsCtrl.text.trim().split(RegExp(r'[\s,;]+')).where((e) => e.isNotEmpty).length;
+          return 'Kitle: UID listesi (${n})';
+        case 'inactive':
+          final hrs = int.tryParse(_inactiveHoursCtrl.text.trim()) ?? 24;
+          return 'Kitle: Son ${hrs} saattir inaktif';
+        default:
+          return 'Kitle: Tümü';
+      }
+    })();
+    parts.add(base);
+    if (_platformsSelected.isNotEmpty) parts.add('Platform: ${_platformsSelected.join(', ')}');
+    final minB = int.tryParse(_buildMinCtrl.text.trim());
+    final maxB = int.tryParse(_buildMaxCtrl.text.trim());
+    if (minB != null || maxB != null) {
+      parts.add('Build: ${minB ?? '−'}..${maxB ?? '∞'}');
     }
+    return parts.join(' • ');
+  }
+
+  Future<void> _sendTest() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() { _sending = true; });
+    try {
+      final callable = FirebaseFunctions.instance.httpsCallable('adminSendPush');
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) return;
+      final data = {
+        'title': _titleCtrl.text.trim(),
+        'body': _bodyCtrl.text.trim(),
+        'route': _routeCtrl.text.trim().isEmpty ? '/home' : _routeCtrl.text.trim(),
+        if (_imageUrl != null) 'imageUrl': _imageUrl,
+        'audience': {'type': 'uids', 'uids': [uid]},
+        if (_scheduleEnabled && _scheduledAt != null) 'scheduledAt': _scheduledAt!.millisecondsSinceEpoch,
+      };
+      final res = await callable.call(data);
+      if (!mounted) return;
+      final m = res.data as Map? ?? {};
+      final scheduled = m['scheduled'] == true;
+      final total = m['totalUsers'];
+      final sent = m['totalSent'];
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(scheduled ? 'Planlandı' : 'Gönderildi: ${sent ?? '-'} / ${total ?? '-'}'),
+      ));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $e')));
+    } finally {
+      if (mounted) setState(() { _sending = false; });
+    }
+  }
+
+  void _nextStep() {
+    if (!_validateStep(_currentStep)) { setState(() {}); return; }
+    if (_currentStep < _lastStep) setState(() => _currentStep++);
+  }
+
+  void _prevStep() {
+    if (_currentStep > 0) setState(() => _currentStep--);
   }
 
   bool _validateStep(int s) {
@@ -443,15 +512,6 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
       return true;
     }
     return true;
-  }
-
-  void _nextStep() {
-    if (!_validateStep(_currentStep)) { setState(() {}); return; }
-    if (_currentStep < _lastStep) setState(() => _currentStep++);
-  }
-
-  void _prevStep() {
-    if (_currentStep > 0) setState(() => _currentStep--);
   }
 
   // Alt eylem çubuğu – adım kontrollü
@@ -499,7 +559,7 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
                   const Spacer(),
                   if (isLast)
                     TextButton.icon(
-                      onPressed: (_sending || uploading) ? null : () => _send(testToSelf: true),
+                      onPressed: (_sending || uploading) ? null : () => _sendTest(),
                       icon: const Icon(Icons.person_outline_rounded),
                       label: const Text('Kendime Test'),
                     ),
@@ -521,7 +581,7 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
                         ),
                       if (isLast)
                         TextButton.icon(
-                          onPressed: (_sending || uploading) ? null : () => _send(testToSelf: true),
+                          onPressed: (_sending || uploading) ? null : () => _sendTest(),
                           icon: const Icon(Icons.person_outline_rounded),
                           label: const Text('Kendime Test'),
                         ),
@@ -734,6 +794,46 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
               return null;
             },
           ),
+        // Platform & Sürüm (opsiyonel)
+        const SizedBox(height: 12),
+        const Text('Platform/Sürüm (opsiyonel)'),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            FilterChip(
+              label: const Text('Android'),
+              selected: _platformsSelected.contains('android'),
+              onSelected: (v) => setState(() => v ? _platformsSelected.add('android') : _platformsSelected.remove('android')),
+            ),
+            FilterChip(
+              label: const Text('iOS'),
+              selected: _platformsSelected.contains('ios'),
+              onSelected: (v) => setState(() => v ? _platformsSelected.add('ios') : _platformsSelected.remove('ios')),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: _buildMinCtrl,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Build Min'),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextFormField(
+                controller: _buildMaxCtrl,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Build Max'),
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }

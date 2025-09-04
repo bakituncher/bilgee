@@ -20,6 +20,8 @@ exports.registerFcmToken = onCall({region: 'us-central1'}, async (request) => {
   const lang = String(request.data?.lang || 'tr');
   if (!token || token.length < 10) throw new HttpsError('invalid-argument', 'Geçerli token gerekli');
   const deviceId = token.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 140);
+  const appVersion = request.data?.appVersion ? String(request.data.appVersion) : null;
+  const appBuild = request.data?.appBuild != null ? Number(request.data.appBuild) : null;
   const ref = db.collection('users').doc(uid).collection('devices').doc(deviceId);
   await ref.set({
     uid,
@@ -28,6 +30,8 @@ exports.registerFcmToken = onCall({region: 'us-central1'}, async (request) => {
     lang,
     disabled: false,
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    ...(appVersion ? { appVersion } : {}),
+    ...(Number.isFinite(appBuild) ? { appBuild } : {}),
   }, {merge: true});
   return {ok: true};
 });
@@ -37,6 +41,39 @@ async function getActiveTokens(uid) {
   if (snap.empty) return [];
   const list = snap.docs.map((d)=> (d.data()||{}).token).filter(Boolean);
   return Array.from(new Set(list));
+}
+
+async function getActiveTokensFiltered(uid, filters = {}) {
+  try {
+    let q = db.collection('users').doc(uid).collection('devices').where('disabled','==', false);
+    const buildMin = Number.isFinite(filters.buildMin) ? Number(filters.buildMin) : null;
+    const buildMax = Number.isFinite(filters.buildMax) ? Number(filters.buildMax) : null;
+    const platforms = Array.isArray(filters.platforms) ? filters.platforms.filter((x)=> typeof x === 'string' && x) : [];
+    if (buildMin !== null) q = q.where('appBuild','>=', buildMin);
+    if (buildMax !== null) q = q.where('appBuild','<=', buildMax);
+    if (platforms.length > 0 && platforms.length <= 10) q = q.where('platform','in', platforms);
+    const snap = await q.limit(50).get();
+    if (snap.empty) return [];
+    const list = snap.docs.map((d)=> (d.data()||{}).token).filter(Boolean);
+    return Array.from(new Set(list));
+  } catch (e) {
+    // Fallback: tüm cihazları çek ve bellek içi filtre uygula (indeks gerekmez)
+    const all = await db.collection('users').doc(uid).collection('devices').limit(200).get();
+    if (all.empty) return [];
+    const buildMin = Number.isFinite(filters.buildMin) ? Number(filters.buildMin) : null;
+    const buildMax = Number.isFinite(filters.buildMax) ? Number(filters.buildMax) : null;
+    const platforms = Array.isArray(filters.platforms) ? filters.platforms.filter((x)=> typeof x === 'string' && x) : [];
+    const list = [];
+    for (const d of all.docs) {
+      const it = d.data() || {};
+      if (it.disabled === true) continue;
+      if (buildMin !== null && !(typeof it.appBuild === 'number' && it.appBuild >= buildMin)) continue;
+      if (buildMax !== null && !(typeof it.appBuild === 'number' && it.appBuild <= buildMax)) continue;
+      if (platforms.length > 0 && !platforms.includes(String(it.platform || ''))) continue;
+      if (it.token) list.push(it.token);
+    }
+    return Array.from(new Set(list));
+  }
 }
 
 function dayKeyIstanbul(d = nowIstanbul()) {
@@ -248,8 +285,9 @@ exports.adminEstimateAudience = onCall({region: 'us-central1', timeoutSeconds: 3
   }
   let tokenHolders = 0;
   for (const uid of uids) {
-    const snap = await db.collection('users').doc(uid).collection('devices').where('disabled','==', false).limit(1).get();
-    if (!snap.empty) tokenHolders++;
+    const filters = { buildMin: audience.buildMin, buildMax: audience.buildMax, platforms: audience.platforms };
+    const tokens = await getActiveTokensFiltered(uid, filters);
+    if (tokens.length > 0) tokenHolders++;
   }
   return {users: uids.length, tokenHolders};
 });
@@ -297,10 +335,12 @@ exports.adminSendPush = onCall({region: 'us-central1', timeoutSeconds: 540}, asy
     targetUids = filtered;
   }
 
+  const filters = { buildMin: audience.buildMin, buildMax: audience.buildMax, platforms: audience.platforms };
+
   let totalSent = 0, totalFail = 0, totalUsers = 0;
   for (const uid of targetUids) {
     totalUsers++;
-    const tokens = await getActiveTokens(uid);
+    const tokens = await getActiveTokensFiltered(uid, filters);
     if (tokens.length === 0) continue;
     const r = await sendPushToTokens(tokens, { title, body, imageUrl, route, type: 'campaign', campaignId: campaignRef.id });
     totalSent += r.successCount; totalFail += r.failureCount;
@@ -330,10 +370,11 @@ exports.processScheduledCampaigns = onSchedule({schedule: '*/5 * * * *', timeZon
         }
         targetUids = filtered;
       }
+      const filters = { buildMin: audience?.buildMin, buildMax: audience?.buildMax, platforms: audience?.platforms };
       let totalSent = 0, totalFail = 0, totalUsers = 0;
       for (const uid of targetUids) {
         totalUsers++;
-        const tokens = await getActiveTokens(uid);
+        const tokens = await getActiveTokensFiltered(uid, filters);
         if (tokens.length === 0) continue;
         const r = await sendPushToTokens(tokens, { title, body, imageUrl, route, type: 'campaign', campaignId: doc.id });
         totalSent += r.successCount; totalFail += r.failureCount;
