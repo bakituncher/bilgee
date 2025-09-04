@@ -35,7 +35,8 @@ exports.registerFcmToken = onCall({region: 'us-central1'}, async (request) => {
 async function getActiveTokens(uid) {
   const snap = await db.collection('users').doc(uid).collection('devices').where('disabled','==', false).limit(50).get();
   if (snap.empty) return [];
-  return snap.docs.map((d)=> (d.data()||{}).token).filter(Boolean);
+  const list = snap.docs.map((d)=> (d.data()||{}).token).filter(Boolean);
+  return Array.from(new Set(list));
 }
 
 function dayKeyIstanbul(d = nowIstanbul()) {
@@ -114,7 +115,7 @@ function buildInactivityTemplate(inactHours, examType) {
   if (inactHours >= 24) {
     return {
       title: 'Bir gün ara verdin. Şimdi hızlanma zamanı! ⚡',
-      body: 'Hedefini 10’a çıkar: kısa bir pratikle ivme yakala! 🎯',
+      body: 'Hedefini 10’a çıkar: k��sa bir pratikle ivme yakala! 🎯',
       route: '/home/add-test',
     };
   }
@@ -130,11 +131,14 @@ function buildInactivityTemplate(inactHours, examType) {
 
 async function sendPushToTokens(tokens, payload) {
   if (!tokens || tokens.length === 0) return {successCount: 0, failureCount: 0};
-  logger.info('sendPushToTokens', { tokenCount: tokens.length, hasImage: !!payload.imageUrl, type: payload.type || 'unknown' });
+  const uniq = Array.from(new Set(tokens.filter(Boolean)));
+  logger.info('sendPushToTokens', { tokenCount: uniq.length, hasImage: !!payload.imageUrl, type: payload.type || 'unknown' });
+  const collapseId = payload.campaignId || (payload.route || 'bilge_general');
   const message = {
-    notification: { title: payload.title, body: payload.body },
-    data: { route: payload.route || '/home', campaignId: payload.campaignId || '', type: payload.type || 'inactivity' },
+    notification: { title: payload.title, body: payload.body, ...(payload.imageUrl ? { imageUrl: payload.imageUrl } : {}) },
+    data: { route: payload.route || '/home', campaignId: payload.campaignId || '', type: payload.type || 'inactivity', ...(payload.imageUrl ? { imageUrl: payload.imageUrl } : {}) },
     android: {
+      collapseKey: collapseId,
       notification: {
         channelId: 'bilge_general',
         clickAction: 'FLUTTER_NOTIFICATION_CLICK',
@@ -143,17 +147,18 @@ async function sendPushToTokens(tokens, payload) {
       },
     },
     apns: {
+      headers: { 'apns-collapse-id': collapseId },
       payload: { aps: { sound: 'default', 'mutable-content': 1 } },
       fcmOptions: payload.imageUrl ? { imageUrl: payload.imageUrl } : undefined,
     },
-    tokens,
+    tokens: uniq,
   };
   try {
     const resp = await admin.messaging().sendEachForMulticast(message);
     return {successCount: resp.successCount, failureCount: resp.failureCount};
   } catch (e) {
     logger.error('FCM send failed', { error: String(e) });
-    return {successCount: 0, failureCount: tokens.length};
+    return {successCount: 0, failureCount: uniq.length};
   }
 }
 

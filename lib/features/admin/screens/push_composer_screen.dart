@@ -294,17 +294,19 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
             if (useFlex)
               Expanded(
                 child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 250),
-                  switchInCurve: Curves.easeOut,
-                  switchOutCurve: Curves.easeIn,
+                  duration: const Duration(milliseconds: 220),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  transitionBuilder: _fadeSlide,
                   child: _stepContent(key: ValueKey(_currentStep)),
                 ),
               )
             else
               AnimatedSwitcher(
-                duration: const Duration(milliseconds: 250),
-                switchInCurve: Curves.easeOut,
-                switchOutCurve: Curves.easeIn,
+                duration: const Duration(milliseconds: 220),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeInCubic,
+                transitionBuilder: _fadeSlide,
                 child: _stepContent(key: ValueKey(_currentStep)),
               ),
             const SizedBox(height: 12),
@@ -314,6 +316,15 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
       ),
     );
   }
+
+  // Hafif fade+slide geçişi (daha akıcı animasyon)
+  Widget _fadeSlide(Widget child, Animation<double> a) => FadeTransition(
+        opacity: a,
+        child: SlideTransition(
+          position: Tween<Offset>(begin: const Offset(0, 0.04), end: Offset.zero).animate(a),
+          child: child,
+        ),
+      );
 
   Widget _wizardHeader() {
     final titles = ['İçerik','Kitle','Zaman','Önizleme'];
@@ -337,15 +348,18 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
         return Container(
           key: key,
           child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 TextFormField(
                   controller: _titleCtrl,
                   autofocus: true,
+                  textInputAction: TextInputAction.next,
                   decoration: InputDecoration(
                     labelText: 'Başlık',
                     helperText: 'Kısa ve net bir çağrı (≤ 60 karakter).',
+                    counterText: '', // counter gizle (klavye jank'ını azaltır)
                     prefixIcon: const Icon(Icons.title_rounded),
                     suffixIcon: IconButton(
                       tooltip: 'Şablonlar',
@@ -359,9 +373,11 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _bodyCtrl,
+                  textInputAction: TextInputAction.newline,
                   decoration: InputDecoration(
                     labelText: 'Açıklama',
                     helperText: 'Kısa fayda + eylem çağrısı (≤ 160 karakter).',
+                    counterText: '', // counter gizle (klavye jank'ını azaltır)
                     prefixIcon: const Icon(Icons.notes_rounded),
                     suffixIcon: IconButton(
                       tooltip: 'Şablonlar',
@@ -389,6 +405,7 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
         return Container(
           key: key,
           child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -421,12 +438,7 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
           ),
         );
       default:
-        return Container(
-          key: key,
-          child: SingleChildScrollView(
-            child: _inlinePreview(),
-          ),
-        );
+        return Container(key: key);
     }
   }
 
