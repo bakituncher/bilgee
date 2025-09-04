@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart' as ph;
 
 class NotificationService {
   NotificationService._();
@@ -56,8 +57,19 @@ class NotificationService {
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(_channel!);
 
-    // iOS foreground'da çift bildirim olmaması için: sistem sunumunda alert/sound kapalı,
-    // biz yerel bildirimi kendimiz gösteriyoruz.
+    // Android 13+ bildirim izni – areNotificationsEnabled ile kontrol ve gerekirse iste
+    try {
+      final androidFln = _fln.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      final enabled = await androidFln?.areNotificationsEnabled() ?? true;
+      if (!enabled && Platform.isAndroid) {
+        final status = await ph.Permission.notification.status;
+        if (!status.isGranted) {
+          await ph.Permission.notification.request();
+        }
+      }
+    } catch (_) {}
+
+    // iOS foreground sunum ayarları
     await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(alert: false, badge: true, sound: false);
 
     await _requestPermission();
@@ -171,8 +183,12 @@ class NotificationService {
     if (imageUrl.isNotEmpty) {
       final localPath = await _downloadToTemp(imageUrl);
       if (localPath != null) {
+        final bigPicture = FilePathAndroidBitmap(localPath);
+        final thumbIcon = FilePathAndroidBitmap(localPath);
         final style = BigPictureStyleInformation(
-          FilePathAndroidBitmap(localPath),
+          bigPicture,
+          // Dar görünümde küçük bir görsel ipucu verelim
+          largeIcon: thumbIcon,
           hideExpandedLargeIcon: true,
           contentTitle: title,
           summaryText: body,
@@ -184,6 +200,9 @@ class NotificationService {
           importance: Importance.high,
           priority: Priority.high,
           styleInformation: style,
+          // Dar görünümde de küçük görsel gözüksün
+          largeIcon: thumbIcon,
+          subText: 'Görsel içerir',
         );
         iosDetails = DarwinNotificationDetails(
           attachments: [
