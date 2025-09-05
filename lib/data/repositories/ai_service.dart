@@ -37,6 +37,29 @@ class AiService {
     return JsonTextCleaner.cleanString(input);
   }
 
+  // YENI: Düz metin sanitizasyonu (markdown ve madde işaretlerini temizle)
+  String _sanitizePlainText(String input) {
+    var out = input;
+    // code-fence ve backtick temizliği
+    out = out.replaceAll('```', '');
+    out = out.replaceAll('`', '');
+    // kalın/italik vurguları kaldır (** __ * _)
+    out = out.replaceAll('**', '');
+    out = out.replaceAll('__', '');
+    out = out.replaceAllMapped(RegExp(r"(^|\s)[*_]([^*_]+)[*_](?=\s|\.|,|!|\?|$)"), (match) => '${match.group(1)}${match.group(2)}');
+    // Satır başındaki madde işaretleri (-, *, •, # başlık) kaldır
+    final lines = out.split('\n').map((l) {
+      var line = l;
+      line = line.replaceFirst(RegExp(r'^\s*[-*•]\s+'), '');
+      line = line.replaceFirst(RegExp(r'^\s*#{1,6}\s*'), '');
+      return line;
+    }).toList();
+    out = lines.join('\n');
+    // Fazla boşluk ve boş satırları sadeleştir
+    out = out.replaceAll(RegExp(r'[ \t]+'), ' ').replaceAll(RegExp(r'\s*\n\s*\n+'), '\n');
+    return out.trim();
+  }
+
   String? _extractJsonFromFencedBlock(String text) {
     final jsonFence = RegExp(r"```json\s*([\s\S]*?)\s*```", multiLine: true).firstMatch(text);
     if (jsonFence != null) return jsonFence.group(1)!.trim();
@@ -105,7 +128,7 @@ class AiService {
       final data = result.data;
       final rawResponse = (data is Map && data['raw'] is String) ? (data['raw'] as String).trim() : '';
       if (rawResponse.isEmpty) {
-        return expectJson ? jsonEncode({'error': 'Boş yanıt alındı'}) : 'Boş yanıt alındı';
+        return expectJson ? jsonEncode({'error': 'Boş yanıt alındı'}) : 'Hata: Boş yanıt alındı';
       }
       String? extracted = _extractJsonFromFencedBlock(rawResponse);
       extracted ??= _extractJsonByBracesFallback(rawResponse);
@@ -114,13 +137,14 @@ class AiService {
       if (expectJson) {
         return _parseAndNormalizeJsonOrError(cleaned);
       }
-      return cleaned.isNotEmpty ? cleaned : rawResponse;
+      final plain = _sanitizePlainText(cleaned.isNotEmpty ? cleaned : rawResponse);
+      return plain.isNotEmpty ? plain : _sanitizePlainText(rawResponse);
     } on FirebaseFunctionsException catch (e) {
       final msg = 'Sunucu hata: ${e.code} ${e.message ?? ''}'.trim();
-      return expectJson ? jsonEncode({'error': msg}) : '**HATA:** $msg';
+      return expectJson ? jsonEncode({'error': msg}) : 'Hata: $msg';
     } catch (e) {
       final msg = 'Sunucuya erişilemedi: ${e.toString()}';
-      return expectJson ? jsonEncode({'error': msg}) : '**HATA:** $msg';
+      return expectJson ? jsonEncode({'error': msg}) : 'Hata: $msg';
     }
   }
 

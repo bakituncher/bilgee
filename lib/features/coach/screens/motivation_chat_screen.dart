@@ -31,6 +31,14 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
   bool _showScrollToBottom = false;
   late AnimationController _backgroundAnimationController;
 
+  // YENI: Sohbetten Süit ekranına dönüş helper
+  void _exitToSuite() {
+    if (!mounted) return;
+    ref.read(chatScreenStateProvider.notifier).state = null; // Süit ekranına dön
+    ref.read(chatHistoryProvider.notifier).state = []; // geçmişi temizle
+    setState(() => _isTyping = false);
+  }
+
   // YENI: Son N mesajdan kısa bir özet üret
   String _buildConversationHistory(List<ChatMessage> history, {int maxTurns = 10, int maxChars = 800}) {
     if (history.isEmpty) return '';
@@ -188,62 +196,75 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
     // DÜZ: arka plan animasyonu yerine sade arka plan
     // AppTheme odaklı renk paleti
 
-    return Scaffold(
-      resizeToAvoidBottomInset: true,
-      appBar: AppBar(
-        title: const Text('Sohbet'),
+    return PopScope(
+      canPop: selectedMood == null,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (ref.read(chatScreenStateProvider) != null) {
+          _exitToSuite();
+        }
+      },
+      child: Scaffold(
+        resizeToAvoidBottomInset: true,
+        appBar: AppBar(
+          title: const Text('Sohbet'),
+          backgroundColor: AppTheme.primaryColor,
+          elevation: 0,
+          // YENI: Sohbet içindeyken geri ikonunu Süit’e dönecek şekilde özelleştir
+          leading: selectedMood != null
+              ? BackButton(onPressed: _exitToSuite)
+              : null,
+        ),
         backgroundColor: AppTheme.primaryColor,
-        elevation: 0,
-      ),
-      backgroundColor: AppTheme.primaryColor,
-      body: Stack(
-        children: [
-          Column(
-            children: [
-              Expanded(
-                child: AnimatedSwitcher(
-                  duration: 200.ms,
-                  transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
-                  child: selectedMood == null
-                      ? _SmartBriefingView(onPromptSelected: _onMoodSelected)
-                      : RepaintBoundary(
-                          child: ListView.builder(
-                            controller: _scrollController,
-                            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                            cacheExtent: 300,
-                            addAutomaticKeepAlives: false,
-                            addRepaintBoundaries: true,
-                            addSemanticIndexes: false,
-                            padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-                            itemCount: history.length + (_isTyping ? 1 : 0),
-                            itemBuilder: (context, index) {
-                              if (_isTyping && index == history.length) {
-                                return const _TypingBubble();
-                              }
-                              final message = history[index];
-                              final bool isLastRealMessage = index == history.length - 1;
-                              return _MessageBubble(message: message, animate: isLastRealMessage);
-                            },
+        body: Stack(
+          children: [
+            Column(
+              children: [
+                Expanded(
+                  child: AnimatedSwitcher(
+                    duration: 200.ms,
+                    transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
+                    child: selectedMood == null
+                        ? _SmartBriefingView(onPromptSelected: _onMoodSelected)
+                        : RepaintBoundary(
+                            child: ListView.builder(
+                              controller: _scrollController,
+                              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                              cacheExtent: 300,
+                              addAutomaticKeepAlives: false,
+                              addRepaintBoundaries: true,
+                              addSemanticIndexes: false,
+                              padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                              itemCount: history.length + (_isTyping ? 1 : 0),
+                              itemBuilder: (context, index) {
+                                if (_isTyping && index == history.length) {
+                                  return const _TypingBubble();
+                                }
+                                final message = history[index];
+                                final bool isLastRealMessage = index == history.length - 1;
+                                return _MessageBubble(message: message, animate: isLastRealMessage);
+                              },
+                            ),
                           ),
-                        ),
+                  ),
+                ),
+                if (selectedMood != null) _buildChatInput(),
+              ],
+            ),
+            if (_showScrollToBottom)
+              Positioned(
+                right: 16,
+                bottom: (selectedMood != null) ? 88 : 24,
+                child: FloatingActionButton.small(
+                  heroTag: 'toBottom',
+                  backgroundColor: AppTheme.lightSurfaceColor,
+                  foregroundColor: Colors.white,
+                  onPressed: () => _scrollToBottom(isNewMessage: false),
+                  child: const Icon(Icons.arrow_downward_rounded),
                 ),
               ),
-              if (selectedMood != null) _buildChatInput(),
-            ],
-          ),
-          if (_showScrollToBottom)
-            Positioned(
-              right: 16,
-              bottom: (selectedMood != null) ? 88 : 24,
-              child: FloatingActionButton.small(
-                heroTag: 'toBottom',
-                backgroundColor: AppTheme.lightSurfaceColor,
-                foregroundColor: Colors.white,
-                onPressed: () => _scrollToBottom(isNewMessage: false),
-                child: const Icon(Icons.arrow_downward_rounded),
-              ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
