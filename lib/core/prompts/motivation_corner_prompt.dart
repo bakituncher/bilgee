@@ -1,6 +1,7 @@
 // lib/core/prompts/motivation_corner_prompt.dart
 import 'package:bilge_ai/data/models/user_model.dart';
 import 'tone_utils.dart';
+import 'package:bilge_ai/core/prompts/prompt_remote.dart';
 
 class MotivationCornerPrompt {
   static String build({
@@ -10,6 +11,19 @@ class MotivationCornerPrompt {
     String lastUserMessage = '',
   }) {
     final userName = user.name ?? 'Komutan';
+
+    final remote = RemotePrompts.get('motivation_corner');
+    if (remote != null && remote.isNotEmpty) {
+      return RemotePrompts.fillTemplate(remote, {
+        'USER_NAME': userName,
+        'EXAM_NAME': examName ?? '—',
+        'GOAL': user.goal ?? '',
+        'CONVERSATION_HISTORY': conversationHistory.trim().isEmpty ? '—' : conversationHistory.trim(),
+        'LAST_USER_MESSAGE': lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim(),
+        'TONE': ToneUtils.toneByExam(examName),
+      });
+    }
+
     return '''
 Sen BilgeAI'sin; olgun, ciddi ve sahada bir koç gibi konuş. Boş söz yok; özgüveni besleyen, saygılı ve net ifadeler kullan.
 ${ToneUtils.toneByExam(examName)}

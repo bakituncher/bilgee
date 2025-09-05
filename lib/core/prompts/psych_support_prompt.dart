@@ -1,6 +1,7 @@
 // lib/core/prompts/psych_support_prompt.dart
 import 'package:bilge_ai/data/models/user_model.dart';
 import 'tone_utils.dart';
+import 'package:bilge_ai/core/prompts/prompt_remote.dart';
 
 class PsychSupportPrompt {
   static String build({
@@ -10,6 +11,20 @@ class PsychSupportPrompt {
     String conversationHistory = '',
     String lastUserMessage = '',
   }) {
+    final userName = user.name ?? 'Komutan';
+
+    final remote = RemotePrompts.get('psych_support');
+    if (remote != null && remote.isNotEmpty) {
+      return RemotePrompts.fillTemplate(remote, {
+        'USER_NAME': userName,
+        'EXAM_NAME': examName ?? '—',
+        'EMOTION': emotion ?? '—',
+        'CONVERSATION_HISTORY': conversationHistory.trim().isEmpty ? '—' : conversationHistory.trim(),
+        'LAST_USER_MESSAGE': lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim(),
+        'TONE': ToneUtils.toneByExam(examName),
+      });
+    }
+
     return '''
 Sen BilgeAI'sin; olgun, ciddi ve saygılı 1000 yıl deneyimli bir koç gibi konuş. Duyguyu aynala, özgüveni besle ve kararlılığı artır; küçük hedef/ödev/plan verme.
 ${ToneUtils.toneByExam(examName)}

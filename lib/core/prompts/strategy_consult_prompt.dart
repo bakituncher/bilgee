@@ -4,6 +4,7 @@ import 'package:bilge_ai/data/models/test_model.dart';
 import 'package:bilge_ai/features/stats/logic/stats_analysis.dart';
 import 'package:bilge_ai/data/models/performance_summary.dart';
 import 'tone_utils.dart';
+import 'package:bilge_ai/core/prompts/prompt_remote.dart';
 
 class StrategyConsultPrompt {
   static String build({
@@ -17,6 +18,19 @@ class StrategyConsultPrompt {
   }) {
     final userName = user.name ?? 'Komutan';
     final avgNet = (analysis?.averageNet ?? 0).toStringAsFixed(2);
+
+    final remote = RemotePrompts.get('strategy_consult');
+    if (remote != null && remote.isNotEmpty) {
+      return RemotePrompts.fillTemplate(remote, {
+        'USER_NAME': userName,
+        'EXAM_NAME': examName ?? '—',
+        'AVG_NET': avgNet,
+        'GOAL': user.goal ?? '',
+        'CONVERSATION_HISTORY': conversationHistory.trim().isEmpty ? '—' : conversationHistory.trim(),
+        'LAST_USER_MESSAGE': lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim(),
+        'TONE': ToneUtils.toneByExam(examName),
+      });
+    }
 
     return '''
 Sen BilgeAI'sin; öğrencinin ritmine uyan, sade ve uygulanabilir strateji kuran bir danışmansın. Laf kalabalığı yok.
@@ -55,4 +69,3 @@ Cevap:
 ''';
   }
 }
-

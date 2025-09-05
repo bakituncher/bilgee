@@ -4,6 +4,7 @@ import 'package:bilge_ai/data/models/test_model.dart';
 import 'package:bilge_ai/features/stats/logic/stats_analysis.dart';
 import 'package:bilge_ai/data/models/performance_summary.dart';
 import 'tone_utils.dart';
+import 'package:bilge_ai/core/prompts/prompt_remote.dart';
 
 class TrialReviewPrompt {
   static String build({
@@ -21,6 +22,22 @@ class TrialReviewPrompt {
     final avgNet = (analysis?.averageNet ?? 0).toStringAsFixed(2);
     final strongest = analysis?.strongestSubjectByNet ?? '—';
     final weakest = analysis?.weakestSubjectByNet ?? '—';
+
+    final remote = RemotePrompts.get('trial_review');
+    if (remote != null && remote.isNotEmpty) {
+      return RemotePrompts.fillTemplate(remote, {
+        'USER_NAME': userName,
+        'EXAM_NAME': examName ?? '—',
+        'GOAL': user.goal ?? '',
+        'LAST_NET': lastNet,
+        'AVG_NET': avgNet,
+        'STRONGEST': strongest,
+        'WEAKEST': weakest,
+        'CONVERSATION_HISTORY': conversationHistory.trim().isEmpty ? '—' : conversationHistory.trim(),
+        'LAST_USER_MESSAGE': lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim(),
+        'TONE': ToneUtils.toneByExam(examName),
+      });
+    }
 
     return '''
 Sen BilgeAI'sin; 1000 yıllık bir bilge eğitmen gibi olgun, sakin ve kesin konuş. Abartı yok, gösteriş yok; sonuç ve netlik var.
