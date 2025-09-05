@@ -947,6 +947,19 @@ exports.generateGemini = onCall(
       temperature = Math.min(1.0, Math.max(0.1, request.data.temperature));
     }
 
+    // Yeni: model seçimi (varsayılan: gemini-1.5-flash-latest)
+    let modelId = 'gemini-1.5-flash-latest';
+    const reqModel = typeof request.data?.model === 'string' ? String(request.data.model).toLowerCase().trim() : '';
+    if (reqModel) {
+      if (reqModel.includes('pro')) {
+        modelId = 'gemini-1.5-pro-latest';
+      } else if (reqModel.includes('flash')) {
+        modelId = 'gemini-1.5-flash-latest';
+      } else if (/^gemini-1\.5-(flash|pro)(?:-[a-z]+)?(?:-latest)?$/.test(reqModel)) {
+        modelId = reqModel; // ileri kullanıcılar tam model adı gönderebilir
+      }
+    }
+
     if (typeof prompt !== 'string' || !prompt.trim()) {
       throw new HttpsError('invalid-argument', 'Geçerli bir prompt gerekli');
     }
@@ -967,7 +980,7 @@ exports.generateGemini = onCall(
           ...(expectJson ? {responseMimeType: 'application/json'} : {}),
         },
       };
-      const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=' + GEMINI_KEY;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${GEMINI_KEY}`;
       const resp = await fetch(url, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -975,14 +988,14 @@ exports.generateGemini = onCall(
       });
 
       if (!resp.ok) {
-        logger.warn('Gemini response not ok', {status: resp.status});
+        logger.warn('Gemini response not ok', {status: resp.status, modelId});
         throw new HttpsError('internal', `Gemini isteği başarısız (${resp.status}).`);
       }
       const data = await resp.json();
       const candidate = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      return {raw: candidate, tokensLimit: GEMINI_MAX_OUTPUT_TOKENS};
+      return {raw: candidate, tokensLimit: GEMINI_MAX_OUTPUT_TOKENS, modelId};
     } catch (e) {
-      logger.error('Gemini çağrısı hata', e);
+      logger.error('Gemini çağrısı hata', { error: String(e), modelId });
       if (e instanceof HttpsError) throw e;
       throw new HttpsError('internal', 'Gemini isteği sırasında hata oluştu');
     }

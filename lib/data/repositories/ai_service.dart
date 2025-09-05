@@ -17,6 +17,7 @@ import 'package:bilge_ai/data/models/performance_summary.dart';
 import 'package:bilge_ai/data/models/plan_document.dart';
 import 'package:bilge_ai/data/providers/firestore_providers.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ChatMessage {
   final String text;
@@ -33,6 +34,44 @@ class AiService {
   final Ref _ref;
   AiService(this._ref);
 
+  // --- Kalıcı sohbet hafızası (Firestore) ---
+  Future<String> _getChatMemory(String userId, String mode) async {
+    try {
+      final svc = _ref.read(firestoreServiceProvider);
+      final snap = await svc.usersCollection.doc(userId).collection('state').doc('ai_memory').get();
+      final data = snap.data() ?? const <String, dynamic>{};
+      final key = '${mode}_summary';
+      final v = data[key];
+      if (v is String && v.trim().isNotEmpty) return v.trim();
+      final g = data['globalSummary'];
+      return (g is String) ? g.trim() : '';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  Future<void> _updateChatMemory(String userId, String mode, {required String lastUserMessage, required String aiResponse, String previous = ''}) async {
+    try {
+      // Basit bir kuyruk: önceki özet + son tur (Kullanıcı/AI), sondan keserek ~1200 char'a indir
+      String appended = [
+        if (previous.trim().isNotEmpty) previous.trim(),
+        if (lastUserMessage.trim().isNotEmpty) 'Kullanıcı: ${lastUserMessage.trim().replaceAll('\n', ' ')}',
+        if (aiResponse.trim().isNotEmpty) 'AI: ${aiResponse.trim().replaceAll('\n', ' ')}',
+      ].join(' | ');
+      const maxChars = 1200;
+      if (appended.length > maxChars) {
+        appended = appended.substring(appended.length - maxChars);
+      }
+      final svc = _ref.read(firestoreServiceProvider);
+      await svc.usersCollection.doc(userId).collection('state').doc('ai_memory').set({
+        '${mode}_summary': appended,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (_) {
+      // sessiz geç
+    }
+  }
+
   String _preprocessAiTextForJson(String input) {
     return JsonTextCleaner.cleanString(input);
   }
@@ -47,17 +86,34 @@ class AiService {
     out = out.replaceAll('**', '');
     out = out.replaceAll('__', '');
     out = out.replaceAllMapped(RegExp(r"(^|\s)[*_]([^*_]+)[*_](?=\s|\.|,|!|\?|$)"), (match) => '${match.group(1)}${match.group(2)}');
-    // Satır başındaki madde işaretleri (-, *, •, # başlık) kaldır
+    // Satır başındaki madde işaretleri (-, *, •, # başlık, 1) 2) ..) kaldır
     final lines = out.split('\n').map((l) {
       var line = l;
       line = line.replaceFirst(RegExp(r'^\s*[-*•]\s+'), '');
       line = line.replaceFirst(RegExp(r'^\s*#{1,6}\s*'), '');
+      line = line.replaceFirst(RegExp(r'^\s*\d+\)\s*'), '');
       return line;
     }).toList();
     out = lines.join('\n');
     // Fazla boşluk ve boş satırları sadeleştir
     out = out.replaceAll(RegExp(r'[ \t]+'), ' ').replaceAll(RegExp(r'\s*\n\s*\n+'), '\n');
     return out.trim();
+  }
+
+  // YENI: Koçvari üslubu korumak için bazı ifadeleri nötralize et
+  String _enforceToneGuard(String input) {
+    var out = input;
+    final replacements = <RegExp, String>{
+      RegExp(r'küçük hedef(?:ler)?', caseSensitive: false): 'kararlı ilerleme',
+      RegExp(r'mikro\s+(görev|adım|hedef|ödül)', caseSensitive: false): 'kararlı ilerleme',
+      RegExp(r'mini\s+(görev|hedef|ödül)', caseSensitive: false): 'kararlı ilerleme',
+      RegExp(r'küçük\s+ödül', caseSensitive: false): '',
+      RegExp(r'\bstreak\b', caseSensitive: false): 'seri',
+    };
+    replacements.forEach((k, v) => out = out.replaceAll(k, v));
+    // Temizlemeden sonra fazla boşlukları toparla
+    out = out.replaceAll(RegExp(r'\s{2,}'), ' ').trim();
+    return out;
   }
 
   String? _extractJsonFromFencedBlock(String text) {
@@ -114,12 +170,13 @@ class AiService {
   String _yyyyMmDd(DateTime d) =>
       '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
-  Future<String> _callGemini(String prompt, {bool expectJson = false, double? temperature}) async {
+  Future<String> _callGemini(String prompt, {bool expectJson = false, double? temperature, String? model}) async {
     try {
       final callable = FirebaseFunctions.instanceFor(region: 'us-central1').httpsCallable('generateGemini');
       final payload = {
         'prompt': prompt,
         'expectJson': expectJson,
+        if (model != null && model.isNotEmpty) 'model': model,
       };
       if (temperature != null) {
         payload['temperature'] = temperature;
@@ -138,7 +195,8 @@ class AiService {
         return _parseAndNormalizeJsonOrError(cleaned);
       }
       final plain = _sanitizePlainText(cleaned.isNotEmpty ? cleaned : rawResponse);
-      return plain.isNotEmpty ? plain : _sanitizePlainText(rawResponse);
+      final guarded = _enforceToneGuard(plain);
+      return guarded.isNotEmpty ? guarded : _enforceToneGuard(_sanitizePlainText(rawResponse));
     } on FirebaseFunctionsException catch (e) {
       final msg = 'Sunucu hata: ${e.code} ${e.message ?? ''}'.trim();
       return expectJson ? jsonEncode({'error': msg}) : 'Hata: $msg';
@@ -316,6 +374,13 @@ class AiService {
     // Önbellekli analiz (varsa)
     final analysis = _ref.read(overallStatsAnalysisProvider).value;
 
+    // Kalıcı bellek: mod bazlı kısa özet yükle ve mevcut geçmişle birleştir
+    final mem = await _getChatMemory(user.id, promptType);
+    final combinedHistory = [
+      if (mem.trim().isNotEmpty) mem.trim(),
+      if (conversationHistory.trim().isNotEmpty) conversationHistory.trim(),
+    ].join(mem.isNotEmpty && conversationHistory.isNotEmpty ? ' | ' : '');
+
     // Yeni: Dört mod için özel promptlar + default akışın modüler hali
     String prompt;
     int maxSentences = 3;
@@ -327,7 +392,7 @@ class AiService {
           analysis: analysis,
           performance: performance,
           examName: examType?.displayName,
-          conversationHistory: conversationHistory,
+          conversationHistory: combinedHistory,
           lastUserMessage: lastUserMessage,
         );
         maxSentences = 5;
@@ -339,7 +404,7 @@ class AiService {
           analysis: analysis,
           performance: performance,
           examName: examType?.displayName,
-          conversationHistory: conversationHistory,
+          conversationHistory: combinedHistory,
           lastUserMessage: lastUserMessage,
         );
         maxSentences = 5;
@@ -349,7 +414,7 @@ class AiService {
           user: user,
           examName: examType?.displayName,
           emotion: emotion,
-          conversationHistory: conversationHistory,
+          conversationHistory: combinedHistory,
           lastUserMessage: lastUserMessage,
         );
         maxSentences = 5;
@@ -358,7 +423,7 @@ class AiService {
         prompt = MotivationSuitePrompts.motivationCorner(
           user: user,
           examName: examType?.displayName,
-          conversationHistory: conversationHistory,
+          conversationHistory: combinedHistory,
           lastUserMessage: lastUserMessage,
         );
         maxSentences = 5;
@@ -369,7 +434,7 @@ class AiService {
           tests: tests,
           analysis: analysis,
           examName: examType?.displayName,
-          conversationHistory: conversationHistory,
+          conversationHistory: combinedHistory,
           lastUserMessage: lastUserMessage,
         );
         break;
@@ -379,7 +444,7 @@ class AiService {
           tests: tests,
           analysis: analysis,
           examName: examType?.displayName,
-          conversationHistory: conversationHistory,
+          conversationHistory: combinedHistory,
           lastUserMessage: lastUserMessage,
         );
         break;
@@ -389,7 +454,7 @@ class AiService {
           tests: tests,
           analysis: analysis,
           examName: examType?.displayName,
-          conversationHistory: conversationHistory,
+          conversationHistory: combinedHistory,
           lastUserMessage: lastUserMessage,
         );
         break;
@@ -399,7 +464,7 @@ class AiService {
           tests: tests,
           analysis: analysis,
           examName: examType?.displayName,
-          conversationHistory: conversationHistory,
+          conversationHistory: combinedHistory,
           lastUserMessage: lastUserMessage,
         );
         break;
@@ -410,7 +475,7 @@ class AiService {
           analysis: analysis,
           examName: examType?.displayName,
           workshopContext: workshopContext,
-          conversationHistory: conversationHistory,
+          conversationHistory: combinedHistory,
           lastUserMessage: lastUserMessage,
         );
         break;
@@ -420,7 +485,7 @@ class AiService {
           tests: tests,
           analysis: analysis,
           examName: examType?.displayName,
-          conversationHistory: conversationHistory,
+          conversationHistory: combinedHistory,
           lastUserMessage: lastUserMessage,
         );
         break;
@@ -430,14 +495,24 @@ class AiService {
           tests: tests,
           analysis: analysis,
           examName: examType?.displayName,
-          conversationHistory: conversationHistory,
+          conversationHistory: combinedHistory,
           lastUserMessage: lastUserMessage,
         );
         break;
     }
 
     // Daha deterministik yanıtlar için sıcaklık düşürüldü
-    final raw = await _callGemini(prompt, expectJson: false, temperature: 0.4);
+    final raw = await _callGemini(
+      prompt,
+      expectJson: false,
+      temperature: 0.4,
+      // SADECE sohbet için PRO modeli kullan
+      model: 'gemini-1.5-pro-latest',
+    );
+
+    // Belleği güncelle (son tur)
+    unawaited(_updateChatMemory(user.id, promptType, lastUserMessage: lastUserMessage, aiResponse: raw, previous: mem));
+
     return _limitSentences(raw, maxSentences: maxSentences);
   }
 
