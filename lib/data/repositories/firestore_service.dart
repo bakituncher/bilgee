@@ -557,6 +557,38 @@ class FirestoreService {
     await updateEngagementScore(session.userId, 25);
   }
 
+  // YENI: Pomodoro seansını ve ilgili istatistikleri tek atomik işlemde kaydet
+  Future<void> recordFocusSessionAndStats(FocusSessionModel session) async {
+    final statsRef = _userStatsDoc(session.userId);
+    final newSessionRef = _focusSessionsCollection.doc();
+    final minutes = (session.durationInSeconds / 60).floor();
+    final dailyRef = _userActivityDailyDoc(session.userId, session.date);
+
+    await _firestore.runTransaction((txn) async {
+      // Detay seansı ayrı koleksiyona yaz
+      txn.set(newSessionRef, session.toMap());
+
+      // Kullanıcı stats: birikimli alanları artır
+      txn.set(statsRef, {
+        'focusMinutes': FieldValue.increment(minutes),
+        'bp': FieldValue.increment(minutes), // Bilgelik Puanı = dakika
+        'pomodoroSessions': FieldValue.increment(1),
+        // Mevcut sistemle tutarlılık için engagementScore ek artışını koru
+        'engagementScore': FieldValue.increment(25),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      // Günlük aktivite modüler yapı: gün başına toplam odak dakikası
+      final d0 = DateTime(session.date.year, session.date.month, session.date.day);
+      txn.set(dailyRef, {
+        'focusMinutes': FieldValue.increment(minutes),
+        'date': Timestamp.fromDate(d0),
+        'dateKey': _dateKey(d0),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    });
+  }
+
   // GÜNCEL: Günlük görev tamamlama basitleştirildi (günlük doküman + stats artış)
   Future<void> updateDailyTaskCompletion({
     required String userId,
@@ -981,5 +1013,24 @@ class FirestoreService {
       await batch.commit();
       // Döngü sonunda tekrar okuyup devam et
     }
+  }
+
+  // YENI: Belirli tarih aralığında günlük odak dakikalarını oku (user_activity)
+  Future<Map<String, int>> getFocusMinutesInRange(String userId, {required DateTime start, required DateTime end}) async {
+    final startDay = DateTime(start.year, start.month, start.day);
+    final endNextDay = DateTime(end.year, end.month, end.day).add(const Duration(days: 1));
+
+    final qs = await _userActivityCollection(userId)
+        .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startDay))
+        .where('date', isLessThan: Timestamp.fromDate(endNextDay))
+        .get();
+
+    final Map<String, int> out = {};
+    for (final doc in qs.docs) {
+      final data = doc.data();
+      final num? m = data['focusMinutes'] as num?;
+      if (m != null) out[doc.id] = m.toInt();
+    }
+    return out;
   }
 }
