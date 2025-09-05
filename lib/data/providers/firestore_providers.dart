@@ -12,6 +12,8 @@ import 'package:bilge_ai/data/models/performance_summary.dart';
 import 'package:bilge_ai/data/models/app_state.dart';
 import 'package:cloud_functions/cloud_functions.dart'; // SUNUCU GÖREVLERİ İÇİN
 import 'package:bilge_ai/shared/notifications/in_app_notification_model.dart';
+import 'package:bilge_ai/data/models/user_stats_model.dart';
+import 'package:bilge_ai/data/models/focus_session_model.dart';
 
 final firestoreProvider = Provider<FirebaseFirestore>((ref) => FirebaseFirestore.instance);
 
@@ -100,4 +102,36 @@ final unreadInAppCountProvider = StreamProvider<int>((ref) {
     return ref.watch(firestoreServiceProvider).streamUnreadInAppCount(user.uid);
   }
   return const Stream<int>.empty();
+});
+
+// YENI: Kullanıcı istatistik akışı (streak, engagementScore, focusMinutes, bp, pomodoroSessions)
+final userStatsStreamProvider = StreamProvider<UserStats?>((ref) {
+  final user = ref.watch(authControllerProvider).value;
+  if (user != null) {
+    return ref.watch(firestoreServiceProvider).getUserStatsStream(user.uid);
+  }
+  return const Stream<UserStats?>.empty();
+});
+
+// YENI: Son N günün odak dakikaları (focusMinutes) – haftalık/aylık grafikler için
+final focusMinutesForLastDaysProvider = FutureProvider.family.autoDispose<Map<String, int>, int>((ref, days) async {
+  final user = ref.watch(authControllerProvider).value;
+  if (user == null) return {};
+  final today = DateTime.now();
+  final start = DateTime(today.year, today.month, today.day).subtract(Duration(days: days - 1));
+  return ref.read(firestoreServiceProvider).getFocusMinutesInRange(user.uid, start: start, end: today);
+});
+
+// YENI: Odaklanma seansları akışı (genel kullanım için)
+final focusSessionsStreamProvider = StreamProvider.autoDispose<List<FocusSessionModel>>((ref) {
+  final user = ref.watch(authControllerProvider).value;
+  if (user != null) {
+    return ref.watch(firestoreProvider)
+        .collection('focusSessions')
+        .where('userId', isEqualTo: user.uid)
+        .orderBy('date', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => FocusSessionModel.fromSnapshot(doc as DocumentSnapshot<Map<String, dynamic>>)).toList());
+  }
+  return Stream.value(const <FocusSessionModel>[]);
 });

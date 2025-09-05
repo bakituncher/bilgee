@@ -2,6 +2,7 @@
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:bilge_ai/data/models/user_model.dart';
+import 'package:bilge_ai/core/prompts/prompt_remote.dart';
 
 class StrategyPrompts {
   static String? _yksTemplate;
@@ -9,9 +10,10 @@ class StrategyPrompts {
   static String? _kpssTemplate;
 
   static Future<void> preload() async {
-    _yksTemplate = await rootBundle.loadString('assets/prompts/yks_prompt.md');
-    _lgsTemplate = await rootBundle.loadString('assets/prompts/lgs_prompt.md');
-    _kpssTemplate = await rootBundle.loadString('assets/prompts/kpss_prompt.md');
+    // Önce Firestore’daki uzaktan içerikleri dene; yoksa asset’e geri dön
+    _yksTemplate = RemotePrompts.get('yks_prompt') ?? await rootBundle.loadString('assets/prompts/yks_prompt.md');
+    _lgsTemplate = RemotePrompts.get('lgs_prompt') ?? await rootBundle.loadString('assets/prompts/lgs_prompt.md');
+    _kpssTemplate = RemotePrompts.get('kpss_prompt') ?? await rootBundle.loadString('assets/prompts/kpss_prompt.md');
   }
 
   static String _revisionBlock(String? revisionRequest) {

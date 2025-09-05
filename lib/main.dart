@@ -14,6 +14,7 @@ import 'package:bilge_ai/core/prompts/strategy_prompts.dart';
 import 'package:bilge_ai/features/quests/quest_armory.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'shared/notifications/notification_service.dart';
+import 'package:bilge_ai/core/prompts/prompt_remote.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -48,7 +49,9 @@ void main() async {
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   await initializeDateFormatting('tr_TR', null);
-  // Asset tabanlı içerikleri önceden yükle
+  // Firestore tabanlı promptları önceden yükle ve canlı izlemeyi başlat
+  await RemotePrompts.preloadAndWatch();
+  // Asset tabanlı içerikleri önceden yükle (uzak yoksa yedek)
   await StrategyPrompts.preload();
   await QuestArmoryLoader.preload();
   runApp(const ProviderScope(child: BilgeAiApp()));

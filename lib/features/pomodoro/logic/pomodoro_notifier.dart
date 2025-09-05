@@ -5,8 +5,6 @@ import 'package:bilge_ai/data/models/focus_session_model.dart';
 import 'package:bilge_ai/data/providers/firestore_providers.dart';
 import 'package:bilge_ai/features/auth/application/auth_controller.dart';
 import 'package:intl/intl.dart';
-import 'package:bilge_ai/features/quests/logic/quest_notifier.dart';
-import 'package:bilge_ai/features/quests/models/quest_model.dart';
 
 enum PomodoroSessionState { idle, work, shortBreak, longBreak, completed }
 
@@ -225,7 +223,7 @@ class PomodoroNotifier extends StateNotifier<PomodoroModel> {
       durationInSeconds: duration,
       task: task,
     );
-    _ref.read(firestoreServiceProvider).addFocusSession(session);
+    _ref.read(firestoreServiceProvider).recordFocusSessionAndStats(session);
   }
 
   @override

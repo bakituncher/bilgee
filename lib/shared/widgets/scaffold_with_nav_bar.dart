@@ -112,16 +112,20 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                 Scaffold(
                   key: rootScaffoldKey,
                   resizeToAvoidBottomInset: false,
-                  body: Builder(
-                    builder: (ctx){
-                      final completedQuest = ref.watch(questCompletionProvider);
-                      if(completedQuest != null) {
-                        WidgetsBinding.instance.addPostFrameCallback((_){
-                          ScaffoldMessenger.of(ctx).clearSnackBars();
-                        });
-                      }
-                      return navigationShell;
-                    },
+                  body: SafeArea(
+                    top: false,
+                    bottom: true,
+                    child: Builder(
+                      builder: (ctx){
+                        final completedQuest = ref.watch(questCompletionProvider);
+                        if(completedQuest != null) {
+                          WidgetsBinding.instance.addPostFrameCallback((_){
+                            ScaffoldMessenger.of(ctx).clearSnackBars();
+                          });
+                        }
+                        return navigationShell;
+                      },
+                    ),
                   ),
                   extendBody: true,
                   drawer: const SidePanelDrawer(),
@@ -158,11 +162,14 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                 if (shouldShowTutorial)
                   TutorialOverlay(steps: tutorialSteps),
                 if (completedQuest != null && !shouldShowTutorial)
-                  Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 80.0),
-                      child: QuestCompletionToast(completedQuest: completedQuest),
+                  SafeArea(
+                    top: false,
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 12.0),
+                        child: QuestCompletionToast(completedQuest: completedQuest),
+                      ),
                     ),
                   ),
                 Consumer(builder: (context, r, _) {
