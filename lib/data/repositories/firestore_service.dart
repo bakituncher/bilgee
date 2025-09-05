@@ -958,4 +958,28 @@ class FirestoreService {
     }
     await batch.commit();
   }
+
+  // YENI: In-app bildirimi tekil sil
+  Future<void> deleteInAppNotification(String userId, String notifId) async {
+    await usersCollection
+        .doc(userId)
+        .collection('in_app_notifications')
+        .doc(notifId)
+        .delete();
+  }
+
+  // YENI: Tüm in-app bildirimlerini temizle (parçalı batch ile)
+  Future<void> clearAllInAppNotifications(String userId) async {
+    final col = usersCollection.doc(userId).collection('in_app_notifications');
+    while (true) {
+      final qs = await col.limit(450).get();
+      if (qs.docs.isEmpty) break;
+      final batch = _firestore.batch();
+      for (final d in qs.docs) {
+        batch.delete(d.reference);
+      }
+      await batch.commit();
+      // Döngü sonunda tekrar okuyup devam et
+    }
+  }
 }

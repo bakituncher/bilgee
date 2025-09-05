@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:bilge_ai/features/auth/application/auth_controller.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class NotificationCenterScreen extends ConsumerWidget {
   const NotificationCenterScreen({super.key});
@@ -14,11 +15,15 @@ class NotificationCenterScreen extends ConsumerWidget {
     final itemsAsync = ref.watch(inAppNotificationsProvider);
     final user = ref.watch(authControllerProvider).value;
 
-    return WillPopScope(
-      onWillPop: () async {
-        if (Navigator.of(context).canPop()) return true;
-        context.go('/home');
-        return false;
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).maybePop();
+        } else {
+          if (context.mounted) context.go('/home');
+        }
       },
       child: Scaffold(
         appBar: AppBar(
@@ -43,6 +48,37 @@ class NotificationCenterScreen extends ConsumerWidget {
                     },
               icon: const Icon(Icons.done_all_rounded),
             ),
+            IconButton(
+              tooltip: 'Tümünü sil',
+              onPressed: user == null
+                  ? null
+                  : () async {
+                      final ok = await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Tümünü sil'),
+                          content: const Text('Tüm bildirimleri silmek istediğine emin misin?'),
+                          actions: [
+                            TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Vazgeç')),
+                            FilledButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Sil')),
+                          ],
+                        ),
+                      );
+                      if (ok == true) {
+                        try {
+                          await ref.read(firestoreServiceProvider).clearAllInAppNotifications(user!.uid);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tüm bildirimler silindi')));
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Silinemedi: $e')));
+                          }
+                        }
+                      }
+                    },
+              icon: const Icon(Icons.delete_sweep_rounded),
+            ),
           ],
         ),
         body: itemsAsync.when(
@@ -60,9 +96,47 @@ class NotificationCenterScreen extends ConsumerWidget {
               child: ListView.separated(
                 physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                 padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                cacheExtent: 600,
                 itemCount: items.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 10),
-                itemBuilder: (context, index) => _NotificationTile(item: items[index]),
+                itemBuilder: (context, index) {
+                  final n = items[index];
+                  return Dismissible(
+                    key: ValueKey(n.id),
+                    direction: DismissDirection.endToStart,
+                    background: Container(
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Icon(Icons.delete_rounded, color: Colors.red),
+                    ),
+                    confirmDismiss: (_) async {
+                      final u = ref.read(authControllerProvider).value;
+                      if (u == null) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Silinemedi: oturum yok')));
+                        }
+                        return false;
+                      }
+                      try {
+                        await ref.read(firestoreServiceProvider).deleteInAppNotification(u.uid, n.id);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Bildirim silindi')));
+                        }
+                        return true;
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Silinemedi: $e')));
+                        }
+                        return false;
+                      }
+                    },
+                    child: _NotificationTile(item: n),
+                  );
+                },
               ),
             );
           },
@@ -94,7 +168,33 @@ class _NotificationTile extends ConsumerWidget {
     final leading = item.imageUrl != null && item.imageUrl!.isNotEmpty
         ? ClipRRect(
             borderRadius: BorderRadius.circular(10),
-            child: Image.network(item.imageUrl!, width: 56, height: 56, fit: BoxFit.cover),
+            child: CachedNetworkImage(
+              imageUrl: item.imageUrl!,
+              width: 56,
+              height: 56,
+              fit: BoxFit.cover,
+              fadeInDuration: const Duration(milliseconds: 150),
+              placeholder: (ctx, _) => Container(
+                width: 56,
+                height: 56,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
+              ),
+              errorWidget: (ctx, _, __) => Container(
+                width: 56,
+                height: 56,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.broken_image_rounded, color: Colors.grey),
+              ),
+            ),
           )
         : Container(
             width: 56,
@@ -109,11 +209,9 @@ class _NotificationTile extends ConsumerWidget {
     return InkWell(
       borderRadius: BorderRadius.circular(14),
       onTap: () async {
-        // Okundu işaretle
         if (user != null && !item.read) {
           await ref.read(firestoreServiceProvider).markInAppNotificationRead(user.uid, item.id);
         }
-        // Detay alt sayfasını aç
         if (context.mounted) {
           await showModalBottomSheet(
             context: context,
@@ -226,7 +324,13 @@ class _NotificationDetailSheet extends ConsumerWidget {
               borderRadius: BorderRadius.circular(12),
               child: AspectRatio(
                 aspectRatio: 16 / 9,
-                child: Image.network(item.imageUrl!, fit: BoxFit.cover),
+                child: CachedNetworkImage(
+                  imageUrl: item.imageUrl!,
+                  fit: BoxFit.cover,
+                  fadeInDuration: const Duration(milliseconds: 150),
+                  placeholder: (ctx, _) => const Center(child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))),
+                  errorWidget: (ctx, _, __) => const Center(child: Icon(Icons.broken_image_rounded, color: Colors.grey)),
+                ),
               ),
             ),
           const SizedBox(height: 12),
@@ -256,7 +360,6 @@ class _NotificationDetailSheet extends ConsumerWidget {
               Expanded(
                 child: FilledButton.icon(
                   onPressed: () {
-                    // İlgili sayfayı aç
                     Navigator.of(context).maybePop();
                     context.go(item.route);
                   },
@@ -273,7 +376,7 @@ class _NotificationDetailSheet extends ConsumerWidget {
 
   String _formatDate(DateTime d) {
     final two = (int n) => n.toString().padLeft(2, '0');
-    return '${two(d.day)}.${two(d.month)}.${d.year} ${two(d.hour)}:${two(d.minute)}';
+    return '${two(d.day)}.${two(d.month)}.${two(d.year)} ${two(d.hour)}:${two(d.minute)}';
   }
 }
 

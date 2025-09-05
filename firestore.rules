@@ -235,7 +235,10 @@ service cloud.firestore {
       match /in_app_notifications/{notifId} {
         allow read: if request.auth.uid == userId;
         allow update: if request.auth.uid == userId; // okundu işaretlemek için
-        allow create, delete: if false; // sadece Cloud Functions oluşturur/siler
+        // create sadece Cloud Functions tarafından yapılır
+        allow create: if false;
+        // Kullanıcı kendi bildirimini silebilir
+        allow delete: if request.auth.uid == userId;
       }
     }
 
