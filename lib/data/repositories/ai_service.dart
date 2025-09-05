@@ -8,8 +8,8 @@ import 'package:bilge_ai/data/models/exam_model.dart';
 import 'package:bilge_ai/data/models/topic_performance_model.dart';
 import 'package:bilge_ai/core/prompts/strategy_prompts.dart';
 import 'package:bilge_ai/core/prompts/workshop_prompts.dart';
-import 'package:bilge_ai/core/prompts/motivation_prompts.dart';
 import 'package:bilge_ai/core/prompts/motivation_suite_prompts.dart';
+import 'package:bilge_ai/core/prompts/default_motivation_prompts.dart';
 import 'package:bilge_ai/features/stats/logic/stats_analysis.dart';
 import 'package:bilge_ai/features/stats/logic/stats_analysis_provider.dart';
 import 'package:bilge_ai/core/utils/json_text_cleaner.dart';
@@ -292,7 +292,7 @@ class AiService {
     // Önbellekli analiz (varsa)
     final analysis = _ref.read(overallStatsAnalysisProvider).value;
 
-    // Yeni: Dört mod için özel promptlar
+    // Yeni: Dört mod için özel promptlar + default akışın modüler hali
     String prompt;
     int maxSentences = 3;
     switch (promptType) {
@@ -339,19 +339,76 @@ class AiService {
         );
         maxSentences = 5;
         break;
-      default:
-        prompt = getMotivationPrompt(
+      case 'welcome':
+        prompt = DefaultMotivationPrompts.welcome(
           user: user,
           tests: tests,
           analysis: analysis,
           examName: examType?.displayName,
-          promptType: promptType,
-          emotion: emotion,
+          conversationHistory: conversationHistory,
+          lastUserMessage: lastUserMessage,
+        );
+        break;
+      case 'new_test_bad':
+        prompt = DefaultMotivationPrompts.newTestBad(
+          user: user,
+          tests: tests,
+          analysis: analysis,
+          examName: examType?.displayName,
+          conversationHistory: conversationHistory,
+          lastUserMessage: lastUserMessage,
+        );
+        break;
+      case 'new_test_good':
+        prompt = DefaultMotivationPrompts.newTestGood(
+          user: user,
+          tests: tests,
+          analysis: analysis,
+          examName: examType?.displayName,
+          conversationHistory: conversationHistory,
+          lastUserMessage: lastUserMessage,
+        );
+        break;
+      case 'proactive_encouragement':
+        prompt = DefaultMotivationPrompts.proactiveEncouragement(
+          user: user,
+          tests: tests,
+          analysis: analysis,
+          examName: examType?.displayName,
+          conversationHistory: conversationHistory,
+          lastUserMessage: lastUserMessage,
+        );
+        break;
+      case 'workshop_review':
+        prompt = DefaultMotivationPrompts.workshopReview(
+          user: user,
+          tests: tests,
+          analysis: analysis,
+          examName: examType?.displayName,
           workshopContext: workshopContext,
           conversationHistory: conversationHistory,
           lastUserMessage: lastUserMessage,
         );
-        maxSentences = 3;
+        break;
+      case 'user_chat':
+        prompt = DefaultMotivationPrompts.userChat(
+          user: user,
+          tests: tests,
+          analysis: analysis,
+          examName: examType?.displayName,
+          conversationHistory: conversationHistory,
+          lastUserMessage: lastUserMessage,
+        );
+        break;
+      default:
+        prompt = DefaultMotivationPrompts.userChat(
+          user: user,
+          tests: tests,
+          analysis: analysis,
+          examName: examType?.displayName,
+          conversationHistory: conversationHistory,
+          lastUserMessage: lastUserMessage,
+        );
         break;
     }
 

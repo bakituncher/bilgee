@@ -9,18 +9,6 @@ import 'package:bilge_ai/features/stats/logic/stats_analysis.dart';
 import 'package:bilge_ai/data/models/performance_summary.dart';
 
 class MotivationSuitePrompts {
-  static String _toneByExam(String? examName) {
-    final name = (examName ?? '').toLowerCase();
-    if (name.contains('lgs')) {
-      return 'Ton: sıcak, gündelik ve motive edici; 8. sınıf/LGS bağlamı. Açık, kısa, net cümleler.';
-    } else if (name.contains('yks')) {
-      return 'Ton: sakin, stratejik ve sonuç odaklı; TYT/AYT ritmine uygun, minimal ve net.';
-    } else if (name.contains('kpss')) {
-      return 'Ton: olgun, profesyonel ve sürdürülebilirlik odaklı; süreklilik ve ölçülebilirlik vurgusu.';
-    }
-    return 'Ton: destekleyici, net ve sade; sınav bağlamına uyumlu, gereksiz süs yok.';
-  }
-
   static String trialReview({
     required UserModel user,
     required List<TestModel> tests,
