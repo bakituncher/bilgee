@@ -1,5 +1,4 @@
 // lib/features/arena/screens/public_profile_screen.dart
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -257,7 +256,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                             Align(
                               alignment: Alignment.centerRight,
                               child: Text(
-                                'Son güncelleme: ${DateFormat('dd MMM yyyy HH:mm', 'tr_TR').format(updatedAt)}',
+                                "Son güncelleme: ${DateFormat('dd MMM yyyy HH:mm', 'tr_TR').format(updatedAt)}",
                                 style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white70),
                               ),
                             ),
@@ -421,6 +420,10 @@ class _FollowButtonState extends State<_FollowButton> {
         elevation: 0,
         side: BorderSide(color: _accentProfile2.withValues(alpha: (_accentProfile2.a * 0.8).toDouble())),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        // Sonsuz genişlik veren global minimumSize'ı geçersiz kıl
+        minimumSize: const Size(0, 40),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       ),
       icon: Icon(widget.isFollowing ? Icons.check_rounded : Icons.person_add_alt_1_rounded),
       label: Text(widget.isFollowing ? 'Takiptesin' : 'Takip Et'),
@@ -465,8 +468,8 @@ class _AvatarHalo extends StatelessWidget {
                         style: Theme.of(context).textTheme.displayMedium?.copyWith(color: _accentProfile2, fontWeight: FontWeight.bold),
                       ),
               ),
-            ),
-          ).animate().fadeIn(duration: 500.ms).scale(curve: Curves.easeOutBack),
+            ).animate().fadeIn(duration: 500.ms).scale(curve: Curves.easeOutBack),
+          ),
         ],
       ),
     );
