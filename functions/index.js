@@ -6,6 +6,8 @@ const admin = require("firebase-admin");
 const fs = require("fs");
 const path = require("path");
 const {onDocumentDeleted, onDocumentCreated} = require("firebase-functions/v2/firestore");
+// YENİ: stats değişimlerini yakalamak için onDocumentWritten kullan
+const {onDocumentWritten} = require("firebase-functions/v2/firestore");
 
 // Firebase projesini başlatıyoruz.
 admin.initializeApp();
@@ -1030,3 +1032,264 @@ async function createInAppForUser(uid, payload) {
     return false;
   }
 }
+
+// ==== Liderlik Tabloları: Yardımcılar ====
+function weekKeyIstanbul(d = nowIstanbul()) {
+  // Haftanın pazartesi başlangıcı (ISO) baz alınır
+  const day = d.getDay(); // 0=PAZAR
+  const isoMonday = new Date(d);
+  const diff = (day === 0 ? -6 : (1 - day));
+  isoMonday.setDate(d.getDate() + diff);
+  isoMonday.setHours(0,0,0,0);
+  return `${isoMonday.getFullYear()}-${(isoMonday.getMonth()+1).toString().padStart(2,'0')}-${isoMonday.getDate().toString().padStart(2,'0')}`;
+}
+
+async function upsertLeaderboardExam(examType) {
+  if (!examType) return;
+  try { await db.collection('leaderboard_exams').doc(String(examType)).set({ exists: true, updatedAt: admin.firestore.FieldValue.serverTimestamp() }, {merge: true}); } catch(_) {}
+}
+
+async function upsertLeaderboardScore({ examType, uid, delta, userDocData }) {
+  if (!examType || !uid || !(delta > 0)) return;
+  const dayKey = dayKeyIstanbul();
+  const weekKey = weekKeyIstanbul();
+  const base = db.collection('leaderboard_scores').doc(examType);
+  const dailyRef = base.collection('daily').doc(dayKey).collection('users').doc(uid);
+  const weeklyRef = base.collection('weekly').doc(weekKey).collection('users').doc(uid);
+  const safeName = userDocData?.name || '';
+  const avatarStyle = userDocData?.avatarStyle || null;
+  const avatarSeed = userDocData?.avatarSeed || null;
+  const payload = {
+    userId: uid,
+    userName: safeName,
+    avatarStyle,
+    avatarSeed,
+    score: admin.firestore.FieldValue.increment(delta),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  };
+  await Promise.all([
+    dailyRef.set(payload, {merge: true}),
+    weeklyRef.set(payload, {merge: true}),
+    upsertLeaderboardExam(examType),
+  ]);
+}
+
+async function publishTopFor(examType, kind) {
+  // kind: 'daily' | 'weekly'
+  const container = db.collection('leaderboard_scores').doc(examType).collection(kind);
+  const periodId = kind === 'daily' ? dayKeyIstanbul() : weekKeyIstanbul();
+  const usersCol = container.doc(periodId).collection('users');
+  const qs = await usersCol.orderBy('score', 'desc').limit(20).get();
+  const entries = qs.docs.map((d) => {
+    const x = d.data() || {}; return {
+      userId: x.userId || d.id,
+      userName: x.userName || '',
+      score: typeof x.score === 'number' ? x.score : 0,
+      testCount: 0,
+      avatarStyle: x.avatarStyle || null,
+      avatarSeed: x.avatarSeed || null,
+    };
+  });
+  const topRef = db.collection('leaderboard_top').doc(examType).collection(kind).doc('latest');
+  const periodTopRef = db.collection('leaderboard_top').doc(examType).collection(kind).doc(periodId);
+  const doc = { entries, updatedAt: admin.firestore.FieldValue.serverTimestamp(), periodId };
+  await Promise.all([
+    topRef.set(doc, {merge: true}),
+    periodTopRef.set(doc, {merge: true}),
+  ]);
+}
+
+async function cleanupOldLeaderboards() {
+  const today = dayKeyIstanbul();
+  const thisWeek = weekKeyIstanbul();
+  // Temizleme: leaderboard_scores günlük (dünkü ve öncesi) ve haftalık (geçen hafta ve öncesi)
+  const examsSnap = await db.collection('leaderboard_exams').get();
+  for (const ex of examsSnap.docs) {
+    const examType = ex.id;
+    // Daily
+    const dailyColl = db.collection('leaderboard_scores').doc(examType).collection('daily');
+    const oldDaily = await dailyColl.where(admin.firestore.FieldPath.documentId(), '<', today).limit(10).get();
+    for (const d of oldDaily.docs) {
+      // Silmeden önce alt koleksiyon kullanıcılarını parti parti temizle
+      const usersCol = d.ref.collection('users');
+      while (true) {
+        const batchUsers = await usersCol.limit(500).get();
+        if (batchUsers.empty) break;
+        const batch = db.batch();
+        batchUsers.docs.forEach((u) => batch.delete(u.ref));
+        await batch.commit();
+      }
+      await d.ref.delete().catch(()=>{});
+    }
+    // Weekly
+    const weeklyColl = db.collection('leaderboard_scores').doc(examType).collection('weekly');
+    const oldWeekly = await weeklyColl.where(admin.firestore.FieldPath.documentId(), '<', thisWeek).limit(5).get();
+    for (const w of oldWeekly.docs) {
+      const usersCol = w.ref.collection('users');
+      while (true) {
+        const batchUsers = await usersCol.limit(500).get();
+        if (batchUsers.empty) break;
+        const batch = db.batch();
+        batchUsers.docs.forEach((u) => batch.delete(u.ref));
+        await batch.commit();
+      }
+      await w.ref.delete().catch(()=>{});
+    }
+    // Top doküman eski dönemler (periodId) – latest bırak
+    const topDaily = db.collection('leaderboard_top').doc(examType).collection('daily');
+    const td = await topDaily.where(admin.firestore.FieldPath.documentId(), '!=', 'latest').limit(20).get();
+    for (const d of td.docs) { if (d.id < today) await d.ref.delete().catch(()=>{}); }
+    const topWeekly = db.collection('leaderboard_top').doc(examType).collection('weekly');
+    const tw = await topWeekly.where(admin.firestore.FieldPath.documentId(), '!=', 'latest').limit(20).get();
+    for (const w of tw.docs) { if (w.id < thisWeek) await w.ref.delete().catch(()=>{}); }
+  }
+}
+
+async function updatePublicProfile(uid, options = {}) {
+  try {
+    const userRef = db.collection('users').doc(uid);
+    const [userSnap, statsSnap] = await Promise.all([
+      userRef.get(),
+      userRef.collection('state').doc('stats').get(),
+    ]);
+    if (!userSnap.exists) return;
+    const u = userSnap.data() || {};
+    const s = statsSnap.exists ? (statsSnap.data() || {}) : {};
+    const publicDoc = {
+      userId: uid,
+      name: u.name || '',
+      avatarStyle: u.avatarStyle || null,
+      avatarSeed: u.avatarSeed || null,
+      selectedExam: u.selectedExam || null,
+      engagementScore: typeof s.engagementScore === 'number' ? s.engagementScore : 0,
+      streak: typeof s.streak === 'number' ? s.streak : 0,
+      testCount: typeof s.testCount === 'number' ? s.testCount : 0,
+      totalNetSum: typeof s.totalNetSum === 'number' ? s.totalNetSum : 0,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
+    await db.collection('public_profiles').doc(uid).set(publicDoc, {merge: true});
+  } catch (e) {
+    logger.warn('updatePublicProfile failed', { uid, error: String(e) });
+  }
+}
+
+// ==== Stats tetikleyicisi: günlük/haftalık skorları türet ve public profile güncelle ====
+exports.onUserStatsWritten = onDocumentWritten("users/{userId}/state/stats", async (event) => {
+  const before = event.data?.before?.data() || {};
+  const after = event.data?.after?.data() || {};
+  const uid = event.params.userId;
+  try {
+    const prev = typeof before.engagementScore === 'number' ? before.engagementScore : 0;
+    const curr = typeof after.engagementScore === 'number' ? after.engagementScore : 0;
+    const delta = Math.max(0, curr - prev);
+    // Kullanıcının examType'ını oku
+    const userSnap = await db.collection('users').doc(uid).get();
+    const examType = (userSnap.data() || {}).selectedExam || null;
+    if (delta > 0 && examType) {
+      await upsertLeaderboardScore({ examType, uid, delta, userDocData: userSnap.data() || {} });
+    }
+    // Public profile'ı güncelle
+    await updatePublicProfile(uid);
+  } catch (e) {
+    logger.error('onUserStatsWritten failed', { uid, error: String(e) });
+  }
+});
+
+// Kullanıcı profil güncellemesi: public_profile yansıt
+exports.onUserProfileChanged = onDocumentWritten("users/{userId}", async (event) => {
+  const uid = event.params.userId;
+  try { await updatePublicProfile(uid); } catch(_) {}
+});
+
+// ==== Zamanlanmış: 3 saatte bir tepe listelerini yayınla ====
+exports.publishLeaderboardSnapshots = onSchedule({ schedule: '0 */3 * * *', timeZone: 'Europe/Istanbul' }, async () => {
+  const examsSnap = await db.collection('leaderboard_exams').get();
+  if (examsSnap.empty) return;
+  for (const ex of examsSnap.docs) {
+    const examType = ex.id;
+    await publishTopFor(examType, 'daily');
+    await publishTopFor(examType, 'weekly');
+  }
+  logger.info('publishLeaderboardSnapshots completed');
+});
+
+// ==== Zamanlanmış: Günlük temizlik ====
+exports.cleanupLeaderboards = onSchedule({ schedule: '30 3 * * *', timeZone: 'Europe/Istanbul' }, async () => {
+  await cleanupOldLeaderboards();
+  logger.info('cleanupLeaderboards completed');
+});
+
+// ==== Kullanıcı rütbe ve komşu sorgusu (callable) ====
+exports.getLeaderboardRank = onCall({region: 'us-central1', timeoutSeconds: 30}, async (request) => {
+  if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
+  const uid = request.auth.uid;
+  const examType = String(request.data?.examType || '').trim();
+  const period = String(request.data?.period || 'daily').trim();
+  if (!examType) throw new HttpsError('invalid-argument', 'examType gerekli');
+  const kind = period === 'weekly' ? 'weekly' : 'daily';
+  const periodId = kind === 'daily' ? dayKeyIstanbul() : weekKeyIstanbul();
+  const base = db.collection('leaderboard_scores').doc(examType).collection(kind).doc(periodId).collection('users');
+  const meDoc = await base.doc(uid).get();
+  if (!meDoc.exists) return { rank: null, score: 0, neighbors: [] };
+  const me = meDoc.data() || {}; const myScore = typeof me.score === 'number' ? me.score : 0;
+  // Benden yüksek kaç kişi var? (Admin SDK aggregate yok -> basit sayma parti parti)
+  let higherCount = 0; let lastScore = null; let pageSize = 500; let q = base.orderBy('score', 'desc');
+  while (true) {
+    const qs = await (lastScore == null ? q : q.startAfter(lastScore)).limit(pageSize).get();
+    if (qs.empty) break;
+    for (const d of qs.docs) {
+      const s = typeof d.data().score === 'number' ? d.data().score : 0;
+      if (s > myScore) higherCount++; else { lastScore = s; break; }
+    }
+    if (qs.size < pageSize) break; // bitti
+  }
+  const rank = higherCount + 1;
+  // Komşular: benden büyük ilk 2, benden küçük ilk 2
+  const above = await base.where('score', '>', myScore).orderBy('score', 'desc').limit(2).get();
+  const below = await base.where('score', '<', myScore).orderBy('score', 'desc').limit(2).get();
+  const toEntry = (d) => { const x = d.data() || {}; return { userId: x.userId || d.id, userName: x.userName || '', score: typeof x.score === 'number' ? x.score : 0, avatarStyle: x.avatarStyle || null, avatarSeed: x.avatarSeed || null }; };
+  const neighbors = [...above.docs.map(toEntry), toEntry(meDoc), ...below.docs.map(toEntry)];
+  return { rank, score: myScore, neighbors };
+});
+
+
+  const kindsReq = request.data?.period;
+  const kinds = kindsReq === 'daily' ? ['daily'] : (kindsReq === 'weekly' ? ['weekly'] : ['daily','weekly']);
+  const pageSize = Math.min(1000, Math.max(50, Number(request.data?.pageSize || 500)));
+  const startAfterId = typeof request.data?.startAfter === 'string' ? request.data.startAfter : null;
+  const dryRun = !!request.data?.dryRun;
+
+  let q = db.collection('users').orderBy(admin.firestore.FieldPath.documentId());
+  if (startAfterId) q = q.startAfter(startAfterId);
+  const snap = await q.limit(pageSize).get();
+  if (snap.empty) return { processed: 0, done: true };
+
+  const examsTouched = new Set();
+  let processed = 0;
+  for (const doc of snap.docs) {
+    const uid = doc.id; const u = doc.data() || {};
+    const examType = u.selectedExam || null; if (!examType) continue;
+    try {
+      const stats = await db.collection('users').doc(uid).collection('state').doc('stats').get();
+      const s = stats.exists ? (stats.data() || {}) : {};
+      const score = typeof s.engagementScore === 'number' ? s.engagementScore : 0;
+      if (!dryRun) {
+        await setLeaderboardScoreAbsolute({ examType, uid, score, userDocData: u, kinds });
+      }
+      examsTouched.add(String(examType));
+      processed++;
+    } catch (e) {
+      logger.warn('Backfill user failed', { uid, error: String(e) });
+    }
+  }
+
+  if (!dryRun) {
+    for (const ex of examsTouched) {
+      if (kinds.includes('daily')) await publishTopFor(ex, 'daily');
+      if (kinds.includes('weekly')) await publishTopFor(ex, 'weekly');
+    }
+  }
+
+  const lastId = snap.docs[snap.docs.length - 1].id;
+  return { processed, nextPageToken: lastId, exams: Array.from(examsTouched), dryRun };
+});

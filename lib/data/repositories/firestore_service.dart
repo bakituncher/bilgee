@@ -39,6 +39,12 @@ class FirestoreService {
   CollectionReference<Map<String, dynamic>> get _postsCollection => _firestore.collection('posts');
   CollectionReference<Map<String, dynamic>> get _questionReportsCollection => _firestore.collection('questionReports');
   CollectionReference<Map<String, dynamic>> get _questionReportsIndexCollection => _firestore.collection('question_report_index');
+  // YENİ: Yayınlanmış tepe listesi dokümanı (latest)
+  DocumentReference<Map<String, dynamic>> _leaderboardTopLatestDoc(String examType, String period)
+      => _firestore.collection('leaderboard_top').doc(examType).collection(period).doc('latest');
+  // YENİ: Public profile dokümanı
+  DocumentReference<Map<String, dynamic>> _publicProfileDoc(String userId)
+      => _firestore.collection('public_profiles').doc(userId);
 
   // Admin: rapor indeks akışı (en çok raporlananlar en üstte)
   Stream<List<Map<String, dynamic>>> streamQuestionReportIndex({int limit = 200}) {
@@ -722,234 +728,30 @@ class FirestoreService {
     }).where((e) => e.userName.isNotEmpty).toList();
   }
 
-  CollectionReference<Map<String, dynamic>> dailyQuestsCollection(String userId) => usersCollection.doc(userId).collection('daily_quests');
-  CollectionReference<Map<String, dynamic>> weeklyQuestsCollection(String userId) => usersCollection.doc(userId).collection('weekly_quests');
-  CollectionReference<Map<String, dynamic>> monthlyQuestsCollection(String userId) => usersCollection.doc(userId).collection('monthly_quests');
-
-  Future<DocumentReference<Map<String, dynamic>>?> _findQuestRef(String userId, String questId) async {
-    final dailyRef = dailyQuestsCollection(userId).doc(questId);
-    final d = await dailyRef.get();
-    if (d.exists) return dailyRef;
-    final weeklyRef = weeklyQuestsCollection(userId).doc(questId);
-    final w = await weeklyRef.get();
-    if (w.exists) return weeklyRef;
-    final monthlyRef = monthlyQuestsCollection(userId).doc(questId);
-    final m = await monthlyRef.get();
-    if (m.exists) return monthlyRef;
-    return null;
+  // YENİ: Yeni yapıdan tepe 20 kullanıcıyı oku (daily/weekly)
+  Future<List<LeaderboardEntry>> getLeaderboardTopUsers(String examType, {required String period}) async {
+    final doc = await _leaderboardTopLatestDoc(examType, period).get();
+    if (!doc.exists) return const <LeaderboardEntry>[];
+    final data = doc.data()!;
+    final List list = (data['entries'] as List?) ?? const [];
+    return list.map((raw) {
+      final Map<String, dynamic> m = Map<String, dynamic>.from(raw as Map);
+      return LeaderboardEntry(
+        userId: (m['userId'] ?? '') as String,
+        userName: (m['userName'] ?? '') as String,
+        score: ((m['score'] ?? 0) as num).toInt(),
+        testCount: ((m['testCount'] ?? 0) as num).toInt(),
+        avatarStyle: m['avatarStyle'] as String?,
+        avatarSeed: m['avatarSeed'] as String?,
+      );
+    }).where((e) => e.userName.isNotEmpty).toList(growable: false);
   }
 
-  // TÜM GÖREVLER: günlük+haftalık+aylık tek akış
-  Stream<List<Quest>> streamDailyQuests(String userId) {
-    // Unified stream (isim uyumluluğu için metot adı korunmuştur)
-    return Stream<List<Quest>>.multi((controller) {
-      List<Quest> a = const [];
-      List<Quest> b = const [];
-      List<Quest> c = const [];
-      void emit() {
-        controller.add([...a, ...b, ...c]);
-      }
-      final s1 = dailyQuestsCollection(userId).orderBy('qid').snapshots().listen((qs) {
-        a = qs.docs.map((d) => Quest.fromMap(d.data(), d.id)).toList(); emit();
-      }, onError: controller.addError);
-      final s2 = weeklyQuestsCollection(userId).orderBy('qid').snapshots().listen((qs) {
-        b = qs.docs.map((d) => Quest.fromMap(d.data(), d.id)).toList(); emit();
-      }, onError: controller.addError);
-      final s3 = monthlyQuestsCollection(userId).orderBy('qid').snapshots().listen((qs) {
-        c = qs.docs.map((d) => Quest.fromMap(d.data(), d.id)).toList(); emit();
-      }, onError: controller.addError);
-      controller.onCancel = () async { await s1.cancel(); await s2.cancel(); await s3.cancel(); };
-    });
-  }
-
-  Future<List<Quest>> getDailyQuestsOnce(String userId) async {
-    // Unified once read
-    final daily = await dailyQuestsCollection(userId).orderBy('qid').get();
-    final weekly = await weeklyQuestsCollection(userId).orderBy('qid').get();
-    final monthly = await monthlyQuestsCollection(userId).orderBy('qid').get();
-    return [
-      ...daily.docs.map((d) => Quest.fromMap(d.data(), d.id)),
-      ...weekly.docs.map((d) => Quest.fromMap(d.data(), d.id)),
-      ...monthly.docs.map((d) => Quest.fromMap(d.data(), d.id)),
-    ];
-  }
-
-  Future<void> replaceAllDailyQuests(String userId, List<Quest> quests) async {
-    final col = dailyQuestsCollection(userId);
-    final batch = _firestore.batch();
-    final existing = await col.get();
-    for (final doc in existing.docs) { batch.delete(doc.reference); }
-    for (final q in quests) { batch.set(col.doc(q.id), q.toMap(), SetOptions(merge: true)); }
-    await batch.commit();
-  }
-
-  Future<void> upsertQuest(String userId, Quest quest) async {
-    await dailyQuestsCollection(userId).doc(quest.id).set(quest.toMap(), SetOptions(merge: true));
-  }
-
-  Future<void> updateQuestFields(String userId, String questId, Map<String, dynamic> fields) async {
-    final ref = await _findQuestRef(userId, questId);
-    if (ref == null) return;
-    await ref.update(fields);
-  }
-
-  Future<void> batchUpdateQuestFields(String userId, Map<String, Map<String, dynamic>> updates, {int? engagementDelta}) async {
-    final batch = _firestore.batch();
-    // Stats'a yaz
-    if (engagementDelta != null && engagementDelta != 0) {
-      batch.set(_userStatsDoc(userId), {
-        'engagementScore': FieldValue.increment(engagementDelta),
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-    }
-    for (final entry in updates.entries) {
-      final questId = entry.key; final fields = entry.value;
-      final ref = await _findQuestRef(userId, questId);
-      if (ref != null) batch.update(ref, fields);
-    }
-    await batch.commit();
-  }
-
-  Future<void> claimQuestReward(String userId, Quest quest) async {
-    final batch = _firestore.batch();
-    final ref = await _findQuestRef(userId, quest.id);
-    if (ref == null) return;
-    // Ödül alınırken görevin tamamlanmasını garanti altına al
-    batch.update(ref, {
-      'rewardClaimed': true,
-      'isCompleted': true,
-      'currentProgress': quest.goalValue,
-      'completionDate': FieldValue.serverTimestamp(),
-    });
-
-    // Puanı stats'a yaz
-    batch.set(_userStatsDoc(userId), {
-      'engagementScore': FieldValue.increment(quest.reward),
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
-
-    await batch.commit();
-    await _syncLeaderboardUser(userId); // Skoru liderlik tablosuna yansıt
-  }
-
-  // ISTEGE BAGLI: Tek kullanımlık migrate yardımcısı. Client tarafında sadece tek kullanıcı için güvenli.
-  Future<void> migrateActiveDailyQuestsForUser(String userId) async {
-    final userDoc = await usersCollection.doc(userId).get();
-    if (!userDoc.exists) return;
-    final data = userDoc.data()!;
-    if (data['activeDailyQuests'] is! List) return;
-    final List active = data['activeDailyQuests'];
-    final List<Quest> quests = [];
-    for (final e in active) {
-      if (e is Map<String, dynamic>) {
-        final dynamic rawId = e['qid'] ?? e['id'];
-        if (rawId != null) {
-          quests.add(Quest.fromMap(e, rawId.toString()));
-        }
-      }
-    }
-    if (quests.isEmpty) return;
-    await replaceAllDailyQuests(userId, quests);
-    // Alanı temizle
-    await usersCollection.doc(userId).update({'activeDailyQuests': FieldValue.delete()});
-  }
-
-  // YENI: Analiz özetini küçük bir dokümana yaz
-  Future<void> updateAnalysisSummary(String userId, StatsAnalysis analysis) {
-    final summaryData = {
-      'weakestSubjectByNet': analysis.weakestSubjectByNet,
-      'strongestSubjectByNet': analysis.strongestSubjectByNet,
-      'trend': analysis.trend,
-      'warriorScore': analysis.warriorScore,
-      'averageNet': analysis.averageNet,
-      'updatedAt': FieldValue.serverTimestamp(),
-    };
-    return usersCollection
-        .doc(userId)
-        .collection('performance')
-        .doc('analysis_summary')
-        .set(summaryData, SetOptions(merge: true));
-  }
-
-  // Stats stream/once
-  Stream<UserStats> getUserStatsStream(String userId) {
-    return _userStatsDoc(userId).snapshots().map((doc) => UserStats.fromSnapshot(doc));
-  }
-
-  Future<UserStats> getUserStatsOnce(String userId) async {
-    final doc = await _userStatsDoc(userId).get();
-    return UserStats.fromSnapshot(doc);
-  }
-
-  // KÖK kullanıcı dokümanı ile stats dokümanını birleştiren akış
-  Stream<UserModel> streamCombinedUserModel(String userId) {
-    return Stream<UserModel>.multi((controller) {
-      UserModel? lastUser;
-      Map<String, dynamic>? lastStats;
-
-      void emitIfReady() {
-        if (lastUser == null) return;
-        final u = lastUser!;
-        final streak = (lastStats?['streak'] as num?)?.toInt() ?? u.streak;
-        final testCount = (lastStats?['testCount'] as num?)?.toInt() ?? u.testCount;
-        final totalNetSum = (lastStats?['totalNetSum'] as num?)?.toDouble() ?? u.totalNetSum;
-        final engagementScore = (lastStats?['engagementScore'] as num?)?.toInt() ?? u.engagementScore;
-        final lastStreakUpdate = (lastStats?['lastStreakUpdate'] as Timestamp?)?.toDate() ?? u.lastStreakUpdate;
-        controller.add(u.withStats(
-          streak: streak,
-          testCount: testCount,
-          totalNetSum: totalNetSum,
-          engagementScore: engagementScore,
-          lastStreakUpdate: lastStreakUpdate,
-        ));
-      }
-
-      final userSub = usersCollection.doc(userId).snapshots().listen((snap) {
-        if (snap.exists) {
-          lastUser = UserModel.fromSnapshot(snap);
-          emitIfReady();
-        }
-      }, onError: controller.addError);
-
-      final statsSub = _userStatsDoc(userId).snapshots().listen((snap) {
-        lastStats = snap.data() ?? <String, dynamic>{};
-        emitIfReady();
-      }, onError: controller.addError);
-
-      controller.onCancel = () async {
-        await userSub.cancel();
-        await statsSub.cancel();
-      };
-    });
-  }
-
-  Future<void> reportQuestionIssue({
-    required String userId,
-    required String subject,
-    required String topic,
-    required String question,
-    required List<String> options,
-    required int correctIndex,
-    int? selectedIndex,
-    String? reason,
-  }) async {
-    final subjKey = sanitizeKey(subject);
-    final topicKey = sanitizeKey(topic);
-    final qhash = _computeQuestionHash(question, options);
-
-    // Sadece ham raporu kaydet (indeksi bulut fonksiyonu güncelleyecek)
-    await _questionReportsCollection.add({
-      'userId': userId,
-      'qhash': qhash,
-      'subject': subjKey,
-      'topic': topicKey,
-      'question': question,
-      'options': options,
-      'correctIndex': correctIndex,
-      'selectedIndex': selectedIndex,
-      'reason': reason,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
+  // YENİ: Public profile oku (güvenli alanlar)
+  Future<Map<String, dynamic>?> getPublicProfileRaw(String userId) async {
+    final snap = await _publicProfileDoc(userId).get();
+    if (!snap.exists) return null;
+    return snap.data();
   }
 
   // In-App Notifications
@@ -1032,5 +834,170 @@ class FirestoreService {
       if (m != null) out[doc.id] = m.toInt();
     }
     return out;
+  }
+
+  // === EKSİK API’LER: USER + STATS BİRLEŞİK ===
+  Stream<UserModel> streamCombinedUserModel(String userId) {
+    return Stream<UserModel>.multi((controller) {
+      UserModel? lastUser;
+      Map<String, dynamic>? lastStats;
+
+      void emitIfReady() {
+        if (lastUser == null) return;
+        final u = lastUser!;
+        final streak = (lastStats?['streak'] as num?)?.toInt() ?? u.streak;
+        final testCount = (lastStats?['testCount'] as num?)?.toInt() ?? u.testCount;
+        final totalNetSum = (lastStats?['totalNetSum'] as num?)?.toDouble() ?? u.totalNetSum;
+        final engagementScore = (lastStats?['engagementScore'] as num?)?.toInt() ?? u.engagementScore;
+        final lastStreakUpdate = (lastStats?['lastStreakUpdate'] as Timestamp?)?.toDate() ?? u.lastStreakUpdate;
+        controller.add(u.withStats(
+          streak: streak,
+          testCount: testCount,
+          totalNetSum: totalNetSum,
+          engagementScore: engagementScore,
+          lastStreakUpdate: lastStreakUpdate,
+        ));
+      }
+
+      final userSub = usersCollection.doc(userId).snapshots().listen((snap) {
+        if (snap.exists) {
+          lastUser = UserModel.fromSnapshot(snap);
+          emitIfReady();
+        }
+      }, onError: controller.addError);
+
+      final statsSub = _userStatsDoc(userId).snapshots().listen((snap) {
+        lastStats = snap.data() ?? <String, dynamic>{};
+        emitIfReady();
+      }, onError: controller.addError);
+
+      controller.onCancel = () async {
+        await userSub.cancel();
+        await statsSub.cancel();
+      };
+    });
+  }
+
+  Stream<UserStats> getUserStatsStream(String userId) {
+    return _userStatsDoc(userId).snapshots().map((doc) => UserStats.fromSnapshot(doc));
+  }
+
+  Future<void> updateAnalysisSummary(String userId, StatsAnalysis analysis) {
+    final summaryData = {
+      'weakestSubjectByNet': analysis.weakestSubjectByNet,
+      'strongestSubjectByNet': analysis.strongestSubjectByNet,
+      'trend': analysis.trend,
+      'warriorScore': analysis.warriorScore,
+      'averageNet': analysis.averageNet,
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+    return usersCollection
+        .doc(userId)
+        .collection('performance')
+        .doc('analysis_summary')
+        .set(summaryData, SetOptions(merge: true));
+  }
+
+  // === EKSİK API’LER: QUESTS ===
+  CollectionReference<Map<String, dynamic>> dailyQuestsCollection(String userId) => usersCollection.doc(userId).collection('daily_quests');
+  CollectionReference<Map<String, dynamic>> weeklyQuestsCollection(String userId) => usersCollection.doc(userId).collection('weekly_quests');
+  CollectionReference<Map<String, dynamic>> monthlyQuestsCollection(String userId) => usersCollection.doc(userId).collection('monthly_quests');
+
+  Future<DocumentReference<Map<String, dynamic>>?> _findQuestRef(String userId, String questId) async {
+    final dailyRef = dailyQuestsCollection(userId).doc(questId);
+    final d = await dailyRef.get();
+    if (d.exists) return dailyRef;
+    final weeklyRef = weeklyQuestsCollection(userId).doc(questId);
+    final w = await weeklyRef.get();
+    if (w.exists) return weeklyRef;
+    final monthlyRef = monthlyQuestsCollection(userId).doc(questId);
+    final m = await monthlyRef.get();
+    if (m.exists) return monthlyRef;
+    return null;
+  }
+
+  Stream<List<Quest>> streamDailyQuests(String userId) {
+    return Stream<List<Quest>>.multi((controller) {
+      List<Quest> a = const [];
+      List<Quest> b = const [];
+      List<Quest> c = const [];
+      void emit() { controller.add([...a, ...b, ...c]); }
+      final s1 = dailyQuestsCollection(userId).orderBy('qid').snapshots().listen((qs) {
+        a = qs.docs.map((d) => Quest.fromMap(d.data(), d.id)).toList(); emit();
+      }, onError: controller.addError);
+      final s2 = weeklyQuestsCollection(userId).orderBy('qid').snapshots().listen((qs) {
+        b = qs.docs.map((d) => Quest.fromMap(d.data(), d.id)).toList(); emit();
+      }, onError: controller.addError);
+      final s3 = monthlyQuestsCollection(userId).orderBy('qid').snapshots().listen((qs) {
+        c = qs.docs.map((d) => Quest.fromMap(d.data(), d.id)).toList(); emit();
+      }, onError: controller.addError);
+      controller.onCancel = () async { await s1.cancel(); await s2.cancel(); await s3.cancel(); };
+    });
+  }
+
+  Future<List<Quest>> getDailyQuestsOnce(String userId) async {
+    final daily = await dailyQuestsCollection(userId).orderBy('qid').get();
+    final weekly = await weeklyQuestsCollection(userId).orderBy('qid').get();
+    final monthly = await monthlyQuestsCollection(userId).orderBy('qid').get();
+    return [
+      ...daily.docs.map((d) => Quest.fromMap(d.data(), d.id)),
+      ...weekly.docs.map((d) => Quest.fromMap(d.data(), d.id)),
+      ...monthly.docs.map((d) => Quest.fromMap(d.data(), d.id)),
+    ];
+  }
+
+  Future<void> upsertQuest(String userId, Quest quest) async {
+    await dailyQuestsCollection(userId).doc(quest.id).set(quest.toMap(), SetOptions(merge: true));
+  }
+
+  Future<void> updateQuestFields(String userId, String questId, Map<String, dynamic> fields) async {
+    final ref = await _findQuestRef(userId, questId);
+    if (ref == null) return;
+    await ref.update(fields);
+  }
+
+  Future<void> claimQuestReward(String userId, Quest quest) async {
+    final batch = _firestore.batch();
+    final ref = await _findQuestRef(userId, quest.id);
+    if (ref == null) return;
+    batch.update(ref, {
+      'rewardClaimed': true,
+      'isCompleted': true,
+      'currentProgress': quest.goalValue,
+      'completionDate': FieldValue.serverTimestamp(),
+    });
+    batch.set(_userStatsDoc(userId), {
+      'engagementScore': FieldValue.increment(quest.reward),
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+    await batch.commit();
+    await _syncLeaderboardUser(userId);
+  }
+
+  Future<void> reportQuestionIssue({
+    required String userId,
+    required String subject,
+    required String topic,
+    required String question,
+    required List<String> options,
+    required int correctIndex,
+    int? selectedIndex,
+    String? reason,
+  }) async {
+    final subjKey = sanitizeKey(subject);
+    final topicKey = sanitizeKey(topic);
+    final qhash = _computeQuestionHash(question, options);
+    await _questionReportsCollection.add({
+      'userId': userId,
+      'qhash': qhash,
+      'subject': subjKey,
+      'topic': topicKey,
+      'question': question,
+      'options': options,
+      'correctIndex': correctIndex,
+      'selectedIndex': selectedIndex,
+      'reason': reason,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
   }
 }

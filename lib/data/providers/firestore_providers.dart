@@ -46,6 +46,22 @@ final leaderboardProvider = FutureProvider.family.autoDispose<List<LeaderboardEn
   return entries;
 });
 
+// YENİ: Günlük ve Haftalık tepe 20 sağlayıcıları (yayınlanmış snapshot'tan okur, maliyet-etkin)
+final leaderboardDailyProvider = FutureProvider.family.autoDispose<List<LeaderboardEntry>, String>((ref, examType) async {
+  return ref.watch(firestoreServiceProvider).getLeaderboardTopUsers(examType, period: 'daily');
+});
+final leaderboardWeeklyProvider = FutureProvider.family.autoDispose<List<LeaderboardEntry>, String>((ref, examType) async {
+  return ref.watch(firestoreServiceProvider).getLeaderboardTopUsers(examType, period: 'weekly');
+});
+
+// YENİ: Kullanıcının sırası ve komşuları (Cloud Function: getLeaderboardRank)
+final leaderboardRankProvider = FutureProvider.family.autoDispose<Map<String, dynamic>?, ({String examType, String period})>((ref, params) async {
+  final functions = ref.watch(functionsProvider);
+  final callable = functions.httpsCallable('getLeaderboardRank');
+  final res = await callable.call({'examType': params.examType, 'period': params.period});
+  return Map<String, dynamic>.from(res.data as Map);
+});
+
 final planProvider = StreamProvider<PlanDocument?>((ref) {
   final user = ref.watch(authControllerProvider).value;
   if (user != null) {

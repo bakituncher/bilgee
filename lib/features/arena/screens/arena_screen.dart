@@ -37,15 +37,15 @@ class ArenaScreen extends ConsumerWidget {
             labelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
             unselectedLabelStyle: TextStyle(fontWeight: FontWeight.normal, fontSize: 14),
             tabs: [
-              Tab(text: 'Bu Haftanın Onuru'),
-              Tab(text: 'Tüm Zamanların Efsaneleri'),
+              Tab(text: 'Günlük Efsaneler'),
+              Tab(text: 'Haftalık Efsaneler'),
             ],
           ),
         ),
         body: const TabBarView(
           children: [
-            _LeaderboardView(isAllTime: false),
-            _LeaderboardView(isAllTime: true),
+            _LeaderboardView(period: 'daily'),
+            _LeaderboardView(period: 'weekly'),
           ],
         ),
       ),
@@ -54,22 +54,28 @@ class ArenaScreen extends ConsumerWidget {
 }
 
 class _LeaderboardView extends ConsumerWidget {
-  final bool isAllTime;
-  const _LeaderboardView({required this.isAllTime});
+  final String period; // 'daily' | 'weekly'
+  const _LeaderboardView({required this.period});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentUserId = ref.watch(authControllerProvider).value?.uid;
     final currentUserExam = ref.watch(userProfileProvider).value?.selectedExam;
     if (currentUserExam == null) return const SizedBox.shrink();
-    final leaderboardAsync = ref.watch(leaderboardProvider(currentUserExam));
+    final leaderboardAsync = period == 'weekly'
+        ? ref.watch(leaderboardWeeklyProvider(currentUserExam))
+        : ref.watch(leaderboardDailyProvider(currentUserExam));
 
     return RefreshIndicator(
       color: _accent1,
       backgroundColor: AppTheme.cardColor,
       onRefresh: () async {
         HapticFeedback.lightImpact();
-        final _ = await ref.refresh(leaderboardProvider(currentUserExam).future); // uyarı giderildi
+        if (period == 'weekly') {
+          await ref.refresh(leaderboardWeeklyProvider(currentUserExam).future);
+        } else {
+          await ref.refresh(leaderboardDailyProvider(currentUserExam).future);
+        }
       },
       child: Container(
         decoration: const BoxDecoration(
@@ -85,13 +91,15 @@ class _LeaderboardView extends ConsumerWidget {
             data: (entries) {
               if (entries.isEmpty) return _buildEmptyState(context);
 
-              final currentUserIndex = entries.indexWhere((e) => e.userId == currentUserId);
-              final currentUserEntry = currentUserIndex != -1 ? entries[currentUserIndex] : null;
-              final hasDetachedCurrentUser = currentUserEntry != null && currentUserIndex >= 15;
+              // Sadece ilk 20 göster
+              final top = entries.take(20).toList(growable: false);
+              final currentUserIndex = top.indexWhere((e) => e.userId == currentUserId);
+              final currentUserEntry = currentUserIndex != -1 ? top[currentUserIndex] : null;
+              final showDetachedArea = currentUserEntry == null; // ilk 20'de yoksa
               final topScore = entries.first.score == 0 ? 1 : entries.first.score;
 
-              // Liste + (current user alt) + featured header (yatay) => featured header ayrı sliver benzeri ilk item
-              final itemCount = entries.length + (hasDetachedCurrentUser ? 1 : 0) + 1; // +1 featured scroller
+              // Liste + (detached user area) + featured header (yatay)
+              final itemCount = top.length + (showDetachedArea ? 1 : 0) + 1; // +1 featured scroller
 
               return ListView.builder(
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -99,22 +107,49 @@ class _LeaderboardView extends ConsumerWidget {
                 itemCount: itemCount,
                 itemBuilder: (context, index) {
                   if (index == 0) {
-                    return _FeaturedScroller(entries: entries.take(5).toList(), currentUserId: currentUserId)
+                    return _FeaturedScroller(entries: top.take(5).toList(), currentUserId: currentUserId)
                         .animate()
                         .fadeIn(duration: 400.ms)
                         .slideY(begin: -0.05, end: 0, duration: 450.ms, curve: Curves.easeOutCubic);
                   }
                   final lastIndexForUser = itemCount - 1;
-                  final isCurrentUserDetachedCard = hasDetachedCurrentUser && index == lastIndexForUser;
-                  if (isCurrentUserDetachedCard) {
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 16.0),
-                      child: _CurrentUserCard(entry: currentUserEntry, rank: currentUserIndex + 1),
+                  if (showDetachedArea && index == lastIndexForUser) {
+                    // Kullanıcı ilk 20'de değil: Cloud Function'dan sırasını ve komşuları çek
+                    final rankAsync = ref.watch(leaderboardRankProvider((examType: currentUserExam, period: period)));
+                    return rankAsync.when(
+                      data: (data) {
+                        if (data == null || data['rank'] == null) return const SizedBox.shrink();
+                        final int rank = (data['rank'] as num).toInt();
+                        final List neighbors = (data['neighbors'] as List?) ?? const [];
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 16.0),
+                          child: _DetachedUserArea(
+                            rank: rank,
+                            neighbors: neighbors.map((e) {
+                              final m = Map<String, dynamic>.from(e as Map);
+                              return LeaderboardEntry(
+                                userId: (m['userId'] ?? '') as String,
+                                userName: (m['userName'] ?? '') as String,
+                                score: ((m['score'] ?? 0) as num).toInt(),
+                                testCount: 0,
+                                avatarStyle: m['avatarStyle'] as String?,
+                                avatarSeed: m['avatarSeed'] as String?,
+                              );
+                            }).toList(growable: false),
+                            currentUserId: currentUserId,
+                          ),
+                        );
+                      },
+                      loading: () => const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 24.0),
+                        child: Center(child: CircularProgressIndicator(color: AppTheme.secondaryColor)),
+                      ),
+                      error: (e, s) => const SizedBox.shrink(),
                     );
                   }
                   // Normal entries: shift by 1 (featured)
                   final realIndex = index - 1; // 0-based entries index
-                  final entry = entries[realIndex];
+                  final entry = top[realIndex];
                   final rank = realIndex + 1;
                   return GestureDetector(
                     onTap: () {
@@ -126,7 +161,7 @@ class _LeaderboardView extends ConsumerWidget {
                       child: _RankCard(
                         entry: entry,
                         rank: rank,
-                        isCurrentUser: entry.userId == currentUserId && !hasDetachedCurrentUser,
+                        isCurrentUser: entry.userId == currentUserId,
                         topScore: topScore,
                       )
                           .animate()
@@ -164,6 +199,28 @@ class _LeaderboardView extends ConsumerWidget {
             ),
           ],
         ).animate().fadeIn(duration: 600.ms).scale(begin: const Offset(0.8, 0.8)));
+  }
+}
+
+class _DetachedUserArea extends StatelessWidget {
+  final int rank; final List<LeaderboardEntry> neighbors; final String? currentUserId;
+  const _DetachedUserArea({required this.rank, required this.neighbors, required this.currentUserId});
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Senin Sıran', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+        const SizedBox(height: 8),
+        ...neighbors.map((e) {
+          final isMe = e.userId == currentUserId;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 10.0),
+            child: _RankCard(entry: e, rank: isMe ? rank : 0, isCurrentUser: isMe, topScore: null),
+          );
+        })
+      ],
+    );
   }
 }
 
@@ -433,8 +490,7 @@ class _CurrentUserCard extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
+      ));
   }
 }
 

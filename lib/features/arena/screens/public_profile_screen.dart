@@ -10,8 +10,9 @@ import 'package:flutter/services.dart'; // haptic
 import 'package:bilge_ai/features/profile/logic/rank_service.dart'; // RankService import geri eklendi
 
 // Bu provider, ID'ye göre tek bir kullanıcı profili getirmek için kullanılır.
-final publicUserProfileProvider = FutureProvider.family.autoDispose<UserModel?, String>((ref, userId) {
-  return ref.watch(firestoreServiceProvider).getUserById(userId);
+// users/{uid} yerine public_profiles/{uid} okunacak, bu yüzden ham map kullanılacak
+final publicUserProfileProvider = FutureProvider.family.autoDispose<Map<String, dynamic>?, String>((ref, userId) {
+  return ref.watch(firestoreServiceProvider).getPublicProfileRaw(userId);
 });
 
 // NovaPulse accent renkleri (arena ile uyumlu)
@@ -42,13 +43,19 @@ class PublicProfileScreen extends ConsumerWidget {
         ],
       ),
       body: userProfileAsync.when(
-        data: (user) {
-          if (user == null) {
+        data: (data) {
+          if (data == null) {
             return const Center(child: Text('Savaşçı bulunamadı.'));
           }
-          final testCount = user.testCount;
-          final avgNet = testCount > 0 ? user.totalNetSum / testCount : 0.0;
-          final rankInfo = RankService.getRankInfo(user.engagementScore);
+          final String displayName = (data['name'] as String?) ?? 'İsimsiz Savaşçı';
+          final int testCount = (data['testCount'] as num?)?.toInt() ?? 0;
+          final double totalNetSum = (data['totalNetSum'] as num?)?.toDouble() ?? 0.0;
+          final double avgNet = testCount > 0 ? totalNetSum / testCount : 0.0;
+          final int engagement = (data['engagementScore'] as num?)?.toInt() ?? 0;
+          final int streak = (data['streak'] as num?)?.toInt() ?? 0;
+          final String? avatarStyle = data['avatarStyle'] as String?;
+          final String? avatarSeed = data['avatarSeed'] as String?;
+          final rankInfo = RankService.getRankInfo(engagement);
           final rankName = rankInfo.current.name;
           final rankIcon = rankInfo.current.icon;
           final rankColor = rankInfo.current.color;
@@ -69,10 +76,10 @@ class PublicProfileScreen extends ConsumerWidget {
                         children: [
                           const SizedBox(height: 12),
                           // Avatar + halo
-                          _AvatarHalo(user: user, rankColor: rankColor),
+                          _AvatarHalo(displayName: displayName, avatarStyle: avatarStyle, avatarSeed: avatarSeed, rankColor: rankColor),
                           const SizedBox(height: 14),
                           Text(
-                            user.name ?? 'İsimsiz Savaşçı',
+                            displayName,
                             style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 0.5),
                             textAlign: TextAlign.center,
                           ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1, end: 0),
@@ -83,7 +90,7 @@ class PublicProfileScreen extends ConsumerWidget {
                               .slideY(begin: 0.2, end: 0, curve: Curves.easeOutCubic),
                           const SizedBox(height: 20),
                           _XpBarNeo(
-                            currentXp: user.engagementScore,
+                            currentXp: engagement,
                             nextLevelXp: rankInfo.next.requiredScore,
                           ).animate().fadeIn(duration: 450.ms, delay: 250.ms),
                           const SizedBox(height: 28),
@@ -114,7 +121,7 @@ class PublicProfileScreen extends ConsumerWidget {
                               Expanded(
                                 child: _StatCard(
                                   label: 'Günlük Seri',
-                                  value: user.streak.toString(),
+                                  value: streak.toString(),
                                   icon: Icons.local_fire_department_rounded,
                                   delay: 490.ms,
                                 ),
@@ -131,7 +138,7 @@ class PublicProfileScreen extends ConsumerWidget {
                             ],
                           ),
                           const SizedBox(height: 32),
-                          _QuickActions(user: user).animate().fadeIn(delay: 600.ms).slideY(begin: 0.15),
+                          _QuickActions().animate().fadeIn(delay: 600.ms).slideY(begin: 0.15),
                           const SizedBox(height: 48),
                         ],
                       ),
@@ -150,8 +157,8 @@ class PublicProfileScreen extends ConsumerWidget {
 }
 
 class _AvatarHalo extends StatelessWidget {
-  final UserModel user; final Color rankColor;
-  const _AvatarHalo({required this.user, required this.rankColor});
+  final String displayName; final String? avatarStyle; final String? avatarSeed; final Color rankColor;
+  const _AvatarHalo({required this.displayName, required this.avatarStyle, required this.avatarSeed, required this.rankColor});
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -176,13 +183,13 @@ class _AvatarHalo extends StatelessWidget {
               radius: 56,
               backgroundColor: Colors.black,
               child: ClipOval(
-                child: user.avatarStyle != null && user.avatarSeed != null
+                child: avatarStyle != null && avatarSeed != null
                     ? SvgPicture.network(
-                        "https://api.dicebear.com/9.x/${user.avatarStyle}/svg?seed=${user.avatarSeed}",
+                        "https://api.dicebear.com/9.x/${avatarStyle}/svg?seed=${avatarSeed}",
                         fit: BoxFit.cover,
                       )
                     : Text(
-                        user.name?.substring(0, 1).toUpperCase() ?? 'B',
+                        (displayName.isNotEmpty ? displayName[0] : 'B').toUpperCase(),
                         style: Theme.of(context).textTheme.displayMedium?.copyWith(color: _accentProfile2, fontWeight: FontWeight.bold),
                       ),
               ),
@@ -329,7 +336,7 @@ class _StatCard extends StatelessWidget {
 }
 
 class _QuickActions extends StatelessWidget {
-  final UserModel user; const _QuickActions({required this.user});
+  const _QuickActions();
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -373,6 +380,21 @@ class _ActionButtonState extends State<_ActionButton> {
       onTapUp: (_) {
         setState(() => _pressed = false);
         HapticFeedback.selectionClick();
+        // Basit aksiyonlar: yönlendirme veya SnackBar
+        switch (widget.label) {
+          case 'İlerleme':
+            Navigator.of(context).pushNamed('/home/stats');
+            break;
+          case 'Başarılar':
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Başarılar yakında.')));
+            break;
+          case 'Takip':
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Takip isteği gönderildi.')));
+            break;
+          case 'Paylaş':
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profil bağlantısı kopyalandı.')));
+            break;
+        }
       },
       child: AnimatedScale(
         scale: _pressed ? 0.96 : 1,

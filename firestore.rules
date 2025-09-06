@@ -244,6 +244,7 @@ service cloud.firestore {
 
     // =====================================================================
     // LİDERLİK TABLOSU KOLEKSİYONU (/leaderboards)
+    // (Eski yol – geriye dönük)
     // =====================================================================
     match /leaderboards/{examType}/users/{userId} {
       allow read: if request.auth != null;
@@ -273,6 +274,24 @@ service cloud.firestore {
       // Kullanici kendi leaderboard dokumanini silebilsin (sinav degisiminde gerekli)
       allow delete: if request.auth.uid == userId;
     }
+
+    // =====================================================================
+    // YENİ LİDERLİK TABLOSU YAPISI
+    // =====================================================================
+    // İstemciler sadece yayınlanmış tepe listeleri okur
+    match /leaderboard_top/{examType}/{period}/{docId} {
+      allow read, list: if request.auth != null;
+      allow write: if false; // sadece Cloud Functions yazar
+    }
+    // Ham skorlar: sadece Cloud Functions yazar/okur (istemci erişemez)
+    match /leaderboard_scores/{examType}/{kind}/{periodId} {
+      allow read, write: if false;
+      match /users/{userId} {
+        allow read, write: if false;
+      }
+    }
+    // Sınav listesi (admin/CF oluşturur), istemci okumaya ihtiyaç duymaz; kapalı tutalım
+    match /leaderboard_exams/{examType} { allow read, write: if false; }
 
     // =====================================================================
     // TESTLER
@@ -340,6 +359,14 @@ service cloud.firestore {
       // İstemciler okuyabilsin; güncelleme yalnızca admin (Cloud Functions/Admin SDK) yapar
       allow read, list: if request.auth != null;
       allow create, update, delete: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    // ======================
+    // PUBLIC PROFILES (kamuya açık profil özeti)
+    // ======================
+    match /public_profiles/{userId} {
+      allow read, list: if request.auth != null; // sadece okuma
+      allow create, update, delete: if false;    // yalnızca Cloud Functions günceller
     }
   }
 }
