@@ -164,7 +164,33 @@ final isFollowingProvider = StreamProvider.family.autoDispose<bool, String>((ref
   return ref.watch(firestoreServiceProvider).streamIsFollowing(me.uid, targetUserId);
 });
 
+// TAKIP: Listeleme için ID akışları
+final followerIdsProvider = StreamProvider.family.autoDispose<List<String>, String>((ref, userId) {
+  return ref.watch(firestoreServiceProvider).streamFollowerIds(userId);
+});
+final followingIdsProvider = StreamProvider.family.autoDispose<List<String>, String>((ref, userId) {
+  return ref.watch(firestoreServiceProvider).streamFollowingIds(userId);
+});
+
+// ID'ye göre kullanıcı profili akışı
+final userProfileByIdProvider = StreamProvider.family.autoDispose<UserModel, String>((ref, userId) {
+  return ref.watch(firestoreServiceProvider).getUserProfile(userId);
+});
+
 // Herhangi bir kullanıcı için UserStats akışı
 final userStatsForUserProvider = StreamProvider.family.autoDispose<UserStats?, String>((ref, userId) {
   return ref.watch(firestoreServiceProvider).getUserStatsStream(userId);
 });
+
+// PUBLIC: public_profiles üzerinden herkese açık profil özeti (isim, avatar, stats özet)
+final publicProfileRawProvider = FutureProvider.family.autoDispose<Map<String, dynamic>?, String>((ref, userId) async {
+  final svc = ref.watch(firestoreServiceProvider);
+  final data = await svc.getPublicProfileRaw(userId);
+  if (data != null) return data;
+  final myExam = ref.watch(userProfileProvider).value?.selectedExam;
+  if (myExam != null) {
+    return await svc.getLeaderboardUserRaw(myExam, userId);
+  }
+  return null;
+});
+

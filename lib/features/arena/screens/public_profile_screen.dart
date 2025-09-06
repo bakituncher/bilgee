@@ -233,22 +233,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                               ),
                               const SizedBox(width: 12),
                               if (me?.uid != widget.userId)
-                                isFollowingAsync.when(
-                                  data: (isFollowing) => _FollowButton(
-                                    isFollowing: isFollowing,
-                                    onTap: () async {
-                                      HapticFeedback.selectionClick();
-                                      final svc = ref.read(firestoreServiceProvider);
-                                      if (isFollowing) {
-                                        await svc.unfollowUser(currentUserId: me!.uid, targetUserId: widget.userId);
-                                      } else {
-                                        await svc.followUser(currentUserId: me!.uid, targetUserId: widget.userId);
-                                      }
-                                    },
-                                  ),
-                                  loading: () => const SizedBox(width: 48, height: 36, child: Center(child: CircularProgressIndicator(strokeWidth: 2))),
-                                  error: (e, s) => const SizedBox.shrink(),
-                                ),
+                                _FollowButton(targetUserId: widget.userId),
                             ],
                           ),
                           const SizedBox(height: 8),
@@ -395,38 +380,66 @@ class _CountPill extends StatelessWidget {
   }
 }
 
-class _FollowButton extends StatefulWidget {
-  final bool isFollowing; final VoidCallback onTap; const _FollowButton({required this.isFollowing, required this.onTap});
+class _FollowButton extends ConsumerStatefulWidget {
+  final String targetUserId;
+  const _FollowButton({required this.targetUserId});
   @override
-  State<_FollowButton> createState() => _FollowButtonState();
+  ConsumerState<_FollowButton> createState() => _FollowButtonState();
 }
 
-class _FollowButtonState extends State<_FollowButton> {
+class _FollowButtonState extends ConsumerState<_FollowButton> {
+  bool? _optimistic; // null: stream belirleyici, true/false: anlık gösterim
   bool _busy = false;
+
   @override
   Widget build(BuildContext context) {
+    final me = ref.watch(authControllerProvider).value;
+    final isFollowingAsync = ref.watch(isFollowingProvider(widget.targetUserId));
+    final bool? streamVal = isFollowingAsync.valueOrNull;
+    final bool? loading = isFollowingAsync.isLoading ? true : null;
+    final bool isFollowing = _optimistic ?? (streamVal ?? false);
+
+    final bg = isFollowing ? Colors.transparent : _accentProfile2;
+    final fg = isFollowing ? _accentProfile2 : Colors.black;
+    final icon = isFollowing ? Icons.check_rounded : Icons.person_add_alt_1_rounded;
+    final label = isFollowing ? 'Takipten Çık' : 'Takip Et';
+
     return ElevatedButton.icon(
-      onPressed: _busy ? null : () async {
-        setState(() => _busy = true);
-        try {
-          widget.onTap(); // await kaldırıldı, VoidCallback
-        } finally {
-          if (mounted) setState(() => _busy = false);
-        }
-      },
+      onPressed: _busy || me?.uid == null || me!.uid == widget.targetUserId
+          ? null
+          : () async {
+              HapticFeedback.selectionClick();
+              setState(() { _busy = true; _optimistic = !isFollowing; });
+              try {
+                final svc = ref.read(firestoreServiceProvider);
+                if (isFollowing) {
+                  await svc.unfollowUser(currentUserId: me!.uid, targetUserId: widget.targetUserId);
+                } else {
+                  await svc.followUser(currentUserId: me!.uid, targetUserId: widget.targetUserId);
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('İşlem başarısız: $e')));
+                  setState(() { _optimistic = null; });
+                }
+              } finally {
+                if (mounted) setState(() { _busy = false; _optimistic = null; });
+              }
+            },
       style: ElevatedButton.styleFrom(
-        backgroundColor: widget.isFollowing ? Colors.transparent : _accentProfile2,
-        foregroundColor: widget.isFollowing ? _accentProfile2 : Colors.black,
+        backgroundColor: bg,
+        foregroundColor: fg,
         elevation: 0,
         side: BorderSide(color: _accentProfile2.withValues(alpha: (_accentProfile2.a * 0.8).toDouble())),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-        // Sonsuz genişlik veren global minimumSize'ı geçersiz kıl
         minimumSize: const Size(0, 40),
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       ),
-      icon: Icon(widget.isFollowing ? Icons.check_rounded : Icons.person_add_alt_1_rounded),
-      label: Text(widget.isFollowing ? 'Takiptesin' : 'Takip Et'),
+      icon: (loading == true && _optimistic == null) || _busy
+          ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: _accentProfile2))
+          : Icon(icon),
+      label: Text(label),
     );
   }
 }

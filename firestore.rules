@@ -247,8 +247,7 @@ service cloud.firestore {
         // yalnızca kendin başka birinin followers listesine eklenebilirsin
         allow create: if request.auth != null
           && request.auth.uid == followerId
-          && request.resource.data.keys().hasOnly(['createdAt'])
-          && request.resource.data.createdAt == request.time;
+          && request.resource.data.keys().hasOnly(['createdAt']);
         // yalnızca kendin kendini çıkarabilirsin
         allow delete: if request.auth != null && request.auth.uid == followerId;
         allow update: if false;
@@ -260,8 +259,7 @@ service cloud.firestore {
         // sadece sahibi kendi following listesine ekleyebilir
         allow create: if request.auth != null
           && request.auth.uid == userId
-          && request.resource.data.keys().hasOnly(['createdAt'])
-          && request.resource.data.createdAt == request.time;
+          && request.resource.data.keys().hasOnly(['createdAt']);
         // sadece sahibi çıkarabilir
         allow delete: if request.auth != null && request.auth.uid == userId;
         allow update: if false;

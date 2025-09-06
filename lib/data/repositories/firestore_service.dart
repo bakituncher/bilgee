@@ -1064,8 +1064,14 @@ class FirestoreService {
     final meFollowsRef = _followingCol(currentUserId).doc(targetUserId);
     final targetFollowersRef = _followersCol(targetUserId).doc(currentUserId);
     await _firestore.runTransaction((txn) async {
-      if ((await txn.get(meFollowsRef)).exists) txn.delete(meFollowsRef);
-      if ((await txn.get(targetFollowersRef)).exists) txn.delete(targetFollowersRef);
+      // TÜM OKUMALARI ÖNCE YAP
+      final meFollowsSnap = await txn.get(meFollowsRef);
+      final targetFollowersSnap = await txn.get(targetFollowersRef);
+      final hasMeFollows = meFollowsSnap.exists;
+      final hasTargetFollower = targetFollowersSnap.exists;
+      // SONRA YAZMALARI YAP
+      if (hasMeFollows) txn.delete(meFollowsRef);
+      if (hasTargetFollower) txn.delete(targetFollowersRef);
     });
   }
 

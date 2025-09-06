@@ -30,6 +30,7 @@ import 'package:bilge_ai/features/weakness_workshop/screens/workshop_stats_scree
 import 'package:bilge_ai/features/home/screens/weekly_plan_screen.dart';
 import 'package:bilge_ai/features/quests/screens/quests_screen.dart';
 import 'package:bilge_ai/features/profile/screens/avatar_selection_screen.dart'; // YENİ: Avatar ekranı import edildi
+import 'package:bilge_ai/features/profile/screens/follow_list_screen.dart'; // YENİ: Takip listesi ekranı import edildi
 
 StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
   return StatefulShellRoute.indexedStack(
@@ -208,6 +209,14 @@ StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
                     path: 'avatar-selection',
                     parentNavigatorKey: rootNavigatorKey,
                     builder: (context, state) => const AvatarSelectionScreen(),
+                  ),
+                  GoRoute(
+                    path: 'follow-list',
+                    parentNavigatorKey: rootNavigatorKey,
+                    builder: (context, state) {
+                      final mode = state.uri.queryParameters['mode'] ?? 'followers';
+                      return FollowListScreen(mode: mode);
+                    },
                   ),
                 ]),
           ]),
