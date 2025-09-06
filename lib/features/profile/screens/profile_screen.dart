@@ -18,6 +18,13 @@ import 'dart:math' as math; // trig için
 import '../logic/rank_service.dart';
 import 'package:bilge_ai/data/models/performance_summary.dart';
 import 'package:bilge_ai/data/models/plan_document.dart'; // EKLENDİ
+import 'package:share_plus/share_plus.dart';
+import 'package:cross_file/cross_file.dart';
+import 'package:flutter/rendering.dart';
+import 'package:intl/intl.dart';
+import 'package:bilge_ai/data/models/user_stats_model.dart';
+import 'package:bilge_ai/data/providers/firestore_providers.dart' as providers;
+import 'dart:ui' as ui;
 
 // ===== NovaPulse / Arena ile tutarlı premium accent renkleri =====
 const _accentProfile1 = AppTheme.secondaryColor; // camgöbeği
@@ -49,6 +56,8 @@ class ProfileScreen extends ConsumerStatefulWidget {
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   late ConfettiController _confettiController;
+  final GlobalKey _shareKey = GlobalKey();
+  bool _sharing = false;
 
   @override
   void initState() {
@@ -110,6 +119,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     ];
   }
 
+  Future<void> _shareProfileImage() async {
+    if (_sharing) return;
+    setState(() => _sharing = true);
+    try {
+      final boundary = _shareKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      if (boundary == null) return;
+      final uiImage = await boundary.toImage(pixelRatio: 3.0);
+      final byteData = await uiImage.toByteData(format: ui.ImageByteFormat.png);
+      if (byteData == null) return;
+      final bytes = byteData.buffer.asUint8List();
+      final xfile = XFile.fromData(bytes, name: 'warrior_card.png', mimeType: 'image/png');
+      await Share.shareXFiles([xfile], text: 'Savaşçı Künyem');
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Paylaşım hatası: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _sharing = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final userAsync = ref.watch(userProfileProvider);
@@ -117,6 +147,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final focusSessionsAsync = ref.watch(focusSessionsProvider);
     final performanceAsync = ref.watch(performanceProvider);
     final planDocAsync = ref.watch(planProvider);
+    final statsStream = ref.watch(providers.userStatsStreamProvider);
 
     ref.listen<AsyncValue<UserModel?>>(userProfileProvider, (previous, next) {
       final prevUser = previous?.valueOrNull;
@@ -138,6 +169,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         elevation: 0,
         actions: [
           IconButton(
+            tooltip: _sharing ? 'Hazırlanıyor...' : 'Paylaş',
+            icon: const Icon(Icons.ios_share_rounded),
+            onPressed: _sharing ? null : () { HapticFeedback.selectionClick(); _shareProfileImage(); },
+          ),
+          IconButton(
             icon: const Icon(Icons.settings_rounded),
             onPressed: () => context.push(AppRoutes.settings),
             tooltip: 'Ayarlar',
@@ -152,6 +188,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       body: userAsync.when(
         data: (user) {
           if (user == null) return const Center(child: Text('Komutan bulunamadı.'));
+
+          final followCountsAsync = ref.watch(providers.followCountsProvider(user.id));
+          final statsUpdatedAt = statsStream.valueOrNull?.updatedAt;
 
           return focusSessionsAsync.when(
             data: (focusSessions) {
@@ -190,77 +229,124 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             child: Column(
                               children: [
                                 const SizedBox(height: 12),
-                                _ProfileAvatarHalo(user: user, color: currentRank.color, rankIndex: rankIndex),
-                                const SizedBox(height: 14),
-                                Text(
-                                  user.name ?? 'İsimsiz Savaşçı',
-                                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 0.5),
-                                  textAlign: TextAlign.center,
-                                ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.08, end: 0),
+                                // Paylaşılabilir kart
+                                RepaintBoundary(
+                                  key: _shareKey,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(28),
+                                      gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0x221F1F1F), Color(0x111F1F1F)]),
+                                      border: Border.all(color: Colors.white54.withValues(alpha: (Colors.white54.a * 0.22).toDouble())),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        _ProfileAvatarHalo(user: user, color: currentRank.color, rankIndex: rankIndex),
+                                        const SizedBox(height: 10),
+                                        Text(
+                                          user.name ?? 'İsimsiz Savaşçı',
+                                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 0.5),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                        const SizedBox(height: 6),
+                                        _RankPill(rank: currentRank),
+                                        const SizedBox(height: 14),
+                                        Row(
+                                          children: [
+                                            Expanded(child: _ProfileStatCard(label: 'Deneme', value: testCount.toString(), icon: Icons.library_books_rounded, delay: 0.ms)),
+                                            const SizedBox(width: 10),
+                                            Expanded(child: _ProfileStatCard(label: 'Ort. Net', value: avgNet.toStringAsFixed(1), icon: Icons.track_changes_rounded, delay: 0.ms)),
+                                            const SizedBox(width: 10),
+                                            Expanded(child: _ProfileStatCard(label: 'Seri', value: user.streak.toString(), icon: Icons.local_fire_department_rounded, delay: 0.ms)),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 14),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Image.asset('assets/images/bilge_baykus.png', width: 28, height: 28),
+                                            const SizedBox(width: 8),
+                                            Text('BilgeAI', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: _accentProfile2, fontWeight: FontWeight.bold)),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                // Takipçi / Takip sayıları
+                                followCountsAsync.when(
+                                  data: (counts) => Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      _FollowCount(label: 'Takipçi', value: counts.$1),
+                                      const SizedBox(width: 12),
+                                      _FollowCount(label: 'Takip', value: counts.$2),
+                                    ],
+                                  ),
+                                  loading: () => const LinearProgressIndicator(minHeight: 2),
+                                  error: (e, s) => const SizedBox.shrink(),
+                                ),
                                 const SizedBox(height: 8),
-                                _RankPill(rank: currentRank).animate().fadeIn(duration: 400.ms, delay: 120.ms).slideY(begin: 0.15),
-                                const SizedBox(height: 20),
+                                if (statsUpdatedAt != null)
+                                  Align(
+                                    alignment: Alignment.centerRight,
+                                    child: Text(
+                                      'Son güncelleme: ${DateFormat('dd MMM yyyy HH:mm', 'tr_TR').format(statsUpdatedAt)}',
+                                      style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white70),
+                                    ),
+                                  ),
+                                const SizedBox(height: 14),
                                 _NeoXpBar(
                                   currentXp: user.engagementScore,
                                   nextLevelXp: nextRank.requiredScore == currentRank.requiredScore ? currentRank.requiredScore : nextRank.requiredScore,
                                   progress: progressToNext,
                                 ).animate().fadeIn(duration: 450.ms, delay: 200.ms),
-                                const SizedBox(height: 28),
+                                const SizedBox(height: 24),
                                 Row(
                                   children: [
                                     Expanded(
                                       child: _ProfileStatCard(
-                                        label: 'Deneme',
-                                        value: testCount.toString(),
-                                        icon: Icons.library_books_rounded,
+                                        label: 'Madalyalar',
+                                        value: '$unlockedCount/${allBadges.length}',
+                                        icon: Icons.military_tech_rounded,
                                         delay: 260.ms,
                                       ),
                                     ),
                                     const SizedBox(width: 14),
                                     Expanded(
                                       child: _ProfileStatCard(
-                                        label: 'Ort. Net',
-                                        value: avgNet.toStringAsFixed(1),
-                                        icon: Icons.track_changes_rounded,
+                                        label: 'Seviye',
+                                        value: (rankIndex + 1).toString(),
+                                        icon: Icons.workspace_premium,
                                         delay: 320.ms,
                                       ),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 14),
+                                const SizedBox(height: 24),
+                                // Hızlı eylemler: Başarılar ve İlerleme eklendi
                                 Row(
                                   children: [
-                                    Expanded(
-                                      child: _ProfileStatCard(
-                                        label: 'Günlük Seri',
-                                        value: user.streak.toString(),
-                                        icon: Icons.local_fire_department_rounded,
-                                        delay: 380.ms,
-                                      ),
-                                    ),
+                                    Expanded(child: _ActionNeo(icon: Icons.emoji_events_outlined, label: 'Başarılar', onTap: () => context.push('/profile/honor-wall', extra: allBadges))),
                                     const SizedBox(width: 14),
-                                    Expanded(
-                                      child: _ProfileStatCard(
-                                        label: 'Madalyalar',
-                                        value: '$unlockedCount/${allBadges.length}',
-                                        icon: Icons.military_tech_rounded,
-                                        delay: 440.ms,
-                                      ),
-                                    ),
+                                    Expanded(child: _ActionNeo(icon: Icons.timeline_rounded, label: 'İlerleme', onTap: () => context.push('/home/stats'))),
                                   ],
                                 ),
-                                const SizedBox(height: 32),
-                                _ProfileQuickActions(
-                                  onHonorWall: () => context.push('/profile/honor-wall', extra: allBadges),
-                                  onStrategy: () {
-                                    if (planDoc?.weeklyPlan != null) {
-                                      context.push('/home/weekly-plan');
-                                    } else {
-                                      context.push('${AppRoutes.aiHub}/${AppRoutes.strategicPlanning}');
-                                    }
-                                  },
-                                  onAvatar: () => context.push('/profile/avatar-selection'),
-                                ).animate().fadeIn(delay: 520.ms).slideY(begin: 0.12),
+                                const SizedBox(height: 12),
+                                Row(
+                                  children: [
+                                    Expanded(child: _ActionNeo(icon: Icons.person_rounded, label: 'Avatar', onTap: () => context.push('/profile/avatar-selection'))),
+                                    const SizedBox(width: 14),
+                                    Expanded(child: _ActionNeo(icon: Icons.map_rounded, label: 'Strateji', onTap: () {
+                                      if (planDoc?.weeklyPlan != null) {
+                                        context.push('/home/weekly-plan');
+                                      } else {
+                                        context.push('${AppRoutes.aiHub}/${AppRoutes.strategicPlanning}');
+                                      }
+                                    })),
+                                  ],
+                                ),
                                 const SizedBox(height: 40),
                               ],
                             ),
@@ -286,6 +372,28 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         },
         loading: () => const Center(child: CircularProgressIndicator(color: AppTheme.secondaryColor)),
         error: (e, s) => Center(child: Text('Karargâh Yüklenemedi: $e')),
+      ),
+    );
+  }
+}
+
+class _FollowCount extends StatelessWidget {
+  final String label; final int value; const _FollowCount({required this.label, required this.value});
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: Colors.white.withValues(alpha: (Colors.white.a * 0.06).toDouble()),
+        border: Border.all(color: Colors.white.withValues(alpha: (Colors.white.a * 0.12).toDouble())),
+      ),
+      child: Row(
+        children: [
+          Text(value.toString(), style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+          const SizedBox(width: 6),
+          Text(label, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white70)),
+        ],
       ),
     );
   }

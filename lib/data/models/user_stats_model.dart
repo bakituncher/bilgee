@@ -11,6 +11,7 @@ class UserStats {
   final int focusMinutes; // toplu odaklanma dakikası
   final int bp; // Bilgelik Puanı (dakika bazlı)
   final int pomodoroSessions; // tamamlanan pomodoro seans sayısı
+  final DateTime? updatedAt; // EKLENDI: son güncelleme
 
   const UserStats({
     this.streak = 0,
@@ -21,6 +22,7 @@ class UserStats {
     this.focusMinutes = 0,
     this.bp = 0,
     this.pomodoroSessions = 0,
+    this.updatedAt,
   });
 
   factory UserStats.fromSnapshot(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -34,6 +36,7 @@ class UserStats {
       focusMinutes: (data['focusMinutes'] as num?)?.toInt() ?? 0,
       bp: (data['bp'] as num?)?.toInt() ?? 0,
       pomodoroSessions: (data['pomodoroSessions'] as num?)?.toInt() ?? 0,
+      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
     );
   }
 
@@ -47,5 +50,6 @@ class UserStats {
         'focusMinutes': focusMinutes,
         'bp': bp,
         'pomodoroSessions': pomodoroSessions,
+        if (updatedAt != null) 'updatedAt': Timestamp.fromDate(updatedAt!),
       };
 }

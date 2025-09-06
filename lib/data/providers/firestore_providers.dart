@@ -151,3 +151,20 @@ final focusSessionsStreamProvider = StreamProvider.autoDispose<List<FocusSession
   }
   return Stream.value(const <FocusSessionModel>[]);
 });
+
+// TAKIP: Sayaçlar (followers/following)
+final followCountsProvider = StreamProvider.family.autoDispose<(int followers, int following), String>((ref, userId) {
+  return ref.watch(firestoreServiceProvider).streamFollowCounts(userId);
+});
+
+// TAKIP: Mevcut kullanıcının hedef kullanıcıyı takip edip etmediği
+final isFollowingProvider = StreamProvider.family.autoDispose<bool, String>((ref, targetUserId) {
+  final me = ref.watch(authControllerProvider).value;
+  if (me == null) return const Stream<bool>.empty();
+  return ref.watch(firestoreServiceProvider).streamIsFollowing(me.uid, targetUserId);
+});
+
+// Herhangi bir kullanıcı için UserStats akışı
+final userStatsForUserProvider = StreamProvider.family.autoDispose<UserStats?, String>((ref, userId) {
+  return ref.watch(firestoreServiceProvider).getUserStatsStream(userId);
+});

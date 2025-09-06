@@ -774,6 +774,25 @@ class FirestoreService {
     }
   }
 
+  Future<Map<String, dynamic>?> getLeaderboardUserRaw(String examType, String userId) async {
+    try {
+      final doc = await _leaderboardUserDoc(examType: examType, userId: userId).get();
+      if (!doc.exists) return null;
+      final d = doc.data() ?? const <String, dynamic>{};
+      return {
+        'name': (d['userName'] ?? '') as String,
+        'testCount': ((d['testCount'] ?? 0) as num).toInt(),
+        'totalNetSum': 0.0, // liderlikte yok, 0 olarak dön
+        'engagementScore': ((d['score'] ?? 0) as num).toInt(),
+        'streak': 0, // liderlikte yok
+        'avatarStyle': d['avatarStyle'] as String?,
+        'avatarSeed': d['avatarSeed'] as String?,
+      };
+    } catch (_) {
+      return null;
+    }
+  }
+
   // In-App Notifications
   Stream<List<InAppNotification>> streamInAppNotifications(String userId, {int limit = 100}) {
     return usersCollection
@@ -1020,4 +1039,70 @@ class FirestoreService {
       'createdAt': FieldValue.serverTimestamp(),
     });
   }
+
+  // === TAKIP SISTEMI ===
+  CollectionReference<Map<String, dynamic>> _followersCol(String userId) => usersCollection.doc(userId).collection('followers');
+  CollectionReference<Map<String, dynamic>> _followingCol(String userId) => usersCollection.doc(userId).collection('following');
+  DocumentReference<Map<String, dynamic>> _followMetaDoc(String userId) => usersCollection.doc(userId).collection('social').doc('follow');
+
+  Future<void> followUser({required String currentUserId, required String targetUserId}) async {
+    if (currentUserId == targetUserId) return;
+    final followingRef = _followingCol(currentUserId).doc(targetUserId);
+    final followersRef = _followersCol(targetUserId).doc(currentUserId);
+    final meMeta = _followMetaDoc(currentUserId);
+    final targetMeta = _followMetaDoc(targetUserId);
+
+    await _firestore.runTransaction((txn) async {
+      final exists = (await txn.get(followingRef)).exists;
+      if (exists) return; // idempotent
+      txn.set(followingRef, {'createdAt': FieldValue.serverTimestamp()});
+      txn.set(followersRef, {'createdAt': FieldValue.serverTimestamp()});
+      txn.set(meMeta, {
+        'following': FieldValue.increment(1),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      txn.set(targetMeta, {
+        'followers': FieldValue.increment(1),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    });
+  }
+
+  Future<void> unfollowUser({required String currentUserId, required String targetUserId}) async {
+    if (currentUserId == targetUserId) return;
+    final followingRef = _followingCol(currentUserId).doc(targetUserId);
+    final followersRef = _followersCol(targetUserId).doc(currentUserId);
+    final meMeta = _followMetaDoc(currentUserId);
+    final targetMeta = _followMetaDoc(targetUserId);
+
+    await _firestore.runTransaction((txn) async {
+      final snap = await txn.get(followingRef);
+      if (!snap.exists) return; // idempotent
+      txn.delete(followingRef);
+      txn.delete(followersRef);
+      txn.set(meMeta, {
+        'following': FieldValue.increment(-1),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      txn.set(targetMeta, {
+        'followers': FieldValue.increment(-1),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    });
+  }
+
+  Stream<(int followers, int following)> streamFollowCounts(String userId) {
+    return _followMetaDoc(userId).snapshots().map((doc) {
+      final data = doc.data() ?? const <String, dynamic>{};
+      final followers = (data['followers'] as num?)?.toInt() ?? 0;
+      final following = (data['following'] as num?)?.toInt() ?? 0;
+      return (followers, following);
+    });
+  }
+
+  Stream<bool> streamIsFollowing(String currentUserId, String targetUserId) {
+    if (currentUserId == targetUserId) return const Stream<bool>.empty();
+    return _followingCol(currentUserId).doc(targetUserId).snapshots().map((d) => d.exists);
+  }
+  // === /TAKIP SISTEMI ===
 }
