@@ -22,7 +22,6 @@ import 'package:share_plus/share_plus.dart';
 import 'package:cross_file/cross_file.dart';
 import 'package:flutter/rendering.dart';
 import 'package:intl/intl.dart';
-import 'package:bilge_ai/data/models/user_stats_model.dart';
 import 'package:bilge_ai/data/providers/firestore_providers.dart' as providers;
 import 'dart:ui' as ui;
 
@@ -279,9 +278,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                   data: (counts) => Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      _FollowCount(label: 'Takipçi', value: counts.$1),
+                                      _FollowCount(
+                                        label: 'Takipçi',
+                                        value: counts.$1,
+                                        onTap: () {
+                                          context.push('/profile/follow-list?mode=followers');
+                                        },
+                                      ),
                                       const SizedBox(width: 12),
-                                      _FollowCount(label: 'Takip', value: counts.$2),
+                                      _FollowCount(
+                                        label: 'Takip',
+                                        value: counts.$2,
+                                        onTap: () {
+                                          context.push('/profile/follow-list?mode=following');
+                                        },
+                                      ),
                                     ],
                                   ),
                                   loading: () => const LinearProgressIndicator(minHeight: 2),
@@ -378,22 +389,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 }
 
 class _FollowCount extends StatelessWidget {
-  final String label; final int value; const _FollowCount({required this.label, required this.value});
+  final String label; final int value; final VoidCallback? onTap;
+  const _FollowCount({required this.label, required this.value, this.onTap});
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        color: Colors.white.withValues(alpha: (Colors.white.a * 0.06).toDouble()),
-        border: Border.all(color: Colors.white.withValues(alpha: (Colors.white.a * 0.12).toDouble())),
-      ),
-      child: Row(
-        children: [
-          Text(value.toString(), style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-          const SizedBox(width: 6),
-          Text(label, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white70)),
-        ],
+    return InkWell(
+      borderRadius: BorderRadius.circular(20),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          color: Colors.white.withValues(alpha: (Colors.white.a * 0.06).toDouble()),
+          border: Border.all(color: Colors.white.withValues(alpha: (Colors.white.a * 0.12).toDouble())),
+        ),
+        child: Row(
+          children: [
+            Text(value.toString(), style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+            const SizedBox(width: 6),
+            Text(label, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white70)),
+          ],
+        ),
       ),
     );
   }

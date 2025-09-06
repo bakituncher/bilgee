@@ -1046,62 +1046,64 @@ class FirestoreService {
   DocumentReference<Map<String, dynamic>> _followMetaDoc(String userId) => usersCollection.doc(userId).collection('social').doc('follow');
 
   Future<void> followUser({required String currentUserId, required String targetUserId}) async {
-    if (currentUserId == targetUserId) return;
-    final followingRef = _followingCol(currentUserId).doc(targetUserId);
-    final followersRef = _followersCol(targetUserId).doc(currentUserId);
-    final meMeta = _followMetaDoc(currentUserId);
-    final targetMeta = _followMetaDoc(targetUserId);
-
+    if (currentUserId == targetUserId) return; // kendini takip etme
+    final meFollowsRef = _followingCol(currentUserId).doc(targetUserId);
+    final targetFollowersRef = _followersCol(targetUserId).doc(currentUserId);
     await _firestore.runTransaction((txn) async {
-      final exists = (await txn.get(followingRef)).exists;
+      final exists = (await txn.get(meFollowsRef)).exists;
       if (exists) return; // idempotent
-      txn.set(followingRef, {'createdAt': FieldValue.serverTimestamp()});
-      txn.set(followersRef, {'createdAt': FieldValue.serverTimestamp()});
-      txn.set(meMeta, {
-        'following': FieldValue.increment(1),
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-      txn.set(targetMeta, {
-        'followers': FieldValue.increment(1),
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      final now = FieldValue.serverTimestamp();
+      txn.set(meFollowsRef, { 'createdAt': now });
+      txn.set(targetFollowersRef, { 'createdAt': now });
     });
   }
 
+  // Takip bırak: iki uçtaki dokümanları siler (idempotent)
   Future<void> unfollowUser({required String currentUserId, required String targetUserId}) async {
     if (currentUserId == targetUserId) return;
-    final followingRef = _followingCol(currentUserId).doc(targetUserId);
-    final followersRef = _followersCol(targetUserId).doc(currentUserId);
-    final meMeta = _followMetaDoc(currentUserId);
-    final targetMeta = _followMetaDoc(targetUserId);
-
+    final meFollowsRef = _followingCol(currentUserId).doc(targetUserId);
+    final targetFollowersRef = _followersCol(targetUserId).doc(currentUserId);
     await _firestore.runTransaction((txn) async {
-      final snap = await txn.get(followingRef);
-      if (!snap.exists) return; // idempotent
-      txn.delete(followingRef);
-      txn.delete(followersRef);
-      txn.set(meMeta, {
-        'following': FieldValue.increment(-1),
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-      txn.set(targetMeta, {
-        'followers': FieldValue.increment(-1),
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      // TÜM OKUMALARI ÖNCE YAP
+      final meFollowsSnap = await txn.get(meFollowsRef);
+      final targetFollowersSnap = await txn.get(targetFollowersRef);
+      final hasMeFollows = meFollowsSnap.exists;
+      final hasTargetFollower = targetFollowersSnap.exists;
+      // SONRA YAZMALARI YAP
+      if (hasMeFollows) txn.delete(meFollowsRef);
+      if (hasTargetFollower) txn.delete(targetFollowersRef);
     });
   }
 
-  Stream<(int followers, int following)> streamFollowCounts(String userId) {
-    return _followMetaDoc(userId).snapshots().map((doc) {
-      final data = doc.data() ?? const <String, dynamic>{};
-      final followers = (data['followers'] as num?)?.toInt() ?? 0;
-      final following = (data['following'] as num?)?.toInt() ?? 0;
+  // Takipçi/takip edilen ID akışları (listeleme için) — sıralı ve limitle
+  Stream<List<String>> streamFollowerIds(String userId, {int limit = 100}) {
+    return _followersCol(userId)
+      .orderBy('createdAt', descending: true)
+      .limit(limit)
+      .snapshots()
+      .map((qs) => qs.docs.map((d) => d.id).toList(growable: false));
+  }
+  Stream<List<String>> streamFollowingIds(String userId, {int limit = 100}) {
+    return _followingCol(userId)
+      .orderBy('createdAt', descending: true)
+      .limit(limit)
+      .snapshots()
+      .map((qs) => qs.docs.map((d) => d.id).toList(growable: false));
+  }
+
+  // Takip: sayaç akışı (public_profiles üzerinden, maliyet-etkin)
+  Stream<(int, int)> streamFollowCounts(String userId) {
+    final doc = _publicProfileDoc(userId);
+    return doc.snapshots().map<(int, int)>((snap) {
+      final data = snap.data() ?? const <String, dynamic>{};
+      final followers = (data['followersCount'] as num?)?.toInt() ?? 0;
+      final following = (data['followingCount'] as num?)?.toInt() ?? 0;
       return (followers, following);
     });
   }
 
+  // Takip: mevcut kullanıcı hedefi takip ediyor mu?
   Stream<bool> streamIsFollowing(String currentUserId, String targetUserId) {
-    if (currentUserId == targetUserId) return const Stream<bool>.empty();
     return _followingCol(currentUserId).doc(targetUserId).snapshots().map((d) => d.exists);
   }
   // === /TAKIP SISTEMI ===
