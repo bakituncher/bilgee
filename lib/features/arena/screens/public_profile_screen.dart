@@ -65,6 +65,85 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
     }
   }
 
+  void _showPublicAchievements(BuildContext context, {required String displayName, required int testCount, required double avgNet, required int streak, required int engagement}) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.cardColor,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) {
+        final items = [
+          {'icon': Icons.flag, 'title': 'Denemeler', 'value': testCount.toString()},
+          {'icon': Icons.track_changes_rounded, 'title': 'Ortalama Net', 'value': avgNet.toStringAsFixed(1)},
+          {'icon': Icons.local_fire_department_rounded, 'title': 'Günlük Seri', 'value': streak.toString()},
+          {'icon': Icons.flash_on_rounded, 'title': 'Rütbe Puanı', 'value': engagement.toString()},
+        ];
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(child: Container(width: 36, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(4)))),
+              const SizedBox(height: 12),
+              Text('$displayName — Başarılar', style: Theme.of(ctx).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+              const SizedBox(height: 12),
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: items.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 12, crossAxisSpacing: 12, childAspectRatio: 2.6),
+                itemBuilder: (_, i) {
+                  final it = items[i];
+                  return Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0x221F1F1F), Color(0x111F1F1F)]),
+                      border: Border.all(color: Colors.white.withValues(alpha: (Colors.white.a * 0.12).toDouble())),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    child: Row(children: [
+                      Icon(it['icon'] as IconData, color: _accentProfile2),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text(it['title'] as String, style: Theme.of(ctx).textTheme.labelLarge)),
+                      Text(it['value'] as String, style: Theme.of(ctx).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                    ]),
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showPublicProgress(BuildContext context, {required int testCount, required double avgNet, required int streak, required int engagement}) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.cardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('İlerleme Özeti'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _kv('Deneme', testCount.toString(), ctx),
+            _kv('Ortalama Net', avgNet.toStringAsFixed(1), ctx),
+            _kv('Günlük Seri', streak.toString(), ctx),
+            _kv('Rütbe Puanı', engagement.toString(), ctx),
+          ],
+        ),
+        actions: [TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Kapat'))],
+      ),
+    );
+  }
+
+  Widget _kv(String k, String v, BuildContext ctx) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4.0),
+    child: Row(children: [Expanded(child: Text(k, style: Theme.of(ctx).textTheme.bodyLarge?.copyWith(color: Colors.white70))), Text(v, style: Theme.of(ctx).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold))]),
+  );
+
   @override
   Widget build(BuildContext context) {
     final userProfileAsync = ref.watch(publicUserProfileProvider(widget.userId));
@@ -182,8 +261,48 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                                 style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white70),
                               ),
                             ),
+                          const SizedBox(height: 16),
+                          // 4'lü eylem kartları — geri eklendi
+                          GridView.count(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 14,
+                            mainAxisSpacing: 14,
+                            childAspectRatio: 2.8,
+                            physics: const NeverScrollableScrollPhysics(),
+                            shrinkWrap: true,
+                            children: [
+                              _ActionTile(icon: Icons.emoji_events_outlined, label: 'Başarılar', onTap: () {
+                                HapticFeedback.selectionClick();
+                                _showPublicAchievements(context,
+                                  displayName: displayName,
+                                  testCount: testCount,
+                                  avgNet: avgNet,
+                                  streak: streak,
+                                  engagement: engagement,
+                                );
+                              }),
+                              _ActionTile(icon: Icons.timeline_rounded, label: 'İlerleme', onTap: () {
+                                HapticFeedback.selectionClick();
+                                _showPublicProgress(context, testCount: testCount, avgNet: avgNet, streak: streak, engagement: engagement);
+                              }),
+                              _ActionTile(icon: Icons.people_alt_rounded, label: 'Takip', onTap: () async {
+                                HapticFeedback.selectionClick();
+                                final svc = ref.read(firestoreServiceProvider);
+                                final isFollowingNow = isFollowingAsync.valueOrNull ?? false;
+                                if (me?.uid == null || me!.uid == widget.userId) return;
+                                if (isFollowingNow) {
+                                  await svc.unfollowUser(currentUserId: me!.uid, targetUserId: widget.userId);
+                                } else {
+                                  await svc.followUser(currentUserId: me!.uid, targetUserId: widget.userId);
+                                }
+                              }),
+                              _ActionTile(icon: Icons.share_rounded, label: 'Paylaş', onTap: () {
+                                HapticFeedback.selectionClick();
+                                _shareProfileImage();
+                              }),
+                            ],
+                          ),
                           const SizedBox(height: 20),
-                          // Eski hızlı eylemler kaldırıldı; paylaş ve takip üstte
                         ],
                       ),
                     ),
@@ -420,6 +539,45 @@ class _StatCard extends StatelessWidget {
               const Spacer(),
               Text(value, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
               Text(label, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white70)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ActionTile extends StatefulWidget {
+  final IconData icon; final String label; final VoidCallback onTap; const _ActionTile({required this.icon, required this.label, required this.onTap});
+  @override
+  State<_ActionTile> createState() => _ActionTileState();
+}
+
+class _ActionTileState extends State<_ActionTile> {
+  bool _pressed = false;
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapCancel: () => setState(() => _pressed = false),
+      onTapUp: (_) { setState(() => _pressed = false); widget.onTap(); },
+      child: AnimatedScale(
+        scale: _pressed ? 0.96 : 1,
+        duration: 120.ms,
+        curve: Curves.easeOut,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0x221F1F1F), Color(0x111F1F1F)]),
+            border: Border.all(color: Colors.white.withValues(alpha: (Colors.white.a * 0.12).toDouble())),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(widget.icon, color: _accentProfile1, size: 22),
+              const SizedBox(width: 8),
+              Text(widget.label, style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600)),
             ],
           ),
         ),

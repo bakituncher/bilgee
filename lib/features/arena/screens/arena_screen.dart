@@ -498,3 +498,4 @@ class _CurrentUserCard extends StatelessWidget {
 extension _ColorOpacityX on Color {
   Color o(double factor) => withValues(alpha: (a * factor).toDouble());
 }
+
