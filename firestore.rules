@@ -240,6 +240,32 @@ service cloud.firestore {
         // Kullanıcı kendi bildirimini silebilir
         allow delete: if request.auth.uid == userId;
       }
+
+      // TAKIP: followers (bir kullanıcının takipçileri) — docId takipçinin uid'si olmalı
+      match /followers/{followerId} {
+        allow read, list: if request.auth != null;
+        // yalnızca kendin başka birinin followers listesine eklenebilirsin
+        allow create: if request.auth != null
+          && request.auth.uid == followerId
+          && request.resource.data.keys().hasOnly(['createdAt'])
+          && request.resource.data.createdAt == request.time;
+        // yalnızca kendin kendini çıkarabilirsin
+        allow delete: if request.auth != null && request.auth.uid == followerId;
+        allow update: if false;
+      }
+
+      // TAKIP: following (kullanıcının takip ettikleri) — sadece sahibi yazar
+      match /following/{followingId} {
+        allow read, list: if request.auth != null;
+        // sadece sahibi kendi following listesine ekleyebilir
+        allow create: if request.auth != null
+          && request.auth.uid == userId
+          && request.resource.data.keys().hasOnly(['createdAt'])
+          && request.resource.data.createdAt == request.time;
+        // sadece sahibi çıkarabilir
+        allow delete: if request.auth != null && request.auth.uid == userId;
+        allow update: if false;
+      }
     }
 
     // =====================================================================

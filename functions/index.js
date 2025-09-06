@@ -1074,6 +1074,33 @@ async function upsertLeaderboardScore({ examType, uid, delta, userDocData }) {
   ]);
 }
 
+// Yeni: Skoru mutlak değerle yazan yardımcı (backfill için)
+async function setLeaderboardScoreAbsolute({ examType, uid, score, userDocData, kinds = ['daily','weekly'] }) {
+  if (!examType || !uid) return;
+  const safeScore = Number.isFinite(score) ? Number(score) : 0;
+  const dayKey = dayKeyIstanbul();
+  const weekKey = weekKeyIstanbul();
+  const base = db.collection('leaderboard_scores').doc(String(examType));
+  const dailyRef = base.collection('daily').doc(dayKey).collection('users').doc(uid);
+  const weeklyRef = base.collection('weekly').doc(weekKey).collection('users').doc(uid);
+  const safeName = userDocData?.name || '';
+  const avatarStyle = userDocData?.avatarStyle || null;
+  const avatarSeed = userDocData?.avatarSeed || null;
+  const payload = {
+    userId: uid,
+    userName: safeName,
+    avatarStyle,
+    avatarSeed,
+    score: safeScore,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  };
+  const writes = [];
+  if (kinds.includes('daily')) writes.push(dailyRef.set(payload, {merge: true}));
+  if (kinds.includes('weekly')) writes.push(weeklyRef.set(payload, {merge: true}));
+  writes.push(upsertLeaderboardExam(examType));
+  await Promise.all(writes);
+}
+
 async function publishTopFor(examType, kind) {
   // kind: 'daily' | 'weekly'
   const container = db.collection('leaderboard_scores').doc(examType).collection(kind);
@@ -1252,6 +1279,11 @@ exports.getLeaderboardRank = onCall({region: 'us-central1', timeoutSeconds: 30},
   return { rank, score: myScore, neighbors };
 });
 
+// Admin: Liderlik tablolarını geriye dönük doldurma (backfill)
+exports.adminBackfillLeaderboard = onCall({region: 'us-central1', timeoutSeconds: 540}, async (request) => {
+  if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
+  const isAdmin = request.auth.token && request.auth.token.admin === true;
+  if (!isAdmin) throw new HttpsError('permission-denied', 'Admin gerekli');
 
   const kindsReq = request.data?.period;
   const kinds = kindsReq === 'daily' ? ['daily'] : (kindsReq === 'weekly' ? ['weekly'] : ['daily','weekly']);
@@ -1293,3 +1325,40 @@ exports.getLeaderboardRank = onCall({region: 'us-central1', timeoutSeconds: 30},
   const lastId = snap.docs[snap.docs.length - 1].id;
   return { processed, nextPageToken: lastId, exams: Array.from(examsTouched), dryRun };
 });
+
+// === Takip Sayaçları: public_profiles üzerinde takipçi/takip sayısını güncelle ===
+async function adjustPublicCounts(uid, { followersDelta = 0, followingDelta = 0 }) {
+  if (!uid) return;
+  const ref = db.collection('public_profiles').doc(uid);
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const d = snap.exists ? (snap.data() || {}) : {};
+    const currFollowers = typeof d.followersCount === 'number' ? d.followersCount : 0;
+    const currFollowing = typeof d.followingCount === 'number' ? d.followingCount : 0;
+    const nextFollowers = Math.max(0, currFollowers + followersDelta);
+    const nextFollowing = Math.max(0, currFollowing + followingDelta);
+    tx.set(ref, {
+      followersCount: nextFollowers,
+      followingCount: nextFollowing,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+  });
+}
+
+exports.onFollowerCreated = onDocumentCreated("users/{userId}/followers/{followerId}", async (event) => {
+  const uid = event.params.userId;
+  try { await adjustPublicCounts(uid, { followersDelta: +1 }); } catch (e) { logger.warn('onFollowerCreated failed', { uid, error: String(e) }); }
+});
+exports.onFollowerDeleted = onDocumentDeleted("users/{userId}/followers/{followerId}", async (event) => {
+  const uid = event.params.userId;
+  try { await adjustPublicCounts(uid, { followersDelta: -1 }); } catch (e) { logger.warn('onFollowerDeleted failed', { uid, error: String(e) }); }
+});
+exports.onFollowingCreated = onDocumentCreated("users/{userId}/following/{followingId}", async (event) => {
+  const uid = event.params.userId;
+  try { await adjustPublicCounts(uid, { followingDelta: +1 }); } catch (e) { logger.warn('onFollowingCreated failed', { uid, error: String(e) }); }
+});
+exports.onFollowingDeleted = onDocumentDeleted("users/{userId}/following/{followingId}", async (event) => {
+  const uid = event.params.userId;
+  try { await adjustPublicCounts(uid, { followingDelta: -1 }); } catch (e) { logger.warn('onFollowingDeleted failed', { uid, error: String(e) }); }
+});
+
