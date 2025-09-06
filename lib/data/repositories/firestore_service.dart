@@ -750,8 +750,28 @@ class FirestoreService {
   // YENİ: Public profile oku (güvenli alanlar)
   Future<Map<String, dynamic>?> getPublicProfileRaw(String userId) async {
     final snap = await _publicProfileDoc(userId).get();
-    if (!snap.exists) return null;
-    return snap.data();
+    if (snap.exists) return snap.data();
+
+    // GERİYE DÖNÜK UYUMLULUK: public_profiles yoksa users + stats'tan güvenli alanları derle
+    try {
+      final userSnap = await usersCollection.doc(userId).get();
+      if (!userSnap.exists) return null;
+      final u = userSnap.data() ?? <String, dynamic>{};
+      final statsSnap = await _userStatsDoc(userId).get();
+      final s = statsSnap.data() ?? const <String, dynamic>{};
+
+      return <String, dynamic>{
+        'name': (u['name'] ?? '') as String,
+        'testCount': ((s['testCount'] ?? u['testCount'] ?? 0) as num).toInt(),
+        'totalNetSum': ((s['totalNetSum'] ?? u['totalNetSum'] ?? 0.0) as num).toDouble(),
+        'engagementScore': ((s['engagementScore'] ?? u['engagementScore'] ?? 0) as num).toInt(),
+        'streak': ((s['streak'] ?? u['streak'] ?? 0) as num).toInt(),
+        'avatarStyle': u['avatarStyle'] as String?,
+        'avatarSeed': u['avatarSeed'] as String?,
+      };
+    } catch (_) {
+      return null;
+    }
   }
 
   // In-App Notifications
