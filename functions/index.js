@@ -898,6 +898,54 @@ async function generateQuestsForAllUsers() {
   await Promise.all(batchPromises);
 }
 
+// İSTEMCİDEN GÜNLÜK GÖREV YENİLEME (CALLABLE)
+exports.regenerateDailyQuests = onCall({ region: 'us-central1', timeoutSeconds: 60 }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Oturum gerekli');
+  }
+  const uid = request.auth.uid;
+  const forceWeeklyMonthly = !!(request.data && request.data.forceWeeklyMonthly);
+  try {
+    const userRef = db.collection('users').doc(uid);
+    const userSnap = await userRef.get();
+    if (!userSnap.exists) {
+      throw new HttpsError('failed-precondition', 'Kullanıcı bulunamadı');
+    }
+    const userData = userSnap.data() || {};
+
+    // Analiz özeti (kişiselleştirme için opsiyonel)
+    let analysis = null;
+    try {
+      const a = await userRef.collection('performance').doc('analysis_summary').get();
+      analysis = a.exists ? a.data() : null;
+    } catch (_) {
+      analysis = null;
+    }
+
+    // Kullanıcı bağlamını hazırla ve şablonlardan günlük görevleri seç
+    const ctx = await getUserContext(userRef);
+    const dailyList = pickDailyQuestsForUser(userData, analysis, ctx);
+
+    // Mevcut günlük görevleri temizle ve yenilerini yaz
+    const dailyCol = userRef.collection('daily_quests');
+    const existing = await dailyCol.get();
+    const batch = db.batch();
+    existing.docs.forEach((d) => batch.delete(d.ref));
+    dailyList.forEach((q) => batch.set(dailyCol.doc(q.qid), q, { merge: true }));
+    batch.update(userRef, { lastQuestRefreshDate: admin.firestore.FieldValue.serverTimestamp() });
+    await batch.commit();
+
+    // Haftalık/aylık görevleri garanti altına al (isteğe bağlı force)
+    await ensureWeeklyAndMonthly(userRef, userData, analysis, forceWeeklyMonthly);
+
+    return { ok: true, dailyCount: dailyList.length };
+  } catch (e) {
+    // Hata durumunda anlamlı bir dönüş
+    if (e instanceof HttpsError) throw e;
+    throw new HttpsError('internal', `Görev üretimi başarısız: ${String(e)}`);
+  }
+});
+
 // Gemini API'sine güvenli bir şekilde istek atan proxy fonksiyonu.
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
 
