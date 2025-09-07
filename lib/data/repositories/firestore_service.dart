@@ -19,6 +19,7 @@ import 'package:bilge_ai/features/blog/models/blog_post.dart';
 import 'package:crypto/crypto.dart' as crypto;
 import 'dart:convert' show utf8;
 import 'package:bilge_ai/shared/notifications/in_app_notification_model.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 class FirestoreService {
   final FirebaseFirestore _firestore;
@@ -412,58 +413,33 @@ class FirestoreService {
     return snapshot.docs.map((doc) => UserModel.fromSnapshot(doc)).toList();
   }
 
-  // GÜNCEL: Puan güncelleme stats dokümanında
+  // GÜNCEL: Puan güncelleme artık Cloud Function üzerinden yapılır
   Future<void> updateEngagementScore(String userId, int pointsToAdd) async {
-    await _userStatsDoc(userId).set({
-      'engagementScore': FieldValue.increment(pointsToAdd),
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
-    // Liderlik tablosu senkronu idealde Cloud Function ile yapılmalı.
+    try {
+      final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
+      final callable = functions.httpsCallable('addEngagementPoints');
+      await callable.call({'pointsToAdd': pointsToAdd});
+    } catch (_) {
+      // istemci tarafında sessiz geç
+    }
   }
 
   Future<void> addTestResult(TestModel test) async {
-    // Testi ekle ve stats sayaçlarını arttır + streak hesapla
-    final newTestRef = _testsCollection.doc();
-    final statsRef = _userStatsDoc(test.userId);
-    await _firestore.runTransaction((txn) async {
-      // ÖNCE OKU
-      final statsSnap = await txn.get(statsRef);
-      final stats = statsSnap.data() ?? <String, dynamic>{};
-      final Timestamp? lastTs = stats['lastStreakUpdate'] as Timestamp?;
-      final int currentStreak = (stats['streak'] as num?)?.toInt() ?? 0;
-
-      final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
-
-      int newStreak;
-      if (lastTs == null) {
-        newStreak = 1;
-      } else {
-        final lastDate = lastTs.toDate();
-        final lastDay = DateTime(lastDate.year, lastDate.month, lastDate.day);
-        if (lastDay == today) {
-          newStreak = currentStreak; // aynı gün tekrar test
-        } else {
-          final yesterday = today.subtract(const Duration(days: 1));
-          if (lastDay == yesterday) {
-            newStreak = currentStreak + 1;
-          } else {
-            newStreak = 1;
-          }
-        }
-      }
-
-      // SONRA YAZ
-      txn.set(newTestRef, test.toJson());
-      txn.set(statsRef, {
-        'testCount': FieldValue.increment(1),
-        'totalNetSum': FieldValue.increment(test.totalNet),
-        'streak': newStreak,
-        'lastStreakUpdate': Timestamp.fromDate(today),
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-    });
-    await updateEngagementScore(test.userId, 50);
+    // Güvenlik: Test ekleme + streak/puan/leaderboard sunucuda yapılır
+    try {
+      final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
+      final callable = functions.httpsCallable('addTestResult');
+      await callable.call({
+        'testName': test.testName,
+        'examType': test.examType.name,
+        'sectionName': test.sectionName,
+        'scores': test.scores,
+        'penaltyCoefficient': test.penaltyCoefficient,
+        'dateMs': test.date.millisecondsSinceEpoch,
+      });
+    } catch (_) {
+      // sessiz geç; UI yeniden denemeyi yönetebilir
+    }
   }
 
   // YENI SAYFALAMALI FONKSIYON

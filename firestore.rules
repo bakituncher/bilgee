@@ -216,7 +216,11 @@ service cloud.firestore {
         allow get, list: if request.auth.uid == userId;
         allow delete: if request.auth.uid == userId;
       }
-      match /state/{docId} { allow read, write: if request.auth.uid == userId; }
+      match /state/{docId} {
+        allow read: if request.auth.uid == userId;
+        // stats dokümanını sadece sunucu günceller; diğer state dokümanları kullanıcı tarafından yazılabilir
+        allow write: if request.auth.uid == userId && docId != 'stats';
+      }
       match /plans/{docId} { allow read, write: if request.auth.uid == userId; }
       match /performance/{docId} {
         allow read, write: if request.auth.uid == userId;
@@ -321,8 +325,9 @@ service cloud.firestore {
     // TESTLER
     // =====================================================================
     match /tests/{testId} {
-      allow read, delete: if request.auth.uid == resource.data.userId;
-      allow create: if request.auth.uid == request.resource.data.userId;
+      // Kullanıcı kendi test sonuçlarını okuyabilir; yazma sadece Cloud Functions (Admin SDK) tarafından yapılır
+      allow read: if request.auth.uid == resource.data.userId;
+      allow create, update, delete: if false;
     }
     match /focusSessions/{sessionId} {
       allow read, delete: if request.auth.uid == resource.data.userId;
