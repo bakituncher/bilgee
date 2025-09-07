@@ -1225,7 +1225,75 @@ exports.onUserStatsWritten = onDocumentWritten("users/{userId}/state/stats", asy
 // Kullanıcı profil güncellemesi: public_profile yansıt
 exports.onUserProfileChanged = onDocumentWritten("users/{userId}", async (event) => {
   const uid = event.params.userId;
-  try { await updatePublicProfile(uid); } catch(_) {}
+  const before = event.data?.before?.data() || {};
+  const after = event.data?.after?.data() || {};
+  try {
+    // Public profile senkronu
+    await updatePublicProfile(uid);
+
+    const prevExam = before?.selectedExam || null;
+    const newExam = after?.selectedExam || null;
+    const name = after?.name || '';
+    const avatarStyle = after?.avatarStyle || null;
+    const avatarSeed = after?.avatarSeed || null;
+
+    if (newExam) {
+      // Stats oku (puan/testCount için)
+      let stats = {};
+      try {
+        const sSnap = await db.collection('users').doc(uid).collection('state').doc('stats').get();
+        stats = sSnap.exists ? (sSnap.data() || {}) : {};
+      } catch (_) {}
+      const score = typeof stats.engagementScore === 'number' ? stats.engagementScore : 0;
+      const testCount = typeof stats.testCount === 'number' ? stats.testCount : 0;
+
+      // Legacy leaderboards kaydını güncelle
+      const lbRef = db.collection('leaderboards').doc(String(newExam)).collection('users').doc(uid);
+      await lbRef.set({
+        userId: uid,
+        userName: name,
+        avatarStyle,
+        avatarSeed,
+        score, // skorun kendisi de tutarlı kalsın
+        testCount,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
+
+      // Yeni leaderboard_scores (günlük/haftalık) isim ve avatar senkronu
+      const dayKey = dayKeyIstanbul();
+      const weekKey = weekKeyIstanbul();
+      const base = db.collection('leaderboard_scores').doc(String(newExam));
+      await Promise.all([
+        base.collection('daily').doc(dayKey).collection('users').doc(uid).set({
+          userId: uid,
+          userName: name,
+          avatarStyle,
+          avatarSeed,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true }),
+        base.collection('weekly').doc(weekKey).collection('users').doc(uid).set({
+          userId: uid,
+          userName: name,
+          avatarStyle,
+          avatarSeed,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true }),
+      ]);
+
+      // Yayınlanmış tepe listelerini ad/avatara yansıtmak için yeniden yayınla
+      await Promise.allSettled([
+        publishTopFor(String(newExam), 'daily'),
+        publishTopFor(String(newExam), 'weekly'),
+      ]);
+    }
+
+    // Sınav değiştiyse eski leaderboard kaydını temizle
+    if (prevExam && prevExam !== newExam) {
+      await db.collection('leaderboards').doc(String(prevExam)).collection('users').doc(uid).delete().catch(()=>{});
+    }
+  } catch (e) {
+    logger.warn('onUserProfileChanged sync failed', { uid, error: String(e) });
+  }
 });
 
 // ==== Zamanlanmış: 3 saatte bir tepe listelerini yayınla ====
