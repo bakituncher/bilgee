@@ -293,3 +293,4 @@ class QuestProgressController {
     onAdded?.call();
   }
 }
+
