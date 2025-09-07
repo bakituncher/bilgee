@@ -15,8 +15,17 @@ service cloud.firestore {
         return ['email','name','goal','challenges','weeklyStudyGoal','onboardingCompleted','tutorialCompleted','streak','lastStreakUpdate','selectedExam','selectedExamSection','testCount','totalNetSum','engagementScore','weeklyAvailability','activeWeeklyCampaign','lastQuestRefreshDate','unlockedAchievements','avatarStyle','avatarSeed','dailyQuestPlanSignature','lastScheduleCompletionRatio','dailyScheduleStreak','lastWeeklyReport','dynamicDifficultyFactorToday','weeklyPlanCompletedAt','workshopStreak','lastWorkshopDate','settings','displayName','photoUrl','bio','createdAt','updatedAt'];
       }
 
-      // CREATE/UPDATE: yalnizca sahibine izin ver (sadelestirilmis ve uyumlu)
-      allow create, update: if request.auth != null && request.auth.uid == userId;
+      // CREATE/UPDATE: yalnizca sahibine izin ver + alan whitelisti ve temel tip/uzunluk kontrolleri
+      allow create, update: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.keys().hasOnly(userAllowedKeys())
+        && (request.resource.data.displayName == null || (request.resource.data.displayName is string && request.resource.data.displayName.size() <= 80))
+        && (request.resource.data.photoUrl == null || (request.resource.data.photoUrl is string && request.resource.data.photoUrl.size() <= 500))
+        && (request.resource.data.bio == null || (request.resource.data.bio is string && request.resource.data.bio.size() <= 500))
+        && (request.resource.data.settings == null || (request.resource.data.settings is map && request.resource.data.settings.size() <= 50))
+        && (request.resource.data.unlockedAchievements == null || (request.resource.data.unlockedAchievements is list && request.resource.data.unlockedAchievements.size() <= 500))
+        && (request.resource.data.createdAt == null || request.resource.data.createdAt is timestamp)
+        && (request.resource.data.updatedAt == null || request.resource.data.updatedAt is timestamp);
 
       // Silme (opsiyonel): Kullanıcı kendi dokümanını silebilsin istiyorsanız açın.
       // allow delete: if request.auth.uid == userId;
@@ -216,7 +225,11 @@ service cloud.firestore {
         allow get, list: if request.auth.uid == userId;
         allow delete: if request.auth.uid == userId;
       }
-      match /state/{docId} { allow read, write: if request.auth.uid == userId; }
+      match /state/{docId} {
+        allow read: if request.auth.uid == userId;
+        // stats dokümanını sadece sunucu günceller; diğer state dokümanları kullanıcı tarafından yazılabilir
+        allow write: if request.auth.uid == userId && docId != 'stats';
+      }
       match /plans/{docId} { allow read, write: if request.auth.uid == userId; }
       match /performance/{docId} {
         allow read, write: if request.auth.uid == userId;
@@ -226,22 +239,68 @@ service cloud.firestore {
       match /savedWorkshops/{workshopId} { allow read, write: if request.auth.uid == userId; }
       match /user_activity/{activityId} { allow read, write: if request.auth.uid == userId; }
 
-      // YENİ: Cihaz tokenları
+      // Cihaz tokenları
       match /devices/{deviceId} {
-        allow read, create, update, delete: if request.auth.uid == userId;
+        function deviceAllowedKeys() { return ['uid','token','platform','lang','appVersion','appBuild','createdAt','lastSeenAt','fcmTopics','disabled','updatedAt']; }
+        function isValidPlatform(p) { return p in ['android','ios','other']; }
+
+        allow read: if request.auth.uid == userId;
+
+        // Oluşturma: temel alanlar ve boyut kontrolleri
+        allow create: if request.auth.uid == userId
+          && request.resource.data.keys().hasOnly(deviceAllowedKeys())
+          && (request.resource.data.uid == null || request.resource.data.uid == userId)
+          && request.resource.data.token is string && request.resource.data.token.size() > 20 && request.resource.data.token.size() <= 1024
+          && request.resource.data.platform is string && isValidPlatform(request.resource.data.platform)
+          && (request.resource.data.lang == null || (request.resource.data.lang is string && request.resource.data.lang.size() >= 2 && request.resource.data.lang.size() <= 10))
+          && (request.resource.data.appVersion == null || (request.resource.data.appVersion is string && request.resource.data.appVersion.size() <= 30))
+          && (request.resource.data.appBuild == null || (request.resource.data.appBuild is int && request.resource.data.appBuild >= 0 && request.resource.data.appBuild <= 100000))
+          && (request.resource.data.disabled == null || request.resource.data.disabled is bool)
+          && request.resource.data.createdAt is timestamp
+          && (request.resource.data.updatedAt == null || request.resource.data.updatedAt is timestamp)
+          && (request.resource.data.lastSeenAt == null || request.resource.data.lastSeenAt is timestamp)
+          && (request.resource.data.fcmTopics == null || (request.resource.data.fcmTopics is list && request.resource.data.fcmTopics.size() <= 50));
+
+        // Güncelleme: sunucu alanları immutable, diğerleri kontrollü
+        allow update: if request.auth.uid == userId
+          && request.resource.data.keys().hasOnly(deviceAllowedKeys())
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.disabled == resource.data.disabled
+          && request.resource.data.updatedAt == resource.data.updatedAt
+          && (request.resource.data.token is string && request.resource.data.token.size() > 20 && request.resource.data.token.size() <= 1024)
+          && (request.resource.data.platform is string && isValidPlatform(request.resource.data.platform))
+          && (request.resource.data.lang == null || (request.resource.data.lang is string && request.resource.data.lang.size() >= 2 && request.resource.data.lang.size() <= 10))
+          && (request.resource.data.appVersion == null || (request.resource.data.appVersion is string && request.resource.data.appVersion.size() <= 30))
+          && (request.resource.data.appBuild == null || (request.resource.data.appBuild is int && request.resource.data.appBuild >= 0 && request.resource.data.appBuild <= 100000))
+          && (request.resource.data.lastSeenAt == null || request.resource.data.lastSeenAt is timestamp)
+          && (request.resource.data.fcmTopics == null || (request.resource.data.fcmTopics is list && request.resource.data.fcmTopics.size() <= 50));
+
+        allow delete: if request.auth.uid == userId;
       }
 
-      // YENİ: Uygulama içi bildirimler
+      // Uygulama içi bildirimler
       match /in_app_notifications/{notifId} {
+        // okuma: sadece sahibi
         allow read: if request.auth.uid == userId;
-        allow update: if request.auth.uid == userId; // okundu işaretlemek için
+        // okundu işaretlemek dışında güncelleme yapılamaz
+        allow update: if request.auth.uid == userId
+          && request.resource.data.keys().hasOnly(['title','body','route','createdAt','read','readAt','imageUrl'])
+          && request.resource.data.title == resource.data.title
+          && request.resource.data.body == resource.data.body
+          && request.resource.data.route == resource.data.route
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.imageUrl == resource.data.imageUrl
+          && request.resource.data.read == true
+          && resource.data.read == false
+          && request.resource.data.readAt == request.time;
         // create sadece Cloud Functions tarafından yapılır
         allow create: if false;
         // Kullanıcı kendi bildirimini silebilir
         allow delete: if request.auth.uid == userId;
       }
 
-      // TAKIP: followers (bir kullanıcının takipçileri) — docId takipçinin uid'si olmalı
+      // TAKIP: followers (bir kullanıcının takipçileri)
       match /followers/{followerId} {
         allow read, list: if request.auth != null;
         // yalnızca kendin başka birinin followers listesine eklenebilirsin
@@ -253,7 +312,7 @@ service cloud.firestore {
         allow update: if false;
       }
 
-      // TAKIP: following (kullanıcının takip ettikleri) — sadece sahibi yazar
+      // TAKIP: following (kullanıcının takip ettikleri)
       match /following/{followingId} {
         allow read, list: if request.auth != null;
         // sadece sahibi kendi following listesine ekleyebilir
@@ -321,8 +380,9 @@ service cloud.firestore {
     // TESTLER
     // =====================================================================
     match /tests/{testId} {
-      allow read, delete: if request.auth.uid == resource.data.userId;
-      allow create: if request.auth.uid == request.resource.data.userId;
+      // Kullanıcı kendi test sonuçlarını okuyabilir; yazma sadece Cloud Functions (Admin SDK) tarafından yapılır
+      allow read: if request.auth.uid == resource.data.userId;
+      allow create, update, delete: if false;
     }
     match /focusSessions/{sessionId} {
       allow read, delete: if request.auth.uid == resource.data.userId;

@@ -898,6 +898,54 @@ async function generateQuestsForAllUsers() {
   await Promise.all(batchPromises);
 }
 
+// İSTEMCİDEN GÜNLÜK GÖREV YENİLEME (CALLABLE)
+exports.regenerateDailyQuests = onCall({ region: 'us-central1', timeoutSeconds: 60 }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Oturum gerekli');
+  }
+  const uid = request.auth.uid;
+  const forceWeeklyMonthly = !!(request.data && request.data.forceWeeklyMonthly);
+  try {
+    const userRef = db.collection('users').doc(uid);
+    const userSnap = await userRef.get();
+    if (!userSnap.exists) {
+      throw new HttpsError('failed-precondition', 'Kullanıcı bulunamadı');
+    }
+    const userData = userSnap.data() || {};
+
+    // Analiz özeti (kişiselleştirme için opsiyonel)
+    let analysis = null;
+    try {
+      const a = await userRef.collection('performance').doc('analysis_summary').get();
+      analysis = a.exists ? a.data() : null;
+    } catch (_) {
+      analysis = null;
+    }
+
+    // Kullanıcı bağlamını hazırla ve şablonlardan günlük görevleri seç
+    const ctx = await getUserContext(userRef);
+    const dailyList = pickDailyQuestsForUser(userData, analysis, ctx);
+
+    // Mevcut günlük görevleri temizle ve yenilerini yaz
+    const dailyCol = userRef.collection('daily_quests');
+    const existing = await dailyCol.get();
+    const batch = db.batch();
+    existing.docs.forEach((d) => batch.delete(d.ref));
+    dailyList.forEach((q) => batch.set(dailyCol.doc(q.qid), q, { merge: true }));
+    batch.update(userRef, { lastQuestRefreshDate: admin.firestore.FieldValue.serverTimestamp() });
+    await batch.commit();
+
+    // Haftalık/aylık görevleri garanti altına al (isteğe bağlı force)
+    await ensureWeeklyAndMonthly(userRef, userData, analysis, forceWeeklyMonthly);
+
+    return { ok: true, dailyCount: dailyList.length };
+  } catch (e) {
+    // Hata durumunda anlamlı bir dönüş
+    if (e instanceof HttpsError) throw e;
+    throw new HttpsError('internal', `Görev üretimi başarısız: ${String(e)}`);
+  }
+});
+
 // Gemini API'sine güvenli bir şekilde istek atan proxy fonksiyonu.
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
 
@@ -1225,7 +1273,75 @@ exports.onUserStatsWritten = onDocumentWritten("users/{userId}/state/stats", asy
 // Kullanıcı profil güncellemesi: public_profile yansıt
 exports.onUserProfileChanged = onDocumentWritten("users/{userId}", async (event) => {
   const uid = event.params.userId;
-  try { await updatePublicProfile(uid); } catch(_) {}
+  const before = event.data?.before?.data() || {};
+  const after = event.data?.after?.data() || {};
+  try {
+    // Public profile senkronu
+    await updatePublicProfile(uid);
+
+    const prevExam = before?.selectedExam || null;
+    const newExam = after?.selectedExam || null;
+    const name = after?.name || '';
+    const avatarStyle = after?.avatarStyle || null;
+    const avatarSeed = after?.avatarSeed || null;
+
+    if (newExam) {
+      // Stats oku (puan/testCount için)
+      let stats = {};
+      try {
+        const sSnap = await db.collection('users').doc(uid).collection('state').doc('stats').get();
+        stats = sSnap.exists ? (sSnap.data() || {}) : {};
+      } catch (_) {}
+      const score = typeof stats.engagementScore === 'number' ? stats.engagementScore : 0;
+      const testCount = typeof stats.testCount === 'number' ? stats.testCount : 0;
+
+      // Legacy leaderboards kaydını güncelle
+      const lbRef = db.collection('leaderboards').doc(String(newExam)).collection('users').doc(uid);
+      await lbRef.set({
+        userId: uid,
+        userName: name,
+        avatarStyle,
+        avatarSeed,
+        score, // skorun kendisi de tutarlı kalsın
+        testCount,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
+
+      // Yeni leaderboard_scores (günlük/haftalık) isim ve avatar senkronu
+      const dayKey = dayKeyIstanbul();
+      const weekKey = weekKeyIstanbul();
+      const base = db.collection('leaderboard_scores').doc(String(newExam));
+      await Promise.all([
+        base.collection('daily').doc(dayKey).collection('users').doc(uid).set({
+          userId: uid,
+          userName: name,
+          avatarStyle,
+          avatarSeed,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true }),
+        base.collection('weekly').doc(weekKey).collection('users').doc(uid).set({
+          userId: uid,
+          userName: name,
+          avatarStyle,
+          avatarSeed,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true }),
+      ]);
+
+      // Yayınlanmış tepe listelerini ad/avatara yansıtmak için yeniden yayınla
+      await Promise.allSettled([
+        publishTopFor(String(newExam), 'daily'),
+        publishTopFor(String(newExam), 'weekly'),
+      ]);
+    }
+
+    // Sınav değiştiyse eski leaderboard kaydını temizle
+    if (prevExam && prevExam !== newExam) {
+      await db.collection('leaderboards').doc(String(prevExam)).collection('users').doc(uid).delete().catch(()=>{});
+    }
+  } catch (e) {
+    logger.warn('onUserProfileChanged sync failed', { uid, error: String(e) });
+  }
 });
 
 // ==== Zamanlanmış: 3 saatte bir tepe listelerini yayınla ====
@@ -1362,3 +1478,170 @@ exports.onFollowingDeleted = onDocumentDeleted("users/{userId}/following/{follow
   try { await adjustPublicCounts(uid, { followingDelta: -1 }); } catch (e) { logger.warn('onFollowingDeleted failed', { uid, error: String(e) }); }
 });
 
+// Test sonucu agregasyonu: doğru/yanlış/boş sayısı ve net hesapla
+async function computeTestAggregates(input) {
+  const scores = input?.scores && typeof input.scores === 'object' ? input.scores : {};
+  const coefRaw = typeof input?.penaltyCoefficient === 'number' ? input.penaltyCoefficient : Number(input?.penaltyCoefficient);
+  const penaltyCoefficient = Number.isFinite(coefRaw) ? coefRaw : 0.25;
+  let totalCorrect = 0, totalWrong = 0, totalBlank = 0, totalQuestions = 0;
+  const normalizedScores = {};
+  for (const [subject, m] of Object.entries(scores)) {
+    const mm = m && typeof m === 'object' ? m : {};
+    const c = Number(mm.dogru || mm.correct || 0) | 0;
+    const w = Number(mm.yanlis || mm.wrong || 0) | 0;
+    const b = Number(mm.bos || mm.blank || 0) | 0;
+    totalCorrect += c; totalWrong += w; totalBlank += b; totalQuestions += (c + w + b);
+    normalizedScores[subject] = { dogru: c, yanlis: w, bos: b };
+  }
+  const totalNet = totalCorrect - penaltyCoefficient * totalWrong;
+  return { normalizedScores, totalCorrect, totalWrong, totalBlank, totalQuestions, totalNet, penaltyCoefficient };
+}
+
+exports.addEngagementPoints = onCall({region: 'us-central1'}, async (request) => {
+  if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
+  const uid = request.auth.uid;
+  const deltaRaw = request.data?.pointsToAdd;
+  const delta = typeof deltaRaw === 'number' ? Math.floor(deltaRaw) : parseInt(String(deltaRaw||'0'), 10);
+  if (!Number.isFinite(delta) || delta <= 0 || delta > 100000) {
+    throw new HttpsError('invalid-argument', 'pointsToAdd pozitif bir tam sayı olmalı');
+  }
+
+  const userRef = db.collection('users').doc(uid);
+  const statsRef = userRef.collection('state').doc('stats');
+  let examType = null; let userDocData = null;
+  await db.runTransaction(async (tx) => {
+    const [uSnap, sSnap] = await Promise.all([tx.get(userRef), tx.get(statsRef)]);
+    if (!uSnap.exists) throw new HttpsError('failed-precondition', 'Kullanıcı bulunamadı');
+    userDocData = uSnap.data() || {};
+    examType = userDocData?.selectedExam || null;
+    tx.set(statsRef, {
+      engagementScore: admin.firestore.FieldValue.increment(delta),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, {merge: true});
+  });
+
+  // Liderlik tablolarını güncelle (günlük/haftalık) ve klasik koleksiyon
+  try {
+    if (examType) {
+      await upsertLeaderboardScore({ examType, uid, delta, userDocData });
+      const lbRef = db.collection('leaderboards').doc(examType).collection('users').doc(uid);
+      await lbRef.set({
+        userId: uid,
+        userName: userDocData?.name || '',
+        avatarStyle: userDocData?.avatarStyle || null,
+        avatarSeed: userDocData?.avatarSeed || null,
+        score: admin.firestore.FieldValue.increment(delta),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, {merge: true});
+      // İsteğe bağlı: en güncel tepeyi yayınla (hızlı senkron)
+      await Promise.allSettled([
+        publishTopFor(examType, 'daily'),
+        publishTopFor(examType, 'weekly'),
+      ]);
+    }
+  } catch (e) {
+    logger.warn('Leaderboard update failed on addEngagementPoints', { uid, examType, error: String(e) });
+  }
+
+  await updatePublicProfile(uid).catch(()=>{});
+  return { ok: true, added: delta };
+});
+
+exports.addTestResult = onCall({region: 'us-central1', timeoutSeconds: 30}, async (request) => {
+  if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
+  const uid = request.auth.uid;
+  const input = request.data || {};
+  const testName = String(input.testName || '').trim();
+  const examTypeParam = String(input.examType || '').trim();
+  const sectionName = String(input.sectionName || '').trim();
+  const dateMs = Number.isFinite(input.dateMs) ? Number(input.dateMs) : null;
+  if (!testName) throw new HttpsError('invalid-argument', 'testName gerekli');
+  if (!examTypeParam) throw new HttpsError('invalid-argument', 'examType gerekli');
+  if (!sectionName) throw new HttpsError('invalid-argument', 'sectionName gerekli');
+
+  const { normalizedScores, totalCorrect, totalWrong, totalBlank, totalQuestions, totalNet, penaltyCoefficient } = await computeTestAggregates(input);
+
+  const userRef = db.collection('users').doc(uid);
+  const statsRef = userRef.collection('state').doc('stats');
+  const testsCol = db.collection('tests');
+
+  let userDocData = null; let examType = null; let newTestId = null; let pointsAward = 50;
+
+  await db.runTransaction(async (tx) => {
+    const [uSnap, sSnap] = await Promise.all([tx.get(userRef), tx.get(statsRef)]);
+    if (!uSnap.exists) throw new HttpsError('failed-precondition', 'Kullanıcı yok');
+    userDocData = uSnap.data() || {};
+    examType = (userDocData?.selectedExam || examTypeParam || '').toString();
+
+    const stats = sSnap.exists ? (sSnap.data() || {}) : {};
+    const lastTs = stats.lastStreakUpdate; // beklenen Timestamp
+    const currentStreak = typeof stats.streak === 'number' ? stats.streak : 0;
+
+    const now = nowIstanbul();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    let newStreak = 1;
+    if (lastTs && typeof lastTs.toDate === 'function') {
+      const lastDate = lastTs.toDate();
+      const lastDay = new Date(lastDate.getFullYear(), lastDate.getMonth(), lastDate.getDate());
+      if (lastDay.getTime() === today.getTime()) {
+        newStreak = currentStreak; // aynı gün
+      } else {
+        const y = new Date(today); y.setDate(today.getDate() - 1);
+        newStreak = (lastDay.getTime() === y.getTime()) ? currentStreak + 1 : 1;
+      }
+    }
+
+    const newDocRef = testsCol.doc();
+    newTestId = newDocRef.id;
+    const testDate = dateMs && Number.isFinite(dateMs) ? admin.firestore.Timestamp.fromMillis(dateMs) : admin.firestore.Timestamp.now();
+    tx.set(newDocRef, {
+      userId: uid,
+      testName,
+      examType,
+      sectionName,
+      date: testDate,
+      scores: normalizedScores,
+      totalNet,
+      totalQuestions,
+      totalCorrect,
+      totalWrong,
+      totalBlank,
+      penaltyCoefficient,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    tx.set(statsRef, {
+      testCount: admin.firestore.FieldValue.increment(1),
+      totalNetSum: admin.firestore.FieldValue.increment(totalNet),
+      streak: newStreak,
+      lastStreakUpdate: admin.firestore.Timestamp.fromDate(today),
+      engagementScore: admin.firestore.FieldValue.increment(pointsAward),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, {merge: true});
+  });
+
+  try {
+    if (examType) {
+      await upsertLeaderboardScore({ examType, uid, delta: pointsAward, userDocData });
+      const lbRef = db.collection('leaderboards').doc(examType).collection('users').doc(uid);
+      await lbRef.set({
+        userId: uid,
+        userName: userDocData?.name || '',
+        avatarStyle: userDocData?.avatarStyle || null,
+        avatarSeed: userDocData?.avatarSeed || null,
+        score: admin.firestore.FieldValue.increment(pointsAward),
+        testCount: admin.firestore.FieldValue.increment(1),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, {merge: true});
+      await Promise.allSettled([
+        publishTopFor(examType, 'daily'),
+        publishTopFor(examType, 'weekly'),
+      ]);
+    }
+  } catch (e) {
+    logger.warn('Leaderboard update failed on addTestResult', { uid, examType, error: String(e) });
+  }
+
+  await updatePublicProfile(uid).catch(()=>{});
+  return { ok: true, testId: newTestId, awarded: pointsAward };
+});
