@@ -75,5 +75,56 @@
       ]
     }
   ],
-  "fieldOverrides": []
+  "fieldOverrides": [
+    {
+      "collectionGroup": "users",
+      "fieldPath": "settings",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "users",
+      "fieldPath": "unlockedAchievements",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "users",
+      "fieldPath": "bio",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "users",
+      "fieldPath": "weeklyAvailability",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "users",
+      "fieldPath": "lastWeeklyReport",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "users",
+      "fieldPath": "photoUrl",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "in_app_notifications",
+      "fieldPath": "body",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "devices",
+      "fieldPath": "fcmTopics",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "analytics_events",
+      "fieldPath": "meta",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "posts",
+      "fieldPath": "content",
+      "indexes": []
+    }
+  ]
 }
