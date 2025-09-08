@@ -962,7 +962,10 @@ class FirestoreService {
   }
 
   Future<void> upsertQuest(String userId, Quest quest) async {
-    await dailyQuestsCollection(userId).doc(quest.id).set(quest.toMap(), SetOptions(merge: true));
+    final data = Map<String, dynamic>.from(quest.toMap());
+    // Kurallar: daily_quests dokümanında 'id' alanı izinli değil
+    data.remove('id');
+    await dailyQuestsCollection(userId).doc(quest.id).set(data, SetOptions(merge: true));
   }
 
   Future<void> updateQuestFields(String userId, String questId, Map<String, dynamic> fields) async {
@@ -971,22 +974,60 @@ class FirestoreService {
     await ref.update(fields);
   }
 
-  Future<void> claimQuestReward(String userId, Quest quest) async {
-    final batch = _firestore.batch();
-    final ref = await _findQuestRef(userId, quest.id);
+  // YENİ: Görev ilerlemesini ATOMİK ve KURALLARA UYGUN şekilde artır
+  Future<void> updateQuestProgressAtomic(String userId, String questId, int desiredProgress) async {
+    final ref = await _findQuestRef(userId, questId);
     if (ref == null) return;
-    batch.update(ref, {
-      'rewardClaimed': true,
-      'isCompleted': true,
-      'currentProgress': quest.goalValue,
-      'completionDate': FieldValue.serverTimestamp(),
+    await _firestore.runTransaction((txn) async {
+      final snap = await txn.get(ref);
+      if (!snap.exists) return;
+      final data = snap.data() ?? <String, dynamic>{};
+      final num? currNum = data['currentProgress'] as num?;
+      final int current = (currNum ?? 0).toInt();
+      final int goal = (data['goalValue'] as num?)?.toInt() ?? current;
+      // Monotonik artış: yeni değer en az mevcut ve en fazla hedef
+      final int next = desiredProgress.clamp(current, goal);
+      if (next == current) return; // değişiklik yoksa yazma
+      txn.update(ref, { 'currentProgress': next });
     });
-    batch.set(_userStatsDoc(userId), {
-      'engagementScore': FieldValue.increment(quest.reward),
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
-    await batch.commit();
-    await _syncLeaderboardUser(userId);
+  }
+
+  Future<void> claimQuestReward(String userId, Quest quest) async {
+    try {
+      final batch = _firestore.batch();
+      final ref = await _findQuestRef(userId, quest.id);
+      if (ref == null) {
+        throw Exception('Görev bulunamadı');
+      }
+      // Önce görevin gerçekten tamamlanmış olduğunu kontrol et
+      final questDoc = await ref.get();
+      if (!questDoc.exists) {
+        throw Exception('Görev dokümanı bulunamadı');
+      }
+      final questData = questDoc.data()!;
+      final isCompleted = questData['isCompleted'] as bool? ?? false;
+      final rewardClaimed = questData['rewardClaimed'] as bool? ?? false;
+      if (!isCompleted) {
+        throw Exception('Görev henüz tamamlanmamış');
+      }
+      if (rewardClaimed) {
+        throw Exception('Ödül zaten alınmış');
+      }
+      // Yalnızca görev dokümanını güncelle
+      batch.update(ref, {
+        'rewardClaimed': true,
+        'isCompleted': true,
+        'currentProgress': quest.goalValue,
+        'completionDate': FieldValue.serverTimestamp(),
+      });
+      await batch.commit();
+      // Puan artışını Cloud Function üzerinden yap (kurallara uygun)
+      await updateEngagementScore(userId, quest.reward);
+      // Leaderboard senkronu Cloud Function içinde yönetiliyor
+    } catch (e) {
+      print('Ödül alma hatası: $e');
+      rethrow;
+    }
   }
 
   Future<void> reportQuestionIssue({

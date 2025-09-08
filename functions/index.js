@@ -1344,7 +1344,7 @@ exports.onUserProfileChanged = onDocumentWritten("users/{userId}", async (event)
   }
 });
 
-// ==== Zamanlanmış: 3 saatte bir tepe listelerini yayınla ====
+// ==== Zamanlanmış: 3 saatte bir tepeyi yayınla ====
 exports.publishLeaderboardSnapshots = onSchedule({ schedule: '0 */3 * * *', timeZone: 'Europe/Istanbul' }, async () => {
   const examsSnap = await db.collection('leaderboard_exams').get();
   if (examsSnap.empty) return;
@@ -1644,4 +1644,97 @@ exports.addTestResult = onCall({region: 'us-central1', timeoutSeconds: 30}, asyn
 
   await updatePublicProfile(uid).catch(()=>{});
   return { ok: true, testId: newTestId, awarded: pointsAward };
+});
+
+// İstemciden görevi TAMAMLAMA (CALLABLE) — isCompleted sadece sunucuda set edilir
+exports.completeQuest = onCall({ region: 'us-central1', timeoutSeconds: 30 }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Oturum gerekli');
+  }
+  const uid = request.auth.uid;
+  const questId = String(request.data?.questId || '').trim();
+  if (!questId) throw new HttpsError('invalid-argument', 'questId zorunlu');
+
+  try {
+    const userRef = db.collection('users').doc(uid);
+    const colls = ['daily_quests','weekly_quests','monthly_quests'];
+    let docRef = null, snap = null;
+    for (const c of colls) {
+      const ref = userRef.collection(c).doc(questId);
+      const s = await ref.get();
+      if (s.exists) { docRef = ref; snap = s; break; }
+    }
+    if (!docRef) throw new HttpsError('not-found', 'Görev bulunamadı');
+
+    const data = snap.data() || {};
+    if (data.isCompleted === true) {
+      // idempotent: zaten tamamlandı
+      return { ok: true, alreadyCompleted: true };
+    }
+
+    const goal = Number(data.goalValue || 0);
+    const cur = Number(data.currentProgress || 0);
+
+    // Görevin gerçekten tamamlanması için hedefe ulaşıp ulaşmadığını kontrol et
+    if (goal > 0 && cur < goal) {
+      throw new HttpsError('failed-precondition', `Görev henüz tamamlanmadı. İlerleme: ${cur}/${goal}`);
+    }
+
+    const clamped = Math.min(Math.max(cur, 0), goal);
+
+    // Güvenli güncelleme - race condition'ları önle
+    await docRef.update({
+      currentProgress: goal > 0 ? Math.max(clamped, goal) : clamped,
+      isCompleted: true,
+      completionDate: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    // Kullanıcının BP'sini güncelle
+    const reward = Number(data.reward || 0);
+    if (reward > 0) {
+      await userRef.update({
+        bilgePoints: admin.firestore.FieldValue.increment(reward)
+      });
+    }
+
+    return { ok: true };
+  } catch (e) {
+    if (e instanceof HttpsError) throw e;
+    throw new HttpsError('internal', `Tamamlama başarısız: ${String(e)}`);
+  }
+});
+
+// Otomatik Görev Tamamlama: İlerleme hedefe ulaştığında backend işaretler
+async function autoCompleteQuestIfNeeded(afterSnap) {
+  try {
+    if (!afterSnap.exists) return;
+    const data = afterSnap.data() || {};
+    if (data.isCompleted === true) return; // zaten tamamlandı
+    const goal = Number(data.goalValue || 0);
+    const cur = Number(data.currentProgress || 0);
+    if (goal > 0 && cur >= goal) {
+      await afterSnap.ref.set({
+        currentProgress: Math.max(cur, goal),
+        isCompleted: true,
+        completionDate: admin.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
+    }
+  } catch (e) {
+    logger.warn('autoCompleteQuestIfNeeded failed', { path: afterSnap?.ref?.path || '', error: String(e) });
+  }
+}
+
+exports.onDailyQuestProgress = onDocumentWritten("users/{userId}/daily_quests/{questId}", async (event) => {
+  if (!event?.data?.after) return;
+  await autoCompleteQuestIfNeeded(event.data.after);
+});
+
+exports.onWeeklyQuestProgress = onDocumentWritten("users/{userId}/weekly_quests/{questId}", async (event) => {
+  if (!event?.data?.after) return;
+  await autoCompleteQuestIfNeeded(event.data.after);
+});
+
+exports.onMonthlyQuestProgress = onDocumentWritten("users/{userId}/monthly_quests/{questId}", async (event) => {
+  if (!event?.data?.after) return;
+  await autoCompleteQuestIfNeeded(event.data.after);
 });

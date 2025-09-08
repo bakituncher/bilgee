@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui; // blur için
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:bilge_ai/core/theme/app_theme.dart';
@@ -154,6 +155,74 @@ class _QuestCompletionToastState extends ConsumerState<QuestCompletionToast> wit
                             ),
                           ),
                           const SizedBox(width: 12),
+                          // ÖNEMLİ: Ödül toplama butonu ekleniyor
+                          Consumer(
+                            builder: (context, ref, child) {
+                              return GestureDetector(
+                                onTap: () async {
+                                  // Haptic feedback
+                                  HapticFeedback.lightImpact();
+
+                                  // Ödülü topla
+                                  await ref.read(questCompletionProvider.notifier)
+                                    .claimReward(quest, ref as Ref);
+
+                                  // Başarı mesajı göster
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Row(
+                                          children: [
+                                            Icon(Icons.monetization_on, color: Colors.amber),
+                                            SizedBox(width: 8),
+                                            Text('${quest.reward} BP toplandı! 🎉'),
+                                          ],
+                                        ),
+                                        backgroundColor: AppTheme.successColor,
+                                        behavior: SnackBarBehavior.floating,
+                                        duration: Duration(seconds: 2),
+                                      ),
+                                    );
+                                  }
+                                },
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(20),
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        AppTheme.successColor,
+                                        AppTheme.successColor.withValues(alpha: 0.8),
+                                      ],
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppTheme.successColor.withValues(alpha: 0.3),
+                                        blurRadius: 8,
+                                        offset: Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.star, color: Colors.white, size: 16),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        'Topla',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(width: 8),
                           // Kapat butonu InkWell -> GestureDetector
                           GestureDetector(
                             onTap: _dismiss,

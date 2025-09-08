@@ -99,9 +99,23 @@ class QuestCard extends StatelessWidget {
                 Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children:[
                   if(isCompleted && quest.rewardClaimed) Row(children: const [Text('Fethedildi!', style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold)), SizedBox(width:4), Icon(Icons.check_circle_rounded,color:Colors.white,size:20)]).animate().fadeIn().scale(delay:150.ms, curve: Curves.easeOutBack),
                   if(isCompleted && !quest.rewardClaimed) Expanded(child: ElevatedButton.icon(onPressed: userId==null? null : () async {
-                    await ref.read(firestoreServiceProvider).claimQuestReward(userId!, quest);
-                    ref.invalidate(dailyQuestsProvider);
-                    if(context.mounted){ ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ödül tahsil edildi.'))); }
+                    try {
+                      await ref.read(firestoreServiceProvider).claimQuestReward(userId!, quest);
+                      ref.invalidate(dailyQuestsProvider);
+                      if(context.mounted){
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                          content: Text('Ödül tahsil edildi! 🎉'),
+                          backgroundColor: Colors.green,
+                        ));
+                      }
+                    } catch (e) {
+                      if(context.mounted){
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text('Ödül alma hatası: ${e.toString()}'),
+                          backgroundColor: Colors.red,
+                        ));
+                      }
+                    }
                   }, icon: const Icon(Icons.card_giftcard_rounded), label: const Text('Ödülü Al!'))),
                   if(!isCompleted) const Row(children:[Text('Yola Koyul', style: TextStyle(color: Colors.white70)), SizedBox(width:4), Icon(Icons.arrow_forward, color: Colors.white70, size:16)])
                 ]),
@@ -197,11 +211,47 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen>{
 
   // Toplu ödül tahsil et
   Future<void> _claimAllRewards(WidgetRef ref, String userId, List<Quest> claimables, BuildContext context) async {
+    int successCount = 0;
+    int errorCount = 0;
+    String? lastError;
+
     for(final q in claimables){
-      try { await ref.read(firestoreServiceProvider).claimQuestReward(userId, q); } catch(_){ /* yoksay */ }
+      try {
+        await ref.read(firestoreServiceProvider).claimQuestReward(userId, q);
+        successCount++;
+      } catch(e){
+        errorCount++;
+        lastError = e.toString();
+        print('Ödül alma hatası (${q.title}): $e');
+      }
     }
+
     ref.invalidate(dailyQuestsProvider);
-    if(context.mounted){ ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tüm uygun ödüller alındı.'))); }
+
+    if(context.mounted){
+      if (errorCount == 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Tüm ödüller başarıyla alındı! ($successCount ödül) 🎉'),
+            backgroundColor: Colors.green,
+          )
+        );
+      } else if (successCount > 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$successCount ödül alındı, $errorCount hatası var. Son hata: $lastError'),
+            backgroundColor: Colors.orange,
+          )
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Hiçbir ödül alınamadı. Hata: $lastError'),
+            backgroundColor: Colors.red,
+          )
+        );
+      }
+    }
   }
 
   @override Widget build(BuildContext context){
@@ -406,9 +456,35 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen>{
 }
 
 // Küçük kart görünümü (yatay önerilenler)
-class _SmallQuestCard extends StatelessWidget{
+class _SmallQuestCard extends StatefulWidget {
   final Quest quest; final String? userId; final Set<String> completedIds; final Map<String,Quest> allQuestsMap; final WidgetRef ref;
   const _SmallQuestCard({required this.quest, required this.userId, required this.completedIds, required this.allQuestsMap, required this.ref});
+
+  @override
+  State<_SmallQuestCard> createState() => _SmallQuestCardState();
+}
+
+class _SmallQuestCardState extends State<_SmallQuestCard> {
+  bool _localRewardClaimed = false;
+  bool _isClaimingReward = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _localRewardClaimed = widget.quest.rewardClaimed;
+  }
+
+  @override
+  void didUpdateWidget(_SmallQuestCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Quest güncellendiğinde local state'i sıfırla
+    if (oldWidget.quest.id != widget.quest.id ||
+        oldWidget.quest.rewardClaimed != widget.quest.rewardClaimed) {
+      _localRewardClaimed = widget.quest.rewardClaimed;
+      _isClaimingReward = false;
+    }
+  }
+
   LinearGradient _grad(QuestCategory c){
     switch(c){
       case QuestCategory.practice: return const LinearGradient(colors:[Color(0xFF8E2DE2), Color(0xFF4A00E0)]);
@@ -420,28 +496,114 @@ class _SmallQuestCard extends StatelessWidget{
     }
   }
   @override Widget build(BuildContext context){
-    final progress=quest.goalValue>0?((quest.currentProgress/quest.goalValue).clamp(0.0,1.0)):1.0;
-    final isCompleted = quest.isCompleted;
-    final canClaim = isCompleted && !quest.rewardClaimed && userId!=null;
-    return Card(color: Colors.transparent, clipBehavior: Clip.antiAlias, child: Container(
-      decoration: BoxDecoration(gradient: _grad(quest.category), borderRadius: BorderRadius.circular(12)),
-      padding: const EdgeInsets.all(12),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children:[
-        Row(children:[ Icon(isCompleted? Icons.verified_rounded: Icons.local_fire_department, color: Colors.white70, size:16), const SizedBox(width:6), Text(isCompleted? 'Tamamlandı':' +${quest.reward} BP', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)) ]),
-        const SizedBox(height:8),
-        Text(quest.title, maxLines:2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize:16, fontWeight: FontWeight.w600)),
-        const Spacer(),
-        ClipRRect(borderRadius: BorderRadius.circular(6), child: LinearProgressIndicator(value:progress, minHeight:6, backgroundColor: Colors.white30, valueColor: const AlwaysStoppedAnimation(Colors.white))),
-        const SizedBox(height:6),
-        Row(children:[
-          Expanded(child: Text('${quest.currentProgress}/${quest.goalValue}', style: const TextStyle(color: Colors.white70, fontSize:12))),
-          if(canClaim) TextButton.icon(onPressed: () async {
-            await ref.read(firestoreServiceProvider).claimQuestReward(userId!, quest);
-            ref.invalidate(dailyQuestsProvider);
-            if(context.mounted){ ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ödül tahsil edildi.'))); }
-          }, icon: const Icon(Icons.card_giftcard, color: Colors.white, size:16), label: const Text('Ödül', style: TextStyle(color: Colors.white)))
-        ])
-      ]),
-    ));
+    final progress = widget.quest.goalValue > 0
+        ? ((widget.quest.currentProgress / widget.quest.goalValue).clamp(0.0, 1.0))
+        : 1.0;
+    final isCompleted = widget.quest.isCompleted;
+    final canClaim = isCompleted && !_localRewardClaimed && widget.userId != null && !_isClaimingReward;
+
+    return Card(
+      color: Colors.transparent,
+      clipBehavior: Clip.antiAlias,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: _grad(widget.quest.category),
+          borderRadius: BorderRadius.circular(12)
+        ),
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children:[
+            Row(children:[
+              Icon(
+                isCompleted ? Icons.verified_rounded : Icons.local_fire_department,
+                color: Colors.white70,
+                size: 16
+              ),
+              const SizedBox(width: 6),
+              Text(
+                isCompleted ? 'Tamamlandı' : ' +${widget.quest.reward} BP',
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)
+              )
+            ]),
+            const SizedBox(height: 8),
+            Text(
+              widget.quest.title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)
+            ),
+            const Spacer(),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 6,
+                backgroundColor: Colors.white30,
+                valueColor: const AlwaysStoppedAnimation(Colors.white)
+              )
+            ),
+            const SizedBox(height: 6),
+            Row(children:[
+              Expanded(
+                child: Text(
+                  '${widget.quest.currentProgress}/${widget.quest.goalValue}',
+                  style: const TextStyle(color: Colors.white70, fontSize: 12)
+                )
+              ),
+              if (canClaim)
+                _isClaimingReward
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation(Colors.white),
+                      ),
+                    )
+                  : TextButton.icon(
+                      onPressed: () async {
+                        setState(() {
+                          _isClaimingReward = true;
+                        });
+
+                        try {
+                          await widget.ref.read(firestoreServiceProvider).claimQuestReward(widget.userId!, widget.quest);
+
+                          // Optimistic update - hemen local state'i güncelle
+                          setState(() {
+                            _localRewardClaimed = true;
+                            _isClaimingReward = false;
+                          });
+
+                          // Provider'ı invalidate et
+                          widget.ref.invalidate(dailyQuestsProvider);
+
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Ödül tahsil edildi.'))
+                            );
+                          }
+                        } catch (e) {
+                          // Hata durumunda state'i geri al
+                          setState(() {
+                            _isClaimingReward = false;
+                          });
+
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Ödül alırken hata oluştu: $e'))
+                            );
+                          }
+                        }
+                      },
+                      icon: const Icon(Icons.card_giftcard, color: Colors.white, size: 16),
+                      label: const Text('Ödül', style: TextStyle(color: Colors.white))
+                    )
+            ])
+          ]
+        ),
+      )
+    );
   }
 }

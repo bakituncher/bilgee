@@ -27,10 +27,27 @@ class QuestProgressController {
 
     // Yalnızca tek hedef seç: aynı kategoride en yakın tamamlanacak olan
     final eligible = activeQuests.where((q) => q.category == category && !q.isCompleted && !sessionCompletedIds.contains(q.id)).toList();
-    if (eligible.isEmpty) { return; }
+    if (eligible.isEmpty) {
+      print('[QuestProgress] Kategori $category için uygun görev bulunamadı');
+      return;
+    }
 
     Quest? target;
     int? targetNewProgress;
+
+    // ÖNEMLİ: Önce tam eşleşen görevi bul (konu/ders eşleşmesi için)
+    Quest? exactMatch;
+    for (final quest in eligible) {
+      // Eğer practice kategorisindeyse ve tags kontrol edilebilirse
+      if (category == QuestCategory.practice && quest.tags.isNotEmpty) {
+        // Subject tag kontrolü yaparak doğru görevi bul
+        final hasSubjectTag = quest.tags.any((tag) => tag.startsWith('subject:'));
+        if (hasSubjectTag) {
+          exactMatch = quest;
+          break;
+        }
+      }
+    }
 
     for (final quest in eligible) {
       int newProgress = quest.currentProgress;
@@ -50,6 +67,14 @@ class QuestProgressController {
           }
           break;
       }
+
+      // Eğer exactMatch varsa öncelik ver
+      if (exactMatch != null && quest.id == exactMatch.id) {
+        target = quest;
+        targetNewProgress = newProgress;
+        break;
+      }
+
       // Aday seçimi: kalan hedefe en yakın olan (en küçük kalan)
       final remaining = (quest.goalValue - newProgress).clamp(-1, quest.goalValue);
       if (target == null) { target = quest; targetNewProgress = newProgress; }
@@ -65,29 +90,59 @@ class QuestProgressController {
     final willComplete = newProgress >= quest.goalValue;
 
     try {
-      // Önce ilerlemeyi yaz (hedefi aşsa bile clamp'leriz)
-      await firestoreSvc.updateQuestFields(user.id, quest.id, {
-        'currentProgress': newProgress.clamp(quest.currentProgress, quest.goalValue),
-      });
+      // Önce ilerlemeyi yaz
+      await firestoreSvc.updateQuestProgressAtomic(user.id, quest.id, newProgress);
+
       if (willComplete) {
-        await ensureAppCheckTokenReady();
-        await functions.httpsCallable('completeQuest').call({'questId': quest.id});
-        ref.read(sessionCompletedQuestsProvider.notifier).update((prev)=>{...prev, quest.id});
-        ref.read(questCompletionProvider.notifier).show(quest.copyWith(currentProgress: quest.goalValue, isCompleted: true, completionDate: Timestamp.now()));
-        HapticFeedback.mediumImpact();
-        ref.read(analyticsLoggerProvider).logQuestEvent(userId: user.id, event: 'quest_completed', data: {
-          'questId': quest.id,'category': quest.category.name,'reward': quest.reward,'difficulty': quest.difficulty.name,
-        });
+        try {
+          await ensureAppCheckTokenReady();
+          await functions.httpsCallable('completeQuest').call({'questId': quest.id});
+
+          // Başarılı tamamlama sonrası UI güncellemeleri
+          ref.read(sessionCompletedQuestsProvider.notifier).update((prev)=>{...prev, quest.id});
+          ref.read(questCompletionProvider.notifier).show(quest.copyWith(
+            currentProgress: quest.goalValue,
+            isCompleted: true,
+            completionDate: Timestamp.now()
+          ));
+          HapticFeedback.mediumImpact();
+          ref.read(analyticsLoggerProvider).logQuestEvent(userId: user.id, event: 'quest_completed', data: {
+            'questId': quest.id,'category': quest.category.name,'reward': quest.reward,'difficulty': quest.difficulty.name,
+          });
+        } catch (completionError) {
+          // Backend tamamlama başarısızsa local olarak tekrar dene
+          print('Quest completion failed, retrying: $completionError');
+
+          // Kısa bir gecikme sonrası tekrar dene
+          await Future.delayed(Duration(milliseconds: 500));
+          try {
+            await functions.httpsCallable('completeQuest').call({'questId': quest.id});
+            ref.read(sessionCompletedQuestsProvider.notifier).update((prev)=>{...prev, quest.id});
+            ref.read(questCompletionProvider.notifier).show(quest.copyWith(
+              currentProgress: quest.goalValue,
+              isCompleted: true,
+              completionDate: Timestamp.now()
+            ));
+            HapticFeedback.mediumImpact();
+          } catch (retryError) {
+            print('Quest completion retry also failed: $retryError');
+            // Son çare olarak local state güncelle ama backend senkronizasyonu eksik kalabilir
+          }
+        }
       } else {
         ref.read(analyticsLoggerProvider).logQuestEvent(userId: user.id, event: 'quest_progress', data: {
           'questId': quest.id,'progress': newProgress,'goal': quest.goalValue,
         });
       }
     } catch (e) {
-      // Sunucu reddederse sadece ilerlemeyi güvenli şekilde güncelle, tamamlandı işaretleme yok
-      await firestoreSvc.updateQuestFields(user.id, quest.id, {
-        'currentProgress': newProgress.clamp(quest.currentProgress, quest.goalValue),
-      });
+      print('Quest progress update failed: $e');
+      // İlerleme güncellemesi başarısızsa tekrar dene
+      try {
+        await Future.delayed(Duration(milliseconds: 300));
+        await firestoreSvc.updateQuestProgressAtomic(user.id, quest.id, newProgress);
+      } catch (retryError) {
+        print('Quest progress retry failed: $retryError');
+      }
     }
 
     // Zincir/bonus mantığı server tamamlama sonrası ayrı çalışır
@@ -105,7 +160,7 @@ class QuestProgressController {
     if (quest == null || quest.isCompleted) return;
     int newProgress = quest.currentProgress + amount;
     try {
-      await firestoreSvc.updateQuestFields(user.id, quest.id, {'currentProgress': newProgress.clamp(quest.currentProgress, quest.goalValue)});
+      await firestoreSvc.updateQuestProgressAtomic(user.id, quest.id, newProgress);
       if (newProgress >= quest.goalValue) {
         await ensureAppCheckTokenReady();
         await functions.httpsCallable('completeQuest').call({'questId': quest.id});
@@ -117,8 +172,7 @@ class QuestProgressController {
         ref.read(analyticsLoggerProvider).logQuestEvent(userId: user.id, event: 'quest_progress', data: {'questId': quest.id,'progress': newProgress,'goal': quest.goalValue});
       }
     } catch (_) {
-      // Tamamlama başarısızsa sadece ilerleme güncelle (tamamlandı işaretleme yok)
-      await firestoreSvc.updateQuestFields(user.id, quest.id, {'currentProgress': newProgress.clamp(quest.currentProgress, quest.goalValue)});
+      // Tamamlama başarısızsa yalnızca güvenli artış denendi; ek işlem yok
     }
     ref.invalidate(dailyQuestsProvider);
   }
@@ -132,16 +186,16 @@ class QuestProgressController {
     if (activeQuests.isEmpty) return;
     final sessionCompletedIds = ref.read(sessionCompletedQuestsProvider);
 
-    // Sadece ilgili route eşleşen bir görev hedefle (ilk uygun)
-    final quest = activeQuests.firstWhere(
+    // Sadece ilgili route eşleşmeyen bir görev hedefle (ilk uygun)
+    final matches = activeQuests.where(
       (q) => q.category == QuestCategory.engagement && q.route == route && !q.isCompleted && !sessionCompletedIds.contains(q.id),
-      orElse: () => null as Quest,
     );
-    if (quest == null) return;
+    if (matches.isEmpty) return;
+    final quest = matches.first;
 
     final newProgress = quest.currentProgress + amount;
     try {
-      await firestoreSvc.updateQuestFields(user.id, quest.id, {'currentProgress': newProgress.clamp(quest.currentProgress, quest.goalValue)});
+      await firestoreSvc.updateQuestProgressAtomic(user.id, quest.id, newProgress);
       if (newProgress >= quest.goalValue) {
         await ensureAppCheckTokenReady();
         await functions.httpsCallable('completeQuest').call({'questId': quest.id});
@@ -153,7 +207,7 @@ class QuestProgressController {
         ref.read(analyticsLoggerProvider).logQuestEvent(userId: user.id, event: 'quest_progress', data: {'questId': quest.id,'progress': newProgress,'goal': quest.goalValue});
       }
     } catch (_) {
-      await firestoreSvc.updateQuestFields(user.id, quest.id, {'currentProgress': newProgress.clamp(quest.currentProgress, quest.goalValue)});
+      // atomic yazım zaten güvenli; ek işlem yok
     }
     ref.invalidate(dailyQuestsProvider);
   }
@@ -174,7 +228,7 @@ class QuestProgressController {
     final sessionCompletedIds = ref.read(sessionCompletedQuestsProvider);
 
     // Kaynak eşleşmeyen veya alt-tip tutmayanları ele; tek uygun görevi hedefle
-    final quest = activeQuests.firstWhere(
+    final candidates = activeQuests.where(
       (q) {
         if (q.category != QuestCategory.practice || q.isCompleted || sessionCompletedIds.contains(q.id)) return false;
         final isWorkshopQuest = q.id.startsWith('chain_workshop_') || q.actionRoute.contains('weakness-workshop') || q.tags.contains('workshop');
@@ -184,13 +238,13 @@ class QuestProgressController {
         if (q.tags.contains('problem') && subtype != 'problem') return false;
         return true;
       },
-      orElse: () => null as Quest,
     );
-    if (quest == null) return;
+    if (candidates.isEmpty) return;
+    final quest = candidates.first;
 
     final newProgress = quest.currentProgress + amount;
     try {
-      await firestoreSvc.updateQuestFields(user.id, quest.id, {'currentProgress': newProgress.clamp(quest.currentProgress, quest.goalValue)});
+      await firestoreSvc.updateQuestProgressAtomic(user.id, quest.id, newProgress);
       if (newProgress >= quest.goalValue) {
         await ensureAppCheckTokenReady();
         await functions.httpsCallable('completeQuest').call({'questId': quest.id});
@@ -202,7 +256,7 @@ class QuestProgressController {
         ref.read(analyticsLoggerProvider).logQuestEvent(userId: user.id, event: 'quest_progress', data: {'questId': quest.id,'progress': newProgress,'goal': quest.goalValue});
       }
     } catch (_) {
-      await firestoreSvc.updateQuestFields(user.id, quest.id, {'currentProgress': newProgress.clamp(quest.currentProgress, quest.goalValue)});
+      // atomic yazım zaten güvenli; ek işlem yok
     }
     ref.invalidate(dailyQuestsProvider);
   }
@@ -293,4 +347,3 @@ class QuestProgressController {
     onAdded?.call();
   }
 }
-

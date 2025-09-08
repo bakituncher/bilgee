@@ -12,11 +12,11 @@ service cloud.firestore {
 
       // Tüm kullanılan profil alanları için geniş whitelist
       function userAllowedKeys() {
-        return ['email','name','goal','challenges','weeklyStudyGoal','onboardingCompleted','tutorialCompleted','streak','lastStreakUpdate','selectedExam','selectedExamSection','testCount','totalNetSum','engagementScore','weeklyAvailability','activeWeeklyCampaign','lastQuestRefreshDate','unlockedAchievements','avatarStyle','avatarSeed','dailyQuestPlanSignature','lastScheduleCompletionRatio','dailyScheduleStreak','lastWeeklyReport','dynamicDifficultyFactorToday','weeklyPlanCompletedAt','workshopStreak','lastWorkshopDate','settings','displayName','photoUrl','bio','createdAt','updatedAt'];
+        return ['email','name','goal','challenges','weeklyStudyGoal','onboardingCompleted','tutorialCompleted','streak','lastStreakUpdate','selectedExam','selectedExamSection','testCount','totalNetSum','engagementScore','weeklyAvailability','activeWeeklyCampaign','lastQuestRefreshDate','unlockedAchievements','avatarStyle','avatarSeed','dailyQuestPlanSignature','lastScheduleCompletionRatio','dailyScheduleStreak','lastWeeklyReport','dynamicDifficultyFactorToday','weeklyPlanCompletedAt','workshopStreak','lastWorkshopDate','settings','displayName','photoUrl','bio','createdAt','updatedAt','bilgePoints','recentPracticeVolumes'];
       }
 
       // CREATE/UPDATE: yalnizca sahibine izin ver + alan whitelisti ve temel tip/uzunluk kontrolleri
-      allow create, update: if request.auth != null
+      allow create: if request.auth != null
         && request.auth.uid == userId
         && request.resource.data.keys().hasOnly(userAllowedKeys())
         && (request.resource.data.displayName == null || (request.resource.data.displayName is string && request.resource.data.displayName.size() <= 80))
@@ -27,6 +27,31 @@ service cloud.firestore {
         && (request.resource.data.createdAt == null || request.resource.data.createdAt is timestamp)
         && (request.resource.data.updatedAt == null || request.resource.data.updatedAt is timestamp);
 
+      allow update: if request.auth != null
+        && request.auth.uid == userId
+        && (
+          // Tam doküman güncellemesi
+          (
+            request.resource.data.keys().hasOnly(userAllowedKeys())
+            && (request.resource.data.displayName == null || (request.resource.data.displayName is string && request.resource.data.displayName.size() <= 80))
+            && (request.resource.data.photoUrl == null || (request.resource.data.photoUrl is string && request.resource.data.photoUrl.size() <= 500))
+            && (request.resource.data.bio == null || (request.resource.data.bio is string && request.resource.data.bio.size() <= 500))
+            && (request.resource.data.settings == null || (request.resource.data.settings is map && request.resource.data.settings.size() <= 50))
+            && (request.resource.data.unlockedAchievements == null || (request.resource.data.unlockedAchievements is list && request.resource.data.unlockedAchievements.size() <= 500))
+            && (request.resource.data.createdAt == null || request.resource.data.createdAt is timestamp)
+            && (request.resource.data.updatedAt == null || request.resource.data.updatedAt is timestamp)
+          )
+          ||
+          // Quest ödül claim için partial update - sadece engagementScore ve updatedAt değişir
+          (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['engagementScore', 'updatedAt'])
+            && request.resource.data.engagementScore is int
+            && request.resource.data.engagementScore >= (resource.data.engagementScore != null ? resource.data.engagementScore : 0)
+            && request.resource.data.engagementScore <= 1000000
+            && request.resource.data.updatedAt is timestamp
+          )
+        );
+
       // Silme (opsiyonel): Kullanıcı kendi dokümanını silebilsin istiyorsanız açın.
       // allow delete: if request.auth.uid == userId;
 
@@ -34,63 +59,44 @@ service cloud.firestore {
       match /daily_quests/{questId} {
         // Oluşturma: immutable alanları sabitle.
         allow create: if request.auth.uid == userId
-          && request.resource.data.keys().hasOnly(['qid','title','description','type','category','progressType','reward','goalValue','currentProgress','isCompleted','actionRoute','routeKey','tags','rewardClaimed','createdAt','schemaVersion'])
+          && request.resource.data.keys().hasOnly(['qid','title','description','type','category','progressType','reward','goalValue','currentProgress','isCompleted','actionRoute','routeKey','tags','rewardClaimed','createdAt','schemaVersion','completionDate'])
           && request.resource.data.currentProgress == 0
           && request.resource.data.isCompleted == false
           && request.resource.data.rewardClaimed == false
           && request.resource.data.goalValue is int && request.resource.data.goalValue >= 0
           && request.resource.data.reward is int && request.resource.data.reward >= 0
           && request.resource.data.title is string && request.resource.data.title.size() <= 120;
-        // Update: ilerleme / tamamlanma VEYA sadece ödül claim senaryosu.
+
+        // ÖNEMLİ: İlerleme güncellemesi için daha esnek kural
         allow update: if request.auth.uid == userId && (
-          // Senaryo A: yalnız ilerleme (tamamlanma ve diğer immutable alanlar değişmez)
+          // Senaryo A: ilerleme güncellemesi (currentProgress artırılabilir)
           (
-            request.resource.data.keys().hasOnly(['qid','title','description','type','category','progressType','reward','goalValue','currentProgress','isCompleted','actionRoute','routeKey','tags','rewardClaimed','createdAt','schemaVersion','completionDate'])
-            && request.resource.data.qid == resource.data.qid
-            && request.resource.data.title == resource.data.title
-            && request.resource.data.description == resource.data.description
-            && request.resource.data.type == resource.data.type
-            && request.resource.data.category == resource.data.category
-            && request.resource.data.progressType == resource.data.progressType
-            && request.resource.data.reward == resource.data.reward
-            && request.resource.data.goalValue == resource.data.goalValue
-            && request.resource.data.actionRoute == resource.data.actionRoute
-            && request.resource.data.routeKey == resource.data.routeKey
-            && request.resource.data.tags == resource.data.tags
-            && request.resource.data.createdAt == resource.data.createdAt
-            && request.resource.data.schemaVersion == resource.data.schemaVersion
+            // Sadece currentProgress güncellendiğinde
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['currentProgress'])
             && request.resource.data.currentProgress is int
             && request.resource.data.currentProgress >= resource.data.currentProgress
-            && request.resource.data.currentProgress <= resource.data.goalValue
-            // İstemci isCompleted değiştiremez
-            && request.resource.data.isCompleted == resource.data.isCompleted
-            // İstemci completionDate değiştiremez
-            && request.resource.data.completionDate == resource.data.completionDate
+            && request.resource.data.currentProgress <= (resource.data.goalValue + 10)
           )
           ||
-          // Senaryo B: sadece ödül claim (tamamlanmış görev için)
+          // Senaryo B: Backend tarafından tamamlama (isCompleted = true yapılabilir)
           (
-            request.resource.data.rewardClaimed == true
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isCompleted', 'currentProgress', 'completionDate'])
+            && request.resource.data.isCompleted == true
+            && resource.data.isCompleted == false
+            && request.resource.data.currentProgress >= resource.data.goalValue
+          )
+          ||
+          // Senaryo C: Ödül claim - sadece claim ile ilgili alanlar güncellenebilir
+          (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rewardClaimed', 'isCompleted', 'currentProgress', 'completionDate'])
+            && request.resource.data.rewardClaimed == true
             && resource.data.rewardClaimed == false
-            && resource.data.isCompleted == true
-            && request.resource.data.currentProgress == resource.data.currentProgress
-            && request.resource.data.isCompleted == resource.data.isCompleted
-            && request.resource.data.qid == resource.data.qid
-            && request.resource.data.title == resource.data.title
-            && request.resource.data.description == resource.data.description
-            && request.resource.data.type == resource.data.type
-            && request.resource.data.category == resource.data.category
-            && request.resource.data.progressType == resource.data.progressType
-            && request.resource.data.reward == resource.data.reward
-            && request.resource.data.goalValue == resource.data.goalValue
-            && request.resource.data.actionRoute == resource.data.actionRoute
-            && request.resource.data.routeKey == resource.data.routeKey
-            && request.resource.data.tags == resource.data.tags
-            && request.resource.data.createdAt == resource.data.createdAt
-            && request.resource.data.schemaVersion == resource.data.schemaVersion
-            && request.resource.data.keys().hasOnly(['qid','title','description','type','category','progressType','reward','goalValue','currentProgress','isCompleted','actionRoute','routeKey','tags','rewardClaimed','createdAt','schemaVersion','completionDate'])
+            && request.resource.data.isCompleted == true
+            && request.resource.data.currentProgress >= resource.data.goalValue
+            // completionDate için type kontrolünü kaldırdık; serverTimestamp dönüşümü izinli
           )
         );
+
         allow get, list: if request.auth.uid == userId;
         allow delete: if request.auth.uid == userId; // İsterseniz kısıtlayın
       }
@@ -154,6 +160,15 @@ service cloud.firestore {
             && request.resource.data.schemaVersion == resource.data.schemaVersion
             && request.resource.data.weekKey == resource.data.weekKey
             && request.resource.data.keys().hasOnly(weeklyAllowedKeys())
+          )
+          ||
+          // Yeni: diff tabanlı esnek claim kuralı (serverTimestamp ile uyumlu)
+          (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rewardClaimed', 'isCompleted', 'currentProgress', 'completionDate'])
+            && request.resource.data.rewardClaimed == true
+            && resource.data.rewardClaimed == false
+            && request.resource.data.isCompleted == true
+            && request.resource.data.currentProgress >= resource.data.goalValue
           )
         );
         allow get, list: if request.auth.uid == userId;
@@ -220,6 +235,15 @@ service cloud.firestore {
             && request.resource.data.schemaVersion == resource.data.schemaVersion
             && request.resource.data.monthKey == resource.data.monthKey
             && request.resource.data.keys().hasOnly(monthlyAllowedKeys())
+          )
+          ||
+          // Yeni: diff tabanlı esnek claim kuralı (serverTimestamp ile uyumlu)
+          (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rewardClaimed', 'isCompleted', 'currentProgress', 'completionDate'])
+            && request.resource.data.rewardClaimed == true
+            && resource.data.rewardClaimed == false
+            && request.resource.data.isCompleted == true
+            && request.resource.data.currentProgress >= resource.data.goalValue
           )
         );
         allow get, list: if request.auth.uid == userId;

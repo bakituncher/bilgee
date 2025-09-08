@@ -4,6 +4,7 @@ import 'package:bilge_ai/features/quests/logic/quest_progress_controller.dart';
 import 'package:bilge_ai/features/quests/models/quest_model.dart';
 import 'package:bilge_ai/features/pomodoro/logic/pomodoro_notifier.dart';
 import 'package:bilge_ai/data/providers/firestore_providers.dart';
+import 'package:bilge_ai/features/quests/logic/quest_session_state.dart';
 
 // Bu provider'ın varlığı devam etmeli, arayüzden çağrılar bunun üzerinden yapılacak.
 final questNotifierProvider = StateNotifierProvider.autoDispose<QuestNotifier, bool>((ref) {
@@ -64,7 +65,9 @@ class QuestNotifier extends StateNotifier<bool> {
 
   /// Kullanıcı "Cevher Atölyesi"nde bir quiz bitirdiğinde bu metot çağrılır.
   void userCompletedWorkshopQuiz(String subject, String topic) {
-    _controller.updateQuestProgress(_ref, QuestCategory.engagement, amount: 1);
+    // Eskiden: genel engagement artışı yapıyorduk; yanlış göreve gidebiliyordu.
+    // Doğru hedefleme için route-bazlı engagement güncellemesi yap.
+    _controller.updateEngagementForRoute(_ref, QuestRoute.workshop, amount: 1);
     _controller.updatePracticeWithContext(_ref, amount: 1, subject: subject, topic: topic, source: PracticeSource.workshop);
   }
 
@@ -81,12 +84,25 @@ class QuestNotifier extends StateNotifier<bool> {
 
   /// Kullanıcı yeni bir stratejik planı onayladığında bu metot çağrılır.
   void userApprovedStrategy() {
+    // ÖNEMLİ: Stratejik planlama görevini spesifik olarak güncelle
+    _controller.updateEngagementForRoute(_ref, QuestRoute.strategy, amount: 1);
+
+    // Ek olarak genel engagement de artır (backup için)
     _controller.updateQuestProgress(_ref, QuestCategory.engagement, amount: 1);
+
+    print('[QuestNotifier] Stratejik plan onaylandı - görevler güncellendi');
   }
 
   /// Kullanıcı giriş yaptığında veya uygulamayı açtığında tutarlılık görevlerini tetikler.
   void userLoggedInOrOpenedApp() {
+    // Session state'i temizle - günlük görevler yenilendiğinde eski tamamlanmışları temizlemek için
+    _ref.read(sessionCompletedQuestsProvider.notifier).state = <String>{};
     _controller.updateQuestProgress(_ref, QuestCategory.consistency);
+  }
+
+  /// Günlük görevler yenilendiğinde session state'i temizle
+  void onDailyQuestsRefreshed() {
+    _ref.read(sessionCompletedQuestsProvider.notifier).state = <String>{};
   }
 
   /// Kullanıcı performans/istatistik raporunu görüntülediğinde çağrılır.
