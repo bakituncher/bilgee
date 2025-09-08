@@ -947,7 +947,9 @@ exports.regenerateDailyQuests = onCall({ region: 'us-central1', timeoutSeconds: 
 });
 
 // Gemini API'sine güvenli bir şekilde istek atan proxy fonksiyonu.
-const GEMINI_KEY = process.env.GEMINI_API_KEY;
+// SECRET entegrasyonu: defineSecret ile kullan
+const { defineSecret } = require('firebase-functions/params');
+const GEMINI_API_KEY = defineSecret('GEMINI_API_KEY');
 
 // Güvenlik ve kötüye kullanım önleme ayarları
 const GEMINI_PROMPT_MAX_CHARS = parseInt(process.env.GEMINI_PROMPT_MAX_CHARS || '50000', 10);
@@ -980,13 +982,10 @@ async function enforceRateLimit(key, windowSeconds, maxCount) {
 }
 
 exports.generateGemini = onCall(
-  {region: 'us-central1', timeoutSeconds: 60, memory: '512MiB'},
+  {region: 'us-central1', timeoutSeconds: 60, memory: '512MiB', secrets: [GEMINI_API_KEY]},
   async (request) => {
     if (!request.auth) {
       throw new HttpsError('unauthenticated', 'Oturum gerekli');
-    }
-    if (!GEMINI_KEY) {
-      throw new HttpsError('failed-precondition', 'Sunucu Gemini anahtarı tanımlı değil.');
     }
     const prompt = request.data?.prompt;
     const expectJson = !!request.data?.expectJson;
@@ -1030,7 +1029,7 @@ exports.generateGemini = onCall(
           ...(expectJson ? {responseMimeType: 'application/json'} : {}),
         },
       };
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${GEMINI_KEY}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${GEMINI_API_KEY.value()}`;
       const resp = await fetch(url, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
