@@ -44,3 +44,30 @@ class OptimizedQuestsNotifier extends StateNotifier<List<Quest>> {
 final optimizedDailyQuestsProvider = StateNotifierProvider<OptimizedQuestsNotifier, List<Quest>>((ref) {
   return OptimizedQuestsNotifier(ref);
 });
+
+/// YENİ: Tüm görev tiplerini (günlük, haftalık, aylık) içeren provider
+class QuestsData {
+  final List<Quest> allQuests;
+  final Map<String, Quest> allQuestsMap;
+
+  QuestsData({required this.allQuests, required this.allQuestsMap});
+}
+
+final optimizedQuestsProvider = FutureProvider<QuestsData>((ref) async {
+  final user = ref.watch(userProfileProvider).value;
+  if (user == null) {
+    return QuestsData(allQuests: [], allQuestsMap: {});
+  }
+
+  final firestoreService = ref.read(firestoreServiceProvider);
+
+  try {
+    // FirestoreService.getDailyQuestsOnce tüm tipleri (günlük+haftalık+aylık) birlikte döner
+    final allQuests = await firestoreService.getDailyQuestsOnce(user.id);
+    final questsMap = <String, Quest>{ for (final q in allQuests) q.id: q };
+    return QuestsData(allQuests: allQuests, allQuestsMap: questsMap);
+  } catch (e) {
+    print('[OptimizedQuestsProvider] Error: $e');
+    return QuestsData(allQuests: [], allQuestsMap: {});
+  }
+});

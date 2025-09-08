@@ -5,6 +5,7 @@ import 'package:bilge_ai/features/quests/models/quest_model.dart';
 import 'package:bilge_ai/features/pomodoro/logic/pomodoro_notifier.dart';
 import 'package:bilge_ai/data/providers/firestore_providers.dart';
 import 'package:bilge_ai/features/quests/logic/quest_session_state.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // FieldValue, SetOptions
 
 // Bu provider'ın varlığı devam etmeli, arayüzden çağrılar bunun üzerinden yapılacak.
 final questNotifierProvider = StateNotifierProvider.autoDispose<QuestNotifier, bool>((ref) {
@@ -51,44 +52,64 @@ class QuestNotifier extends StateNotifier<bool> {
 
   /// Kullanıcı bir Pomodoro seansını tamamladığında bu metot çağrılır.
   void userCompletedPomodoroSession(int focusSeconds) {
-    _controller.updateQuestProgress(_ref, QuestCategory.engagement, amount: 1);
+    // YENİ: Pomodoro için spesifik route güncellemesi
+    _controller.updateEngagementForRoute(_ref, QuestRoute.pomodoro, amount: 1);
+
     final int minutes = focusSeconds ~/ 60;
     if (minutes > 0) {
       _controller.updateQuestProgress(_ref, QuestCategory.focus, amount: minutes);
     }
+
+    // Kullanıcının pomodoro kullandığını işaretle
+    _updateUserFeatureUsage('pomodoro');
   }
 
   /// Haftalık planından bir görev tamamlandığında çağrılır (Planlı Harekât vb.).
   void userCompletedWeeklyPlanTask() {
     _controller.updateQuestProgress(_ref, QuestCategory.study, amount: 1);
+    _updateUserFeatureUsage('weeklyPlan');
   }
 
   /// Kullanıcı "Cevher Atölyesi"nde bir quiz bitirdiğinde bu metot çağrılır.
   void userCompletedWorkshopQuiz(String subject, String topic) {
-    // Eskiden: genel engagement artışı yapıyorduk; yanlış göreve gidebiliyordu.
-    // Doğru hedefleme için route-bazlı engagement güncellemesi yap.
+    // YENİ: Route bazlı engagement ve context bazlı practice güncellemesi
     _controller.updateEngagementForRoute(_ref, QuestRoute.workshop, amount: 1);
-    _controller.updatePracticeWithContext(_ref, amount: 1, subject: subject, topic: topic, source: PracticeSource.workshop);
+    _controller.updatePracticeWithContext(_ref,
+      amount: 1,
+      subject: subject,
+      topic: topic,
+      source: PracticeSource.workshop
+    );
+
+    _updateUserFeatureUsage('workshop');
+    print('[QuestNotifier] Atölye quizi tamamlandı - $subject/$topic');
   }
 
   /// Kullanıcı yeni bir deneme sonucu eklediğinde bu metot çağrılır.
   void userSubmittedTest() {
     _controller.updateQuestProgress(_ref, QuestCategory.test_submission);
+    _updateUserFeatureUsage('testSubmission');
   }
 
   /// Kullanıcı bir konunun performansını manuel olarak güncellediğinde bu metot çağrılır.
   void userUpdatedTopicPerformance(String subject, String topic, int questionCount) {
-    _controller.updatePracticeWithContext(_ref, amount: questionCount, subject: subject, topic: topic);
+    _controller.updatePracticeWithContext(_ref,
+      amount: questionCount,
+      subject: subject,
+      topic: topic,
+      source: PracticeSource.general
+    );
     _controller.updateQuestProgress(_ref, QuestCategory.study, amount: 1);
   }
 
   /// Kullanıcı yeni bir stratejik planı onayladığında bu metot çağrılır.
   void userApprovedStrategy() {
-    // ÖNEMLİ: Stratejik planlama görevini spesifik olarak güncelle
+    // YENİ: Stratejik planlama için spesifik route güncellemesi
     _controller.updateEngagementForRoute(_ref, QuestRoute.strategy, amount: 1);
 
-    // Ek olarak genel engagement de artır (backup için)
-    _controller.updateQuestProgress(_ref, QuestCategory.engagement, amount: 1);
+    // Kullanıcının strateji özelliğini kullandığını işaretle
+    _updateUserFeatureUsage('strategy');
+    _markUserCreatedStrategicPlan();
 
     print('[QuestNotifier] Stratejik plan onaylandı - görevler güncellendi');
   }
@@ -100,23 +121,69 @@ class QuestNotifier extends StateNotifier<bool> {
     _controller.updateQuestProgress(_ref, QuestCategory.consistency);
   }
 
-  /// Günlük görevler yenilendiğinde session state'i temizle
-  void onDailyQuestsRefreshed() {
-    _ref.read(sessionCompletedQuestsProvider.notifier).state = <String>{};
+  /// YENİ: Kullanıcı bir soru çözdüğünde (coach'ta)
+  void userSolvedQuestions(int questionCount, {String? subject, String? topic}) {
+    _controller.updatePracticeWithContext(_ref,
+      amount: questionCount,
+      subject: subject,
+      topic: topic,
+      source: PracticeSource.general,
+    );
   }
 
-  /// Kullanıcı performans/istatistik raporunu görüntülediğinde çağrılır.
-  void userViewedStatsReport() {
-    _controller.updateEngagementForRoute(_ref, QuestRoute.stats, amount: 1);
+  /// YENİ: Kullanıcı arena'da yarışmaya katıldığında
+  void userParticipatedInArena() {
+    _controller.updateEngagementForRoute(_ref, QuestRoute.arena, amount: 1);
+    _updateUserFeatureUsage('arena');
   }
 
-  /// Kullanıcı kütüphaneyi/Arşiv ekranını görüntülediğinde çağrılır.
+  /// YENİ: Kullanıcı kütüphaneyi ziyaret ettiğinde
   void userVisitedLibrary() {
     _controller.updateEngagementForRoute(_ref, QuestRoute.library, amount: 1);
   }
 
-  /// Belirli bir ID'ye sahip görevi ilerletmek için (nadiren kullanılır).
-  Future<void> updateQuestProgressById(String questId, {int amount = 1}) async {
-    await _controller.updateQuestProgressById(_ref, questId, amount: amount);
+  /// ESKI UYUMLULUK: Legacy metod - ID ile görev ilerletme
+  void updateQuestProgressById(String questId, {int amount = 1}) {
+    // Bu metod artık genel kategori güncellemesi yapıyor
+    // Spesifik ID güncellemesi için backend'e yönlendirme yapılabilir
+    _controller.updateQuestProgress(_ref, QuestCategory.study, amount: amount);
+  }
+
+  /// YENİ: Kullanıcı stats raporunu görüntülediğinde
+  void userViewedStatsReport() {
+    _controller.updateEngagementForRoute(_ref, QuestRoute.stats, amount: 1);
+    _updateUserFeatureUsage('stats');
+  }
+
+  /// YENİ: Kullanıcı özellik kullanımını işaretle (kişiselleştirme için)
+  void _updateUserFeatureUsage(String feature) {
+    final user = _ref.read(userProfileProvider).value;
+    if (user == null) return;
+
+    // Firestore'da kullanıcının usedFeatures alanını güncelle
+    final fs = _ref.read(firestoreProvider);
+    fs.collection('users').doc(user.id).set(
+      {'usedFeatures.$feature': true},
+      SetOptions(merge: true),
+    ).catchError((e) {
+      print('[QuestNotifier] Feature usage update failed: $e');
+    });
+  }
+
+  /// YENİ: Kullanıcının stratejik plan oluşturduğunu işaretle
+  void _markUserCreatedStrategicPlan() {
+    final user = _ref.read(userProfileProvider).value;
+    if (user == null) return;
+
+    final fs = _ref.read(firestoreProvider);
+    fs.collection('users').doc(user.id).set(
+      {
+        'hasCreatedStrategicPlan': true,
+        'lastStrategyCreationDate': FieldValue.serverTimestamp(),
+      },
+      SetOptions(merge: true),
+    ).catchError((e) {
+      print('[QuestNotifier] Strategic plan marking failed: $e');
+    });
   }
 }

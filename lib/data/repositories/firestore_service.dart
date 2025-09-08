@@ -1124,4 +1124,8 @@ class FirestoreService {
     return _followingCol(currentUserId).doc(targetUserId).snapshots().map((d) => d.exists);
   }
   // === /TAKIP SISTEMI ===
+
+  Future<void> updateUserDocument(String userId, Map<String, dynamic> fields) async {
+    await usersCollection.doc(userId).set(fields, SetOptions(merge: true));
+  }
 }

@@ -41,7 +41,17 @@ class UserModel {
   final Timestamp? weeklyPlanCompletedAt; // YENİ: haftalık plan tamamlanma anı
   final int workshopStreak; // YENİ: art arda günlerde Cevher Atölyesi seansı
   final Timestamp? lastWorkshopDate; // YENİ: son Cevher seansı tarihi (UTC gün)
-  // KALDIRILDI: recentPracticeVolumes -> user_activity alt koleksiyonuna taşındı
+
+  // GÖREV KİŞİSELLEŞTİRME İÇİN YENİ ALANLAR
+  final bool hasCreatedStrategicPlan; // Stratejik plan oluşturdu mu?
+  final Timestamp? lastStrategyCreationDate; // Son strateji oluşturma tarihi
+  final int completedWorkshopCount; // Toplam tamamlanmış atölye sayısı
+  final bool hasUsedPomodoro; // Pomodoro kullandı mı?
+  final bool hasSubmittedTest; // Test sonucu gönderdi mi?
+  final bool hasCompletedWeeklyPlan; // Haftalık plan tamamladı mı?
+  final Map<String, bool> usedFeatures; // Kullanılan özellikler {"strategy": true, "workshop": true}
+  final int currentQuestStreak; // Mevcut görev tamamlama serisi
+  final Timestamp? lastQuestCompletionDate; // Son görev tamamlama tarihi
 
   UserModel({
     required this.id,
@@ -82,7 +92,17 @@ class UserModel {
     this.weeklyPlanCompletedAt,
     this.workshopStreak = 0, // yeni
     this.lastWorkshopDate, // yeni
-    // this.recentPracticeVolumes = const {}, // KALDIRILDI
+
+    // YENİ PARAMETRELER
+    this.hasCreatedStrategicPlan = false,
+    this.lastStrategyCreationDate,
+    this.completedWorkshopCount = 0,
+    this.hasUsedPomodoro = false,
+    this.hasSubmittedTest = false,
+    this.hasCompletedWeeklyPlan = false,
+    this.usedFeatures = const {},
+    this.currentQuestStreak = 0,
+    this.lastQuestCompletionDate,
   });
 
   factory UserModel.fromSnapshot(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -146,7 +166,17 @@ class UserModel {
       weeklyPlanCompletedAt: data['weeklyPlanCompletedAt'] as Timestamp?,
       workshopStreak: data['workshopStreak'] ?? 0, // yeni
       lastWorkshopDate: data['lastWorkshopDate'] as Timestamp?, // yeni
-      // recentPracticeVolumes: Map<String,int>.from(data['recentPracticeVolumes'] ?? {}), // KALDIRILDI
+
+      // GÖREV KİŞİSELLEŞTİRME İÇİN YENİ ALANLAR
+      hasCreatedStrategicPlan: data['hasCreatedStrategicPlan'] ?? false,
+      lastStrategyCreationDate: data['lastStrategyCreationDate'] as Timestamp?,
+      completedWorkshopCount: data['completedWorkshopCount'] ?? 0,
+      hasUsedPomodoro: data['hasUsedPomodoro'] ?? false,
+      hasSubmittedTest: data['hasSubmittedTest'] ?? false,
+      hasCompletedWeeklyPlan: data['hasCompletedWeeklyPlan'] ?? false,
+      usedFeatures: Map<String, bool>.from(data['usedFeatures'] ?? {}),
+      currentQuestStreak: data['currentQuestStreak'] ?? 0,
+      lastQuestCompletionDate: data['lastQuestCompletionDate'] as Timestamp?,
     );
   }
 
