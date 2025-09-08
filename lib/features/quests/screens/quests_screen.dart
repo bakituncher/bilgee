@@ -170,51 +170,11 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
   Widget _buildQuestsList(String userId) {
     return Consumer(
       builder: (context, ref, child) {
-        final questsAsyncValue = ref.watch(optimizedQuestsProvider);
+        final questsState = ref.watch(optimizedQuestsProvider);
 
-        return questsAsyncValue.when(
-          data: (questsData) {
-            final filteredQuests = _filterQuests(questsData.allQuests);
-
-            if (filteredQuests.isEmpty) {
-              return _buildEmptyState();
-            }
-
-            // Görevleri kategorilere ayır
-            final activeQuests = filteredQuests.where((q) => !q.isCompleted).toList();
-            final completedQuests = filteredQuests.where((q) => q.isCompleted).toList();
-
-            return ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                if (activeQuests.isNotEmpty) ...[
-                  _buildSectionHeader('Aktif Görevler', activeQuests.length),
-                  ...activeQuests.map((quest) =>
-                    ModernQuestCard(
-                      quest: quest,
-                      userId: userId,
-                      allQuestsMap: questsData.allQuestsMap,
-                    ).animate().fadeIn(delay: (activeQuests.indexOf(quest) * 100).ms),
-                  ),
-                  const SizedBox(height: 24),
-                ],
-
-                if (completedQuests.isNotEmpty) ...[
-                  _buildSectionHeader('Tamamlanan Görevler', completedQuests.length),
-                  ...completedQuests.map((quest) =>
-                    ModernQuestCard(
-                      quest: quest,
-                      userId: userId,
-                      allQuestsMap: questsData.allQuestsMap,
-                      isCompleted: true,
-                    ).animate().fadeIn(delay: (completedQuests.indexOf(quest) * 100).ms),
-                  ),
-                ],
-              ],
-            );
-          },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stack) => Center(
+        // Hata durumu
+        if (questsState.error != null && questsState.error!.isNotEmpty) {
+          return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -231,7 +191,54 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                 ),
               ],
             ),
-          ),
+          );
+        }
+
+        // Yükleniyor durumu
+        if (!questsState.isLoaded) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final questsDataList = questsState.allQuests ?? [];
+        final filteredQuests = _filterQuests(questsDataList);
+
+        if (filteredQuests.isEmpty) {
+          return _buildEmptyState();
+        }
+
+        // Görevleri kategorilere ayır
+        final activeQuests = filteredQuests.where((q) => !q.isCompleted).toList();
+        final completedQuests = filteredQuests.where((q) => q.isCompleted).toList();
+
+        final allQuestsMap = questsState.questsMap ?? {};
+
+        return ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            if (activeQuests.isNotEmpty) ...[
+              _buildSectionHeader('Aktif Görevler', activeQuests.length),
+              ...activeQuests.map((quest) =>
+                ModernQuestCard(
+                  quest: quest,
+                  userId: userId,
+                  allQuestsMap: allQuestsMap,
+                ).animate().fadeIn(delay: (activeQuests.indexOf(quest) * 100).ms),
+              ),
+              const SizedBox(height: 24),
+            ],
+
+            if (completedQuests.isNotEmpty) ...[
+              _buildSectionHeader('Tamamlanan Görevler', completedQuests.length),
+              ...completedQuests.map((quest) =>
+                ModernQuestCard(
+                  quest: quest,
+                  userId: userId,
+                  allQuestsMap: allQuestsMap,
+                  isCompleted: true,
+                ).animate().fadeIn(delay: (completedQuests.indexOf(quest) * 100).ms),
+              ),
+            ],
+          ],
         );
       },
     );
@@ -374,7 +381,6 @@ class ModernQuestCard extends ConsumerWidget {
         ? (quest.currentProgress / quest.goalValue).clamp(0.0, 1.0)
         : 1.0;
 
-    // Dinamik ödül hesapla
     int finalReward = quest.reward;
     if (user != null) {
       finalReward = quest.calculateDynamicReward(
@@ -389,8 +395,8 @@ class ModernQuestCard extends ConsumerWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () => _handleQuestTap(context, ref),
           borderRadius: BorderRadius.circular(16),
+          onTap: () => _handleQuestTap(context, ref),
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -400,22 +406,14 @@ class ModernQuestCard extends ConsumerWidget {
                 end: Alignment.bottomRight,
                 colors: _getGradientColors(),
               ),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.1),
-                width: 1,
-              ),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.1), width: 1),
               boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
+                BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 8, offset: const Offset(0, 4)),
               ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Üst kısım - başlık ve kategori ikonu
                 Row(
                   children: [
                     _buildCategoryIcon(),
@@ -426,11 +424,7 @@ class ModernQuestCard extends ConsumerWidget {
                         children: [
                           Text(
                             quest.title,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -438,10 +432,7 @@ class ModernQuestCard extends ConsumerWidget {
                             const SizedBox(height: 4),
                             Text(
                               quest.description,
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.7),
-                                fontSize: 13,
-                              ),
+                              style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 13),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -449,19 +440,12 @@ class ModernQuestCard extends ConsumerWidget {
                         ],
                       ),
                     ),
+                    const SizedBox(width: 8),
                     _buildRewardBadge(finalReward),
                   ],
                 ),
-
                 const SizedBox(height: 12),
-
-                // Alt kısım - ilerleme veya tamamlanma durumu
-                if (isCompleted)
-                  _buildCompletedState(finalReward, ref)
-                else
-                  _buildProgressState(progress),
-
-                // Özel etiketler
+                if (isCompleted) _buildCompletedState(finalReward, ref) else _buildProgressState(progress),
                 if (_shouldShowTags()) ...[
                   const SizedBox(height: 8),
                   _buildTags(),
@@ -475,9 +459,8 @@ class ModernQuestCard extends ConsumerWidget {
   }
 
   Widget _buildCategoryIcon() {
-    IconData icon;
-    Color color;
-
+    IconData icon = Icons.label;
+    Color color = Colors.grey;
     switch (quest.category) {
       case QuestCategory.study:
         icon = Icons.book_rounded;
@@ -511,16 +494,9 @@ class ModernQuestCard extends ConsumerWidget {
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: color.withValues(alpha: 0.3),
-          width: 1,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
       ),
-      child: Icon(
-        icon,
-        color: color,
-        size: 20,
-      ),
+      child: Icon(icon, color: color, size: 20),
     );
   }
 
@@ -530,28 +506,14 @@ class ModernQuestCard extends ConsumerWidget {
       decoration: BoxDecoration(
         color: AppTheme.goldColor.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: AppTheme.goldColor.withValues(alpha: 0.4),
-          width: 1,
-        ),
+        border: Border.all(color: AppTheme.goldColor.withValues(alpha: 0.4), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.star_rounded,
-            color: AppTheme.goldColor,
-            size: 14,
-          ),
+          Icon(Icons.star_rounded, color: AppTheme.goldColor, size: 14),
           const SizedBox(width: 4),
-          Text(
-            '+$reward BP',
-            style: TextStyle(
-              color: AppTheme.goldColor,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          Text('+$reward BP', style: TextStyle(color: AppTheme.goldColor, fontSize: 12, fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -569,19 +531,12 @@ class ModernQuestCard extends ConsumerWidget {
                   value: progress,
                   minHeight: 6,
                   backgroundColor: Colors.white.withValues(alpha: 0.2),
-                  valueColor: AlwaysStoppedAnimation(Colors.white),
+                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
                 ),
               ),
             ),
             const SizedBox(width: 12),
-            Text(
-              '${quest.currentProgress}/${quest.goalValue}',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            Text('${quest.currentProgress}/${quest.goalValue}', style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
           ],
         ),
       ],
@@ -591,60 +546,34 @@ class ModernQuestCard extends ConsumerWidget {
   Widget _buildCompletedState(int reward, WidgetRef ref) {
     return Row(
       children: [
-        Icon(
-          Icons.check_circle_rounded,
-          color: AppTheme.successColor,
-          size: 20,
-        ),
+        Icon(Icons.check_circle_rounded, color: AppTheme.successColor, size: 20),
         const SizedBox(width: 8),
-        Text(
-          'Tamamlandı',
-          style: TextStyle(
-            color: AppTheme.successColor,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        Text('Tamamlandı', style: TextStyle(color: AppTheme.successColor, fontSize: 14, fontWeight: FontWeight.w600)),
         const Spacer(),
         if (!quest.rewardClaimed)
           ElevatedButton.icon(
             onPressed: () => _claimReward(ref, reward),
-            icon: Icon(Icons.star, size: 16),
-            label: Text('Topla'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.goldColor,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
+            icon: const Icon(Icons.star, size: 16),
+            label: const Text('Topla'),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.goldColor, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
           ),
       ],
     );
   }
 
   bool _shouldShowTags() {
-    return quest.tags.any((tag) =>
-      ['high_value', 'weakness', 'adaptive', 'chain', 'onboarding'].contains(tag)
-    );
+    return quest.tags.any((tag) => ['high_value', 'weakness', 'adaptive', 'chain', 'onboarding'].contains(tag));
   }
 
   Widget _buildTags() {
-    final importantTags = quest.tags.where((tag) =>
-      ['high_value', 'weakness', 'adaptive', 'chain', 'onboarding'].contains(tag)
-    ).take(3).toList();
-
-    return Wrap(
-      spacing: 6,
-      children: importantTags.map((tag) => _buildTag(tag)).toList(),
-    );
+    final importantTags = quest.tags.where((tag) => ['high_value', 'weakness', 'adaptive', 'chain', 'onboarding'].contains(tag)).take(3).toList();
+    return Wrap(spacing: 6, children: importantTags.map((t) => _buildTag(t)).toList());
   }
 
   Widget _buildTag(String tag) {
-    String label;
-    Color color;
-    IconData icon;
-
+    String label = tag;
+    Color color = Colors.grey;
+    IconData icon = Icons.label;
     switch (tag) {
       case 'high_value':
         label = 'Öncelik';
@@ -672,109 +601,44 @@ class ModernQuestCard extends ConsumerWidget {
         icon = Icons.explore;
         break;
       default:
-        label = tag;
-        color = Colors.grey;
-        icon = Icons.label;
+        break;
     }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(
-          color: color.withValues(alpha: 0.4),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: color),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(6), border: Border.all(color: color.withValues(alpha: 0.4), width: 1)),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(icon, size: 12, color: color), const SizedBox(width: 4), Text(label, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w600))]),
     );
   }
 
   List<Color> _getGradientColors() {
-    if (isCompleted) {
-      return [
-        AppTheme.successColor.withValues(alpha: 0.2),
-        AppTheme.successColor.withValues(alpha: 0.1),
-      ];
-    }
-
+    if (isCompleted) return [AppTheme.successColor.withValues(alpha: 0.2), AppTheme.successColor.withValues(alpha: 0.1)];
     switch (quest.category) {
       case QuestCategory.study:
-        return [
-          Colors.blue.withValues(alpha: 0.2),
-          Colors.blue.withValues(alpha: 0.1),
-        ];
+        return [Colors.blue.withValues(alpha: 0.2), Colors.blue.withValues(alpha: 0.1)];
       case QuestCategory.practice:
-        return [
-          Colors.green.withValues(alpha: 0.2),
-          Colors.green.withValues(alpha: 0.1),
-        ];
+        return [Colors.green.withValues(alpha: 0.2), Colors.green.withValues(alpha: 0.1)];
       case QuestCategory.engagement:
-        return [
-          Colors.purple.withValues(alpha: 0.2),
-          Colors.purple.withValues(alpha: 0.1),
-        ];
+        return [Colors.purple.withValues(alpha: 0.2), Colors.purple.withValues(alpha: 0.1)];
       case QuestCategory.consistency:
-        return [
-          Colors.orange.withValues(alpha: 0.2),
-          Colors.orange.withValues(alpha: 0.1),
-        ];
+        return [Colors.orange.withValues(alpha: 0.2), Colors.orange.withValues(alpha: 0.1)];
       case QuestCategory.test_submission:
-        return [
-          Colors.red.withValues(alpha: 0.2),
-          Colors.red.withValues(alpha: 0.1),
-        ];
+        return [Colors.red.withValues(alpha: 0.2), Colors.red.withValues(alpha: 0.1)];
       case QuestCategory.focus:
-        return [
-          Colors.cyan.withValues(alpha: 0.2),
-          Colors.cyan.withValues(alpha: 0.1),
-        ];
+        return [Colors.cyan.withValues(alpha: 0.2), Colors.cyan.withValues(alpha: 0.1)];
     }
   }
 
   void _handleQuestTap(BuildContext context, WidgetRef ref) {
     if (isCompleted) return;
+    ref.read(analyticsLoggerProvider).logQuestEvent(userId: userId, event: 'quest_tap', data: {'questId': quest.id, 'category': quest.category.name});
 
-    // Analytics log
-    ref.read(analyticsLoggerProvider).logQuestEvent(
-      userId: userId,
-      event: 'quest_tap',
-      data: {
-        'questId': quest.id,
-        'category': quest.category.name,
-      },
-    );
-
-    // Navigate to quest action route
     String targetRoute = quest.actionRoute;
-
-    // Coach için özel subject parameter ekleme
     if (targetRoute == '/coach') {
-      final subjectTag = quest.tags.firstWhere(
-        (t) => t.startsWith('subject:'),
-        orElse: () => '',
-      );
+      final subjectTag = quest.tags.firstWhere((t) => t.startsWith('subject:'), orElse: () => '');
       if (subjectTag.isNotEmpty) {
         final subject = subjectTag.split(':').sublist(1).join(':');
-        targetRoute = Uri(
-          path: '/coach',
-          queryParameters: {'subject': subject},
-        ).toString();
+        targetRoute = Uri(path: '/coach', queryParameters: {'subject': subject}).toString();
       }
     }
 
@@ -783,16 +647,10 @@ class ModernQuestCard extends ConsumerWidget {
 
   void _claimReward(WidgetRef ref, int reward) async {
     try {
-      await ref.read(firestoreServiceProvider).claimQuestReward(
-        userId,
-        quest,
-      );
-
-      // UI feedback
+      await ref.read(firestoreServiceProvider).claimQuestReward(userId, quest);
       ref.invalidate(optimizedQuestsProvider);
     } catch (e) {
-      // Handle error
-      print('Reward claim failed: $e');
+      // ignore
     }
   }
 }

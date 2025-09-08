@@ -95,12 +95,14 @@ class ScaffoldWithNavBar extends ConsumerWidget {
           builder: (context, ref, child) {
             final currentStepIndex = ref.watch(tutorialProvider);
             final shouldShowTutorial = currentStepIndex != null;
-            final completedQuest = ref.watch(questCompletionProvider);
+            final completionState = ref.watch(questCompletionProvider);
+            final completedQuest = completionState.completedQuest;
 
-            ref.listen<Quest?>(questCompletionProvider, (previous, next) {
-              if (next != null) {
+            ref.listen<QuestCompletionState>(questCompletionProvider, (previous, next) {
+              final nextQuest = next.completedQuest;
+              if (nextQuest != null) {
                 Future.delayed(3.seconds, () {
-                  if (ref.read(questCompletionProvider) == next) {
+                  if (ref.read(questCompletionProvider).completedQuest == nextQuest) {
                     ref.read(questCompletionProvider.notifier).clear();
                   }
                 });
@@ -117,7 +119,7 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                     bottom: true,
                     child: Builder(
                       builder: (ctx){
-                        final completedQuest = ref.watch(questCompletionProvider);
+                        final completedQuest = ref.watch(questCompletionProvider).completedQuest;
                         if(completedQuest != null) {
                           WidgetsBinding.instance.addPostFrameCallback((_){
                             ScaffoldMessenger.of(ctx).clearSnackBars();

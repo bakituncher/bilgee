@@ -20,7 +20,7 @@ Future<void> ensureAppCheckTokenReady({int maxAttempts = 3}) async {
       if (kDebugMode) {
         debugPrint('[AppCheck] Token denemesi $attempt hata: $e');
       }
-
+      
       // "Too many attempts" hatası alındığında daha fazla deneme yapmaya gerek yok
       if (e.toString().toLowerCase().contains('too many attempts')) {
         if (kDebugMode) {
@@ -28,7 +28,7 @@ Future<void> ensureAppCheckTokenReady({int maxAttempts = 3}) async {
         }
         break;
       }
-
+      
       // Firebase exception türü kontrolü
       if (e.toString().contains('firebase') && e.toString().contains('exception')) {
         if (kDebugMode) {
@@ -36,7 +36,7 @@ Future<void> ensureAppCheckTokenReady({int maxAttempts = 3}) async {
         }
         break;
       }
-
+      
       // Devam edip yeniden deneyeceğiz.
     }
     // Son deneme değilse kısa gecikme (artan backoff)

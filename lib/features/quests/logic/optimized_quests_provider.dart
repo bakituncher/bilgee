@@ -3,71 +3,401 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:bilge_ai/data/providers/firestore_providers.dart';
 import 'package:bilge_ai/features/quests/models/quest_model.dart';
 import 'dart:async';
+// YENİ: Gelişmiş sistemler
+import 'package:bilge_ai/features/quests/logic/quest_tracking_service.dart';
+import 'package:bilge_ai/features/quests/logic/quest_navigation_manager.dart';
+import 'package:bilge_ai/features/quests/logic/quest_service.dart';
 
-/// Aktif görev listesini user stream değiştikçe günceller.
-/// Equatable destekli Quest modeli ile gereksiz manuel diff kaldırıldı.
-class OptimizedQuestsNotifier extends StateNotifier<List<Quest>> {
+/// Geliştirilmiş Quest Notifier - Tüm görev tiplerini destekler
+class OptimizedQuestsNotifier extends StateNotifier<QuestsState> {
   final Ref _ref;
-  StreamSubscription<List<Quest>>? _sub;
-  OptimizedQuestsNotifier(this._ref) : super(const []) {
-    void subscribe(String userId) {
-      _sub?.cancel();
-      _sub = _ref.read(firestoreServiceProvider).streamDailyQuests(userId).listen((quests) {
-        state = quests;
-      });
-    }
+  StreamSubscription<List<Quest>>? _dailySub;
+  StreamSubscription<List<Quest>>? _weeklySub;
+  StreamSubscription<List<Quest>>? _monthlySub;
+  Timer? _refreshTimer;
 
+  OptimizedQuestsNotifier(this._ref) : super(const QuestsState.loading()) {
+    _initializeStreams();
+    _setupPeriodicRefresh();
+  }
+
+  /// Stream'leri başlat
+  void _initializeStreams() {
     final user = _ref.read(userProfileProvider).value;
     if (user != null) {
-      subscribe(user.id);
+      _subscribeToQuests(user.id);
     }
-    // Stream dinle ve direkt ata
+
+    // User değişikliklerini dinle
     _ref.listen(userProfileProvider, (previous, next) {
       final newUser = next.value;
       if (newUser == null) {
-        state = const [];
-        _sub?.cancel();
-        _sub = null;
+        _clearStreams();
+        state = const QuestsState.empty();
         return;
       }
-      subscribe(newUser.id);
+      _subscribeToQuests(newUser.id);
     });
+  }
+
+  /// Tüm görev tiplerini dinle
+  void _subscribeToQuests(String userId) {
+    _clearStreams();
+
+    final firestoreService = _ref.read(firestoreServiceProvider);
+
+    try {
+      // Günlük görevler
+      _dailySub = firestoreService.streamDailyQuests(userId).listen(
+        (quests) => _updateDailyQuests(quests),
+        onError: (e) => _handleStreamError('daily', e),
+      );
+
+      // Haftalık görevler
+      _weeklySub = firestoreService.streamWeeklyQuests(userId).listen(
+        (quests) => _updateWeeklyQuests(quests),
+        onError: (e) => _handleStreamError('weekly', e),
+      );
+
+      // Aylık görevler
+      _monthlySub = firestoreService.streamMonthlyQuests(userId).listen(
+        (quests) => _updateMonthlyQuests(quests),
+        onError: (e) => _handleStreamError('monthly', e),
+      );
+
+    } catch (e) {
+      print('[OptimizedQuests] Stream subscription error: $e');
+      state = QuestsState.error('Görev akışı başlatılamadı: $e');
+    }
+  }
+
+  /// Günlük görev güncellemesi
+  void _updateDailyQuests(List<Quest> quests) {
+    state = state.copyWith(
+      dailyQuests: quests,
+      lastDailyUpdate: DateTime.now(),
+    );
+    _checkAllQuestsLoaded();
+  }
+
+  /// Haftalık görev güncellemesi
+  void _updateWeeklyQuests(List<Quest> quests) {
+    state = state.copyWith(
+      weeklyQuests: quests,
+      lastWeeklyUpdate: DateTime.now(),
+    );
+    _checkAllQuestsLoaded();
+  }
+
+  /// Aylık görev güncellemesi
+  void _updateMonthlyQuests(List<Quest> quests) {
+    state = state.copyWith(
+      monthlyQuests: quests,
+      lastMonthlyUpdate: DateTime.now(),
+    );
+    _checkAllQuestsLoaded();
+  }
+
+  /// Tüm görevler yüklendiğinde state'i güncelle
+  void _checkAllQuestsLoaded() {
+    if (state.dailyQuests != null &&
+        state.weeklyQuests != null &&
+        state.monthlyQuests != null) {
+
+      final allQuests = [
+        ...state.dailyQuests!,
+        ...state.weeklyQuests!,
+        ...state.monthlyQuests!,
+      ];
+
+      state = state.copyWith(
+        allQuests: allQuests,
+        questsMap: {for (final q in allQuests) q.id: q},
+        isLoaded: true,
+      );
+    }
+  }
+
+  /// Stream hatası yönetimi
+  void _handleStreamError(String questType, dynamic error) {
+    print('[OptimizedQuests] $questType quest stream error: $error');
+    // Diğer stream'ler çalışmaya devam etsin
+  }
+
+  /// Periyodik yenileme (5 dakikada bir)
+  void _setupPeriodicRefresh() {
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer.periodic(const Duration(minutes: 5), (_) {
+      refreshQuests();
+    });
+  }
+
+  /// Manuel yenileme
+  Future<void> refreshQuests({bool force = false}) async {
+    final user = _ref.read(userProfileProvider).value;
+    if (user == null) return;
+
+    try {
+      state = state.copyWith(isRefreshing: true);
+
+      // Quest service ile yenile
+      await _ref.read(questServiceProvider).refreshDailyQuestsForUser(user, force: force);
+
+      state = state.copyWith(
+        isRefreshing: false,
+        lastRefresh: DateTime.now(),
+      );
+
+    } catch (e) {
+      print('[OptimizedQuests] Refresh error: $e');
+      state = state.copyWith(
+        isRefreshing: false,
+        error: 'Yenileme başarısız: $e',
+      );
+    }
+  }
+
+  /// Görev tamamlama takibi
+  Future<void> completeQuest(String questId, {int amount = 1}) async {
+    final trackingService = _ref.read(questTrackingServiceProvider);
+
+    try {
+      final result = await trackingService.updateQuestProgress(
+        questId: questId,
+        amount: amount,
+      );
+
+      if (result.isSuccess) {
+        print('[OptimizedQuests] Quest updated: ${result.quest?.title}');
+      }
+
+    } catch (e) {
+      print('[OptimizedQuests] Quest completion error: $e');
+    }
+  }
+
+  /// Kategori bazlı görev güncellemesi
+  Future<void> updateQuestsByCategory(QuestCategory category, {int amount = 1}) async {
+    final trackingService = _ref.read(questTrackingServiceProvider);
+
+    try {
+      final results = await trackingService.updateQuestsByCategory(
+        category: category,
+        amount: amount,
+      );
+
+      final completedCount = results.where((r) => r.isCompleted).length;
+      if (completedCount > 0) {
+        print('[OptimizedQuests] $completedCount quest(s) completed in category: ${category.name}');
+      }
+
+    } catch (e) {
+      print('[OptimizedQuests] Category update error: $e');
+    }
+  }
+
+  /// Stream'leri temizle
+  void _clearStreams() {
+    _dailySub?.cancel();
+    _weeklySub?.cancel();
+    _monthlySub?.cancel();
+    _dailySub = null;
+    _weeklySub = null;
+    _monthlySub = null;
   }
 
   @override
   void dispose() {
-    _sub?.cancel();
+    _clearStreams();
+    _refreshTimer?.cancel();
     super.dispose();
   }
 }
 
-final optimizedDailyQuestsProvider = StateNotifierProvider<OptimizedQuestsNotifier, List<Quest>>((ref) {
+/// Geliştirilmiş Quest State
+class QuestsState {
+  final List<Quest>? dailyQuests;
+  final List<Quest>? weeklyQuests;
+  final List<Quest>? monthlyQuests;
+  final List<Quest>? allQuests;
+  final Map<String, Quest>? questsMap;
+  final bool isLoaded;
+  final bool isRefreshing;
+  final String? error;
+  final DateTime? lastRefresh;
+  final DateTime? lastDailyUpdate;
+  final DateTime? lastWeeklyUpdate;
+  final DateTime? lastMonthlyUpdate;
+
+  const QuestsState({
+    this.dailyQuests,
+    this.weeklyQuests,
+    this.monthlyQuests,
+    this.allQuests,
+    this.questsMap,
+    this.isLoaded = false,
+    this.isRefreshing = false,
+    this.error,
+    this.lastRefresh,
+    this.lastDailyUpdate,
+    this.lastWeeklyUpdate,
+    this.lastMonthlyUpdate,
+  });
+
+  const QuestsState.loading() : this(isRefreshing: true);
+  const QuestsState.empty() : this(
+    dailyQuests: const [],
+    weeklyQuests: const [],
+    monthlyQuests: const [],
+    allQuests: const [],
+    questsMap: const {},
+    isLoaded: true,
+  );
+
+  QuestsState.error(String errorMessage) : this(
+    error: errorMessage,
+    isLoaded: true,
+    dailyQuests: const [],
+    weeklyQuests: const [],
+    monthlyQuests: const [],
+    allQuests: const [],
+    questsMap: const {},
+  );
+
+  QuestsState copyWith({
+    List<Quest>? dailyQuests,
+    List<Quest>? weeklyQuests,
+    List<Quest>? monthlyQuests,
+    List<Quest>? allQuests,
+    Map<String, Quest>? questsMap,
+    bool? isLoaded,
+    bool? isRefreshing,
+    String? error,
+    DateTime? lastRefresh,
+    DateTime? lastDailyUpdate,
+    DateTime? lastWeeklyUpdate,
+    DateTime? lastMonthlyUpdate,
+  }) {
+    return QuestsState(
+      dailyQuests: dailyQuests ?? this.dailyQuests,
+      weeklyQuests: weeklyQuests ?? this.weeklyQuests,
+      monthlyQuests: monthlyQuests ?? this.monthlyQuests,
+      allQuests: allQuests ?? this.allQuests,
+      questsMap: questsMap ?? this.questsMap,
+      isLoaded: isLoaded ?? this.isLoaded,
+      isRefreshing: isRefreshing ?? this.isRefreshing,
+      error: error ?? this.error,
+      lastRefresh: lastRefresh ?? this.lastRefresh,
+      lastDailyUpdate: lastDailyUpdate ?? this.lastDailyUpdate,
+      lastWeeklyUpdate: lastWeeklyUpdate ?? this.lastWeeklyUpdate,
+      lastMonthlyUpdate: lastMonthlyUpdate ?? this.lastMonthlyUpdate,
+    );
+  }
+
+  /// Aktif görevleri filtrele
+  List<Quest> get activeQuests {
+    return allQuests?.where((q) => !q.isCompleted).toList() ?? [];
+  }
+
+  /// Tamamlanan görevleri filtrele
+  List<Quest> get completedQuests {
+    return allQuests?.where((q) => q.isCompleted).toList() ?? [];
+  }
+
+  /// Kategori bazlı filtreleme
+  List<Quest> getQuestsByCategory(QuestCategory category) {
+    return allQuests?.where((q) => q.category == category).toList() ?? [];
+  }
+
+  /// Tip bazlı filtreleme
+  List<Quest> getQuestsByType(QuestType type) {
+    return allQuests?.where((q) => q.type == type).toList() ?? [];
+  }
+
+  /// Route bazlı filtreleme
+  List<Quest> getQuestsByRoute(QuestRoute route) {
+    return allQuests?.where((q) => q.route == route).toList() ?? [];
+  }
+
+  /// Toplam ödül hesaplama
+  int get totalReward {
+    return completedQuests.fold(0, (sum, quest) => sum + quest.reward);
+  }
+
+  /// Tamamlanma oranı
+  double get completionRate {
+    if (allQuests == null || allQuests!.isEmpty) return 0.0;
+    return completedQuests.length / allQuests!.length;
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is QuestsState &&
+        other.isLoaded == isLoaded &&
+        other.isRefreshing == isRefreshing &&
+        other.error == error &&
+        other.allQuests?.length == allQuests?.length;
+  }
+
+  @override
+  int get hashCode {
+    return Object.hash(
+      isLoaded,
+      isRefreshing,
+      error,
+      allQuests?.length,
+    );
+  }
+}
+
+// Provider'ları güncelle
+final optimizedQuestsProvider = StateNotifierProvider<OptimizedQuestsNotifier, QuestsState>((ref) {
   return OptimizedQuestsNotifier(ref);
 });
 
-/// YENİ: Tüm görev tiplerini (günlük, haftalık, aylık) içeren provider
-class QuestsData {
-  final List<Quest> allQuests;
-  final Map<String, Quest> allQuestsMap;
+// Geriye dönük uyumluluk için günlük görevler provider'ı koru
+final optimizedDailyQuestsProvider = Provider<List<Quest>>((ref) {
+  final questsState = ref.watch(optimizedQuestsProvider);
+  return questsState.dailyQuests ?? [];
+});
 
-  QuestsData({required this.allQuests, required this.allQuestsMap});
+// YENİ: Haftalık görevler provider
+final optimizedWeeklyQuestsProvider = Provider<List<Quest>>((ref) {
+  final questsState = ref.watch(optimizedQuestsProvider);
+  return questsState.weeklyQuests ?? [];
+});
+
+// YENİ: Aylık görevler provider
+final optimizedMonthlyQuestsProvider = Provider<List<Quest>>((ref) {
+  final questsState = ref.watch(optimizedQuestsProvider);
+  return questsState.monthlyQuests ?? [];
+});
+
+// YENİ: Tüm görevler provider
+final allQuestsProvider = Provider<List<Quest>>((ref) {
+  final questsState = ref.watch(optimizedQuestsProvider);
+  return questsState.allQuests ?? [];
+});
+
+// YENİ: Aktif görevler provider
+final activeQuestsProvider = Provider<List<Quest>>((ref) {
+  final questsState = ref.watch(optimizedQuestsProvider);
+  return questsState.activeQuests;
+});
+
+// YENİ: Kategori bazlı görevler provider'ı factory
+Provider<List<Quest>> questsByCategoryProvider(QuestCategory category) {
+  return Provider<List<Quest>>((ref) {
+    final questsState = ref.watch(optimizedQuestsProvider);
+    return questsState.getQuestsByCategory(category);
+  });
 }
 
-final optimizedQuestsProvider = FutureProvider<QuestsData>((ref) async {
-  final user = ref.watch(userProfileProvider).value;
-  if (user == null) {
-    return QuestsData(allQuests: [], allQuestsMap: {});
-  }
-
-  final firestoreService = ref.read(firestoreServiceProvider);
-
-  try {
-    // FirestoreService.getDailyQuestsOnce tüm tipleri (günlük+haftalık+aylık) birlikte döner
-    final allQuests = await firestoreService.getDailyQuestsOnce(user.id);
-    final questsMap = <String, Quest>{ for (final q in allQuests) q.id: q };
-    return QuestsData(allQuests: allQuests, allQuestsMap: questsMap);
-  } catch (e) {
-    print('[OptimizedQuestsProvider] Error: $e');
-    return QuestsData(allQuests: [], allQuestsMap: {});
-  }
-});
+// YENİ: Route bazlı görevler provider'ı factory
+Provider<List<Quest>> questsByRouteProvider(QuestRoute route) {
+  return Provider<List<Quest>>((ref) {
+    final questsState = ref.watch(optimizedQuestsProvider);
+    return questsState.getQuestsByRoute(route);
+  });
+}
