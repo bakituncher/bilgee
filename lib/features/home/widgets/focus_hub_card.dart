@@ -1,7 +1,5 @@
 // lib/features/home/widgets/focus_hub_card.dart
 import 'package:bilge_ai/core/theme/app_theme.dart';
-import 'package:bilge_ai/data/models/test_model.dart';
-import 'package:bilge_ai/data/providers/firestore_providers.dart';
 import 'package:bilge_ai/features/home/providers/home_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -15,7 +13,7 @@ class FocusHubCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final quests = ref.watch(dailyQuestsProgressProvider);
     final plan = ref.watch(planProgressProvider);
-    final tests = ref.watch(testsProvider).valueOrNull ?? <TestModel>[];
+    final lastTests = ref.watch(lastTestsSummaryProvider); // YENİ
 
     // Önceliklendirme (üst bölüm CTA)
     String title = 'Bir Sonraki Adım';
@@ -35,8 +33,9 @@ class FocusHubCard extends ConsumerWidget {
       icon = Icons.checklist_rounded;
       primary = () => context.go('/home/weekly-plan');
     } else {
-      final last = _lastTestInfo(tests);
-      if (last.$1 == null || (last.$2 != null && last.$2! > const Duration(days: 2))) {
+      final lastDate = lastTests.lastDate; // YENİ
+      final diff = lastDate == null ? null : DateTime.now().difference(lastDate);
+      if (lastDate == null || (diff != null && diff > const Duration(days: 2))) {
         title = 'Deneme Ekle';
         subtitle = 'Öğrenen zihin için yeni veri ekle';
         icon = Icons.add_chart_rounded;
@@ -115,13 +114,6 @@ class FocusHubCard extends ConsumerWidget {
         ),
       ),
     ).animate().fadeIn(duration: 220.ms).slideY(begin: .04, curve: Curves.easeOut);
-  }
-
-  (DateTime?, Duration?) _lastTestInfo(List<TestModel> tests) {
-    if (tests.isEmpty) return (null, null);
-    final sorted = [...tests]..sort((a,b)=> b.date.compareTo(a.date));
-    final last = sorted.first.date;
-    return (last, DateTime.now().difference(last));
   }
 
   String _humanize(Duration d) {
