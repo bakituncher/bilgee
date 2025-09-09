@@ -15,6 +15,44 @@ class PomodoroStatsView extends ConsumerStatefulWidget {
 }
 
 class _PomodoroStatsViewState extends ConsumerState<PomodoroStatsView> {
+  List<MapEntry<DateTime, int>>? _parsedRollupCache;
+  int _rollupSignature = 0;
+
+  int _computeSignature(Map<String, int> rollup) {
+    // Basit imza: eleman sayısı + anahtarların hash toplamı
+    int hash = rollup.length;
+    for (final k in rollup.keys) {
+      hash = 0x1fffffff & (hash + k.hashCode);
+    }
+    return hash;
+  }
+
+  void _prepareRollupCache(Map<String, int> rollup) {
+    final sig = _computeSignature(rollup);
+    if (_parsedRollupCache != null && sig == _rollupSignature) return; // cache geçerli
+    final list = <MapEntry<DateTime, int>>[];
+    rollup.forEach((k, v) {
+      try {
+        list.add(MapEntry(DateTime.parse(k), v));
+      } catch (_) {}
+    });
+    _parsedRollupCache = list;
+    _rollupSignature = sig;
+  }
+
+  int _sumForLastDays(int days, DateTime now) {
+    if (_parsedRollupCache == null) return 0;
+    final today = DateTime(now.year, now.month, now.day);
+    final start = today.subtract(Duration(days: days - 1));
+    int total = 0;
+    for (final e in _parsedRollupCache!) {
+      final d = e.key;
+      if (d.isBefore(start) || d.isAfter(today)) continue;
+      total += e.value;
+    }
+    return total;
+  }
+
   void _openStatsSheet() {
     showModalBottomSheet(
       context: context,
@@ -23,26 +61,16 @@ class _PomodoroStatsViewState extends ConsumerState<PomodoroStatsView> {
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
       builder: (context) => Consumer(
         builder: (context, ref, _) {
-          final userStats = ref.watch(userStatsStreamProvider).value;
+          final asyncStats = ref.watch(userStatsStreamProvider);
+          final userStats = asyncStats.value;
           if (userStats == null) {
             return const SizedBox(height: 160, child: Center(child: CircularProgressIndicator(strokeWidth: 2)));
           }
+          // Cache parse
+            _prepareRollupCache(userStats.focusRollup30);
           final now = DateTime.now();
-          final dateKey = DateFormat('yyyy-MM-dd').format(DateTime(now.year, now.month, now.day));
-          // Rollup map (son ~30 gün) üzerinden haftalık ve 30 günlük toplamları hesapla
-            int sumForLast(int days) {
-              final start = DateTime(now.year, now.month, now.day).subtract(Duration(days: days - 1));
-              int total = 0;
-              userStats.focusRollup30.forEach((k, v) {
-                try {
-                  final d = DateTime.parse(k);
-                  if (!d.isBefore(start) && !d.isAfter(now)) total += v;
-                } catch (_) {}
-              });
-              return total;
-            }
-          final weekTotal = sumForLast(7);
-          final monthTotal = sumForLast(30);
+          final weekTotal = _sumForLastDays(7, now);
+          final monthTotal = _sumForLastDays(30, now);
 
           return SafeArea(
             child: Padding(

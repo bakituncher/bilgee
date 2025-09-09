@@ -1,4 +1,5 @@
 // lib/features/quests/screens/quests_screen.dart
+import 'dart:async';
 import 'package:bilge_ai/core/analytics/analytics_logger.dart';
 import 'package:bilge_ai/core/theme/app_theme.dart';
 import 'package:bilge_ai/data/providers/firestore_providers.dart';
@@ -23,23 +24,27 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
   QuestFilter _selectedFilter = QuestFilter.all;
   String _searchQuery = '';
 
+  Timer? _searchDebounce;
+  List<Quest>? _lastAllQuestsIdentity;
+  String _cacheSearch = '';
+  QuestFilter _cacheFilter = QuestFilter.all;
+  List<Quest>? _cacheFiltered;
+
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(userProfileProvider).value;
     if (user == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-
     return Scaffold(
       backgroundColor: AppTheme.primaryColor,
-      body: NestedScrollView(
-        headerSliverBuilder: (context, innerBoxIsScrolled) => [
+      body: CustomScrollView(
+        slivers: [
           _buildModernAppBar(context),
           _buildFilterBar(),
+          // Görevler için sliver listesi
+          _buildQuestsSliver(user.id),
         ],
-        body: _buildQuestsList(user.id),
       ),
     );
   }
@@ -48,18 +53,19 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
   Widget _buildModernAppBar(BuildContext context) {
     return SliverAppBar(
       expandedHeight: 120,
-      floating: true,
+      floating: false,
       pinned: true,
+      automaticallyImplyLeading: false,
       backgroundColor: AppTheme.primaryColor,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+        onPressed: () => Navigator.of(context).maybePop(),
+      ),
+      title: const Text(
+        'Fetih Görevleri',
+        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 20),
+      ),
       flexibleSpace: FlexibleSpaceBar(
-        title: Text(
-          'Fetih Görevleri',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w700,
-            fontSize: 24,
-          ),
-        ),
         background: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -67,18 +73,18 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
               end: Alignment.bottomCenter,
               colors: [
                 AppTheme.primaryColor,
-                AppTheme.primaryColor.withValues(alpha: 0.8),
+                AppTheme.primaryColor.withValues(alpha: 0.85),
               ],
             ),
           ),
           child: Stack(
             children: [
               Positioned(
-                right: -50,
-                top: -50,
+                right: -40,
+                top: -40,
                 child: Container(
-                  width: 200,
-                  height: 200,
+                  width: 160,
+                  height: 160,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: Colors.white.withValues(alpha: 0.05),
@@ -90,9 +96,13 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
         ),
       ),
       actions: [
-        IconButton(
-          icon: Icon(Icons.refresh_rounded, color: Colors.white),
-          onPressed: () => _refreshQuests(),
+        Padding(
+          padding: const EdgeInsets.only(right: 4),
+          child: IconButton(
+            tooltip: 'Yenile',
+            icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+            onPressed: () => _refreshQuests(),
+          ),
         ),
       ],
     );
@@ -108,7 +118,12 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
           children: [
             // Arama kutusu
             TextField(
-              onChanged: (value) => setState(() => _searchQuery = value),
+              onChanged: (value) {
+                _searchDebounce?.cancel();
+                _searchDebounce = Timer(const Duration(milliseconds: 250), () {
+                  if (mounted) setState(() => _searchQuery = value);
+                });
+              },
               decoration: InputDecoration(
                 hintText: 'Görev ara...',
                 prefixIcon: Icon(Icons.search, color: Colors.white70),
@@ -167,80 +182,134 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
   }
 
   /// YENİ: İyileştirilmiş görevler listesi
-  Widget _buildQuestsList(String userId) {
-    return Consumer(
-      builder: (context, ref, child) {
-        final questsState = ref.watch(optimizedQuestsProvider);
+  Widget _buildQuestsSliver(String userId) {
+    return Consumer(builder: (context, ref, _) {
+      final questsState = ref.watch(optimizedQuestsProvider);
 
-        // Hata durumu
-        if (questsState.error != null && questsState.error!.isNotEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.error_outline, size: 64, color: Colors.white54),
-                const SizedBox(height: 16),
-                Text(
-                  'Görevler yüklenirken hata oluştu',
-                  style: TextStyle(color: Colors.white70, fontSize: 16),
-                ),
-                const SizedBox(height: 8),
-                ElevatedButton(
-                  onPressed: _refreshQuests,
-                  child: Text('Tekrar Dene'),
-                ),
-              ],
+      if (questsState.error != null && questsState.error!.isNotEmpty) {
+        return SliverFillRemaining(
+          hasScrollBody: false,
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.error_outline, size: 64, color: Colors.white54),
+                  const SizedBox(height: 16),
+                  const Text('Görevler yüklenirken hata oluştu', style: TextStyle(color: Colors.white70, fontSize: 16)),
+                  const SizedBox(height: 8),
+                  ElevatedButton(onPressed: _refreshQuests, child: const Text('Tekrar Dene')),
+                ],
+              ),
+            ),
+        );
+      }
+
+      if (!questsState.isLoaded) {
+        // Skeleton placeholder (hızlı geri bildirim)
+        final placeholders = List.generate(5, (i) => _buildSkeletonCard());
+        return SliverList(
+          delegate: SliverChildBuilderDelegate((context, index) {
+            if (index == 0) {
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: Column(children: placeholders),
+              );
+            }
+            return null;
+          }, childCount: 1),
+        );
+      }
+
+      final questsDataList = questsState.allQuests ?? [];
+      final filteredQuests = _filterQuests(questsDataList);
+      if (filteredQuests.isEmpty) {
+        return SliverFillRemaining(
+          hasScrollBody: false,
+          child: _buildEmptyState(),
+        );
+      }
+      final activeQuests = filteredQuests.where((q) => !q.isCompleted).toList();
+      final completedQuests = filteredQuests.where((q) => q.isCompleted).toList();
+      final enableAnimations = (activeQuests.length + completedQuests.length) <= 30;
+
+      final children = <Widget>[];
+      if (activeQuests.isNotEmpty) {
+        children.add(Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          child: _buildSectionHeader('Aktif Görevler', activeQuests.length),
+        ));
+        for (var i = 0; i < activeQuests.length; i++) {
+          final quest = activeQuests[i];
+          Widget card = Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: ModernQuestCard(
+              quest: quest,
+              userId: userId,
             ),
           );
+          if (enableAnimations) {
+            card = card.animate().fadeIn(delay: (i * 80).ms);
+          }
+          children.add(card);
         }
-
-        // Yükleniyor durumu
-        if (!questsState.isLoaded) {
-          return const Center(child: CircularProgressIndicator());
+      }
+      if (completedQuests.isNotEmpty) {
+        children.add(Padding(
+          padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+          child: _buildSectionHeader('Tamamlanan Görevler', completedQuests.length),
+        ));
+        for (var i = 0; i < completedQuests.length; i++) {
+          final quest = completedQuests[i];
+          Widget card = Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: ModernQuestCard(
+              quest: quest,
+              userId: userId,
+              isCompleted: true,
+            ),
+          );
+          if (enableAnimations) {
+            card = card.animate().fadeIn(delay: (i * 80).ms);
+          }
+          children.add(card);
         }
+      }
+      children.add(const SizedBox(height: 40));
 
-        final questsDataList = questsState.allQuests ?? [];
-        final filteredQuests = _filterQuests(questsDataList);
+      return SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) => children[index],
+          childCount: children.length,
+        ),
+      );
+    });
+  }
 
-        if (filteredQuests.isEmpty) {
-          return _buildEmptyState();
-        }
-
-        // Görevleri kategorilere ayır
-        final activeQuests = filteredQuests.where((q) => !q.isCompleted).toList();
-        final completedQuests = filteredQuests.where((q) => q.isCompleted).toList();
-
-        final allQuestsMap = questsState.questsMap ?? {};
-
-        return ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            if (activeQuests.isNotEmpty) ...[
-              _buildSectionHeader('Aktif Görevler', activeQuests.length),
-              ...activeQuests.map((quest) =>
-                ModernQuestCard(
-                  quest: quest,
-                  userId: userId,
-                  allQuestsMap: allQuestsMap,
-                ).animate().fadeIn(delay: (activeQuests.indexOf(quest) * 100).ms),
-              ),
-              const SizedBox(height: 24),
+  Widget _buildSkeletonCard() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      height: 90,
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(children: [
+        const SizedBox(width: 16),
+        Container(width: 40, height: 40, decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12))),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(height: 14, width: 160, decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(6))),
+              const SizedBox(height: 8),
+              Container(height: 10, width: 220, decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(6))),
             ],
-
-            if (completedQuests.isNotEmpty) ...[
-              _buildSectionHeader('Tamamlanan Görevler', completedQuests.length),
-              ...completedQuests.map((quest) =>
-                ModernQuestCard(
-                  quest: quest,
-                  userId: userId,
-                  allQuestsMap: allQuestsMap,
-                  isCompleted: true,
-                ).animate().fadeIn(delay: (completedQuests.indexOf(quest) * 100).ms),
-              ),
-            ],
-          ],
-        );
-      },
+          ),
+        ),
+        const SizedBox(width: 16),
+      ]),
     );
   }
 
@@ -317,6 +386,14 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
   }
 
   List<Quest> _filterQuests(List<Quest> quests) {
+    // Cache koşulu: aynı liste referansı + aynı filtre + aynı arama
+    if (identical(quests, _lastAllQuestsIdentity) &&
+        _selectedFilter == _cacheFilter &&
+        _searchQuery == _cacheSearch &&
+        _cacheFiltered != null) {
+      return _cacheFiltered!;
+    }
+
     var filtered = quests;
 
     // Filtre uygula
@@ -340,13 +417,21 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
 
     // Arama uygula
     if (_searchQuery.isNotEmpty) {
-      filtered = filtered.where((quest) =>
-        quest.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-        quest.description.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-        quest.tags.any((tag) => tag.toLowerCase().contains(_searchQuery.toLowerCase()))
-      ).toList();
+      final qLower = _searchQuery.toLowerCase();
+      filtered = filtered.where((quest) {
+        if (quest.title.toLowerCase().contains(qLower)) return true;
+        if (quest.description.toLowerCase().contains(qLower)) return true;
+        for (final tag in quest.tags) {
+          if (tag.toLowerCase().contains(qLower)) return true;
+        }
+        return false;
+      }).toList();
     }
 
+    _lastAllQuestsIdentity = quests;
+    _cacheFilter = _selectedFilter;
+    _cacheSearch = _searchQuery;
+    _cacheFiltered = filtered;
     return filtered;
   }
 
@@ -357,20 +442,24 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
       ref.invalidate(optimizedQuestsProvider);
     }
   }
+
+  @override
+  void dispose() {
+    _searchDebounce?.cancel();
+    super.dispose();
+  }
 }
 
 /// YENİ: Modern ve kompakt quest card tasarımı
 class ModernQuestCard extends ConsumerWidget {
   final Quest quest;
   final String userId;
-  final Map<String, Quest> allQuestsMap;
   final bool isCompleted;
 
   const ModernQuestCard({
     super.key,
     required this.quest,
     required this.userId,
-    required this.allQuestsMap,
     this.isCompleted = false,
   });
 
