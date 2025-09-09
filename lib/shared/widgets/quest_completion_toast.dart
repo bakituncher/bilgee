@@ -32,7 +32,7 @@ class _QuestCompletionToastState extends ConsumerState<QuestCompletionToast> wit
 
   /// Otomatik ödül toplama sistemi
   void _autoClaimReward() async {
-    await Future.delayed(const Duration(milliseconds: 500)); // kısa animasyon beklemesi
+    await Future.delayed(const Duration(milliseconds: 1200)); // gecikme artırıldı
     if (!mounted) return;
 
     final quest = widget.completedQuest;
@@ -40,7 +40,7 @@ class _QuestCompletionToastState extends ConsumerState<QuestCompletionToast> wit
 
     try {
       if (user != null) {
-        // Backend'e ödül talep et
+        // Backend'e ödül talep et - önce quest durumunu kontrol et
         await ref.read(firestoreServiceProvider).claimQuestReward(user.id, quest);
       }
       if (mounted) {
@@ -48,7 +48,7 @@ class _QuestCompletionToastState extends ConsumerState<QuestCompletionToast> wit
         HapticFeedback.lightImpact();
       }
     } catch (e) {
-      print('[QuestToast] Auto reward claim failed: $e');
+      debugPrint('[QuestToast] Auto reward claim failed: $e');
     }
   }
 
