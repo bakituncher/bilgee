@@ -59,41 +59,43 @@ service cloud.firestore {
       match /daily_quests/{questId} {
         // Oluşturma: immutable alanları sabitle.
         allow create: if request.auth.uid == userId
-          && request.resource.data.keys().hasOnly(['qid','title','description','type','category','progressType','reward','goalValue','currentProgress','isCompleted','actionRoute','routeKey','tags','rewardClaimed','createdAt','schemaVersion','completionDate'])
+          && request.resource.data.keys().hasOnly(['qid','title','description','type','category','progressType','reward','goalValue','currentProgress','isCompleted','actionRoute','routeKey','tags','rewardClaimed','createdAt','schemaVersion','completionDate','updatedAt'])
           && request.resource.data.currentProgress == 0
           && request.resource.data.isCompleted == false
           && request.resource.data.rewardClaimed == false
           && request.resource.data.goalValue is int && request.resource.data.goalValue >= 0
           && request.resource.data.reward is int && request.resource.data.reward >= 0
-          && request.resource.data.title is string && request.resource.data.title.size() <= 120;
+          && request.resource.data.title is string && request.resource.data.title.size() <= 120
+          && (request.resource.data.updatedAt == null || request.resource.data.updatedAt is timestamp);
 
-        // ÖNEMLİ: İlerleme güncellemesi için daha esnek kural
+        // ÖNEMLİ: İlerleme / tamamlama / claim güncellemeleri
         allow update: if request.auth.uid == userId && (
-          // Senaryo A: ilerleme güncellemesi (currentProgress artırılabilir)
+          // Senaryo A: ilerleme güncellemesi (currentProgress artırılabilir, opsiyonel updatedAt)
           (
-            // Sadece currentProgress güncellendiğinde
-            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['currentProgress'])
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['currentProgress','updatedAt'])
             && request.resource.data.currentProgress is int
             && request.resource.data.currentProgress >= resource.data.currentProgress
             && request.resource.data.currentProgress <= (resource.data.goalValue + 10)
+            && (request.resource.data.updatedAt == null || request.resource.data.updatedAt is timestamp)
           )
           ||
-          // Senaryo B: Backend tarafından tamamlama (isCompleted = true yapılabilir)
+          // Senaryo B: Tamamlama (isCompleted = true yapılabilir) + opsiyonel completionDate & updatedAt
           (
-            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isCompleted', 'currentProgress', 'completionDate'])
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isCompleted','currentProgress','completionDate','updatedAt'])
             && request.resource.data.isCompleted == true
             && resource.data.isCompleted == false
             && request.resource.data.currentProgress >= resource.data.goalValue
+            && (request.resource.data.updatedAt == null || request.resource.data.updatedAt is timestamp)
           )
           ||
-          // Senaryo C: Ödül claim - sadece claim ile ilgili alanlar güncellenebilir
+            // Senaryo C: Ödül claim - sadece claim ile ilgili alanlar güncellenebilir + opsiyonel updatedAt
           (
-            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rewardClaimed', 'isCompleted', 'currentProgress', 'completionDate'])
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rewardClaimed','isCompleted','currentProgress','completionDate','updatedAt'])
             && request.resource.data.rewardClaimed == true
             && resource.data.rewardClaimed == false
             && request.resource.data.isCompleted == true
             && request.resource.data.currentProgress >= resource.data.goalValue
-            // completionDate için type kontrolünü kaldırdık; serverTimestamp dönüşümü izinli
+            && (request.resource.data.updatedAt == null || request.resource.data.updatedAt is timestamp)
           )
         );
 
@@ -102,7 +104,7 @@ service cloud.firestore {
       }
       // YENI: Haftalık görevler
       match /weekly_quests/{questId} {
-        function weeklyAllowedKeys() { return ['qid','title','description','type','category','progressType','reward','goalValue','currentProgress','isCompleted','actionRoute','routeKey','tags','rewardClaimed','createdAt','schemaVersion','completionDate','weekKey']; }
+        function weeklyAllowedKeys() { return ['qid','title','description','type','category','progressType','reward','goalValue','currentProgress','isCompleted','actionRoute','routeKey','tags','rewardClaimed','createdAt','schemaVersion','completionDate','weekKey','updatedAt']; }
         allow create: if request.auth.uid == userId
           && request.resource.data.keys().hasOnly(weeklyAllowedKeys())
           && request.resource.data.currentProgress == 0
@@ -111,11 +113,16 @@ service cloud.firestore {
           && request.resource.data.goalValue is int && request.resource.data.goalValue >= 0
           && request.resource.data.reward is int && request.resource.data.reward >= 0
           && request.resource.data.title is string && request.resource.data.title.size() <= 120
-          && request.resource.data.weekKey is string;
+          && request.resource.data.weekKey is string
+          && (request.resource.data.updatedAt == null || request.resource.data.updatedAt is timestamp);
 
         allow update: if request.auth.uid == userId && (
+          // İlerleme güncellemesi (yalnız currentProgress ve opsiyonel updatedAt değişebilir)
           (
-            request.resource.data.keys().hasOnly(weeklyAllowedKeys())
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['currentProgress','updatedAt'])
+            && request.resource.data.currentProgress is int
+            && request.resource.data.currentProgress >= resource.data.currentProgress
+            && request.resource.data.currentProgress <= resource.data.goalValue
             && request.resource.data.qid == resource.data.qid
             && request.resource.data.title == resource.data.title
             && request.resource.data.description == resource.data.description
@@ -130,17 +137,15 @@ service cloud.firestore {
             && request.resource.data.createdAt == resource.data.createdAt
             && request.resource.data.schemaVersion == resource.data.schemaVersion
             && request.resource.data.weekKey == resource.data.weekKey
-            && request.resource.data.currentProgress is int
-            && request.resource.data.currentProgress >= resource.data.currentProgress
-            && request.resource.data.currentProgress <= resource.data.goalValue
-            // İstemci isCompleted değiştiremez
             && request.resource.data.isCompleted == resource.data.isCompleted
-            // İstemci completionDate değiştiremez
             && request.resource.data.completionDate == resource.data.completionDate
+            && (request.resource.data.updatedAt == null || request.resource.data.updatedAt is timestamp)
           )
           ||
+          // Claim (tamamlama sonrası rewardClaimed)
           (
-            request.resource.data.rewardClaimed == true
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rewardClaimed','updatedAt'])
+            && request.resource.data.rewardClaimed == true
             && resource.data.rewardClaimed == false
             && resource.data.isCompleted == true
             && request.resource.data.currentProgress == resource.data.currentProgress
@@ -159,16 +164,19 @@ service cloud.firestore {
             && request.resource.data.createdAt == resource.data.createdAt
             && request.resource.data.schemaVersion == resource.data.schemaVersion
             && request.resource.data.weekKey == resource.data.weekKey
-            && request.resource.data.keys().hasOnly(weeklyAllowedKeys())
+            && request.resource.data.completionDate == resource.data.completionDate
+            && (request.resource.data.updatedAt == null || request.resource.data.updatedAt is timestamp)
           )
           ||
-          // Yeni: diff tabanlı esnek claim kuralı (serverTimestamp ile uyumlu)
+          // Esnek: Tamamlama + claim aynı anda (örn. CF) -> rewardClaimed, isCompleted, currentProgress, completionDate, updatedAt
           (
-            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rewardClaimed', 'isCompleted', 'currentProgress', 'completionDate'])
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rewardClaimed','isCompleted','currentProgress','completionDate','updatedAt'])
             && request.resource.data.rewardClaimed == true
             && resource.data.rewardClaimed == false
             && request.resource.data.isCompleted == true
+            && resource.data.isCompleted == false
             && request.resource.data.currentProgress >= resource.data.goalValue
+            && (request.resource.data.updatedAt == null || request.resource.data.updatedAt is timestamp)
           )
         );
         allow get, list: if request.auth.uid == userId;
@@ -177,20 +185,25 @@ service cloud.firestore {
 
       // YENİ: Aylık görevler
       match /monthly_quests/{questId} {
-        function monthlyAllowedKeys() { return ['qid','title','description','type','category','progressType','reward','goalValue','currentProgress','isCompleted','actionRoute','routeKey','tags','rewardClaimed','createdAt','schemaVersion','completionDate','monthKey']; }
+        function monthlyAllowedKeys() { return ['qid','title','description','type','category','progressType','reward','goalValue','currentProgress','isCompleted','actionRoute','routeKey','tags','rewardClaimed','createdAt','schemaVersion','completionDate','monthKey','updatedAt']; }
         allow create: if request.auth.uid == userId
           && request.resource.data.keys().hasOnly(monthlyAllowedKeys())
           && request.resource.data.currentProgress == 0
-          && request.resource.data.isCompleted == false
+            && request.resource.data.isCompleted == false
           && request.resource.data.rewardClaimed == false
           && request.resource.data.goalValue is int && request.resource.data.goalValue >= 0
           && request.resource.data.reward is int && request.resource.data.reward >= 0
           && request.resource.data.title is string && request.resource.data.title.size() <= 120
-          && request.resource.data.monthKey is string;
+          && request.resource.data.monthKey is string
+          && (request.resource.data.updatedAt == null || request.resource.data.updatedAt is timestamp);
 
         allow update: if request.auth.uid == userId && (
+          // İlerleme güncellemesi (yalnız currentProgress & opsiyonel updatedAt)
           (
-            request.resource.data.keys().hasOnly(monthlyAllowedKeys())
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['currentProgress','updatedAt'])
+            && request.resource.data.currentProgress is int
+            && request.resource.data.currentProgress >= resource.data.currentProgress
+            && request.resource.data.currentProgress <= resource.data.goalValue
             && request.resource.data.qid == resource.data.qid
             && request.resource.data.title == resource.data.title
             && request.resource.data.description == resource.data.description
@@ -205,17 +218,15 @@ service cloud.firestore {
             && request.resource.data.createdAt == resource.data.createdAt
             && request.resource.data.schemaVersion == resource.data.schemaVersion
             && request.resource.data.monthKey == resource.data.monthKey
-            && request.resource.data.currentProgress is int
-            && request.resource.data.currentProgress >= resource.data.currentProgress
-            && request.resource.data.currentProgress <= resource.data.goalValue
-            // İstemci isCompleted değiştiremez
             && request.resource.data.isCompleted == resource.data.isCompleted
-            // İstemci completionDate değiştiremez
             && request.resource.data.completionDate == resource.data.completionDate
+            && (request.resource.data.updatedAt == null || request.resource.data.updatedAt is timestamp)
           )
           ||
+          // Claim
           (
-            request.resource.data.rewardClaimed == true
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rewardClaimed','updatedAt'])
+            && request.resource.data.rewardClaimed == true
             && resource.data.rewardClaimed == false
             && resource.data.isCompleted == true
             && request.resource.data.currentProgress == resource.data.currentProgress
@@ -234,16 +245,19 @@ service cloud.firestore {
             && request.resource.data.createdAt == resource.data.createdAt
             && request.resource.data.schemaVersion == resource.data.schemaVersion
             && request.resource.data.monthKey == resource.data.monthKey
-            && request.resource.data.keys().hasOnly(monthlyAllowedKeys())
+            && request.resource.data.completionDate == resource.data.completionDate
+            && (request.resource.data.updatedAt == null || request.resource.data.updatedAt is timestamp)
           )
           ||
-          // Yeni: diff tabanlı esnek claim kuralı (serverTimestamp ile uyumlu)
+          // Esnek: Tamamlama + claim aynı anda
           (
-            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rewardClaimed', 'isCompleted', 'currentProgress', 'completionDate'])
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rewardClaimed','isCompleted','currentProgress','completionDate','updatedAt'])
             && request.resource.data.rewardClaimed == true
             && resource.data.rewardClaimed == false
             && request.resource.data.isCompleted == true
+            && resource.data.isCompleted == false
             && request.resource.data.currentProgress >= resource.data.goalValue
+            && (request.resource.data.updatedAt == null || request.resource.data.updatedAt is timestamp)
           )
         );
         allow get, list: if request.auth.uid == userId;

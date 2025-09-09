@@ -54,7 +54,7 @@ class QuestTrackingService {
       // Güncelleme verileri hazırla
       final updateData = {
         'currentProgress': newProgress,
-        'lastUpdated': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(), // was lastUpdated - rules ile uyumlu
         if (isNowCompleted) ...{
           'isCompleted': true,
           'completionDate': FieldValue.serverTimestamp(),
