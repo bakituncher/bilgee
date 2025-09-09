@@ -4,6 +4,7 @@ import 'package:bilge_ai/features/quests/models/quest_model.dart';
 import 'package:bilge_ai/data/providers/firestore_providers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:bilge_ai/features/quests/logic/quest_service.dart';
+import 'package:bilge_ai/features/quests/logic/optimized_quests_provider.dart';
 import 'package:flutter/foundation.dart';
 
 /// Geliştirilmiş Quest Completion Notifier
@@ -39,35 +40,67 @@ class QuestCompletionNotifier extends StateNotifier<QuestCompletionState> {
     }
   }
 
-  /// Ödül toplama - geliştirilmiş
+  /// Ödül toplama - geliştirilmiş VE GÜVENLİ
   Future<void> claimReward(Quest quest, Ref ref) async {
     try {
-      final firestoreSvc = ref.read(firestoreServiceProvider);
+      final firestoreService = ref.read(firestoreServiceProvider);
       final user = ref.read(userProfileProvider).value;
 
       if (user == null) {
-        debugPrint('[QuestCompletion] Kullanıcı bulunamadı');
+        debugPrint('[QuestCompletion] HATA: Kullanıcı bulunamadı');
         return;
       }
 
-      // Basit ödül hesaplama (user.level ve currentStreak yoksa)
-      final dynamicReward = quest.calculateDynamicReward();
+      // Çifte ödül toplama koruması
+      if (quest.rewardClaimed) {
+        debugPrint('[QuestCompletion] UYARI: Ödül zaten toplanmış');
+        return;
+      }
 
-      // Firestore güncellemeleri paralel olarak yap
-      await Future.wait([
-        // BP güncelleme
-        firestoreSvc.usersCollection.doc(user.id).update({
+      // Dinamik ödül hesaplama
+      final dynamicReward = quest.calculateDynamicReward(
+        userLevel: (user.engagementScore / 100).floor(),
+        currentStreak: user.currentQuestStreak,
+      );
+
+      // ATOMIK TRANSACTION İLE GÜVENLİ ÖDÜL TOPLAMA
+      await firestoreService.db.runTransaction((transaction) async {
+        // 1. Görev durumunu kontrol et
+        final questRef = firestoreService.questsCollection(user.id).doc(quest.id);
+        final questSnap = await transaction.get(questRef);
+
+        if (!questSnap.exists || questSnap.data()?['rewardClaimed'] == true) {
+          throw Exception('Ödül zaten toplanmış veya görev bulunamadı');
+        }
+
+        // 2. Kullanıcı puanını güncelle
+        final userRef = firestoreService.usersCollection.doc(user.id);
+        transaction.update(userRef, {
           'bilgePoints': FieldValue.increment(dynamicReward),
-        }),
-        // Görev reward claimed flag güncelleme
-        firestoreSvc.updateQuestFields(user.id, quest.id, {
-          'rewardClaimed': true,
-          'rewardClaimedAt': FieldValue.serverTimestamp(),
-          'actualReward': dynamicReward,
-        }),
-      ]);
+          'totalEarnedBP': FieldValue.increment(dynamicReward),
+          'lastRewardClaimedAt': FieldValue.serverTimestamp(),
+        });
 
-      debugPrint('[QuestCompletion] Ödül toplandı: $dynamicReward BP (base: ${quest.reward})');
+        // 3. Görev reward claimed flag'ini güncelle
+        transaction.update(questRef, {
+          'rewardClaimed': true,
+          'actualReward': dynamicReward,
+          'rewardClaimedAt': FieldValue.serverTimestamp(),
+        });
+
+        // 4. Ödül toplama log'u
+        final rewardLogRef = firestoreService.db.collection('reward_claims').doc();
+        transaction.set(rewardLogRef, {
+          'userId': user.id,
+          'questId': quest.id,
+          'questTitle': quest.title,
+          'baseReward': quest.reward,
+          'actualReward': dynamicReward,
+          'claimedAt': FieldValue.serverTimestamp(),
+        });
+      });
+
+      debugPrint('[QuestCompletion] ✅ Ödül başarıyla toplandı: $dynamicReward BP');
 
       // State güncelle
       state = state.copyWith(
@@ -75,9 +108,10 @@ class QuestCompletionNotifier extends StateNotifier<QuestCompletionState> {
         actualReward: dynamicReward,
       );
 
-      // Providers yenile
-      ref.invalidate(dailyQuestsProvider);
+      // Provider'ları yenile - PUANIN ANINDA YANSIMASI
       ref.invalidate(userProfileProvider);
+      ref.invalidate(optimizedQuestsProvider);
+      ref.invalidate(dailyQuestsProvider);
 
       // Özel görev tipleri için ek işlemler
       await _handleSpecialRewardTypes(quest, ref, dynamicReward);
@@ -88,9 +122,13 @@ class QuestCompletionNotifier extends StateNotifier<QuestCompletionState> {
       });
 
     } catch (e) {
-      debugPrint('[QuestCompletion] Ödül toplama hatası: $e');
-      // Hata durumunda da clear et
+      debugPrint('[QuestCompletion] ❌ KRITIK HATA - Ödül toplama başarısız: $e');
+
+      // Hata durumunda state temizle
       clear();
+
+      // Kullanıcıya hata bildirimi (opsiyonel)
+      // _showErrorNotification(e.toString());
     }
   }
 

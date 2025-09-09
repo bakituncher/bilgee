@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:bilge_ai/features/quests/models/quest_model.dart';
 import 'package:bilge_ai/features/quests/logic/quest_completion_notifier.dart';
 import 'package:bilge_ai/features/quests/logic/quest_session_state.dart';
+import 'package:bilge_ai/features/quests/logic/optimized_quests_provider.dart';
+import 'package:bilge_ai/features/quests/logic/quest_service.dart';
 import 'package:bilge_ai/data/providers/firestore_providers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
@@ -124,9 +126,56 @@ class QuestTrackingService {
     }
   }
 
-  /// Görev tamamlanma işlemleri
+  /// Görev tamamlanma işlemleri - İYİLEŞTİRİLMİŞ
   Future<void> _handleQuestCompletion(Quest completedQuest) async {
     try {
+      final user = _ref.read(userProfileProvider).value;
+      final firestoreService = _ref.read(firestoreServiceProvider);
+
+      if (user == null) {
+        debugPrint('[QuestTracking] HATA: Kullanıcı bulunamadı');
+        return;
+      }
+
+      // Dinamik ödül hesaplama
+      final dynamicReward = completedQuest.calculateDynamicReward(
+        userLevel: (user.engagementScore / 100).floor(),
+        currentStreak: user.currentQuestStreak,
+        isStreakBonus: user.currentQuestStreak >= 3,
+      );
+
+      // ATOMIK TRANSACTION - Tüm güncellmeleri tek seferde yap
+      await firestoreService.usersCollection.doc(user.id).parent.firestore.runTransaction((transaction) async {
+        // 1. Kullanıcının BP'sini güncelle
+        final userRef = firestoreService.usersCollection.doc(user.id);
+        transaction.update(userRef, {
+          'bilgePoints': FieldValue.increment(dynamicReward),
+          'totalEarnedBP': FieldValue.increment(dynamicReward),
+          'lastQuestCompletedAt': FieldValue.serverTimestamp(),
+          'currentQuestStreak': FieldValue.increment(1),
+          'totalCompletedQuests': FieldValue.increment(1),
+        });
+
+        // 2. Görevin rewardClaimed flag'ini güncelle
+        final questRef = firestoreService.questsCollection(user.id).doc(completedQuest.id);
+        transaction.update(questRef, {
+          'rewardClaimed': true,
+          'actualReward': dynamicReward,
+          'claimedAt': FieldValue.serverTimestamp(),
+        });
+
+        // 3. Quest completion log'u oluştur - kullanıcının alt koleksiyonunda
+        final logRef = firestoreService.usersCollection.doc(user.id).collection('quest_completions').doc();
+        transaction.set(logRef, {
+          'questId': completedQuest.id,
+          'questTitle': completedQuest.title,
+          'category': completedQuest.category.name,
+          'baseReward': completedQuest.reward,
+          'actualReward': dynamicReward,
+          'completedAt': FieldValue.serverTimestamp(),
+        });
+      });
+
       // Session state güncelle
       final currentCompleted = _ref.read(sessionCompletedQuestsProvider);
       _ref.read(sessionCompletedQuestsProvider.notifier).state = {
@@ -137,18 +186,36 @@ class QuestTrackingService {
       // Completion notifier'ı tetikle
       _ref.read(questCompletionProvider.notifier).show(completedQuest);
 
+      // Provider'ları yenile - PUANIN YANSIMASI İÇİN ÖNEMLİ
+      _ref.invalidate(userProfileProvider);
+      _ref.invalidate(optimizedQuestsProvider);
+      // dailyQuestsProvider yerine quest_service.dart'tan import et
+      try {
+        _ref.invalidate(questServiceProvider);
+      } catch (e) {
+        debugPrint('[QuestTracking] Provider invalidation uyarısı: $e');
+      }
+
       // Zincir görevler için sonraki görevi aktifleştir
       if (completedQuest.chainId != null) {
         await _activateNextChainQuest(completedQuest);
       }
 
-      // Haftalık/aylık görevlerin özel işlemleri
+      // Özel görev tipleri işlemleri
       await _handleSpecialQuestTypes(completedQuest);
 
-      debugPrint('[QuestTracking] Görev tamamlandı: ${completedQuest.title}');
+      debugPrint('[QuestTracking] ✅ Görev başarıyla tamamlandı: ${completedQuest.title} (+$dynamicReward BP)');
 
     } catch (e) {
-      debugPrint('[QuestTracking] Tamamlama işlemi hatası: $e');
+      debugPrint('[QuestTracking] ❌ KRITIK HATA - Tamamlama işlemi başarısız: $e');
+
+      // Hata durumunda kullanıcıya bildir
+      _ref.read(questCompletionProvider.notifier).dismiss();
+
+      // Analytics'e hata gönder
+      _logQuestError(completedQuest, e.toString());
+
+      rethrow; // Hatayı üst katmana ilet
     }
   }
 
@@ -289,6 +356,20 @@ class QuestTrackingService {
 
     // Analytics provider'ı kullan
     // _ref.read(analyticsServiceProvider).logEvent('quest_progress', eventData);
+  }
+
+  /// Hata loglama
+  void _logQuestError(Quest quest, String errorMessage) {
+    final errorData = {
+      'quest_id': quest.id,
+      'quest_type': quest.type.name,
+      'category': quest.category.name,
+      'error_message': errorMessage,
+      'route': quest.route.name,
+    };
+
+    // Analytics veya hata izleme servisine log gönder
+    // _ref.read(analyticsServiceProvider).logEvent('quest_error', errorData);
   }
 }
 

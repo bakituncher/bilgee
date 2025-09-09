@@ -53,6 +53,13 @@ class UserModel {
   final int currentQuestStreak; // Mevcut görev tamamlama serisi
   final Timestamp? lastQuestCompletionDate; // Son görev tamamlama tarihi
 
+  // PUAN SİSTEMİ İÇİN KRİTİK ALANLAR
+  final int bilgePoints; // Toplam Bilge Points
+  final int totalEarnedBP; // Hayat boyu kazanılan toplam BP
+  final int totalCompletedQuests; // Toplam tamamlanan görev sayısı
+  final Timestamp? lastRewardClaimedAt; // Son ödül toplama zamanı
+  final Timestamp? lastQuestCompletedAt; // Son görev tamamlama zamanı
+
   UserModel({
     required this.id,
     required this.email,
@@ -69,30 +76,20 @@ class UserModel {
     this.testCount = 0,
     this.totalNetSum = 0.0,
     this.engagementScore = 0,
-    // this.topicPerformances = const {},
-    // this.completedDailyTasks = const {},
-    // this.studyPacing,
-    // this.longTermStrategy,
-    // this.weeklyPlan,
     this.weeklyAvailability = const {},
-    // this.masteredTopics = const [],
-    // KALDIRILDI: activeDailyQuests
     this.activeWeeklyCampaign,
     this.lastQuestRefreshDate,
     this.unlockedAchievements = const {},
-    // this.dailyVisits = const [], // KALDIRILDI
-    this.avatarStyle, // YENİ
-    this.avatarSeed, // YENİ
+    this.avatarStyle,
+    this.avatarSeed,
     this.dailyQuestPlanSignature,
     this.lastScheduleCompletionRatio,
-    // KALDIRILDI: dailyPlanBonuses
     this.dailyScheduleStreak = 0,
     this.lastWeeklyReport,
     this.dynamicDifficultyFactorToday,
     this.weeklyPlanCompletedAt,
-    this.workshopStreak = 0, // yeni
-    this.lastWorkshopDate, // yeni
-
+    this.workshopStreak = 0,
+    this.lastWorkshopDate,
     // YENİ PARAMETRELER
     this.hasCreatedStrategicPlan = false,
     this.lastStrategyCreationDate,
@@ -103,6 +100,11 @@ class UserModel {
     this.usedFeatures = const {},
     this.currentQuestStreak = 0,
     this.lastQuestCompletionDate,
+    this.bilgePoints = 0,
+    this.totalEarnedBP = 0,
+    this.totalCompletedQuests = 0,
+    this.lastRewardClaimedAt,
+    this.lastQuestCompletedAt,
   });
 
   factory UserModel.fromSnapshot(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -177,6 +179,11 @@ class UserModel {
       usedFeatures: Map<String, bool>.from(data['usedFeatures'] ?? {}),
       currentQuestStreak: data['currentQuestStreak'] ?? 0,
       lastQuestCompletionDate: data['lastQuestCompletionDate'] as Timestamp?,
+      bilgePoints: data['bilgePoints'] ?? 0, // yeni
+      totalEarnedBP: data['totalEarnedBP'] ?? 0, // yeni
+      totalCompletedQuests: data['totalCompletedQuests'] ?? 0, // yeni
+      lastRewardClaimedAt: data['lastRewardClaimedAt'] as Timestamp?, // yeni
+      lastQuestCompletedAt: data['lastQuestCompletedAt'] as Timestamp?, // yeni
     );
   }
 

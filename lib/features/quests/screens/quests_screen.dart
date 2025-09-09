@@ -428,10 +428,21 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
   }
 
   void _refreshQuests() async {
+    // Widget dispose edilmişse işlem yapma
+    if (!mounted) return;
+
     final user = ref.read(userProfileProvider).value;
-    if (user != null) {
-      await ref.read(questServiceProvider).refreshDailyQuestsForUser(user, force: true);
-      ref.invalidate(optimizedQuestsProvider);
+    if (user != null && mounted) {
+      try {
+        await ref.read(questServiceProvider).refreshDailyQuestsForUser(user, force: true);
+
+        // İkinci mounted kontrolü - async işlem sonrası
+        if (mounted) {
+          ref.invalidate(optimizedQuestsProvider);
+        }
+      } catch (e) {
+        debugPrint('[QuestsScreen] Refresh hatası: $e');
+      }
     }
   }
 

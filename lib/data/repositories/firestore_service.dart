@@ -25,6 +25,9 @@ class FirestoreService {
   final FirebaseFirestore _firestore;
   FirestoreService(this._firestore);
 
+  // Firestore instance'ına erişim için getter ekle
+  FirebaseFirestore get db => _firestore;
+
   String sanitizeKey(String key) {
     return key.replaceAll(RegExp(r'[.\s()]'), '_');
   }
