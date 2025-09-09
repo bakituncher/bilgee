@@ -545,27 +545,30 @@ class FirestoreService {
     final newSessionRef = _focusSessionsCollection.doc();
     final minutes = (session.durationInSeconds / 60).floor();
     final dailyRef = _userActivityDailyDoc(session.userId, session.date);
+    final dateKey = _dateKey(session.date);
 
     await _firestore.runTransaction((txn) async {
-      // Detay seansı ayrı koleksiyona yaz
+      // Detay seans
       txn.set(newSessionRef, session.toMap());
 
-      // Kullanıcı stats: birikimli alanları artır
+      // Stats dokümanı (atomik artışlar)
       txn.set(statsRef, {
         'focusMinutes': FieldValue.increment(minutes),
-        'bp': FieldValue.increment(minutes), // Bilgelik Puanı = dakika
+        'bp': FieldValue.increment(minutes),
+        'pomodoroBp': FieldValue.increment(minutes),
         'pomodoroSessions': FieldValue.increment(1),
-        // Mevcut sistemle tutarlılık için engagementScore ek artışını koru
-        'engagementScore': FieldValue.increment(25),
+        'totalFocusSeconds': FieldValue.increment(session.durationInSeconds),
+        // Son 30 güne yönelik hafifletilmiş rollup (UI haftalık/aylık sorguları azaltır)
+        'focusRollup30.$dateKey': FieldValue.increment(minutes),
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
-      // Günlük aktivite modüler yapı: gün başına toplam odak dakikası
+      // Günlük aktivite dokümanı
       final d0 = DateTime(session.date.year, session.date.month, session.date.day);
       txn.set(dailyRef, {
         'focusMinutes': FieldValue.increment(minutes),
         'date': Timestamp.fromDate(d0),
-        'dateKey': _dateKey(d0),
+        'dateKey': dateKey,
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
     });
@@ -893,8 +896,8 @@ class FirestoreService {
     });
   }
 
-  Stream<UserStats> getUserStatsStream(String userId) {
-    return _userStatsDoc(userId).snapshots().map((doc) => UserStats.fromSnapshot(doc));
+  Stream<UserStats?> getUserStatsStream(String userId) {
+    return _userStatsDoc(userId).snapshots().map((doc) => doc.exists ? UserStats.fromSnapshot(doc) : null);
   }
 
   Future<void> updateAnalysisSummary(String userId, StatsAnalysis analysis) {
