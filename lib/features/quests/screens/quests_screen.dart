@@ -11,7 +11,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-enum QuestFilter { all, daily, weekly, monthly, completed }
+enum QuestFilter { all, daily, completed }
 
 class QuestsScreen extends ConsumerStatefulWidget {
   const QuestsScreen({super.key});
@@ -175,8 +175,6 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
     switch (filter) {
       case QuestFilter.all: return 'Tümü';
       case QuestFilter.daily: return 'Günlük';
-      case QuestFilter.weekly: return 'Haftalık';
-      case QuestFilter.monthly: return 'Aylık';
       case QuestFilter.completed: return 'Tamamlanan';
     }
   }
@@ -400,12 +398,6 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
     switch (_selectedFilter) {
       case QuestFilter.daily:
         filtered = filtered.where((q) => q.type == QuestType.daily).toList();
-        break;
-      case QuestFilter.weekly:
-        filtered = filtered.where((q) => q.type == QuestType.weekly).toList();
-        break;
-      case QuestFilter.monthly:
-        filtered = filtered.where((q) => q.type == QuestType.monthly).toList();
         break;
       case QuestFilter.completed:
         filtered = filtered.where((q) => q.isCompleted).toList();

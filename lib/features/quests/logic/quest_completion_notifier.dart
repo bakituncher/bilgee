@@ -148,31 +148,15 @@ class QuestCompletionNotifier extends StateNotifier<QuestCompletionState> {
     debugPrint('[QuestCompletion] Görev kuyruğa eklendi: ${quest.title} (Kuyruk: ${state.completionQueue.length})');
   }
 
-  /// Özel g��rev tiplerinin ödül işlemleri
+  /// Özel görev tiplerinin ödül işlemleri
   Future<void> _handleSpecialRewardTypes(Quest quest, Ref ref, int actualReward) async {
     switch (quest.type) {
-      case QuestType.weekly:
-        await _handleWeeklyReward(quest, ref, actualReward);
-        break;
-      case QuestType.monthly:
-        await _handleMonthlyReward(quest, ref, actualReward);
-        break;
       case QuestType.achievement:
         await _handleAchievementReward(quest, ref, actualReward);
         break;
       default:
         break;
     }
-  }
-
-  Future<void> _handleWeeklyReward(Quest quest, Ref ref, int reward) async {
-    // Haftalık görev bonusları ve özel ödüller
-    debugPrint('[QuestCompletion] Haftalık görev özel ödülü işleniyor');
-  }
-
-  Future<void> _handleMonthlyReward(Quest quest, Ref ref, int reward) async {
-    // Aylık görev bonusları ve özel ödüller
-    debugPrint('[QuestCompletion] Aylık görev özel ödülü işleniyor');
   }
 
   Future<void> _handleAchievementReward(Quest quest, Ref ref, int reward) async {

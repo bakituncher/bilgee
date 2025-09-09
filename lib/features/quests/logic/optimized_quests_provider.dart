@@ -8,12 +8,10 @@ import 'package:bilge_ai/features/quests/logic/quest_tracking_service.dart';
 import 'package:bilge_ai/features/quests/logic/quest_navigation_manager.dart';
 import 'package:bilge_ai/features/quests/logic/quest_service.dart';
 
-/// Geliştirilmiş Quest Notifier - Tüm görev tiplerini destekler
+/// Geliştirilmiş Quest Notifier - Günlük görevleri destekler
 class OptimizedQuestsNotifier extends StateNotifier<QuestsState> {
   final Ref _ref;
   StreamSubscription<List<Quest>>? _dailySub;
-  StreamSubscription<List<Quest>>? _weeklySub;
-  StreamSubscription<List<Quest>>? _monthlySub;
   Timer? _refreshTimer;
 
   OptimizedQuestsNotifier(this._ref) : super(const QuestsState.loading()) {
@@ -40,7 +38,7 @@ class OptimizedQuestsNotifier extends StateNotifier<QuestsState> {
     });
   }
 
-  /// Tüm görev tiplerini dinle
+  /// Günlük görevleri dinle
   void _subscribeToQuests(String userId) {
     _clearStreams();
 
@@ -51,18 +49,6 @@ class OptimizedQuestsNotifier extends StateNotifier<QuestsState> {
       _dailySub = firestoreService.streamDailyQuests(userId).listen(
         (quests) => _updateDailyQuests(quests),
         onError: (e) => _handleStreamError('daily', e),
-      );
-
-      // Haftalık görevler
-      _weeklySub = firestoreService.streamWeeklyQuests(userId).listen(
-        (quests) => _updateWeeklyQuests(quests),
-        onError: (e) => _handleStreamError('weekly', e),
-      );
-
-      // Aylık görevler
-      _monthlySub = firestoreService.streamMonthlyQuests(userId).listen(
-        (quests) => _updateMonthlyQuests(quests),
-        onError: (e) => _handleStreamError('monthly', e),
       );
 
     } catch (e) {
@@ -80,34 +66,12 @@ class OptimizedQuestsNotifier extends StateNotifier<QuestsState> {
     _checkAllQuestsLoaded();
   }
 
-  /// Haftalık görev güncellemesi
-  void _updateWeeklyQuests(List<Quest> quests) {
-    state = state.copyWith(
-      weeklyQuests: quests,
-      lastWeeklyUpdate: DateTime.now(),
-    );
-    _checkAllQuestsLoaded();
-  }
-
-  /// Aylık görev güncellemesi
-  void _updateMonthlyQuests(List<Quest> quests) {
-    state = state.copyWith(
-      monthlyQuests: quests,
-      lastMonthlyUpdate: DateTime.now(),
-    );
-    _checkAllQuestsLoaded();
-  }
-
   /// Tüm görevler yüklendiğinde state'i güncelle
   void _checkAllQuestsLoaded() {
-    if (state.dailyQuests != null &&
-        state.weeklyQuests != null &&
-        state.monthlyQuests != null) {
+    if (state.dailyQuests != null) {
 
       final allQuests = [
         ...state.dailyQuests!,
-        ...state.weeklyQuests!,
-        ...state.monthlyQuests!,
       ];
 
       state = state.copyWith(
@@ -199,11 +163,7 @@ class OptimizedQuestsNotifier extends StateNotifier<QuestsState> {
   /// Stream'leri temizle
   void _clearStreams() {
     _dailySub?.cancel();
-    _weeklySub?.cancel();
-    _monthlySub?.cancel();
     _dailySub = null;
-    _weeklySub = null;
-    _monthlySub = null;
   }
 
   @override
@@ -217,8 +177,6 @@ class OptimizedQuestsNotifier extends StateNotifier<QuestsState> {
 /// Geliştirilmiş Quest State
 class QuestsState {
   final List<Quest>? dailyQuests;
-  final List<Quest>? weeklyQuests;
-  final List<Quest>? monthlyQuests;
   final List<Quest>? allQuests;
   final Map<String, Quest>? questsMap;
   final bool isLoaded;
@@ -226,13 +184,9 @@ class QuestsState {
   final String? error;
   final DateTime? lastRefresh;
   final DateTime? lastDailyUpdate;
-  final DateTime? lastWeeklyUpdate;
-  final DateTime? lastMonthlyUpdate;
 
   const QuestsState({
     this.dailyQuests,
-    this.weeklyQuests,
-    this.monthlyQuests,
     this.allQuests,
     this.questsMap,
     this.isLoaded = false,
@@ -240,15 +194,11 @@ class QuestsState {
     this.error,
     this.lastRefresh,
     this.lastDailyUpdate,
-    this.lastWeeklyUpdate,
-    this.lastMonthlyUpdate,
   });
 
   const QuestsState.loading() : this(isRefreshing: true);
   const QuestsState.empty() : this(
     dailyQuests: const [],
-    weeklyQuests: const [],
-    monthlyQuests: const [],
     allQuests: const [],
     questsMap: const {},
     isLoaded: true,
@@ -258,16 +208,12 @@ class QuestsState {
     error: errorMessage,
     isLoaded: true,
     dailyQuests: const [],
-    weeklyQuests: const [],
-    monthlyQuests: const [],
     allQuests: const [],
     questsMap: const {},
   );
 
   QuestsState copyWith({
     List<Quest>? dailyQuests,
-    List<Quest>? weeklyQuests,
-    List<Quest>? monthlyQuests,
     List<Quest>? allQuests,
     Map<String, Quest>? questsMap,
     bool? isLoaded,
@@ -275,13 +221,9 @@ class QuestsState {
     String? error,
     DateTime? lastRefresh,
     DateTime? lastDailyUpdate,
-    DateTime? lastWeeklyUpdate,
-    DateTime? lastMonthlyUpdate,
   }) {
     return QuestsState(
       dailyQuests: dailyQuests ?? this.dailyQuests,
-      weeklyQuests: weeklyQuests ?? this.weeklyQuests,
-      monthlyQuests: monthlyQuests ?? this.monthlyQuests,
       allQuests: allQuests ?? this.allQuests,
       questsMap: questsMap ?? this.questsMap,
       isLoaded: isLoaded ?? this.isLoaded,
@@ -289,8 +231,6 @@ class QuestsState {
       error: error ?? this.error,
       lastRefresh: lastRefresh ?? this.lastRefresh,
       lastDailyUpdate: lastDailyUpdate ?? this.lastDailyUpdate,
-      lastWeeklyUpdate: lastWeeklyUpdate ?? this.lastWeeklyUpdate,
-      lastMonthlyUpdate: lastMonthlyUpdate ?? this.lastMonthlyUpdate,
     );
   }
 
@@ -360,18 +300,6 @@ final optimizedQuestsProvider = StateNotifierProvider<OptimizedQuestsNotifier, Q
 final optimizedDailyQuestsProvider = Provider<List<Quest>>((ref) {
   final questsState = ref.watch(optimizedQuestsProvider);
   return questsState.dailyQuests ?? [];
-});
-
-// YENİ: Haftalık görevler provider
-final optimizedWeeklyQuestsProvider = Provider<List<Quest>>((ref) {
-  final questsState = ref.watch(optimizedQuestsProvider);
-  return questsState.weeklyQuests ?? [];
-});
-
-// YENİ: Aylık görevler provider
-final optimizedMonthlyQuestsProvider = Provider<List<Quest>>((ref) {
-  final questsState = ref.watch(optimizedQuestsProvider);
-  return questsState.monthlyQuests ?? [];
 });
 
 // YENİ: Tüm görevler provider

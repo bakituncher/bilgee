@@ -122,40 +122,6 @@ class QuestSystemManager {
   }
 
   /// =====================
-  /// HAFTALIK/AYLIK GÖREV İŞLEMLERİ
-  /// =====================
-
-  /// Haftalık görevleri getir
-  List<Quest> getWeeklyQuests() {
-    final questsState = _ref.read(optimizedQuestsProvider);
-    return questsState.weeklyQuests ?? [];
-  }
-
-  /// Aylık görevleri getir
-  List<Quest> getMonthlyQuests() {
-    final questsState = _ref.read(optimizedQuestsProvider);
-    return questsState.monthlyQuests ?? [];
-  }
-
-  /// Haftalık hedef ilerlemesi
-  double getWeeklyProgress() {
-    final weekly = getWeeklyQuests();
-    if (weekly.isEmpty) return 0.0;
-
-    final completed = weekly.where((q) => q.isCompleted).length;
-    return completed / weekly.length;
-  }
-
-  /// Aylık hedef ilerlemesi
-  double getMonthlyProgress() {
-    final monthly = getMonthlyQuests();
-    if (monthly.isEmpty) return 0.0;
-
-    final completed = monthly.where((q) => q.isCompleted).length;
-    return completed / monthly.length;
-  }
-
-  /// =====================
   /// GENEL GÖREV İŞLEMLERİ
   /// =====================
 
@@ -222,8 +188,6 @@ class QuestSystemManager {
       'isRefreshing': questsState.isRefreshing,
       'error': questsState.error,
       'dailyQuests': questsState.dailyQuests?.length ?? 0,
-      'weeklyQuests': questsState.weeklyQuests?.length ?? 0,
-      'monthlyQuests': questsState.monthlyQuests?.length ?? 0,
       'totalQuests': questsState.allQuests?.length ?? 0,
       'completionRate': questsState.completionRate,
       'lastRefresh': questsState.lastRefresh?.toIso8601String(),

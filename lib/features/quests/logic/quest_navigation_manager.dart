@@ -6,7 +6,7 @@ import 'package:bilge_ai/features/quests/models/quest_model.dart';
 import 'package:bilge_ai/features/quests/logic/quest_progress_controller.dart';
 
 /// Görev yönlendirmelerini merkezi olarak yöneten servis
-/// T����m görev tiplerini (günlük, haftalık, aylık) destekler
+/// Tüm görev tiplerini (günlük, başarım) destekler
 class QuestNavigationManager {
   static const QuestNavigationManager _instance = QuestNavigationManager._internal();
   factory QuestNavigationManager() => _instance;
@@ -105,26 +105,6 @@ class QuestNavigationManager {
             QuestRoute.coach,
             QuestRoute.addTest,
             QuestRoute.stats,
-          ]
-        };
-
-      case QuestType.weekly:
-        return {
-          QuestType.weekly: [
-            QuestRoute.weeklyPlan,
-            QuestRoute.strategy,
-            QuestRoute.workshop,
-            QuestRoute.arena,
-          ]
-        };
-
-      case QuestType.monthly:
-        return {
-          QuestType.monthly: [
-            QuestRoute.library,
-            QuestRoute.motivationChat,
-            QuestRoute.avatar,
-            QuestRoute.availability,
           ]
         };
 

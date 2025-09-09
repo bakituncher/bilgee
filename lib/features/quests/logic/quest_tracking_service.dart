@@ -187,30 +187,12 @@ class QuestTrackingService {
   /// Özel görev tiplerinin işlemleri
   Future<void> _handleSpecialQuestTypes(Quest quest) async {
     switch (quest.type) {
-      case QuestType.weekly:
-        await _handleWeeklyQuestCompletion(quest);
-        break;
-      case QuestType.monthly:
-        await _handleMonthlyQuestCompletion(quest);
-        break;
       case QuestType.achievement:
         await _handleAchievementCompletion(quest);
         break;
       default:
         break;
     }
-  }
-
-  /// Haftalık görev tamamlama
-  Future<void> _handleWeeklyQuestCompletion(Quest quest) async {
-    // Haftalık streak kontrolü ve bonus hesaplama
-    // İleride implement edilecek
-  }
-
-  /// Aylık görev tamamlama
-  Future<void> _handleMonthlyQuestCompletion(Quest quest) async {
-    // Aylık başarım ve özel ödül sistemi
-    // İleride implement edilecek
   }
 
   /// Başarım tamamlama
@@ -392,8 +374,6 @@ extension QuestExtensions on Quest {
     int? chainLength,
     QuestRoute? route,
     bool? rewardClaimed,
-    String? weekKey,
-    String? monthKey,
   }) {
     return Quest(
       id: id ?? this.id,
@@ -419,8 +399,6 @@ extension QuestExtensions on Quest {
       chainLength: chainLength ?? this.chainLength,
       route: route ?? this.route,
       rewardClaimed: rewardClaimed ?? this.rewardClaimed,
-      weekKey: weekKey ?? this.weekKey,
-      monthKey: monthKey ?? this.monthKey,
     );
   }
 
