@@ -156,6 +156,13 @@ class QuestTrackingService {
           'totalCompletedQuests': FieldValue.increment(1),
         });
 
+        // 1.b Stats.engagementScore artır (UI & leaderboard için tek kaynak)
+        final statsRef = firestoreService.usersCollection.doc(user.id).collection('state').doc('stats');
+        transaction.set(statsRef, {
+          'engagementScore': FieldValue.increment(dynamicReward),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+
         // 2. Görevin rewardClaimed flag'ini güncelle
         final questRef = firestoreService.questsCollection(user.id).doc(completedQuest.id);
         transaction.update(questRef, {
@@ -175,6 +182,9 @@ class QuestTrackingService {
           'completedAt': FieldValue.serverTimestamp(),
         });
       });
+
+      // Liderlik tablosu senkronu (sessizce dene)
+      try { await firestoreService.syncLeaderboardUser(user.id); } catch (_) {}
 
       // Session state güncelle
       final currentCompleted = _ref.read(sessionCompletedQuestsProvider);

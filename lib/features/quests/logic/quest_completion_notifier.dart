@@ -81,6 +81,13 @@ class QuestCompletionNotifier extends StateNotifier<QuestCompletionState> {
           'lastRewardClaimedAt': FieldValue.serverTimestamp(),
         });
 
+        // 2.b Stats.engagementScore'u da artır (UI & leaderboard için)
+        final statsRef = firestoreService.usersCollection.doc(user.id).collection('state').doc('stats');
+        transaction.set(statsRef, {
+          'engagementScore': FieldValue.increment(dynamicReward),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+
         // 3. Görev reward claimed flag'ini güncelle
         transaction.update(questRef, {
           'rewardClaimed': true,
@@ -99,6 +106,9 @@ class QuestCompletionNotifier extends StateNotifier<QuestCompletionState> {
           'claimedAt': FieldValue.serverTimestamp(),
         });
       });
+
+      // Liderlik tablosu senkronu (sessizce dene)
+      try { await firestoreService.syncLeaderboardUser(user.id); } catch (_) {}
 
       debugPrint('[QuestCompletion] ✅ Ödül başarıyla toplandı: $dynamicReward BP');
 

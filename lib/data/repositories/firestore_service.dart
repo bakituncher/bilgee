@@ -269,6 +269,11 @@ class FirestoreService {
     }, SetOptions(merge: true));
   }
 
+  // Public wrapper: leaderboard kaydını güncelle
+  Future<void> syncLeaderboardUser(String userId, {String? targetExam}) async {
+    await _syncLeaderboardUser(userId, targetExam: targetExam);
+  }
+
   Future<void> updateUserAvatar({
     required String userId,
     required String style,
@@ -1021,12 +1026,22 @@ class FirestoreService {
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
 
+    // Stats.engagementScore'u da artır (UI ve leaderboard bu değeri kullanıyor)
+    final statsRef = usersCollection.doc(userId).collection('state').doc('stats');
+    batch.set(statsRef, {
+      'engagementScore': FieldValue.increment(reward),
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+
     // Try to set rewardClaimed on all possible quest locations (safe-merge)
     batch.set(qDaily, {'rewardClaimed': true, 'rewardClaimedAt': FieldValue.serverTimestamp(), 'actualReward': reward}, SetOptions(merge: true));
     batch.set(qWeekly, {'rewardClaimed': true, 'rewardClaimedAt': FieldValue.serverTimestamp(), 'actualReward': reward}, SetOptions(merge: true));
     batch.set(qMonthly, {'rewardClaimed': true, 'rewardClaimedAt': FieldValue.serverTimestamp(), 'actualReward': reward}, SetOptions(merge: true));
 
     await batch.commit();
+
+    // Liderlik tablosu senkronu (sessizce dene)
+    try { await syncLeaderboardUser(userId); } catch (_) {}
   }
 
   /// Report question issue (creates report and updates index)
