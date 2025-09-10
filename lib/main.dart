@@ -27,8 +27,6 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
   // Global hata yakalama (Flutter ve Dart)
   FlutterError.onError = (details) {
     FlutterError.presentError(details);
@@ -39,6 +37,9 @@ void main() async {
   };
 
   await runZonedGuarded(() async {
+    // Binding ve runApp aynı zone’da olmalı
+    WidgetsFlutterBinding.ensureInitialized();
+
     try {
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
