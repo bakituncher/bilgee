@@ -107,6 +107,12 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // YENİ: Liderlik tablosu anlık görüntüleri (optimize edilmiş)
+    match /leaderboard_snapshots/{snapshotId} {
+      allow read, list: if request.auth != null;
+      allow write: if false; // Sadece sunucu yazmalı
+    }
+
     // =====================================================================
     // TESTLER
     // =====================================================================

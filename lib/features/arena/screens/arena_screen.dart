@@ -49,7 +49,13 @@ class ArenaScreen extends ConsumerWidget {
           ],
         ),
       ),
-    );
+    ).animate(onPlay: (c) => c.repeat())
+       .shimmer(
+          delay: (isFirstPlace ? 2000 : 3000).ms,
+          duration: 1800.ms,
+          blendMode: BlendMode.srcATop,
+          color: Colors.white.withOpacity(0.7)
+       );
   }
 }
 
@@ -91,29 +97,28 @@ class _LeaderboardView extends ConsumerWidget {
             data: (entries) {
               if (entries.isEmpty) return _buildEmptyState(context);
 
-              // YENİ: Gelen tüm listeyi kullan (örn. 200 kişi)
               final fullList = entries;
-              final topTwenty = fullList.take(20).toList(growable: false);
+              final topThree = fullList.take(3).toList();
+              // Geri kalan liste (3. sıradan sonraki)
+              final restOfTheList = fullList.length > 3 ? fullList.sublist(3) : <LeaderboardEntry>[];
+
               final currentUserIndex = fullList.indexWhere((e) => e.userId == currentUserId);
               final currentUserEntry = currentUserIndex != -1 ? fullList[currentUserIndex] : null;
               // Kullanıcı ilk 20'de değilse ama listedeyse (21-200 arası) en altta kendi kartını göster
               final showCurrentUserAtBottom = currentUserEntry != null && currentUserIndex >= 20;
-              final topScore = fullList.first.score == 0 ? 1 : fullList.first.score;
+              final topScore = fullList.isNotEmpty ? (fullList.first.score == 0 ? 1 : fullList.first.score) : 1;
 
-              // Liste (20) + (opsiyonel alt kart) + öne çıkanlar (1)
-              final itemCount = topTwenty.length + (showCurrentUserAtBottom ? 1 : 0) + 1;
+              // Liste (geri kalan) + (opsiyonel alt kart) + podyum (1)
+              final itemCount = restOfTheList.length + (showCurrentUserAtBottom ? 1 : 0) + 1;
 
               return ListView.builder(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(16, 18, 16, 40),
                 itemCount: itemCount,
                 itemBuilder: (context, index) {
-                  // 1. Öne çıkanlar
+                  // 1. Podyum
                   if (index == 0) {
-                    return _FeaturedScroller(entries: fullList.take(5).toList(), currentUserId: currentUserId)
-                        .animate()
-                        .fadeIn(duration: 400.ms)
-                        .slideY(begin: -0.05, end: 0, duration: 450.ms, curve: Curves.easeOutCubic);
+                    return _PodiumDisplay(topThree: topThree, currentUserId: currentUserId);
                   }
 
                   // 2. Listenin sonundaki kullanıcı kartı (eğer 20'nin dışındaysa)
@@ -124,9 +129,9 @@ class _LeaderboardView extends ConsumerWidget {
                     );
                   }
 
-                  // 3. Normal sıralama kartları (ilk 20)
+                  // 3. Normal sıralama kartları (4. sıradan itibaren)
                   final realIndex = index - 1;
-                  final entry = topTwenty[realIndex];
+                  final entry = restOfTheList[realIndex];
                   return GestureDetector(
                     onTap: () {
                       HapticFeedback.selectionClick();
@@ -190,21 +195,54 @@ class _CurrentUserCard extends StatelessWidget {
         onPlay: (c) => c.repeat(reverse: true),
         effects: [ScaleEffect(delay: 600.ms, duration: 1800.ms, begin: const Offset(1,1), end: const Offset(1.015,1.015), curve: Curves.easeInOut)],
         child: Container(
-          decoration: const BoxDecoration(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-            gradient: LinearGradient(colors: [_accent2, _accent1]),
+          decoration: BoxDecoration(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+            gradient: LinearGradient(colors: [_accent2.withOpacity(0.8), _accent1.withOpacity(0.8)]),
+            boxShadow: [
+              BoxShadow(color: _accent2.withOpacity(0.3), blurRadius: 20, spreadRadius: 4),
+            ]
           ),
           padding: const EdgeInsets.all(2),
           child: Container(
             decoration: const BoxDecoration(
               borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-              gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF1B2534), Color(0xFF1F2D46)]),
+              gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF1F2D46), Color(0xFF1B2534)]),
             ),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(8,10,8,10),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
               child: SafeArea(
                 top: false,
-                child: _RankCard(entry: entry, rank: entry.rank, isCurrentUser: true, topScore: null),
+                child: Column(
+                  children: [
+                    Text("Sizin Sıralamanız", style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white70)),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        _RankCapsule(rank: entry.rank, highlight: true),
+                        const SizedBox(width: 12),
+                        CircleAvatar(
+                          backgroundColor: Colors.white10,
+                          radius: 22,
+                          child: ClipOval(
+                            child: (entry.avatarStyle != null && entry.avatarSeed != null)
+                                ? SvgPicture.network('https://api.dicebear.com/9.x/${entry.avatarStyle}/svg?seed=${entry.avatarSeed}', fit: BoxFit.cover)
+                                : Text(entry.userName.isNotEmpty ? entry.userName.substring(0,1).toUpperCase() : '?', style: const TextStyle(fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            entry.userName,
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600, color: Colors.white),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text('${entry.score} BP', style: Theme.of(context).textTheme.titleSmall?.copyWith(color: _accent2, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -218,128 +256,110 @@ const _accent1 = Color(0xFF7F5BFF);
 const _accent2 = Color(0xFF6BFF7A);
 const List<Color> _bgGradient = [Color(0xFF0B0F14), Color(0xFF2A155A), Color(0xFF061F38)];
 
-class _FeaturedScroller extends StatelessWidget {
-  final List<LeaderboardEntry> entries;
+// YENİ: Premium Podyum Widget'ı
+class _PodiumDisplay extends StatelessWidget {
+  final List<LeaderboardEntry> topThree;
   final String? currentUserId;
-  const _FeaturedScroller({required this.entries, required this.currentUserId});
+  const _PodiumDisplay({required this.topThree, this.currentUserId});
+
   @override
   Widget build(BuildContext context) {
-    final ts = MediaQuery.textScaleFactorOf(context);
-    final base = 174.0; // 150 -> 174 overflow fix
-    final extra = ((ts - 1) * 44).clamp(0, 52); // biraz daha tolerans
-    final containerHeight = base + extra; // dinamik yükseklik
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4.0, bottom: 12),
-          child: Row(
-            children: [
-              const Icon(Icons.trending_up, color: _accent2, size: 20),
-              const SizedBox(width: 6),
-              Text('Öne Çıkanlar', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w700)),
-            ],
-          ),
-        ),
-        SizedBox(
-          height: containerHeight,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: entries.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 14),
-            itemBuilder: (context, i) {
-              final e = entries[i];
-              final rank = i + 1;
-              final isUser = e.userId == currentUserId;
-              return _FeaturedCard(entry: e, rank: rank, isCurrentUser: isUser)
-                  .animate()
-                  .fadeIn(duration: 400.ms, delay: (70 * i).ms)
-                  .scale(begin: const Offset(0.9, 0.9), end: const Offset(1, 1), duration: 450.ms, curve: Curves.easeOutBack);
-            },
-          ),
-        ),
-        const SizedBox(height: 12),
-      ],
+    final entries = topThree.length > 1
+        ? [
+            topThree[1], // 2. sıra
+            topThree[0], // 1. sıra
+            if (topThree.length > 2) topThree[2], // 3. sıra
+          ]
+        : topThree;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 24.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(entries.length, (index) {
+          final entry = entries[index];
+          // Ortadaki (1. sıra) en büyük olacak
+          final isFirstPlace = entries.length > 1 && index == 1;
+          return _PodiumPlaceCard(
+            entry: entry,
+            isCurrentUser: entry.userId == currentUserId,
+            isFirstPlace: isFirstPlace,
+          ).animate().slideY(begin: 1, duration: 600.ms, delay: (200 * index).ms, curve: Curves.easeOutCubic).fadeIn();
+        }),
+      ),
     );
   }
 }
 
-class _FeaturedCard extends StatelessWidget {
+class _PodiumPlaceCard extends StatelessWidget {
   final LeaderboardEntry entry;
-  final int rank;
   final bool isCurrentUser;
-  const _FeaturedCard({super.key, required this.entry, required this.rank, required this.isCurrentUser});
+  final bool isFirstPlace;
+
+  const _PodiumPlaceCard({
+    required this.entry,
+    this.isCurrentUser = false,
+    this.isFirstPlace = false,
+  });
+
   @override
   Widget build(BuildContext context) {
-    final medalColor = switch (rank) {
+    final medalColor = switch (entry.rank) {
       1 => _accent2,
       2 => _accent1,
       3 => Colors.orangeAccent,
       _ => Colors.white54,
     };
+    final height = isFirstPlace ? 180.0 : 150.0;
+    final avatarRadius = isFirstPlace ? 32.0 : 26.0;
+
     return GestureDetector(
       onTap: () => context.push('${AppRoutes.arena}/${entry.userId}'),
       child: Container(
-        width: 130,
+        width: 110,
+        height: height,
+        margin: const EdgeInsets.symmetric(horizontal: 4),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(26),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              const Color(0x1AFFFFFF),
-              const Color(0x0FFFFFFF),
-              const Color(0x14FFFFFF),
-            ],
+            begin: Alignment.bottomCenter,
+            end: Alignment.topCenter,
+            colors: [medalColor.withOpacity(0.5), medalColor.withOpacity(0.1)],
           ),
-          border: Border.all(color: medalColor.o(0.6), width: 1.4),
-          boxShadow: [
-            if (rank == 1)
-              BoxShadow(color: _accent2.o(0.55), blurRadius: 24, spreadRadius: 2),
-          ],
+          border: Border.all(color: medalColor, width: 1.5),
         ),
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Stack(
+              clipBehavior: Clip.none,
               alignment: Alignment.center,
               children: [
-                if (rank <= 3)
-                  Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(colors: [medalColor.o(0.9), medalColor.o(0.25)]),
-                    ),
-                  )
-                      .animate(onPlay: (c) => c.repeat(reverse: true))
-                      .scale(begin: const Offset(1, 1), end: const Offset(1.08, 1.08), duration: 1200.ms, curve: Curves.easeInOut),
                 CircleAvatar(
-                  radius: 26,
+                  radius: avatarRadius,
                   backgroundColor: Colors.white10,
                   child: ClipOval(
                     child: (entry.avatarStyle != null && entry.avatarSeed != null)
                         ? SvgPicture.network('https://api.dicebear.com/9.x/${entry.avatarStyle}/svg?seed=${entry.avatarSeed}', fit: BoxFit.cover)
-                        : Text(entry.userName.isNotEmpty ? entry.userName.substring(0,1).toUpperCase() : '?', style: const TextStyle(fontWeight: FontWeight.bold)),
+                        : Text(entry.userName.isNotEmpty ? entry.userName.substring(0, 1).toUpperCase() : '?', style: const TextStyle(fontWeight: FontWeight.bold)),
                   ),
+                ),
+                Positioned(
+                  bottom: -10,
+                  child: _RankCapsule(rank: entry.rank, highlight: isCurrentUser),
                 ),
               ],
             ),
-            const SizedBox(height: 6), // 8 -> 6
+            const SizedBox(height: 18),
             Text(
               entry.userName,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
             ),
-            const SizedBox(height: 2), // 4 -> 2
-            Text('${entry.score} BP', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: _accent2, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
-            const SizedBox(height: 2), // 4 -> 2
-            _RankCapsule(rank: rank, highlight: isCurrentUser),
-            const SizedBox(height: 4), // Spacer kaldırıldı overflow engellendi
+            const SizedBox(height: 4),
+            Text('${entry.score} BP', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: _accent2, fontWeight: FontWeight.bold)),
           ],
         ),
       ),
@@ -365,6 +385,8 @@ class _RankCapsule extends StatelessWidget {
   }
 }
 
+import 'dart:ui'; // YENİ: BackdropFilter için eklendi
+
 class _RankCard extends StatelessWidget {
   final LeaderboardEntry entry;
   final int rank;
@@ -375,75 +397,88 @@ class _RankCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final base = AppTheme.cardColor.o(isCurrentUser ? 0.9 : 0.55);
-    final borderGrad = rank <= 3
-        ? [
-            if (rank == 1) _accent2 else _accent1,
-            if (rank == 1) _accent1 else _accent2,
-          ]
-        : [_accent1.o(0.35), _accent2.o(0.35)];
     final progress = (topScore != null && topScore! > 0) ? (entry.score / topScore!).clamp(0.0, 1.0) : 0.0;
 
-    return Semantics(
-      label: 'Sıra $rank, kullanıcı ${entry.userName}, puan ${entry.score}',
-      child: AnimatedContainer(
-        duration: 350.ms,
-        curve: Curves.easeOutCubic,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          gradient: LinearGradient(colors: borderGrad),
-        ),
-        padding: const EdgeInsets.all(1.4),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(22),
-            color: base,
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+    // Kartın ana rengi ve vurgu rengi
+    final cardColor = isCurrentUser ? AppTheme.primaryColor.withOpacity(0.3) : AppTheme.cardColor.withOpacity(0.15);
+    final borderColor = isCurrentUser ? _accent2 : Colors.white24;
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.25),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          )
+        ]
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            padding: const EdgeInsets.all(1.4),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: borderColor, width: 1.5),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [cardColor, cardColor.withOpacity(0.5)],
+                stops: const [0.0, 1.0],
+              ),
+            ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _RankCapsule(rank: rank, highlight: isCurrentUser),
-                  const SizedBox(width: 12),
-                  CircleAvatar(
-                    backgroundColor: Colors.white10,
-                    radius: 22,
-                    child: ClipOval(
-                      child: (entry.avatarStyle != null && entry.avatarSeed != null)
-                          ? SvgPicture.network('https://api.dicebear.com/9.x/${entry.avatarStyle}/svg?seed=${entry.avatarSeed}', fit: BoxFit.cover)
-                          : Text(entry.userName.isNotEmpty ? entry.userName.substring(0,1).toUpperCase() : '?', style: const TextStyle(fontWeight: FontWeight.bold)),
-                    ),
+                  Row(
+                    children: [
+                      _RankCapsule(rank: rank, highlight: isCurrentUser),
+                      const SizedBox(width: 12),
+                      CircleAvatar(
+                        backgroundColor: Colors.white10,
+                        radius: 22,
+                        child: ClipOval(
+                          child: (entry.avatarStyle != null && entry.avatarSeed != null)
+                              ? SvgPicture.network('https://api.dicebear.com/9.x/${entry.avatarStyle}/svg?seed=${entry.avatarSeed}', fit: BoxFit.cover)
+                              : Text(entry.userName.isNotEmpty ? entry.userName.substring(0,1).toUpperCase() : '?', style: const TextStyle(fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          entry.userName,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600, color: Colors.white),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text('${entry.score} BP', style: Theme.of(context).textTheme.titleSmall?.copyWith(color: _accent2, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      entry.userName,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-                      overflow: TextOverflow.ellipsis,
+                  if (topScore != null) ...[
+                    const SizedBox(height: 10),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        minHeight: 6,
+                        backgroundColor: Colors.white.o(0.1),
+                        valueColor: AlwaysStoppedAnimation(isCurrentUser ? _accent2 : _accent1),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text('${entry.score} BP', style: Theme.of(context).textTheme.titleSmall?.copyWith(color: _accent2, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                  ],
                 ],
               ),
-              if (topScore != null) ...[
-                const SizedBox(height: 10),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    minHeight: 6,
-                    backgroundColor: Colors.white.o(0.06),
-                    valueColor: AlwaysStoppedAnimation(rank <= 3 ? _accent2 : _accent1),
-                  ),
-                ),
-              ],
-            ],
+            ),
           ),
         ),
-      ));
+      ),
+    );
   }
 }
 
