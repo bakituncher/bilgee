@@ -91,66 +91,42 @@ class _LeaderboardView extends ConsumerWidget {
             data: (entries) {
               if (entries.isEmpty) return _buildEmptyState(context);
 
-              // Sadece ilk 20 göster
-              final top = entries.take(20).toList(growable: false);
-              final currentUserIndex = top.indexWhere((e) => e.userId == currentUserId);
-              final currentUserEntry = currentUserIndex != -1 ? top[currentUserIndex] : null;
-              final showDetachedArea = currentUserEntry == null; // ilk 20'de yoksa
-              final topScore = entries.first.score == 0 ? 1 : entries.first.score;
+              // YENİ: Gelen tüm listeyi kullan (örn. 200 kişi)
+              final fullList = entries;
+              final topTwenty = fullList.take(20).toList(growable: false);
+              final currentUserIndex = fullList.indexWhere((e) => e.userId == currentUserId);
+              final currentUserEntry = currentUserIndex != -1 ? fullList[currentUserIndex] : null;
+              // Kullanıcı ilk 20'de değilse ama listedeyse (21-200 arası) en altta kendi kartını göster
+              final showCurrentUserAtBottom = currentUserEntry != null && currentUserIndex >= 20;
+              final topScore = fullList.first.score == 0 ? 1 : fullList.first.score;
 
-              // Liste + (detached user area) + featured header (yatay)
-              final itemCount = top.length + (showDetachedArea ? 1 : 0) + 1; // +1 featured scroller
+              // Liste (20) + (opsiyonel alt kart) + öne çıkanlar (1)
+              final itemCount = topTwenty.length + (showCurrentUserAtBottom ? 1 : 0) + 1;
 
               return ListView.builder(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(16, 18, 16, 40),
                 itemCount: itemCount,
                 itemBuilder: (context, index) {
+                  // 1. Öne çıkanlar
                   if (index == 0) {
-                    return _FeaturedScroller(entries: top.take(5).toList(), currentUserId: currentUserId)
+                    return _FeaturedScroller(entries: fullList.take(5).toList(), currentUserId: currentUserId)
                         .animate()
                         .fadeIn(duration: 400.ms)
                         .slideY(begin: -0.05, end: 0, duration: 450.ms, curve: Curves.easeOutCubic);
                   }
-                  final lastIndexForUser = itemCount - 1;
-                  if (showDetachedArea && index == lastIndexForUser) {
-                    // Kullanıcı ilk 20'de değil: Cloud Function'dan sırasını ve komşuları çek
-                    final rankAsync = ref.watch(leaderboardRankProvider((examType: currentUserExam, period: period)));
-                    return rankAsync.when(
-                      data: (data) {
-                        if (data == null || data['rank'] == null) return const SizedBox.shrink();
-                        final int rank = (data['rank'] as num).toInt();
-                        final List neighbors = (data['neighbors'] as List?) ?? const [];
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 16.0),
-                          child: _DetachedUserArea(
-                            rank: rank,
-                            neighbors: neighbors.map((e) {
-                              final m = Map<String, dynamic>.from(e as Map);
-                              return LeaderboardEntry(
-                                userId: (m['userId'] ?? '') as String,
-                                userName: (m['userName'] ?? '') as String,
-                                score: ((m['score'] ?? 0) as num).toInt(),
-                                testCount: 0,
-                                avatarStyle: m['avatarStyle'] as String?,
-                                avatarSeed: m['avatarSeed'] as String?,
-                              );
-                            }).toList(growable: false),
-                            currentUserId: currentUserId,
-                          ),
-                        );
-                      },
-                      loading: () => const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 24.0),
-                        child: Center(child: CircularProgressIndicator(color: AppTheme.secondaryColor)),
-                      ),
-                      error: (e, s) => const SizedBox.shrink(),
+
+                  // 2. Listenin sonundaki kullanıcı kartı (eğer 20'nin dışındaysa)
+                  if (showCurrentUserAtBottom && index == itemCount - 1) {
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 24.0),
+                      child: _CurrentUserCard(entry: currentUserEntry!),
                     );
                   }
-                  // Normal entries: shift by 1 (featured)
-                  final realIndex = index - 1; // 0-based entries index
-                  final entry = top[realIndex];
-                  final rank = realIndex + 1;
+
+                  // 3. Normal sıralama kartları (ilk 20)
+                  final realIndex = index - 1;
+                  final entry = topTwenty[realIndex];
                   return GestureDetector(
                     onTap: () {
                       HapticFeedback.selectionClick();
@@ -160,7 +136,7 @@ class _LeaderboardView extends ConsumerWidget {
                       padding: const EdgeInsets.only(bottom: 12.0),
                       child: _RankCard(
                         entry: entry,
-                        rank: rank,
+                        rank: entry.rank, // Doğrudan modelden gelen rank'i kullan
                         isCurrentUser: entry.userId == currentUserId,
                         topScore: topScore,
                       )
@@ -202,25 +178,38 @@ class _LeaderboardView extends ConsumerWidget {
   }
 }
 
-class _DetachedUserArea extends StatelessWidget {
-  final int rank; final List<LeaderboardEntry> neighbors; final String? currentUserId;
-  const _DetachedUserArea({required this.rank, required this.neighbors, required this.currentUserId});
+class _CurrentUserCard extends StatelessWidget {
+  final LeaderboardEntry entry;
+  const _CurrentUserCard({required this.entry});
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Senin Sıran', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-        const SizedBox(height: 8),
-        ...neighbors.map((e) {
-          final isMe = e.userId == currentUserId;
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 10.0),
-            child: _RankCard(entry: e, rank: isMe ? rank : 0, isCurrentUser: isMe, topScore: null),
-          );
-        })
-      ],
-    );
+    return Animate(
+      effects: [SlideEffect(begin: const Offset(0,1), duration: 500.ms, curve: Curves.easeOutCubic), FadeEffect(duration: 500.ms)],
+      child: Animate(
+        onPlay: (c) => c.repeat(reverse: true),
+        effects: [ScaleEffect(delay: 600.ms, duration: 1800.ms, begin: const Offset(1,1), end: const Offset(1.015,1.015), curve: Curves.easeInOut)],
+        child: Container(
+          decoration: const BoxDecoration(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+            gradient: LinearGradient(colors: [_accent2, _accent1]),
+          ),
+          padding: const EdgeInsets.all(2),
+          child: Container(
+            decoration: const BoxDecoration(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF1B2534), Color(0xFF1F2D46)]),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(8,10,8,10),
+              child: SafeArea(
+                top: false,
+                child: _RankCard(entry: entry, rank: entry.rank, isCurrentUser: true, topScore: null),
+              ),
+            ),
+          ),
+        ),
+      ));
   }
 }
 
@@ -458,41 +447,7 @@ class _RankCard extends StatelessWidget {
   }
 }
 
-class _CurrentUserCard extends StatelessWidget {
-  final LeaderboardEntry entry;
-  final int rank;
-  const _CurrentUserCard({required this.entry, required this.rank});
-
-  @override
-  Widget build(BuildContext context) {
-    return Animate(
-      effects: [SlideEffect(begin: const Offset(0,1), duration: 500.ms, curve: Curves.easeOutCubic), FadeEffect(duration: 500.ms)],
-      child: Animate(
-        onPlay: (c) => c.repeat(reverse: true),
-        effects: [ScaleEffect(delay: 600.ms, duration: 1800.ms, begin: const Offset(1,1), end: const Offset(1.015,1.015), curve: Curves.easeInOut)],
-        child: Container(
-          decoration: const BoxDecoration(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-            gradient: LinearGradient(colors: [_accent2, _accent1]),
-          ),
-          padding: const EdgeInsets.all(2),
-          child: Container(
-            decoration: const BoxDecoration(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-              gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF1B2534), Color(0xFF1F2D46)]),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(8,10,8,10),
-              child: SafeArea(
-                top: false,
-                child: _RankCard(entry: entry, rank: rank, isCurrentUser: true, topScore: null),
-              ),
-            ),
-          ),
-        ),
-      ));
-  }
-}
+// Bu widget yukarı taşındığı için kaldırıldı.
 
 // Color extension (withOpacity yerine)
 extension _ColorOpacityX on Color {

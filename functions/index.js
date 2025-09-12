@@ -1148,29 +1148,47 @@ async function setLeaderboardScoreAbsolute({ examType, uid, score, userDocData, 
   await Promise.all(writes);
 }
 
-async function publishTopFor(examType, kind) {
-  // kind: 'daily' | 'weekly'
+// YENİ: Genişletilmiş ve optimize edilmiş anlık görüntü yayıncısı
+async function publishLeaderboardSnapshot(examType, kind, limit = 200) {
   const container = db.collection('leaderboard_scores').doc(examType).collection(kind);
   const periodId = kind === 'daily' ? dayKeyIstanbul() : weekKeyIstanbul();
   const usersCol = container.doc(periodId).collection('users');
-  const qs = await usersCol.orderBy('score', 'desc').limit(20).get();
-  const entries = qs.docs.map((d) => {
-    const x = d.data() || {}; return {
+
+  // Top 200 kullanıcıyı çek
+  const qs = await usersCol.orderBy('score', 'desc').limit(limit).get();
+  if (qs.empty) {
+    // Eğer hiç kullanıcı yoksa, eski snapshot'ı temizle
+    const snapshotRef = db.collection('leaderboard_snapshots').doc(`${examType}_${kind}`);
+    await snapshotRef.delete().catch(() => {}); // Hata durumunda devam et
+    return;
+  }
+
+  const entries = qs.docs.map((d, index) => {
+    const x = d.data() || {};
+    return {
       userId: x.userId || d.id,
       userName: x.userName || '',
       score: typeof x.score === 'number' ? x.score : 0,
-      testCount: 0,
+      rank: index + 1, // Sıralamayı doğrudan ekle
       avatarStyle: x.avatarStyle || null,
       avatarSeed: x.avatarSeed || null,
     };
   });
+
+  const snapshotRef = db.collection('leaderboard_snapshots').doc(`${examType}_${kind}`);
+  const doc = {
+    entries,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    periodId,
+    examType,
+    kind,
+  };
+  await snapshotRef.set(doc);
+
+  // Geriye dönük uyumluluk veya anlık en tepeyi isteyenler için top-20'yi de yayınla
+  const top20 = entries.slice(0, 20);
   const topRef = db.collection('leaderboard_top').doc(examType).collection(kind).doc('latest');
-  const periodTopRef = db.collection('leaderboard_top').doc(examType).collection(kind).doc(periodId);
-  const doc = { entries, updatedAt: admin.firestore.FieldValue.serverTimestamp(), periodId };
-  await Promise.all([
-    topRef.set(doc, {merge: true}),
-    periodTopRef.set(doc, {merge: true}),
-  ]);
+  await topRef.set({ entries: top20, updatedAt: admin.firestore.FieldValue.serverTimestamp(), periodId }, { merge: true });
 }
 
 async function cleanupOldLeaderboards() {
@@ -1327,11 +1345,11 @@ exports.onUserProfileChanged = onDocumentWritten("users/{userId}", async (event)
         }, { merge: true }),
       ]);
 
-      // Yayınlanmış tepe listelerini ad/avatara yansıtmak için yeniden yayınla
-      await Promise.allSettled([
-        publishTopFor(String(newExam), 'daily'),
-        publishTopFor(String(newExam), 'weekly'),
-      ]);
+      // YENİ: Periyodik snapshot güncellemeleri bu anlık yeniden yayını gereksiz kılar.
+      // await Promise.allSettled([
+      //   publishLeaderboardSnapshot(String(newExam), 'daily'),
+      //   publishLeaderboardSnapshot(String(newExam), 'weekly'),
+      // ]);
     }
 
     // Sınav değiştiyse eski leaderboard kaydını temizle
@@ -1343,16 +1361,22 @@ exports.onUserProfileChanged = onDocumentWritten("users/{userId}", async (event)
   }
 });
 
-// ==== Zamanlanmış: 3 saatte bir tepeyi yayınla ====
-exports.publishLeaderboardSnapshots = onSchedule({ schedule: '0 */3 * * *', timeZone: 'Europe/Istanbul' }, async () => {
+// YENİ: Zamanlanmış: 15 dakikada bir anlık görüntüleri yayınla
+exports.publishLeaderboardSnapshots = onSchedule({ schedule: '*/15 * * * *', timeZone: 'Europe/Istanbul' }, async () => {
   const examsSnap = await db.collection('leaderboard_exams').get();
-  if (examsSnap.empty) return;
+  if (examsSnap.empty) {
+    logger.info('publishLeaderboardSnapshots: No exams found to process.');
+    return;
+  }
+  const jobs = [];
   for (const ex of examsSnap.docs) {
     const examType = ex.id;
-    await publishTopFor(examType, 'daily');
-    await publishTopFor(examType, 'weekly');
+    // Her sınav türü için günlük ve haftalık anlık görüntüleri oluştur
+    jobs.push(publishLeaderboardSnapshot(examType, 'daily'));
+    jobs.push(publishLeaderboardSnapshot(examType, 'weekly'));
   }
-  logger.info('publishLeaderboardSnapshots completed');
+  await Promise.all(jobs);
+  logger.info(`publishLeaderboardSnapshots completed for ${examsSnap.size} exams.`);
 });
 
 // ==== Zamanlanmış: Günlük temizlik ====
@@ -1362,36 +1386,49 @@ exports.cleanupLeaderboards = onSchedule({ schedule: '30 3 * * *', timeZone: 'Eu
 });
 
 // ==== Kullanıcı rütbe ve komşu sorgusu (callable) ====
+// YENİ: Optimize edilmiş: Anlık görüntüden sıralama ve komşuları al
 exports.getLeaderboardRank = onCall({region: 'us-central1', timeoutSeconds: 30}, async (request) => {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
   const uid = request.auth.uid;
   const examType = String(request.data?.examType || '').trim();
   const period = String(request.data?.period || 'daily').trim();
   if (!examType) throw new HttpsError('invalid-argument', 'examType gerekli');
+
   const kind = period === 'weekly' ? 'weekly' : 'daily';
-  const periodId = kind === 'daily' ? dayKeyIstanbul() : weekKeyIstanbul();
-  const base = db.collection('leaderboard_scores').doc(examType).collection(kind).doc(periodId).collection('users');
-  const meDoc = await base.doc(uid).get();
-  if (!meDoc.exists) return { rank: null, score: 0, neighbors: [] };
-  const me = meDoc.data() || {}; const myScore = typeof me.score === 'number' ? me.score : 0;
-  // Benden yüksek kaç kişi var? (Admin SDK aggregate yok -> basit sayma parti parti)
-  let higherCount = 0; let lastScore = null; let pageSize = 500; let q = base.orderBy('score', 'desc');
-  while (true) {
-    const qs = await (lastScore == null ? q : q.startAfter(lastScore)).limit(pageSize).get();
-    if (qs.empty) break;
-    for (const d of qs.docs) {
-      const s = typeof d.data().score === 'number' ? d.data().score : 0;
-      if (s > myScore) higherCount++; else { lastScore = s; break; }
-    }
-    if (qs.size < pageSize) break; // bitti
+  const snapshotRef = db.collection('leaderboard_snapshots').doc(`${examType}_${kind}`);
+  const snapshot = await snapshotRef.get();
+
+  if (!snapshot.exists) {
+    // Anlık görüntü henüz yoksa, kullanıcıya boş bir yanıt döndür.
+    // İstemci bunu "Sıralama hesaplanıyor..." olarak gösterebilir.
+    return { rank: null, score: 0, neighbors: [] };
   }
-  const rank = higherCount + 1;
-  // Komşular: benden büyük ilk 2, benden küçük ilk 2
-  const above = await base.where('score', '>', myScore).orderBy('score', 'desc').limit(2).get();
-  const below = await base.where('score', '<', myScore).orderBy('score', 'desc').limit(2).get();
-  const toEntry = (d) => { const x = d.data() || {}; return { userId: x.userId || d.id, userName: x.userName || '', score: typeof x.score === 'number' ? x.score : 0, avatarStyle: x.avatarStyle || null, avatarSeed: x.avatarSeed || null }; };
-  const neighbors = [...above.docs.map(toEntry), toEntry(meDoc), ...below.docs.map(toEntry)];
-  return { rank, score: myScore, neighbors };
+
+  const data = snapshot.data() || {};
+  const entries = Array.isArray(data.entries) ? data.entries : [];
+  const userIndex = entries.findIndex((e) => e.userId === uid);
+
+  if (userIndex === -1) {
+    // Kullanıcı listede (örneğin ilk 200'de) değilse.
+    // Bu durumda, kendi skorunu `leaderboard_scores`'dan okuyabiliriz.
+    const periodId = kind === 'daily' ? dayKeyIstanbul() : weekKeyIstanbul();
+    const userScoreRef = db.collection('leaderboard_scores').doc(examType).collection(kind).doc(periodId).collection('users').doc(uid);
+    const userScoreSnap = await userScoreRef.get();
+    const score = userScoreSnap.exists ? (userScoreSnap.data()?.score || 0) : 0;
+    // Sıralamayı "200+" gibi bir ifadeyle döndürebiliriz veya null bırakabiliriz.
+    return { rank: null, score: score, neighbors: [], totalCount: entries.length };
+  }
+
+  const userEntry = entries[userIndex];
+  const rank = userEntry.rank;
+  const score = userEntry.score;
+
+  // Komşuları hesapla: kendisinden önceki 2 ve sonraki 2
+  const start = Math.max(0, userIndex - 2);
+  const end = Math.min(entries.length, userIndex + 3);
+  const neighbors = entries.slice(start, end);
+
+  return { rank, score, neighbors, totalCount: entries.length };
 });
 
 // Admin: Liderlik tablolarını geriye dönük doldurma (backfill)
@@ -1532,11 +1569,11 @@ exports.addEngagementPoints = onCall({region: 'us-central1'}, async (request) =>
         score: admin.firestore.FieldValue.increment(delta),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       }, {merge: true});
-      // İsteğe bağlı: en güncel tepeyi yayınla (hızlı senkron)
-      await Promise.allSettled([
-        publishTopFor(examType, 'daily'),
-        publishTopFor(examType, 'weekly'),
-      ]);
+      // YENİ: Periyodik snapshot güncellemeleri bu anlık yeniden yayını gereksiz kılar.
+      // await Promise.allSettled([
+      //   publishLeaderboardSnapshot(examType, 'daily'),
+      //   publishLeaderboardSnapshot(examType, 'weekly'),
+      // ]);
     }
   } catch (e) {
     logger.warn('Leaderboard update failed on addEngagementPoints', { uid, examType, error: String(e) });
@@ -1632,10 +1669,11 @@ exports.addTestResult = onCall({region: 'us-central1', timeoutSeconds: 30}, asyn
         testCount: admin.firestore.FieldValue.increment(1),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       }, {merge: true});
-      await Promise.allSettled([
-        publishTopFor(examType, 'daily'),
-        publishTopFor(examType, 'weekly'),
-      ]);
+      // YENİ: Periyodik snapshot güncellemeleri bu anlık yeniden yayını gereksiz kılar.
+      // await Promise.allSettled([
+      //   publishLeaderboardSnapshot(examType, 'daily'),
+      //   publishLeaderboardSnapshot(examType, 'weekly'),
+      // ]);
     }
   } catch (e) {
     logger.warn('Leaderboard update failed on addTestResult', { uid, examType, error: String(e) });
