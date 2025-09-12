@@ -87,6 +87,43 @@ class QuestService {
     }
   }
 
+  Future<bool> claimReward(String userId, String questId) async {
+    final firestore = _ref.read(firestoreProvider);
+    final userStatsRef = firestore.collection('user_stats').doc(userId);
+    final questRef = firestore.collection('users').doc(userId).collection('daily_quests').doc(questId);
+
+    try {
+      await firestore.runTransaction((transaction) async {
+        final questDoc = await transaction.get(questRef);
+        final userStatsDoc = await transaction.get(userStatsRef);
+
+        if (!questDoc.exists) {
+          throw Exception("Görev bulunamadı: $questId");
+        }
+        final quest = Quest.fromMap(questDoc.data()!, questDoc.id);
+
+        if (!quest.isCompleted) {
+          throw Exception("Görev tamamlanmamış.");
+        }
+        if (quest.rewardClaimed) {
+          // Zaten alınmışsa işlem yapma, başarılı say.
+          return;
+        }
+
+        final currentBp = (userStatsDoc.data()?['bp'] as num? ?? 0).toInt();
+        final newBp = currentBp + quest.reward;
+
+        transaction.update(userStatsRef, {'bp': newBp});
+        transaction.update(questRef, {'rewardClaimed': true});
+      });
+      return true;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Ödül alınırken hata: $e');
+      }
+      return false;
+    }
+  }
 }
 
 final dailyQuestsProvider = FutureProvider.autoDispose<List<Quest>>((ref) async {

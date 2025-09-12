@@ -329,3 +329,10 @@ Provider<List<Quest>> questsByRouteProvider(QuestRoute route) {
     return questsState.getQuestsByRoute(route);
   });
 }
+
+/// YENİ: Ödülü alınabilir görev olup olmadığını kontrol eden provider
+final hasClaimableQuestsProvider = Provider<bool>((ref) {
+  final questsState = ref.watch(optimizedQuestsProvider);
+  if (questsState.allQuests == null) return false;
+  return questsState.allQuests!.any((q) => q.isCompleted && !q.rewardClaimed);
+});
