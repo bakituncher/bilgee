@@ -565,7 +565,8 @@ class FirestoreService {
       // Stats dokümanı (atomik artışlar)
       txn.set(statsRef, {
         'focusMinutes': FieldValue.increment(minutes),
-        'engagementScore': FieldValue.increment(minutes), // 'bp' ve 'pomodoroBp' yerine 'engagementScore' kullanılıyor
+        'engagementScore': FieldValue.increment(minutes), // Genel puan
+        'pomodoroBp': FieldValue.increment(minutes),      // Sadece Pomodoro'dan kazanılan puan
         'pomodoroSessions': FieldValue.increment(1),
         'totalFocusSeconds': FieldValue.increment(session.durationInSeconds),
         // Son 30 güne yönelik hafifletilmiş rollup (UI haftalık/aylık sorguları azaltır)
