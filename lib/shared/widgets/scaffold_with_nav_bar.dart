@@ -10,7 +10,7 @@ import 'package:bilge_ai/features/onboarding/models/tutorial_step.dart';
 import 'package:bilge_ai/features/quests/models/quest_model.dart';
 import 'package:bilge_ai/features/quests/logic/quest_completion_notifier.dart';
 import 'package:bilge_ai/features/quests/logic/quest_notifier.dart';
-import 'package:bilge_ai/shared/widgets/quest_completion_toast.dart';
+import 'package:bilge_ai/shared/widgets/quest_completion_celebration.dart';
 import 'package:bilge_ai/data/models/plan_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:bilge_ai/data/providers/firestore_providers.dart';
@@ -164,16 +164,7 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                 if (shouldShowTutorial)
                   TutorialOverlay(steps: tutorialSteps),
                 if (completedQuest != null && !shouldShowTutorial)
-                  SafeArea(
-                    top: false,
-                    child: Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Padding(
-                        padding: const EdgeInsets.only(bottom: 12.0),
-                        child: QuestCompletionToast(completedQuest: completedQuest),
-                      ),
-                    ),
-                  ),
+                  QuestCompletionCelebration(completedQuest: completedQuest),
                 Consumer(builder: (context, r, _) {
                   final showWeeklyPopup = r.watch(weeklyPlanCompletionProvider);
                   if(!showWeeklyPopup) return const SizedBox.shrink();

@@ -934,46 +934,11 @@ class FirestoreService {
     return _firestore.collection('users').doc(userId).collection('daily_quests');
   }
 
-  /// YENİ: Haftalık görevler stream
-  Stream<List<Quest>> streamWeeklyQuests(String userId) {
-    return weeklyQuestsCollection(userId)
-        .orderBy('qid')
-        .snapshots()
-        .map((qs) => qs.docs.map((d) => Quest.fromMap(d.data(), d.id)).toList());
-  }
-
-  /// YENİ: Aylık görevler stream
-  Stream<List<Quest>> streamMonthlyQuests(String userId) {
-    return monthlyQuestsCollection(userId)
-        .orderBy('qid')
-        .snapshots()
-        .map((qs) => qs.docs.map((d) => Quest.fromMap(d.data(), d.id)).toList());
-  }
-
-  /// YENİ: Haftalık görevler tek seferlik
-  Future<List<Quest>> getWeeklyQuestsOnce(String userId) async {
-    final snapshot = await weeklyQuestsCollection(userId).orderBy('qid').get();
-    return snapshot.docs.map((d) => Quest.fromMap(d.data(), d.id)).toList();
-  }
-
-  /// YENİ: Aylık görevler tek seferlik
-  Future<List<Quest>> getMonthlyQuestsOnce(String userId) async {
-    final snapshot = await monthlyQuestsCollection(userId).orderBy('qid').get();
-    return snapshot.docs.map((d) => Quest.fromMap(d.data(), d.id)).toList();
-  }
-
   // === /TAKIP SISTEMI ===
 
   Future<void> updateUserDocument(String userId, Map<String, dynamic> fields) async {
     await usersCollection.doc(userId).set(fields, SetOptions(merge: true));
   }
-
-  /// --- QUESTS: collection helpers for weekly/monthly and daily streams ---
-  CollectionReference<Map<String, dynamic>> weeklyQuestsCollection(String userId) =>
-      usersCollection.doc(userId).collection('weekly_quests');
-
-  CollectionReference<Map<String, dynamic>> monthlyQuestsCollection(String userId) =>
-      usersCollection.doc(userId).collection('monthly_quests');
 
   /// Daily quests stream
   Stream<List<Quest>> streamDailyQuests(String userId) {
@@ -991,58 +956,31 @@ class FirestoreService {
 
   // weekly/monthly streams already used earlier rely on weeklyQuestsCollection/monthlyQuestsCollection
 
-  /// Update arbitrary quest fields (tries daily, weekly, monthly collections)
+  /// Update arbitrary quest fields
   Future<void> updateQuestFields(String userId, String questId, Map<String, dynamic> fields) async {
-    final candidates = [
-      questsCollection(userId).doc(questId),
-      weeklyQuestsCollection(userId).doc(questId),
-      monthlyQuestsCollection(userId).doc(questId),
-    ];
-
-    for (final ref in candidates) {
-      try {
-        final snap = await ref.get();
-        if (snap.exists) {
-          await ref.set(fields, SetOptions(merge: true));
-          return;
-        }
-      } catch (_) {
-        // ignore and try next
-      }
-    }
-
-    // Fallback: write to daily collection (create if missing)
     await questsCollection(userId).doc(questId).set(fields, SetOptions(merge: true));
   }
 
   /// Claim quest reward (marks rewardClaimed and increments user BP)
   Future<void> claimQuestReward(String userId, Quest quest) async {
     final reward = quest.calculateDynamicReward();
-    final userRef = usersCollection.doc(userId);
 
     final batch = _firestore.batch();
-    // mark quest as claimed in whichever collection it exists
-    final qDaily = questsCollection(userId).doc(quest.id);
-    final qWeekly = weeklyQuestsCollection(userId).doc(quest.id);
-    final qMonthly = monthlyQuestsCollection(userId).doc(quest.id);
 
-    // 'bilgePoints' yerine doğrudan 'stats' dokümanındaki 'engagementScore' güncelleniyor.
-    // Bu, onUserStatsWritten tetikleyicisini çalıştırır ve veri tutarlılığı sağlar.
+    // Mark quest as claimed in the daily_quests collection
+    final questRef = questsCollection(userId).doc(quest.id);
+    batch.set(questRef, {'rewardClaimed': true, 'rewardClaimedAt': FieldValue.serverTimestamp(), 'actualReward': reward}, SetOptions(merge: true));
+
+    // Update the engagementScore in the stats document, which triggers other backend processes
     final statsRef = usersCollection.doc(userId).collection('state').doc('stats');
     batch.set(statsRef, {
       'engagementScore': FieldValue.increment(reward),
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
 
-    // Try to set rewardClaimed on all possible quest locations (safe-merge)
-    batch.set(qDaily, {'rewardClaimed': true, 'rewardClaimedAt': FieldValue.serverTimestamp(), 'actualReward': reward}, SetOptions(merge: true));
-    batch.set(qWeekly, {'rewardClaimed': true, 'rewardClaimedAt': FieldValue.serverTimestamp(), 'actualReward': reward}, SetOptions(merge: true));
-    batch.set(qMonthly, {'rewardClaimed': true, 'rewardClaimedAt': FieldValue.serverTimestamp(), 'actualReward': reward}, SetOptions(merge: true));
-
     await batch.commit();
 
-    // Liderlik tablosu senkronu (sessizce dene)
-    try { await syncLeaderboardUser(userId); } catch (_) {}
+    // The leaderboard sync is now handled by the onUserStatsWritten trigger, so no need to call it here.
   }
 
   /// Report question issue (creates report and updates index)

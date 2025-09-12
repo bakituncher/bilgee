@@ -731,7 +731,6 @@ function routeKeyFromPath(pathname) {
     case '/home': return 'home';
     case '/home/pomodoro': return 'pomodoro';
     case '/coach': return 'coach';
-    case '/home/weekly-plan': return 'weeklyPlan';
     case '/home/stats': return 'stats';
     case '/home/add-test': return 'addTest';
     case '/home/quests': return 'quests';
@@ -831,8 +830,24 @@ function scoreTemplateForUser(t, ctx) {
   return score;
 }
 
+function evaluateExcludeConditions(template, ctx) {
+  const cond = template.excludeConditions || {};
+  if (!cond || Object.keys(cond).length === 0) return false; // No conditions, don't exclude.
+
+  if (cond.hasCreatedStrategicPlan === true && ctx.user?.hasCreatedStrategicPlan === true) return true;
+  if (cond.hasCustomAvatar === true && (ctx.user?.avatarStyle || ctx.user?.avatarSeed)) return true;
+  if (cond['usedFeatures.workshop'] === true && ctx.user?.usedFeatures?.workshop === true) return true;
+  if (cond['usedFeatures.pomodoro'] === true && ctx.user?.usedFeatures?.pomodoro === true) return true;
+
+  return false;
+}
+
 function pickTemplatesForType(type, ctx, desiredCount) {
-  const pool = QUEST_TEMPLATES.filter((q) => (q.type || 'daily') === type).filter((q) => evaluateTriggerConditions(q, ctx));
+  const pool = QUEST_TEMPLATES.filter((q) => {
+    if ((q.type || 'daily') !== type) return false;
+    if (evaluateExcludeConditions(q, ctx)) return false;
+    return evaluateTriggerConditions(q, ctx);
+  });
   const scored = pool.map((q) => ({q, s: scoreTemplateForUser(q, ctx)})).sort((a,b)=> b.s - a.s);
   const selected = []; const usedCategories = new Set();
   for (const it of scored) { if (selected.length >= desiredCount) break; const q = it.q; if (usedCategories.has(q.category) && Math.random() < 0.45) continue; selected.push(q); usedCategories.add(q.category); }
@@ -849,33 +864,8 @@ function materializeTemplates(templates, userData, analysis) {
   });
 }
 
-async function ensureWeeklyAndMonthly(userRef, userData, analysis, force = false) {
-  const ctx = await getUserContext(userRef);
-  const now = nowIstanbul();
-  const weekStart = new Date(now); weekStart.setDate(now.getDate() - (now.getDay() === 0 ? 6 : (now.getDay()-1))); weekStart.setHours(0,0,0,0);
-  const weekKey = `${weekStart.getFullYear()}-${(weekStart.getMonth()+1).toString().padStart(2,'0')}-${weekStart.getDate().toString().padStart(2,'0')}`;
-  const weeklyCol = userRef.collection('weekly_quests');
-  const weeklySnap = await weeklyCol.where('weekKey', '==', weekKey).limit(1).get();
-  if (weeklySnap.empty || force) {
-    if (force) { const toDel = await weeklyCol.where('weekKey', '==', weekKey).get(); const delBatch = db.batch(); toDel.docs.forEach((d)=> delBatch.delete(d.ref)); if (!toDel.empty) await delBatch.commit(); }
-    const tpls = pickTemplatesForType('weekly', ctx, 6);
-    const list = materializeTemplates(tpls, userData, analysis).map((x)=> ({...x, weekKey}));
-    const batch = db.batch(); list.forEach((q)=> batch.set(weeklyCol.doc(q.qid), q, {merge:true})); await batch.commit();
-  }
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const monthKey = `${monthStart.getFullYear()}-${(monthStart.getMonth()+1).toString().padStart(2,'0')}`;
-  const monthlyCol = userRef.collection('monthly_quests');
-  const monthlySnap = await monthlyCol.where('monthKey', '==', monthKey).limit(1).get();
-  if (monthlySnap.empty || force) {
-    if (force) { const toDel = await monthlyCol.where('monthKey', '==', monthKey).get(); const delBatch = db.batch(); toDel.docs.forEach((d)=> delBatch.delete(d.ref)); if (!toDel.empty) await delBatch.commit(); }
-    const tpls = pickTemplatesForType('monthly', ctx, 6);
-    const list = materializeTemplates(tpls, userData, analysis).map((x)=> ({...x, monthKey}));
-    const batch = db.batch(); list.forEach((q)=> batch.set(monthlyCol.doc(q.qid), q, {merge:true})); await batch.commit();
-  }
-}
-
 function pickDailyQuestsForUser(userData, analysis, ctx) {
-  const tpls = pickTemplatesForType('daily', ctx, 7);
+  const tpls = pickTemplatesForType('daily', ctx, 4);
   return materializeTemplates(tpls, userData, analysis);
 }
 
@@ -891,7 +881,6 @@ async function generateQuestsForAllUsers() {
     const existing = await dailyRef.get(); existing.docs.forEach((d) => { batch.delete(d.ref); opCount++; });
     daily.forEach((q) => { batch.set(dailyRef.doc(q.qid), q, {merge:true}); opCount++; });
     batch.update(userRef, { lastQuestRefreshDate: admin.firestore.FieldValue.serverTimestamp() });
-    await ensureWeeklyAndMonthly(userRef, doc.data(), analysis, false);
     if (opCount > 400) { batchPromises.push(batch.commit()); batch = db.batch(); opCount = 0; }
   }
   if (opCount > 0) batchPromises.push(batch.commit());
@@ -904,7 +893,6 @@ exports.regenerateDailyQuests = onCall({ region: 'us-central1', timeoutSeconds: 
     throw new HttpsError('unauthenticated', 'Oturum gerekli');
   }
   const uid = request.auth.uid;
-  const forceWeeklyMonthly = !!(request.data && request.data.forceWeeklyMonthly);
   try {
     const userRef = db.collection('users').doc(uid);
     const userSnap = await userRef.get();
@@ -934,9 +922,6 @@ exports.regenerateDailyQuests = onCall({ region: 'us-central1', timeoutSeconds: 
     dailyList.forEach((q) => batch.set(dailyCol.doc(q.qid), q, { merge: true }));
     batch.update(userRef, { lastQuestRefreshDate: admin.firestore.FieldValue.serverTimestamp() });
     await batch.commit();
-
-    // Haftalık/aylık görevleri garanti altına al (isteğe bağlı force)
-    await ensureWeeklyAndMonthly(userRef, userData, analysis, forceWeeklyMonthly);
 
     return { ok: true, dailyCount: dailyList.length };
   } catch (e) {
@@ -1694,14 +1679,9 @@ exports.completeQuest = onCall({ region: 'us-central1', timeoutSeconds: 30 }, as
 
   try {
     const userRef = db.collection('users').doc(uid);
-    const colls = ['daily_quests','weekly_quests','monthly_quests'];
-    let docRef = null, snap = null;
-    for (const c of colls) {
-      const ref = userRef.collection(c).doc(questId);
-      const s = await ref.get();
-      if (s.exists) { docRef = ref; snap = s; break; }
-    }
-    if (!docRef) throw new HttpsError('not-found', 'Görev bulunamadı');
+    const docRef = userRef.collection('daily_quests').doc(questId);
+    const snap = await docRef.get();
+    if (!snap.exists) throw new HttpsError('not-found', 'Görev bulunamadı');
 
     const data = snap.data() || {};
     if (data.isCompleted === true) {
@@ -1758,16 +1738,6 @@ async function autoCompleteQuestIfNeeded(afterSnap) {
 }
 
 exports.onDailyQuestProgress = onDocumentWritten("users/{userId}/daily_quests/{questId}", async (event) => {
-  if (!event?.data?.after) return;
-  await autoCompleteQuestIfNeeded(event.data.after);
-});
-
-exports.onWeeklyQuestProgress = onDocumentWritten("users/{userId}/weekly_quests/{questId}", async (event) => {
-  if (!event?.data?.after) return;
-  await autoCompleteQuestIfNeeded(event.data.after);
-});
-
-exports.onMonthlyQuestProgress = onDocumentWritten("users/{userId}/monthly_quests/{questId}", async (event) => {
   if (!event?.data?.after) return;
   await autoCompleteQuestIfNeeded(event.data.after);
 });
