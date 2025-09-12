@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart'; // YENİ: Navigasyon için import
 import 'package:bilge_ai/core/navigation/app_routes.dart'; // YENİ: Rota isimleri için import
 import 'package:flutter_svg/flutter_svg.dart'; // YENİ: Avatar için import
 import 'package:flutter/services.dart'; // Haptic feedback
+import 'dart:ui'; // YENİ: BackdropFilter için eklendi
 
 class ArenaScreen extends ConsumerWidget {
   const ArenaScreen({super.key});
@@ -49,13 +50,7 @@ class ArenaScreen extends ConsumerWidget {
           ],
         ),
       ),
-    ).animate(onPlay: (c) => c.repeat())
-       .shimmer(
-          delay: (isFirstPlace ? 2000 : 3000).ms,
-          duration: 1800.ms,
-          blendMode: BlendMode.srcATop,
-          color: Colors.white.withOpacity(0.7)
-       );
+    );
   }
 }
 
