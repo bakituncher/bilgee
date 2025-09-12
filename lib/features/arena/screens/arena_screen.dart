@@ -6,11 +6,11 @@ import 'package:bilge_ai/features/arena/models/leaderboard_entry_model.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:bilge_ai/core/theme/app_theme.dart';
 import 'package:bilge_ai/features/auth/application/auth_controller.dart';
-import 'package:go_router/go_router.dart'; // YENİ: Navigasyon için import
-import 'package:bilge_ai/core/navigation/app_routes.dart'; // YENİ: Rota isimleri için import
-import 'package:flutter_svg/flutter_svg.dart'; // YENİ: Avatar için import
-import 'package:flutter/services.dart'; // Haptic feedback
-import 'dart:ui'; // YENİ: BackdropFilter için eklendi
+import 'package:go_router/go_router.dart';
+import 'package:bilge_ai/core/navigation/app_routes.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter/services.dart';
+import 'dart:ui';
 
 class ArenaScreen extends ConsumerWidget {
   const ArenaScreen({super.key});
@@ -18,11 +18,14 @@ class ArenaScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentUser = ref.watch(userProfileProvider).value;
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
 
     if (currentUser == null || currentUser.selectedExam == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Zafer Panteonu')),
-        body: const Center(child: Text("Arenaya girmek için bir sınav seçmelisiniz.")),
+        body: const Center(
+            child: Text("Arenaya girmek için bir sınav seçmelisiniz.")),
       );
     }
 
@@ -31,13 +34,13 @@ class ArenaScreen extends ConsumerWidget {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Zafer Panteonu'),
-          backgroundColor: AppTheme.primaryColor.withValues(alpha: AppTheme.primaryColor.a * 0.5),
-          bottom: const TabBar(
+          backgroundColor: AppTheme.primaryColor.withOpacity(0.5),
+          bottom: TabBar(
             indicatorColor: AppTheme.secondaryColor,
             indicatorWeight: 3,
-            labelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-            unselectedLabelStyle: TextStyle(fontWeight: FontWeight.normal, fontSize: 14),
-            tabs: [
+            labelStyle: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+            unselectedLabelStyle: textTheme.bodyLarge,
+            tabs: const [
               Tab(text: 'Günlük Efsaneler'),
               Tab(text: 'Haftalık Efsaneler'),
             ],
@@ -68,22 +71,27 @@ class _LeaderboardView extends ConsumerWidget {
         : ref.watch(leaderboardDailyProvider(currentUserExam));
 
     return RefreshIndicator(
-      color: _accent1,
+      color: AppTheme.secondaryColor,
       backgroundColor: AppTheme.cardColor,
       onRefresh: () async {
         HapticFeedback.lightImpact();
         if (period == 'weekly') {
-          var _ = await ref.refresh(leaderboardWeeklyProvider(currentUserExam).future);
+          ref.invalidate(leaderboardWeeklyProvider(currentUserExam));
         } else {
-          var _ = await ref.refresh(leaderboardDailyProvider(currentUserExam).future);
+          ref.invalidate(leaderboardDailyProvider(currentUserExam));
         }
+        await Future.delayed(const Duration(milliseconds: 500));
       },
       child: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: _bgGradient,
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AppTheme.primaryColor,
+              AppTheme.scaffoldBackgroundColor,
+            ],
+            stops: [0.0, 0.7],
           ),
         ),
         child: SafeArea(
@@ -94,29 +102,32 @@ class _LeaderboardView extends ConsumerWidget {
 
               final fullList = entries;
               final topThree = fullList.take(3).toList();
-              // Geri kalan liste (3. sıradan sonraki)
-              final restOfTheList = fullList.length > 3 ? fullList.sublist(3) : <LeaderboardEntry>[];
+              final restOfTheList =
+              fullList.length > 3 ? fullList.sublist(3) : <LeaderboardEntry>[];
 
-              final currentUserIndex = fullList.indexWhere((e) => e.userId == currentUserId);
-              final currentUserEntry = currentUserIndex != -1 ? fullList[currentUserIndex] : null;
-              // Kullanıcı ilk 20'de değilse ama listedeyse (21-200 arası) en altta kendi kartını göster
-              final showCurrentUserAtBottom = currentUserEntry != null && currentUserIndex >= 20;
-              final topScore = fullList.isNotEmpty ? (fullList.first.score == 0 ? 1 : fullList.first.score) : 1;
+              final currentUserIndex =
+              fullList.indexWhere((e) => e.userId == currentUserId);
+              final currentUserEntry =
+              currentUserIndex != -1 ? fullList[currentUserIndex] : null;
+              final showCurrentUserAtBottom =
+                  currentUserEntry != null && currentUserIndex >= 20;
+              final topScore = fullList.isNotEmpty
+                  ? (fullList.first.score == 0 ? 1 : fullList.first.score)
+                  : 1;
 
-              // Liste (geri kalan) + (opsiyonel alt kart) + podyum (1)
-              final itemCount = restOfTheList.length + (showCurrentUserAtBottom ? 1 : 0) + 1;
+              final itemCount =
+                  restOfTheList.length + (showCurrentUserAtBottom ? 1 : 0) + 1;
 
               return ListView.builder(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(16, 18, 16, 40),
                 itemCount: itemCount,
                 itemBuilder: (context, index) {
-                  // 1. Podyum
                   if (index == 0) {
-                    return _PodiumDisplay(topThree: topThree, currentUserId: currentUserId);
+                    return _PodiumDisplay(
+                        topThree: topThree, currentUserId: currentUserId);
                   }
 
-                  // 2. Listenin sonundaki kullanıcı kartı (eğer 20'nin dışındaysa)
                   if (showCurrentUserAtBottom && index == itemCount - 1) {
                     return Padding(
                       padding: const EdgeInsets.only(top: 24.0),
@@ -124,7 +135,6 @@ class _LeaderboardView extends ConsumerWidget {
                     );
                   }
 
-                  // 3. Normal sıralama kartları (4. sıradan itibaren)
                   final realIndex = index - 1;
                   final entry = restOfTheList[realIndex];
                   return GestureDetector(
@@ -136,20 +146,29 @@ class _LeaderboardView extends ConsumerWidget {
                       padding: const EdgeInsets.only(bottom: 12.0),
                       child: _RankCard(
                         entry: entry,
-                        rank: entry.rank, // Doğrudan modelden gelen rank'i kullan
+                        rank: entry.rank,
                         isCurrentUser: entry.userId == currentUserId,
                         topScore: topScore,
                       )
                           .animate()
-                          .fadeIn(duration: 350.ms, delay: (40 * (realIndex % 10)).ms)
-                          .slideX(begin: realIndex.isEven ? -0.06 : 0.06, end: 0, duration: 420.ms, curve: Curves.easeOutCubic),
+                          .fadeIn(
+                          duration: 350.ms,
+                          delay: (40 * (realIndex % 10)).ms)
+                          .slideX(
+                          begin: realIndex.isEven ? -0.06 : 0.06,
+                          end: 0,
+                          duration: 420.ms,
+                          curve: Curves.easeOutCubic),
                     ),
                   );
                 },
               );
             },
-            loading: () => const Center(child: CircularProgressIndicator(color: AppTheme.secondaryColor)),
-            error: (err, stack) => Center(child: Text('Liderlik tablosu yüklenemedi: $err')),
+            loading: () => const Center(
+                child:
+                CircularProgressIndicator(color: AppTheme.secondaryColor)),
+            error: (err, stack) =>
+                Center(child: Text('Liderlik tablosu yüklenemedi: $err')),
           ),
         ),
       ),
@@ -157,20 +176,23 @@ class _LeaderboardView extends ConsumerWidget {
   }
 
   Widget _buildEmptyState(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
     return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.shield_moon_rounded, size: 80, color: AppTheme.secondaryTextColor),
+            const Icon(Icons.shield_moon_rounded,
+                size: 80, color: AppTheme.secondaryTextColor),
             const SizedBox(height: 16),
-            Text('Arena Henüz Boş', style: Theme.of(context).textTheme.headlineSmall),
+            Text('Arena Henüz Boş', style: textTheme.headlineSmall),
             const SizedBox(height: 8),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32.0),
               child: Text(
                 'Deneme ekleyerek veya Pomodoro seansları tamamlayarak Bilgelik Puanı kazan ve adını bu panteona yazdır!',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.secondaryTextColor),
+                style: textTheme.bodyLarge
+                    ?.copyWith(color: AppTheme.secondaryTextColor),
               ),
             ),
           ],
@@ -184,74 +206,111 @@ class _CurrentUserCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
     return Animate(
-      effects: [SlideEffect(begin: const Offset(0,1), duration: 500.ms, curve: Curves.easeOutCubic), FadeEffect(duration: 500.ms)],
-      child: Animate(
-        onPlay: (c) => c.repeat(reverse: true),
-        effects: [ScaleEffect(delay: 600.ms, duration: 1800.ms, begin: const Offset(1,1), end: const Offset(1.015,1.015), curve: Curves.easeInOut)],
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-            gradient: LinearGradient(colors: [_accent2.o(0.8), _accent1.o(0.8)]),
-            boxShadow: [
-              BoxShadow(color: _accent2.o(0.3), blurRadius: 20, spreadRadius: 4),
-            ]
-          ),
-          padding: const EdgeInsets.all(2),
+        effects: [
+          SlideEffect(
+              begin: const Offset(0, 1),
+              duration: 500.ms,
+              curve: Curves.easeOutCubic),
+          FadeEffect(duration: 500.ms)
+        ],
+        child: Animate(
+          onPlay: (c) => c.repeat(reverse: true),
+          effects: [
+            ScaleEffect(
+                delay: 600.ms,
+                duration: 1800.ms,
+                begin: const Offset(1, 1),
+                end: const Offset(1.015, 1.015),
+                curve: Curves.easeInOut)
+          ],
           child: Container(
-            decoration: const BoxDecoration(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-              gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF1F2D46), Color(0xFF1B2534)]),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-              child: SafeArea(
-                top: false,
-                child: Column(
-                  children: [
-                    Text("Sizin Sıralamanız", style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white70)),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        _RankCapsule(rank: entry.rank, highlight: true),
-                        const SizedBox(width: 12),
-                        CircleAvatar(
-                          backgroundColor: Colors.white10,
-                          radius: 22,
-                          child: ClipOval(
-                            child: (entry.avatarStyle != null && entry.avatarSeed != null)
-                                ? SvgPicture.network('https://api.dicebear.com/9.x/${entry.avatarStyle}/svg?seed=${entry.avatarSeed}', fit: BoxFit.cover)
-                                : Text(entry.userName.isNotEmpty ? entry.userName.substring(0,1).toUpperCase() : '?', style: const TextStyle(fontWeight: FontWeight.bold)),
+            decoration: BoxDecoration(
+                borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(30)),
+                gradient: LinearGradient(colors: [
+                  AppTheme.goldColor.withOpacity(0.8),
+                  AppTheme.secondaryColor.withOpacity(0.8)
+                ]),
+                boxShadow: [
+                  BoxShadow(
+                      color: AppTheme.goldColor.withOpacity(0.3),
+                      blurRadius: 20,
+                      spreadRadius: 4),
+                ]),
+            padding: const EdgeInsets.all(2),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(28)),
+                gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppTheme.lightSurfaceColor,
+                      AppTheme.cardColor,
+                    ]),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                child: SafeArea(
+                  top: false,
+                  child: Column(
+                    children: [
+                      Text("Sizin Sıralamanız",
+                          style: textTheme.labelLarge
+                              ?.copyWith(color: AppTheme.secondaryTextColor)),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          _RankCapsule(rank: entry.rank, highlight: true),
+                          const SizedBox(width: 12),
+                          CircleAvatar(
+                            backgroundColor: Colors.white10,
+                            radius: 22,
+                            child: ClipOval(
+                              child: (entry.avatarStyle != null &&
+                                  entry.avatarSeed != null)
+                                  ? SvgPicture.network(
+                                  'https://api.dicebear.com/9.x/${entry.avatarStyle}/svg?seed=${entry.avatarSeed}',
+                                  fit: BoxFit.cover)
+                                  : Text(
+                                  entry.userName.isNotEmpty
+                                      ? entry.userName
+                                      .substring(0, 1)
+                                      .toUpperCase()
+                                      : '?',
+                                  style: textTheme.titleMedium),
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            entry.userName,
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600, color: Colors.white),
-                            overflow: TextOverflow.ellipsis,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              entry.userName,
+                              style: textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w600),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Text('${entry.score} BP', style: Theme.of(context).textTheme.titleSmall?.copyWith(color: _accent2, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
-                      ],
-                    ),
-                  ],
+                          const SizedBox(width: 12),
+                          Text('${entry.score} BP',
+                              style: textTheme.titleSmall?.copyWith(
+                                  color: AppTheme.goldColor,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5)),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ));
+        ));
   }
 }
 
-// NovaPulse renkleri (lokal)
-const _accent1 = Color(0xFF7F5BFF);
-const _accent2 = Color(0xFF6BFF7A);
-const List<Color> _bgGradient = [Color(0xFF0B0F14), Color(0xFF2A155A), Color(0xFF061F38)];
-
-// YENİ: Premium Podyum Widget'ı
 class _PodiumDisplay extends StatelessWidget {
   final List<LeaderboardEntry> topThree;
   final String? currentUserId;
@@ -261,10 +320,10 @@ class _PodiumDisplay extends StatelessWidget {
   Widget build(BuildContext context) {
     final entries = topThree.length > 1
         ? [
-            topThree[1], // 2. sıra
-            topThree[0], // 1. sıra
-            if (topThree.length > 2) topThree[2], // 3. sıra
-          ]
+      topThree[1],
+      topThree[0],
+      if (topThree.length > 2) topThree[2],
+    ]
         : topThree;
 
     return Container(
@@ -274,13 +333,19 @@ class _PodiumDisplay extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: List.generate(entries.length, (index) {
           final entry = entries[index];
-          // Ortadaki (1. sıra) en büyük olacak
           final isFirstPlace = entries.length > 1 && index == 1;
           return _PodiumPlaceCard(
             entry: entry,
             isCurrentUser: entry.userId == currentUserId,
             isFirstPlace: isFirstPlace,
-          ).animate().slideY(begin: 1, duration: 600.ms, delay: (200 * index).ms, curve: Curves.easeOutCubic).fadeIn();
+          )
+              .animate()
+              .slideY(
+              begin: 1,
+              duration: 600.ms,
+              delay: (200 * index).ms,
+              curve: Curves.easeOutCubic)
+              .fadeIn();
         }),
       ),
     );
@@ -300,10 +365,11 @@ class _PodiumPlaceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
     final medalColor = switch (entry.rank) {
-      1 => _accent2,
-      2 => _accent1,
-      3 => Colors.orangeAccent,
+      1 => AppTheme.goldColor,
+      2 => AppTheme.secondaryColor,
+      3 => AppTheme.successColor,
       _ => Colors.white54,
     };
     final height = isFirstPlace ? 180.0 : 150.0;
@@ -320,9 +386,20 @@ class _PodiumPlaceCard extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.bottomCenter,
             end: Alignment.topCenter,
-            colors: [medalColor.o(0.5), medalColor.o(0.1)],
+            colors: [
+              medalColor.withOpacity(0.5),
+              medalColor.withOpacity(0.1)
+            ],
           ),
           border: Border.all(color: medalColor, width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: medalColor.withOpacity(0.3),
+              blurRadius: 20,
+              spreadRadius: 2,
+              offset: const Offset(0, 5),
+            ),
+          ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -335,14 +412,22 @@ class _PodiumPlaceCard extends StatelessWidget {
                   radius: avatarRadius,
                   backgroundColor: Colors.white10,
                   child: ClipOval(
-                    child: (entry.avatarStyle != null && entry.avatarSeed != null)
-                        ? SvgPicture.network('https://api.dicebear.com/9.x/${entry.avatarStyle}/svg?seed=${entry.avatarSeed}', fit: BoxFit.cover)
-                        : Text(entry.userName.isNotEmpty ? entry.userName.substring(0, 1).toUpperCase() : '?', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    child: (entry.avatarStyle != null &&
+                        entry.avatarSeed != null)
+                        ? SvgPicture.network(
+                        'https://api.dicebear.com/9.x/${entry.avatarStyle}/svg?seed=${entry.avatarSeed}',
+                        fit: BoxFit.cover)
+                        : Text(
+                        entry.userName.isNotEmpty
+                            ? entry.userName.substring(0, 1).toUpperCase()
+                            : '?',
+                        style: textTheme.titleMedium),
                   ),
                 ),
                 Positioned(
                   bottom: -10,
-                  child: _RankCapsule(rank: entry.rank, highlight: isCurrentUser),
+                  child:
+                  _RankCapsule(rank: entry.rank, highlight: isCurrentUser),
                 ),
               ],
             ),
@@ -351,10 +436,12 @@ class _PodiumPlaceCard extends StatelessWidget {
               entry.userName,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
+              style: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 4),
-            Text('${entry.score} BP', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: _accent2, fontWeight: FontWeight.bold)),
+            Text('${entry.score} BP',
+                style: textTheme.labelSmall?.copyWith(
+                    color: AppTheme.goldColor, fontWeight: FontWeight.bold)),
           ],
         ),
       ),
@@ -363,19 +450,27 @@ class _PodiumPlaceCard extends StatelessWidget {
 }
 
 class _RankCapsule extends StatelessWidget {
-  final int rank; final bool highlight;
+  final int rank;
+  final bool highlight;
   const _RankCapsule({super.key, required this.rank, required this.highlight});
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
     return AnimatedContainer(
       duration: 300.ms,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(colors: highlight ? [_accent2, _accent1] : [Colors.white12, Colors.white10]),
-        border: Border.all(color: highlight ? Colors.white : Colors.white24, width: 1),
+        gradient: LinearGradient(
+            colors: highlight
+                ? [AppTheme.secondaryColor, AppTheme.successColor]
+                : [Colors.white12, Colors.white10]),
+        border: Border.all(
+            color: highlight ? Colors.white : Colors.white24, width: 1),
       ),
-      child: Text('#$rank', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.w600)),
+      child: Text('#$rank',
+          style: textTheme.labelSmall
+              ?.copyWith(color: Colors.white, fontWeight: FontWeight.w600)),
     );
   }
 }
@@ -384,29 +479,40 @@ class _RankCard extends StatelessWidget {
   final LeaderboardEntry entry;
   final int rank;
   final bool isCurrentUser;
-  final int? topScore; // progress bar için
+  final int? topScore;
 
-  const _RankCard({required this.entry, required this.rank, this.isCurrentUser = false, this.topScore});
+  const _RankCard(
+      {required this.entry,
+        required this.rank,
+        this.isCurrentUser = false,
+        this.topScore});
 
   @override
   Widget build(BuildContext context) {
-    final progress = (topScore != null && topScore! > 0) ? (entry.score / topScore!).clamp(0.0, 1.0) : 0.0;
+    final textTheme = Theme.of(context).textTheme;
+    final progress = (topScore != null && topScore! > 0)
+        ? (entry.score / topScore!).clamp(0.0, 1.0)
+        : 0.0;
 
-    // Kartın ana rengi ve vurgu rengi
-    final cardColor = isCurrentUser ? AppTheme.primaryColor.withOpacity(0.3) : AppTheme.cardColor.withOpacity(0.15);
-    final borderColor = isCurrentUser ? _accent2 : Colors.white24;
+    final cardColor = isCurrentUser
+        ? AppTheme.secondaryColor.withOpacity(0.2)
+        : AppTheme.cardColor.withOpacity(0.15);
+    final borderColor =
+    isCurrentUser ? AppTheme.secondaryColor : Colors.white24;
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.25),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          )
-        ]
-      ),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: isCurrentUser
+                  ? AppTheme.secondaryColor.withOpacity(0.25)
+                  : Colors.black.withOpacity(0.4),
+              blurRadius: 12,
+              spreadRadius: -2,
+              offset: const Offset(0, 6),
+            )
+          ]),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
         child: BackdropFilter(
@@ -419,12 +525,13 @@ class _RankCard extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [cardColor, cardColor.o(0.5)],
+                colors: [cardColor, cardColor.withOpacity(0.5)],
                 stops: const [0.0, 1.0],
               ),
             ),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              padding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -436,21 +543,35 @@ class _RankCard extends StatelessWidget {
                         backgroundColor: Colors.white10,
                         radius: 22,
                         child: ClipOval(
-                          child: (entry.avatarStyle != null && entry.avatarSeed != null)
-                              ? SvgPicture.network('https://api.dicebear.com/9.x/${entry.avatarStyle}/svg?seed=${entry.avatarSeed}', fit: BoxFit.cover)
-                              : Text(entry.userName.isNotEmpty ? entry.userName.substring(0,1).toUpperCase() : '?', style: const TextStyle(fontWeight: FontWeight.bold)),
+                          child: (entry.avatarStyle != null &&
+                              entry.avatarSeed != null)
+                              ? SvgPicture.network(
+                              'https://api.dicebear.com/9.x/${entry.avatarStyle}/svg?seed=${entry.avatarSeed}',
+                              fit: BoxFit.cover)
+                              : Text(
+                              entry.userName.isNotEmpty
+                                  ? entry.userName
+                                  .substring(0, 1)
+                                  .toUpperCase()
+                                  : '?',
+                              style: textTheme.titleMedium),
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           entry.userName,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600, color: Colors.white),
+                          style: textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w600),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Text('${entry.score} BP', style: Theme.of(context).textTheme.titleSmall?.copyWith(color: _accent2, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                      Text('${entry.score} BP',
+                          style: textTheme.titleSmall?.copyWith(
+                              color: AppTheme.secondaryColor,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5)),
                     ],
                   ),
                   if (topScore != null) ...[
@@ -460,8 +581,10 @@ class _RankCard extends StatelessWidget {
                       child: LinearProgressIndicator(
                         value: progress,
                         minHeight: 6,
-                        backgroundColor: Colors.white.o(0.1),
-                        valueColor: AlwaysStoppedAnimation(isCurrentUser ? _accent2 : _accent1),
+                        backgroundColor: Colors.white.withOpacity(0.1),
+                        valueColor: AlwaysStoppedAnimation(isCurrentUser
+                            ? AppTheme.successColor
+                            : AppTheme.secondaryColor),
                       ),
                     ),
                   ],
@@ -473,11 +596,4 @@ class _RankCard extends StatelessWidget {
       ),
     );
   }
-}
-
-// Bu widget yukarı taşındığı için kaldırıldı.
-
-// Color extension (withOpacity yerine)
-extension _ColorOpacityX on Color {
-  Color o(double factor) => withValues(alpha: (a * factor).toDouble());
 }
