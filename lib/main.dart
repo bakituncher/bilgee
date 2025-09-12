@@ -12,7 +12,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'firebase_options.dart';
 import 'package:bilge_ai/core/prompts/strategy_prompts.dart';
-import 'package:bilge_ai/features/quests/quest_armory.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'shared/notifications/notification_service.dart';
 import 'package:bilge_ai/core/prompts/prompt_remote.dart';
@@ -114,7 +113,6 @@ void main() async {
         await Future.wait([
           RemotePrompts.preloadAndWatch(),
           StrategyPrompts.preload(),
-          QuestArmoryLoader.preload(),
         ]);
       } catch (e, st) {
         if (kDebugMode) {

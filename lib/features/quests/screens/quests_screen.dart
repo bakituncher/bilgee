@@ -11,7 +11,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-enum QuestFilter { all, daily, completed }
+enum QuestFilter { active, completed }
 
 class QuestsScreen extends ConsumerStatefulWidget {
   const QuestsScreen({super.key});
@@ -21,13 +21,13 @@ class QuestsScreen extends ConsumerStatefulWidget {
 }
 
 class _QuestsScreenState extends ConsumerState<QuestsScreen> {
-  QuestFilter _selectedFilter = QuestFilter.all;
+  QuestFilter _selectedFilter = QuestFilter.active;
   String _searchQuery = '';
 
   Timer? _searchDebounce;
   List<Quest>? _lastAllQuestsIdentity;
   String _cacheSearch = '';
-  QuestFilter _cacheFilter = QuestFilter.all;
+  QuestFilter _cacheFilter = QuestFilter.active;
   List<Quest>? _cacheFiltered;
 
   @override
@@ -173,8 +173,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
 
   String _getFilterLabel(QuestFilter filter) {
     switch (filter) {
-      case QuestFilter.all: return 'Tümü';
-      case QuestFilter.daily: return 'Günlük';
+      case QuestFilter.active: return 'Aktif';
       case QuestFilter.completed: return 'Tamamlanan';
     }
   }
@@ -286,28 +285,30 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
   Widget _buildSkeletonCard() {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
       height: 90,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
+        color: Colors.white.withOpacity(0.08),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(children: [
-        const SizedBox(width: 16),
-        Container(width: 40, height: 40, decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12))),
+        Container(width: 40, height: 40, decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(12))),
         const SizedBox(width: 16),
         Expanded(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(height: 14, width: 160, decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(6))),
+              Container(height: 14, width: 160, decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(6))),
               const SizedBox(height: 8),
-              Container(height: 10, width: 220, decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(6))),
+              Container(height: 10, width: 220, decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(6))),
             ],
           ),
         ),
-        const SizedBox(width: 16),
       ]),
+    ).animate(onPlay: (c) => c.repeat()).shimmer(
+      duration: 1200.ms,
+      color: Colors.white.withOpacity(0.1),
     );
   }
 
@@ -346,40 +347,53 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
   }
 
   Widget _buildEmptyState() {
+    final isCompletedFilter = _selectedFilter == QuestFilter.completed;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.assignment_turned_in,
-            size: 80,
-            color: Colors.white54,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Görev bulunamadı',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Seçili filtreye uygun görev yok',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 14,
-            ),
-          ),
+            isCompletedFilter ? Icons.history_edu_rounded : Icons.checklist_rtl_rounded,
+            size: 90,
+            color: Colors.white.withOpacity(0.4),
+          ).animate().scale(delay: 100.ms, duration: 600.ms, curve: Curves.elasticOut),
           const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: _refreshQuests,
-            icon: Icon(Icons.refresh),
-            label: Text('Görevleri Yenile'),
+          Text(
+            isCompletedFilter ? 'Henüz Görev Tamamlanmadı' : 'Tüm Görevler Tamamlandı!',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+            ),
           ),
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40.0),
+            child: Text(
+              isCompletedFilter
+                  ? 'Tamamladığın görevler burada görünecek.'
+                  : 'Harika iş çıkardın! Yarın yeni görevler için tekrar gel.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.7),
+                fontSize: 16,
+              ),
+            ),
+          ),
+          if (!isCompletedFilter) ...[
+            const SizedBox(height: 32),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                backgroundColor: AppTheme.secondaryColor,
+              ),
+              onPressed: _refreshQuests,
+              icon: const Icon(Icons.refresh, color: Colors.white),
+              label: const Text('Yine de Yenile', style: TextStyle(color: Colors.white, fontSize: 16)),
+            ),
+          ]
         ],
-      ),
+      ).animate().fadeIn(duration: 400.ms),
     );
   }
 
@@ -396,14 +410,11 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
 
     // Filtre uygula
     switch (_selectedFilter) {
-      case QuestFilter.daily:
-        filtered = filtered.where((q) => q.type == QuestType.daily).toList();
+      case QuestFilter.active:
+        filtered = filtered.where((q) => !q.isCompleted).toList();
         break;
       case QuestFilter.completed:
         filtered = filtered.where((q) => q.isCompleted).toList();
-        break;
-      case QuestFilter.all:
-        // Tümünü göster
         break;
     }
 
