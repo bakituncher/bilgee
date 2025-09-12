@@ -146,20 +146,15 @@ class QuestTrackingService {
 
       // ATOMIK TRANSACTION - Tüm güncellmeleri tek seferde yap
       await firestoreService.usersCollection.doc(user.id).parent.firestore.runTransaction((transaction) async {
-        // 1. Kullanıcının BP'sini güncelle
-        final userRef = firestoreService.usersCollection.doc(user.id);
-        transaction.update(userRef, {
-          'bilgePoints': FieldValue.increment(dynamicReward),
+        // 1. Tüm puan ve istatistik güncellemeleri merkezi 'stats' dokümanında yapılır.
+        // Bu, onUserStatsWritten tetikleyicisini çalıştırarak veri bütünlüğünü sağlar.
+        final statsRef = firestoreService.usersCollection.doc(user.id).collection('state').doc('stats');
+        transaction.set(statsRef, {
+          'engagementScore': FieldValue.increment(dynamicReward),
           'totalEarnedBP': FieldValue.increment(dynamicReward),
           'lastQuestCompletedAt': FieldValue.serverTimestamp(),
           'currentQuestStreak': FieldValue.increment(1),
           'totalCompletedQuests': FieldValue.increment(1),
-        });
-
-        // 1.b Stats.engagementScore artır (UI & leaderboard için tek kaynak)
-        final statsRef = firestoreService.usersCollection.doc(user.id).collection('state').doc('stats');
-        transaction.set(statsRef, {
-          'engagementScore': FieldValue.increment(dynamicReward),
           'updatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
 
