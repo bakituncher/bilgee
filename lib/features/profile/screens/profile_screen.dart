@@ -120,6 +120,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Future<void> _shareProfileImage() async {
     if (_sharing) return;
     setState(() => _sharing = true);
+
+    // Kısa bir gecikme ekleyerek widget'ın boyanmasını bekle
+    await Future.delayed(const Duration(milliseconds: 100));
+
     try {
       final boundary = _shareKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
       if (boundary == null) return;
@@ -262,7 +266,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                         Row(
                                           mainAxisAlignment: MainAxisAlignment.center,
                                           children: [
-                                            Image.asset('assets/images/bilge_baykus.png', width: 28, height: 28),
+                                            // Image.asset('assets/images/bilge_baykus.png', width: 28, height: 28),
                                             const SizedBox(width: 8),
                                             Text('BilgeAI', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: _accentProfile2, fontWeight: FontWeight.bold)),
                                           ],

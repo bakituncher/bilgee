@@ -22,11 +22,13 @@ class QuestSystemHealthCheck {
         return {'error': 'Kullanıcı bulunamadı'};
       }
 
-      final userData = userDoc.data()!;
-      final currentBP = userData['bilgePoints'] ?? 0;
-      final totalEarnedBP = userData['totalEarnedBP'] ?? 0;
+      final statsDoc = await firestoreService.usersCollection.doc(userId).collection('state').doc('stats').get();
+      final statsData = statsDoc.exists ? statsDoc.data()! : <String, dynamic>{};
 
-      report['current_bp'] = currentBP;
+      final currentScore = statsData['engagementScore'] ?? 0;
+      final totalEarnedBP = statsData['totalEarnedBP'] ?? 0;
+
+      report['current_engagement_score'] = currentScore;
       report['total_earned_bp'] = totalEarnedBP;
 
       // 2. Tamamlanan görevleri kontrol et
@@ -48,14 +50,15 @@ class QuestSystemHealthCheck {
 
       report['completed_quests'] = completedQuests.size;
       report['claimed_rewards_total'] = claimedRewards;
-      report['discrepancy'] = claimedRewards - currentBP;
+      report['discrepancy'] = claimedRewards - currentScore;
 
       // 4. Eğer tutarsızlık varsa onar
-      if (claimedRewards != currentBP && claimedRewards > 0) {
+      if (claimedRewards != currentScore && claimedRewards > 0) {
         await _repairUserPoints(userId, claimedRewards, report);
       }
 
       // 5. Eksik alanları kontrol et ve ekle
+      final userData = userDoc.exists ? userDoc.data()! : <String, dynamic>{};
       await _ensureUserFieldsExist(userId, userData, report);
 
       return report;
@@ -70,15 +73,16 @@ class QuestSystemHealthCheck {
   Future<void> _repairUserPoints(String userId, int correctTotal, Map<String, dynamic> report) async {
     try {
       final firestoreService = _ref.read(firestoreServiceProvider);
+      final statsRef = firestoreService.usersCollection.doc(userId).collection('state').doc('stats');
 
-      await firestoreService.usersCollection.doc(userId).update({
-        'bilgePoints': correctTotal,
+      await statsRef.set({
+        'engagementScore': correctTotal,
         'totalEarnedBP': correctTotal,
         'pointsRepairedAt': FieldValue.serverTimestamp(),
-      });
+      }, SetOptions(merge: true));
 
       report['repair_performed'] = true;
-      report['new_bp'] = correctTotal;
+      report['new_engagement_score'] = correctTotal;
 
       debugPrint('[HealthCheck] ✅ Puanlar onarıldı: $correctTotal BP');
 
@@ -92,14 +96,11 @@ class QuestSystemHealthCheck {
   Future<void> _ensureUserFieldsExist(String userId, Map<String, dynamic> userData, Map<String, dynamic> report) async {
     try {
       final firestoreService = _ref.read(firestoreServiceProvider);
-      final updates = <String, dynamic>{};
+      final userUpdates = <String, dynamic>{};
+      final statsUpdates = <String, dynamic>{};
 
-      // Kritik alanların varlığını kontrol et
-      final requiredFields = {
-        'bilgePoints': 0,
-        'totalEarnedBP': 0,
-        'totalCompletedQuests': 0,
-        'currentQuestStreak': 0,
+      // Kullanıcı dokümanındaki alanlar
+      final requiredUserFields = {
         'usedFeatures': <String, bool>{},
         'hasCreatedStrategicPlan': false,
         'hasUsedPomodoro': false,
@@ -107,16 +108,38 @@ class QuestSystemHealthCheck {
         'completedWorkshopCount': 0,
       };
 
-      for (final entry in requiredFields.entries) {
+      for (final entry in requiredUserFields.entries) {
         if (!userData.containsKey(entry.key)) {
-          updates[entry.key] = entry.value;
+          userUpdates[entry.key] = entry.value;
         }
       }
 
-      if (updates.isNotEmpty) {
-        await firestoreService.usersCollection.doc(userId).update(updates);
-        report['added_fields'] = updates.keys.toList();
-        debugPrint('[HealthCheck] ✅ Eksik alanlar eklendi: ${updates.keys}');
+      if (userUpdates.isNotEmpty) {
+        await firestoreService.usersCollection.doc(userId).update(userUpdates);
+        report['added_user_fields'] = userUpdates.keys.toList();
+        debugPrint('[HealthCheck] ✅ Eksik kullanıcı alanları eklendi: ${userUpdates.keys}');
+      }
+
+      // Stats dokümanındaki alanlar
+      final statsDoc = await firestoreService.usersCollection.doc(userId).collection('state').doc('stats').get();
+      final statsData = statsDoc.exists ? statsDoc.data()! : <String, dynamic>{};
+      final requiredStatsFields = {
+        'engagementScore': 0,
+        'totalEarnedBP': 0,
+        'totalCompletedQuests': 0,
+        'currentQuestStreak': 0,
+      };
+
+      for (final entry in requiredStatsFields.entries) {
+        if (!statsData.containsKey(entry.key)) {
+          statsUpdates[entry.key] = entry.value;
+        }
+      }
+
+      if (statsUpdates.isNotEmpty) {
+        await statsDoc.reference.set(statsUpdates, SetOptions(merge: true));
+        report['added_stats_fields'] = statsUpdates.keys.toList();
+        debugPrint('[HealthCheck] ✅ Eksik stats alanları eklendi: ${statsUpdates.keys}');
       }
 
     } catch (e) {

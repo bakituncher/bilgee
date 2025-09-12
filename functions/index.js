@@ -1726,13 +1726,9 @@ exports.completeQuest = onCall({ region: 'us-central1', timeoutSeconds: 30 }, as
       completionDate: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    // Kullanıcının BP'sini güncelle
-    const reward = Number(data.reward || 0);
-    if (reward > 0) {
-      await userRef.update({
-        bilgePoints: admin.firestore.FieldValue.increment(reward)
-      });
-    }
+    // Ödül ve puan güncellemesi artık istemci tarafında (claimQuestReward veya _handleQuestCompletion)
+    // 'stats' dokümanındaki 'engagementScore' alanı üzerinden merkezi olarak yapılıyor.
+    // Bu nedenle buradaki 'bilgePoints' güncellemesi kaldırılmıştır.
 
     return { ok: true };
   } catch (e) {

@@ -53,13 +53,6 @@ class UserModel {
   final int currentQuestStreak; // Mevcut görev tamamlama serisi
   final Timestamp? lastQuestCompletionDate; // Son görev tamamlama tarihi
 
-  // PUAN SİSTEMİ İÇİN KRİTİK ALANLAR
-  final int bilgePoints; // Toplam Bilge Points
-  final int totalEarnedBP; // Hayat boyu kazanılan toplam BP
-  final int totalCompletedQuests; // Toplam tamamlanan görev sayısı
-  final Timestamp? lastRewardClaimedAt; // Son ödül toplama zamanı
-  final Timestamp? lastQuestCompletedAt; // Son görev tamamlama zamanı
-
   UserModel({
     required this.id,
     required this.email,
@@ -100,11 +93,6 @@ class UserModel {
     this.usedFeatures = const {},
     this.currentQuestStreak = 0,
     this.lastQuestCompletionDate,
-    this.bilgePoints = 0,
-    this.totalEarnedBP = 0,
-    this.totalCompletedQuests = 0,
-    this.lastRewardClaimedAt,
-    this.lastQuestCompletedAt,
   });
 
   factory UserModel.fromSnapshot(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -179,11 +167,6 @@ class UserModel {
       usedFeatures: Map<String, bool>.from(data['usedFeatures'] ?? {}),
       currentQuestStreak: data['currentQuestStreak'] ?? 0,
       lastQuestCompletionDate: data['lastQuestCompletionDate'] as Timestamp?,
-      bilgePoints: data['bilgePoints'] ?? 0, // yeni
-      totalEarnedBP: data['totalEarnedBP'] ?? 0, // yeni
-      totalCompletedQuests: data['totalCompletedQuests'] ?? 0, // yeni
-      lastRewardClaimedAt: data['lastRewardClaimedAt'] as Timestamp?, // yeni
-      lastQuestCompletedAt: data['lastQuestCompletedAt'] as Timestamp?, // yeni
     );
   }
 

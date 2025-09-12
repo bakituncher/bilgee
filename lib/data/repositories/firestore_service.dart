@@ -565,8 +565,8 @@ class FirestoreService {
       // Stats dokümanı (atomik artışlar)
       txn.set(statsRef, {
         'focusMinutes': FieldValue.increment(minutes),
-        'bp': FieldValue.increment(minutes),
-        'pomodoroBp': FieldValue.increment(minutes),
+        'engagementScore': FieldValue.increment(minutes), // Genel puan
+        'pomodoroBp': FieldValue.increment(minutes),      // Sadece Pomodoro'dan kazanılan puan
         'pomodoroSessions': FieldValue.increment(1),
         'totalFocusSeconds': FieldValue.increment(session.durationInSeconds),
         // Son 30 güne yönelik hafifletilmiş rollup (UI haftalık/aylık sorguları azaltır)
@@ -1026,12 +1026,8 @@ class FirestoreService {
     final qWeekly = weeklyQuestsCollection(userId).doc(quest.id);
     final qMonthly = monthlyQuestsCollection(userId).doc(quest.id);
 
-    batch.set(userRef, {
-      'bilgePoints': FieldValue.increment(reward),
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
-
-    // Stats.engagementScore'u da artır (UI ve leaderboard bu değeri kullanıyor)
+    // 'bilgePoints' yerine doğrudan 'stats' dokümanındaki 'engagementScore' güncelleniyor.
+    // Bu, onUserStatsWritten tetikleyicisini çalıştırır ve veri tutarlılığı sağlar.
     final statsRef = usersCollection.doc(userId).collection('state').doc('stats');
     batch.set(statsRef, {
       'engagementScore': FieldValue.increment(reward),

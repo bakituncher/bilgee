@@ -73,18 +73,13 @@ class QuestCompletionNotifier extends StateNotifier<QuestCompletionState> {
           throw Exception('Ödül zaten toplanmış veya görev bulunamadı');
         }
 
-        // 2. Kullanıcı puanını güncelle
-        final userRef = firestoreService.usersCollection.doc(user.id);
-        transaction.update(userRef, {
-          'bilgePoints': FieldValue.increment(dynamicReward),
-          'totalEarnedBP': FieldValue.increment(dynamicReward),
-          'lastRewardClaimedAt': FieldValue.serverTimestamp(),
-        });
-
-        // 2.b Stats.engagementScore'u da artır (UI & leaderboard için)
+        // 2. Puan ve ilgili istatistikler merkezi 'stats' dokümanında güncellenir.
+        // Bu, onUserStatsWritten tetikleyicisini çalıştırarak veri bütünlüğünü ve anlık UI güncellemelerini sağlar.
         final statsRef = firestoreService.usersCollection.doc(user.id).collection('state').doc('stats');
         transaction.set(statsRef, {
           'engagementScore': FieldValue.increment(dynamicReward),
+          'totalEarnedBP': FieldValue.increment(dynamicReward),
+          'lastRewardClaimedAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
 
