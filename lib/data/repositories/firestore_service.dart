@@ -46,6 +46,9 @@ class FirestoreService {
   // YENİ: Yayınlanmış tepe listesi dokümanı (latest)
   DocumentReference<Map<String, dynamic>> _leaderboardTopLatestDoc(String examType, String period)
       => _firestore.collection('leaderboard_top').doc(examType).collection(period).doc('latest');
+  // YENİ: Optimize edilmiş anlık görüntü dokümanı referansı
+  DocumentReference<Map<String, dynamic>> _leaderboardSnapshotDoc(String examType, String period)
+      => _firestore.collection('leaderboard_snapshots').doc('${examType}_$period');
   // YENİ: Public profile dokümanı
   DocumentReference<Map<String, dynamic>> _publicProfileDoc(String userId)
       => _firestore.collection('public_profiles').doc(userId);
@@ -715,9 +718,9 @@ class FirestoreService {
     }).where((e) => e.userName.isNotEmpty).toList();
   }
 
-  // YENİ: Yeni yapıdan tepe 20 kullanıcıyı oku (daily/weekly)
-  Future<List<LeaderboardEntry>> getLeaderboardTopUsers(String examType, {required String period}) async {
-    final doc = await _leaderboardTopLatestDoc(examType, period).get();
+  // YENİ: Optimize edilmiş anlık görüntüden tüm listeyi oku
+  Future<List<LeaderboardEntry>> getLeaderboardSnapshot(String examType, {required String period}) async {
+    final doc = await _leaderboardSnapshotDoc(examType, period).get();
     if (!doc.exists) return const <LeaderboardEntry>[];
     final data = doc.data()!;
     final List list = (data['entries'] as List?) ?? const [];
@@ -727,6 +730,8 @@ class FirestoreService {
         userId: (m['userId'] ?? '') as String,
         userName: (m['userName'] ?? '') as String,
         score: ((m['score'] ?? 0) as num).toInt(),
+        // rank alanı snapshot'tan doğrudan gelir
+        rank: ((m['rank'] ?? 0) as num).toInt(),
         testCount: ((m['testCount'] ?? 0) as num).toInt(),
         avatarStyle: m['avatarStyle'] as String?,
         avatarSeed: m['avatarSeed'] as String?,
