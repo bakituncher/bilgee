@@ -338,9 +338,7 @@ class _ConquestQuestCardState extends ConsumerState<ConquestQuestCard> {
               ),
             ),
           ).animate(onPlay: (c) => showShimmer ? c.repeat() : null)
-             .shimmer(delay: 500.ms, duration: 1800.ms, color: Colors.white.withOpacity(0.1))
-             .animate() // This re-enables targeting to specific animations below
-             .saturate(amount: isClaimed ? 0.2 : 1.0, duration: 400.ms),
+             .shimmer(delay: 500.ms, duration: 1800.ms, color: Colors.white.withOpacity(0.1)),
         ),
         ConfettiWidget(
           confettiController: _confettiController,
