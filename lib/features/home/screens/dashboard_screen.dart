@@ -18,6 +18,7 @@ import 'package:bilge_ai/features/home/providers/home_providers.dart';
 import 'package:bilge_ai/features/home/widgets/focus_hub_card.dart';
 import 'package:bilge_ai/shared/widgets/scaffold_with_nav_bar.dart' show rootScaffoldKey;
 import 'package:bilge_ai/features/home/widgets/motivation_quotes_card.dart';
+import 'package:bilge_ai/features/quests/logic/optimized_quests_provider.dart';
 
 // Widget'ları vurgulamak için GlobalKey'ler artik highlight_keys.dart'tan geliyor, burada TANIM YOK.
 

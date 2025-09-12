@@ -227,9 +227,9 @@ class GamifiedQuestCard extends ConsumerWidget {
       ref.invalidate(optimizedQuestsProvider);
     } else if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Ödül alınırken bir hata oluştu.'),
-          backgroundColor: AppTheme.errorColor,
+        SnackBar(
+          content: const Text('Ödül alınırken bir hata oluştu.'),
+          backgroundColor: AppTheme.accentColor,
         ),
       );
     }
