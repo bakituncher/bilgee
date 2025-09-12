@@ -88,12 +88,21 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> with SingleTickerPr
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            'Günlük Emirler',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
+          Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+                onPressed: () => context.pop(),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Günlük Emirler',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
           ),
           IconButton(
             icon: const Icon(Icons.sync_rounded, color: AppTheme.secondaryTextColor),
@@ -119,6 +128,21 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> with SingleTickerPr
     if (quests.isEmpty) {
       return _buildEmptyState();
     }
+
+    // GÖREVLERİ SIRALA
+    quests.sort((a, b) {
+      final aClaimable = a.isCompleted && !a.rewardClaimed;
+      final bClaimable = b.isCompleted && !b.rewardClaimed;
+      if (aClaimable && !bClaimable) return -1;
+      if (!aClaimable && bClaimable) return 1;
+
+      final aCompleted = a.isCompleted && a.rewardClaimed;
+      final bCompleted = b.isCompleted && b.rewardClaimed;
+      if (aCompleted && !bCompleted) return 1;
+      if (!aCompleted && bCompleted) return -1;
+
+      return 0;
+    });
 
     return Expanded(
       child: ListView.builder(
@@ -166,7 +190,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> with SingleTickerPr
   }
 }
 
-class GamifiedQuestCard extends StatelessWidget {
+class GamifiedQuestCard extends ConsumerWidget {
   final Quest quest;
   final String userId;
 
@@ -186,28 +210,59 @@ class GamifiedQuestCard extends StatelessWidget {
         targetRoute = Uri(path: '/coach', queryParameters: {'subject': subject}).toString();
       }
     }
-    context.push(targetRoute);
+    context.go(targetRoute);
+  }
+
+  Future<void> _handleClaimReward(BuildContext context, WidgetRef ref) async {
+    final questService = ref.read(questServiceProvider);
+    final success = await questService.claimReward(userId, quest.id);
+
+    if (success && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${quest.reward} BP kazandın!'),
+          backgroundColor: AppTheme.successColor,
+        ),
+      );
+      ref.invalidate(optimizedQuestsProvider);
+    } else if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ödül alınırken bir hata oluştu.'),
+          backgroundColor: AppTheme.errorColor,
+        ),
+      );
+    }
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Consumer(
-      builder: (context, ref, child) {
-        final progress = quest.goalValue > 0 ? (quest.currentProgress / quest.goalValue).clamp(0.0, 1.0) : (quest.isCompleted ? 1.0 : 0.0);
-        final isCompleted = quest.isCompleted;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final progress = quest.goalValue > 0 ? (quest.currentProgress / quest.goalValue).clamp(0.0, 1.0) : (quest.isCompleted ? 1.0 : 0.0);
+    final isCompleted = quest.isCompleted;
+    final isClaimable = isCompleted && !quest.rewardClaimed;
 
-        return GestureDetector(
-          onTap: isCompleted ? null : () => _handleQuestTap(context, ref),
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+    VoidCallback? onTapAction;
+    if (isClaimable) {
+      onTapAction = () => _handleClaimReward(context, ref);
+    } else if (!isCompleted) {
+      onTapAction = () => _handleQuestTap(context, ref);
+    }
+
+    return GestureDetector(
+      onTap: onTapAction,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
             decoration: BoxDecoration(
-              color: AppTheme.cardColor,
+              color: isClaimable ? AppTheme.cardColor.withBlue(170) : AppTheme.cardColor,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppTheme.lightSurfaceColor.withOpacity(0.5)),
+              border: Border.all(
+                color: isClaimable ? AppTheme.goldColor : AppTheme.lightSurfaceColor.withOpacity(0.5),
+                width: isClaimable ? 2 : 1,
+              ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
+                  color: isClaimable ? AppTheme.goldColor.withOpacity(0.3) : Colors.black.withOpacity(0.3),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -219,7 +274,7 @@ class GamifiedQuestCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    _buildCategoryIcon(isCompleted),
+                    _buildCategoryIcon(isCompleted, isClaimable),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Column(
@@ -233,32 +288,34 @@ class GamifiedQuestCard extends StatelessWidget {
                           Text(
                             quest.description,
                             style: TextStyle(fontSize: 14, color: AppTheme.secondaryTextColor),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
                     ),
-                    _buildRewardChip(),
+                    _buildRewardChip(isClaimable),
                   ],
                 ),
-                if (!isCompleted) ...[
+                if (!isCompleted || isClaimable) ...[
                   const SizedBox(height: 20),
-                  _buildProgressBar(progress),
+                  if (isClaimable)
+                    _buildClaimRewardPrompt()
+                  else
+                    _buildProgressBar(progress),
                 ],
               ],
             ),
           ),
         );
-      },
-    );
   }
 
-  Widget _buildCategoryIcon(bool isCompleted) {
+  Widget _buildCategoryIcon(bool isCompleted, bool isClaimable) {
     IconData icon;
     Color color;
 
-    if (isCompleted) {
+    if (isClaimable) {
+      icon = Icons.military_tech_rounded;
+      color = AppTheme.goldColor;
+    } else if (isCompleted) {
       icon = Icons.check_circle_rounded;
       color = AppTheme.successColor;
     } else {
@@ -284,18 +341,18 @@ class GamifiedQuestCard extends StatelessWidget {
     );
   }
 
-  Widget _buildRewardChip() {
+  Widget _buildRewardChip(bool isClaimable) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: AppTheme.goldColor.withOpacity(0.1),
+        color: (isClaimable ? AppTheme.goldColor : AppTheme.goldColor).withOpacity(0.1),
         borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: AppTheme.goldColor.withOpacity(0.3)),
+        border: Border.all(color: (isClaimable ? AppTheme.goldColor : AppTheme.goldColor).withOpacity(0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.star_rounded, color: AppTheme.goldColor, size: 18),
+          Icon(isClaimable ? Icons.military_tech_rounded : Icons.star_rounded, color: AppTheme.goldColor, size: 18),
           const SizedBox(width: 6),
           Text(
             '+${quest.reward}',
@@ -304,6 +361,32 @@ class GamifiedQuestCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildClaimRewardPrompt() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          'Ödülünü Topla!',
+          style: TextStyle(
+            color: AppTheme.goldColor,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            shadows: [
+              Shadow(
+                blurRadius: 10.0,
+                color: AppTheme.goldColor.withOpacity(0.5),
+                offset: const Offset(0, 0),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        const Icon(Icons.touch_app_rounded, color: AppTheme.goldColor),
+      ],
+    ).animate(onPlay: (controller) => controller.repeat())
+     .shimmer(delay: 400.ms, duration: 1800.ms, color: AppTheme.goldColor.withOpacity(0.3));
   }
 
   Widget _buildProgressBar(double progress) {

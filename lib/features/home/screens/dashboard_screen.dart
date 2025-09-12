@@ -98,6 +98,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         final sections = <Widget>[
           const RepaintBoundary(child: HeroHeader()),
           const RepaintBoundary(child: FocusHubCard()),
+          RepaintBoundary(child: _DailyQuestsCard()),
           RepaintBoundary(child: Container(key: todaysPlanKey, child: const TodaysPlan())), // Kaydırılan kartlar burada
           const RepaintBoundary(child: MotivationQuotesCard()),
         ];
@@ -191,12 +192,13 @@ class _DailyQuestsCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(userProfileProvider).value; if (user == null) return const SizedBox.shrink();
     final questProg = ref.watch(dailyQuestsProgressProvider);
+    final hasClaimable = ref.watch(hasClaimableQuestsProvider);
     final total = questProg.total; final completed = questProg.completed; final progress = questProg.progress; final remaining = questProg.remaining;
 
     // Riverpod üzerinden kutlama tarihlerini al
     final celebratedDates = ref.watch(celebratedDatesProvider);
 
-    if (progress >= 1.0) {
+    if (progress >= 1.0 && !hasClaimable) {
       final todayKey = DateTime.now().toIso8601String().substring(0,10);
       if (!celebratedDates.contains(todayKey)) {
         // Set'i immutably güncelle
@@ -205,34 +207,33 @@ class _DailyQuestsCard extends ConsumerWidget {
       }
     }
 
-    final showShimmer = progress < 1.0;
     final card = Card(
       clipBehavior: Clip.antiAlias,
       elevation: progress >= 1.0 ? 10 : 6,
-      shadowColor: progress >= 1.0 ? AppTheme.successColor.withValues(alpha: .6) : AppTheme.lightSurfaceColor.withValues(alpha: .35),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24), side: BorderSide(color: _progressColor(progress), width: 2)),
+      shadowColor: hasClaimable ? AppTheme.goldColor.withOpacity(0.7) : (progress >= 1.0 ? AppTheme.successColor.withValues(alpha: .6) : AppTheme.lightSurfaceColor.withValues(alpha: .35)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24), side: BorderSide(color: hasClaimable ? AppTheme.goldColor : _progressColor(progress), width: 2)),
       child: InkWell(
         onTap: () => context.go('/home/quests'),
         child: Container(
           padding: const EdgeInsets.all(20.0),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [ _progressColor(progress).withValues(alpha: 0.18), AppTheme.cardColor.withValues(alpha: 0.55), ],
+                colors: [ (hasClaimable ? AppTheme.goldColor : _progressColor(progress)).withValues(alpha: 0.18), AppTheme.cardColor.withValues(alpha: 0.55), ],
                 begin: Alignment.topLeft, end: Alignment.bottomRight,
               ),
             ),
           child: Row(children: [
             Stack(alignment: Alignment.center, children: [
-              SizedBox(height: 56, width: 56, child: CircularProgressIndicator(value: progress == 0 ? null : progress, strokeWidth: 6, backgroundColor: AppTheme.lightSurfaceColor.withValues(alpha: .25), valueColor: AlwaysStoppedAnimation(_progressColor(progress)),)),
-              Icon(progress >=1 ? Icons.emoji_events_rounded : Icons.shield_moon_rounded, size: 28, color: _progressColor(progress)),
+              SizedBox(height: 56, width: 56, child: CircularProgressIndicator(value: progress == 0 ? null : progress, strokeWidth: 6, backgroundColor: AppTheme.lightSurfaceColor.withValues(alpha: .25), valueColor: AlwaysStoppedAnimation(hasClaimable ? AppTheme.goldColor : _progressColor(progress)),)),
+              Icon(hasClaimable ? Icons.military_tech_rounded : (progress >=1 ? Icons.emoji_events_rounded : Icons.shield_moon_rounded), size: 28, color: hasClaimable ? AppTheme.goldColor : _progressColor(progress)),
             ]),
             const SizedBox(width: 16),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-              Text(progress >=1 ? "Zafer!" : "Günlük Fetihler", style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.white)),
+              Text(hasClaimable ? "Ödül Zamanı!" : (progress >=1 ? "Zafer!" : "Günlük Fetihler"), style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.white)),
               const SizedBox(height: 4),
               Text(total == 0 ? 'Bugün görev yok' : '$completed / $total tamamlandı • Kalan ${_formatRemaining(remaining)}', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor)),
               const SizedBox(height: 6),
-              ClipRRect(borderRadius: BorderRadius.circular(6), child: LinearProgressIndicator(value: progress.clamp(0,1), minHeight: 6, backgroundColor: AppTheme.lightSurfaceColor.withValues(alpha: .25), valueColor: AlwaysStoppedAnimation(_progressColor(progress)),)),
+              ClipRRect(borderRadius: BorderRadius.circular(6), child: LinearProgressIndicator(value: progress.clamp(0,1), minHeight: 6, backgroundColor: AppTheme.lightSurfaceColor.withValues(alpha: .25), valueColor: AlwaysStoppedAnimation(hasClaimable ? AppTheme.goldColor : _progressColor(progress)),)),
             ])),
             const SizedBox(width: 8),
             const Icon(Icons.arrow_forward_ios_rounded, color: AppTheme.secondaryTextColor, size: 18),
@@ -240,8 +241,8 @@ class _DailyQuestsCard extends ConsumerWidget {
         ),
       ),
     );
-    if (!showShimmer) return card;
-    return Animate(onPlay: (c)=> c.repeat(reverse: true), effects: [ShimmerEffect(duration: 2500.ms, color: AppTheme.secondaryColor.withValues(alpha: 0.35))], child: card);
+    if (!hasClaimable) return card;
+    return Animate(onPlay: (c)=> c.repeat(reverse: true), effects: [ShimmerEffect(duration: 1500.ms, color: AppTheme.goldColor.withOpacity(0.5))], child: card);
   }
 }
 // ------------------------------------------
