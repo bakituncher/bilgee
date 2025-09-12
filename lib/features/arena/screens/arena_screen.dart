@@ -73,9 +73,9 @@ class _LeaderboardView extends ConsumerWidget {
       onRefresh: () async {
         HapticFeedback.lightImpact();
         if (period == 'weekly') {
-          await ref.refresh(leaderboardWeeklyProvider(currentUserExam).future);
+          var _ = await ref.refresh(leaderboardWeeklyProvider(currentUserExam).future);
         } else {
-          await ref.refresh(leaderboardDailyProvider(currentUserExam).future);
+          var _ = await ref.refresh(leaderboardDailyProvider(currentUserExam).future);
         }
       },
       child: Container(
@@ -120,7 +120,7 @@ class _LeaderboardView extends ConsumerWidget {
                   if (showCurrentUserAtBottom && index == itemCount - 1) {
                     return Padding(
                       padding: const EdgeInsets.only(top: 24.0),
-                      child: _CurrentUserCard(entry: currentUserEntry!),
+                      child: _CurrentUserCard(entry: currentUserEntry),
                     );
                   }
 
@@ -192,9 +192,9 @@ class _CurrentUserCard extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-            gradient: LinearGradient(colors: [_accent2.withOpacity(0.8), _accent1.withOpacity(0.8)]),
+            gradient: LinearGradient(colors: [_accent2.o(0.8), _accent1.o(0.8)]),
             boxShadow: [
-              BoxShadow(color: _accent2.withOpacity(0.3), blurRadius: 20, spreadRadius: 4),
+              BoxShadow(color: _accent2.o(0.3), blurRadius: 20, spreadRadius: 4),
             ]
           ),
           padding: const EdgeInsets.all(2),
@@ -320,7 +320,7 @@ class _PodiumPlaceCard extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.bottomCenter,
             end: Alignment.topCenter,
-            colors: [medalColor.withOpacity(0.5), medalColor.withOpacity(0.1)],
+            colors: [medalColor.o(0.5), medalColor.o(0.1)],
           ),
           border: Border.all(color: medalColor, width: 1.5),
         ),
@@ -380,8 +380,6 @@ class _RankCapsule extends StatelessWidget {
   }
 }
 
-import 'dart:ui'; // YENİ: BackdropFilter için eklendi
-
 class _RankCard extends StatelessWidget {
   final LeaderboardEntry entry;
   final int rank;
@@ -421,7 +419,7 @@ class _RankCard extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [cardColor, cardColor.withOpacity(0.5)],
+                colors: [cardColor, cardColor.o(0.5)],
                 stops: const [0.0, 1.0],
               ),
             ),
@@ -483,4 +481,3 @@ class _RankCard extends StatelessWidget {
 extension _ColorOpacityX on Color {
   Color o(double factor) => withValues(alpha: (a * factor).toDouble());
 }
-

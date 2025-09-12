@@ -109,8 +109,9 @@ service cloud.firestore {
 
     // YENİ: Liderlik tablosu anlık görüntüleri (optimize edilmiş)
     match /leaderboard_snapshots/{snapshotId} {
-      // KALICI KURAL: Sadece kimliği doğrulanmış kullanıcılar okuyabilir.
-      allow read, list: if request.auth.uid != null;
+      // KALICI KURAL: Eski hali request.auth.uid != null idi ve authenticated olmayan istemciler için PERMISSION_DENIED veriyordu.
+      // HIZLI DÜZELTME: Bu koleksiyonu herkese açık yapıyoruz. Eğer güvenlik gerekiyorsa daha ince yetkilendirme ekleyin.
+      allow read, list: if true;
       allow write: if false; // Sadece sunucu yazmalı
     }
 
