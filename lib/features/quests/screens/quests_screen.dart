@@ -1,5 +1,6 @@
 // lib/features/quests/screens/quests_screen.dart
 import 'dart:async';
+import 'dart:math';
 import 'dart:ui';
 import 'package:bilge_ai/core/analytics/analytics_logger.dart';
 import 'package:bilge_ai/core/theme/app_theme.dart';
@@ -7,10 +8,12 @@ import 'package:bilge_ai/data/providers/firestore_providers.dart';
 import 'package:bilge_ai/features/quests/logic/quest_service.dart';
 import 'package:bilge_ai/features/quests/logic/optimized_quests_provider.dart';
 import 'package:bilge_ai/features/quests/models/quest_model.dart';
+import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class QuestsScreen extends ConsumerStatefulWidget {
   const QuestsScreen({super.key});
@@ -19,13 +22,13 @@ class QuestsScreen extends ConsumerStatefulWidget {
   ConsumerState<QuestsScreen> createState() => _QuestsScreenState();
 }
 
-class _QuestsScreenState extends ConsumerState<QuestsScreen> with SingleTickerProviderStateMixin {
+class _QuestsScreenState extends ConsumerState<QuestsScreen> with TickerProviderStateMixin {
   late AnimationController _bgController;
 
   @override
   void initState() {
     super.initState();
-    _bgController = AnimationController(vsync: this, duration: const Duration(seconds: 20))..repeat();
+    _bgController = AnimationController(vsync: this, duration: const Duration(seconds: 45))..repeat();
   }
 
   void _refreshQuests() async {
@@ -54,16 +57,14 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> with SingleTickerPr
       backgroundColor: AppTheme.scaffoldBackgroundColor,
       body: Stack(
         children: [
-          // Animated Grid Background
           Positioned.fill(
             child: CustomPaint(
-              painter: AnimatedGridPainter(_bgController),
+              painter: StarfieldPainter(_bgController),
             ),
           ),
-          // Main Content
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              padding: const EdgeInsets.symmetric(horizontal: 12.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -84,25 +85,25 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> with SingleTickerPr
 
   Widget _buildHeader(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 20.0),
+      padding: const EdgeInsets.only(top: 20.0, left: 8.0, right: 8.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-                onPressed: () => context.pop(),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Günlük Emirler',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ],
+          IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white70),
+            onPressed: () => context.pop(),
+          ),
+          Text(
+            'Fetih Sancağı',
+            style: GoogleFonts.orbitron(
+              fontSize: 26,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              shadows: [
+                const Shadow(blurRadius: 10, color: AppTheme.secondaryColor),
+                const Shadow(blurRadius: 20, color: AppTheme.secondaryColor),
+              ],
+            ),
           ),
           IconButton(
             icon: const Icon(Icons.sync_rounded, color: AppTheme.secondaryTextColor),
@@ -115,11 +116,9 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> with SingleTickerPr
   }
 
   Widget _buildLoadingState() {
-    return Expanded(
+    return const Expanded(
       child: Center(
-        child: const CircularProgressIndicator(color: AppTheme.secondaryColor)
-            .animate()
-            .scale(),
+        child: CircularProgressIndicator(color: AppTheme.secondaryColor),
       ),
     );
   }
@@ -129,28 +128,26 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> with SingleTickerPr
       return _buildEmptyState();
     }
 
-    // GÖREVLERİ SIRALA
     quests.sort((a, b) {
       final aClaimable = a.isCompleted && !a.rewardClaimed;
       final bClaimable = b.isCompleted && !b.rewardClaimed;
       if (aClaimable && !bClaimable) return -1;
       if (!aClaimable && bClaimable) return 1;
-
       final aCompleted = a.isCompleted && a.rewardClaimed;
       final bCompleted = b.isCompleted && b.rewardClaimed;
       if (aCompleted && !bCompleted) return 1;
       if (!aCompleted && bCompleted) return -1;
-
       return 0;
     });
 
     return Expanded(
       child: ListView.builder(
-        padding: EdgeInsets.zero,
+        padding: const EdgeInsets.symmetric(horizontal: 8.0),
         itemCount: quests.length,
         itemBuilder: (context, index) {
           final quest = quests[index];
-          return GamifiedQuestCard(
+          return ConquestQuestCard(
+            key: ValueKey(quest.id),
             quest: quest,
             userId: userId,
           )
@@ -168,11 +165,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> with SingleTickerPr
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.shield_moon_rounded,
-              size: 100,
-              color: AppTheme.secondaryTextColor,
-            ),
+            const Icon(Icons.shield_moon_rounded, size: 100, color: AppTheme.secondaryTextColor),
             const SizedBox(height: 20),
             Text(
               'Tüm Emirler Tamamlandı!',
@@ -190,21 +183,37 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> with SingleTickerPr
   }
 }
 
-class GamifiedQuestCard extends ConsumerWidget {
+class ConquestQuestCard extends ConsumerStatefulWidget {
   final Quest quest;
   final String userId;
 
-  const GamifiedQuestCard({
-    super.key,
-    required this.quest,
-    required this.userId,
-  });
+  const ConquestQuestCard({super.key, required this.quest, required this.userId});
 
-  void _handleQuestTap(BuildContext context, WidgetRef ref) {
-    ref.read(analyticsLoggerProvider).logQuestEvent(userId: userId, event: 'quest_tap', data: {'questId': quest.id, 'category': quest.category.name});
-    String targetRoute = quest.actionRoute;
+  @override
+  ConsumerState<ConquestQuestCard> createState() => _ConquestQuestCardState();
+}
+
+class _ConquestQuestCardState extends ConsumerState<ConquestQuestCard> {
+  late final ConfettiController _confettiController;
+  bool _isClaiming = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _confettiController = ConfettiController(duration: const Duration(milliseconds: 400));
+  }
+
+  @override
+  void dispose() {
+    _confettiController.dispose();
+    super.dispose();
+  }
+
+  void _handleQuestTap() {
+    ref.read(analyticsLoggerProvider).logQuestEvent(userId: widget.userId, event: 'quest_tap', data: {'questId': widget.quest.id, 'category': widget.quest.category.name});
+    String targetRoute = widget.quest.actionRoute;
     if (targetRoute == '/coach') {
-      final subjectTag = quest.tags.firstWhere((t) => t.startsWith('subject:'), orElse: () => '');
+      final subjectTag = widget.quest.tags.firstWhere((t) => t.startsWith('subject:'), orElse: () => '');
       if (subjectTag.isNotEmpty) {
         final subject = subjectTag.split(':').sublist(1).join(':');
         targetRoute = Uri(path: '/coach', queryParameters: {'subject': subject}).toString();
@@ -213,19 +222,19 @@ class GamifiedQuestCard extends ConsumerWidget {
     context.go(targetRoute);
   }
 
-  Future<void> _handleClaimReward(BuildContext context, WidgetRef ref) async {
-    final questService = ref.read(questServiceProvider);
-    final success = await questService.claimReward(userId, quest.id);
+  Future<void> _handleClaimReward() async {
+    if (_isClaiming) return;
+    setState(() => _isClaiming = true);
 
-    if (success && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${quest.reward} BP kazandın!'),
-          backgroundColor: AppTheme.successColor,
-        ),
-      );
+    _confettiController.play();
+    await Future.delayed(const Duration(milliseconds: 300));
+
+    final questService = ref.read(questServiceProvider);
+    final success = await questService.claimReward(widget.userId, widget.quest.id);
+
+    if (success && mounted) {
       ref.invalidate(optimizedQuestsProvider);
-    } else if (context.mounted) {
+    } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Ödül alınırken bir hata oluştu.'),
@@ -233,222 +242,229 @@ class GamifiedQuestCard extends ConsumerWidget {
         ),
       );
     }
+    if (mounted) {
+      setState(() => _isClaiming = false);
+    }
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
+    final quest = widget.quest;
     final progress = quest.goalValue > 0 ? (quest.currentProgress / quest.goalValue).clamp(0.0, 1.0) : (quest.isCompleted ? 1.0 : 0.0);
     final isCompleted = quest.isCompleted;
     final isClaimable = isCompleted && !quest.rewardClaimed;
+    final isClaimed = isCompleted && quest.rewardClaimed;
 
-    VoidCallback? onTapAction;
-    if (isClaimable) {
-      onTapAction = () => _handleClaimReward(context, ref);
-    } else if (!isCompleted) {
-      onTapAction = () => _handleQuestTap(context, ref);
-    }
-
-    return GestureDetector(
-      onTap: onTapAction,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-            decoration: BoxDecoration(
-              color: isClaimable ? AppTheme.cardColor.withBlue(170) : AppTheme.cardColor,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isClaimable ? AppTheme.goldColor : AppTheme.lightSurfaceColor.withOpacity(0.5),
-                width: isClaimable ? 2 : 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: isClaimable ? AppTheme.goldColor.withOpacity(0.3) : Colors.black.withOpacity(0.3),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    _buildCategoryIcon(isCompleted, isClaimable),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            quest.title,
-                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            quest.description,
-                            style: TextStyle(fontSize: 14, color: AppTheme.secondaryTextColor),
-                          ),
-                        ],
-                      ),
-                    ),
-                    _buildRewardChip(isClaimable),
-                  ],
-                ),
-                if (!isCompleted || isClaimable) ...[
-                  const SizedBox(height: 20),
-                  if (isClaimable)
-                    _buildClaimRewardPrompt()
-                  else
-                    _buildProgressBar(progress),
-                ],
-              ],
-            ),
-          ),
-        );
-  }
-
-  Widget _buildCategoryIcon(bool isCompleted, bool isClaimable) {
+    Color borderColor, iconColor;
     IconData icon;
-    Color color;
+    bool showShimmer = false;
 
     if (isClaimable) {
+      borderColor = AppTheme.goldColor;
+      iconColor = AppTheme.goldColor;
       icon = Icons.military_tech_rounded;
-      color = AppTheme.goldColor;
-    } else if (isCompleted) {
+      showShimmer = true;
+    } else if (isClaimed) {
+      borderColor = AppTheme.successColor.withOpacity(0.5);
+      iconColor = AppTheme.successColor;
       icon = Icons.check_circle_rounded;
-      color = AppTheme.successColor;
     } else {
+      borderColor = AppTheme.secondaryColor.withOpacity(0.6);
+      iconColor = AppTheme.secondaryColor;
       switch (quest.category) {
-        case QuestCategory.study: icon = Icons.menu_book_rounded; color = Colors.blueAccent; break;
-        case QuestCategory.practice: icon = Icons.edit_note_rounded; color = Colors.greenAccent; break;
-        case QuestCategory.engagement: icon = Icons.auto_awesome_rounded; color = Colors.purpleAccent; break;
-        case QuestCategory.consistency: icon = Icons.event_repeat_rounded; color = Colors.orangeAccent; break;
-        case QuestCategory.test_submission: icon = Icons.add_chart_rounded; color = Colors.redAccent; break;
-        case QuestCategory.focus: icon = Icons.center_focus_strong; color = AppTheme.secondaryColor; break;
+        case QuestCategory.study: icon = Icons.menu_book_rounded; break;
+        case QuestCategory.practice: icon = Icons.edit_note_rounded; break;
+        case QuestCategory.engagement: icon = Icons.auto_awesome_rounded; break;
+        case QuestCategory.consistency: icon = Icons.event_repeat_rounded; break;
+        case QuestCategory.test_submission: icon = Icons.add_chart_rounded; break;
+        case QuestCategory.focus: icon = Icons.center_focus_strong; break;
       }
     }
 
-    return Container(
-      width: 52,
-      height: 52,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: color.withOpacity(0.1),
-        border: Border.all(color: color.withOpacity(0.5), width: 2),
-      ),
-      child: Icon(icon, color: color, size: 28),
+    return Stack(
+      alignment: Alignment.topCenter,
+      children: [
+        GestureDetector(
+          onTap: isClaimable ? _handleClaimReward : (isCompleted ? null : _handleQuestTap),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              gradient: LinearGradient(
+                colors: [
+                  AppTheme.lightSurfaceColor.withOpacity(isClaimed ? 0.2 : 0.5),
+                  AppTheme.cardColor.withOpacity(isClaimed ? 0.3 : 0.8),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              border: Border.all(color: borderColor, width: 1.5),
+              boxShadow: [
+                BoxShadow(color: borderColor.withOpacity(0.3), blurRadius: 12, spreadRadius: 1),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(18),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          _buildCategoryIcon(icon, iconColor),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(quest.title, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white)),
+                                const SizedBox(height: 4),
+                                Text(quest.description, style: TextStyle(fontSize: 14, color: AppTheme.secondaryTextColor, height: 1.4)),
+                              ],
+                            ),
+                          ),
+                          _buildRewardChip(quest, isClaimable),
+                        ],
+                      ),
+                      if (!isClaimed) ...[
+                        const SizedBox(height: 16),
+                        isClaimable ? _buildClaimRewardPrompt() : _buildProgressBar(progress, borderColor),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ).animate(onPlay: (c) => showShimmer ? c.repeat() : null)
+             .shimmer(delay: 500.ms, duration: 1800.ms, color: Colors.white.withOpacity(0.1))
+             .animate() // This re-enables targeting to specific animations below
+             .saturate(amount: isClaimed ? 0.2 : 1.0, duration: 400.ms),
+        ),
+        ConfettiWidget(
+          confettiController: _confettiController,
+          blastDirectionality: BlastDirectionality.explosive,
+          numberOfParticles: 25,
+          gravity: 0.1,
+        ),
+      ],
     );
   }
 
-  Widget _buildRewardChip(bool isClaimable) {
+  Widget _buildCategoryIcon(IconData icon, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      width: 50,
+      height: 50,
       decoration: BoxDecoration(
-        color: (isClaimable ? AppTheme.goldColor : AppTheme.goldColor).withOpacity(0.1),
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: (isClaimable ? AppTheme.goldColor : AppTheme.goldColor).withOpacity(0.3)),
+        shape: BoxShape.circle,
+        color: color.withOpacity(0.1),
+        border: Border.all(color: color.withOpacity(0.5), width: 1),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(isClaimable ? Icons.military_tech_rounded : Icons.star_rounded, color: AppTheme.goldColor, size: 18),
-          const SizedBox(width: 6),
-          Text(
-            '+${quest.reward}',
-            style: const TextStyle(color: AppTheme.goldColor, fontSize: 16, fontWeight: FontWeight.bold),
+      child: Icon(icon, color: color, size: 26),
+    );
+  }
+
+  Widget _buildRewardChip(Quest quest, bool isClaimable) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: AppTheme.goldColor.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(color: AppTheme.goldColor.withOpacity(0.4)),
           ),
-        ],
-      ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.star_rounded, color: AppTheme.goldColor, size: 16),
+              const SizedBox(width: 6),
+              Text('+${quest.reward}', style: const TextStyle(color: AppTheme.goldColor, fontSize: 15, fontWeight: FontWeight.bold)),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildClaimRewardPrompt() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          'Ödülünü Topla!',
-          style: TextStyle(
-            color: AppTheme.goldColor,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-            shadows: [
-              Shadow(
-                blurRadius: 10.0,
-                color: AppTheme.goldColor.withOpacity(0.5),
-                offset: const Offset(0, 0),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 8),
-        const Icon(Icons.touch_app_rounded, color: AppTheme.goldColor),
-      ],
-    ).animate(onPlay: (controller) => controller.repeat())
-     .shimmer(delay: 400.ms, duration: 1800.ms, color: AppTheme.goldColor.withOpacity(0.3));
+    return Text(
+      'ÖDÜLÜ TOPLA',
+      style: GoogleFonts.orbitron(
+        color: AppTheme.goldColor,
+        fontWeight: FontWeight.bold,
+        fontSize: 16,
+        letterSpacing: 2,
+        shadows: [const Shadow(blurRadius: 8, color: AppTheme.goldColor)],
+      ),
+    );
   }
 
-  Widget _buildProgressBar(double progress) {
-    return Row(
-      children: [
-        Expanded(
-          child: Container(
-            height: 8,
-            decoration: BoxDecoration(
-              color: AppTheme.lightSurfaceColor,
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: FractionallySizedBox(
-                  widthFactor: progress,
-                  child: Container(color: AppTheme.secondaryColor),
-                ),
-              ),
-            ),
+  Widget _buildProgressBar(double progress, Color color) {
+    return Container(
+      height: 8,
+      decoration: BoxDecoration(
+        color: AppTheme.lightSurfaceColor.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(4),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: FractionallySizedBox(
+            widthFactor: progress,
+            child: Container(color: color),
           ),
         ),
-        const SizedBox(width: 12),
-        Text(
-          '${quest.currentProgress} / ${quest.goalValue}',
-          style: const TextStyle(color: AppTheme.secondaryTextColor, fontWeight: FontWeight.bold),
-        ),
-      ],
+      ),
     );
   }
 }
 
-
-class AnimatedGridPainter extends CustomPainter {
+class StarfieldPainter extends CustomPainter {
   final Animation<double> animation;
+  final List<List<Offset>> _stars = [];
+  final List<Paint> _starPaints = [];
+  final int _starLayers = 3;
 
-  AnimatedGridPainter(this.animation) : super(repaint: animation);
+  StarfieldPainter(this.animation) : super(repaint: animation) {
+    // Create star layers
+    final random = Random(123); // Seed for consistency
+    for (int i = 0; i < _starLayers; i++) {
+      _stars.add([]);
+      _starPaints.add(Paint()..color = Colors.white.withOpacity(random.nextDouble() * 0.8 + 0.2));
+      for (int j = 0; j < 100 ~/ (_starLayers - i); j++) {
+        _stars[i].add(Offset(random.nextDouble(), random.nextDouble()));
+      }
+    }
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppTheme.lightSurfaceColor.withOpacity(0.1)
-      ..strokeWidth = 1.0;
+    // Draw background gradient
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      Paint()..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Color(0xFF0F172A), Color(0xFF0A0F1E)],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height)),
+    );
 
-    final path = Path();
-    const gridSize = 50.0;
+    // Draw stars
+    for (int i = 0; i < _starLayers; i++) {
+      double parallaxFactor = (i + 1) * 0.2;
+      double xOffset = (animation.value * size.width * parallaxFactor) % size.width;
+      double yOffset = (animation.value * size.height * 0.1 * parallaxFactor) % size.height;
 
-    // Animate grid lines
-    final offset = animation.value * gridSize * 2;
-
-    for (double i = -offset; i < size.width + offset; i += gridSize) {
-      path.moveTo(i, -offset);
-      path.lineTo(i, size.height + offset);
+      for (var star in _stars[i]) {
+        double x = (star.dx * size.width + xOffset) % size.width;
+        double y = (star.dy * size.height + yOffset) % size.height;
+        double radius = (i + 1) * 0.7;
+        canvas.drawCircle(Offset(x, y), radius, _starPaints[i]);
+      }
     }
-    for (double i = -offset; i < size.height + offset; i += gridSize) {
-      path.moveTo(-offset, i);
-      path.lineTo(size.width + offset, i);
-    }
-
-    canvas.drawPath(path, paint);
   }
 
   @override
