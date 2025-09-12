@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:bilge_ai/data/models/user_model.dart';
 import 'package:bilge_ai/data/providers/firestore_providers.dart';
 import 'package:bilge_ai/features/quests/models/quest_model.dart';
-import 'package:bilge_ai/features/quests/quest_armory.dart';
 import 'package:bilge_ai/features/stats/logic/stats_analysis.dart';
 import 'package:uuid/uuid.dart';
 import 'package:bilge_ai/data/models/exam_model.dart';
