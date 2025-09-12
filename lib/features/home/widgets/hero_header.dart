@@ -6,7 +6,6 @@ import 'package:bilge_ai/features/profile/logic/rank_service.dart';
 import 'package:bilge_ai/core/theme/app_theme.dart';
 import 'package:go_router/go_router.dart';
 import 'package:bilge_ai/features/home/providers/home_providers.dart';
-import 'package:bilge_ai/data/models/test_model.dart';
 
 class HeroHeader extends ConsumerWidget {
   const HeroHeader({super.key});
@@ -30,16 +29,10 @@ class HeroHeader extends ConsumerWidget {
         final current = info.current;
         final progress = info.progress; // 0..1
         final plan = ref.watch(planProgressProvider);
-        final tests = ref.watch(testsProvider).valueOrNull ?? <TestModel>[];
-        DateTime? lastDate;
-        double? lastNet;
-        double? prevNet;
-        if (tests.isNotEmpty) {
-          final sorted = [...tests]..sort((a,b)=> b.date.compareTo(a.date));
-            lastDate = sorted.first.date;
-            lastNet = sorted.first.totalNet;
-            if (sorted.length > 1) prevNet = sorted[1].totalNet;
-        }
+        final lastTests = ref.watch(lastTestsSummaryProvider); // YENİ
+        final lastDate = lastTests.lastDate;
+        final lastNet = lastTests.lastNet;
+        final prevNet = lastTests.prevNet;
         String lastInfo = 'Henüz deneme yok';
         if (lastDate != null) {
           final diff = DateTime.now().difference(lastDate);

@@ -5,7 +5,7 @@ import 'package:equatable/equatable.dart';
 // GÜNCELLENDİ: Yeni 'focus' kategorisi eklendi.
 enum QuestCategory { study, practice, engagement, consistency, test_submission, focus }
 
-enum QuestType { daily, weekly, monthly, achievement }
+enum QuestType { daily, achievement }
 
 enum QuestProgressType {
   increment,
@@ -80,8 +80,6 @@ class Quest extends Equatable {
   final int? chainLength; // yeni: toplam adım sayısı
   final QuestRoute route; // yeni: type-safe rota
   final bool rewardClaimed; // yeni: ödül tahsil edildi mi
-  final String? weekKey; // yeni: haftalık anahtar (YYYY-MM-DD, Pazartesi)
-  final String? monthKey; // yeni: aylık anahtar (YYYY-MM)
 
   Quest({
     required this.id,
@@ -107,8 +105,6 @@ class Quest extends Equatable {
     this.chainLength,
     required this.route,
     this.rewardClaimed = false,
-    this.weekKey,
-    this.monthKey,
   });
 
   factory Quest.fromMap(Map<String, dynamic> map, String id) {
@@ -174,8 +170,6 @@ class Quest extends Equatable {
       chainStep: derivedChainStep,
       chainLength: derivedChainLength,
       rewardClaimed: map['rewardClaimed'] == true,
-      weekKey: map['weekKey'] as String?,
-      monthKey: map['monthKey'] as String?,
     );
   }
 
@@ -210,9 +204,73 @@ class Quest extends Equatable {
       'routeKey': route.name,
       'schemaVersion': 2,
       'rewardClaimed': rewardClaimed,
-      if (weekKey != null) 'weekKey': weekKey,
-      if (monthKey != null) 'monthKey': monthKey,
     };
+  }
+
+  /// YENİ: Dinamik ödül hesaplama - zorluk, süre ve kullanıcı seviyesine göre
+  int calculateDynamicReward({
+    int? userLevel,
+    int? currentStreak,
+    bool isStreakBonus = false,
+    double difficultyMultiplier = 1.0,
+  }) {
+    int baseReward = reward;
+
+    // 1. Zorluk çarpanı
+    double finalMultiplier = difficultyMultiplier;
+    switch (difficulty) {
+      case QuestDifficulty.trivial:
+        finalMultiplier *= 0.8;
+        break;
+      case QuestDifficulty.easy:
+        finalMultiplier *= 1.0;
+        break;
+      case QuestDifficulty.medium:
+        finalMultiplier *= 1.3;
+        break;
+      case QuestDifficulty.hard:
+        finalMultiplier *= 1.6;
+        break;
+      case QuestDifficulty.epic:
+        finalMultiplier *= 2.0;
+        break;
+    }
+
+    // 2. Tahmini süre bonusu
+    if (estimatedMinutes != null && estimatedMinutes! > 30) {
+      finalMultiplier *= 1.2;
+    }
+
+    // 3. Kullanıcı seviyesi ölçeklendirmesi
+    if (userLevel != null && userLevel > 10) {
+      // Yüksek seviyeli kullanıcılar için daha zorlu hedefler, daha fazla ödül
+      finalMultiplier *= (1.0 + (userLevel - 10) * 0.05).clamp(1.0, 2.0);
+    }
+
+    // 4. Seri bonusu
+    if (isStreakBonus && currentStreak != null) {
+      if (currentStreak >= 7) {
+        finalMultiplier *= 1.15; // %15 bonus
+      } else if (currentStreak >= 5) {
+        finalMultiplier *= 1.10; // %10 bonus
+      } else if (currentStreak >= 3) {
+        finalMultiplier *= 1.05; // %5 bonus
+      }
+    }
+
+    return (baseReward * finalMultiplier).round();
+  }
+
+  /// YENİ: Görevin kişiselleştirme koşullarını kontrol et
+  bool shouldExcludeForUser(Map<String, dynamic> userConditions) {
+    // Bu metod şimdilik client-side kontrol için, asıl mantık server'da olacak
+    return false;
+  }
+
+  /// YENİ: Görevin tetiklenme koşullarını kontrol et
+  bool shouldTriggerForUser(Map<String, dynamic> userConditions) {
+    // Bu metod şimdilik client-side kontrol için, asıl mantık server'da olacak
+    return true;
   }
 
   Quest copyWith({

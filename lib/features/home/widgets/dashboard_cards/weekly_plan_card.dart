@@ -277,7 +277,7 @@ class _TaskTile extends ConsumerWidget {
                 ref.invalidate(completedTasksForDateProvider(dateForTile));
                 if(!isCompleted){
                   final questId='schedule_${dateKey}_${taskIdentifier.hashCode}';
-                  await ref.read(questNotifierProvider.notifier).updateQuestProgressById(questId);
+                  ref.read(questNotifierProvider.notifier).updateQuestProgressById(questId);
                   if(context.mounted){
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Plan görevi fethedildi: ${item.activity}')));
                   }

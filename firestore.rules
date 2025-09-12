@@ -4,398 +4,124 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // =====================================================================
-    // KULLANICI KOLEKSİYONU (/users)
+    // KULLANICI KOLEKSİYONU (/users) - TAMAMEN YENİ KURAL
     // =====================================================================
     match /users/{userId} {
       // Kullanıcı sadece kendi profilini okuyabilir ve güncelleyebilir.
-      allow get: if request.auth.uid == userId;
+      allow read: if request.auth.uid == userId;
 
-      // Tüm kullanılan profil alanları için geniş whitelist
-      function userAllowedKeys() {
-        return ['email','name','goal','challenges','weeklyStudyGoal','onboardingCompleted','tutorialCompleted','streak','lastStreakUpdate','selectedExam','selectedExamSection','testCount','totalNetSum','engagementScore','weeklyAvailability','activeWeeklyCampaign','lastQuestRefreshDate','unlockedAchievements','avatarStyle','avatarSeed','dailyQuestPlanSignature','lastScheduleCompletionRatio','dailyScheduleStreak','lastWeeklyReport','dynamicDifficultyFactorToday','weeklyPlanCompletedAt','workshopStreak','lastWorkshopDate','settings','displayName','photoUrl','bio','createdAt','updatedAt'];
-      }
-
-      // CREATE/UPDATE: yalnizca sahibine izin ver + alan whitelisti ve temel tip/uzunluk kontrolleri
-      allow create, update: if request.auth != null
-        && request.auth.uid == userId
-        && request.resource.data.keys().hasOnly(userAllowedKeys())
-        && (request.resource.data.displayName == null || (request.resource.data.displayName is string && request.resource.data.displayName.size() <= 80))
-        && (request.resource.data.photoUrl == null || (request.resource.data.photoUrl is string && request.resource.data.photoUrl.size() <= 500))
-        && (request.resource.data.bio == null || (request.resource.data.bio is string && request.resource.data.bio.size() <= 500))
-        && (request.resource.data.settings == null || (request.resource.data.settings is map && request.resource.data.settings.size() <= 50))
-        && (request.resource.data.unlockedAchievements == null || (request.resource.data.unlockedAchievements is list && request.resource.data.unlockedAchievements.size() <= 500))
-        && (request.resource.data.createdAt == null || request.resource.data.createdAt is timestamp)
-        && (request.resource.data.updatedAt == null || request.resource.data.updatedAt is timestamp);
-
-      // Silme (opsiyonel): Kullanıcı kendi dokümanını silebilsin istiyorsanız açın.
-      // allow delete: if request.auth.uid == userId;
+      // BASIT VE GENİŞ YAZMA İZNİ - TÜM ALANLAR İÇİN
+      allow write: if request.auth != null && request.auth.uid == userId;
 
       // --- ALT KOLEKSİYONLAR ---
       match /daily_quests/{questId} {
-        // Oluşturma: immutable alanları sabitle.
-        allow create: if request.auth.uid == userId
-          && request.resource.data.keys().hasOnly(['qid','title','description','type','category','progressType','reward','goalValue','currentProgress','isCompleted','actionRoute','routeKey','tags','rewardClaimed','createdAt','schemaVersion'])
-          && request.resource.data.currentProgress == 0
-          && request.resource.data.isCompleted == false
-          && request.resource.data.rewardClaimed == false
-          && request.resource.data.goalValue is int && request.resource.data.goalValue >= 0
-          && request.resource.data.reward is int && request.resource.data.reward >= 0
-          && request.resource.data.title is string && request.resource.data.title.size() <= 120;
-        // Update: ilerleme / tamamlanma VEYA sadece ödül claim senaryosu.
-        allow update: if request.auth.uid == userId && (
-          // Senaryo A: yalnız ilerleme (tamamlanma ve diğer immutable alanlar değişmez)
-          (
-            request.resource.data.keys().hasOnly(['qid','title','description','type','category','progressType','reward','goalValue','currentProgress','isCompleted','actionRoute','routeKey','tags','rewardClaimed','createdAt','schemaVersion','completionDate'])
-            && request.resource.data.qid == resource.data.qid
-            && request.resource.data.title == resource.data.title
-            && request.resource.data.description == resource.data.description
-            && request.resource.data.type == resource.data.type
-            && request.resource.data.category == resource.data.category
-            && request.resource.data.progressType == resource.data.progressType
-            && request.resource.data.reward == resource.data.reward
-            && request.resource.data.goalValue == resource.data.goalValue
-            && request.resource.data.actionRoute == resource.data.actionRoute
-            && request.resource.data.routeKey == resource.data.routeKey
-            && request.resource.data.tags == resource.data.tags
-            && request.resource.data.createdAt == resource.data.createdAt
-            && request.resource.data.schemaVersion == resource.data.schemaVersion
-            && request.resource.data.currentProgress is int
-            && request.resource.data.currentProgress >= resource.data.currentProgress
-            && request.resource.data.currentProgress <= resource.data.goalValue
-            // İstemci isCompleted değiştiremez
-            && request.resource.data.isCompleted == resource.data.isCompleted
-            // İstemci completionDate değiştiremez
-            && request.resource.data.completionDate == resource.data.completionDate
-          )
-          ||
-          // Senaryo B: sadece ödül claim (tamamlanmış görev için)
-          (
-            request.resource.data.rewardClaimed == true
-            && resource.data.rewardClaimed == false
-            && resource.data.isCompleted == true
-            && request.resource.data.currentProgress == resource.data.currentProgress
-            && request.resource.data.isCompleted == resource.data.isCompleted
-            && request.resource.data.qid == resource.data.qid
-            && request.resource.data.title == resource.data.title
-            && request.resource.data.description == resource.data.description
-            && request.resource.data.type == resource.data.type
-            && request.resource.data.category == resource.data.category
-            && request.resource.data.progressType == resource.data.progressType
-            && request.resource.data.reward == resource.data.reward
-            && request.resource.data.goalValue == resource.data.goalValue
-            && request.resource.data.actionRoute == resource.data.actionRoute
-            && request.resource.data.routeKey == resource.data.routeKey
-            && request.resource.data.tags == resource.data.tags
-            && request.resource.data.createdAt == resource.data.createdAt
-            && request.resource.data.schemaVersion == resource.data.schemaVersion
-            && request.resource.data.keys().hasOnly(['qid','title','description','type','category','progressType','reward','goalValue','currentProgress','isCompleted','actionRoute','routeKey','tags','rewardClaimed','createdAt','schemaVersion','completionDate'])
-          )
-        );
-        allow get, list: if request.auth.uid == userId;
-        allow delete: if request.auth.uid == userId; // İsterseniz kısıtlayın
+        allow read, write: if request.auth.uid == userId;
       }
-      // YENI: Haftalık görevler
+
       match /weekly_quests/{questId} {
-        function weeklyAllowedKeys() { return ['qid','title','description','type','category','progressType','reward','goalValue','currentProgress','isCompleted','actionRoute','routeKey','tags','rewardClaimed','createdAt','schemaVersion','completionDate','weekKey']; }
-        allow create: if request.auth.uid == userId
-          && request.resource.data.keys().hasOnly(weeklyAllowedKeys())
-          && request.resource.data.currentProgress == 0
-          && request.resource.data.isCompleted == false
-          && request.resource.data.rewardClaimed == false
-          && request.resource.data.goalValue is int && request.resource.data.goalValue >= 0
-          && request.resource.data.reward is int && request.resource.data.reward >= 0
-          && request.resource.data.title is string && request.resource.data.title.size() <= 120
-          && request.resource.data.weekKey is string;
-
-        allow update: if request.auth.uid == userId && (
-          (
-            request.resource.data.keys().hasOnly(weeklyAllowedKeys())
-            && request.resource.data.qid == resource.data.qid
-            && request.resource.data.title == resource.data.title
-            && request.resource.data.description == resource.data.description
-            && request.resource.data.type == resource.data.type
-            && request.resource.data.category == resource.data.category
-            && request.resource.data.progressType == resource.data.progressType
-            && request.resource.data.reward == resource.data.reward
-            && request.resource.data.goalValue == resource.data.goalValue
-            && request.resource.data.actionRoute == resource.data.actionRoute
-            && request.resource.data.routeKey == resource.data.routeKey
-            && request.resource.data.tags == resource.data.tags
-            && request.resource.data.createdAt == resource.data.createdAt
-            && request.resource.data.schemaVersion == resource.data.schemaVersion
-            && request.resource.data.weekKey == resource.data.weekKey
-            && request.resource.data.currentProgress is int
-            && request.resource.data.currentProgress >= resource.data.currentProgress
-            && request.resource.data.currentProgress <= resource.data.goalValue
-            // İstemci isCompleted değiştiremez
-            && request.resource.data.isCompleted == resource.data.isCompleted
-            // İstemci completionDate değiştiremez
-            && request.resource.data.completionDate == resource.data.completionDate
-          )
-          ||
-          (
-            request.resource.data.rewardClaimed == true
-            && resource.data.rewardClaimed == false
-            && resource.data.isCompleted == true
-            && request.resource.data.currentProgress == resource.data.currentProgress
-            && request.resource.data.isCompleted == resource.data.isCompleted
-            && request.resource.data.qid == resource.data.qid
-            && request.resource.data.title == resource.data.title
-            && request.resource.data.description == resource.data.description
-            && request.resource.data.type == resource.data.type
-            && request.resource.data.category == resource.data.category
-            && request.resource.data.progressType == resource.data.progressType
-            && request.resource.data.reward == resource.data.reward
-            && request.resource.data.goalValue == resource.data.goalValue
-            && request.resource.data.actionRoute == resource.data.actionRoute
-            && request.resource.data.routeKey == resource.data.routeKey
-            && request.resource.data.tags == resource.data.tags
-            && request.resource.data.createdAt == resource.data.createdAt
-            && request.resource.data.schemaVersion == resource.data.schemaVersion
-            && request.resource.data.weekKey == resource.data.weekKey
-            && request.resource.data.keys().hasOnly(weeklyAllowedKeys())
-          )
-        );
-        allow get, list: if request.auth.uid == userId;
-        allow delete: if request.auth.uid == userId;
+        allow read, write: if request.auth.uid == userId;
       }
 
-      // YENİ: Aylık görevler
       match /monthly_quests/{questId} {
-        function monthlyAllowedKeys() { return ['qid','title','description','type','category','progressType','reward','goalValue','currentProgress','isCompleted','actionRoute','routeKey','tags','rewardClaimed','createdAt','schemaVersion','completionDate','monthKey']; }
-        allow create: if request.auth.uid == userId
-          && request.resource.data.keys().hasOnly(monthlyAllowedKeys())
-          && request.resource.data.currentProgress == 0
-          && request.resource.data.isCompleted == false
-          && request.resource.data.rewardClaimed == false
-          && request.resource.data.goalValue is int && request.resource.data.goalValue >= 0
-          && request.resource.data.reward is int && request.resource.data.reward >= 0
-          && request.resource.data.title is string && request.resource.data.title.size() <= 120
-          && request.resource.data.monthKey is string;
+        allow read, write: if request.auth.uid == userId;
+      }
 
-        allow update: if request.auth.uid == userId && (
-          (
-            request.resource.data.keys().hasOnly(monthlyAllowedKeys())
-            && request.resource.data.qid == resource.data.qid
-            && request.resource.data.title == resource.data.title
-            && request.resource.data.description == resource.data.description
-            && request.resource.data.type == resource.data.type
-            && request.resource.data.category == resource.data.category
-            && request.resource.data.progressType == resource.data.progressType
-            && request.resource.data.reward == resource.data.reward
-            && request.resource.data.goalValue == resource.data.goalValue
-            && request.resource.data.actionRoute == resource.data.actionRoute
-            && request.resource.data.routeKey == resource.data.routeKey
-            && request.resource.data.tags == resource.data.tags
-            && request.resource.data.createdAt == resource.data.createdAt
-            && request.resource.data.schemaVersion == resource.data.schemaVersion
-            && request.resource.data.monthKey == resource.data.monthKey
-            && request.resource.data.currentProgress is int
-            && request.resource.data.currentProgress >= resource.data.currentProgress
-            && request.resource.data.currentProgress <= resource.data.goalValue
-            // İstemci isCompleted değiştiremez
-            && request.resource.data.isCompleted == resource.data.isCompleted
-            // İstemci completionDate değiştiremez
-            && request.resource.data.completionDate == resource.data.completionDate
-          )
-          ||
-          (
-            request.resource.data.rewardClaimed == true
-            && resource.data.rewardClaimed == false
-            && resource.data.isCompleted == true
-            && request.resource.data.currentProgress == resource.data.currentProgress
-            && request.resource.data.isCompleted == resource.data.isCompleted
-            && request.resource.data.qid == resource.data.qid
-            && request.resource.data.title == resource.data.title
-            && request.resource.data.description == resource.data.description
-            && request.resource.data.type == resource.data.type
-            && request.resource.data.category == resource.data.category
-            && request.resource.data.progressType == resource.data.progressType
-            && request.resource.data.reward == resource.data.reward
-            && request.resource.data.goalValue == resource.data.goalValue
-            && request.resource.data.actionRoute == resource.data.actionRoute
-            && request.resource.data.routeKey == resource.data.routeKey
-            && request.resource.data.tags == resource.data.tags
-            && request.resource.data.createdAt == resource.data.createdAt
-            && request.resource.data.schemaVersion == resource.data.schemaVersion
-            && request.resource.data.monthKey == resource.data.monthKey
-            && request.resource.data.keys().hasOnly(monthlyAllowedKeys())
-          )
-        );
-        allow get, list: if request.auth.uid == userId;
-        allow delete: if request.auth.uid == userId;
-      }
       match /state/{docId} {
-        allow read: if request.auth.uid == userId;
-        // stats dokümanını sadece sunucu günceller; diğer state dokümanları kullanıcı tarafından yazılabilir
-        allow write: if request.auth.uid == userId && docId != 'stats';
+        allow read, write: if request.auth.uid == userId;
       }
-      match /plans/{docId} { allow read, write: if request.auth.uid == userId; }
+
+      match /plans/{docId} {
+        allow read, write: if request.auth.uid == userId;
+      }
+
       match /performance/{docId} {
         allow read, write: if request.auth.uid == userId;
-        match /masteredTopics/{masteredTopicId} { allow read, write: if request.auth.uid == userId; }
+        match /masteredTopics/{masteredTopicId} {
+          allow read, write: if request.auth.uid == userId;
+        }
       }
-      match /topic_performance/{topicId} { allow read, write: if request.auth.uid == userId; }
-      match /savedWorkshops/{workshopId} { allow read, write: if request.auth.uid == userId; }
-      match /user_activity/{activityId} { allow read, write: if request.auth.uid == userId; }
 
-      // Cihaz tokenları
+      match /topic_performance/{topicId} {
+        allow read, write: if request.auth.uid == userId;
+      }
+
+      match /savedWorkshops/{workshopId} {
+        allow read, write: if request.auth.uid == userId;
+      }
+
+      match /user_activity/{activityId} {
+        allow read, write: if request.auth.uid == userId;
+      }
+
       match /devices/{deviceId} {
-        function deviceAllowedKeys() { return ['uid','token','platform','lang','appVersion','appBuild','createdAt','lastSeenAt','fcmTopics','disabled','updatedAt']; }
-        function isValidPlatform(p) { return p in ['android','ios','other']; }
-
-        allow read: if request.auth.uid == userId;
-
-        // Oluşturma: temel alanlar ve boyut kontrolleri
-        allow create: if request.auth.uid == userId
-          && request.resource.data.keys().hasOnly(deviceAllowedKeys())
-          && (request.resource.data.uid == null || request.resource.data.uid == userId)
-          && request.resource.data.token is string && request.resource.data.token.size() > 20 && request.resource.data.token.size() <= 1024
-          && request.resource.data.platform is string && isValidPlatform(request.resource.data.platform)
-          && (request.resource.data.lang == null || (request.resource.data.lang is string && request.resource.data.lang.size() >= 2 && request.resource.data.lang.size() <= 10))
-          && (request.resource.data.appVersion == null || (request.resource.data.appVersion is string && request.resource.data.appVersion.size() <= 30))
-          && (request.resource.data.appBuild == null || (request.resource.data.appBuild is int && request.resource.data.appBuild >= 0 && request.resource.data.appBuild <= 100000))
-          && (request.resource.data.disabled == null || request.resource.data.disabled is bool)
-          && request.resource.data.createdAt is timestamp
-          && (request.resource.data.updatedAt == null || request.resource.data.updatedAt is timestamp)
-          && (request.resource.data.lastSeenAt == null || request.resource.data.lastSeenAt is timestamp)
-          && (request.resource.data.fcmTopics == null || (request.resource.data.fcmTopics is list && request.resource.data.fcmTopics.size() <= 50));
-
-        // Güncelleme: sunucu alanları immutable, diğerleri kontrollü
-        allow update: if request.auth.uid == userId
-          && request.resource.data.keys().hasOnly(deviceAllowedKeys())
-          && request.resource.data.createdAt == resource.data.createdAt
-          && request.resource.data.uid == resource.data.uid
-          && request.resource.data.disabled == resource.data.disabled
-          && request.resource.data.updatedAt == resource.data.updatedAt
-          && (request.resource.data.token is string && request.resource.data.token.size() > 20 && request.resource.data.token.size() <= 1024)
-          && (request.resource.data.platform is string && isValidPlatform(request.resource.data.platform))
-          && (request.resource.data.lang == null || (request.resource.data.lang is string && request.resource.data.lang.size() >= 2 && request.resource.data.lang.size() <= 10))
-          && (request.resource.data.appVersion == null || (request.resource.data.appVersion is string && request.resource.data.appVersion.size() <= 30))
-          && (request.resource.data.appBuild == null || (request.resource.data.appBuild is int && request.resource.data.appBuild >= 0 && request.resource.data.appBuild <= 100000))
-          && (request.resource.data.lastSeenAt == null || request.resource.data.lastSeenAt is timestamp)
-          && (request.resource.data.fcmTopics == null || (request.resource.data.fcmTopics is list && request.resource.data.fcmTopics.size() <= 50));
-
-        allow delete: if request.auth.uid == userId;
+        allow read, write: if request.auth.uid == userId;
       }
 
-      // Uygulama içi bildirimler
       match /in_app_notifications/{notifId} {
-        // okuma: sadece sahibi
         allow read: if request.auth.uid == userId;
-        // okundu işaretlemek dışında güncelleme yapılamaz
         allow update: if request.auth.uid == userId
           && request.resource.data.keys().hasOnly(['title','body','route','createdAt','read','readAt','imageUrl'])
-          && request.resource.data.title == resource.data.title
-          && request.resource.data.body == resource.data.body
-          && request.resource.data.route == resource.data.route
-          && request.resource.data.createdAt == resource.data.createdAt
-          && request.resource.data.imageUrl == resource.data.imageUrl
           && request.resource.data.read == true
-          && resource.data.read == false
-          && request.resource.data.readAt == request.time;
-        // create sadece Cloud Functions tarafından yapılır
-        allow create: if false;
-        // Kullanıcı kendi bildirimini silebilir
+          && resource.data.read == false;
         allow delete: if request.auth.uid == userId;
       }
 
-      // TAKIP: followers (bir kullanıcının takipçileri)
       match /followers/{followerId} {
         allow read, list: if request.auth != null;
-        // yalnızca kendin başka birinin followers listesine eklenebilirsin
-        allow create: if request.auth != null
-          && request.auth.uid == followerId
-          && request.resource.data.keys().hasOnly(['createdAt']);
-        // yalnızca kendin kendini çıkarabilirsin
+        allow create: if request.auth != null && request.auth.uid == followerId;
         allow delete: if request.auth != null && request.auth.uid == followerId;
-        allow update: if false;
       }
 
-      // TAKIP: following (kullanıcının takip ettikleri)
       match /following/{followingId} {
         allow read, list: if request.auth != null;
-        // sadece sahibi kendi following listesine ekleyebilir
-        allow create: if request.auth != null
-          && request.auth.uid == userId
-          && request.resource.data.keys().hasOnly(['createdAt']);
-        // sadece sahibi çıkarabilir
+        allow create: if request.auth != null && request.auth.uid == userId;
         allow delete: if request.auth != null && request.auth.uid == userId;
-        allow update: if false;
       }
     }
 
     // =====================================================================
     // LİDERLİK TABLOSU KOLEKSİYONU (/leaderboards)
-    // (Eski yol – geriye dönük)
     // =====================================================================
     match /leaderboards/{examType}/users/{userId} {
       allow read: if request.auth != null;
-
-      function lbAllowedKeys() {
-        return ['userId','userName','score','testCount','avatarStyle','avatarSeed','updatedAt'];
-      }
-
-      // Uygulama: userId, userName, score, testCount, avatar* ve updatedAt yaziyor
-      allow create: if request.auth.uid == userId
-        && request.resource.data.keys().hasOnly(lbAllowedKeys())
-        && request.resource.data.userId == userId
-        && (request.resource.data.userName == null || request.resource.data.userName is string)
-        && (request.resource.data.avatarStyle == null || request.resource.data.avatarStyle is string)
-        && (request.resource.data.avatarSeed == null || request.resource.data.avatarSeed is string)
-        && request.resource.data.score is int && request.resource.data.score >= 0 && request.resource.data.score <= 1000000
-        && (request.resource.data.testCount == null || (request.resource.data.testCount is int && request.resource.data.testCount >= 0 && request.resource.data.testCount <= 100000))
-        && request.resource.data.updatedAt == request.time;
-
-      allow update: if request.auth.uid == userId
-        && request.resource.data.keys().hasOnly(lbAllowedKeys())
-        && request.resource.data.userId == resource.data.userId
-        && request.resource.data.score is int && request.resource.data.score >= resource.data.score && request.resource.data.score <= 1000000
-        && (request.resource.data.testCount == null || (request.resource.data.testCount is int && request.resource.data.testCount >= (resource.data.testCount == null ? 0 : resource.data.testCount) && request.resource.data.testCount <= 100000))
-        && request.resource.data.updatedAt == request.time;
-
-      // Kullanici kendi leaderboard dokumanini silebilsin (sinav degisiminde gerekli)
+      allow write: if request.auth.uid == userId;
       allow delete: if request.auth.uid == userId;
     }
 
     // =====================================================================
     // YENİ LİDERLİK TABLOSU YAPISI
     // =====================================================================
-    // İstemciler sadece yayınlanmış tepe listeleri okur
     match /leaderboard_top/{examType}/{period}/{docId} {
       allow read, list: if request.auth != null;
-      allow write: if false; // sadece Cloud Functions yazar
+      allow write: if false;
     }
-    // Ham skorlar: sadece Cloud Functions yazar/okur (istemci erişemez)
+
     match /leaderboard_scores/{examType}/{kind}/{periodId} {
       allow read, write: if false;
       match /users/{userId} {
         allow read, write: if false;
       }
     }
-    // Sınav listesi (admin/CF oluşturur), istemci okumaya ihtiyaç duymaz; kapalı tutalım
-    match /leaderboard_exams/{examType} { allow read, write: if false; }
+
+    match /leaderboard_exams/{examType} {
+      allow read, write: if false;
+    }
 
     // =====================================================================
     // TESTLER
     // =====================================================================
     match /tests/{testId} {
-      // Kullanıcı kendi test sonuçlarını okuyabilir; yazma sadece Cloud Functions (Admin SDK) tarafından yapılır
       allow read: if request.auth.uid == resource.data.userId;
       allow create, update, delete: if false;
     }
+
     match /focusSessions/{sessionId} {
       allow read, delete: if request.auth.uid == resource.data.userId;
       allow create: if request.auth.uid == request.resource.data.userId;
     }
 
-    // Analitik: sadece kabul edilen alanlar, boyut sınırı, sadece create.
     match /analytics_events/{eventId} {
-      allow create: if request.auth.uid != null
-        && request.resource.data.keys().hasOnly(['type','ts','meta'])
-        && request.resource.data.type is string && request.resource.data.type.size() <= 40
-        && request.resource.data.ts is timestamp
-        && (request.resource.data.meta == null || request.resource.data.meta is map && request.resource.data.meta.size() <= 50);
+      allow create: if request.auth.uid != null;
       allow read, update, delete: if false;
     }
 
@@ -406,7 +132,7 @@ service cloud.firestore {
       allow read: if resource.data.status == 'published' &&
                   resource.data.publishedAt is timestamp &&
                   resource.data.publishedAt <= request.time;
-      allow list: if true; // Filtreli sorgular yukarıdaki read koşuluna tabi
+      allow list: if true;
       allow create, update, delete: if request.auth != null && request.auth.token.admin == true;
     }
 
@@ -414,22 +140,21 @@ service cloud.firestore {
     // SORU BİLDİRİMLERİ
     // ======================
     match /questionReports/{reportId} {
-      // Kullanıcılar rapor oluşturabilir. Okuma yalnızca adminlere.
       allow create: if request.auth != null;
       allow read, update, delete: if request.auth != null && request.auth.token.admin == true;
     }
+
     match /question_report_index/{docId} {
-      // İndeksi sadece adminler okuyabilir. Yazma Cloud Functions tarafından yapılır.
       allow read: if request.auth != null && request.auth.token.admin == true;
       allow write: if false;
     }
 
     // ======================
-    // PUSH KAMPANYALARI (sadece admin okur)
+    // PUSH KAMPANYALARI
     // ======================
     match /push_campaigns/{campaignId} {
       allow read: if request.auth != null && request.auth.token.admin == true;
-      allow write: if false; // Yazma yalnızca Cloud Functions (Admin SDK) tarafından yapılır
+      allow write: if false;
       match /logs/{logId} {
         allow read: if request.auth != null && request.auth.token.admin == true;
         allow write: if false;
@@ -437,20 +162,19 @@ service cloud.firestore {
     }
 
     // ======================
-    // PROMPTS (uzaktan şablonlar)
+    // PROMPTS
     // ======================
     match /prompts/{promptId} {
-      // İstemciler okuyabilsin; güncelleme yalnızca admin (Cloud Functions/Admin SDK) yapar
       allow read, list: if request.auth != null;
       allow create, update, delete: if request.auth != null && request.auth.token.admin == true;
     }
 
     // ======================
-    // PUBLIC PROFILES (kamuya açık profil özeti)
+    // PUBLIC PROFILES
     // ======================
     match /public_profiles/{userId} {
-      allow read, list: if request.auth != null; // sadece okuma
-      allow create, update, delete: if false;    // yalnızca Cloud Functions günceller
+      allow read, list: if request.auth != null;
+      allow create, update, delete: if false;
     }
   }
 }

@@ -19,6 +19,7 @@ import 'package:bilge_ai/features/quests/logic/quest_templates.dart';
 import 'package:bilge_ai/data/models/performance_summary.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:bilge_ai/core/app_check/app_check_helper.dart';
+import 'package:bilge_ai/features/quests/logic/quest_session_state.dart';
 
 final questServiceProvider = Provider<QuestService>((ref) {
   return QuestService(ref);
@@ -68,6 +69,10 @@ class QuestService {
         await callable.call(<String, dynamic>{ 'forceWeeklyMonthly': force });
         // Üretim sonrası tekrar oku
         final refreshed = await _ref.read(firestoreServiceProvider).getDailyQuestsOnce(user.id);
+
+        // ÖNEMLİ: Günlük görevler yenilendiğinde session state'i temizle
+        _ref.read(sessionCompletedQuestsProvider.notifier).state = <String>{};
+
         _ref.read(questGenerationIssueProvider.notifier).state = false;
         return refreshed;
       } catch (e, st) {

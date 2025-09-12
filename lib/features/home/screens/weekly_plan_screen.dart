@@ -240,7 +240,7 @@ class _TaskListViewState extends ConsumerState<_TaskListView> with AutomaticKeep
                       ref.read(questNotifierProvider.notifier).userCompletedWeeklyPlanTask();
                       // Eski schedule tabanlı görev varsa (geriye dönük), onu da tamamlamayı dene
                       final questId = 'schedule_${dateKey}_${taskIdentifier.hashCode}';
-                      await ref.read(questNotifierProvider.notifier).updateQuestProgressById(questId);
+                      ref.read(questNotifierProvider.notifier).updateQuestProgressById(questId);
                       if(context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Plan görevi fethedildi: ${item.activity}')));
                       }

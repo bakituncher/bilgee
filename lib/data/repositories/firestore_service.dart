@@ -25,6 +25,9 @@ class FirestoreService {
   final FirebaseFirestore _firestore;
   FirestoreService(this._firestore);
 
+  // Firestore instance'ına erişim için getter ekle
+  FirebaseFirestore get db => _firestore;
+
   String sanitizeKey(String key) {
     return key.replaceAll(RegExp(r'[.\s()]'), '_');
   }
@@ -264,6 +267,11 @@ class FirestoreService {
       'avatarSeed': data['avatarSeed'],
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+  }
+
+  // Public wrapper: leaderboard kaydını güncelle
+  Future<void> syncLeaderboardUser(String userId, {String? targetExam}) async {
+    await _syncLeaderboardUser(userId, targetExam: targetExam);
   }
 
   Future<void> updateUserAvatar({
@@ -545,27 +553,30 @@ class FirestoreService {
     final newSessionRef = _focusSessionsCollection.doc();
     final minutes = (session.durationInSeconds / 60).floor();
     final dailyRef = _userActivityDailyDoc(session.userId, session.date);
+    final dateKey = _dateKey(session.date);
 
     await _firestore.runTransaction((txn) async {
-      // Detay seansı ayrı koleksiyona yaz
+      // Detay seans
       txn.set(newSessionRef, session.toMap());
 
-      // Kullanıcı stats: birikimli alanları artır
+      // Stats dokümanı (atomik artışlar)
       txn.set(statsRef, {
         'focusMinutes': FieldValue.increment(minutes),
-        'bp': FieldValue.increment(minutes), // Bilgelik Puanı = dakika
+        'bp': FieldValue.increment(minutes),
+        'pomodoroBp': FieldValue.increment(minutes),
         'pomodoroSessions': FieldValue.increment(1),
-        // Mevcut sistemle tutarlılık için engagementScore ek artışını koru
-        'engagementScore': FieldValue.increment(25),
+        'totalFocusSeconds': FieldValue.increment(session.durationInSeconds),
+        // Son 30 güne yönelik hafifletilmiş rollup (UI haftalık/aylık sorguları azaltır)
+        'focusRollup30.$dateKey': FieldValue.increment(minutes),
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
-      // Günlük aktivite modüler yapı: gün başına toplam odak dakikası
+      // Günlük aktivite dokümanı
       final d0 = DateTime(session.date.year, session.date.month, session.date.day);
       txn.set(dailyRef, {
         'focusMinutes': FieldValue.increment(minutes),
         'date': Timestamp.fromDate(d0),
-        'dateKey': _dateKey(d0),
+        'dateKey': dateKey,
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
     });
@@ -893,8 +904,8 @@ class FirestoreService {
     });
   }
 
-  Stream<UserStats> getUserStatsStream(String userId) {
-    return _userStatsDoc(userId).snapshots().map((doc) => UserStats.fromSnapshot(doc));
+  Stream<UserStats?> getUserStatsStream(String userId) {
+    return _userStatsDoc(userId).snapshots().map((doc) => doc.exists ? UserStats.fromSnapshot(doc) : null);
   }
 
   Future<void> updateAnalysisSummary(String userId, StatsAnalysis analysis) {
@@ -913,82 +924,127 @@ class FirestoreService {
         .set(summaryData, SetOptions(merge: true));
   }
 
-  // === EKSİK API’LER: QUESTS ===
-  CollectionReference<Map<String, dynamic>> dailyQuestsCollection(String userId) => usersCollection.doc(userId).collection('daily_quests');
-  CollectionReference<Map<String, dynamic>> weeklyQuestsCollection(String userId) => usersCollection.doc(userId).collection('weekly_quests');
-  CollectionReference<Map<String, dynamic>> monthlyQuestsCollection(String userId) => usersCollection.doc(userId).collection('monthly_quests');
-
-  Future<DocumentReference<Map<String, dynamic>>?> _findQuestRef(String userId, String questId) async {
-    final dailyRef = dailyQuestsCollection(userId).doc(questId);
-    final d = await dailyRef.get();
-    if (d.exists) return dailyRef;
-    final weeklyRef = weeklyQuestsCollection(userId).doc(questId);
-    final w = await weeklyRef.get();
-    if (w.exists) return weeklyRef;
-    final monthlyRef = monthlyQuestsCollection(userId).doc(questId);
-    final m = await monthlyRef.get();
-    if (m.exists) return monthlyRef;
-    return null;
+  /// YENİ: Quests collection genel erişim metodu
+  CollectionReference<Map<String, dynamic>> questsCollection(String userId) {
+    return _firestore.collection('users').doc(userId).collection('daily_quests');
   }
 
+  /// YENİ: Haftalık görevler stream
+  Stream<List<Quest>> streamWeeklyQuests(String userId) {
+    return weeklyQuestsCollection(userId)
+        .orderBy('qid')
+        .snapshots()
+        .map((qs) => qs.docs.map((d) => Quest.fromMap(d.data(), d.id)).toList());
+  }
+
+  /// YENİ: Aylık görevler stream
+  Stream<List<Quest>> streamMonthlyQuests(String userId) {
+    return monthlyQuestsCollection(userId)
+        .orderBy('qid')
+        .snapshots()
+        .map((qs) => qs.docs.map((d) => Quest.fromMap(d.data(), d.id)).toList());
+  }
+
+  /// YENİ: Haftalık görevler tek seferlik
+  Future<List<Quest>> getWeeklyQuestsOnce(String userId) async {
+    final snapshot = await weeklyQuestsCollection(userId).orderBy('qid').get();
+    return snapshot.docs.map((d) => Quest.fromMap(d.data(), d.id)).toList();
+  }
+
+  /// YENİ: Aylık görevler tek seferlik
+  Future<List<Quest>> getMonthlyQuestsOnce(String userId) async {
+    final snapshot = await monthlyQuestsCollection(userId).orderBy('qid').get();
+    return snapshot.docs.map((d) => Quest.fromMap(d.data(), d.id)).toList();
+  }
+
+  // === /TAKIP SISTEMI ===
+
+  Future<void> updateUserDocument(String userId, Map<String, dynamic> fields) async {
+    await usersCollection.doc(userId).set(fields, SetOptions(merge: true));
+  }
+
+  /// --- QUESTS: collection helpers for weekly/monthly and daily streams ---
+  CollectionReference<Map<String, dynamic>> weeklyQuestsCollection(String userId) =>
+      usersCollection.doc(userId).collection('weekly_quests');
+
+  CollectionReference<Map<String, dynamic>> monthlyQuestsCollection(String userId) =>
+      usersCollection.doc(userId).collection('monthly_quests');
+
+  /// Daily quests stream
   Stream<List<Quest>> streamDailyQuests(String userId) {
-    return Stream<List<Quest>>.multi((controller) {
-      List<Quest> a = const [];
-      List<Quest> b = const [];
-      List<Quest> c = const [];
-      void emit() { controller.add([...a, ...b, ...c]); }
-      final s1 = dailyQuestsCollection(userId).orderBy('qid').snapshots().listen((qs) {
-        a = qs.docs.map((d) => Quest.fromMap(d.data(), d.id)).toList(); emit();
-      }, onError: controller.addError);
-      final s2 = weeklyQuestsCollection(userId).orderBy('qid').snapshots().listen((qs) {
-        b = qs.docs.map((d) => Quest.fromMap(d.data(), d.id)).toList(); emit();
-      }, onError: controller.addError);
-      final s3 = monthlyQuestsCollection(userId).orderBy('qid').snapshots().listen((qs) {
-        c = qs.docs.map((d) => Quest.fromMap(d.data(), d.id)).toList(); emit();
-      }, onError: controller.addError);
-      controller.onCancel = () async { await s1.cancel(); await s2.cancel(); await s3.cancel(); };
-    });
+    return questsCollection(userId)
+        .orderBy('qid')
+        .snapshots()
+        .map((qs) => qs.docs.map((d) => Quest.fromMap(d.data(), d.id)).toList());
   }
 
+  /// Single read helpers for quests
   Future<List<Quest>> getDailyQuestsOnce(String userId) async {
-    final daily = await dailyQuestsCollection(userId).orderBy('qid').get();
-    final weekly = await weeklyQuestsCollection(userId).orderBy('qid').get();
-    final monthly = await monthlyQuestsCollection(userId).orderBy('qid').get();
-    return [
-      ...daily.docs.map((d) => Quest.fromMap(d.data(), d.id)),
-      ...weekly.docs.map((d) => Quest.fromMap(d.data(), d.id)),
-      ...monthly.docs.map((d) => Quest.fromMap(d.data(), d.id)),
-    ];
+    final snapshot = await questsCollection(userId).orderBy('qid').get();
+    return snapshot.docs.map((d) => Quest.fromMap(d.data(), d.id)).toList();
   }
 
-  Future<void> upsertQuest(String userId, Quest quest) async {
-    await dailyQuestsCollection(userId).doc(quest.id).set(quest.toMap(), SetOptions(merge: true));
-  }
+  // weekly/monthly streams already used earlier rely on weeklyQuestsCollection/monthlyQuestsCollection
 
+  /// Update arbitrary quest fields (tries daily, weekly, monthly collections)
   Future<void> updateQuestFields(String userId, String questId, Map<String, dynamic> fields) async {
-    final ref = await _findQuestRef(userId, questId);
-    if (ref == null) return;
-    await ref.update(fields);
+    final candidates = [
+      questsCollection(userId).doc(questId),
+      weeklyQuestsCollection(userId).doc(questId),
+      monthlyQuestsCollection(userId).doc(questId),
+    ];
+
+    for (final ref in candidates) {
+      try {
+        final snap = await ref.get();
+        if (snap.exists) {
+          await ref.set(fields, SetOptions(merge: true));
+          return;
+        }
+      } catch (_) {
+        // ignore and try next
+      }
+    }
+
+    // Fallback: write to daily collection (create if missing)
+    await questsCollection(userId).doc(questId).set(fields, SetOptions(merge: true));
   }
 
+  /// Claim quest reward (marks rewardClaimed and increments user BP)
   Future<void> claimQuestReward(String userId, Quest quest) async {
+    final reward = quest.calculateDynamicReward();
+    final userRef = usersCollection.doc(userId);
+
     final batch = _firestore.batch();
-    final ref = await _findQuestRef(userId, quest.id);
-    if (ref == null) return;
-    batch.update(ref, {
-      'rewardClaimed': true,
-      'isCompleted': true,
-      'currentProgress': quest.goalValue,
-      'completionDate': FieldValue.serverTimestamp(),
-    });
-    batch.set(_userStatsDoc(userId), {
-      'engagementScore': FieldValue.increment(quest.reward),
+    // mark quest as claimed in whichever collection it exists
+    final qDaily = questsCollection(userId).doc(quest.id);
+    final qWeekly = weeklyQuestsCollection(userId).doc(quest.id);
+    final qMonthly = monthlyQuestsCollection(userId).doc(quest.id);
+
+    batch.set(userRef, {
+      'bilgePoints': FieldValue.increment(reward),
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+
+    // Stats.engagementScore'u da artır (UI ve leaderboard bu değeri kullanıyor)
+    final statsRef = usersCollection.doc(userId).collection('state').doc('stats');
+    batch.set(statsRef, {
+      'engagementScore': FieldValue.increment(reward),
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+
+    // Try to set rewardClaimed on all possible quest locations (safe-merge)
+    batch.set(qDaily, {'rewardClaimed': true, 'rewardClaimedAt': FieldValue.serverTimestamp(), 'actualReward': reward}, SetOptions(merge: true));
+    batch.set(qWeekly, {'rewardClaimed': true, 'rewardClaimedAt': FieldValue.serverTimestamp(), 'actualReward': reward}, SetOptions(merge: true));
+    batch.set(qMonthly, {'rewardClaimed': true, 'rewardClaimedAt': FieldValue.serverTimestamp(), 'actualReward': reward}, SetOptions(merge: true));
+
     await batch.commit();
-    await _syncLeaderboardUser(userId);
+
+    // Liderlik tablosu senkronu (sessizce dene)
+    try { await syncLeaderboardUser(userId); } catch (_) {}
   }
 
+  /// Report question issue (creates report and updates index)
   Future<void> reportQuestionIssue({
     required String userId,
     required String subject,
@@ -997,90 +1053,115 @@ class FirestoreService {
     required List<String> options,
     required int correctIndex,
     int? selectedIndex,
-    String? reason,
+    required String reason,
   }) async {
-    final subjKey = sanitizeKey(subject);
-    final topicKey = sanitizeKey(topic);
-    final qhash = _computeQuestionHash(question, options);
-    await _questionReportsCollection.add({
-      'userId': userId,
-      'qhash': qhash,
-      'subject': subjKey,
-      'topic': topicKey,
-      'question': question,
-      'options': options,
-      'correctIndex': correctIndex,
-      'selectedIndex': selectedIndex,
-      'reason': reason,
-      'createdAt': FieldValue.serverTimestamp(),
+    try {
+      final qhash = _computeQuestionHash(question, options);
+      final payload = {
+        'reporterId': userId,
+        'subject': subject,
+        'topic': topic,
+        'question': question,
+        'options': options,
+        'correctIndex': correctIndex,
+        'selectedIndex': selectedIndex,
+        'reason': reason,
+        'qhash': qhash,
+        'createdAt': FieldValue.serverTimestamp(),
+      };
+
+      await _questionReportsCollection.add(payload);
+
+      // Index increment (reportCount)
+      final idxRef = _questionReportsIndexCollection.doc(qhash);
+      await idxRef.set({
+        'qhash': qhash,
+        'lastReportedAt': FieldValue.serverTimestamp(),
+        'reportCount': FieldValue.increment(1),
+      }, SetOptions(merge: true));
+    } catch (_) {
+      // ignore errors to avoid blocking UI
+    }
+  }
+
+  /// --- FOLLOW / SOCIAL ---
+  CollectionReference<Map<String, dynamic>> _followersCollection(String userId) =>
+      usersCollection.doc(userId).collection('followers');
+  CollectionReference<Map<String, dynamic>> _followingCollection(String userId) =>
+      usersCollection.doc(userId).collection('following');
+
+  /// Stream follower ids
+  Stream<List<String>> streamFollowerIds(String userId) {
+    return _followersCollection(userId).snapshots().map((qs) => qs.docs.map((d) => d.id).toList());
+  }
+
+  /// Stream following ids
+  Stream<List<String>> streamFollowingIds(String userId) {
+    return _followingCollection(userId).snapshots().map((qs) => qs.docs.map((d) => d.id).toList());
+  }
+
+  /// Stream whether me is following target
+  Stream<bool> streamIsFollowing(String meUserId, String targetUserId) {
+    return _followersCollection(targetUserId)
+        .doc(meUserId)
+        .snapshots()
+        .map((snap) => snap.exists);
+  }
+
+  /// Stream follow counts as a record (followers, following)
+  Stream<(int followers, int following)> streamFollowCounts(String userId) {
+    return Stream<(int, int)>.multi((controller) {
+      int? lastFollowers;
+      int? lastFollowing;
+
+      void emitIfReady() {
+        if (lastFollowers == null || lastFollowing == null) return;
+        controller.add((lastFollowers!, lastFollowing!));
+      }
+
+      final subF = _followersCollection(userId).snapshots().listen((qs) {
+        lastFollowers = qs.size;
+        emitIfReady();
+      }, onError: controller.addError);
+
+      final subG = _followingCollection(userId).snapshots().listen((qs) {
+        lastFollowing = qs.size;
+        emitIfReady();
+      }, onError: controller.addError);
+
+      controller.onCancel = () async {
+        await subF.cancel();
+        await subG.cancel();
+      };
     });
   }
 
-  // === TAKIP SISTEMI ===
-  CollectionReference<Map<String, dynamic>> _followersCol(String userId) => usersCollection.doc(userId).collection('followers');
-  CollectionReference<Map<String, dynamic>> _followingCol(String userId) => usersCollection.doc(userId).collection('following');
-  DocumentReference<Map<String, dynamic>> _followMetaDoc(String userId) => usersCollection.doc(userId).collection('social').doc('follow');
-
+  /// Follow a user (adds docs both sides)
   Future<void> followUser({required String currentUserId, required String targetUserId}) async {
-    if (currentUserId == targetUserId) return; // kendini takip etme
-    final meFollowsRef = _followingCol(currentUserId).doc(targetUserId);
-    final targetFollowersRef = _followersCol(targetUserId).doc(currentUserId);
-    await _firestore.runTransaction((txn) async {
-      final exists = (await txn.get(meFollowsRef)).exists;
-      if (exists) return; // idempotent
-      final now = FieldValue.serverTimestamp();
-      txn.set(meFollowsRef, { 'createdAt': now });
-      txn.set(targetFollowersRef, { 'createdAt': now });
-    });
+    if (currentUserId == targetUserId) return;
+    final batch = _firestore.batch();
+    final now = FieldValue.serverTimestamp();
+    batch.set(_followersCollection(targetUserId).doc(currentUserId), {'createdAt': now});
+    batch.set(_followingCollection(currentUserId).doc(targetUserId), {'createdAt': now});
+
+    // Optionally update counters on user docs
+    batch.set(usersCollection.doc(targetUserId), {'followerCount': FieldValue.increment(1)}, SetOptions(merge: true));
+    batch.set(usersCollection.doc(currentUserId), {'followingCount': FieldValue.increment(1)}, SetOptions(merge: true));
+
+    await batch.commit();
   }
 
-  // Takip bırak: iki uçtaki dokümanları siler (idempotent)
+  /// Unfollow a user
   Future<void> unfollowUser({required String currentUserId, required String targetUserId}) async {
     if (currentUserId == targetUserId) return;
-    final meFollowsRef = _followingCol(currentUserId).doc(targetUserId);
-    final targetFollowersRef = _followersCol(targetUserId).doc(currentUserId);
-    await _firestore.runTransaction((txn) async {
-      // TÜM OKUMALARI ÖNCE YAP
-      final meFollowsSnap = await txn.get(meFollowsRef);
-      final targetFollowersSnap = await txn.get(targetFollowersRef);
-      final hasMeFollows = meFollowsSnap.exists;
-      final hasTargetFollower = targetFollowersSnap.exists;
-      // SONRA YAZMALARI YAP
-      if (hasMeFollows) txn.delete(meFollowsRef);
-      if (hasTargetFollower) txn.delete(targetFollowersRef);
-    });
+    final batch = _firestore.batch();
+    batch.delete(_followersCollection(targetUserId).doc(currentUserId));
+    batch.delete(_followingCollection(currentUserId).doc(targetUserId));
+
+    batch.set(usersCollection.doc(targetUserId), {'followerCount': FieldValue.increment(-1)}, SetOptions(merge: true));
+    batch.set(usersCollection.doc(currentUserId), {'followingCount': FieldValue.increment(-1)}, SetOptions(merge: true));
+
+    await batch.commit();
   }
 
-  // Takipçi/takip edilen ID akışları (listeleme için) — sıralı ve limitle
-  Stream<List<String>> streamFollowerIds(String userId, {int limit = 100}) {
-    return _followersCol(userId)
-      .orderBy('createdAt', descending: true)
-      .limit(limit)
-      .snapshots()
-      .map((qs) => qs.docs.map((d) => d.id).toList(growable: false));
-  }
-  Stream<List<String>> streamFollowingIds(String userId, {int limit = 100}) {
-    return _followingCol(userId)
-      .orderBy('createdAt', descending: true)
-      .limit(limit)
-      .snapshots()
-      .map((qs) => qs.docs.map((d) => d.id).toList(growable: false));
-  }
-
-  // Takip: sayaç akışı (public_profiles üzerinden, maliyet-etkin)
-  Stream<(int, int)> streamFollowCounts(String userId) {
-    final doc = _publicProfileDoc(userId);
-    return doc.snapshots().map<(int, int)>((snap) {
-      final data = snap.data() ?? const <String, dynamic>{};
-      final followers = (data['followersCount'] as num?)?.toInt() ?? 0;
-      final following = (data['followingCount'] as num?)?.toInt() ?? 0;
-      return (followers, following);
-    });
-  }
-
-  // Takip: mevcut kullanıcı hedefi takip ediyor mu?
-  Stream<bool> streamIsFollowing(String currentUserId, String targetUserId) {
-    return _followingCol(currentUserId).doc(targetUserId).snapshots().map((d) => d.exists);
-  }
-  // === /TAKIP SISTEMI ===
 }

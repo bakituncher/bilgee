@@ -8,6 +8,7 @@ class AppTheme {
   static const Color secondaryColor = Color(0xFF22D3EE);    // Canlı Camgöbeği (vurgular/aksiyonlar)
   static const Color accentColor = Color(0xFFE71D36);       // Uyarı/Kırmızı (hata)
   static const Color successColor = Color(0xFF34D399);      // Zümrüt (başarı)
+  static const Color goldColor = Color(0xFFFFB020);         // Altın sarısı (ödüller/premium)
 
   // Arka Plan ve Yüzey Renkleri
   static const Color scaffoldBackgroundColor = Color(0xFF0F172A); // Ana arka plan (slate-900)

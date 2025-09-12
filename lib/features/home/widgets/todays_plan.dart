@@ -13,7 +13,6 @@ import 'package:bilge_ai/core/navigation/app_routes.dart';
 
 import 'dashboard_cards/mission_card.dart';
 import 'dashboard_cards/weekly_plan_card.dart';
-import 'dashboard_cards/performance_analysis_card.dart';
 
 
 class TodaysPlan extends ConsumerStatefulWidget {
@@ -51,10 +50,9 @@ class _TodaysPlanState extends ConsumerState<TodaysPlan> {
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(userProfileProvider).value;
-    final tests = ref.watch(testsProvider).value;
     final planDoc = ref.watch(planProvider).value;
 
-    if (user == null || tests == null) {
+    if (user == null) {
       return const SizedBox(height: 420);
     }
 
@@ -98,7 +96,6 @@ class _TodaysPlanState extends ConsumerState<TodaysPlan> {
     List<Widget> pages = [
       const MissionCard(),
       const WeeklyPlanCard(),
-      PerformanceAnalysisCard(user: user, tests: tests),
     ];
 
     if (isPlanBehind) {

@@ -56,7 +56,6 @@ final planProgressProvider = Provider<({int done,int total,double ratio})>((ref)
     return (done:0,total:0,ratio:0.0);
   }
   final today = DateTime.now();
-  final todayKey = DateFormat('yyyy-MM-dd').format(today);
   final completedList = ref.watch(completedTasksForDateProvider(today)).maybeWhen(data: (list)=> list, orElse: ()=> const <String>[]);
   int totalToday = 0;
   if (planMap['plan'] is List){
@@ -86,4 +85,26 @@ final lastActivityProvider = Provider<({String label,String route,IconData icon,
     return (label:'AI Koç Sohbeti', route:'/ai-hub/motivation-chat', icon: Icons.chat_bubble_outline_rounded, color: Colors.tealAccent);
   }
   return (label:'Odak Seansına Başla', route:'/home/pomodoro', icon: Icons.timer_outlined, color: Colors.lightBlueAccent);
+});
+
+final lastTestsSummaryProvider = Provider<({int count, DateTime? lastDate,double? lastNet,double? prevNet})>((ref){
+  final tests = ref.watch(testsProvider).valueOrNull ?? <TestModel>[];
+  if (tests.isEmpty) return (count:0,lastDate:null,lastNet:null,prevNet:null);
+  TestModel? first; TestModel? second;
+  for (final t in tests){
+    if (first==null || t.date.isAfter(first.date)){
+      second = first; first = t;
+    } else if (second==null || t.date.isAfter(second.date)){
+      second = t;
+    }
+  }
+  return (count:tests.length,lastDate:first!.date,lastNet:first.totalNet,prevNet:second?.totalNet);
+});
+
+final lastTestsSeriesProvider = Provider<List<TestModel>>((ref){
+  final tests = ref.watch(testsProvider).valueOrNull ?? <TestModel>[];
+  if (tests.isEmpty) return const <TestModel>[];
+  final sorted = [...tests]..sort((a,b)=> a.date.compareTo(b.date));
+  const take = 10;
+  return sorted.length <= take ? sorted : sorted.sublist(sorted.length - take);
 });

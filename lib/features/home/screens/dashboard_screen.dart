@@ -10,6 +10,7 @@ import 'package:bilge_ai/core/theme/app_theme.dart';
 import 'package:bilge_ai/features/home/widgets/todays_plan.dart';
 import 'package:bilge_ai/features/onboarding/providers/tutorial_provider.dart';
 import 'package:bilge_ai/features/home/widgets/hero_header.dart';
+// import 'package:bilge_ai/features/home/widgets/performance_momentum_card.dart'; // KALDIRILDI: Ayrı kart istenmiyor
 // import 'package:bilge_ai/features/home/widgets/performance_cluster.dart'; // KALDIRILDI
 // import 'package:bilge_ai/features/home/widgets/adaptive_action_center.dart'; // KALDIRILDI: tekrar eden üçlü kart
 import 'package:bilge_ai/shared/constants/highlight_keys.dart';
@@ -32,9 +33,22 @@ class DashboardScreen extends ConsumerStatefulWidget {
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   // Tutarlı yatay boşluk
   static const double _hPad = 16;
+  // Scroll controller + appbar opaklığı
+  late final ScrollController _scrollController;
+  double _appBarOpacity = 0.0; // 0 -> transparan, 1 -> opak
+  static const double _opacityTrigger = 36; // kaç px sonra tam opak
 
   // Liste animasyonlarını sadece ilk yüklemede çalıştırmak için bayrak
   bool _animateSectionsOnce = true;
+
+  void _onScroll() {
+    final offset = _scrollController.hasClients ? _scrollController.offset : 0.0;
+    double target = (offset / _opacityTrigger).clamp(0, 1);
+    // Gürültülü sürekli setState engelle (0.04 farktan küçükse güncelleme yapma)
+    if ((target - _appBarOpacity).abs() > 0.04) {
+      if (mounted) setState(() => _appBarOpacity = target);
+    }
+  }
 
   Widget _animatedSection(Widget child, int index) {
     if (!_animateSectionsOnce) return child; // İlk frame sonrasında animasyon yok
@@ -51,6 +65,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   @override
   void initState() {
     super.initState();
+    _scrollController = ScrollController()..addListener(_onScroll);
     // Öğretici tetikleme (orijinal mantık)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final user = ref.read(userProfileProvider).value;
@@ -60,6 +75,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       // İlk çizimden sonra liste animasyonlarını kapat (kaydırma akıcılığı)
       if (mounted) setState(() => _animateSectionsOnce = false);
     });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -75,22 +97,23 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         // Hiyerarşik bölümler (YENİ AKIŞ) — ağır widget'ları izole etmek için RepaintBoundary
         final sections = <Widget>[
           const RepaintBoundary(child: HeroHeader()),
-          const RepaintBoundary(child: FocusHubCard()), // Günlük Fetihlerin yerine birleşik ve kaliteli kart
-          RepaintBoundary(child: Container(key: todaysPlanKey, child: const TodaysPlan())),
-          const RepaintBoundary(child: MotivationQuotesCard()), // En altta motivasyon sözleri döngüsü
+          const RepaintBoundary(child: FocusHubCard()),
+          RepaintBoundary(child: Container(key: todaysPlanKey, child: const TodaysPlan())), // Kaydırılan kartlar burada
+          const RepaintBoundary(child: MotivationQuotesCard()),
         ];
 
         return SafeArea(
           child: CustomScrollView(
+            controller: _scrollController,
             physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
             slivers: [
-              // Üstte menüyü açan kompakt AppBar
               SliverAppBar(
-                pinned: false,
-                floating: true,
+                pinned: true,
+                floating: false,
                 snap: false,
-                backgroundColor: Colors.transparent,
-                elevation: 0,
+                elevation: _appBarOpacity > 0.95 ? 2 : 0,
+                backgroundColor: AppTheme.cardColor.withValues(alpha: _appBarOpacity * 0.92),
+                surfaceTintColor: Colors.transparent,
                 toolbarHeight: 56,
                 leading: Builder(
                   builder: (ctx) => IconButton(
@@ -99,12 +122,31 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     tooltip: 'Menü',
                   ),
                 ),
-                title: const Text('Komuta Merkezi'),
+                title: AnimatedOpacity(
+                  duration: 200.ms,
+                  opacity: _appBarOpacity.clamp(0, 1),
+                  child: const Text('Komuta Merkezi'),
+                ),
                 centerTitle: true,
                 actions: [
                   _NotificationBell(),
                   const SizedBox(width: 4),
                 ],
+                flexibleSpace: IgnorePointer(
+                  child: AnimatedContainer(
+                    duration: 220.ms,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          AppTheme.cardColor.withValues(alpha: (_appBarOpacity * 0.95).clamp(0, .95)),
+                          AppTheme.cardColor.withValues(alpha: (_appBarOpacity * 0.70).clamp(0, .70)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               ),
 
               SliverPadding(
@@ -116,10 +158,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     return _animatedSection(w, i);
                   },
                   separatorBuilder: (_, i) {
-                    // HeroHeader -> Günlük Fetihler -> Plan -> Aksiyon -> Performans
-                    if (i == 0) return const SizedBox(height: 12);
-                    if (i == 1) return const SizedBox(height: 16);
-                    if (i == 2) return const SizedBox(height: 14);
+                    // Sıra: Hero -> Focus -> (PageView kartları) -> Motivasyon
+                    if (i == 0) return const SizedBox(height: 12); // Hero sonrası
+                    if (i == 1) return const SizedBox(height: 16); // Focus sonrası
+                    if (i == 2) return const SizedBox(height: 18); // PageView sonrası
                     return const SizedBox(height: 12);
                   },
                 ),
