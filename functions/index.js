@@ -830,8 +830,24 @@ function scoreTemplateForUser(t, ctx) {
   return score;
 }
 
+function evaluateExcludeConditions(template, ctx) {
+  const cond = template.excludeConditions || {};
+  if (!cond || Object.keys(cond).length === 0) return false; // No conditions, don't exclude.
+
+  if (cond.hasCreatedStrategicPlan === true && ctx.user?.hasCreatedStrategicPlan === true) return true;
+  if (cond.hasCustomAvatar === true && (ctx.user?.avatarStyle || ctx.user?.avatarSeed)) return true;
+  if (cond['usedFeatures.workshop'] === true && ctx.user?.usedFeatures?.workshop === true) return true;
+  if (cond['usedFeatures.pomodoro'] === true && ctx.user?.usedFeatures?.pomodoro === true) return true;
+
+  return false;
+}
+
 function pickTemplatesForType(type, ctx, desiredCount) {
-  const pool = QUEST_TEMPLATES.filter((q) => (q.type || 'daily') === type).filter((q) => evaluateTriggerConditions(q, ctx));
+  const pool = QUEST_TEMPLATES.filter((q) => {
+    if ((q.type || 'daily') !== type) return false;
+    if (evaluateExcludeConditions(q, ctx)) return false;
+    return evaluateTriggerConditions(q, ctx);
+  });
   const scored = pool.map((q) => ({q, s: scoreTemplateForUser(q, ctx)})).sort((a,b)=> b.s - a.s);
   const selected = []; const usedCategories = new Set();
   for (const it of scored) { if (selected.length >= desiredCount) break; const q = it.q; if (usedCategories.has(q.category) && Math.random() < 0.45) continue; selected.push(q); usedCategories.add(q.category); }
@@ -849,7 +865,7 @@ function materializeTemplates(templates, userData, analysis) {
 }
 
 function pickDailyQuestsForUser(userData, analysis, ctx) {
-  const tpls = pickTemplatesForType('daily', ctx, 7);
+  const tpls = pickTemplatesForType('daily', ctx, 4);
   return materializeTemplates(tpls, userData, analysis);
 }
 

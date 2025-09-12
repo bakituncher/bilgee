@@ -268,7 +268,7 @@
     "category": "engagement",
     "reward": 40,
     "goalValue": 1,
-    "actionRoute": "/profile/avatar-selection",
+    "actionRoute": "/profile",
     "tags": ["profile", "onboarding", "customization"],
     "excludeConditions": {"hasCustomAvatar": true}
   },
@@ -391,7 +391,7 @@
     "category": "engagement",
     "reward": 30,
     "goalValue": 1,
-    "actionRoute": "/profile/settings",
+    "actionRoute": "/settings",
     "tags": ["planning", "profile"]
   },
   {
