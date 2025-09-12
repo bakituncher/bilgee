@@ -7,6 +7,7 @@ import 'package:bilge_ai/features/quests/logic/quest_service.dart';
 import 'package:bilge_ai/features/quests/logic/optimized_quests_provider.dart';
 import 'package:bilge_ai/features/quests/models/quest_model.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -34,151 +35,106 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
   Widget build(BuildContext context) {
     final user = ref.watch(userProfileProvider).value;
     if (user == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(
+        backgroundColor: AppTheme.scaffoldBackgroundColor,
+        body: Center(child: CircularProgressIndicator(color: AppTheme.secondaryColor)),
+      );
     }
     return Scaffold(
-      backgroundColor: AppTheme.primaryColor,
+      backgroundColor: AppTheme.scaffoldBackgroundColor,
       body: CustomScrollView(
         slivers: [
-          _buildModernAppBar(context),
-          _buildFilterBar(),
-          // Görevler için sliver listesi
+          _buildThemedAppBar(context),
+          _buildThemedFilterBar(),
           _buildQuestsSliver(user.id),
         ],
       ),
     );
   }
 
-  /// YENİ: Modern tasarımlı app bar
-  Widget _buildModernAppBar(BuildContext context) {
+  Widget _buildThemedAppBar(BuildContext context) {
     return SliverAppBar(
-      expandedHeight: 120,
+      expandedHeight: 140,
       floating: false,
       pinned: true,
       automaticallyImplyLeading: false,
-      backgroundColor: AppTheme.primaryColor,
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-        onPressed: () => Navigator.of(context).maybePop(),
-      ),
-      title: const Text(
-        'Fetih Görevleri',
-        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 20),
-      ),
+      backgroundColor: AppTheme.scaffoldBackgroundColor,
+      elevation: 0,
       flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                AppTheme.primaryColor,
-                AppTheme.primaryColor.withValues(alpha: 0.85),
-              ],
-            ),
-          ),
-          child: Stack(
-            children: [
-              Positioned(
-                right: -40,
-                top: -40,
-                child: Container(
-                  width: 160,
-                  height: 160,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: 0.05),
-                  ),
-                ),
-              ),
-            ],
-          ),
+        titlePadding: const EdgeInsets.only(left: 16, bottom: 16, right: 16),
+        centerTitle: false,
+        title: Text(
+          'Fetih Görevleri',
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
-      ),
-      actions: [
-        Padding(
-          padding: const EdgeInsets.only(right: 4),
-          child: IconButton(
-            tooltip: 'Yenile',
-            icon: const Icon(Icons.refresh_rounded, color: Colors.white),
-            onPressed: () => _refreshQuests(),
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// YENİ: Filtre çubuğu - artık modalBottomSheet yerine her zaman görünür
-  Widget _buildFilterBar() {
-    return SliverToBoxAdapter(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        color: AppTheme.primaryColor,
-        child: Column(
+        background: Stack(
           children: [
-            // Arama kutusu
-            TextField(
-              onChanged: (value) {
-                _searchDebounce?.cancel();
-                _searchDebounce = Timer(const Duration(milliseconds: 250), () {
-                  if (mounted) setState(() => _searchQuery = value);
-                });
-              },
-              decoration: InputDecoration(
-                hintText: 'Görev ara...',
-                prefixIcon: Icon(Icons.search, color: Colors.white70),
-                filled: true,
-                fillColor: Colors.white.withValues(alpha: 0.1),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
+            Positioned(
+              right: -50,
+              top: -50,
+              child: Container(
+                width: 200,
+                height: 200,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppTheme.secondaryColor.withOpacity(0.1),
                 ),
-                hintStyle: TextStyle(color: Colors.white70),
-              ),
-              style: TextStyle(color: Colors.white),
-            ),
-            const SizedBox(height: 12),
-
-            // Filtre chip'leri
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: QuestFilter.values.map((filter) {
-                  final isSelected = _selectedFilter == filter;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: FilterChip(
-                      label: Text(_getFilterLabel(filter)),
-                      selected: isSelected,
-                      onSelected: (selected) {
-                        setState(() => _selectedFilter = filter);
-                      },
-                      backgroundColor: Colors.white.withValues(alpha: 0.1),
-                      selectedColor: AppTheme.secondaryColor,
-                      labelStyle: TextStyle(
-                        color: isSelected ? Colors.white : Colors.white70,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                      ),
-                      checkmarkColor: Colors.white,
-                    ),
-                  );
-                }).toList(),
-              ),
+              ).animate().fadeIn(duration: 800.ms),
             ),
           ],
         ),
       ),
+      actions: [
+        IconButton(
+          tooltip: 'Yenile',
+          icon: const Icon(Icons.sync_rounded, color: AppTheme.secondaryTextColor),
+          onPressed: () => _refreshQuests(),
+        ),
+        const SizedBox(width: 8),
+      ],
     );
   }
 
-  String _getFilterLabel(QuestFilter filter) {
-    switch (filter) {
-      case QuestFilter.active: return 'Aktif';
-      case QuestFilter.completed: return 'Tamamlanan';
-    }
+  Widget _buildThemedFilterBar() {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        child: CupertinoSlidingSegmentedControl<QuestFilter>(
+          backgroundColor: AppTheme.cardColor,
+          thumbColor: AppTheme.secondaryColor,
+          groupValue: _selectedFilter,
+          onValueChanged: (QuestFilter? value) {
+            if (value != null) {
+              setState(() => _selectedFilter = value);
+            }
+          },
+          children: <QuestFilter, Widget>{
+            QuestFilter.active: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: Text(
+                'Aktif',
+                style: TextStyle(
+                  color: _selectedFilter == QuestFilter.active ? Colors.black : Colors.white,
+                  fontWeight: FontWeight.bold
+                ),
+              ),
+            ),
+            QuestFilter.completed: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: Text(
+                'Tamamlanmış',
+                 style: TextStyle(
+                  color: _selectedFilter == QuestFilter.completed ? Colors.black : Colors.white,
+                  fontWeight: FontWeight.bold
+                ),
+              ),
+            ),
+          },
+        ),
+      ),
+    );
   }
 
-  /// YENİ: İyileştirilmiş görevler listesi
   Widget _buildQuestsSliver(String userId) {
     return Consumer(builder: (context, ref, _) {
       final questsState = ref.watch(optimizedQuestsProvider);
@@ -190,9 +146,9 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.error_outline, size: 64, color: Colors.white54),
+                  const Icon(Icons.error_outline, size: 64, color: AppTheme.secondaryTextColor),
                   const SizedBox(height: 16),
-                  const Text('Görevler yüklenirken hata oluştu', style: TextStyle(color: Colors.white70, fontSize: 16)),
+                  const Text('Görevler yüklenirken hata oluştu', style: TextStyle(color: AppTheme.secondaryTextColor, fontSize: 16)),
                   const SizedBox(height: 8),
                   ElevatedButton(onPressed: _refreshQuests, child: const Text('Tekrar Dene')),
                 ],
@@ -202,81 +158,40 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
       }
 
       if (!questsState.isLoaded) {
-        // Skeleton placeholder (hızlı geri bildirim)
-        final placeholders = List.generate(5, (i) => _buildSkeletonCard());
-        return SliverList(
-          delegate: SliverChildBuilderDelegate((context, index) {
-            if (index == 0) {
-              return Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                child: Column(children: placeholders),
-              );
-            }
-            return null;
-          }, childCount: 1),
+        return SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          sliver: SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) => _buildSkeletonCard(),
+              childCount: 5,
+            ),
+          ),
         );
       }
 
       final questsDataList = questsState.allQuests ?? [];
       final filteredQuests = _filterQuests(questsDataList);
+
       if (filteredQuests.isEmpty) {
         return SliverFillRemaining(
           hasScrollBody: false,
           child: _buildEmptyState(),
         );
       }
-      final activeQuests = filteredQuests.where((q) => !q.isCompleted).toList();
-      final completedQuests = filteredQuests.where((q) => q.isCompleted).toList();
-      final enableAnimations = (activeQuests.length + completedQuests.length) <= 30;
 
-      final children = <Widget>[];
-      if (activeQuests.isNotEmpty) {
-        children.add(Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-          child: _buildSectionHeader('Aktif Görevler', activeQuests.length),
-        ));
-        for (var i = 0; i < activeQuests.length; i++) {
-          final quest = activeQuests[i];
-          Widget card = Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: ModernQuestCard(
-              quest: quest,
-              userId: userId,
-            ),
-          );
-          if (enableAnimations) {
-            card = card.animate().fadeIn(delay: (i * 80).ms);
-          }
-          children.add(card);
-        }
-      }
-      if (completedQuests.isNotEmpty) {
-        children.add(Padding(
-          padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
-          child: _buildSectionHeader('Tamamlanan Görevler', completedQuests.length),
-        ));
-        for (var i = 0; i < completedQuests.length; i++) {
-          final quest = completedQuests[i];
-          Widget card = Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: ModernQuestCard(
-              quest: quest,
-              userId: userId,
-              isCompleted: true,
-            ),
-          );
-          if (enableAnimations) {
-            card = card.animate().fadeIn(delay: (i * 80).ms);
-          }
-          children.add(card);
-        }
-      }
-      children.add(const SizedBox(height: 40));
-
-      return SliverList(
-        delegate: SliverChildBuilderDelegate(
-          (context, index) => children[index],
-          childCount: children.length,
+      return SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        sliver: SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              final quest = filteredQuests[index];
+              return ThemedQuestCard(
+                quest: quest,
+                userId: userId,
+              ).animate().fadeIn(delay: (index * 80).ms, duration: 400.ms).slideY(begin: 0.2, curve: Curves.easeOut);
+            },
+            childCount: filteredQuests.length,
+          ),
         ),
       );
     });
@@ -286,63 +201,14 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
-      height: 90,
+      height: 110,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
+        color: AppTheme.cardColor,
         borderRadius: BorderRadius.circular(16),
       ),
-      child: Row(children: [
-        Container(width: 40, height: 40, decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(12))),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(height: 14, width: 160, decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(6))),
-              const SizedBox(height: 8),
-              Container(height: 10, width: 220, decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(6))),
-            ],
-          ),
-        ),
-      ]),
     ).animate(onPlay: (c) => c.repeat()).shimmer(
-      duration: 1200.ms,
-      color: Colors.white.withOpacity(0.1),
-    );
-  }
-
-  Widget _buildSectionHeader(String title, int count) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppTheme.secondaryColor.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              count.toString(),
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
+      duration: 1500.ms,
+      color: AppTheme.lightSurfaceColor.withOpacity(0.5),
     );
   }
 
@@ -355,7 +221,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
           Icon(
             isCompletedFilter ? Icons.history_edu_rounded : Icons.checklist_rtl_rounded,
             size: 90,
-            color: Colors.white.withOpacity(0.4),
+            color: AppTheme.secondaryTextColor.withOpacity(0.4),
           ).animate().scale(delay: 100.ms, duration: 600.ms, curve: Curves.elasticOut),
           const SizedBox(height: 24),
           Text(
@@ -375,84 +241,44 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                   : 'Harika iş çıkardın! Yarın yeni görevler için tekrar gel.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
+                color: AppTheme.secondaryTextColor,
                 fontSize: 16,
               ),
             ),
           ),
-          if (!isCompletedFilter) ...[
-            const SizedBox(height: 32),
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                backgroundColor: AppTheme.secondaryColor,
-              ),
-              onPressed: _refreshQuests,
-              icon: const Icon(Icons.refresh, color: Colors.white),
-              label: const Text('Yine de Yenile', style: TextStyle(color: Colors.white, fontSize: 16)),
-            ),
-          ]
         ],
       ).animate().fadeIn(duration: 400.ms),
     );
   }
 
   List<Quest> _filterQuests(List<Quest> quests) {
-    // Cache koşulu: aynı liste referansı + aynı filtre + aynı arama
-    if (identical(quests, _lastAllQuestsIdentity) &&
-        _selectedFilter == _cacheFilter &&
-        _searchQuery == _cacheSearch &&
-        _cacheFiltered != null) {
+    if (identical(quests, _lastAllQuestsIdentity) && _selectedFilter == _cacheFilter && _cacheFiltered != null) {
       return _cacheFiltered!;
     }
 
-    var filtered = quests;
-
-    // Filtre uygula
+    List<Quest> filtered;
     switch (_selectedFilter) {
       case QuestFilter.active:
-        filtered = filtered.where((q) => !q.isCompleted).toList();
+        filtered = quests.where((q) => !q.isCompleted).toList();
         break;
       case QuestFilter.completed:
-        filtered = filtered.where((q) => q.isCompleted).toList();
+        filtered = quests.where((q) => q.isCompleted).toList();
         break;
-    }
-
-    // Arama uygula
-    if (_searchQuery.isNotEmpty) {
-      final qLower = _searchQuery.toLowerCase();
-      filtered = filtered.where((quest) {
-        if (quest.title.toLowerCase().contains(qLower)) return true;
-        if (quest.description.toLowerCase().contains(qLower)) return true;
-        for (final tag in quest.tags) {
-          if (tag.toLowerCase().contains(qLower)) return true;
-        }
-        return false;
-      }).toList();
     }
 
     _lastAllQuestsIdentity = quests;
     _cacheFilter = _selectedFilter;
-    _cacheSearch = _searchQuery;
     _cacheFiltered = filtered;
     return filtered;
   }
 
   void _refreshQuests() async {
-    // Widget dispose edilmişse işlem yapma
     if (!mounted) return;
-
     final user = ref.read(userProfileProvider).value;
     if (user != null && mounted) {
-      try {
-        await ref.read(questServiceProvider).refreshDailyQuestsForUser(user, force: true);
-
-        // İkinci mounted kontrolü - async işlem sonrası
-        if (mounted) {
-          ref.invalidate(optimizedQuestsProvider);
-        }
-      } catch (e) {
-        debugPrint('[QuestsScreen] Refresh hatası: $e');
+      await ref.read(questServiceProvider).refreshDailyQuestsForUser(user, force: true);
+      if (mounted) {
+        ref.invalidate(optimizedQuestsProvider);
       }
     }
   }
@@ -464,278 +290,153 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
   }
 }
 
-/// YENİ: Modern ve kompakt quest card tasarımı
-class ModernQuestCard extends ConsumerWidget {
+class ThemedQuestCard extends ConsumerWidget {
   final Quest quest;
   final String userId;
-  final bool isCompleted;
 
-  const ModernQuestCard({
+  const ThemedQuestCard({
     super.key,
     required this.quest,
     required this.userId,
-    this.isCompleted = false,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(userProfileProvider).value;
-    final progress = quest.goalValue > 0
-        ? (quest.currentProgress / quest.goalValue).clamp(0.0, 1.0)
-        : 1.0;
+    final progress = quest.goalValue > 0 ? (quest.currentProgress / quest.goalValue).clamp(0.0, 1.0) : (quest.isCompleted ? 1.0 : 0.0);
+    final isCompleted = quest.isCompleted;
 
-    int finalReward = quest.reward;
-    if (user != null) {
-      finalReward = quest.calculateDynamicReward(
-        userLevel: (user.engagementScore / 100).floor(),
-        currentStreak: user.currentQuestStreak,
-        isStreakBonus: user.currentQuestStreak >= 3,
-      );
-    }
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () => _handleQuestTap(context, ref),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: _getGradientColors(),
+    return GestureDetector(
+      onTap: isCompleted ? null : () => _handleQuestTap(context, ref),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          gradient: LinearGradient(
+            colors: isCompleted
+                ? [AppTheme.successColor.withOpacity(0.2), AppTheme.cardColor.withOpacity(0.1)]
+                : [AppTheme.lightSurfaceColor.withOpacity(0.5), AppTheme.cardColor],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          border: Border.all(
+            color: isCompleted ? AppTheme.successColor.withOpacity(0.4) : AppTheme.lightSurfaceColor,
+            width: 1,
+          ),
+        ),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: FractionallySizedBox(
+                    widthFactor: progress,
+                    child: Container(color: AppTheme.secondaryColor.withOpacity(isCompleted ? 0.2 : 0.1)),
+                  ),
+                ),
               ),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.1), width: 1),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 8, offset: const Offset(0, 4)),
-              ],
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    _buildCategoryIcon(),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Row(
+                children: [
+                  _buildCategoryIcon(isCompleted),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          quest.title,
+                          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (!isCompleted) ...[
+                          const SizedBox(height: 4),
                           Text(
-                            quest.title,
-                            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+                            quest.description,
+                            style: TextStyle(color: AppTheme.secondaryTextColor, fontSize: 13),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          if (!isCompleted) ...[
-                            const SizedBox(height: 4),
-                            Text(
-                              quest.description,
-                              style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 13),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
                         ],
-                      ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    _buildRewardBadge(finalReward),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                if (isCompleted) _buildCompletedState(finalReward, ref) else _buildProgressState(progress),
-                if (_shouldShowTags()) ...[
-                  const SizedBox(height: 8),
-                  _buildTags(),
+                  ),
+                  const SizedBox(width: 8),
+                  _buildRewardBadge(isCompleted),
                 ],
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildCategoryIcon() {
-    IconData icon = Icons.label;
-    Color color = Colors.grey;
+  Widget _buildCategoryIcon(bool isCompleted) {
+    if (isCompleted) {
+      return Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: AppTheme.successColor.withOpacity(0.3),
+        ),
+        child: const Icon(Icons.check_circle_rounded, color: AppTheme.successColor, size: 28),
+      );
+    }
+
+    IconData icon;
+    Color color;
     switch (quest.category) {
-      case QuestCategory.study:
-        icon = Icons.book_rounded;
-        color = Colors.blue;
-        break;
-      case QuestCategory.practice:
-        icon = Icons.edit_note_rounded;
-        color = Colors.green;
-        break;
-      case QuestCategory.engagement:
-        icon = Icons.auto_awesome;
-        color = Colors.purple;
-        break;
-      case QuestCategory.consistency:
-        icon = Icons.event_repeat_rounded;
-        color = Colors.orange;
-        break;
-      case QuestCategory.test_submission:
-        icon = Icons.add_chart_rounded;
-        color = Colors.red;
-        break;
-      case QuestCategory.focus:
-        icon = Icons.center_focus_strong;
-        color = Colors.cyan;
-        break;
+      case QuestCategory.study: icon = Icons.menu_book_rounded; color = Colors.blue; break;
+      case QuestCategory.practice: icon = Icons.edit_note_rounded; color = Colors.green; break;
+      case QuestCategory.engagement: icon = Icons.auto_awesome_rounded; color = Colors.purple; break;
+      case QuestCategory.consistency: icon = Icons.event_repeat_rounded; color = Colors.orange; break;
+      case QuestCategory.test_submission: icon = Icons.add_chart_rounded; color = Colors.red; break;
+      case QuestCategory.focus: icon = Icons.center_focus_strong; color = Colors.cyan; break;
     }
 
     return Container(
-      width: 40,
-      height: 40,
+      width: 48,
+      height: 48,
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
+        color: color.withOpacity(0.15),
+        shape: BoxShape.circle,
+        border: Border.all(color: color.withOpacity(0.3), width: 2),
       ),
-      child: Icon(icon, color: color, size: 20),
+      child: Icon(icon, color: color, size: 24),
     );
   }
 
-  Widget _buildRewardBadge(int reward) {
+  Widget _buildRewardBadge(bool isCompleted) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AppTheme.goldColor.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.goldColor.withValues(alpha: 0.4), width: 1),
+        color: isCompleted ? AppTheme.goldColor.withOpacity(0.2) : AppTheme.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.goldColor.withOpacity(0.5)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.star_rounded, color: AppTheme.goldColor, size: 14),
+          Icon(Icons.star_rounded, color: AppTheme.goldColor, size: 16),
           const SizedBox(width: 4),
-          Text('+$reward BP', style: TextStyle(color: AppTheme.goldColor, fontSize: 12, fontWeight: FontWeight.w600)),
+          Text(
+            '+${quest.reward}',
+            style: const TextStyle(color: AppTheme.goldColor, fontSize: 14, fontWeight: FontWeight.bold),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildProgressState(double progress) {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  minHeight: 6,
-                  backgroundColor: Colors.white.withValues(alpha: 0.2),
-                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text('${quest.currentProgress}/${quest.goalValue}', style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCompletedState(int reward, WidgetRef ref) {
-    return Row(
-      children: [
-        Icon(Icons.check_circle_rounded, color: AppTheme.successColor, size: 20),
-        const SizedBox(width: 8),
-        Text('Tamamlandı', style: TextStyle(color: AppTheme.successColor, fontSize: 14, fontWeight: FontWeight.w600)),
-        const Spacer(),
-        if (!quest.rewardClaimed)
-          ElevatedButton.icon(
-            onPressed: () => _claimReward(ref, reward),
-            icon: const Icon(Icons.star, size: 16),
-            label: const Text('Topla'),
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.goldColor, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
-          ),
-      ],
-    );
-  }
-
-  bool _shouldShowTags() {
-    return quest.tags.any((tag) => ['high_value', 'weakness', 'adaptive', 'chain', 'onboarding'].contains(tag));
-  }
-
-  Widget _buildTags() {
-    final importantTags = quest.tags.where((tag) => ['high_value', 'weakness', 'adaptive', 'chain', 'onboarding'].contains(tag)).take(3).toList();
-    return Wrap(spacing: 6, children: importantTags.map((t) => _buildTag(t)).toList());
-  }
-
-  Widget _buildTag(String tag) {
-    String label = tag;
-    Color color = Colors.grey;
-    IconData icon = Icons.label;
-    switch (tag) {
-      case 'high_value':
-        label = 'Öncelik';
-        color = Colors.amber;
-        icon = Icons.flash_on;
-        break;
-      case 'weakness':
-        label = 'Zayıf Nokta';
-        color = Colors.red;
-        icon = Icons.warning_amber;
-        break;
-      case 'adaptive':
-        label = 'Adaptif';
-        color = Colors.lightBlue;
-        icon = Icons.auto_fix_high;
-        break;
-      case 'chain':
-        label = 'Zincir';
-        color = Colors.teal;
-        icon = Icons.link;
-        break;
-      case 'onboarding':
-        label = 'Keşif';
-        color = Colors.purple;
-        icon = Icons.explore;
-        break;
-      default:
-        break;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(6), border: Border.all(color: color.withValues(alpha: 0.4), width: 1)),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(icon, size: 12, color: color), const SizedBox(width: 4), Text(label, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w600))]),
-    );
-  }
-
-  List<Color> _getGradientColors() {
-    if (isCompleted) return [AppTheme.successColor.withValues(alpha: 0.2), AppTheme.successColor.withValues(alpha: 0.1)];
-    switch (quest.category) {
-      case QuestCategory.study:
-        return [Colors.blue.withValues(alpha: 0.2), Colors.blue.withValues(alpha: 0.1)];
-      case QuestCategory.practice:
-        return [Colors.green.withValues(alpha: 0.2), Colors.green.withValues(alpha: 0.1)];
-      case QuestCategory.engagement:
-        return [Colors.purple.withValues(alpha: 0.2), Colors.purple.withValues(alpha: 0.1)];
-      case QuestCategory.consistency:
-        return [Colors.orange.withValues(alpha: 0.2), Colors.orange.withValues(alpha: 0.1)];
-      case QuestCategory.test_submission:
-        return [Colors.red.withValues(alpha: 0.2), Colors.red.withValues(alpha: 0.1)];
-      case QuestCategory.focus:
-        return [Colors.cyan.withValues(alpha: 0.2), Colors.cyan.withValues(alpha: 0.1)];
-    }
-  }
-
   void _handleQuestTap(BuildContext context, WidgetRef ref) {
-    if (isCompleted) return;
     ref.read(analyticsLoggerProvider).logQuestEvent(userId: userId, event: 'quest_tap', data: {'questId': quest.id, 'category': quest.category.name});
-
     String targetRoute = quest.actionRoute;
     if (targetRoute == '/coach') {
       final subjectTag = quest.tags.firstWhere((t) => t.startsWith('subject:'), orElse: () => '');
@@ -744,16 +445,6 @@ class ModernQuestCard extends ConsumerWidget {
         targetRoute = Uri(path: '/coach', queryParameters: {'subject': subject}).toString();
       }
     }
-
     context.go(targetRoute);
-  }
-
-  void _claimReward(WidgetRef ref, int reward) async {
-    try {
-      await ref.read(firestoreServiceProvider).claimQuestReward(userId, quest);
-      ref.invalidate(optimizedQuestsProvider);
-    } catch (e) {
-      // ignore
-    }
   }
 }
