@@ -99,7 +99,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         final sections = <Widget>[
           const RepaintBoundary(child: HeroHeader()),
           const RepaintBoundary(child: FocusHubCard()),
-          RepaintBoundary(child: _DailyQuestsCard()),
           RepaintBoundary(child: Container(key: todaysPlanKey, child: const TodaysPlan())), // Kaydırılan kartlar burada
           const RepaintBoundary(child: MotivationQuotesCard()),
         ];
