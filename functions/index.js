@@ -1,5 +1,5 @@
 const { logger } = require("firebase-functions");
-const { onRequest } = require("firebase-functions/v2/http");
+const { onRequest } = require("firebase-functions/v2/https");
 
 // Import and re-export all the functions from the new modules
 const admin = require("./src/admin");
