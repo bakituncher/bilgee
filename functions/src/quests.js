@@ -164,15 +164,30 @@ function pickTemplatesForType(type, ctx, desiredCount) {
     if (evaluateExcludeConditions(q, ctx)) return false;
     return evaluateTriggerConditions(q, ctx);
   });
+
+  // 1. Skora göre sırala
   const scored = pool.map((q) => ({ q, s: scoreTemplateForUser(q, ctx) })).sort((a, b) => b.s - a.s);
+
+  // 2. En iyi 10 görevi al ve karıştır (daha fazla çeşitlilik için)
+  const topPool = scored.slice(0, 10);
+  for (let i = topPool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [topPool[i], topPool[j]] = [topPool[j], topPool[i]]; // Karıştırma
+  }
+
+  // 3. Karıştırılmış havuzdan istenen sayıda görev seç, kategori çeşitliliğini koru
   const selected = [];
-  const usedCategories = new Set();
-  for (const it of scored) {
+  const categoryCounts = new Map();
+  for (const it of topPool) {
     if (selected.length >= desiredCount) break;
     const q = it.q;
-    if (usedCategories.has(q.category) && Math.random() < 0.45) continue;
-    selected.push(q);
-    usedCategories.add(q.category);
+    const currentCategoryCount = categoryCounts.get(q.category) || 0;
+
+    // Bir kategoriden en fazla 2 görev al
+    if (currentCategoryCount < 2) {
+      selected.push(q);
+      categoryCounts.set(q.category, currentCategoryCount + 1);
+    }
   }
   return selected;
 }

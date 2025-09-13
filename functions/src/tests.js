@@ -126,6 +126,25 @@ exports.addTestResult = onCall({ region: "us-central1", timeoutSeconds: 30 }, as
       engagementScore: admin.firestore.FieldValue.increment(pointsAward),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     }, { merge: true });
+
+    // YENİ: Aktif görevlerin ilerlemesini de bu transaction içinde güncelle
+    const questsSnap = await tx.get(userRef.collection("daily_quests").where("isCompleted", "==", false));
+    if (!questsSnap.empty) {
+      for (const doc of questsSnap.docs) {
+        const quest = doc.data();
+        // Sadece soru çözme ile ilgili görevleri güncelle
+        if (quest.category === 'practice' || quest.category === 'test_submission') {
+          tx.update(doc.ref, {
+            currentProgress: admin.firestore.FieldValue.increment(totalQuestions),
+          });
+        }
+        if (quest.id === 'daily_tes_01_result_entry') {
+            tx.update(doc.ref, {
+                currentProgress: admin.firestore.FieldValue.increment(1),
+              });
+        }
+      }
+    }
   });
 
   try {
