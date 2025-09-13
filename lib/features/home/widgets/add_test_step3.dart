@@ -89,8 +89,9 @@ class Step3Summary extends ConsumerWidget {
                   final examData = await ExamData.getExamByType(ExamType.values.byName(user.selectedExam!));
                   final analysis = StatsAnalysis(updatedTests, performance, examData, ref.read(firestoreServiceProvider), user: user);
                   await ref.read(firestoreServiceProvider).updateAnalysisSummary(user.id, analysis);
-                } catch (_) {
-                  // Sessizce geç; görev üretimi yine çalışır
+                } catch (e, st) {
+                  // Hata günlüğe kaydedilir ancak kullanıcı akışı engellenmez.
+                  debugPrint('Performans özeti güncellenirken hata oluştu: $e\n$st');
                 }
 
                 // Yeni FutureProvider verisini yenile (invalidate)

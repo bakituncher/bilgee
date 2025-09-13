@@ -62,3 +62,20 @@ exports.setSelfAdmin = onCall({region: 'us-central1'}, async (request) => {
   await auth.setCustomUserClaims(uid, {...existing, admin: true});
   return {ok: true, uid, admin: true};
 });
+
+exports.getUsers = onCall({region: 'us-central1'}, async (request) => {
+    if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
+    const allowed = await isSuperAdmin(request.auth.uid);
+    if (!allowed) throw new HttpsError('permission-denied', 'Yetki yok');
+
+    const listUsersResult = await auth.listUsers(1000);
+    const users = listUsersResult.users.map((userRecord) => {
+        return {
+            uid: userRecord.uid,
+            email: userRecord.email,
+            displayName: userRecord.displayName,
+            admin: !!userRecord.customClaims?.admin,
+        };
+    });
+    return { users };
+});

@@ -361,6 +361,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                     })),
                                   ],
                                 ),
+                                const SizedBox(height: 12),
+                                // ADMIN PANEL BUTTON
+                                if (ref.watch(adminClaimProvider).valueOrNull == true)
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: _ActionNeo(
+                                          icon: Icons.admin_panel_settings_rounded,
+                                          label: 'Admin Paneli',
+                                          onTap: () => context.push('/admin/panel'),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 const SizedBox(height: 40),
                               ],
                             ),
