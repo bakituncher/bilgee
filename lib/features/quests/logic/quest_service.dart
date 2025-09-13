@@ -63,7 +63,7 @@ class QuestService {
         // App Check tokenının hazır olduğundan emin ol
         await ensureAppCheckTokenReady();
         final functions = _ref.read(functionsProvider);
-        final callable = functions.httpsCallable('regenerateDailyQuests');
+        final callable = functions.httpsCallable('quests-regenerateDailyQuests');
         await callable.call(); // No more parameters needed
         // Üretim sonrası tekrar oku
         final refreshed = await _ref.read(firestoreServiceProvider).getDailyQuestsOnce(user.id);

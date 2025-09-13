@@ -42,13 +42,6 @@
       ]
     },
     {
-      "collectionGroup": "users",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "selectedExam", "order": "ASCENDING" }
-      ]
-    },
-    {
       "collectionGroup": "devices",
       "queryScope": "COLLECTION_GROUP",
       "fields": [

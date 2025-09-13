@@ -172,7 +172,7 @@ class AiService {
 
   Future<String> _callGemini(String prompt, {bool expectJson = false, double? temperature, String? model}) async {
     try {
-      final callable = FirebaseFunctions.instanceFor(region: 'us-central1').httpsCallable('generateGemini');
+      final callable = FirebaseFunctions.instanceFor(region: 'us-central1').httpsCallable('ai-generateGemini');
       final payload = {
         'prompt': prompt,
         'expectJson': expectJson,
