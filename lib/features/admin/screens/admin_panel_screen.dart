@@ -45,13 +45,12 @@ class AdminPanelScreen extends ConsumerWidget {
             onTap: () => context.push('/admin/push-composer'),
           ),
           const Divider(),
-          // Placeholder for Question Reports
           ListTile(
             leading: const Icon(Icons.flag_outlined),
             title: const Text('Soru Raporları'),
             subtitle: const Text('Kullanıcıların raporladığı sorular'),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/admin/question-reports'),
+            onTap: () => context.push('/admin/reports'),
           ),
         ],
       ),

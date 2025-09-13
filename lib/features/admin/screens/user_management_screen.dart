@@ -24,8 +24,22 @@ class UserManagementScreen extends ConsumerWidget {
       ),
       body: allUsersAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Kullanıcılar yüklenemedi: $err')),
+        error: (err, stack) {
+          final errorMessage = err.toString();
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                'Kullanıcılar yüklenemedi.\nHata: $errorMessage',
+                textAlign: TextAlign.center,
+              ),
+            ),
+          );
+        },
         data: (users) {
+          if (users.isEmpty) {
+            return const Center(child: Text('Sistemde hiç kullanıcı bulunamadı.'));
+          }
           return ListView.builder(
             itemCount: users.length,
             itemBuilder: (context, index) {

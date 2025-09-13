@@ -298,7 +298,7 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() { _sending = true; });
     try {
-      final callable = FirebaseFunctions.instance.httpsCallable('adminSendPush');
+      final callable = FirebaseFunctions.instance.httpsCallable('admin-adminSendPush');
       final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid == null) return;
       final data = {
