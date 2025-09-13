@@ -153,7 +153,7 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
   Future<void> _estimate() async {
     setState(() { _estimateUsers = null; _estimateTokenHolders = null; });
     try {
-      final callable = FirebaseFunctions.instance.httpsCallable('admin-adminEstimateAudience');
+      final callable = FirebaseFunctions.instance.httpsCallable('notifications-adminEstimateAudience');
       final res = await callable.call({'audience': _buildAudience()});
       final m = (res.data as Map?) ?? {};
       setState(() {
@@ -263,7 +263,7 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() { _sending = true; });
     try {
-      final callable = FirebaseFunctions.instance.httpsCallable('admin-adminSendPush');
+      final callable = FirebaseFunctions.instance.httpsCallable('notifications-adminSendPush');
       Map<String, dynamic> audience = _buildAudience();
       if (testToSelf) {
         final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -298,7 +298,7 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() { _sending = true; });
     try {
-      final callable = FirebaseFunctions.instance.httpsCallable('admin-adminSendPush');
+      final callable = FirebaseFunctions.instance.httpsCallable('notifications-adminSendPush');
       final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid == null) return;
       final data = {
@@ -389,25 +389,25 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
 
         final content = isWide && !_simpleMode
             ? Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: stepContent),
-                  const SizedBox(width: 16),
-                  SizedBox(width: 380, child: _buildRightColumn(isWide: true)),
-                ],
-              )
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: stepContent),
+            const SizedBox(width: 16),
+            SizedBox(width: 380, child: _buildRightColumn(isWide: true)),
+          ],
+        )
             : SingleChildScrollView(
-                padding: EdgeInsets.only(bottom: 24 + bottomInset),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Mobil ve basit mod: son adımda önizlemeyi ayrıca göster
-                    if (_currentStep == _lastStep) _inlinePreview(),
-                    if (_currentStep == _lastStep) const SizedBox(height: 16),
-                    stepContent,
-                  ],
-                ),
-              );
+          padding: EdgeInsets.only(bottom: 24 + bottomInset),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Mobil ve basit mod: son adımda önizlemeyi ayrıca göster
+              if (_currentStep == _lastStep) _inlinePreview(),
+              if (_currentStep == _lastStep) const SizedBox(height: 16),
+              stepContent,
+            ],
+          ),
+        );
 
         return Scaffold(
           appBar: AppBar(
@@ -703,10 +703,10 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
                   onPressed: (_sending || uploading)
                       ? null
                       : () {
-                          if (!isLast) { _nextStep(); return; }
-                          if (!_formKey.currentState!.validate()) return;
-                          _send();
-                        },
+                    if (!isLast) { _nextStep(); return; }
+                    if (!_formKey.currentState!.validate()) return;
+                    _send();
+                  },
                   icon: _sending
                       ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
                       : Icon(isLast ? (_scheduleEnabled ? Icons.event_available_rounded : Icons.send_rounded) : Icons.arrow_forward_rounded),

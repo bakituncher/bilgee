@@ -37,8 +37,9 @@ async function isSuperAdmin(uid) {
 
 exports.setAdminClaim = onCall({region: 'us-central1'}, async (request) => {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
-  const allowed = await isSuperAdmin(request.auth.uid);
-  if (!allowed) throw new HttpsError('permission-denied', 'Yetki yok');
+  const isSuper = await isSuperAdmin(request.auth.uid);
+  const isAdmin = request.auth.token && request.auth.token.admin === true;
+  if (!isSuper && !isAdmin) throw new HttpsError('permission-denied', 'Admin yetkisi gerekli');
 
   const uid = request.data?.uid;
   const makeAdmin = !!request.data?.makeAdmin;
@@ -49,6 +50,10 @@ exports.setAdminClaim = onCall({region: 'us-central1'}, async (request) => {
   const existing = target.customClaims || {};
   const newClaims = {...existing, admin: makeAdmin};
   await auth.setCustomUserClaims(uid, newClaims);
+  if (makeAdmin === false) {
+    // Revoke tokens to force re-login and claim refresh
+    await auth.revokeRefreshTokens(uid);
+  }
   return {ok: true, uid, admin: makeAdmin};
 });
 
@@ -65,19 +70,30 @@ exports.setSelfAdmin = onCall({region: 'us-central1'}, async (request) => {
 
 exports.getUsers = onCall({region: 'us-central1'}, async (request) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
-    const allowed = await isSuperAdmin(request.auth.uid);
-    if (!allowed) throw new HttpsError('permission-denied', 'Yetki yok');
+    const isSuper = await isSuperAdmin(request.auth.uid);
+    const isAdmin = request.auth.token && request.auth.token.admin === true;
+    if (!isSuper && !isAdmin) throw new HttpsError('permission-denied', 'Admin yetkisi gerekli');
 
-    const listUsersResult = await auth.listUsers(1000);
-    const users = listUsersResult.users.map((userRecord) => {
-        return {
-            uid: userRecord.uid,
-            email: userRecord.email,
-            displayName: userRecord.displayName,
-            admin: !!userRecord.customClaims?.admin,
-        };
-    });
-    return { users };
+    const superAdminEmails = await getSuperAdmins();
+    const pageSize = 100;
+    const pageToken = request.data?.pageToken;
+    const listUsersResult = await auth.listUsers(pageSize, pageToken);
+
+    const users = listUsersResult.users
+        .filter(user => !superAdminEmails.includes((user.email || '').toLowerCase()))
+        .map((userRecord) => {
+            return {
+                uid: userRecord.uid,
+                email: userRecord.email,
+                displayName: userRecord.displayName,
+                admin: !!userRecord.customClaims?.admin,
+            };
+        });
+
+    return {
+        users,
+        nextPageToken: listUsersResult.pageToken
+    };
 });
 
 async function _getAudienceQuery(audience) {
@@ -202,4 +218,36 @@ exports.adminSendPush = onCall({region: 'us-central1'}, async (request) => {
     console.log(`Push sent. Success: ${successCount}, Failure: ${failureCount}`);
 
     return { ok: true, totalSent: successCount, totalUsers: totalUsers };
+});
+
+exports.findUserByEmail = onCall({region: 'us-central1'}, async (request) => {
+    if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
+    const isSuper = await isSuperAdmin(request.auth.uid);
+    const isAdmin = request.auth.token && request.auth.token.admin === true;
+    if (!isSuper && !isAdmin) throw new HttpsError('permission-denied', 'Admin yetkisi gerekli');
+
+    const email = request.data?.email;
+    if (!email) {
+        throw new HttpsError('invalid-argument', 'Email adresi gerekli');
+    }
+
+    try {
+        const superAdminEmails = await getSuperAdmins();
+        if (superAdminEmails.includes(email.toLowerCase())) {
+            return null; // Hide super admin
+        }
+
+        const userRecord = await auth.getUserByEmail(email);
+        return {
+            uid: userRecord.uid,
+            email: userRecord.email,
+            displayName: userRecord.displayName,
+            admin: !!userRecord.customClaims?.admin,
+        };
+    } catch (error) {
+        if (error.code === 'auth/user-not-found') {
+            return null;
+        }
+        throw new HttpsError('internal', 'Kullanıcı aranırken bir hata oluştu.');
+    }
 });

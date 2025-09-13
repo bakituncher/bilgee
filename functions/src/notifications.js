@@ -122,7 +122,7 @@ exports.registerFcmToken = onCall({region: 'us-central1'}, async (request) => {
     if (inactHours >= 24) {
       return {
         title: 'Bir gün ara verdin. Şimdi hızlanma zamanı! ⚡',
-        body: 'Hedefini 10’a çıkar: k��sa bir pratikle ivme yakala! 🎯',
+        body: 'Hedefini 10’a çıkar: kısa bir pratikle ivme yakala! 🎯',
         route: '/home/add-test',
       };
     }
@@ -259,8 +259,8 @@ exports.registerFcmToken = onCall({region: 'us-central1'}, async (request) => {
     const body = String(request.data?.body || '').trim();
     const imageUrl = request.data?.imageUrl ? String(request.data.imageUrl) : '';
     const route = String(request.data?.route || '/home');
-    const audience = request.data?.audience || {type: 'all'}; // 'all'|'exam'|'uids'|'inactive'
-    const scheduledAt = typeof request.data?.scheduledAt === 'number' ? request.data.scheduledAt : null; // epoch ms
+    const audience = request.data?.audience || {type: 'all'};
+    const scheduledAt = typeof request.data?.scheduledAt === 'number' ? request.data.scheduledAt : null;
     const sendTypeRaw = String(request.data?.sendType || 'push').toLowerCase();
     const sendType = ['push','inapp','both'].includes(sendTypeRaw) ? sendTypeRaw : 'push';
 
@@ -274,16 +274,13 @@ exports.registerFcmToken = onCall({region: 'us-central1'}, async (request) => {
       sendType,
     };
 
-    // Planlı ise dokümana yazıp çık
-    if (scheduledAt && scheduledAt > Date.now() + 15000) { // 15sn sonrası kabul
+    if (scheduledAt && scheduledAt > Date.now() + 15000) {
       await campaignRef.set({ ...baseDoc, status: 'scheduled', scheduledAt });
       return {ok: true, campaignId: campaignRef.id, scheduled: true};
     }
 
-    // Hemen gönder
     await campaignRef.set({ ...baseDoc, status: 'sending' });
 
-    // Alıcılar
     let targetUids = await selectAudienceUids(audience);
     logger.info('adminSendPush audience selected', { count: targetUids.length, type: audience?.type || 'all' });
     if (audience?.type === 'inactive' && typeof audience.hours === 'number') {
@@ -297,25 +294,38 @@ exports.registerFcmToken = onCall({region: 'us-central1'}, async (request) => {
     }
 
     const filters = { buildMin: audience.buildMin, buildMax: audience.buildMax, platforms: audience.platforms };
+    const totalUsers = targetUids.length;
+    let totalInApp = 0;
+    let totalSent = 0;
+    let totalFail = 0;
 
-    let totalSent = 0, totalFail = 0, totalUsers = 0, totalInApp = 0;
-    for (const uid of targetUids) {
-      totalUsers++;
+    // Handle in-app messages first
+    if (sendType === 'inapp' || sendType === 'both') {
+      const inAppPromises = targetUids.map(uid =>
+        createInAppForUser(uid, { title, body, imageUrl, route, type: 'campaign', campaignId: campaignRef.id })
+      );
+      const results = await Promise.all(inAppPromises);
+      totalInApp = results.filter(Boolean).length;
+    }
 
-      if (sendType === 'inapp' || sendType === 'both') {
-        const ok = await createInAppForUser(uid, { title, body, imageUrl, route, type: 'campaign', campaignId: campaignRef.id });
-        if (ok) totalInApp++;
+    // Handle push notifications
+    if (sendType === 'push' || sendType === 'both') {
+      const allTokens = [];
+      const batchSize = 100;
+      for (let i = 0; i < targetUids.length; i += batchSize) {
+        const batchUids = targetUids.slice(i, i + batchSize);
+        const tokenPromises = batchUids.map(uid => getActiveTokensFiltered(uid, filters));
+        const tokenBatches = await Promise.all(tokenPromises);
+        tokenBatches.forEach(tokens => allTokens.push(...tokens));
       }
 
-      if (sendType === 'push' || sendType === 'both') {
-        const tokens = await getActiveTokensFiltered(uid, filters);
-        if (tokens.length > 0) {
-          const r = await sendPushToTokens(tokens, { title, body, imageUrl, route, type: 'campaign', campaignId: campaignRef.id });
-          totalSent += r.successCount; totalFail += r.failureCount;
-          await campaignRef.collection('logs').add({uid, success: r.successCount, failed: r.failureCount, ts: admin.firestore.FieldValue.serverTimestamp()});
-        } else {
-          await campaignRef.collection('logs').add({uid, success: 0, failed: 0, ts: admin.firestore.FieldValue.serverTimestamp(), note: 'no_tokens'});
-        }
+      const uniqueTokens = [...new Set(allTokens)];
+
+      if (uniqueTokens.length > 0) {
+        const pushPayload = { title, body, imageUrl, route, type: 'campaign', campaignId: campaignRef.id };
+        const result = await sendPushToTokens(uniqueTokens, pushPayload);
+        totalSent = result.successCount;
+        totalFail = result.failureCount;
       }
     }
 
