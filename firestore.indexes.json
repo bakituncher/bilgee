@@ -56,7 +56,7 @@
         { "fieldPath": "status", "order": "ASCENDING" },
         { "fieldPath": "scheduledAt", "order": "ASCENDING" }
       ]
-    },
+    }
   ],
   "fieldOverrides": [
     {
