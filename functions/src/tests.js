@@ -155,7 +155,7 @@ exports.addTestResult = onCall({ region: "us-central1", timeoutSeconds: 30 }, as
         userId: uid,
         userName: (userDocData && userDocData.name) || "",
         avatarStyle: (userDocData && userDocData.avatarStyle) || null,
-        avatarSeed: (userDocD ata && userDocData.avatarSeed) || null,
+        avatarSeed: (userDocData && userDocData.avatarSeed) || null,
         score: admin.firestore.FieldValue.increment(pointsAward),
         testCount: admin.firestore.FieldValue.increment(1),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
