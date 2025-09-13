@@ -57,20 +57,6 @@
         { "fieldPath": "scheduledAt", "order": "ASCENDING" }
       ]
     },
-    {
-      "collectionGroup": "leaderboard_scores",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        { "fieldPath": "score", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "daily_quests",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        { "fieldPath": "isCompleted", "order": "ASCENDING" }
-      ]
-    }
   ],
   "fieldOverrides": [
     {
