@@ -63,6 +63,13 @@
       "fields": [
         { "fieldPath": "score", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "daily_quests",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "isCompleted", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": [
