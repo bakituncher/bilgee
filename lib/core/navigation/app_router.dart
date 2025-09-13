@@ -19,6 +19,8 @@ import 'package:bilge_ai/features/blog/screens/blog_detail_screen.dart';
 import 'package:bilge_ai/features/admin/screens/question_reports_screen.dart';
 import 'package:bilge_ai/features/admin/screens/question_report_detail_screen.dart';
 import 'package:bilge_ai/features/admin/screens/push_composer_screen.dart';
+import 'package:bilge_ai/features/admin/screens/admin_panel_screen.dart';
+import 'package:bilge_ai/features/admin/screens/user_management_screen.dart';
 import 'package:bilge_ai/shared/notifications/notification_center_screen.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
@@ -136,6 +138,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       // Admin: Cevher Bildirimleri
       GoRoute(
+        path: '/admin/panel',
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (c, s) => const AdminPanelScreen(),
+      ),
+      GoRoute(
+        path: '/admin/user-management',
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (c, s) => const UserManagementScreen(),
+      ),
+      GoRoute(
         path: '/admin/reports',
         parentNavigatorKey: rootNavigatorKey,
         builder: (c, s) => const QuestionReportsScreen(),
@@ -149,7 +161,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
-        path: '/admin/push',
+        path: '/admin/push-composer',
         parentNavigatorKey: rootNavigatorKey,
         builder: (c, s) => const PushComposerScreen(),
       ),

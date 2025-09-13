@@ -82,7 +82,10 @@ class StatsAnalysis {
       accuracy = totalQuestionsAttempted > 0 ? (totalCorrectAnswers / totalQuestionsAttempted) * 100 : 0.0;
       trend = _calculateTrend(allNets);
       netSpots = List.generate(sortedTests.length, (i) => FlSpot(i.toDouble(), sortedTests[i].totalNet));
-      final netComponent = (averageNet / (sortedTests.first.totalQuestions * 1.0)) * 50;
+      final totalQuestionsInFirstTest = sortedTests.first.totalQuestions;
+      final netComponent = (totalQuestionsInFirstTest > 0)
+          ? (averageNet / (totalQuestionsInFirstTest * 1.0)) * 50
+          : 0.0;
       final accuracyComponent = (accuracy / 100) * 25;
       final consistencyComponent = (consistency / 100) * 15;
       final trendComponent = (atan(trend) / (pi / 2)) * 10;

@@ -100,27 +100,15 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
     }
 
     Widget? buildFab() {
-      return isAdminAsync.when(
-        loading: () => null,
-        error: (_, __) => null,
-        data: (isAdmin) {
-          if (isAdmin == true) {
-            return FloatingActionButton.extended(
-              onPressed: () => context.go('/blog/admin/new'),
-              icon: const Icon(Icons.add_rounded),
-              label: const Text('Yeni Yazı'),
-              backgroundColor: AppTheme.secondaryColor,
-              foregroundColor: AppTheme.primaryColor,
-            );
-          }
-          return FloatingActionButton.extended(
-            onPressed: requestSelfAdmin,
-            icon: const Icon(Icons.verified_user_rounded),
-            label: const Text('Admin Yetkisi Al'),
-            backgroundColor: AppTheme.successColor,
-            foregroundColor: Colors.white,
-          );
-        },
+      final isAdmin = isAdminAsync.asData?.value ?? false;
+      if (!isAdmin) return null;
+
+      return FloatingActionButton.extended(
+        onPressed: () => context.go('/blog/admin/new'),
+        icon: const Icon(Icons.add_rounded),
+        label: const Text('Yeni Yazı'),
+        backgroundColor: AppTheme.secondaryColor,
+        foregroundColor: AppTheme.primaryColor,
       );
     }
 
