@@ -141,7 +141,7 @@ class NotificationService {
 
   Future<void> _registerToken(String token, String? appVersion, int? appBuild) async {
     try {
-      final HttpsCallable fn = FirebaseFunctions.instance.httpsCallable('registerFcmToken');
+      final HttpsCallable fn = FirebaseFunctions.instance.httpsCallable('notifications-registerFcmToken');
       final platform = Platform.isAndroid ? 'android' : (Platform.isIOS ? 'ios' : 'other');
       final lang = Intl.getCurrentLocale();
       await fn.call({

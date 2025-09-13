@@ -86,7 +86,7 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
     Future<void> requestSelfAdmin() async {
       try {
         final functions = ref.read(functionsProvider);
-        await functions.httpsCallable('setSelfAdmin').call();
+        await functions.httpsCallable('admin-setSelfAdmin').call();
         await FirebaseAuth.instance.currentUser?.getIdToken(true);
         ref.invalidate(adminClaimProvider);
         if (context.mounted) {

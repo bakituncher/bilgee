@@ -18,7 +18,7 @@ class QuestionReportsScreen extends ConsumerWidget {
 
     Future<void> _callAdminFn({required String mode, required String qhash}) async {
       try {
-        final callable = FirebaseFunctions.instanceFor(region: 'us-central1').httpsCallable('adminDeleteQuestionReports');
+        final callable = FirebaseFunctions.instanceFor(region: 'us-central1').httpsCallable('reports-adminDeleteQuestionReports');
         final res = await callable.call({'mode': mode, 'qhash': qhash});
         // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('İşlem başarılı: ${res.data}')));

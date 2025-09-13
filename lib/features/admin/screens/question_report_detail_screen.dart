@@ -16,7 +16,7 @@ class QuestionReportDetailScreen extends ConsumerWidget {
 
     Future<void> _callAdminFn(String mode, {String? reportId}) async {
       try {
-        final callable = FirebaseFunctions.instanceFor(region: 'us-central1').httpsCallable('adminDeleteQuestionReports');
+        final callable = FirebaseFunctions.instanceFor(region: 'us-central1').httpsCallable('reports-adminDeleteQuestionReports');
         final payload = {
           'mode': mode,
           if (mode == 'single' && reportId != null) 'reportId': reportId,

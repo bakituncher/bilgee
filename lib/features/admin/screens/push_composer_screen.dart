@@ -153,7 +153,7 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
   Future<void> _estimate() async {
     setState(() { _estimateUsers = null; _estimateTokenHolders = null; });
     try {
-      final callable = FirebaseFunctions.instance.httpsCallable('adminEstimateAudience');
+      final callable = FirebaseFunctions.instance.httpsCallable('admin-adminEstimateAudience');
       final res = await callable.call({'audience': _buildAudience()});
       final m = (res.data as Map?) ?? {};
       setState(() {
@@ -263,7 +263,7 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() { _sending = true; });
     try {
-      final callable = FirebaseFunctions.instance.httpsCallable('adminSendPush');
+      final callable = FirebaseFunctions.instance.httpsCallable('admin-adminSendPush');
       Map<String, dynamic> audience = _buildAudience();
       if (testToSelf) {
         final uid = FirebaseAuth.instance.currentUser?.uid;

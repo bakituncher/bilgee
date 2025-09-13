@@ -428,7 +428,7 @@ class FirestoreService {
   Future<void> updateEngagementScore(String userId, int pointsToAdd) async {
     try {
       final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
-      final callable = functions.httpsCallable('addEngagementPoints');
+      final callable = functions.httpsCallable('tests-addEngagementPoints');
       await callable.call({'pointsToAdd': pointsToAdd});
     } catch (_) {
       // istemci tarafında sessiz geç
@@ -439,7 +439,7 @@ class FirestoreService {
     // Güvenlik: Test ekleme + streak/puan/leaderboard sunucuda yapılır
     try {
       final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
-      final callable = functions.httpsCallable('addTestResult');
+      final callable = functions.httpsCallable('tests-addTestResult');
       await callable.call({
         'testName': test.testName,
         'examType': test.examType.name,

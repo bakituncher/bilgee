@@ -111,7 +111,7 @@ service cloud.firestore {
     match /leaderboard_snapshots/{snapshotId} {
       // KALICI KURAL: Eski hali request.auth.uid != null idi ve authenticated olmayan istemciler için PERMISSION_DENIED veriyordu.
       // HIZLI DÜZELTME: Bu koleksiyonu herkese açık yapıyoruz. Eğer güvenlik gerekiyorsa daha ince yetkilendirme ekleyin.
-      allow read, list: if true;
+      allow read, list: if request.auth != null;
       allow write: if false; // Sadece sunucu yazmalı
     }
 
