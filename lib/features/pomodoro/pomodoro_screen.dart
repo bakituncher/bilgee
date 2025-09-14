@@ -81,7 +81,16 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen> with TickerProv
       case PomodoroSessionState.idle:
         return const PomodoroStatsView(key: ValueKey('stats'));
       case PomodoroSessionState.completed:
-        return PomodoroCompletedView(key: const ValueKey('completed'), result: pomodoro.lastResult!);
+        // DÜZELTME: lastResult'ın null olabileceği geçiş anı için kontrol eklendi.
+        // Bu durum, tamamlanma ekranından mola veya başa dönme sırasında yaşanır.
+        if (pomodoro.lastResult == null) {
+          // Geçiş sırasında bir "boş" view göstermek çökmemeyi sağlar.
+          return const SizedBox.shrink(key: ValueKey('empty_completed'));
+        }
+        return PomodoroCompletedView(
+          key: const ValueKey('completed'),
+          result: pomodoro.lastResult!,
+        );
       default:
         return const PomodoroTimerView(key: ValueKey('timer'));
     }

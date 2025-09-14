@@ -89,13 +89,13 @@ class QuestService {
 
   Future<bool> claimReward(String userId, String questId) async {
     final firestore = _ref.read(firestoreProvider);
-    final userStatsRef = firestore.collection('user_stats').doc(userId);
+    // DÜZELTME: Doğru stats doküman yolu kullanıldı.
+    final userStatsRef = firestore.collection('users').doc(userId).collection('state').doc('stats');
     final questRef = firestore.collection('users').doc(userId).collection('daily_quests').doc(questId);
 
     try {
       await firestore.runTransaction((transaction) async {
         final questDoc = await transaction.get(questRef);
-        final userStatsDoc = await transaction.get(userStatsRef);
 
         if (!questDoc.exists) {
           throw Exception("Görev bulunamadı: $questId");
@@ -110,11 +110,19 @@ class QuestService {
           return;
         }
 
-        final currentBp = (userStatsDoc.data()?['bp'] as num? ?? 0).toInt();
-        final newBp = currentBp + quest.reward;
+        // DÜZELTME: 'bp' yerine 'engagementScore' kullanıldı ve FieldValue.increment ile atomik artış sağlandı.
+        // Bu sayede userStats dokümanını okumaya gerek kalmadı, bu da işlemi basitleştirir.
+        transaction.update(userStatsRef, {
+          'engagementScore': FieldValue.increment(quest.reward),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
 
-        transaction.update(userStatsRef, {'bp': newBp});
-        transaction.update(questRef, {'rewardClaimed': true});
+        // DÜZELTME: Ödülün alındığını ve ne kadar alındığını kaydet.
+        transaction.update(questRef, {
+          'rewardClaimed': true,
+          'rewardClaimedAt': FieldValue.serverTimestamp(),
+          'actualReward': quest.reward,
+        });
       });
       return true;
     } catch (e) {

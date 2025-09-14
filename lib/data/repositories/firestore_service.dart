@@ -448,8 +448,9 @@ class FirestoreService {
         'penaltyCoefficient': test.penaltyCoefficient,
         'dateMs': test.date.millisecondsSinceEpoch,
       });
-    } catch (_) {
-      // sessiz geç; UI yeniden denemeyi yönetebilir
+    } catch (e) {
+      // Hatanın çağrıldığı yere yeniden fırlatılması, UI'ın hatayı yakalamasına olanak tanır.
+      rethrow;
     }
   }
 

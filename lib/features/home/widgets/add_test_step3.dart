@@ -105,9 +105,16 @@ class Step3Summary extends ConsumerWidget {
                 if (context.mounted) {
                   context.push('/home/test-result-summary', extra: newTest);
                 }
-              } catch (e) {
+              } catch (e, s) {
+                debugPrint('Deneme sonucu kaydedilirken bir hata oluştu: $e');
+                debugPrint('Stack trace: $s');
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $e')));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Deneme sonucu kaydedilemedi. Lütfen tekrar deneyin.'),
+                      backgroundColor: AppTheme.accentColor,
+                    ),
+                  );
                 }
               } finally {
                 if(context.mounted) {
