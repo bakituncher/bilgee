@@ -106,7 +106,7 @@ exports.addTestResult = onCall({ region: "us-central1", timeoutSeconds: 30 }, as
       }
 
       const newDocRef = testsCol.doc();
-      newTestI d = newDocRef.id;
+      newTestId = newDocRef.id;
       const testDate = dateMs && Number.isFinite(dateMs) ? admin.firestore.Timestamp.fromMillis(dateMs) : admin.firestore.Timestamp.now();
       tx.set(newDocRef, {
         userId: uid,
