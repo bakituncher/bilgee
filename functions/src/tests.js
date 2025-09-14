@@ -81,7 +81,13 @@ exports.addTestResult = onCall({ region: "us-central1", timeoutSeconds: 30 }, as
     const pointsAward = 50;
 
     await db.runTransaction(async (tx) => {
-      const [uSnap, sSnap] = await Promise.all([tx.get(userRef), tx.get(statsRef)]);
+      // Önce tüm okuma işlemleri
+      const [uSnap, sSnap, questsSnap] = await Promise.all([
+        tx.get(userRef),
+        tx.get(statsRef),
+        tx.get(userRef.collection("daily_quests").where("isCompleted", "==", false)),
+      ]);
+
       if (!uSnap.exists) throw new HttpsError("failed-precondition", "Kullanıcı yok");
       userDocData = uSnap.data() || {};
       examType = ((userDocData && userDocData.selectedExam) || examTypeParam || "").toString();
@@ -105,6 +111,7 @@ exports.addTestResult = onCall({ region: "us-central1", timeoutSeconds: 30 }, as
         }
       }
 
+      // Şimdi tüm yazma işlemleri
       const newDocRef = testsCol.doc();
       newTestId = newDocRef.id;
       const testDate = dateMs && Number.isFinite(dateMs) ? admin.firestore.Timestamp.fromMillis(dateMs) : admin.firestore.Timestamp.now();
@@ -133,12 +140,9 @@ exports.addTestResult = onCall({ region: "us-central1", timeoutSeconds: 30 }, as
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       }, { merge: true });
 
-      // YENİ: Aktif görevlerin ilerlemesini de bu transaction içinde güncelle
-      const questsSnap = await tx.get(userRef.collection("daily_quests").where("isCompleted", "==", false));
       if (!questsSnap.empty) {
         for (const doc of questsSnap.docs) {
           const quest = doc.data();
-          // Sadece soru çözme ile ilgili görevleri güncelle
           if (quest.category === 'practice' || quest.category === 'test_submission') {
             tx.update(doc.ref, {
               currentProgress: admin.firestore.FieldValue.increment(totalQuestions),
