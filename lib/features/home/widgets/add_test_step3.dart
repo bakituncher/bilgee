@@ -107,7 +107,12 @@ class Step3Summary extends ConsumerWidget {
                 }
               } catch (e) {
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $e')));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Deneme sonucu kaydedilemedi. Lütfen tekrar deneyin.'),
+                      backgroundColor: AppTheme.accentColor,
+                    ),
+                  );
                 }
               } finally {
                 if(context.mounted) {
