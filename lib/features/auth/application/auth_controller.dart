@@ -49,10 +49,22 @@ class AuthController extends StreamNotifier<User?> {
     );
   }
 
-  Future<void> signUp({required String name, required String email, required String password}) {
+  Future<void> signUp({
+    required String firstName,
+    required String lastName,
+    required String username,
+    String? gender,
+    DateTime? dateOfBirth,
+    required String email,
+    required String password,
+  }) {
     final authRepository = ref.read(authRepositoryProvider);
     return authRepository.signUpWithEmailAndPassword(
-      name: name,
+      firstName: firstName,
+      lastName: lastName,
+      username: username,
+      gender: gender,
+      dateOfBirth: dateOfBirth,
       email: email,
       password: password,
     );

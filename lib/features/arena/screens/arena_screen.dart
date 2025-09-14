@@ -286,11 +286,23 @@ class _CurrentUserCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 12),
                           Expanded(
-                            child: Text(
-                              entry.userName,
-                              style: textTheme.titleMedium
-                                  ?.copyWith(fontWeight: FontWeight.w600),
-                              overflow: TextOverflow.ellipsis,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  entry.userName,
+                                  style: textTheme.titleMedium
+                                      ?.copyWith(fontWeight: FontWeight.w600),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                if (entry.username != null && entry.username!.isNotEmpty)
+                                  Text(
+                                    '@${entry.username}',
+                                    style: textTheme.bodySmall
+                                        ?.copyWith(color: AppTheme.secondaryTextColor),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                              ],
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -432,11 +444,22 @@ class _PodiumPlaceCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 18),
-            Text(
-              entry.userName,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
+            Column(
+              children: [
+                Text(
+                  entry.userName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
+                ),
+                if (entry.username != null && entry.username!.isNotEmpty)
+                  Text(
+                    '@${entry.username}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.labelSmall?.copyWith(color: AppTheme.secondaryTextColor),
+                  ),
+              ],
             ),
             const SizedBox(height: 4),
             Text('${entry.score} BP',
@@ -559,11 +582,23 @@ class _RankCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: Text(
-                          entry.userName,
-                          style: textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.w600),
-                          overflow: TextOverflow.ellipsis,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              entry.userName,
+                              style: textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w600),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (entry.username != null && entry.username!.isNotEmpty)
+                              Text(
+                                '@${entry.username}',
+                                style: textTheme.bodySmall
+                                    ?.copyWith(color: AppTheme.secondaryTextColor),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                          ],
                         ),
                       ),
                       const SizedBox(width: 12),

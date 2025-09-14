@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:bilge_ai/features/auth/application/auth_controller.dart';
 import 'package:bilge_ai/core/navigation/app_routes.dart';
+import 'package:intl/intl.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -14,23 +15,32 @@ class RegisterScreen extends ConsumerStatefulWidget {
 
 class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _dateOfBirthController = TextEditingController();
+
+  String? _selectedGender;
+  DateTime? _selectedDate;
 
   bool _isLoading = false;
   String? _errorMessage;
   bool _obscurePass1 = true;
   bool _obscurePass2 = true;
-  bool _acceptPolicy = true; // opsiyonel: varsayılan kabul
+  bool _acceptPolicy = true;
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _usernameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _dateOfBirthController.dispose();
     super.dispose();
   }
 
@@ -42,6 +52,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     if (RegExp(r'[0-9]').hasMatch(v)) score++;
     if (RegExp(r'[!@#\$%^&*(),.?":{}|<>_+-]').hasMatch(v)) score++;
     return (score / 5).clamp(0, 1).toDouble();
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? DateTime.now(),
+      firstDate: DateTime(1920),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+        _dateOfBirthController.text = DateFormat('dd/MM/yyyy').format(picked);
+      });
+    }
   }
 
   void _submit() async {
@@ -60,7 +85,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
       try {
         await ref.read(authControllerProvider.notifier).signUp(
-          name: _nameController.text.trim(),
+          firstName: _firstNameController.text.trim(),
+          lastName: _lastNameController.text.trim(),
+          username: _usernameController.text.trim(),
+          gender: _selectedGender,
+          dateOfBirth: _selectedDate,
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
         );
@@ -127,18 +156,106 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ),
                 ),
               const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _firstNameController,
+                      decoration: const InputDecoration(labelText: 'Ad', prefixIcon: Icon(Icons.person_outline)),
+                      textInputAction: TextInputAction.next,
+                      autofillHints: const [AutofillHints.givenName],
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Lütfen adınızı girin.';
+                        }
+                        return null;
+                      },
+                      onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _lastNameController,
+                      decoration: const InputDecoration(labelText: 'Soyad', prefixIcon: Icon(Icons.person_outline)),
+                      textInputAction: TextInputAction.next,
+                      autofillHints: const [AutofillHints.familyName],
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Lütfen soyadınızı girin.';
+                        }
+                        return null;
+                      },
+                      onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
               TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Adın', prefixIcon: Icon(Icons.badge_outlined)),
+                controller: _usernameController,
+                decoration: const InputDecoration(labelText: 'Kullanıcı Adı', prefixIcon: Icon(Icons.alternate_email)),
                 textInputAction: TextInputAction.next,
-                autofillHints: const [AutofillHints.name],
+                autofillHints: const [AutofillHints.username],
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Lütfen adınızı girin.';
+                    return 'Lütfen bir kullanıcı adı girin.';
+                  }
+                  if (value.length < 3) {
+                    return 'Kullanıcı adı en az 3 karakter olmalıdır.';
                   }
                   return null;
                 },
                 onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
+              ),
+              const SizedBox(height: 12),
+               Row(
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      value: _selectedGender,
+                      decoration: const InputDecoration(
+                        labelText: 'Cinsiyet',
+                        prefixIcon: Icon(Icons.wc_outlined),
+                      ),
+                      items: ['Erkek', 'Kadın', 'Belirtmek istemiyorum']
+                          .map((label) => DropdownMenuItem(
+                                child: Text(label),
+                                value: label,
+                              ))
+                          .toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedGender = value;
+                        });
+                      },
+                       validator: (value) {
+                        if (value == null) {
+                          return 'Lütfen cinsiyetinizi seçin.';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _dateOfBirthController,
+                      decoration: const InputDecoration(
+                        labelText: 'Doğum Tarihi',
+                        prefixIcon: Icon(Icons.calendar_today_outlined),
+                      ),
+                      readOnly: true,
+                      onTap: () => _selectDate(context),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Lütfen doğum tarihinizi seçin.';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -180,7 +297,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
               ),
               const SizedBox(height: 8),
-              // Şifre gücü g��stergesi
+              // Şifre gücü göstergesi
               ClipRRect(
                 borderRadius: BorderRadius.circular(6),
                 child: LinearProgressIndicator(

@@ -15,6 +15,7 @@ import 'package:bilge_ai/features/home/screens/test_detail_screen.dart';
 import 'package:bilge_ai/features/home/screens/test_result_summary_screen.dart';
 import 'package:bilge_ai/features/pomodoro/pomodoro_screen.dart';
 import 'package:bilge_ai/features/profile/screens/profile_screen.dart';
+import 'package:bilge_ai/features/profile/screens/edit_profile_screen.dart';
 import 'package:bilge_ai/features/profile/screens/honor_wall_screen.dart';
 import 'package:bilge_ai/features/profile/models/badge_model.dart' as app_badge;
 import 'package:bilge_ai/features/stats/screens/stats_screen.dart';
@@ -196,6 +197,11 @@ StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
                 path: AppRoutes.profile,
                 builder: (context, state) => const ProfileScreen(),
                 routes: [
+                  GoRoute(
+                    path: 'edit',
+                    parentNavigatorKey: rootNavigatorKey,
+                    builder: (context, state) => const EditProfileScreen(),
+                  ),
                   GoRoute(
                     path: 'honor-wall',
                     parentNavigatorKey: rootNavigatorKey,
