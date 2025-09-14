@@ -41,7 +41,10 @@ class _PomodoroCompletedViewState extends State<PomodoroCompletedView> {
         final notifier = ref.read(pomodoroProvider.notifier);
         final pomodoro = ref.watch(pomodoroProvider);
 
-        final isLongBreakTime = widget.result.roundsCompleted % pomodoro.longBreakInterval == 0;
+        // DÜZELTME: 'longBreakInterval' sıfır olabileceğinden, crash'i önlemek için kontrol eklendi.
+        final isLongBreakTime = pomodoro.longBreakInterval > 0
+            ? (widget.result.roundsCompleted % pomodoro.longBreakInterval == 0)
+            : false;
         final breakDuration = isLongBreakTime ? pomodoro.longBreakDuration : pomodoro.shortBreakDuration;
 
         return Stack(
