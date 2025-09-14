@@ -59,11 +59,13 @@ service cloud.firestore {
 
       match /in_app_notifications/{notifId} {
         allow read: if request.auth.uid == userId;
+        // DÜZELTME: Kural, bir kullanıcının kendi bildirimini okundu olarak işaretlemesine izin verecek şekilde basitleştirildi.
+        // Önceki 'hasOnly' kuralı, bir güncelleme işlemi için fazla kısıtlayıcıydı ve hatalıydı.
         allow update: if request.auth.uid == userId
-          && request.resource.data.keys().hasOnly(['title','body','route','createdAt','read','readAt','imageUrl'])
           && request.resource.data.read == true
           && resource.data.read == false;
         allow delete: if request.auth.uid == userId;
+        // Not: 'create' izni eklenmedi, bildirimlerin yalnızca sunucu tarafından (admin SDK) oluşturulduğu varsayılıyor.
       }
 
       match /followers/{followerId} {
