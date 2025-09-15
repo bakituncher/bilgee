@@ -337,8 +337,24 @@ class FirestoreService {
         .map((snapshot) => snapshot.docs.map((doc) => SavedWorkshopModel.fromSnapshot(doc)).toList());
   }
 
-  Future<void> createUserProfile(User user, String name) async {
-    final userProfile = UserModel(id: user.uid, email: user.email!, name: name, tutorialCompleted: false);
+  Future<void> createUserProfile({
+    required User user,
+    required String firstName,
+    required String lastName,
+    required String username,
+    String? gender,
+    DateTime? dateOfBirth,
+  }) async {
+    final userProfile = UserModel(
+      id: user.uid,
+      email: user.email!,
+      firstName: firstName,
+      lastName: lastName,
+      username: username,
+      gender: gender,
+      dateOfBirth: dateOfBirth,
+      tutorialCompleted: false,
+    );
     await usersCollection.doc(user.uid).set(userProfile.toJson());
     // Stats başlangıç değerleri
     await _userStatsDoc(user.uid).set({
@@ -356,11 +372,19 @@ class FirestoreService {
 
   Future<void> updateUserName({required String userId, required String newName}) async {
     final userDocRef = usersCollection.doc(userId);
+    final parts = newName.split(' ');
+    final firstName = parts.isNotEmpty ? parts.first : '';
+    final lastName = parts.length > 1 ? parts.sublist(1).join(' ') : '';
+
     await _firestore.runTransaction((txn) async {
       final snap = await txn.get(userDocRef);
       final data = snap.data();
       final String? examType = data?['selectedExam'];
-      txn.update(userDocRef, {'name': newName});
+      txn.update(userDocRef, {
+        'name': newName,
+        'firstName': firstName,
+        'lastName': lastName,
+      });
       if (examType != null) {
         final statsSnap = await txn.get(_userStatsDoc(userId));
         final stats = statsSnap.data() ?? const <String, dynamic>{};
@@ -396,6 +420,32 @@ class FirestoreService {
     });
     await _appStateDoc(userId).set({'onboardingCompleted': true}, SetOptions(merge: true));
     await usersCollection.doc(userId).update({'onboardingCompleted': true});
+  }
+
+  Future<void> updateUserProfile(String userId, Map<String, dynamic> data) async {
+    final userDocRef = usersCollection.doc(userId);
+
+    // Also update the full name for backward compatibility
+    if (data.containsKey('firstName') || data.containsKey('lastName')) {
+      final userSnap = await userDocRef.get();
+      final existingData = userSnap.data() ?? {};
+      final firstName = data['firstName'] ?? existingData['firstName'] ?? '';
+      final lastName = data['lastName'] ?? existingData['lastName'] ?? '';
+      data['name'] = '$firstName $lastName'.trim();
+    }
+
+    await userDocRef.update(data);
+
+    // Update leaderboard if name changed
+    if (data.containsKey('name')) {
+      final userSnap = await userDocRef.get();
+      final userData = userSnap.data();
+      final String? examType = userData?['selectedExam'];
+      if (examType != null) {
+        final lbRef = _leaderboardUserDoc(examType: examType, userId: userId);
+        await lbRef.set({'userName': data['name'], 'username': data['username']}, SetOptions(merge: true));
+      }
+    }
   }
 
   Stream<UserModel> getUserProfile(String userId) {
@@ -711,6 +761,7 @@ class FirestoreService {
       return LeaderboardEntry(
         userId: data['userId'] ?? doc.id,
         userName: (data['userName'] ?? '') as String,
+        username: data['username'] as String?,
         score: (data['score'] ?? 0) as int,
         testCount: (data['testCount'] ?? 0) as int,
         avatarStyle: data['avatarStyle'] as String?,
@@ -730,6 +781,7 @@ class FirestoreService {
       return LeaderboardEntry(
         userId: (m['userId'] ?? '') as String,
         userName: (m['userName'] ?? '') as String,
+        username: m['username'] as String?,
         score: ((m['score'] ?? 0) as num).toInt(),
         // rank alanı snapshot'tan doğrudan gelir
         rank: ((m['rank'] ?? 0) as num).toInt(),

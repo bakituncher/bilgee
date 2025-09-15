@@ -5,7 +5,16 @@ import 'package:bilge_ai/features/quests/models/quest_model.dart';
 class UserModel {
   final String id;
   final String email;
+  @Deprecated('Use firstName and lastName instead')
   final String? name;
+
+  // Yeni Profil Alanları
+  final String firstName;
+  final String lastName;
+  final String username;
+  final String? gender;
+  final DateTime? dateOfBirth;
+
   final bool isAdmin;
   final String? goal;
   final List<String>? challenges;
@@ -58,6 +67,12 @@ class UserModel {
     required this.id,
     required this.email,
     this.name,
+    // Yeni Alanlar
+    required this.firstName,
+    required this.lastName,
+    required this.username,
+    this.gender,
+    this.dateOfBirth,
     this.isAdmin = false,
     this.goal,
     this.challenges,
@@ -101,6 +116,11 @@ class UserModel {
     String? id,
     String? email,
     String? name,
+    String? firstName,
+    String? lastName,
+    String? username,
+    String? gender,
+    DateTime? dateOfBirth,
     bool? isAdmin,
     String? goal,
     List<String>? challenges,
@@ -142,6 +162,11 @@ class UserModel {
       id: id ?? this.id,
       email: email ?? this.email,
       name: name ?? this.name,
+      firstName: firstName ?? this.firstName,
+      lastName: lastName ?? this.lastName,
+      username: username ?? this.username,
+      gender: gender ?? this.gender,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       isAdmin: isAdmin ?? this.isAdmin,
       goal: goal ?? this.goal,
       challenges: challenges ?? this.challenges,
@@ -199,10 +224,24 @@ class UserModel {
       }
     }
 
+    // Geriye dönük uyumluluk için name'den firstName/lastName türetme
+    String fName = data['firstName'] ?? '';
+    String lName = data['lastName'] ?? '';
+    if (fName.isEmpty && lName.isEmpty && data['name'] != null) {
+      final parts = data['name'].split(' ');
+      fName = parts.isNotEmpty ? parts.first : '';
+      lName = parts.length > 1 ? parts.sublist(1).join(' ') : '';
+    }
+
     return UserModel(
       id: doc.id,
       email: data['email'],
       name: data['name'],
+      firstName: fName,
+      lastName: lName,
+      username: data['username'] ?? '',
+      gender: data['gender'],
+      dateOfBirth: (data['dateOfBirth'] as Timestamp?)?.toDate(),
       goal: data['goal'],
       challenges: List<String>.from(data['challenges'] ?? []),
       weeklyStudyGoal: (data['weeklyStudyGoal'] as num?)?.toDouble(),
@@ -261,11 +300,18 @@ class UserModel {
   List<Timestamp> get dailyVisits => const [];
   Map<String,int> get recentPracticeVolumes => const {};
 
+  String get fullName => '$firstName $lastName'.trim();
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'email': email,
-      'name': name,
+      'name': fullName,
+      'firstName': firstName,
+      'lastName': lastName,
+      'username': username,
+      'gender': gender,
+      'dateOfBirth': dateOfBirth != null ? Timestamp.fromDate(dateOfBirth!) : null,
       'goal': goal,
       'challenges': challenges,
       'weeklyStudyGoal': weeklyStudyGoal,
@@ -302,6 +348,15 @@ class UserModel {
       'workshopStreak': workshopStreak,
       'lastWorkshopDate': lastWorkshopDate,
       // 'recentPracticeVolumes': recentPracticeVolumes, // KALDIRILDI
+      'hasCreatedStrategicPlan': hasCreatedStrategicPlan,
+      'lastStrategyCreationDate': lastStrategyCreationDate,
+      'completedWorkshopCount': completedWorkshopCount,
+      'hasUsedPomodoro': hasUsedPomodoro,
+      'hasSubmittedTest': hasSubmittedTest,
+      'hasCompletedWeeklyPlan': hasCompletedWeeklyPlan,
+      'usedFeatures': usedFeatures,
+      'currentQuestStreak': currentQuestStreak,
+      'lastQuestCompletionDate': lastQuestCompletionDate,
     };
   }
 
@@ -317,6 +372,11 @@ class UserModel {
       id: id,
       email: email,
       name: name,
+      firstName: firstName,
+      lastName: lastName,
+      username: username,
+      gender: gender,
+      dateOfBirth: dateOfBirth,
       isAdmin: isAdmin,
       goal: goal,
       challenges: challenges,

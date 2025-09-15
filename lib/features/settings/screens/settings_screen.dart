@@ -83,7 +83,7 @@ class SettingsScreen extends ConsumerWidget {
                         labelText: "Onay Metni",
                         hintText: confirmationText,
                       ),
-                      onChanged: (value) => setState(() {}), // Buton durumunu g��ncellemek için
+                      onChanged: (value) => setState(() {}), // Buton durumunu güncellemek için
                       validator: (value) {
                         if (value != confirmationText) {
                           return "Lütfen 'SİL' yazın.";
@@ -120,78 +120,6 @@ class SettingsScreen extends ConsumerWidget {
                     );
                   },
                 ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  // İsim değiştirme diyalogunu gösteren fonksiyon
-  void _showEditNameDialog(BuildContext context, WidgetRef ref, String currentName) {
-    final formKey = GlobalKey<FormState>();
-    final nameController = TextEditingController(text: currentName);
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Consumer(
-          builder: (context, ref, child) {
-            final settingsState = ref.watch(settingsNotifierProvider);
-            return AlertDialog(
-              backgroundColor: AppTheme.cardColor,
-              title: const Text("İsmini Güncelle"),
-              content: Form(
-                key: formKey,
-                child: TextFormField(
-                  controller: nameController,
-                  autofocus: true,
-                  decoration: const InputDecoration(labelText: "Yeni İsim"),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return "İsim boş bırakılamaz.";
-                    }
-                    return null;
-                  },
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text("İptal"),
-                ),
-                ElevatedButton(
-                  onPressed: settingsState.isLoading
-                      ? null
-                      : () async {
-                    if (formKey.currentState!.validate()) {
-                      final success = await ref
-                          .read(settingsNotifierProvider.notifier)
-                          .updateUserName(nameController.text.trim());
-                      if (context.mounted) {
-                        Navigator.of(context).pop();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(success
-                                ? "İsmin başarıyla güncellendi!"
-                                : "Bir hata oluştu."),
-                            backgroundColor: success
-                                ? AppTheme.successColor
-                                : AppTheme.accentColor,
-                          ),
-                        );
-                      }
-                    }
-                  },
-                  child: settingsState.isLoading
-                      ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                      : const Text("Kaydet"),
-                )
               ],
             );
           },
@@ -421,11 +349,11 @@ class SettingsScreen extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         children: [
           const SettingsSection(title: "Hesap"),
-          SettingsTile(
+           SettingsTile(
             icon: Icons.person_outline_rounded,
-            title: "İsim",
-            subtitle: user.name ?? "Belirtilmemiş",
-            onTap: () => _showEditNameDialog(context, ref, user.name ?? ""),
+            title: "Profili Düzenle",
+            subtitle: "Kişisel bilgilerinizi güncelleyin",
+            onTap: () => context.push(AppRoutes.editProfile),
           ),
           SettingsTile(
             icon: Icons.alternate_email_rounded,

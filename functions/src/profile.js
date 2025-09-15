@@ -15,6 +15,7 @@ async function updatePublicProfile(uid, options = {}) {
     const publicDoc = {
       userId: uid,
       name: u.name || "",
+      username: u.username || "",
       avatarStyle: u.avatarStyle || null,
       avatarSeed: u.avatarSeed || null,
       selectedExam: u.selectedExam || null,

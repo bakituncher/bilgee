@@ -3,6 +3,7 @@
 class LeaderboardEntry {
   final String userId;
   final String userName;
+  final String? username;
   final int score;
   final int testCount;
   final String? avatarStyle;
@@ -12,6 +13,7 @@ class LeaderboardEntry {
   LeaderboardEntry({
     required this.userId,
     required this.userName,
+    this.username,
     required this.score,
     required this.testCount,
     this.avatarStyle,

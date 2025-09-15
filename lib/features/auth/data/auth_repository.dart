@@ -20,7 +20,11 @@ class AuthRepository {
   Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
 
   Future<void> signUpWithEmailAndPassword({
-    required String name,
+    required String firstName,
+    required String lastName,
+    required String username,
+    String? gender,
+    DateTime? dateOfBirth,
     required String email,
     required String password,
   }) async {
@@ -30,7 +34,14 @@ class AuthRepository {
         password: password,
       );
       if (userCredential.user != null) {
-        await _firestoreService.createUserProfile(userCredential.user!, name);
+        await _firestoreService.createUserProfile(
+          user: userCredential.user!,
+          firstName: firstName,
+          lastName: lastName,
+          username: username,
+          gender: gender,
+          dateOfBirth: dateOfBirth,
+        );
       }
     } on FirebaseAuthException catch (e) {
       if (e.code == 'weak-password') {
