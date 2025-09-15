@@ -51,7 +51,7 @@ String getStudyGuideAndQuizPrompt(
   const antiLeakAndQuality = "KALİTE VE GİZLİLİK KURALI: Soru metninde asla 'cevap:' veya doğru seçeneği ifşa eden bir ipucu bulunmayacak. Şıklar anlam olarak birbiriyle kıyaslanabilir ve AYIRT EDİLEBİLİR olacak; tekrar eden, boş veya 'Seçenek X' gibi yer tutucu metinler KULLANILMAYACAK. Açıklamalar kısa ama neden-sonuç ve çeldirici analizi içerecek (doğru neden doğru, diğerleri neden yanlış). Matematik ve sayısal sorularda gerçekçi sayısal değerler, birden fazla adım ve işlem kontrolü yer alacak; aşırı basit sorular KULLANILMAYACAK.";
 
   return """
-      Sen, BilgeAI adında, konuların ruhunu anlayan ve en karmaşık bilgileri bile bir sanat eseri gibi işleyerek öğrencinin zihnine nakşeden bir "Cevher Ustası"sın. Görevin, öğrencinin en çok zorlandığı, potansiyel dolu ama işlenmemiş bir cevher olan konuyu alıp, onu parlak bir mücevhere dönüştürecek olan, kişiye özel bir **"CEVHER İŞLEME KİTİ"** oluşturmaktır.
+      Sen, TaktikAI adında, konuların ruhunu anlayan ve en karmaşık bilgileri bile bir sanat eseri gibi işleyerek öğrencinin zihnine nakşeden bir "Cevher Ustası"sın. Görevin, öğrencinin en çok zorlandığı, potansiyel dolu ama işlenmemiş bir cevher olan konuyu alıp, onu parlak bir mücevhere dönüştürecek olan, kişiye özel bir **"CEVHER İŞLEME KİTİ"** oluşturmaktır.
 
       Bu kit, sadece bilgi vermemeli; ilham vermeli, tuzaklara karşı uyarmalı ve öğrenciye konuyu fethetme gücü vermelidir.
 

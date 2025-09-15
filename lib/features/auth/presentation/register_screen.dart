@@ -133,7 +133,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'BilgeAi\'ye Hoş Geldin!',
+                'TaktikAi\'ye Hoş Geldin!',
                 style: Theme.of(context).textTheme.headlineMedium,
                 textAlign: TextAlign.center,
               ),

@@ -23,7 +23,7 @@ class WarriorIDCard extends StatelessWidget {
               radius: 36,
               backgroundColor: AppTheme.secondaryColor,
               child: Text(
-                user.name?.substring(0, 1).toUpperCase() ?? 'B',
+                user.name?.substring(0, 1).toUpperCase() ?? 'T',
                 style: textTheme.displaySmall?.copyWith(color: AppTheme.primaryColor, fontWeight: FontWeight.bold),
               ),
             ),
@@ -41,7 +41,7 @@ class WarriorIDCard extends StatelessWidget {
                       const Icon(Icons.star_rounded, color: Colors.amber, size: 20),
                       const SizedBox(width: 4),
                       Text(
-                        '${user.engagementScore} Bilgelik Puanı',
+                        '${user.engagementScore} Taktik Puanı',
                         style: textTheme.titleMedium?.copyWith(color: Colors.amber),
                       ),
                     ],

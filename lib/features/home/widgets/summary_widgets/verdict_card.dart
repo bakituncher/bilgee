@@ -30,7 +30,7 @@ class VerdictCard extends StatelessWidget {
             FittedBox(
               fit: BoxFit.scaleDown,
               child: Text(
-                "Bilgelik Puanın: ${wisdomScore.toStringAsFixed(1)}",
+                "Taktik Puanın: ${wisdomScore.toStringAsFixed(1)}",
                 style: textTheme.titleLarge?.copyWith(color: Colors.white),
               ),
             ),

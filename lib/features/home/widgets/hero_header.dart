@@ -79,7 +79,7 @@ class HeroHeader extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('${_greeting()}, ${user.name ?? 'Bilge'}',
+                        Text('${_greeting()}, ${user.name ?? 'Taktik'}',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),

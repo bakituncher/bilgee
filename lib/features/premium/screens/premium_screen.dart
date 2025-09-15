@@ -52,7 +52,7 @@ class PremiumView extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('BilgeAI Premium', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppTheme.primaryColor, fontWeight: FontWeight.w800)),
+                        Text('TaktikAI Premium', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppTheme.primaryColor, fontWeight: FontWeight.w800)),
                         Text('Odakta kal, daha hızlı ilerle', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: AppTheme.primaryColor.withValues(alpha: .9))),
                       ],
                     ),

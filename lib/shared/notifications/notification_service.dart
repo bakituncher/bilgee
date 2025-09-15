@@ -60,7 +60,7 @@ class NotificationService {
 
     _channel = const AndroidNotificationChannel(
       'bilge_general',
-      'BilgeAI Genel',
+      'TaktikAI Genel',
       description: 'Genel bildirimler',
       importance: Importance.high,
     );
@@ -212,7 +212,7 @@ class NotificationService {
         );
         androidDetails = AndroidNotificationDetails(
           _channel?.id ?? 'bilge_general',
-          _channel?.name ?? 'BilgeAI Genel',
+          _channel?.name ?? 'TaktikAI Genel',
           channelDescription: _channel?.description,
           importance: Importance.high,
           priority: Priority.high,
@@ -230,7 +230,7 @@ class NotificationService {
         // Görsel indirilemezse normal metin bildirimi göster
         androidDetails = AndroidNotificationDetails(
           _channel?.id ?? 'bilge_general',
-          _channel?.name ?? 'BilgeAI Genel',
+          _channel?.name ?? 'TaktikAI Genel',
           channelDescription: _channel?.description,
           importance: Importance.high,
           priority: Priority.high,
@@ -239,8 +239,8 @@ class NotificationService {
       }
     } else {
       androidDetails = AndroidNotificationDetails(
-        _channel?.id ?? 'bilge_general',
-        _channel?.name ?? 'BilgeAI Genel',
+        _channel?.id ?? 'taktik_general',
+        _channel?.name ?? 'TaktikAI Genel',
         channelDescription: _channel?.description,
         importance: Importance.high,
         priority: Priority.high,

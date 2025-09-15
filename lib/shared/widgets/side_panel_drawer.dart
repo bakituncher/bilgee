@@ -112,7 +112,7 @@ class SidePanelDrawer extends ConsumerWidget {
                     _navTile(context, icon: Icons.shield_moon_rounded, title: 'Günlük Fetihler', route: '/home/quests'),
                     _navTile(context, icon: Icons.timer_rounded, title: 'Odaklanma Mabedi', route: '/home/pomodoro'),
                     _navTile(context, icon: Icons.inventory_2_outlined, title: 'Performans Arşivi', route: '/library'),
-                    _navTile(context, icon: Icons.article_rounded, title: 'Bilgelik Yazıları', route: '/blog'),
+                    _navTile(context, icon: Icons.article_rounded, title: 'Taktik Yazıları', route: '/blog'),
                     const SizedBox(height: 12),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -222,7 +222,7 @@ class _Avatar extends StatelessWidget {
   String? _buildSvgUrl() {
     if (style == null && seed == null) return null;
     final s = style ?? 'thumbs';
-    final sd = Uri.encodeComponent(seed ?? userName ?? 'Bilge');
+    final sd = Uri.encodeComponent(seed ?? userName ?? 'Taktik');
     return 'https://api.dicebear.com/7.x/$s/svg?seed=$sd';
   }
 }

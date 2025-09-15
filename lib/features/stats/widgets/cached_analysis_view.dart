@@ -44,7 +44,7 @@ class CachedAnalysisView extends ConsumerWidget {
         const TitleWidget(title: 'Zafer Anıtları', subtitle: 'Genel performans metriklerin'),
         KeyStatsGrid(analysis: analysis),
         const SizedBox(height: 24),
-        const TitleWidget(title: 'Komutan Emirleri', subtitle: 'Bilge Göz\'ün taktiksel raporu'),
+        const TitleWidget(title: 'Komutan Emirleri', subtitle: 'Taktik Göz\'ün taktiksel raporu'),
         AiInsightCard(analysis: analysis),
         const SizedBox(height: 24),
         const TitleWidget(title: 'Fetih Haritası', subtitle: 'Ders kalelerine tıklayarak detaylı istihbarat al'),

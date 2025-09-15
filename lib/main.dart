@@ -144,7 +144,7 @@ class BilgeAiApp extends ConsumerWidget {
     });
 
     return MaterialApp.router(
-      title: 'BilgeAi',
+      title: 'TaktikAi',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.modernTheme,
       darkTheme: AppTheme.modernTheme,

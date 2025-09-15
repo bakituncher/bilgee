@@ -9,7 +9,7 @@ class UserStats {
   final DateTime? lastStreakUpdate;
   // YENI ALANLAR
   final int focusMinutes; // toplu odaklanma dakikası
-  final int bp; // Bilgelik Puanı (genel)
+  final int bp; // Taktik Puanı (genel)
   final int pomodoroSessions; // tamamlanan pomodoro seans sayısı
   final int pomodoroBp; // YENI: Sadece Pomodoro seanslarından gelen BP
   final int totalFocusSeconds; // YENI: Toplam odak saniyesi (daha hassas metrik)

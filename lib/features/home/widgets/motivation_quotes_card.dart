@@ -24,7 +24,7 @@ class _MotivationQuotesCardState extends State<MotivationQuotesCard> {
     ('Şimdi acı çek ve hayatının geri kalanını bir şampiyon olarak yaşa.', 'Muhammed Ali'),
     ('Tek bildiğim, hiçbir şey bilmediğimdir.', 'Sokrates'),
     ('Hayal gücü bilgiden daha önemlidir. Çünkü bilgi sınırlıyken, hayal gücü tüm dünyayı kapsar.', 'Albert Einstein'),
-    ('Yenilginin en büyük zaferden tek farkı, ayağa kalkma cesaretidir.', 'Bilge Baykuş'),
+    ('Yenilginin en büyük zaferden tek farkı, ayağa kalkma cesaretidir.', 'Taktik Baykuş'),
   ];
 
   @override

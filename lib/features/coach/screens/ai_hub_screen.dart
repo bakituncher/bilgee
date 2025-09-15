@@ -92,7 +92,7 @@ class _AiHubScreenState extends State<AiHubScreen> with SingleTickerProviderStat
                 backgroundColor: Colors.transparent,
                 elevation: 0,
                 toolbarHeight: kToolbarHeight,
-                title: const Text('BilgeAI Çekirdeği'),
+                title: const Text('TaktikAI Çekirdeği'),
                 flexibleSpace: ClipRect(
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
