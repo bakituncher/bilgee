@@ -209,27 +209,28 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
               ),
               const SizedBox(height: 12),
-               Row(
+              Row(
                 children: [
                   Expanded(
                     child: DropdownButtonFormField<String>(
                       value: _selectedGender,
+                      isExpanded: true,
                       decoration: const InputDecoration(
                         labelText: 'Cinsiyet',
                         prefixIcon: Icon(Icons.wc_outlined),
                       ),
                       items: ['Erkek', 'Kadın', 'Belirtmek istemiyorum']
                           .map((label) => DropdownMenuItem(
-                                child: Text(label),
-                                value: label,
-                              ))
+                        child: Text(label, overflow: TextOverflow.ellipsis),
+                        value: label,
+                      ))
                           .toList(),
                       onChanged: (value) {
                         setState(() {
                           _selectedGender = value;
                         });
                       },
-                       validator: (value) {
+                      validator: (value) {
                         if (value == null) {
                           return 'Lütfen cinsiyetinizi seçin.';
                         }

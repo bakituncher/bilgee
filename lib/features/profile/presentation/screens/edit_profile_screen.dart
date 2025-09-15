@@ -73,6 +73,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         lastName: _lastNameController.text.trim(),
         gender: _selectedGender,
         dateOfBirth: _selectedDate,
+        username: _usernameController.text.trim(),
       );
     }
   }
@@ -88,7 +89,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         },
         data: (_) {
           if (previous is AsyncLoading) {
-             ScaffoldMessenger.of(context).showSnackBar(
+            ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Profil başarıyla güncellendi!')),
             );
           }
@@ -133,7 +134,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       labelText: 'Kullanıcı Adı',
                       prefixIcon: Icon(Icons.alternate_email),
                     ),
-                    readOnly: true,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Lütfen bir kullanıcı adı girin.';
+                      }
+                      if (value.length < 3) {
+                        return 'Kullanıcı adı en az 3 karakter olmalıdır.';
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 16),
                   Row(
@@ -171,15 +180,16 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       Expanded(
                         child: DropdownButtonFormField<String>(
                           value: _selectedGender,
+                          isExpanded: true,
                           decoration: const InputDecoration(
                             labelText: 'Cinsiyet',
                             prefixIcon: Icon(Icons.wc_outlined),
                           ),
                           items: ['Erkek', 'Kadın', 'Belirtmek istemiyorum']
                               .map((label) => DropdownMenuItem(
-                                    child: Text(label),
-                                    value: label,
-                                  ))
+                            child: Text(label, overflow: TextOverflow.ellipsis),
+                            value: label,
+                          ))
                               .toList(),
                           onChanged: (value) {
                             setState(() {
@@ -204,7 +214,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           ),
                           readOnly: true,
                           onTap: () => _selectDate(context),
-                           validator: (value) {
+                          validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'Lütfen doğum tarihinizi seçin.';
                             }

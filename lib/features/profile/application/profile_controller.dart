@@ -16,6 +16,7 @@ class ProfileController extends StateNotifier<AsyncValue<void>> {
     required String lastName,
     required String? gender,
     required DateTime? dateOfBirth,
+    String? username,
   }) async {
     state = const AsyncValue.loading();
     try {
@@ -31,6 +32,10 @@ class ProfileController extends StateNotifier<AsyncValue<void>> {
         'gender': gender,
         'dateOfBirth': dateOfBirth,
       };
+
+      if (username != null && username.isNotEmpty) {
+        dataToUpdate['username'] = username;
+      }
 
       await firestoreService.updateUserProfile(userId, dataToUpdate);
       state = const AsyncValue.data(null);
