@@ -53,7 +53,7 @@ class BlogDetailScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Bilgelik Yazısı'),
+        title: const Text('Taktik Yazısı'),
         automaticallyImplyLeading: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
@@ -143,7 +143,7 @@ class BlogDetailScreen extends ConsumerWidget {
                             children: [
                               Icon(Icons.person_outline_rounded, size: 16, color: AppTheme.secondaryTextColor),
                               const SizedBox(width: 6),
-                              Text(post.author ?? 'BilgeAI', style: TextStyle(color: AppTheme.secondaryTextColor)),
+                              Text(post.author ?? 'TaktikAI', style: TextStyle(color: AppTheme.secondaryTextColor)),
                               const SizedBox(width: 12),
                               Icon(Icons.schedule_rounded, size: 16, color: AppTheme.secondaryTextColor),
                               const SizedBox(width: 6),

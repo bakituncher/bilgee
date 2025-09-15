@@ -76,7 +76,7 @@ class _PomodoroCompletedViewState extends State<PomodoroCompletedView> {
                     children: [
                       const Icon(Icons.star_rounded, color: Colors.amber),
                       const SizedBox(width: 8),
-                      Text("+$earnedMinutes Bilgelik Puanı", style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold)),
+                      Text("+$earnedMinutes Taktik Puanı", style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold)),
                     ],
                   ).animate().fadeIn(delay: 400.ms).shake(),
                   const Spacer(),

@@ -349,7 +349,7 @@ class _ShareableProfileCard extends StatelessWidget {
             children: [
               Image.asset('assets/images/bilge_baykus.png', width: 28, height: 28),
               const SizedBox(width: 8),
-              Text('BilgeAI', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: _accentProfile2, fontWeight: FontWeight.bold)),
+              Text('TaktikAI', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: _accentProfile2, fontWeight: FontWeight.bold)),
             ],
           ),
         ],
@@ -477,7 +477,7 @@ class _AvatarHalo extends StatelessWidget {
                         fit: BoxFit.cover,
                       )
                     : Text(
-                        (displayName.isNotEmpty ? displayName[0] : 'B').toUpperCase(),
+                        (displayName.isNotEmpty ? displayName[0] : 'T').toUpperCase(),
                         style: Theme.of(context).textTheme.displayMedium?.copyWith(color: _accentProfile2, fontWeight: FontWeight.bold),
                       ),
               ),

@@ -109,7 +109,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       app_badge.Badge(name: 'Durdurulamaz', description: '30 gün! Sen artık bir alışkanlık abidesisin.', icon: Icons.wb_sunny, color: Colors.orange, isUnlocked: user.streak >= 30, rarity: app_badge.BadgeRarity.epic, hint: "Tam 30 gün ara verme."),
       app_badge.Badge(name: 'Yükseliş', description: 'Ortalama 50 net barajını aştın. Bu daha başlangıç!', icon: Icons.trending_up, color: Colors.blueAccent, isUnlocked: avgNet > 50, hint: "Net ortalamanı 50'nin üzerine çıkar."),
       app_badge.Badge(name: 'Usta Nişancı', description: 'Ortalama 90 net! Elitler arasına hoş geldin.', icon: Icons.gps_not_fixed, color: Colors.blueAccent, isUnlocked: avgNet > 90, rarity: app_badge.BadgeRarity.rare, hint: "Net ortalamanı 90'ın üzerine çıkar."),
-      app_badge.Badge(name: 'Bilge Nişancı', description: 'Ortalama 100 net barajını yıktın. Sen bir efsanesin!', icon: Icons.workspace_premium, color: Colors.blueAccent, isUnlocked: avgNet > 100, rarity: app_badge.BadgeRarity.epic, hint: "Net ortalamanı 100'ün üzerine çıkar."),
+      app_badge.Badge(name: 'Taktik Nişancı', description: 'Ortalama 100 net barajını yıktın. Sen bir efsanesin!', icon: Icons.workspace_premium, color: Colors.blueAccent, isUnlocked: avgNet > 100, rarity: app_badge.BadgeRarity.epic, hint: "Net ortalamanı 100'ün üzerine çıkar."),
       app_badge.Badge(name: 'Günlük Görev Ustası', description: 'Günlük görevlerini düzenli olarak tamamladın.', icon: Icons.checklist, color: Colors.purpleAccent, isUnlocked: (user.completedDailyTasks.values.expand((e) => e).length) >= 15, rarity: app_badge.BadgeRarity.rare, hint: "Günlük görevlerini düzenli olarak tamamla."),
       app_badge.Badge(name: 'Odaklanma Ninjası', description: 'Toplam 10 saat Pomodoro tekniği ile odaklandın.', icon: Icons.timer, color: Colors.purpleAccent, isUnlocked: focusSessions.fold(0, (p, c) => p + c.durationInSeconds) >= 36000, rarity: app_badge.BadgeRarity.rare, hint: "Toplam 10 saat odaklan."),
       app_badge.Badge(name: 'Cevher Avcısı', description: 'Cevher Atölyesi\'nde ilk zayıf konunu işledin.', icon: Icons.construction, color: AppTheme.secondaryColor, isUnlocked: performance.topicPerformances.isNotEmpty, hint: "Cevher Atölyesi'ni kullan."),
@@ -269,7 +269,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                           children: [
                                             // Image.asset('assets/images/bilge_baykus.png', width: 28, height: 28),
                                             const SizedBox(width: 8),
-                                            Text('BilgeAI', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: _accentProfile2, fontWeight: FontWeight.bold)),
+                                            Text('TaktikAI', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: _accentProfile2, fontWeight: FontWeight.bold)),
                                           ],
                                         ),
                                       ],
@@ -553,7 +553,7 @@ class _ProfileAvatarHalo extends StatelessWidget {
                 )
                     : Center(
                   child: Text(
-                    user.name?.substring(0, 1).toUpperCase() ?? 'B',
+                    user.name?.substring(0, 1).toUpperCase() ?? 'T',
                     style: Theme.of(context).textTheme.displayMedium?.copyWith(
                       color: _accentProfile2,
                       fontWeight: FontWeight.bold,

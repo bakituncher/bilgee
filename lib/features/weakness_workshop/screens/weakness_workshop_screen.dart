@@ -511,8 +511,8 @@ class _BriefingView extends ConsumerWidget {
             const SizedBox(height: 8),
             Text(
               suggestions.any((s) => s['isSuggestion'] == true)
-                  ? "Henüz yeterli verin olmadığı için BilgeAI, yolculuğa başlaman için bazı kilit konuları belirledi. Bunlar 'Keşif Noktaları'dır."
-                  : "BilgeAI, performansını analiz etti ve gelişim için en parlak fırsatları belirledi. Aşağıdaki cevherlerden birini seçerek işlemeye başla.",
+                  ? "Henüz yeterli verin olmadığı için TaktikAI, yolculuğa başlaman için bazı kilit konuları belirledi. Bunlar 'Keşif Noktaları'dır."
+                  : "TaktikAI, performansını analiz etti ve gelişim için en parlak fırsatları belirledi. Aşağıdaki cevherlerden birini seçerek işlemeye başla.",
               style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.secondaryTextColor),
             ),
             const SizedBox(height: 24),
@@ -575,7 +575,7 @@ class _TopicCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(color: AppTheme.secondaryColor, borderRadius: BorderRadius.circular(8)),
-                        child: Text("BİLGEAI ÖNERİSİ", style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.primaryColor, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                        child: Text("TAKTİKAI ÖNERİSİ", style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.primaryColor, fontWeight: FontWeight.bold, letterSpacing: 1)),
                       ),
                     const Spacer(),
                     Container(

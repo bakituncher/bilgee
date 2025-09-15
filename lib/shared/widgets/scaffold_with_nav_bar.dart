@@ -35,7 +35,7 @@ class ScaffoldWithNavBar extends ConsumerWidget {
     final List<TutorialStep> tutorialSteps = [
       TutorialStep(
         title: "Karargaha Hoş Geldin!",
-        text: "Ben Bilge Baykuş! Zafer yolundaki en büyük destekçin ben olacağım. Sana hızlıca komuta merkezini tanıtayım.",
+        text: "Ben Taktik Baykuş! Zafer yolundaki en büyük destekçin ben olacağım. Sana hızlıca komuta merkezini tanıtayım.",
       ),
       TutorialStep(
         highlightKey: todaysPlanKey,
@@ -59,7 +59,7 @@ class ScaffoldWithNavBar extends ConsumerWidget {
       ),
       TutorialStep(
         highlightKey: aiHubFabKey,
-        title: "İşte BilgeAI Çekirdeği!",
+        title: "İşte TaktikAI Çekirdeği!",
         text: "Burası sihrin gerçekleştiği yer! Buradan kişisel zafer planını oluşturabilir, en zayıf konularına özel çalışmalar yapabilirsin.",
         requiredScreenIndex: 1,
       ),

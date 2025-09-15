@@ -141,7 +141,7 @@ class SettingsScreen extends ConsumerWidget {
     final Uri emailUri = Uri(
       scheme: 'mailto',
       path: email,
-      query: 'subject=BilgeAI Geri Bildirim',
+      query: 'subject=TaktikAI Geri Bildirim',
     );
     if (!await launchUrl(emailUri)) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -411,13 +411,13 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () {
               showAboutDialog(
                 context: context,
-                applicationName: 'BilgeAI',
+                applicationName: 'TaktikAI',
                 applicationVersion: '1.0.0',
                 applicationLegalese: '© 2025 Codenzi. Tüm hakları saklıdır.',
                 children: <Widget>[
                   const Padding(
                     padding: EdgeInsets.only(top: 15),
-                    child: Text('BilgeAI, kişisel yapay zeka destekli sınav koçunuzdur.'),
+                    child: Text('TaktikAI, kişisel yapay zeka destekli sınav koçunuzdur.'),
                   )
                 ],
               );

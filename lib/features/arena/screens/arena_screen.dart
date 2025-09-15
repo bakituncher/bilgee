@@ -189,7 +189,7 @@ class _LeaderboardView extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32.0),
               child: Text(
-                'Deneme ekleyerek veya Pomodoro seansları tamamlayarak Bilgelik Puanı kazan ve adını bu panteona yazdır!',
+                'Deneme ekleyerek veya Pomodoro seansları tamamlayarak Taktik Puanı kazan ve adını bu panteona yazdır!',
                 textAlign: TextAlign.center,
                 style: textTheme.bodyLarge
                     ?.copyWith(color: AppTheme.secondaryTextColor),
