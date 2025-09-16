@@ -25,6 +25,7 @@ import 'package:flutter/rendering.dart';
 import 'package:intl/intl.dart';
 import 'package:bilge_ai/data/providers/firestore_providers.dart' as providers;
 import 'dart:ui' as ui;
+import 'package:bilge_ai/shared/widgets/logo_loader.dart';
 
 // ===== NovaPulse / Arena ile tutarlı premium accent renkleri =====
 const _accentProfile1 = AppTheme.secondaryColor; // camgöbeği
@@ -169,7 +170,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             if (user == null) return const Center(child: Text('Komutan bulunamadı.'));
             return _ProfileView(user: user, shareKey: _shareKey, confettiController: _confettiController);
           },
-          loading: () => const _ProfileSkeleton(),
+          loading: () => const LogoLoader(),
           error: (e, s) => Center(child: Text('Karargâh Yüklenemedi: $e')),
         ),
       ),
@@ -274,11 +275,11 @@ class _ProfileView extends ConsumerWidget {
                                 },
                                 loading: () => Row(
                                   children: const [
-                                    Expanded(child: _Skeleton(height: 110)),
+                                    _Skeleton(height: 110),
                                     SizedBox(width: 10),
-                                    Expanded(child: _Skeleton(height: 110)),
+                                    _Skeleton(height: 110),
                                     SizedBox(width: 10),
-                                    Expanded(child: _Skeleton(height: 110)),
+                                    _Skeleton(height: 110),
                                   ],
                                 ),
                                 error: (e,s) => const SizedBox.shrink(),
@@ -410,71 +411,6 @@ class _ProfileView extends ConsumerWidget {
         ),
       ],
     );
-  }
-}
-
-class _ProfileSkeleton extends StatelessWidget {
-  const _ProfileSkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
-        child: Column(
-          children: [
-            const SizedBox(height: 12),
-            const _Skeleton(shape: BoxShape.circle, height: 138, width: 138),
-            const SizedBox(height: 10),
-            const _Skeleton(height: 28, width: 200),
-            const SizedBox(height: 6),
-            const _Skeleton(height: 36, width: 150),
-            const SizedBox(height: 14),
-            Row(
-              children: const [
-                Expanded(child: _Skeleton(height: 110)),
-                SizedBox(width: 10),
-                Expanded(child: _Skeleton(height: 110)),
-                SizedBox(width: 10),
-                Expanded(child: _Skeleton(height: 110)),
-              ],
-            ),
-            const SizedBox(height: 24),
-            const _Skeleton(height: 50, width: double.infinity),
-            const SizedBox(height: 24),
-            Row(
-              children: const [
-                Expanded(child: _Skeleton(height: 110)),
-                SizedBox(width: 14),
-                Expanded(child: _Skeleton(height: 110)),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Skeleton extends StatelessWidget {
-  final double? height;
-  final double? width;
-  final BoxShape shape;
-  final double borderRadius;
-
-  const _Skeleton({this.height, this.width, this.shape = BoxShape.rectangle, this.borderRadius = 24});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: height,
-      width: width,
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
-        shape: shape,
-        borderRadius: shape == BoxShape.rectangle ? BorderRadius.circular(borderRadius) : null,
-      ),
-    ).animate(onPlay: (c) => c.repeat(reverse: true)).fade(begin: 0.5, end: 1, duration: 800.ms, curve: Curves.easeInOut);
   }
 }
 
@@ -973,6 +909,28 @@ class _ActionNeoState extends State<_ActionNeo> {
         ),
       ),
     );
+  }
+}
+
+class _Skeleton extends StatelessWidget {
+  final double? height;
+  final double? width;
+  final BoxShape shape;
+  final double borderRadius;
+
+  const _Skeleton({this.height, this.width, this.shape = BoxShape.rectangle, this.borderRadius = 24});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: height,
+      width: width,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.08),
+        shape: shape,
+        borderRadius: shape == BoxShape.rectangle ? BorderRadius.circular(borderRadius) : null,
+      ),
+    ).animate(onPlay: (c) => c.repeat(reverse: true)).fade(begin: 0.5, end: 1, duration: 800.ms, curve: Curves.easeInOut);
   }
 }
 
