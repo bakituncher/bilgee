@@ -146,7 +146,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     // Logo ve başlık
                     Column(
                       children: [
-                        Icon(Icons.auto_awesome_rounded, size: 72, color: Theme.of(context).colorScheme.primary),
+                        Image.asset('assets/images/logo.png', height: 100),
                         const SizedBox(height: 12),
                         Text('Tekrar Hoş Geldin!', textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),
                         const SizedBox(height: 6),
