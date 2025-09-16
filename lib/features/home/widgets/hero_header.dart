@@ -6,6 +6,7 @@ import 'package:bilge_ai/features/profile/logic/rank_service.dart';
 import 'package:bilge_ai/core/theme/app_theme.dart';
 import 'package:go_router/go_router.dart';
 import 'package:bilge_ai/features/home/providers/home_providers.dart';
+import 'package:bilge_ai/shared/widgets/logo_loader.dart';
 
 class HeroHeader extends ConsumerWidget {
   const HeroHeader({super.key});
@@ -155,7 +156,7 @@ class HeroHeader extends ConsumerWidget {
           ),
         );
       },
-      loading: () => const SizedBox(height: 72, child: Center(child: CircularProgressIndicator(strokeWidth: 2))),
+      loading: () => SizedBox(height: 72, child: LogoLoader(size: 60)),
       error: (_, __) => const SizedBox.shrink(),
     );
   }

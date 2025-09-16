@@ -12,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:bilge_ai/features/auth/application/auth_controller.dart';
 import 'package:bilge_ai/data/providers/firestore_providers.dart';
 import 'package:intl/intl.dart';
+import 'package:bilge_ai/shared/widgets/logo_loader.dart';
 
 class TestResultSummaryScreen extends StatelessWidget {
   final TestModel test;
@@ -142,7 +143,7 @@ class TestResultSummaryEntry extends ConsumerWidget {
       future: ref.read(firestoreServiceProvider).getTestResultsPaginated(user.uid, limit: 1),
       builder: (context, snap) {
         if (snap.connectionState != ConnectionState.done) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          return const Scaffold(body: LogoLoader());
         }
         if (snap.hasError) {
           return Scaffold(body: Center(child: Text('Özet yüklenemedi: ${snap.error}')));

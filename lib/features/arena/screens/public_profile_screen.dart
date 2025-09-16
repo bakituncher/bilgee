@@ -12,6 +12,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:bilge_ai/features/auth/application/auth_controller.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/rendering.dart';
+import 'package:bilge_ai/shared/widgets/logo_loader.dart';
 
 // NovaPulse accent renkleri (arena ile uyumlu)
 const _accentProfile1 = Color(0xFF7F5BFF);
@@ -296,7 +297,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
             ),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator(color: AppTheme.secondaryColor)),
+        loading: () => const LogoLoader(),
         error: (e, s) => Center(child: Text('Savaşçı Künyesi Yüklenemedi: $e')),
       ),
     );

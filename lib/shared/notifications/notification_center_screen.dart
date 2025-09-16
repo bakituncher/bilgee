@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:bilge_ai/features/auth/application/auth_controller.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:bilge_ai/shared/widgets/logo_loader.dart';
 
 class NotificationCenterScreen extends ConsumerWidget {
   const NotificationCenterScreen({super.key});
@@ -140,7 +141,7 @@ class NotificationCenterScreen extends ConsumerWidget {
               ),
             );
           },
-          loading: () => const Center(child: CircularProgressIndicator(color: AppTheme.secondaryColor)),
+          loading: () => const LogoLoader(),
           error: (e, s) => Center(child: Text('Hata: $e')),
         ),
       ),

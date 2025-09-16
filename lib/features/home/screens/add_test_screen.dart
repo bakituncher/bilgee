@@ -7,6 +7,7 @@ import '../logic/add_test_notifier.dart';
 import '../widgets/add_test_step1.dart';
 import '../widgets/add_test_step2.dart';
 import '../widgets/add_test_step3.dart';
+import 'package:bilge_ai/shared/widgets/logo_loader.dart';
 
 // Provider'lar artık logic dosyasında. Bu dosya sadece UI.
 
@@ -28,7 +29,7 @@ class AddTestScreen extends ConsumerWidget {
       future: ExamData.getExamByType(selectedExamType),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting && addTestState.availableSections.isEmpty) {
-          return Scaffold(appBar: AppBar(title: Text('${selectedExamType.displayName} Sonuç Bildirimi')), body: const Center(child: CircularProgressIndicator()));
+          return Scaffold(appBar: AppBar(title: Text('${selectedExamType.displayName} Sonuç Bildirimi')), body: const LogoLoader());
         }
         if (snapshot.hasError) {
           return Scaffold(appBar: AppBar(title: Text('${selectedExamType.displayName} Sonuç Bildirimi')), body: Center(child: Text("Sınav verisi yüklenemedi: ${snapshot.error}")));

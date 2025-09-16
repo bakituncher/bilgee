@@ -11,6 +11,7 @@ import 'package:bilge_ai/core/navigation/app_routes.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
+import 'package:bilge_ai/shared/widgets/logo_loader.dart';
 
 class ArenaScreen extends ConsumerWidget {
   const ArenaScreen({super.key});
@@ -164,9 +165,7 @@ class _LeaderboardView extends ConsumerWidget {
                 },
               );
             },
-            loading: () => const Center(
-                child:
-                CircularProgressIndicator(color: AppTheme.secondaryColor)),
+            loading: () => const LogoLoader(),
             error: (err, stack) =>
                 Center(child: Text('Liderlik tablosu yüklenemedi: $err')),
           ),

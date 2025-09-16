@@ -5,6 +5,7 @@ import 'package:bilge_ai/data/providers/firestore_providers.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:bilge_ai/shared/widgets/logo_loader.dart';
 
 class QuestionReportDetailScreen extends ConsumerWidget {
   final String qhash;
@@ -91,7 +92,7 @@ class QuestionReportDetailScreen extends ConsumerWidget {
             stream: stream,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
+                return const LogoLoader();
               }
               if (snapshot.hasError) {
                 final msg = snapshot.error.toString();
@@ -211,7 +212,7 @@ class QuestionReportDetailScreen extends ConsumerWidget {
           );
         },
         error: (e, _) => Center(child: Text('Hata: $e')),
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LogoLoader(),
       ),
     );
   }

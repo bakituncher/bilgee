@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:bilge_ai/shared/widgets/logo_loader.dart';
 
 class GeneralOverviewScreen extends ConsumerWidget {
   const GeneralOverviewScreen({super.key});
@@ -82,7 +83,7 @@ class GeneralOverviewScreen extends ConsumerWidget {
               weekTasksAsync.when(
                 data: (map) => _WeeklyTasksCard(weekStart: weekStart, data: map)
                     .animate().fadeIn(duration: 250.ms).slideY(begin: .05),
-                loading: () => const Center(child: Padding(padding: EdgeInsets.all(12), child: CircularProgressIndicator(color: AppTheme.secondaryColor))),
+                loading: () => const LogoLoader(),
                 error: (e, s) => const SizedBox.shrink(),
               ),
               const SizedBox(height: 16),
@@ -92,7 +93,7 @@ class GeneralOverviewScreen extends ConsumerWidget {
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator(color: AppTheme.secondaryColor)),
+        loading: () => const LogoLoader(),
         error: (e, s) => Center(child: Text('Hata: $e')),
       ),
     );
@@ -250,7 +251,7 @@ class _VisitsThisMonthTile extends ConsumerWidget {
       future: ref.read(firestoreServiceProvider).getVisitsForMonth(userId, DateTime.now()),
       builder: (context, snap){
         if (snap.connectionState != ConnectionState.done) {
-          return const Card(child: Padding(padding: EdgeInsets.all(16), child: Center(child: CircularProgressIndicator(color: AppTheme.secondaryColor))));
+          return const SizedBox(height: 72, child: LogoLoader());
         }
         if (snap.hasError) {
           return const SizedBox.shrink();

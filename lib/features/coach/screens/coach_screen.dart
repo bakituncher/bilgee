@@ -12,6 +12,7 @@ import 'package:bilge_ai/features/coach/widgets/mastery_topic_bubble.dart';
 import 'package:bilge_ai/features/coach/widgets/topic_stats_dialog.dart';
 import 'package:bilge_ai/core/utils/exam_utils.dart';
 import 'package:bilge_ai/data/models/performance_summary.dart';
+import 'package:bilge_ai/shared/widgets/logo_loader.dart';
 
 final coachScreenTabProvider = StateProvider<int>((ref) => 0);
 
@@ -87,9 +88,7 @@ class _CoachScreenState extends ConsumerState<CoachScreen>
             if (snapshot.connectionState == ConnectionState.waiting) {
               return Scaffold(
                   appBar: AppBar(title: const Text('Bilgi Galaksisi')),
-                  body: const Center(
-                      child: CircularProgressIndicator(
-                          color: AppTheme.secondaryColor)));
+                  body: const LogoLoader());
             }
             if (snapshot.hasError) {
               return Scaffold(
@@ -168,7 +167,7 @@ class _CoachScreenState extends ConsumerState<CoachScreen>
                       );
                     }).toList(),
                   ),
-                  loading: () => const Center(child: CircularProgressIndicator()),
+                  loading: () => const LogoLoader(),
                   error: (e,s) => Center(child: Text("Performans verisi yüklenemedi: $e")),
                 )
             );
@@ -177,9 +176,7 @@ class _CoachScreenState extends ConsumerState<CoachScreen>
       },
       loading: () => Scaffold(
           appBar: AppBar(title: const Text('Bilgi Galaksisi')),
-          body: const Center(
-              child:
-              CircularProgressIndicator(color: AppTheme.secondaryColor))),
+          body: const LogoLoader()),
       error: (e, s) => Scaffold(
           appBar: AppBar(title: const Text('Bilgi Galaksisi')),
           body:
