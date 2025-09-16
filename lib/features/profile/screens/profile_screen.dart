@@ -326,6 +326,15 @@ class _ProfileView extends ConsumerWidget {
                       const SizedBox(height: 24),
                       performanceAsync.when(
                         data: (performance) {
+                          if (performance == null) {
+                            return Column(
+                              children: [
+                                Row(children: const [Expanded(child: _Skeleton(height: 110)), SizedBox(width: 14), Expanded(child: _Skeleton(height: 110))]),
+                                const SizedBox(height: 24),
+                                Row(children: const [Expanded(child: _Skeleton(height: 64)), SizedBox(width: 14), Expanded(child: _Skeleton(height: 64))]),
+                              ],
+                            );
+                          }
                           final tests = testsAsync.valueOrNull ?? [];
                           final focusSessions = focusSessionsAsync.valueOrNull ?? [];
                           final planDoc = planDocAsync.value;
