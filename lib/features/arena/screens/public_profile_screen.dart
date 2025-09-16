@@ -348,9 +348,9 @@ class _ShareableProfileCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.asset('assets/images/bilge_baykus.png', width: 28, height: 28),
+              Image.asset('assets/images/logo.png', width: 28, height: 28),
               const SizedBox(width: 8),
-              Text('TaktikAI', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: _accentProfile2, fontWeight: FontWeight.bold)),
+              Text('Taktik App', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: _accentProfile2, fontWeight: FontWeight.bold)),
             ],
           ),
         ],
@@ -409,24 +409,24 @@ class _FollowButtonState extends ConsumerState<_FollowButton> {
       onPressed: _busy || me?.uid == null || me!.uid == widget.targetUserId
           ? null
           : () async {
-              HapticFeedback.selectionClick();
-              setState(() { _busy = true; _optimistic = !isFollowing; });
-              try {
-                final svc = ref.read(firestoreServiceProvider);
-                if (isFollowing) {
-                  await svc.unfollowUser(currentUserId: me!.uid, targetUserId: widget.targetUserId);
-                } else {
-                  await svc.followUser(currentUserId: me!.uid, targetUserId: widget.targetUserId);
-                }
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('İşlem başarısız: $e')));
-                  setState(() { _optimistic = null; });
-                }
-              } finally {
-                if (mounted) setState(() { _busy = false; _optimistic = null; });
-              }
-            },
+        HapticFeedback.selectionClick();
+        setState(() { _busy = true; _optimistic = !isFollowing; });
+        try {
+          final svc = ref.read(firestoreServiceProvider);
+          if (isFollowing) {
+            await svc.unfollowUser(currentUserId: me!.uid, targetUserId: widget.targetUserId);
+          } else {
+            await svc.followUser(currentUserId: me!.uid, targetUserId: widget.targetUserId);
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('İşlem başarısız: $e')));
+            setState(() { _optimistic = null; });
+          }
+        } finally {
+          if (mounted) setState(() { _busy = false; _optimistic = null; });
+        }
+      },
       style: ElevatedButton.styleFrom(
         backgroundColor: bg,
         foregroundColor: fg,
@@ -474,13 +474,13 @@ class _AvatarHalo extends StatelessWidget {
               child: ClipOval(
                 child: avatarStyle != null && avatarSeed != null
                     ? SvgPicture.network(
-                        "https://api.dicebear.com/9.x/${avatarStyle}/svg?seed=${avatarSeed}",
-                        fit: BoxFit.cover,
-                      )
+                  "https://api.dicebear.com/9.x/${avatarStyle}/svg?seed=${avatarSeed}",
+                  fit: BoxFit.cover,
+                )
                     : Text(
-                        (displayName.isNotEmpty ? displayName[0] : 'T').toUpperCase(),
-                        style: Theme.of(context).textTheme.displayMedium?.copyWith(color: _accentProfile2, fontWeight: FontWeight.bold),
-                      ),
+                  (displayName.isNotEmpty ? displayName[0] : 'T').toUpperCase(),
+                  style: Theme.of(context).textTheme.displayMedium?.copyWith(color: _accentProfile2, fontWeight: FontWeight.bold),
+                ),
               ),
             ).animate().fadeIn(duration: 500.ms).scale(curve: Curves.easeOutBack),
           ),

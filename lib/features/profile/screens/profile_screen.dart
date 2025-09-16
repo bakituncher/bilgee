@@ -294,8 +294,9 @@ class _ProfileView extends ConsumerWidget {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
+                                  Image.asset('assets/images/logo.png', width: 28, height: 28),
                                   const SizedBox(width: 8),
-                                  Text('TaktikAI', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: _accentProfile2, fontWeight: FontWeight.bold)),
+                                  Text('Taktik App', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: _accentProfile2, fontWeight: FontWeight.bold)),
                                 ],
                               ),
                             ],

@@ -427,12 +427,6 @@ class SettingsScreen extends ConsumerWidget {
           // --- Admin: sadece admin claim varsa göster ---
           if (isAdmin) ...[
             const SettingsSection(title: "Admin"),
-            SettingsTile(
-              icon: Icons.campaign_rounded,
-              title: "Bildirim Yayınla",
-              subtitle: "Başlık, açıklama, görsel, kitle ve planlama",
-              onTap: () => context.push('/admin/push'),
-            ),
           ],
           const SettingsSection(title: "Oturum"),
           SettingsTile(
