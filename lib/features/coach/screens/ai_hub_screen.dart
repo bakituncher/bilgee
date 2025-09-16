@@ -21,23 +21,17 @@ class AiHubScreen extends StatefulWidget {
 class _AiHubScreenState extends State<AiHubScreen> with SingleTickerProviderStateMixin {
   late final AnimationController _pulse;
   late final Animation<double> _glow;
-  final TextEditingController _searchCtrl = TextEditingController();
-  String _query = '';
 
   @override
   void initState() {
     super.initState();
     _pulse = AnimationController(vsync: this, duration: const Duration(seconds: 5))..repeat(reverse: true);
     _glow = CurvedAnimation(parent: _pulse, curve: Curves.easeInOut);
-    _searchCtrl.addListener(() {
-      setState(() => _query = _searchCtrl.text.trim().toLowerCase());
-    });
   }
 
   @override
   void dispose() {
     _pulse.dispose();
-    _searchCtrl.dispose();
     super.dispose();
   }
 
@@ -74,7 +68,7 @@ class _AiHubScreenState extends State<AiHubScreen> with SingleTickerProviderStat
         heroTag: 'motivation-core',
         chip: 'Destek',
       ),
-    ].where((t) => _query.isEmpty || t.title.toLowerCase().contains(_query) || t.subtitle.toLowerCase().contains(_query)).toList();
+    ];
 
     final bottomInset = MediaQuery.of(context).padding.bottom;
 
@@ -109,13 +103,9 @@ class _AiHubScreenState extends State<AiHubScreen> with SingleTickerProviderStat
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _CoreVisual(glow: _glow),
-                      const SizedBox(height: 20),
-                      _SearchBar(controller: _searchCtrl),
-                      const SizedBox(height: 10),
-                      _QuickActions(onSelect: (route) => context.go(route)),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 40),
                       Text('Yapay Zeka Araçları', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 20),
                     ],
                   ),
                 ),
@@ -124,7 +114,7 @@ class _AiHubScreenState extends State<AiHubScreen> with SingleTickerProviderStat
                 padding: EdgeInsets.fromLTRB(16, 0, 16, bottomInset + 32), // alt boşluk optimize
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
-                    (context, index) {
+                        (context, index) {
                       final tool = tools[index];
                       return _AiToolCard(tool: tool, onTap: () => context.go(tool.route));
                     },
@@ -211,81 +201,6 @@ class _CoreVisual extends StatelessWidget {
               ],
             );
           },
-        ),
-      ),
-    );
-  }
-}
-
-class _SearchBar extends StatelessWidget {
-  const _SearchBar({required this.controller});
-  final TextEditingController controller;
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      decoration: InputDecoration(
-        hintText: 'Araç ara... (örn: motivasyon)',
-        prefixIcon: const Icon(Icons.search),
-        suffixIcon: controller.text.isNotEmpty
-            ? IconButton(icon: const Icon(Icons.close), onPressed: () => controller.clear())
-            : null,
-      ),
-    );
-  }
-}
-
-class _QuickActions extends StatelessWidget {
-  const _QuickActions({required this.onSelect});
-  final void Function(String route) onSelect;
-  @override
-  Widget build(BuildContext context) {
-    final actions = [
-      ('Hafta Planı', Icons.calendar_month_rounded, '/ai-hub/strategic-planning'),
-      ('Zayıflık', Icons.bug_report_rounded, '/ai-hub/weakness-workshop'),
-      ('Motivasyon', Icons.psychology_rounded, '/ai-hub/motivation-chat'),
-    ];
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: actions.map((a) => Padding(
-          padding: const EdgeInsets.only(right: 12),
-          child: _GlassChip(
-            label: a.$1,
-            icon: a.$2,
-            onTap: () => onSelect(a.$3),
-          ),
-        )).toList(),
-      ),
-    );
-  }
-}
-
-class _GlassChip extends StatelessWidget {
-  const _GlassChip({required this.label, required this.icon, required this.onTap});
-  final String label; final IconData icon; final VoidCallback onTap;
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(40),
-      onTap: onTap,
-      child: Ink(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(40),
-          border: Border.all(color: Colors.white.withOpacity(.08)),
-          gradient: LinearGradient(
-            colors: [Colors.white.withOpacity(.08), Colors.white.withOpacity(.02)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(.3), blurRadius: 12, offset: const Offset(0, 6)),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [Icon(icon, size: 18, color: AppTheme.secondaryColor), const SizedBox(width: 6), Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),],
         ),
       ),
     );
