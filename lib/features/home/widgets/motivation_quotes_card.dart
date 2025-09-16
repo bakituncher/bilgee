@@ -17,27 +17,14 @@ class _MotivationQuotesCardState extends State<MotivationQuotesCard> {
   Timer? _timer;
   int _index = 0;
   final _quotes = const [
-    ('Bugün yorulabilirsin ama yarın hayallerine ulaşınca her şey buna değecek.', 'Anonim'),
-    ('Sınavlar potansiyelini görmen için bir aynadır. Onunla yüzleşmekten korkma.', 'Nasuh Mahruki'),
-    ('Yeteri kadar nedenin varsa, her şeyi yapabilirsin.', 'Jim Rohn'),
-    ('Hayallerin seni korkutmuyorsa, yeterince büyük değiller demektir.', 'Ellen Johnson Sirleaf'),
-    ('Başarı, başarısızlıktan başarısızlığa hevesini kaybetmeden ilerlemektir.', 'Winston Churchill'),
-    ('Henüz hedeflediğin yerde olmayabilirsin. Ama dün olduğun yerden daha yakınsın.', 'Anonim'),
-    ('Başlamak için mükemmel olmak zorunda değilsin; fakat mükemmel olmak için başlamak zorundasın.', 'Zig Ziglar'),
-    ('Düştüğünde değil, pes ettiğinde kaybedersin.', 'Anonim'),
-    ('İmkansıza ulaşmanın tek yolu, onun mümkün olduğuna inanmaktır.', 'Lewis Carroll'),
-    ('Zorluklar, öğrenme sürecinin bir parçasıdır. Onları aşarsan, gerçek başarıya ulaşırsın.', 'Thomas Edison'),
-    ('Şüphesiz her zorlukla birlikte bir kolaylık vardır.', 'Kur\'an'),
-    ('Eğitimin kökleri acı, meyveleri tatlıdır.', 'Aristoteles'),
-    ('Büyük işler başarmak için büyük hayaller kurun ve onlar için çalışın.', 'Walt Disney'),
-    ('Başarı, sadece yetenekle değil, kararlılıkla gelir.', 'Kobe Bryant'),
-    ('Zirveye giden asansör bozuk, merdivenleri kullanmak zorundasın.', 'Anonim'),
-    ('Hayat bisiklet sürmeye benzer. Dengeyi korumak için hareket etmeye devam etmelisin.', 'Albert Einstein'),
-    ('Hayal gücü, gerçekliği değiştirebilecek en güçlü araçtır.', 'Anonim'),
-    ('Geleceğini tahmin etmenin en iyi yolu, onu yaratmaktır.', 'Abraham Lincoln'),
-    ('Küçük adımlar, büyük başarıların temelidir.', 'Anonim'),
-    ('Pes etme, çünkü henüz kazanmaya ne kadar yakın olduğunu bilmiyorsun.', 'Anonim'),
-    ('Başarıya giden yolda en büyük engel, kendine olan inançsızlıktır.', 'Anonim'),
+    ('Hayatta en hakiki mürşit ilimdir, fendir.', 'M. Kemal Atatürk'),
+    ('Geleceği tahmin etmenin en iyi yolu, onu yaratmaktır.', 'Peter Drucker'),
+    ('Başarının sırrı, sıradan işleri sıra dışı bir şekilde yapmaktır.', 'John D. Rockefeller'),
+    ('Dehanın %1\'i ilham, %99\'u alın teridir.', 'Thomas Edison'),
+    ('Şimdi acı çek ve hayatının geri kalanını bir şampiyon olarak yaşa.', 'Muhammed Ali'),
+    ('Tek bildiğim, hiçbir şey bilmediğimdir.', 'Sokrates'),
+    ('Hayal gücü bilgiden daha önemlidir. Çünkü bilgi sınırlıyken, hayal gücü tüm dünyayı kapsar.', 'Albert Einstein'),
+    ('Yenilginin en büyük zaferden tek farkı, ayağa kalkma cesaretidir.', 'Bilge Baykuş'),
   ];
 
   @override
