@@ -13,11 +13,11 @@ class HeroHeader extends ConsumerWidget {
 
   String _greeting() {
     final hour = DateTime.now().hour;
-    if (hour < 6) return 'Gece Vardiyası';
+    if (hour < 6) return 'İyi Geceler';
     if (hour < 11) return 'Günaydın';
-    if (hour < 17) return 'Odak Zamanı';
-    if (hour < 22) return 'Akşam Gücü';
-    return 'Gece Derinliği';
+    if (hour < 17) return 'Kolay Gelsin';
+    if (hour < 22) return 'İyi Akşamlar';
+    return 'İyi Geceler';
   }
 
   @override
