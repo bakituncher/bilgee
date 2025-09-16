@@ -22,6 +22,7 @@ import 'package:bilge_ai/features/admin/screens/push_composer_screen.dart';
 import 'package:bilge_ai/features/admin/screens/admin_panel_screen.dart';
 import 'package:bilge_ai/features/admin/screens/user_management_screen.dart';
 import 'package:bilge_ai/shared/notifications/notification_center_screen.dart';
+import 'transition_utils.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   final rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -40,11 +41,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final userProfileState = ref.read(userProfileProvider);
       final location = state.matchedLocation;
 
-      // While providers are loading, show the loading screen.
-      final isLoading = authState.isLoading || (authState.hasValue && userProfileState.isLoading);
-      if (isLoading) {
-        return AppRoutes.loading;
-      }
 
       final isLoggedIn = authState.hasValue && authState.value != null;
       final onAuthScreen = location == AppRoutes.login || location == AppRoutes.register;
@@ -94,88 +90,148 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: AppRoutes.loading,
-        builder: (c, s) => const LoadingScreen(),
+        pageBuilder: (context, state) => buildPageWithFadeTransition(
+          context: context,
+          state: state,
+          child: const LoadingScreen(),
+        ),
       ),
       GoRoute(
           path: AppRoutes.library,
           parentNavigatorKey: rootNavigatorKey,
-          builder: (c, s) => const LibraryScreen()
+          pageBuilder: (context, state) => buildPageWithFadeTransition(
+            context: context,
+            state: state,
+            child: const LibraryScreen(),
+          )
       ),
       GoRoute(
         path: AppRoutes.settings,
         parentNavigatorKey: rootNavigatorKey,
-        builder: (c, s) => const SettingsScreen(),
+        pageBuilder: (context, state) => buildPageWithFadeTransition(
+          context: context,
+          state: state,
+          child: const SettingsScreen(),
+        ),
       ),
       // Blog ve Premium (üst seviye sayfalar)
       GoRoute(
         path: '/blog',
         parentNavigatorKey: rootNavigatorKey,
-        builder: (c, s) => const BlogScreen(),
+        pageBuilder: (context, state) => buildPageWithFadeTransition(
+          context: context,
+          state: state,
+          child: const BlogScreen(),
+        ),
       ),
       GoRoute(
         path: '/blog/:slug',
         parentNavigatorKey: rootNavigatorKey,
-        builder: (c, s) {
-          final slug = s.pathParameters['slug']!;
-          return BlogDetailScreen(slug: slug);
+        pageBuilder: (context, state) {
+          final slug = state.pathParameters['slug']!;
+          return buildPageWithFadeTransition(
+            context: context,
+            state: state,
+            child: BlogDetailScreen(slug: slug),
+          );
         },
       ),
       GoRoute(
         path: '/premium',
         parentNavigatorKey: rootNavigatorKey,
-        builder: (c, s) => const premium.PremiumView(),
+        pageBuilder: (context, state) => buildPageWithFadeTransition(
+          context: context,
+          state: state,
+          child: const premium.PremiumView(),
+        ),
       ),
       GoRoute(
         path: '/stats/overview',
         parentNavigatorKey: rootNavigatorKey,
-        builder: (c, s) => const GeneralOverviewScreen(),
+        pageBuilder: (context, state) => buildPageWithFadeTransition(
+          context: context,
+          state: state,
+          child: const GeneralOverviewScreen(),
+        ),
       ),
       // Bildirim Merkezi
       GoRoute(
         path: '/notifications',
         parentNavigatorKey: rootNavigatorKey,
-        builder: (c, s) => const NotificationCenterScreen(),
+        pageBuilder: (context, state) => buildPageWithFadeTransition(
+          context: context,
+          state: state,
+          child: const NotificationCenterScreen(),
+        ),
       ),
       // Admin: Cevher Bildirimleri
       GoRoute(
         path: '/admin/panel',
         parentNavigatorKey: rootNavigatorKey,
-        builder: (c, s) => const AdminPanelScreen(),
+        pageBuilder: (context, state) => buildPageWithFadeTransition(
+          context: context,
+          state: state,
+          child: const AdminPanelScreen(),
+        ),
       ),
       GoRoute(
         path: '/admin/user-management',
         parentNavigatorKey: rootNavigatorKey,
-        builder: (c, s) => const UserManagementScreen(),
+        pageBuilder: (context, state) => buildPageWithFadeTransition(
+          context: context,
+          state: state,
+          child: const UserManagementScreen(),
+        ),
       ),
       GoRoute(
         path: '/admin/reports',
         parentNavigatorKey: rootNavigatorKey,
-        builder: (c, s) => const QuestionReportsScreen(),
+        pageBuilder: (context, state) => buildPageWithFadeTransition(
+          context: context,
+          state: state,
+          child: const QuestionReportsScreen(),
+        ),
       ),
       GoRoute(
         path: '/admin/reports/:qhash',
         parentNavigatorKey: rootNavigatorKey,
-        builder: (c, s) {
-          final qhash = s.pathParameters['qhash']!;
-          return QuestionReportDetailScreen(qhash: qhash);
+        pageBuilder: (context, state) {
+          final qhash = state.pathParameters['qhash']!;
+          return buildPageWithFadeTransition(
+            context: context,
+            state: state,
+            child: QuestionReportDetailScreen(qhash: qhash),
+          );
         },
       ),
       GoRoute(
         path: '/admin/push-composer',
         parentNavigatorKey: rootNavigatorKey,
-        builder: (c, s) => const PushComposerScreen(),
+        pageBuilder: (context, state) => buildPageWithFadeTransition(
+          context: context,
+          state: state,
+          child: const PushComposerScreen(),
+        ),
       ),
       GoRoute(
         path: '/blog/admin/new',
         parentNavigatorKey: rootNavigatorKey,
-        builder: (c, s) => const BlogAdminEditorScreen(),
+        pageBuilder: (context, state) => buildPageWithFadeTransition(
+          context: context,
+          state: state,
+          child: const BlogAdminEditorScreen(),
+        ),
       ),
       GoRoute(
         path: '/blog/admin/edit/:slug',
         parentNavigatorKey: rootNavigatorKey,
-        builder: (c, s) {
-          final slug = s.pathParameters['slug']!;
-          return BlogAdminEditorScreen(initialSlug: slug);
+        pageBuilder: (context, state) {
+          final slug = state.pathParameters['slug']!;
+          return buildPageWithFadeTransition(
+            context: context,
+            state: state,
+            child: BlogAdminEditorScreen(initialSlug: slug),
+          );
         },
       ),
       ...authRoutes,

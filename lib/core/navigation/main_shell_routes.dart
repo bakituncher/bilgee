@@ -32,6 +32,7 @@ import 'package:bilge_ai/features/home/screens/weekly_plan_screen.dart';
 import 'package:bilge_ai/features/quests/screens/quests_screen.dart';
 import 'package:bilge_ai/features/profile/screens/avatar_selection_screen.dart'; // YENİ: Avatar ekranı import edildi
 import 'package:bilge_ai/features/profile/screens/follow_list_screen.dart'; // YENİ: Takip listesi ekranı import edildi
+import 'transition_utils.dart';
 
 StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
   return StatefulShellRoute.indexedStack(
@@ -42,70 +43,70 @@ StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
       StatefulShellBranch(routes: [
         GoRoute(
             path: AppRoutes.home,
-            builder: (context, state) => const DashboardScreen(),
+            pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: const DashboardScreen()),
             routes: [
               GoRoute(
                 path: AppRoutes.quests,
                 parentNavigatorKey: rootNavigatorKey,
-                builder: (context, state) => const QuestsScreen(),
+                pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: const QuestsScreen()),
               ),
               GoRoute(
                 path: 'weekly-plan',
                 parentNavigatorKey: rootNavigatorKey,
-                builder: (context, state) => const WeeklyPlanScreen(),
+                pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: const WeeklyPlanScreen()),
               ),
               GoRoute(
                 path: AppRoutes.addTest,
                 parentNavigatorKey: rootNavigatorKey,
-                builder: (context, state) => const AddTestScreen(),
+                pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: const AddTestScreen()),
               ),
               GoRoute(
                 path: AppRoutes.testDetail,
                 parentNavigatorKey: rootNavigatorKey,
-                builder: (context, state) {
+                pageBuilder: (context, state) {
                   final test = state.extra as TestModel?; // null güvenli
                   if (test == null) {
-                    return const Scaffold(body: Center(child: Text('Test verisi bulunamadı')));
+                    return buildPageWithFadeTransition(context: context, state: state, child: const Scaffold(body: Center(child: Text('Test verisi bulunamadı'))));
                   }
-                  return TestDetailScreen(test: test);
+                  return buildPageWithFadeTransition(context: context, state: state, child: TestDetailScreen(test: test));
                 },
               ),
               GoRoute(
                 path: AppRoutes.testResultSummary,
                 parentNavigatorKey: rootNavigatorKey,
-                builder: (context, state) {
+                pageBuilder: (context, state) {
                   final test = state.extra as TestModel?; // null güvenli
-                  return TestResultSummaryEntry(test: test);
+                  return buildPageWithFadeTransition(context: context, state: state, child: TestResultSummaryEntry(test: test));
                 },
               ),
               GoRoute(
                 path: AppRoutes.pomodoro,
                 parentNavigatorKey: rootNavigatorKey,
-                builder: (context, state) => const PomodoroScreen(),
+                pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: const PomodoroScreen()),
               ),
               GoRoute(
                 path: AppRoutes.stats,
                 parentNavigatorKey: rootNavigatorKey,
-                builder: (context, state) => const StatsScreen(),
+                pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: const StatsScreen()),
               ),
             ]),
       ]),
       StatefulShellBranch(routes: [
         GoRoute(
             path: AppRoutes.coach,
-            builder: (context, state) => CoachScreen(initialSubject: state.uri.queryParameters['subject']),
+            pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: CoachScreen(initialSubject: state.uri.queryParameters['subject'])),
             routes: [
               GoRoute(
                 path: AppRoutes.updateTopicPerformance,
                 parentNavigatorKey: rootNavigatorKey,
-                builder: (context, state) {
+                pageBuilder: (context, state) {
                   final args = state.extra as Map<String, dynamic>;
-                  return UpdateTopicPerformanceScreen(
+                  return buildPageWithFadeTransition(context: context, state: state, child: UpdateTopicPerformanceScreen(
                     subject: args['subject'] as String,
                     topic: args['topic'] as String,
                     initialPerformance:
                     args['performance'] as TopicPerformanceModel,
-                  );
+                  ));
                 },
               ),
             ]),
@@ -113,64 +114,64 @@ StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
       StatefulShellBranch(routes: [
         GoRoute(
             path: AppRoutes.aiHub,
-            builder: (context, state) => const AiHubScreen(),
+            pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: const AiHubScreen()),
             routes: [
               GoRoute(
                   path: AppRoutes.strategicPlanning,
                   parentNavigatorKey: rootNavigatorKey,
-                  builder: (context, state) =>
-                  const StrategicPlanningScreen(),
+                  pageBuilder: (context, state) =>
+                  buildPageWithFadeTransition(context: context, state: state, child: const StrategicPlanningScreen()),
                   routes: [
                     GoRoute(
                       path: AppRoutes.strategyReview,
                       parentNavigatorKey: rootNavigatorKey,
-                      builder: (context, state) {
+                      pageBuilder: (context, state) {
                         final result = state.extra as Map<String, dynamic>;
-                        return StrategyReviewScreen(generationResult: result);
+                        return buildPageWithFadeTransition(context: context, state: state, child: StrategyReviewScreen(generationResult: result));
                       },
                     ),
                   ]),
               GoRoute(
                   path: AppRoutes.weaknessWorkshop,
                   parentNavigatorKey: rootNavigatorKey,
-                  builder: (context, state) =>
-                  const WeaknessWorkshopScreen(),
+                  pageBuilder: (context, state) =>
+                  buildPageWithFadeTransition(context: context, state: state, child: const WeaknessWorkshopScreen()),
                   routes: [
                     GoRoute(
                       path: 'stats',
                       parentNavigatorKey: rootNavigatorKey,
-                      builder: (context, state) =>
-                      const WorkshopStatsScreen(),
+                      pageBuilder: (context, state) =>
+                      buildPageWithFadeTransition(context: context, state: state, child: const WorkshopStatsScreen()),
                     ),
                     GoRoute(
                       path: AppRoutes.savedWorkshops,
                       parentNavigatorKey: rootNavigatorKey,
-                      builder: (context, state) =>
-                      const SavedWorkshopsScreen(),
+                      pageBuilder: (context, state) =>
+                      buildPageWithFadeTransition(context: context, state: state, child: const SavedWorkshopsScreen()),
                     ),
                     GoRoute(
                       path: AppRoutes.savedWorkshopDetail,
                       parentNavigatorKey: rootNavigatorKey,
-                      builder: (context, state) {
+                      pageBuilder: (context, state) {
                         final workshop =
                         state.extra as SavedWorkshopModel;
-                        return SavedWorkshopDetailScreen(
-                            workshop: workshop);
+                        return buildPageWithFadeTransition(context: context, state: state, child: SavedWorkshopDetailScreen(
+                            workshop: workshop));
                       },
                     ),
                   ]),
               GoRoute(
                 path: AppRoutes.motivationChat,
                 parentNavigatorKey: rootNavigatorKey,
-                builder: (context, state) {
+                pageBuilder: (context, state) {
                   final prompt = state.extra;
-                  return MotivationChatScreen(initialPrompt: prompt);
+                  return buildPageWithFadeTransition(context: context, state: state, child: MotivationChatScreen(initialPrompt: prompt));
                 },
               ),
               GoRoute(
                 path: AppRoutes.coachPushed,
                 parentNavigatorKey: rootNavigatorKey,
-                builder: (context, state) => CoachScreen(initialSubject: state.uri.queryParameters['subject']),
+                pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: CoachScreen(initialSubject: state.uri.queryParameters['subject'])),
               ),
             ]),
       ]),
@@ -178,14 +179,14 @@ StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
           routes: [
             GoRoute(
                 path: AppRoutes.arena,
-                builder: (context, state) => const ArenaScreen(),
+                pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: const ArenaScreen()),
                 routes: [
                   GoRoute(
                     path: ':userId',
                     parentNavigatorKey: rootNavigatorKey,
-                    builder: (context, state) {
+                    pageBuilder: (context, state) {
                       final userId = state.pathParameters['userId']!;
-                      return PublicProfileScreen(userId: userId);
+                      return buildPageWithFadeTransition(context: context, state: state, child: PublicProfileScreen(userId: userId));
                     },
                   )
                 ]
@@ -195,33 +196,33 @@ StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
           routes: [
             GoRoute(
                 path: AppRoutes.profile,
-                builder: (context, state) => const ProfileScreen(),
+                pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: const ProfileScreen()),
                 routes: [
                   GoRoute(
                     path: 'edit',
                     parentNavigatorKey: rootNavigatorKey,
-                    builder: (context, state) => const EditProfileScreen(),
+                    pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: const EditProfileScreen()),
                   ),
                   GoRoute(
                     path: 'honor-wall',
                     parentNavigatorKey: rootNavigatorKey,
-                    builder: (context, state) {
+                    pageBuilder: (context, state) {
                       final allBadges = state.extra as List<app_badge.Badge>;
-                      return HonorWallScreen(allBadges: allBadges);
+                      return buildPageWithFadeTransition(context: context, state: state, child: HonorWallScreen(allBadges: allBadges));
                     },
                   ),
                   // YENİ EKLENEN AVATAR ROTASI
                   GoRoute(
                     path: 'avatar-selection',
                     parentNavigatorKey: rootNavigatorKey,
-                    builder: (context, state) => const AvatarSelectionScreen(),
+                    pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: const AvatarSelectionScreen()),
                   ),
                   GoRoute(
                     path: 'follow-list',
                     parentNavigatorKey: rootNavigatorKey,
-                    builder: (context, state) {
+                    pageBuilder: (context, state) {
                       final mode = state.uri.queryParameters['mode'] ?? 'followers';
-                      return FollowListScreen(mode: mode);
+                      return buildPageWithFadeTransition(context: context, state: state, child: FollowListScreen(mode: mode));
                     },
                   ),
                 ]),
