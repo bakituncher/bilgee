@@ -7,11 +7,25 @@ class AppLoader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    // Sade, hızlı açılan loader: sadece logo ve hafif opak geçiş
+    return Scaffold(
       backgroundColor: AppTheme.primaryColor,
       body: Center(
-        child: CircularProgressIndicator(color: AppTheme.secondaryColor),
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0, end: 1),
+          duration: const Duration(milliseconds: 400),
+          builder: (context, v, child) => Opacity(opacity: v, child: child),
+          child: Image.asset(
+            'assets/images/logo.png',
+            width: 160,
+            height: 160,
+            filterQuality: FilterQuality.medium,
+            errorBuilder: (_, __, ___) => const Icon(Icons.school, size: 96, color: Colors.white70),
+          ),
+        ),
       ),
     );
   }
 }
+
+// Önceki karmaşık animasyon ve gölgelendirme kaldırıldı; açılışta takılma azaltılır.

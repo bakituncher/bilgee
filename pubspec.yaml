@@ -67,13 +67,26 @@ dev_dependencies:
     sdk: flutter
 
   flutter_lints: ^4.0.0
+  flutter_native_splash: ^2.4.1
 
 # Ana Flutter yapılandırması
 flutter:
   uses-material-design: true
-
-  # YENİ EKLENEN KISIM
   assets:
     - assets/data/
     - assets/prompts/
     - assets/images/
+
+flutter_native_splash:
+  color: "#0F172A"
+  image: assets/images/logo.png
+  android_12:
+    image: assets/images/logo.png
+    icon_background_color: "#0F172A"
+  android: true
+  ios: true
+  web: false
+  fullscreen: true
+  # Opsiyonel durumsal karanlık tema aynı renk
+  color_dark: "#0F172A"
+  image_dark: assets/images/logo.png
