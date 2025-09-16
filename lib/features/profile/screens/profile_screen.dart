@@ -217,6 +217,23 @@ class _ProfileView extends ConsumerWidget {
     final planDocAsync = ref.watch(planProvider);
     final statsStream = ref.watch(providers.userStatsStreamProvider);
     final followCountsAsync = ref.watch(providers.followCountsProvider(user.id));
+
+    // Check for loading state first
+    if (testsAsync.isLoading || focusSessionsAsync.isLoading || performanceAsync.isLoading || planDocAsync.isLoading || followCountsAsync.isLoading) {
+      return const LogoLoader();
+    }
+
+    // Handle errors gracefully
+    if (testsAsync.hasError || focusSessionsAsync.hasError || performanceAsync.hasError || planDocAsync.hasError || followCountsAsync.hasError) {
+      return const Center(child: Text("Veriler yüklenirken bir sorun oluştu."));
+    }
+
+    // If we reach here, all data is available.
+    final tests = testsAsync.value!;
+    final focusSessions = focusSessionsAsync.value!;
+    final performance = performanceAsync.value!;
+    final planDoc = planDocAsync.value;
+    final followCounts = followCountsAsync.value!;
     final statsUpdatedAt = statsStream.valueOrNull?.updatedAt;
 
     final rankInfo = RankService.getRankInfo(user.engagementScore);
@@ -224,6 +241,11 @@ class _ProfileView extends ConsumerWidget {
     final nextRank = rankInfo.next;
     final progressToNext = rankInfo.progress;
     final rankIndex = RankService.ranks.indexOf(currentRank);
+
+    final testCount = tests.length;
+    final avgNet = testCount > 0 ? user.totalNetSum / testCount : 0.0;
+    final allBadges = _generateBadges(user, performance, planDoc, testCount, avgNet, focusSessions);
+    final unlockedCount = allBadges.where((b) => b.isUnlocked).length;
 
     return Stack(
       alignment: Alignment.topCenter,
@@ -259,30 +281,14 @@ class _ProfileView extends ConsumerWidget {
                               const SizedBox(height: 6),
                               _RankPill(rank: currentRank),
                               const SizedBox(height: 14),
-                              testsAsync.when(
-                                data: (tests) {
-                                  final testCount = tests.length;
-                                  final avgNet = testCount > 0 ? user.totalNetSum / testCount : 0.0;
-                                  return Row(
-                                    children: [
-                                      Expanded(child: _ProfileStatCard(label: 'Deneme', value: testCount.toString(), icon: Icons.library_books_rounded, delay: 0.ms)),
-                                      const SizedBox(width: 10),
-                                      Expanded(child: _ProfileStatCard(label: 'Ort. Net', value: avgNet.toStringAsFixed(1), icon: Icons.track_changes_rounded, delay: 0.ms)),
-                                      const SizedBox(width: 10),
-                                      Expanded(child: _ProfileStatCard(label: 'Seri', value: user.streak.toString(), icon: Icons.local_fire_department_rounded, delay: 0.ms)),
-                                    ],
-                                  );
-                                },
-                                loading: () => Row(
-                                  children: const [
-                                    _Skeleton(height: 110),
-                                    SizedBox(width: 10),
-                                    _Skeleton(height: 110),
-                                    SizedBox(width: 10),
-                                    _Skeleton(height: 110),
-                                  ],
-                                ),
-                                error: (e,s) => const SizedBox.shrink(),
+                              Row(
+                                children: [
+                                  Expanded(child: _ProfileStatCard(label: 'Deneme', value: testCount.toString(), icon: Icons.library_books_rounded, delay: 0.ms)),
+                                  const SizedBox(width: 10),
+                                  Expanded(child: _ProfileStatCard(label: 'Ort. Net', value: avgNet.toStringAsFixed(1), icon: Icons.track_changes_rounded, delay: 0.ms)),
+                                  const SizedBox(width: 10),
+                                  Expanded(child: _ProfileStatCard(label: 'Seri', value: user.streak.toString(), icon: Icons.local_fire_department_rounded, delay: 0.ms)),
+                                ],
                               ),
                               const SizedBox(height: 14),
                               Row(
@@ -297,17 +303,13 @@ class _ProfileView extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      followCountsAsync.when(
-                        data: (counts) => Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            _FollowCount(label: 'Takipçi', value: counts.$1, onTap: () => context.push('/profile/follow-list?mode=followers')),
-                            const SizedBox(width: 12),
-                            _FollowCount(label: 'Takip', value: counts.$2, onTap: () => context.push('/profile/follow-list?mode=following')),
-                          ],
-                        ),
-                        loading: () => const _Skeleton(height: 36, width: 200),
-                        error: (e, s) => const SizedBox.shrink(),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _FollowCount(label: 'Takipçi', value: followCounts.$1, onTap: () => context.push('/profile/follow-list?mode=followers')),
+                          const SizedBox(width: 12),
+                          _FollowCount(label: 'Takip', value: followCounts.$2, onTap: () => context.push('/profile/follow-list?mode=following')),
+                        ],
                       ),
                       const SizedBox(height: 8),
                       if (statsUpdatedAt != null)
@@ -325,52 +327,20 @@ class _ProfileView extends ConsumerWidget {
                         progress: progressToNext,
                       ).animate().fadeIn(duration: 450.ms, delay: 200.ms),
                       const SizedBox(height: 24),
-                      performanceAsync.when(
-                        data: (performance) {
-                          if (performance == null) {
-                            return Column(
-                              children: [
-                                Row(children: const [Expanded(child: _Skeleton(height: 110)), SizedBox(width: 14), Expanded(child: _Skeleton(height: 110))]),
-                                const SizedBox(height: 24),
-                                Row(children: const [Expanded(child: _Skeleton(height: 64)), SizedBox(width: 14), Expanded(child: _Skeleton(height: 64))]),
-                              ],
-                            );
-                          }
-                          final tests = testsAsync.valueOrNull ?? [];
-                          final focusSessions = focusSessionsAsync.valueOrNull ?? [];
-                          final planDoc = planDocAsync.value;
-                          final testCount = tests.length;
-                          final avgNet = testCount > 0 ? user.totalNetSum / testCount : 0.0;
-                          final allBadges = _generateBadges(user, performance, planDoc, testCount, avgNet, focusSessions);
-                          final unlockedCount = allBadges.where((b) => b.isUnlocked).length;
-                          return Column(
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(child: _ProfileStatCard(label: 'Madalyalar', value: '$unlockedCount/${allBadges.length}', icon: Icons.military_tech_rounded, delay: 260.ms)),
-                                  const SizedBox(width: 14),
-                                  Expanded(child: _ProfileStatCard(label: 'Seviye', value: (rankIndex + 1).toString(), icon: Icons.workspace_premium, delay: 320.ms)),
-                                ],
-                              ),
-                              const SizedBox(height: 24),
-                              Row(
-                                children: [
-                                  Expanded(child: _ActionNeo(icon: Icons.emoji_events_outlined, label: 'Başarılar', onTap: () => context.push('/profile/honor-wall', extra: allBadges))),
-                                  const SizedBox(width: 14),
-                                  Expanded(child: _ActionNeo(icon: Icons.timeline_rounded, label: 'İlerleme', onTap: () => context.push('/home/stats'))),
-                                ],
-                              ),
-                            ],
-                          );
-                        },
-                        loading: () => Column(
-                          children: [
-                            Row(children: const [Expanded(child: _Skeleton(height: 110)), SizedBox(width: 14), Expanded(child: _Skeleton(height: 110))]),
-                            const SizedBox(height: 24),
-                            Row(children: const [Expanded(child: _Skeleton(height: 64)), SizedBox(width: 14), Expanded(child: _Skeleton(height: 64))]),
-                          ],
-                        ),
-                        error: (e,s) => const SizedBox.shrink(),
+                      Row(
+                        children: [
+                          Expanded(child: _ProfileStatCard(label: 'Madalyalar', value: '$unlockedCount/${allBadges.length}', icon: Icons.military_tech_rounded, delay: 260.ms)),
+                          const SizedBox(width: 14),
+                          Expanded(child: _ProfileStatCard(label: 'Seviye', value: (rankIndex + 1).toString(), icon: Icons.workspace_premium, delay: 320.ms)),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        children: [
+                          Expanded(child: _ActionNeo(icon: Icons.emoji_events_outlined, label: 'Başarılar', onTap: () => context.push('/profile/honor-wall', extra: allBadges))),
+                          const SizedBox(width: 14),
+                          Expanded(child: _ActionNeo(icon: Icons.timeline_rounded, label: 'İlerleme', onTap: () => context.push('/home/stats'))),
+                        ],
                       ),
                       const SizedBox(height: 12),
                       Row(
@@ -378,7 +348,7 @@ class _ProfileView extends ConsumerWidget {
                           Expanded(child: _ActionNeo(icon: Icons.person_rounded, label: 'Avatar', onTap: () => context.push('/profile/avatar-selection'))),
                           const SizedBox(width: 14),
                           Expanded(child: _ActionNeo(icon: Icons.map_rounded, label: 'Strateji', onTap: () {
-                            if (planDocAsync.value?.weeklyPlan != null) {
+                            if (planDoc?.weeklyPlan != null) {
                               context.push('/home/weekly-plan');
                             } else {
                               context.push('${AppRoutes.aiHub}/${AppRoutes.strategicPlanning}');
@@ -909,28 +879,6 @@ class _ActionNeoState extends State<_ActionNeo> {
         ),
       ),
     );
-  }
-}
-
-class _Skeleton extends StatelessWidget {
-  final double? height;
-  final double? width;
-  final BoxShape shape;
-  final double borderRadius;
-
-  const _Skeleton({this.height, this.width, this.shape = BoxShape.rectangle, this.borderRadius = 24});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: height,
-      width: width,
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
-        shape: shape,
-        borderRadius: shape == BoxShape.rectangle ? BorderRadius.circular(borderRadius) : null,
-      ),
-    ).animate(onPlay: (c) => c.repeat(reverse: true)).fade(begin: 0.5, end: 1, duration: 800.ms, curve: Curves.easeInOut);
   }
 }
 
