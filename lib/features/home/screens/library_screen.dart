@@ -9,6 +9,7 @@ import 'package:bilge_ai/core/theme/app_theme.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:bilge_ai/features/quests/logic/quest_notifier.dart';
+import 'package:bilge_ai/shared/widgets/logo_loader.dart';
 
 class LibraryScreen extends ConsumerStatefulWidget {
   const LibraryScreen({super.key});
@@ -260,7 +261,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
 
   Widget _buildBody(TextTheme textTheme) {
     if (_tests.isEmpty && _isLoading) {
-      return const Center(child: CircularProgressIndicator(color: AppTheme.secondaryColor));
+      return const LogoLoader();
     }
     if (_tests.isEmpty) {
       return Center(

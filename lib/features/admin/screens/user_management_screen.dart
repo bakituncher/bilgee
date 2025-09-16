@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:bilge_ai/data/providers/firestore_providers.dart';
 import 'package:bilge_ai/core/theme/app_theme.dart';
+import 'package:bilge_ai/shared/widgets/logo_loader.dart';
 
 // State model for the user management screen
 class UserManagementState {
@@ -245,7 +246,7 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
             ),
           ),
           if (state.isLoading && state.users.isEmpty && state.error == null)
-            const Center(child: CircularProgressIndicator()),
+            const Expanded(child: LogoLoader()),
         ],
       ),
     );

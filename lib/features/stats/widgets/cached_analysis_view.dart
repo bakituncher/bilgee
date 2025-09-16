@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:bilge_ai/features/stats/logic/stats_analysis_provider.dart';
 import 'package:bilge_ai/features/stats/screens/subject_stats_screen.dart';
+import 'package:bilge_ai/shared/widgets/logo_loader.dart';
 import 'package:bilge_ai/features/stats/widgets/title_widget.dart';
 import 'package:bilge_ai/features/stats/widgets/net_evolution_chart.dart';
 import 'package:bilge_ai/features/stats/widgets/key_stats_grid.dart';
@@ -23,7 +24,7 @@ class CachedAnalysisView extends ConsumerWidget {
     return analysisAsync.when(
       loading: () => previous != null
           ? _buildBody(context, previous)
-          : const Center(child: CircularProgressIndicator()),
+          : const LogoLoader(),
       error: (e, st) => Center(child: Text('Analiz yüklenemedi: $e')),
       data: (analysis) {
         if (analysis == null) {

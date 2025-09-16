@@ -11,6 +11,7 @@ import 'package:bilge_ai/data/providers/firestore_providers.dart';
 import 'package:bilge_ai/core/navigation/app_routes.dart';
 import 'package:bilge_ai/data/models/performance_summary.dart';
 import 'package:bilge_ai/features/stats/logic/stats_analysis_provider.dart';
+import 'package:bilge_ai/shared/widgets/logo_loader.dart';
 
 class MissionCard extends ConsumerWidget {
   const MissionCard({super.key});
@@ -28,7 +29,7 @@ class MissionCard extends ConsumerWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       clipBehavior: Clip.antiAlias,
       child: user == null || tests == null || performance == null
-          ? const Center(child: CircularProgressIndicator(color: AppTheme.secondaryColor))
+          ? const LogoLoader(size: 60)
           : _buildMissionContent(context, ref, user, tests, performance),
     );
   }
@@ -39,7 +40,7 @@ class MissionCard extends ConsumerWidget {
     final analysisAsync = ref.watch(overallStatsAnalysisProvider);
 
     return analysisAsync.when(
-      loading: () => const Center(child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator(color: AppTheme.secondaryColor))),
+      loading: () => const LogoLoader(size: 60),
       error: (e, st) => Center(child: Padding(padding: const EdgeInsets.all(24), child: Text('Analiz yüklenemedi: $e'))),
       data: (analysis) {
         final textTheme = Theme.of(context).textTheme;

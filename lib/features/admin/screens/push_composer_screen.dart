@@ -10,6 +10,7 @@ import 'package:bilge_ai/data/providers/admin_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
+import 'package:bilge_ai/shared/widgets/logo_loader.dart';
 
 class PushComposerScreen extends StatefulWidget {
   const PushComposerScreen({super.key});
@@ -1125,7 +1126,7 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
           .snapshots(),
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return const LogoLoader();
         }
         if (!snap.hasData || snap.data!.docs.isEmpty) {
           return const Center(child: Text('Kayıt yok'));

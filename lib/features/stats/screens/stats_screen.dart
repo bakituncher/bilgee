@@ -9,6 +9,7 @@ import 'package:bilge_ai/core/theme/app_theme.dart';
 import 'package:bilge_ai/features/stats/widgets/fortress_tab_selector.dart';
 import 'package:bilge_ai/features/stats/widgets/cached_analysis_view.dart';
 import 'package:bilge_ai/features/quests/logic/quest_notifier.dart';
+import 'package:bilge_ai/shared/widgets/logo_loader.dart';
 
 final selectedTabIndexProvider = StateProvider<int>((ref) => 0);
 
@@ -46,7 +47,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
   Widget _buildLoadingState() {
     return Scaffold(
       appBar: AppBar(title: const Text('Performans Kalesi')),
-      body: const Center(child: CircularProgressIndicator(color: AppTheme.secondaryColor)),
+      body: const LogoLoader(),
     );
   }
 

@@ -11,6 +11,7 @@ import 'package:bilge_ai/features/settings/logic/settings_notifier.dart';
 import 'package:bilge_ai/features/settings/widgets/settings_section.dart';
 import 'package:bilge_ai/features/settings/widgets/settings_tile.dart';
 import 'package:bilge_ai/data/providers/admin_providers.dart';
+import 'package:bilge_ai/shared/widgets/logo_loader.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -344,7 +345,7 @@ class SettingsScreen extends ConsumerWidget {
         ),
       ),
       body: user == null
-          ? const Center(child: CircularProgressIndicator())
+          ? const LogoLoader()
           : ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         children: [

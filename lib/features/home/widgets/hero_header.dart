@@ -155,7 +155,7 @@ class HeroHeader extends ConsumerWidget {
           ),
         );
       },
-      loading: () => const SizedBox(height: 72, child: Center(child: CircularProgressIndicator(strokeWidth: 2))),
+      loading: () => const SizedBox(height: 72, child: LogoLoader(size: 60)),
       error: (_, __) => const SizedBox.shrink(),
     );
   }

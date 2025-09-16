@@ -6,6 +6,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:bilge_ai/shared/widgets/logo_loader.dart';
 
 final _reportSearchProvider = StateProvider.autoDispose<String>((_) => '');
 
@@ -67,7 +68,7 @@ class QuestionReportsScreen extends ConsumerWidget {
                   stream: stream,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
+                      return const LogoLoader();
                     }
                     if (snapshot.hasError) {
                       return Center(child: Text('Hata: ${snapshot.error}'));
@@ -201,7 +202,7 @@ class QuestionReportsScreen extends ConsumerWidget {
           );
         },
         error: (e, _) => Center(child: Text('Hata: $e')),
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LogoLoader(),
       ),
     );
   }
