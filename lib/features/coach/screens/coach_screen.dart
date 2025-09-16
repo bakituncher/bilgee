@@ -1,5 +1,4 @@
 // lib/features/coach/screens/coach_screen.dart
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -58,13 +57,6 @@ class _CoachScreenState extends ConsumerState<CoachScreen>
             _tabController!.index;
       }
     });
-  }
-
-  void _showGalaxyGuide(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => const _GalaxyGuideDialog(),
-    );
   }
 
   @override
@@ -143,13 +135,6 @@ class _CoachScreenState extends ConsumerState<CoachScreen>
             return Scaffold(
                 appBar: AppBar(
                   title: const Text('Bilgi Galaksisi'),
-                  actions: [
-                    IconButton(
-                      icon: const Icon(Icons.info_outline_rounded),
-                      tooltip: "Rehber",
-                      onPressed: () => _showGalaxyGuide(context),
-                    ),
-                  ],
                   bottom: TabBar(
                     controller: _tabController,
                     isScrollable: true,
@@ -251,7 +236,7 @@ class _SubjectGalaxyViewState extends ConsumerState<_SubjectGalaxyView> {
           crossAxisCount: crossAxisCount,
           mainAxisSpacing: 16,
           crossAxisSpacing: 16,
-          childAspectRatio: 2.6,
+          childAspectRatio: 2.8,
         ),
         itemCount: processed.length,
         itemBuilder:(c,i){ final e=processed[i]; return MasteryTopicBubble(
@@ -295,11 +280,9 @@ class _SubjectGalaxyViewState extends ConsumerState<_SubjectGalaxyView> {
         padding: const EdgeInsets.fromLTRB(20,20,20,110),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children:[
           _SubjectStatsCard(subjectName: subjectName, overallMastery: overallMastery, totalQuestions: totalQuestions, totalCorrect: totalCorrect, totalWrong: totalWrong),
-          const SizedBox(height:16),
+          const SizedBox(height:24),
           _GalaxyToolbar(controller: _searchCtrl, onChanged: (v)=> ref.read(subjectFilterProvider(subjectName).notifier).state = v, currentMode: viewMode, onModeChanged: (m)=> ref.read(subjectViewModeProvider(subjectName).notifier).state = m),
-          const SizedBox(height:12),
-          const _ColorLegend(),
-          const SizedBox(height:20),
+          const SizedBox(height:24),
           content.animate().fadeIn(duration:500.ms, delay:200.ms),
         ]),
       ),
@@ -319,35 +302,49 @@ class _SubjectStatsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final masteryPercent = (overallMastery*100).toStringAsFixed(0);
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [AppTheme.lightSurfaceColor.withOpacity(0.55), AppTheme.lightSurfaceColor.withOpacity(0.25)]),
-        border: Border.all(color: Colors.white.withOpacity(0.06), width: 1),
+        color: AppTheme.lightSurfaceColor.withOpacity(0.5),
+        border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 20,
+            spreadRadius: -10,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children:[
-        Row(children:[
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children:[
           Expanded(
-            child: Text(
-              subjectName,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  subjectName,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+                const SizedBox(height: 4),
+                Text('Genel Hakimiyet: %$masteryPercent', style: theme.textTheme.titleMedium?.copyWith(color: AppTheme.secondaryTextColor)),
+              ],
             ),
           ),
           const SizedBox(width: 12),
           _MasteryPill(mastery: overallMastery)
         ]),
-        const SizedBox(height:8),
-        Text('Genel net hakimiyet: %$masteryPercent', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.secondaryTextColor)),
-        const SizedBox(height:14),
+        const SizedBox(height:16),
         ClipRRect(
           borderRadius: BorderRadius.circular(10),
           child: SizedBox(
-            height: 14,
+            height: 12,
             child: Stack(children: [
-              Container(color: AppTheme.lightSurfaceColor.withOpacity(0.4)),
+              Container(color: AppTheme.lightSurfaceColor),
               FractionallySizedBox(
                 widthFactor: overallMastery,
                 child: Container(
@@ -360,33 +357,69 @@ class _SubjectStatsCard extends StatelessWidget {
             ]),
           ),
         ),
-        const SizedBox(height:14),
-        Row(children:[ _StatChip(label:'Soru', value: totalQuestions.toString()), const SizedBox(width:8), _StatChip(label:'Doğru', value: totalCorrect.toString(), color: AppTheme.successColor), const SizedBox(width:8), _StatChip(label:'Yanlış', value: totalWrong.toString(), color: AppTheme.accentColor) ])
+        const SizedBox(height:16),
+        Row(children:[
+          Expanded(child: _StatChip(label:'Soru', value: totalQuestions.toString())),
+          const SizedBox(width:10),
+          Expanded(child: _StatChip(label:'Doğru', value: totalCorrect.toString(), color: AppTheme.successColor)),
+          const SizedBox(width:10),
+          Expanded(child: _StatChip(label:'Yanlış', value: totalWrong.toString(), color: AppTheme.accentColor))
+        ])
       ]),
     );
   }
 }
 
-class _StatChip extends StatelessWidget { final String label; final String value; final Color? color; const _StatChip({required this.label, required this.value, this.color}); @override Widget build(BuildContext context){ final c = color ?? AppTheme.secondaryColor; return Container(padding: const EdgeInsets.symmetric(horizontal:12, vertical:8), decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), color: c.withOpacity(0.18), border: Border.all(color: c.withOpacity(0.6), width:1)), child: Row(children:[ Text(label, style: const TextStyle(fontSize:12, color: AppTheme.secondaryTextColor)), const SizedBox(width:6), Text(value, style: const TextStyle(fontWeight: FontWeight.bold)) ])); }}
+class _StatChip extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color? color;
+  const _StatChip({required this.label, required this.value, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = color ?? AppTheme.secondaryTextColor;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: (color ?? AppTheme.lightSurfaceColor).withOpacity(0.15),
+        border: Border.all(color: (color ?? AppTheme.lightSurfaceColor).withOpacity(0.4), width: 1),
+      ),
+      child: Column(
+        children: [
+          Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color ?? Colors.white)),
+          const SizedBox(height: 2),
+          Text(label, style: TextStyle(fontSize: 12, color: c.withOpacity(0.8))),
+        ],
+      ),
+    );
+  }
+}
+
 class _GalaxyToolbar extends StatelessWidget {
   final TextEditingController controller; final ValueChanged<String> onChanged; final GalaxyViewMode currentMode; final ValueChanged<GalaxyViewMode> onModeChanged; const _GalaxyToolbar({required this.controller, required this.onChanged, required this.currentMode, required this.onModeChanged});
   @override
   Widget build(BuildContext context) {
     Widget modeChip(GalaxyViewMode m, IconData icon, String label){
       final active = currentMode==m;
+      final color = active ? AppTheme.primaryColor : AppTheme.secondaryTextColor;
       return InkWell(
         onTap: ()=> onModeChanged(m),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds:180),
-          padding: const EdgeInsets.symmetric(horizontal:14, vertical:8),
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal:16, vertical:10),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            color: active? AppTheme.secondaryColor.withOpacity(0.25): AppTheme.lightSurfaceColor.withOpacity(0.20),
-            border: Border.all(color: active? AppTheme.secondaryColor: AppTheme.lightSurfaceColor.withOpacity(0.55), width:1),
-            boxShadow: active? [BoxShadow(color: AppTheme.secondaryColor.withOpacity(0.25), blurRadius:8, offset: const Offset(0,2))]:[],
+            borderRadius: BorderRadius.circular(12),
+            color: active ? AppTheme.secondaryColor : AppTheme.lightSurfaceColor.withOpacity(0.5),
+            border: Border.all(color: active ? AppTheme.secondaryColor : Colors.white.withOpacity(0.1), width: 1),
           ),
-          child: Row(mainAxisSize: MainAxisSize.min, children:[ Icon(icon, size:18, color: active? AppTheme.secondaryColor: AppTheme.secondaryTextColor), const SizedBox(width:6), Text(label, style: TextStyle(fontSize:12, fontWeight: FontWeight.w600, color: active? AppTheme.secondaryColor: AppTheme.secondaryTextColor)) ]),
+          child: Row(mainAxisSize: MainAxisSize.min, children:[
+            Icon(icon, size:18, color: color),
+            const SizedBox(width:8),
+            Text(label, style: TextStyle(fontSize:13, fontWeight: FontWeight.w600, color: color))
+          ]),
         ),
       );
     }
@@ -397,103 +430,68 @@ class _GalaxyToolbar extends StatelessWidget {
           onChanged: onChanged,
           decoration: InputDecoration(
             isDense:true,
-            hintText:'Konu ara...',
+            hintText:'Konu Ara...',
             filled:true,
-            fillColor: AppTheme.lightSurfaceColor.withOpacity(0.35),
-            prefixIcon: const Icon(Icons.search,size:20),
-            contentPadding: const EdgeInsets.symmetric(horizontal:14, vertical:10),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+            fillColor: AppTheme.lightSurfaceColor.withOpacity(0.5),
+            prefixIcon: const Icon(Icons.search, size: 20, color: AppTheme.secondaryTextColor),
+            hintStyle: const TextStyle(color: AppTheme.secondaryTextColor),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.white.withOpacity(0.1))),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.white.withOpacity(0.1))),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppTheme.secondaryColor, width: 1.5)),
           ),
         ),
       ),
-      const SizedBox(width:14),
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal:10, vertical:6),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          color: AppTheme.lightSurfaceColor.withOpacity(0.30),
-          border: Border.all(color: AppTheme.lightSurfaceColor.withOpacity(0.50), width:1),
-        ),
-        child: Row(children:[
-          modeChip(GalaxyViewMode.grid, Icons.grid_view_rounded, 'Izgara'),
-          const SizedBox(width:8),
-          modeChip(GalaxyViewMode.list, Icons.view_list_rounded, 'Liste'),
-        ]),
-      )
+      const SizedBox(width:12),
+      modeChip(GalaxyViewMode.grid, Icons.grid_view_rounded, 'Izgara'),
+      const SizedBox(width:8),
+      modeChip(GalaxyViewMode.list, Icons.view_list_rounded, 'Liste'),
     ]);
   }
 }
 
-class _ColorLegend extends StatelessWidget { const _ColorLegend(); Color _c(double v){ if(v<0) return AppTheme.lightSurfaceColor; if(v<0.4) return AppTheme.accentColor; if(v<0.7) return AppTheme.secondaryColor; return AppTheme.successColor; } @override Widget build(BuildContext context){ final items=[{'t':'Yetersiz Veri','v':-1.0},{'t':'Zayıf','v':0.2},{'t':'Gelişiyor','v':0.55},{'t':'Güçlü','v':0.85}]; return Wrap(spacing:12, runSpacing:8, children: items.map((e)=> Container(padding: const EdgeInsets.symmetric(horizontal:10, vertical:6), decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: (_c(e['v'] as double)).withOpacity(0.18), border: Border.all(color: _c(e['v'] as double), width:1)), child: Row(mainAxisSize: MainAxisSize.min, children:[ Container(width:10,height:10, decoration: BoxDecoration(color: _c(e['v'] as double), shape: BoxShape.circle)), const SizedBox(width:6), Text(e['t'] as String, style: const TextStyle(fontSize:12, color: AppTheme.secondaryTextColor)) ]) )).toList()); }}
+class _MasteryPill extends StatelessWidget {
+  final double mastery;
+  const _MasteryPill({super.key, required this.mastery});
 
-class _MasteryPill extends StatelessWidget { final double mastery; const _MasteryPill({super.key, required this.mastery}); @override Widget build(BuildContext context){ String txt; Color c; if(mastery<0){ txt='VERİ YOK'; c=AppTheme.lightSurfaceColor; } else if(mastery<0.4){ txt='%${(mastery*100).toStringAsFixed(0)}'; c=AppTheme.accentColor; } else if(mastery<0.7){ txt='%${(mastery*100).toStringAsFixed(0)}'; c=AppTheme.secondaryColor; } else { txt='%${(mastery*100).toStringAsFixed(0)}'; c=AppTheme.successColor; } return Container(padding: const EdgeInsets.symmetric(horizontal:12, vertical:6), decoration: BoxDecoration(borderRadius: BorderRadius.circular(30), color: c.withOpacity(0.22), border: Border.all(color:c,width:1)), child: Text(txt, style: const TextStyle(fontSize:12, fontWeight: FontWeight.bold))); }}
-class _GalaxyGuideDialog extends StatelessWidget {
-  const _GalaxyGuideDialog();
   @override
   Widget build(BuildContext context) {
-    return BackdropFilter(
-      filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-      child: AlertDialog(
-        backgroundColor: AppTheme.cardColor.withOpacity(0.95),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Row(
-          children: [
-            Icon(Icons.auto_awesome, color: AppTheme.secondaryColor),
-            SizedBox(width: 12),
-            Expanded(child: Text("Bilgi Galaksisi Rehberi")),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: const [
-              _GuideDetailRow(
-                icon: Icons.explore_rounded,
-                title: "Galaksiyi Keşfet",
-                subtitle: "Her ders bir sistem, her konu bir gezegen. Kişisel bilgi evrenini düzenli takip et.",
-              ),
-              _GuideDetailRow(
-                icon: Icons.palette_rounded,
-                title: "Gezegen Renkleri",
-                subtitle: "Renk hakimiyet seviyeni gösterir. Kırmızı zayıf, sarı gelişiyor, yeşil güçlü.",
-              ),
-              _GuideDetailRow(
-                icon: Icons.touch_app_rounded,
-                title: "Hızlı Güncelle",
-                subtitle: "Kısa dokunuşla son test doğru/yanlış girişini yap ve ilerlemeni anında güncelle.",
-              ),
-              _GuideDetailRow(
-                icon: Icons.analytics_rounded,
-                title: "Detaylı Analiz",
-                subtitle: "Uzun basarak konu istatistikleri ve yapay zeka yorumunu aç.",
-              ),
-            ].animate(interval: 100.ms).fadeIn(duration: 500.ms).slideX(begin: 0.4),
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: ()=> Navigator.of(context).pop(), child: const Text("Kapat")),
+    String txt;
+    Color c;
+    String level;
+
+    if (mastery < 0) {
+      txt = 'N/A';
+      level = 'Veri Yok';
+      c = AppTheme.lightSurfaceColor;
+    } else if (mastery < 0.4) {
+      txt = '%${(mastery * 100).toStringAsFixed(0)}';
+      level = 'Zayıf';
+      c = AppTheme.accentColor;
+    } else if (mastery < 0.7) {
+      txt = '%${(mastery * 100).toStringAsFixed(0)}';
+      level = 'Gelişiyor';
+      c = AppTheme.secondaryColor;
+    } else {
+      txt = '%${(mastery * 100).toStringAsFixed(0)}';
+      level = 'Güçlü';
+      c = AppTheme.successColor;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(30),
+        color: c.withOpacity(0.15),
+        border: Border.all(color: c.withOpacity(0.7), width: 1),
+      ),
+      child: Column(
+        children: [
+          Text(txt, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: c)),
+          const SizedBox(height: 2),
+          Text(level, style: TextStyle(fontSize: 10, color: c.withOpacity(0.9))),
         ],
       ),
-    );
-  }
-}
-
-class _GuideDetailRow extends StatelessWidget {
-  final IconData icon; final String title; final String subtitle;
-  const _GuideDetailRow({required this.icon, required this.title, required this.subtitle});
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 18.0),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children:[
-        Icon(icon, color: AppTheme.secondaryTextColor, size: 28),
-        const SizedBox(width: 16),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children:[
-          Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          Text(subtitle, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor, height: 1.35)),
-        ])),
-      ]),
     );
   }
 }
