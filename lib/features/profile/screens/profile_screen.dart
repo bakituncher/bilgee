@@ -98,33 +98,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  List<app_badge.Badge> _generateBadges(UserModel user, PerformanceSummary performance, PlanDocument? planDoc, int testCount, double avgNet, List<FocusSessionModel> focusSessions) {
-    return [
-      app_badge.Badge(name: 'İlk Adım', description: 'İlk denemeni başarıyla ekledin ve zafere giden yola çıktın.', icon: Icons.flag, color: AppTheme.successColor, isUnlocked: testCount >= 1, hint: "İlk denemeni ekleyerek başla."),
-      app_badge.Badge(name: 'Acemi Savaşçı', description: '5 farklı denemede savaş meydanının tozunu attın.', icon: Icons.shield_outlined, color: AppTheme.successColor, isUnlocked: testCount >= 5, rarity: app_badge.BadgeRarity.common, hint: "Toplam 5 deneme ekle."),
-      app_badge.Badge(name: 'Kıdemli Savaşçı', description: '15 deneme! Artık bu işin kurdu olmaya başladın.', icon: Icons.shield, color: AppTheme.successColor, isUnlocked: testCount >= 15, rarity: app_badge.BadgeRarity.rare, hint: "Toplam 15 deneme ekle."),
-      app_badge.Badge(name: 'Deneme Fatihi', description: 'Tam 50 denemeyi arşivine ekledin. Önünde kimse duramaz!', icon: Icons.military_tech, color: AppTheme.successColor, isUnlocked: testCount >= 50, rarity: app_badge.BadgeRarity.epic, hint: "Toplam 50 deneme ekle."),
-      app_badge.Badge(name: 'Kıvılcım', description: 'Ateşi yaktın! 3 günlük çalışma serisine ulaştın.', icon: Icons.whatshot_outlined, color: Colors.orange, isUnlocked: user.streak >= 3, hint: "3 gün ara vermeden çalış."),
-      app_badge.Badge(name: 'Alev Ustası', description: 'Tam 14 gün boyunca disiplini elden bırakmadın. Bu bir irade zaferidir!', icon: Icons.local_fire_department, color: Colors.orange, isUnlocked: user.streak >= 14, rarity: app_badge.BadgeRarity.rare, hint: "14 günlük seriye ulaş."),
-      app_badge.Badge(name: 'Durdurulamaz', description: '30 gün! Sen artık bir alışkanlık abidesisin.', icon: Icons.wb_sunny, color: Colors.orange, isUnlocked: user.streak >= 30, rarity: app_badge.BadgeRarity.epic, hint: "Tam 30 gün ara verme."),
-      app_badge.Badge(name: 'Yükseliş', description: 'Ortalama 50 net barajını aştın. Bu daha başlangıç!', icon: Icons.trending_up, color: Colors.blueAccent, isUnlocked: avgNet > 50, hint: "Net ortalamanı 50'nin üzerine çıkar."),
-      app_badge.Badge(name: 'Usta Nişancı', description: 'Ortalama 90 net! Elitler arasına hoş geldin.', icon: Icons.gps_not_fixed, color: Colors.blueAccent, isUnlocked: avgNet > 90, rarity: app_badge.BadgeRarity.rare, hint: "Net ortalamanı 90'ın üzerine çıkar."),
-      app_badge.Badge(name: 'Taktik Nişancı', description: 'Ortalama 100 net barajını yıktın. Sen bir efsanesin!', icon: Icons.workspace_premium, color: Colors.blueAccent, isUnlocked: avgNet > 100, rarity: app_badge.BadgeRarity.epic, hint: "Net ortalamanı 100'ün üzerine çıkar."),
-      app_badge.Badge(name: 'Günlük Görev Ustası', description: 'Günlük görevlerini düzenli olarak tamamladın.', icon: Icons.checklist, color: Colors.purpleAccent, isUnlocked: (user.completedDailyTasks.values.expand((e) => e).length) >= 15, rarity: app_badge.BadgeRarity.rare, hint: "Günlük görevlerini düzenli olarak tamamla."),
-      app_badge.Badge(name: 'Odaklanma Ninjası', description: 'Toplam 10 saat Pomodoro tekniği ile odaklandın.', icon: Icons.timer, color: Colors.purpleAccent, isUnlocked: focusSessions.fold(0, (p, c) => p + c.durationInSeconds) >= 36000, rarity: app_badge.BadgeRarity.rare, hint: "Toplam 10 saat odaklan."),
-      app_badge.Badge(name: 'Cevher Avcısı', description: 'Cevher Atölyesi\'nde ilk zayıf konunu işledin.', icon: Icons.construction, color: AppTheme.secondaryColor, isUnlocked: performance.topicPerformances.isNotEmpty, hint: "Cevher Atölyesi'ni kullan."),
-      app_badge.Badge(name: 'Arena Gladyatörü', description: 'Liderlik tablosuna girerek adını duyurdun.', icon: Icons.leaderboard, color: AppTheme.secondaryColor, isUnlocked: user.engagementScore > 0, rarity: app_badge.BadgeRarity.common, hint: "Etkileşim puanı kazan."),
-      app_badge.Badge(name: 'Efsane', description: 'Tüm madalyaları toplayarak ölümsüzleştin!', icon: Icons.auto_stories, color: Colors.amber, isUnlocked: false, rarity: app_badge.BadgeRarity.legendary, hint: "Tüm diğer madalyaları kazan."),
-    ];
-  }
-
   Future<void> _shareProfileImage() async {
     if (_sharing) return;
     setState(() => _sharing = true);
-
-    // Kısa bir gecikme ekleyerek widget'ın boyanmasını bekle
     await Future.delayed(const Duration(milliseconds: 100));
-
     try {
       final boundary = _shareKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
       if (boundary == null) return;
@@ -146,11 +123,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final userAsync = ref.watch(userProfileProvider);
-    final testsAsync = ref.watch(testsProvider);
-    final focusSessionsAsync = ref.watch(focusSessionsProvider);
-    final performanceAsync = ref.watch(performanceProvider);
-    final planDocAsync = ref.watch(planProvider);
-    final statsStream = ref.watch(providers.userStatsStreamProvider);
 
     ref.listen<AsyncValue<UserModel?>>(userProfileProvider, (previous, next) {
       final prevUser = previous?.valueOrNull;
@@ -188,221 +160,312 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           )
         ],
       ),
-      body: userAsync.when(
-        data: (user) {
-          if (user == null) return const Center(child: Text('Komutan bulunamadı.'));
-
-          final followCountsAsync = ref.watch(providers.followCountsProvider(user.id));
-          final statsUpdatedAt = statsStream.valueOrNull?.updatedAt;
-
-          return focusSessionsAsync.when(
-            data: (focusSessions) {
-              final tests = testsAsync.valueOrNull ?? [];
-              final performance = performanceAsync.value;
-              final planDoc = planDocAsync.value;
-
-              if (performance == null) return const Center(child: CircularProgressIndicator());
-
-              final testCount = tests.length;
-              final avgNet = testCount > 0 ? user.totalNetSum / testCount : 0.0;
-              final allBadges = _generateBadges(user, performance, planDoc, testCount, avgNet, focusSessions);
-              final unlockedCount = allBadges.where((b) => b.isUnlocked).length;
-
-              final rankInfo = RankService.getRankInfo(user.engagementScore);
-              final currentRank = rankInfo.current;
-              final nextRank = rankInfo.next;
-              final progressToNext = rankInfo.progress;
-              final rankIndex = RankService.ranks.indexOf(currentRank);
-
-              return Stack(
-                alignment: Alignment.topCenter,
-                children: [
-                  Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: _profileBgGradient),
-                    ),
-                  ),
-                  SafeArea(
-                    child: CustomScrollView(
-                      physics: const BouncingScrollPhysics(),
-                      slivers: [
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
-                            child: Column(
-                              children: [
-                                const SizedBox(height: 12),
-                                // Paylaşılabilir kart
-                                RepaintBoundary(
-                                  key: _shareKey,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(16),
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(28),
-                                      gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0x221F1F1F), Color(0x111F1F1F)]),
-                                      border: Border.all(color: Colors.white54.withValues(alpha: (Colors.white54.a * 0.22).toDouble())),
-                                    ),
-                                    child: Column(
-                                      children: [
-                                        _ProfileAvatarHalo(user: user, color: currentRank.color, rankIndex: rankIndex),
-                                        const SizedBox(height: 10),
-                                        Text(
-                                          user.name ?? 'İsimsiz Savaşçı',
-                                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 0.5),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                        const SizedBox(height: 6),
-                                        _RankPill(rank: currentRank),
-                                        const SizedBox(height: 14),
-                                        Row(
-                                          children: [
-                                            Expanded(child: _ProfileStatCard(label: 'Deneme', value: testCount.toString(), icon: Icons.library_books_rounded, delay: 0.ms)),
-                                            const SizedBox(width: 10),
-                                            Expanded(child: _ProfileStatCard(label: 'Ort. Net', value: avgNet.toStringAsFixed(1), icon: Icons.track_changes_rounded, delay: 0.ms)),
-                                            const SizedBox(width: 10),
-                                            Expanded(child: _ProfileStatCard(label: 'Seri', value: user.streak.toString(), icon: Icons.local_fire_department_rounded, delay: 0.ms)),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 14),
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            // Image.asset('assets/images/bilge_baykus.png', width: 28, height: 28),
-                                            const SizedBox(width: 8),
-                                            Text('TaktikAI', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: _accentProfile2, fontWeight: FontWeight.bold)),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                // Takipçi / Takip sayıları
-                                followCountsAsync.when(
-                                  data: (counts) => Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      _FollowCount(
-                                        label: 'Takipçi',
-                                        value: counts.$1,
-                                        onTap: () {
-                                          context.push('/profile/follow-list?mode=followers');
-                                        },
-                                      ),
-                                      const SizedBox(width: 12),
-                                      _FollowCount(
-                                        label: 'Takip',
-                                        value: counts.$2,
-                                        onTap: () {
-                                          context.push('/profile/follow-list?mode=following');
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                  loading: () => const LinearProgressIndicator(minHeight: 2),
-                                  error: (e, s) => const SizedBox.shrink(),
-                                ),
-                                const SizedBox(height: 8),
-                                if (statsUpdatedAt != null)
-                                  Align(
-                                    alignment: Alignment.centerRight,
-                                    child: Text(
-                                      'Son güncelleme: ${DateFormat('dd MMM yyyy HH:mm', 'tr_TR').format(statsUpdatedAt)}',
-                                      style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white70),
-                                    ),
-                                  ),
-                                const SizedBox(height: 14),
-                                _NeoXpBar(
-                                  currentXp: user.engagementScore,
-                                  nextLevelXp: nextRank.requiredScore == currentRank.requiredScore ? currentRank.requiredScore : nextRank.requiredScore,
-                                  progress: progressToNext,
-                                ).animate().fadeIn(duration: 450.ms, delay: 200.ms),
-                                const SizedBox(height: 24),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: _ProfileStatCard(
-                                        label: 'Madalyalar',
-                                        value: '$unlockedCount/${allBadges.length}',
-                                        icon: Icons.military_tech_rounded,
-                                        delay: 260.ms,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 14),
-                                    Expanded(
-                                      child: _ProfileStatCard(
-                                        label: 'Seviye',
-                                        value: (rankIndex + 1).toString(),
-                                        icon: Icons.workspace_premium,
-                                        delay: 320.ms,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 24),
-                                // Hızlı eylemler: Başarılar ve İlerleme eklendi
-                                Row(
-                                  children: [
-                                    Expanded(child: _ActionNeo(icon: Icons.emoji_events_outlined, label: 'Başarılar', onTap: () => context.push('/profile/honor-wall', extra: allBadges))),
-                                    const SizedBox(width: 14),
-                                    Expanded(child: _ActionNeo(icon: Icons.timeline_rounded, label: 'İlerleme', onTap: () => context.push('/home/stats'))),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                Row(
-                                  children: [
-                                    Expanded(child: _ActionNeo(icon: Icons.person_rounded, label: 'Avatar', onTap: () => context.push('/profile/avatar-selection'))),
-                                    const SizedBox(width: 14),
-                                    Expanded(child: _ActionNeo(icon: Icons.map_rounded, label: 'Strateji', onTap: () {
-                                      if (planDoc?.weeklyPlan != null) {
-                                        context.push('/home/weekly-plan');
-                                      } else {
-                                        context.push('${AppRoutes.aiHub}/${AppRoutes.strategicPlanning}');
-                                      }
-                                    })),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                // ADMIN PANEL BUTTON
-                                if (ref.watch(adminClaimProvider).valueOrNull == true)
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: _ActionNeo(
-                                          icon: Icons.admin_panel_settings_rounded,
-                                          label: 'Admin Paneli',
-                                          onTap: () => context.push('/admin/panel'),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                const SizedBox(height: 40),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  ConfettiWidget(
-                    confettiController: _confettiController,
-                    blastDirectionality: BlastDirectionality.explosive,
-                    shouldLoop: false,
-                    numberOfParticles: 30,
-                    gravity: 0.2,
-                    colors: const [AppTheme.secondaryColor, AppTheme.successColor, Colors.white, Colors.amber],
-                  ),
-                ],
-              );
-            },
-            loading: () => const Center(child: CircularProgressIndicator(color: AppTheme.secondaryColor)),
-            error: (e, s) => Center(child: Text('Odaklanma verileri yüklenemedi: $e')),
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator(color: AppTheme.secondaryColor)),
-        error: (e, s) => Center(child: Text('Karargâh Yüklenemedi: $e')),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: _profileBgGradient),
+        ),
+        child: userAsync.when(
+          data: (user) {
+            if (user == null) return const Center(child: Text('Komutan bulunamadı.'));
+            return _ProfileView(user: user, shareKey: _shareKey, confettiController: _confettiController);
+          },
+          loading: () => const _ProfileSkeleton(),
+          error: (e, s) => Center(child: Text('Karargâh Yüklenemedi: $e')),
+        ),
       ),
     );
+  }
+}
+
+class _ProfileView extends ConsumerWidget {
+  final UserModel user;
+  final GlobalKey shareKey;
+  final ConfettiController confettiController;
+
+  const _ProfileView({
+    required this.user,
+    required this.shareKey,
+    required this.confettiController,
+  });
+
+  List<app_badge.Badge> _generateBadges(UserModel user, PerformanceSummary performance, PlanDocument? planDoc, int testCount, double avgNet, List<FocusSessionModel> focusSessions) {
+    return [
+      app_badge.Badge(name: 'İlk Adım', description: 'İlk denemeni başarıyla ekledin ve zafere giden yola çıktın.', icon: Icons.flag, color: AppTheme.successColor, isUnlocked: testCount >= 1, hint: "İlk denemeni ekleyerek başla."),
+      app_badge.Badge(name: 'Acemi Savaşçı', description: '5 farklı denemede savaş meydanının tozunu attın.', icon: Icons.shield_outlined, color: AppTheme.successColor, isUnlocked: testCount >= 5, rarity: app_badge.BadgeRarity.common, hint: "Toplam 5 deneme ekle."),
+      app_badge.Badge(name: 'Kıdemli Savaşçı', description: '15 deneme! Artık bu işin kurdu olmaya başladın.', icon: Icons.shield, color: AppTheme.successColor, isUnlocked: testCount >= 15, rarity: app_badge.BadgeRarity.rare, hint: "Toplam 15 deneme ekle."),
+      app_badge.Badge(name: 'Deneme Fatihi', description: 'Tam 50 denemeyi arşivine ekledin. Önünde kimse duramaz!', icon: Icons.military_tech, color: AppTheme.successColor, isUnlocked: testCount >= 50, rarity: app_badge.BadgeRarity.epic, hint: "Toplam 50 deneme ekle."),
+      app_badge.Badge(name: 'Kıvılcım', description: 'Ateşi yaktın! 3 günlük çalışma serisine ulaştın.', icon: Icons.whatshot_outlined, color: Colors.orange, isUnlocked: user.streak >= 3, hint: "3 gün ara vermeden çalış."),
+      app_badge.Badge(name: 'Alev Ustası', description: 'Tam 14 gün boyunca disiplini elden bırakmadın. Bu bir irade zaferidir!', icon: Icons.local_fire_department, color: Colors.orange, isUnlocked: user.streak >= 14, rarity: app_badge.BadgeRarity.rare, hint: "14 günlük seriye ulaş."),
+      app_badge.Badge(name: 'Durdurulamaz', description: '30 gün! Sen artık bir alışkanlık abidesisin.', icon: Icons.wb_sunny, color: Colors.orange, isUnlocked: user.streak >= 30, rarity: app_badge.BadgeRarity.epic, hint: "Tam 30 gün ara verme."),
+      app_badge.Badge(name: 'Yükseliş', description: 'Ortalama 50 net barajını aştın. Bu daha başlangıç!', icon: Icons.trending_up, color: Colors.blueAccent, isUnlocked: avgNet > 50, hint: "Net ortalamanı 50'nin üzerine çıkar."),
+      app_badge.Badge(name: 'Usta Nişancı', description: 'Ortalama 90 net! Elitler arasına hoş geldin.', icon: Icons.gps_not_fixed, color: Colors.blueAccent, isUnlocked: avgNet > 90, rarity: app_badge.BadgeRarity.rare, hint: "Net ortalamanı 90'ın üzerine çıkar."),
+      app_badge.Badge(name: 'Taktik Nişancı', description: 'Ortalama 100 net barajını yıktın. Sen bir efsanesin!', icon: Icons.workspace_premium, color: Colors.blueAccent, isUnlocked: avgNet > 100, rarity: app_badge.BadgeRarity.epic, hint: "Net ortalamanı 100'ün üzerine çıkar."),
+      app_badge.Badge(name: 'Günlük Görev Ustası', description: 'Günlük görevlerini düzenli olarak tamamladın.', icon: Icons.checklist, color: Colors.purpleAccent, isUnlocked: (user.completedDailyTasks.values.expand((e) => e).length) >= 15, rarity: app_badge.BadgeRarity.rare, hint: "Günlük görevlerini düzenli olarak tamamla."),
+      app_badge.Badge(name: 'Odaklanma Ninjası', description: 'Toplam 10 saat Pomodoro tekniği ile odaklandın.', icon: Icons.timer, color: Colors.purpleAccent, isUnlocked: focusSessions.fold(0, (p, c) => p + c.durationInSeconds) >= 36000, rarity: app_badge.BadgeRarity.rare, hint: "Toplam 10 saat odaklan."),
+      app_badge.Badge(name: 'Cevher Avcısı', description: 'Cevher Atölyesi\'nde ilk zayıf konunu işledin.', icon: Icons.construction, color: AppTheme.secondaryColor, isUnlocked: performance.topicPerformances.isNotEmpty, hint: "Cevher Atöylyesi'ni kullan."),
+      app_badge.Badge(name: 'Arena Gladyatörü', description: 'Liderlik tablosuna girerek adını duyurdun.', icon: Icons.leaderboard, color: AppTheme.secondaryColor, isUnlocked: user.engagementScore > 0, rarity: app_badge.BadgeRarity.common, hint: "Etkileşim puanı kazan."),
+      app_badge.Badge(name: 'Efsane', description: 'Tüm madalyaları toplayarak ölümsüzleştin!', icon: Icons.auto_stories, color: Colors.amber, isUnlocked: false, rarity: app_badge.BadgeRarity.legendary, hint: "Tüm diğer madalyaları kazan."),
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final testsAsync = ref.watch(testsProvider);
+    final focusSessionsAsync = ref.watch(focusSessionsProvider);
+    final performanceAsync = ref.watch(performanceProvider);
+    final planDocAsync = ref.watch(planProvider);
+    final statsStream = ref.watch(providers.userStatsStreamProvider);
+    final followCountsAsync = ref.watch(providers.followCountsProvider(user.id));
+    final statsUpdatedAt = statsStream.valueOrNull?.updatedAt;
+
+    final rankInfo = RankService.getRankInfo(user.engagementScore);
+    final currentRank = rankInfo.current;
+    final nextRank = rankInfo.next;
+    final progressToNext = rankInfo.progress;
+    final rankIndex = RankService.ranks.indexOf(currentRank);
+
+    return Stack(
+      alignment: Alignment.topCenter,
+      children: [
+        SafeArea(
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 12),
+                      RepaintBoundary(
+                        key: shareKey,
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(28),
+                            gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0x221F1F1F), Color(0x111F1F1F)]),
+                            border: Border.all(color: Colors.white54.withValues(alpha: (Colors.white54.a * 0.22).toDouble())),
+                          ),
+                          child: Column(
+                            children: [
+                              _ProfileAvatarHalo(user: user, color: currentRank.color, rankIndex: rankIndex),
+                              const SizedBox(height: 10),
+                              Text(
+                                user.name ?? 'İsimsiz Savaşçı',
+                                style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 0.5),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 6),
+                              _RankPill(rank: currentRank),
+                              const SizedBox(height: 14),
+                              testsAsync.when(
+                                data: (tests) {
+                                  final testCount = tests.length;
+                                  final avgNet = testCount > 0 ? user.totalNetSum / testCount : 0.0;
+                                  return Row(
+                                    children: [
+                                      Expanded(child: _ProfileStatCard(label: 'Deneme', value: testCount.toString(), icon: Icons.library_books_rounded, delay: 0.ms)),
+                                      const SizedBox(width: 10),
+                                      Expanded(child: _ProfileStatCard(label: 'Ort. Net', value: avgNet.toStringAsFixed(1), icon: Icons.track_changes_rounded, delay: 0.ms)),
+                                      const SizedBox(width: 10),
+                                      Expanded(child: _ProfileStatCard(label: 'Seri', value: user.streak.toString(), icon: Icons.local_fire_department_rounded, delay: 0.ms)),
+                                    ],
+                                  );
+                                },
+                                loading: () => Row(
+                                  children: const [
+                                    Expanded(child: _Skeleton(height: 110)),
+                                    SizedBox(width: 10),
+                                    Expanded(child: _Skeleton(height: 110)),
+                                    SizedBox(width: 10),
+                                    Expanded(child: _Skeleton(height: 110)),
+                                  ],
+                                ),
+                                error: (e,s) => const SizedBox.shrink(),
+                              ),
+                              const SizedBox(height: 14),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const SizedBox(width: 8),
+                                  Text('TaktikAI', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: _accentProfile2, fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      followCountsAsync.when(
+                        data: (counts) => Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _FollowCount(label: 'Takipçi', value: counts.$1, onTap: () => context.push('/profile/follow-list?mode=followers')),
+                            const SizedBox(width: 12),
+                            _FollowCount(label: 'Takip', value: counts.$2, onTap: () => context.push('/profile/follow-list?mode=following')),
+                          ],
+                        ),
+                        loading: () => const _Skeleton(height: 36, width: 200),
+                        error: (e, s) => const SizedBox.shrink(),
+                      ),
+                      const SizedBox(height: 8),
+                      if (statsUpdatedAt != null)
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            'Son güncelleme: ${DateFormat('dd MMM yyyy HH:mm', 'tr_TR').format(statsUpdatedAt)}',
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white70),
+                          ),
+                        ),
+                      const SizedBox(height: 14),
+                      _NeoXpBar(
+                        currentXp: user.engagementScore,
+                        nextLevelXp: nextRank.requiredScore == currentRank.requiredScore ? currentRank.requiredScore : nextRank.requiredScore,
+                        progress: progressToNext,
+                      ).animate().fadeIn(duration: 450.ms, delay: 200.ms),
+                      const SizedBox(height: 24),
+                      performanceAsync.when(
+                        data: (performance) {
+                          final tests = testsAsync.valueOrNull ?? [];
+                          final focusSessions = focusSessionsAsync.valueOrNull ?? [];
+                          final planDoc = planDocAsync.value;
+                          final testCount = tests.length;
+                          final avgNet = testCount > 0 ? user.totalNetSum / testCount : 0.0;
+                          final allBadges = _generateBadges(user, performance, planDoc, testCount, avgNet, focusSessions);
+                          final unlockedCount = allBadges.where((b) => b.isUnlocked).length;
+                          return Column(
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(child: _ProfileStatCard(label: 'Madalyalar', value: '$unlockedCount/${allBadges.length}', icon: Icons.military_tech_rounded, delay: 260.ms)),
+                                  const SizedBox(width: 14),
+                                  Expanded(child: _ProfileStatCard(label: 'Seviye', value: (rankIndex + 1).toString(), icon: Icons.workspace_premium, delay: 320.ms)),
+                                ],
+                              ),
+                              const SizedBox(height: 24),
+                              Row(
+                                children: [
+                                  Expanded(child: _ActionNeo(icon: Icons.emoji_events_outlined, label: 'Başarılar', onTap: () => context.push('/profile/honor-wall', extra: allBadges))),
+                                  const SizedBox(width: 14),
+                                  Expanded(child: _ActionNeo(icon: Icons.timeline_rounded, label: 'İlerleme', onTap: () => context.push('/home/stats'))),
+                                ],
+                              ),
+                            ],
+                          );
+                        },
+                        loading: () => Column(
+                          children: [
+                            Row(children: const [Expanded(child: _Skeleton(height: 110)), SizedBox(width: 14), Expanded(child: _Skeleton(height: 110))]),
+                            const SizedBox(height: 24),
+                            Row(children: const [Expanded(child: _Skeleton(height: 64)), SizedBox(width: 14), Expanded(child: _Skeleton(height: 64))]),
+                          ],
+                        ),
+                        error: (e,s) => const SizedBox.shrink(),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(child: _ActionNeo(icon: Icons.person_rounded, label: 'Avatar', onTap: () => context.push('/profile/avatar-selection'))),
+                          const SizedBox(width: 14),
+                          Expanded(child: _ActionNeo(icon: Icons.map_rounded, label: 'Strateji', onTap: () {
+                            if (planDocAsync.value?.weeklyPlan != null) {
+                              context.push('/home/weekly-plan');
+                            } else {
+                              context.push('${AppRoutes.aiHub}/${AppRoutes.strategicPlanning}');
+                            }
+                          })),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      if (ref.watch(adminClaimProvider).valueOrNull == true)
+                        Row(
+                          children: [
+                            Expanded(child: _ActionNeo(icon: Icons.admin_panel_settings_rounded, label: 'Admin Paneli', onTap: () => context.push('/admin/panel'))),
+                          ],
+                        ),
+                      const SizedBox(height: 40),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        ConfettiWidget(
+          confettiController: confettiController,
+          blastDirectionality: BlastDirectionality.explosive,
+          shouldLoop: false,
+          numberOfParticles: 30,
+          gravity: 0.2,
+          colors: const [AppTheme.secondaryColor, AppTheme.successColor, Colors.white, Colors.amber],
+        ),
+      ],
+    );
+  }
+}
+
+class _ProfileSkeleton extends StatelessWidget {
+  const _ProfileSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            const _Skeleton(shape: BoxShape.circle, height: 138, width: 138),
+            const SizedBox(height: 10),
+            const _Skeleton(height: 28, width: 200),
+            const SizedBox(height: 6),
+            const _Skeleton(height: 36, width: 150),
+            const SizedBox(height: 14),
+            Row(
+              children: const [
+                Expanded(child: _Skeleton(height: 110)),
+                SizedBox(width: 10),
+                Expanded(child: _Skeleton(height: 110)),
+                SizedBox(width: 10),
+                Expanded(child: _Skeleton(height: 110)),
+              ],
+            ),
+            const SizedBox(height: 24),
+            const _Skeleton(height: 50, width: double.infinity),
+            const SizedBox(height: 24),
+            Row(
+              children: const [
+                Expanded(child: _Skeleton(height: 110)),
+                SizedBox(width: 14),
+                Expanded(child: _Skeleton(height: 110)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Skeleton extends StatelessWidget {
+  final double? height;
+  final double? width;
+  final BoxShape shape;
+  final double borderRadius;
+
+  const _Skeleton({this.height, this.width, this.shape = BoxShape.rectangle, this.borderRadius = 24});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: height,
+      width: width,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.08),
+        shape: shape,
+        borderRadius: shape == BoxShape.rectangle ? BorderRadius.circular(borderRadius) : null,
+      ),
+    ).animate(onPlay: (c) => c.repeat(reverse: true)).fade(begin: 0.5, end: 1, duration: 800.ms, curve: Curves.easeInOut);
   }
 }
 
