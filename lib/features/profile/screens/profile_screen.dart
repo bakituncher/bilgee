@@ -162,11 +162,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             onPressed: () => context.push(AppRoutes.settings),
             tooltip: 'Ayarlar',
           ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => _showLogoutDialog(context, ref),
-            tooltip: 'Güvenli Çıkış',
-          )
         ],
       ),
       body: Container(
