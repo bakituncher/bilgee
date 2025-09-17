@@ -412,12 +412,20 @@ class FirestoreService {
     required String goal,
     required List<String> challenges,
     required double weeklyStudyGoal,
+    Map<String, dynamic>? additionalData,
   }) async {
-    await usersCollection.doc(userId).update({
+    final updateData = <String, dynamic>{
       'goal': goal,
       'challenges': challenges,
       'weeklyStudyGoal': weeklyStudyGoal,
-    });
+    };
+
+    // Ek veri varsa ekle
+    if (additionalData != null) {
+      updateData.addAll(additionalData);
+    }
+
+    await usersCollection.doc(userId).update(updateData);
     await _appStateDoc(userId).set({'onboardingCompleted': true}, SetOptions(merge: true));
     await usersCollection.doc(userId).update({'onboardingCompleted': true});
   }

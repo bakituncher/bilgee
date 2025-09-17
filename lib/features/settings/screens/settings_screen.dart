@@ -67,8 +67,6 @@ class SettingsScreen extends ConsumerWidget {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              backgroundColor: AppTheme.cardColor,
-              title: const Text("Son Onay"),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -79,18 +77,16 @@ class SettingsScreen extends ConsumerWidget {
                     key: formKey,
                     child: TextFormField(
                       controller: confirmationController,
-                      autofocus: true,
-                      decoration: const InputDecoration(
-                        labelText: "Onay Metni",
-                        hintText: confirmationText,
-                      ),
-                      onChanged: (value) => setState(() {}), // Buton durumunu güncellemek için
                       validator: (value) {
-                        if (value != confirmationText) {
-                          return "Lütfen 'SİL' yazın.";
+                        if (value == null || value.trim() != confirmationText) {
+                          return 'Lütfen büyük harflerle "SİL" yazın.';
                         }
                         return null;
                       },
+                      decoration: const InputDecoration(
+                        labelText: 'Onay için "SİL" yazın',
+                        hintText: 'SİL',
+                      ),
                     ),
                   ),
                 ],

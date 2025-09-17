@@ -34,14 +34,15 @@ dependencies:
 
   # Grafikler
   fl_chart: ^0.68.0
-  confetti: ^0.7.0 # BU SATIRI EKLE
+  confetti: ^0.7.0
+  lottie: ^3.1.2
   url_launcher: ^6.3.1
 
   # Font
   google_fonts: ^6.2.1
   intl: ^0.19.0
   flutter_animate: ^4.5.0
-  rive: ^0.13.4 # BU SATIRI EKLEYİN
+  rive: ^0.13.4
   flutter_svg: ^2.0.10+1
 
   http: ^1.2.1

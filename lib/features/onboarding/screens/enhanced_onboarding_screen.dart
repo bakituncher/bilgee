@@ -1,4 +1,4 @@
-// lib/features/onboarding/screens/onboarding_screen.dart
+// lib/features/onboarding/screens/enhanced_onboarding_screen.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,14 +14,14 @@ import 'package:bilge_ai/features/auth/application/auth_controller.dart';
 import 'package:bilge_ai/data/providers/firestore_providers.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-class OnboardingScreen extends ConsumerStatefulWidget {
-  const OnboardingScreen({super.key});
+class EnhancedOnboardingScreen extends ConsumerStatefulWidget {
+  const EnhancedOnboardingScreen({super.key});
 
   @override
-  ConsumerState<OnboardingScreen> createState() => _OnboardingScreenState();
+  ConsumerState<EnhancedOnboardingScreen> createState() => _EnhancedOnboardingScreenState();
 }
 
-class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
+class _EnhancedOnboardingScreenState extends ConsumerState<EnhancedOnboardingScreen>
     with TickerProviderStateMixin {
   final PageController _pageController = PageController();
   late AnimationController _progressController;
