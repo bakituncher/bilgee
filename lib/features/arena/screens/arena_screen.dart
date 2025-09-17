@@ -515,7 +515,7 @@ class _RankCapsule extends StatelessWidget {
   }
 }
 
-class _RankCard extends StatelessWidget {
+class _RankCard extends ConsumerWidget {
   final LeaderboardEntry entry;
   final int rank;
   final bool isCurrentUser;
@@ -531,9 +531,15 @@ class _RankCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
     final progress = topScore > 0 ? (entry.score / topScore).clamp(0.0, 1.0) : 0.0;
+    final currentUserId = ref.watch(authControllerProvider).value?.uid;
+
+    // Takip durumunu kontrol et
+    final isFollowingAsync = !isCurrentUser && currentUserId != null
+        ? ref.watch(isFollowingProvider(entry.userId))
+        : null;
 
     // İlk 3 için özel renkler
     Color getSpecialColor() {
@@ -614,48 +620,43 @@ class _RankCard extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                // Sıralama rozeti - İlk 3'e özel - Küçültüldü
+                // Sıralama rozeti - Sol taraf (Rakamlar ve renkler)
                 Container(
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
-                      colors: isCurrentUser
-                          ? [AppTheme.secondaryColor, AppTheme.successColor]
-                          : isTopThree
-                              ? [getSpecialColor(), getSpecialColor().withOpacity(0.7)]
-                              : [Colors.white.withOpacity(0.2), Colors.white.withOpacity(0.1)],
+                      colors: _getRankColors(rank, isCurrentUser),
                     ),
                     border: Border.all(
-                      color: isCurrentUser
-                          ? Colors.white.withOpacity(0.8)
-                          : isTopThree
-                              ? Colors.white.withOpacity(0.9)
-                              : Colors.white.withOpacity(0.3),
-                      width: isTopThree ? 1.5 : 1.0
+                      color: _getRankBorderColor(rank, isCurrentUser),
+                      width: rank <= 3 ? 2.0 : 1.0
                     ),
+                    boxShadow: rank <= 3 ? [
+                      BoxShadow(
+                        color: _getRankColors(rank, isCurrentUser)[0].withValues(alpha: 0.4),
+                        blurRadius: 8,
+                        spreadRadius: 1,
+                      )
+                    ] : null,
                   ),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // İlk 3'e özel crown/medal ikonları
-                      if (isTopThree && !isCurrentUser)
-                        Icon(
-                          rank == 1 ? Icons.emoji_events : rank == 2 ? Icons.military_tech : Icons.workspace_premium,
-                          size: 14,
-                          color: Colors.white,
-                        ),
-                      if (!isTopThree || isCurrentUser)
-                        Text(
-                          '#$rank',
-                          style: textTheme.labelMedium?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 11,
-                          ),
-                        ),
-                    ],
+                  child: Center(
+                    child: Text(
+                      '$rank',
+                      style: textTheme.labelLarge?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: rank <= 3 ? 14 : 12,
+                        shadows: rank <= 3 ? [
+                          Shadow(
+                            color: Colors.black.withValues(alpha: 0.5),
+                            offset: const Offset(0, 1),
+                            blurRadius: 2,
+                          )
+                        ] : null,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -816,112 +817,190 @@ class _RankCard extends StatelessWidget {
 
                 const SizedBox(width: 8),
 
-                // Takip et butonu - Küçültüldü
+                // Takip et butonu - EN SAĞDA ve çalışır halde
                 if (!isCurrentUser)
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      gradient: LinearGradient(
-                        colors: [
-                          AppTheme.secondaryColor.withOpacity(0.9),
-                          AppTheme.primaryColor.withOpacity(0.9),
+                  isFollowingAsync?.when(
+                    data: (isFollowing) => Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        gradient: LinearGradient(
+                          colors: isFollowing ? [
+                            AppTheme.successColor.withOpacity(0.9),
+                            AppTheme.successColor.withOpacity(0.7),
+                          ] : [
+                            AppTheme.secondaryColor.withOpacity(0.9),
+                            AppTheme.primaryColor.withOpacity(0.9),
+                          ],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: (isFollowing ? AppTheme.successColor : AppTheme.secondaryColor).withOpacity(0.25),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
                         ],
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppTheme.secondaryColor.withOpacity(0.25),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(16),
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('${entry.userName} takip edildi!'),
-                              behavior: SnackBarBehavior.floating,
-                              backgroundColor: AppTheme.successColor,
-                              duration: const Duration(seconds: 2),
-                            ),
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.person_add_rounded,
-                                size: 14,
-                                color: Colors.white,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Takip Et',
-                                style: textTheme.labelSmall?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 10,
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: () async {
+                            if (currentUserId == null) return;
+
+                            HapticFeedback.lightImpact();
+
+                            try {
+                              final firestore = ref.read(firestoreServiceProvider);
+
+                              if (isFollowing) {
+                                // Takipten çıkar
+                                await firestore.unfollowUser(
+                                  currentUserId: currentUserId,
+                                  targetUserId: entry.userId,
+                                );
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('${entry.userName} takipten çıkarıldı!'),
+                                    behavior: SnackBarBehavior.floating,
+                                    backgroundColor: AppTheme.accentColor,
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              } else {
+                                // Takip et
+                                await firestore.followUser(
+                                  currentUserId: currentUserId,
+                                  targetUserId: entry.userId,
+                                );
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('${entry.userName} takip edildi!'),
+                                    behavior: SnackBarBehavior.floating,
+                                    backgroundColor: AppTheme.successColor,
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Bir hata oluştu: $e'),
+                                  behavior: SnackBarBehavior.floating,
+                                  backgroundColor: AppTheme.accentColor,
                                 ),
-                              ),
-                            ],
+                              );
+                            }
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  isFollowing ? Icons.check : Icons.person_add_rounded,
+                                  size: 14,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  isFollowing ? 'Takipte' : 'Takip Et',
+                                  style: textTheme.labelSmall?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-
-                // Kendi kartımızsa crown ikonu veya ilk 3'e özel badge - Küçültüldü
-                if (isCurrentUser)
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        colors: [
-                          AppTheme.goldColor.withOpacity(0.8),
-                          AppTheme.goldColor.withOpacity(0.6),
-                        ],
+                    loading: () => Container(
+                      width: 80,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        color: Colors.white.withOpacity(0.1),
+                      ),
+                      child: const Center(
+                        child: SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation(Colors.white),
+                          ),
+                        ),
                       ),
                     ),
-                    child: Icon(
-                      Icons.stars_rounded,
-                      size: 16,
-                      color: Colors.white,
-                    ),
-                  )
-                else if (isTopThree)
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        colors: [
-                          getSpecialColor().withOpacity(0.8),
-                          getSpecialColor().withOpacity(0.6),
-                        ],
+                    error: (error, stack) => Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        color: Colors.white.withOpacity(0.1),
+                      ),
+                      child: Text(
+                        'Takip Et',
+                        style: textTheme.labelSmall?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 10,
+                        ),
                       ),
                     ),
-                    child: Icon(
-                      rank == 1
-                          ? Icons.emoji_events
-                          : rank == 2
-                              ? Icons.military_tech
-                              : Icons.workspace_premium,
-                      size: 16,
-                      color: Colors.white,
-                    ),
-                  ),
+                  ) ?? const SizedBox.shrink(),
               ],
             ),
           ),
         ),
       ),
     );
+  }
+
+  List<Color> _getRankColors(int rank, bool isCurrentUser) {
+    if (isCurrentUser) {
+      return [
+        AppTheme.secondaryColor,
+        AppTheme.successColor,
+      ];
+    } else {
+      switch (rank) {
+        case 1:
+          return [
+            AppTheme.goldColor,
+            AppTheme.goldColor.withOpacity(0.7),
+          ];
+        case 2:
+          return [
+            AppTheme.secondaryColor,
+            AppTheme.secondaryColor.withOpacity(0.7),
+          ];
+        case 3:
+          return [
+            AppTheme.successColor,
+            AppTheme.successColor.withOpacity(0.7),
+          ];
+        default:
+          return [Colors.white.withOpacity(0.2), Colors.white.withOpacity(0.1)];
+      }
+    }
+  }
+
+  Color _getRankBorderColor(int rank, bool isCurrentUser) {
+    if (isCurrentUser) {
+      return AppTheme.successColor.withOpacity(0.8);
+    } else {
+      switch (rank) {
+        case 1:
+          return AppTheme.goldColor;
+        case 2:
+          return AppTheme.secondaryColor;
+        case 3:
+          return AppTheme.successColor;
+        default:
+          return Colors.white.withOpacity(0.3);
+      }
+    }
   }
 }
