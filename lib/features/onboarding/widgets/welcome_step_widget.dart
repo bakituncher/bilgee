@@ -68,7 +68,7 @@ class WelcomeStepWidget extends StatelessWidget {
 
                   // Hoş geldin metni
                   Text(
-                    'Bilge AI\'ya\nHoş Geldin! 🎉',
+                    'Taktik\'e\nHoş Geldin! 🎯',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
@@ -83,7 +83,7 @@ class WelcomeStepWidget extends StatelessWidget {
 
                   // Alt metin
                   Text(
-                    'Sınav başarın için kişisel\nAI asistanın hazır',
+                    'Sınav başarın için\nstratejik AI asistanın hazır',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyLarge?.copyWith(
                       color: theme.colorScheme.onSurface.withOpacity(0.7),

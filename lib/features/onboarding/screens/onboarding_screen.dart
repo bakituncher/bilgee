@@ -7,7 +7,6 @@ import 'package:bilge_ai/features/onboarding/controllers/onboarding_controller.d
 import 'package:bilge_ai/features/onboarding/models/onboarding_step.dart';
 import 'package:bilge_ai/features/onboarding/widgets/welcome_step_widget.dart';
 import 'package:bilge_ai/features/onboarding/widgets/feature_introduction_widget.dart';
-import 'package:bilge_ai/features/onboarding/widgets/interactive_demo_widget.dart';
 import 'package:bilge_ai/features/onboarding/widgets/personalization_widget.dart';
 import 'package:bilge_ai/features/onboarding/widgets/completion_widget.dart';
 import 'package:bilge_ai/features/auth/application/auth_controller.dart';
@@ -147,8 +146,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     final currentStep = controller.currentStepData;
     final user = ref.watch(authControllerProvider).value;
 
-    return WillPopScope(
-      onWillPop: _handleBackPressed,
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) async {
+        if (!didPop) {
+          final shouldPop = await _handleBackPressed();
+          if (shouldPop && context.canPop()) {
+            Navigator.of(context).pop();
+          }
+        }
+      },
       child: Scaffold(
         appBar: _shouldShowAppBar(currentStep.type) ? _buildAppBar(context, progress) : null,
         body: SafeArea(
@@ -168,7 +175,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               // Loading overlay
               if (_isLoading)
                 Container(
-                  color: Colors.black.withOpacity(0.5),
+                  color: Colors.black.withValues(alpha: 0.5),
                   child: Center(
                     child: Container(
                       padding: EdgeInsets.all(32),
@@ -258,17 +265,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
         );
 
       case OnboardingStepType.appIntroduction:
-      case OnboardingStepType.featureTour:
       case OnboardingStepType.aiAssistant:
-      case OnboardingStepType.studyPlanning:
-      case OnboardingStepType.questionPractice:
-      case OnboardingStepType.progressTracking:
         return FeatureIntroductionWidget(
           step: step,
           onContinue: _nextStep,
-          onSkip: step.type == OnboardingStepType.featureTour
-              ? () => _skipToStep(OnboardingStepType.personalization)
-              : null,
+          onSkip: null,
         );
 
       case OnboardingStepType.personalization:
@@ -284,11 +285,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
 
       case OnboardingStepType.availability:
         return _buildAvailabilityContent();
-
-      case OnboardingStepType.practiceDemo:
-        return InteractiveDemoWidget(
-          onContinue: _nextStep,
-        );
 
       case OnboardingStepType.completion:
         return CompletionWidget(

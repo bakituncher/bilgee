@@ -1,5 +1,3 @@
-// lib/features/onboarding/widgets/completion_widget.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:confetti/confetti.dart';
@@ -54,7 +52,6 @@ class _CompletionWidgetState extends State<CompletionWidget>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
       body: Stack(
@@ -145,7 +142,7 @@ class _CompletionWidgetState extends State<CompletionWidget>
                         SizedBox(height: 16),
 
                         Text(
-                          'Artık Bilge AI ile başarıya giden\nyolculuğuna başlayabilirsin!',
+                          'Artık Taktik ile başarıya giden\nyolculuğuna başlayabilirsin!',
                           textAlign: TextAlign.center,
                           style: theme.textTheme.bodyLarge?.copyWith(
                             color: theme.colorScheme.onSurface.withOpacity(0.8),
@@ -207,7 +204,7 @@ class _CompletionWidgetState extends State<CompletionWidget>
                               SizedBox(width: 12),
                               Expanded(
                                 child: Text(
-                                  'Unutma: Başarı, küçük adımların toplamıdır. Sen de başaracaksın!',
+                                  'Başarı, küçük adımların toplamıdır. Sen de başaracaksın!',
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w500,
