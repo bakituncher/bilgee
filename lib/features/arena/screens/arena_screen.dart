@@ -12,6 +12,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
 import 'package:bilge_ai/shared/widgets/logo_loader.dart';
+import 'package:bilge_ai/data/models/user_model.dart';
 
 class ArenaScreen extends ConsumerWidget {
   const ArenaScreen({super.key});
@@ -66,6 +67,8 @@ class _LeaderboardView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final currentUserId = ref.watch(authControllerProvider).value?.uid;
     final currentUserExam = ref.watch(userProfileProvider).value?.selectedExam;
+    final currentUserProfile = ref.watch(userProfileProvider).value; // Kullanıcı profilini çek
+
     if (currentUserExam == null) return const SizedBox.shrink();
     final leaderboardAsync = period == 'weekly'
         ? ref.watch(leaderboardWeeklyProvider(currentUserExam))
@@ -102,10 +105,6 @@ class _LeaderboardView extends ConsumerWidget {
               if (entries.isEmpty) return _buildEmptyState(context);
 
               final fullList = entries;
-              final topThree = fullList.take(3).toList();
-              final restOfTheList =
-              fullList.length > 3 ? fullList.sublist(3) : <LeaderboardEntry>[];
-
               final currentUserIndex =
               fullList.indexWhere((e) => e.userId == currentUserId);
               final currentUserEntry =
@@ -116,47 +115,42 @@ class _LeaderboardView extends ConsumerWidget {
                   ? (fullList.first.score == 0 ? 1 : fullList.first.score)
                   : 1;
 
-              final itemCount =
-                  restOfTheList.length + (showCurrentUserAtBottom ? 1 : 0) + 1;
+              final displayList = fullList.take(20).toList();
+              final itemCount = displayList.length + (showCurrentUserAtBottom ? 1 : 0);
 
               return ListView.builder(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(16, 18, 16, 40),
+                padding: const EdgeInsets.fromLTRB(14, 16, 14, 36),
                 itemCount: itemCount,
                 itemBuilder: (context, index) {
-                  if (index == 0) {
-                    return _PodiumDisplay(
-                        topThree: topThree, currentUserId: currentUserId);
-                  }
-
                   if (showCurrentUserAtBottom && index == itemCount - 1) {
                     return Padding(
-                      padding: const EdgeInsets.only(top: 24.0),
-                      child: _CurrentUserCard(entry: currentUserEntry),
+                      padding: const EdgeInsets.only(top: 20.0),
+                      child: _CurrentUserCard(entry: currentUserEntry, userProfile: currentUserProfile),
                     );
                   }
 
-                  final realIndex = index - 1;
-                  final entry = restOfTheList[realIndex];
+                  final entry = displayList[index];
                   return GestureDetector(
                     onTap: () {
                       HapticFeedback.selectionClick();
                       context.push('${AppRoutes.arena}/${entry.userId}');
                     },
                     child: Padding(
-                      padding: const EdgeInsets.only(bottom: 12.0),
+                      padding: const EdgeInsets.only(bottom: 8.0),
                       child: _RankCard(
                         entry: entry,
                         rank: entry.rank,
                         isCurrentUser: entry.userId == currentUserId,
                         topScore: topScore,
+                        currentUserProfile: currentUserProfile,
                       )
                           .animate()
                           .fadeIn(
                           duration: 350.ms,
-                          delay: (40 * (realIndex % 10)).ms)
+                          delay: (40 * (index % 10)).ms)
                           .slideX(
-                          begin: realIndex.isEven ? -0.06 : 0.06,
+                          begin: index.isEven ? -0.06 : 0.06,
                           end: 0,
                           duration: 420.ms,
                           curve: Curves.easeOutCubic),
@@ -201,11 +195,22 @@ class _LeaderboardView extends ConsumerWidget {
 
 class _CurrentUserCard extends StatelessWidget {
   final LeaderboardEntry entry;
-  const _CurrentUserCard({required this.entry});
+  final UserModel? userProfile;
+
+  const _CurrentUserCard({required this.entry, this.userProfile});
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+
+    // Gerçek kullanıcı adını profil verilerinden çek
+    String getUsernameDisplay() {
+      if (userProfile != null && userProfile!.username.trim().isNotEmpty) {
+        return '@${userProfile!.username.trim()}';
+      }
+      return '@user${entry.userId.substring(entry.userId.length - 6)}';
+    }
+
     return Animate(
         effects: [
           SlideEffect(
@@ -227,7 +232,7 @@ class _CurrentUserCard extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
                 borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(30)),
+                const BorderRadius.vertical(top: Radius.circular(26)),
                 gradient: LinearGradient(colors: [
                   AppTheme.goldColor.withOpacity(0.8),
                   AppTheme.secondaryColor.withOpacity(0.8)
@@ -235,14 +240,14 @@ class _CurrentUserCard extends StatelessWidget {
                 boxShadow: [
                   BoxShadow(
                       color: AppTheme.goldColor.withOpacity(0.3),
-                      blurRadius: 20,
-                      spreadRadius: 4),
+                      blurRadius: 18,
+                      spreadRadius: 3),
                 ]),
             padding: const EdgeInsets.all(2),
             child: Container(
               decoration: BoxDecoration(
                 borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(28)),
+                const BorderRadius.vertical(top: Radius.circular(24)),
                 gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -252,7 +257,7 @@ class _CurrentUserCard extends StatelessWidget {
                     ]),
               ),
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
                 child: SafeArea(
                   top: false,
                   child: Column(
@@ -260,14 +265,14 @@ class _CurrentUserCard extends StatelessWidget {
                       Text("Sizin Sıralamanız",
                           style: textTheme.labelLarge
                               ?.copyWith(color: AppTheme.secondaryTextColor)),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       Row(
                         children: [
                           _RankCapsule(rank: entry.rank, highlight: true),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 10),
                           CircleAvatar(
                             backgroundColor: Colors.white10,
-                            radius: 22,
+                            radius: 20,
                             child: ClipOval(
                               child: (entry.avatarStyle != null &&
                                   entry.avatarSeed != null)
@@ -283,33 +288,46 @@ class _CurrentUserCard extends StatelessWidget {
                                   style: textTheme.titleMedium),
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                // Ad Soyad - pixel perfect
                                 Text(
-                                  entry.userName,
-                                  style: textTheme.titleMedium
-                                      ?.copyWith(fontWeight: FontWeight.w600),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                if (entry.username != null && entry.username!.isNotEmpty)
-                                  Text(
-                                    '@${entry.username}',
-                                    style: textTheme.bodySmall
-                                        ?.copyWith(color: AppTheme.secondaryTextColor),
-                                    overflow: TextOverflow.ellipsis,
+                                  entry.userName.isNotEmpty ? entry.userName : 'İsimsiz Kullanıcı',
+                                  style: textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                    height: 1.2,
+                                    letterSpacing: 0.1,
                                   ),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                ),
+                                // Kullanıcı adı - gerçek profil verilerinden
+                                Text(
+                                  getUsernameDisplay(),
+                                  style: textTheme.bodySmall?.copyWith(
+                                    color: AppTheme.secondaryTextColor,
+                                    fontSize: 11,
+                                    height: 1.1,
+                                    fontWeight: FontWeight.w400,
+                                    letterSpacing: 0.2,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                ),
                               ],
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 10),
                           Text('${entry.score} BP',
                               style: textTheme.titleSmall?.copyWith(
                                   color: AppTheme.goldColor,
                                   fontWeight: FontWeight.bold,
-                                  letterSpacing: 0.5)),
+                                  fontSize: 12,
+                                  letterSpacing: 0.3)),
                         ],
                       ),
                     ],
@@ -501,129 +519,405 @@ class _RankCard extends StatelessWidget {
   final LeaderboardEntry entry;
   final int rank;
   final bool isCurrentUser;
-  final int? topScore;
+  final int topScore;
+  final UserModel? currentUserProfile;
 
-  const _RankCard(
-      {required this.entry,
-        required this.rank,
-        this.isCurrentUser = false,
-        this.topScore});
+  const _RankCard({
+    required this.entry,
+    required this.rank,
+    required this.isCurrentUser,
+    required this.topScore,
+    this.currentUserProfile,
+  });
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final progress = (topScore != null && topScore! > 0)
-        ? (entry.score / topScore!).clamp(0.0, 1.0)
-        : 0.0;
+    final progress = topScore > 0 ? (entry.score / topScore).clamp(0.0, 1.0) : 0.0;
 
+    // İlk 3 için özel renkler
+    Color getSpecialColor() {
+      switch (rank) {
+        case 1:
+          return AppTheme.goldColor; // Altın - 1. sıra
+        case 2:
+          return AppTheme.secondaryColor; // Gümüş - 2. sıra
+        case 3:
+          return AppTheme.successColor; // Bronz - 3. sıra
+        default:
+          return Colors.white.withOpacity(0.1);
+      }
+    }
+
+    // Gerçek kullanıcı adını çek
+    String getUsernameDisplay() {
+      if (isCurrentUser && currentUserProfile != null) {
+        // Kendi kartımızsa profil verilerinden çek
+        if (currentUserProfile!.username.trim().isNotEmpty) {
+          return '@${currentUserProfile!.username.trim()}';
+        }
+      } else {
+        // Diğer kullanıcılar için LeaderboardEntry'den çek
+        if (entry.username != null && entry.username!.trim().isNotEmpty) {
+          return '@${entry.username!.trim()}';
+        }
+      }
+      return '@user${entry.userId.substring(entry.userId.length - 6)}';
+    }
+
+    bool isTopThree = rank <= 3;
+
+    // Modern kart renkleri - İlk 3'e özel
     final cardColor = isCurrentUser
-        ? AppTheme.secondaryColor.withOpacity(0.2)
-        : AppTheme.cardColor.withOpacity(0.15);
-    final borderColor =
-    isCurrentUser ? AppTheme.secondaryColor : Colors.white24;
+        ? AppTheme.primaryColor.withOpacity(0.15)
+        : isTopThree
+            ? getSpecialColor().withOpacity(0.15)
+            : AppTheme.cardColor.withOpacity(0.8);
+
+    final borderColor = isCurrentUser
+        ? AppTheme.secondaryColor.withOpacity(0.6)
+        : isTopThree
+            ? getSpecialColor().withOpacity(0.8)
+            : Colors.white.withOpacity(0.1);
 
     return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
       decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: isCurrentUser
-                  ? AppTheme.secondaryColor.withOpacity(0.25)
-                  : Colors.black.withOpacity(0.4),
-              blurRadius: 12,
-              spreadRadius: -2,
-              offset: const Offset(0, 6),
-            )
-          ]),
+        borderRadius: BorderRadius.circular(18),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            cardColor,
+            cardColor.withOpacity(0.6),
+          ],
+        ),
+        border: Border.all(color: borderColor, width: isTopThree ? 1.8 : 1.0),
+        boxShadow: [
+          BoxShadow(
+            color: isCurrentUser
+                ? AppTheme.secondaryColor.withOpacity(0.2)
+                : isTopThree
+                    ? getSpecialColor().withOpacity(0.25)
+                    : Colors.black.withOpacity(0.08),
+            blurRadius: isTopThree ? 14 : 10,
+            spreadRadius: isTopThree ? 1 : 0,
+            offset: const Offset(0, 3),
+          )
+        ],
+      ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(18),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            padding: const EdgeInsets.all(1.4),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: borderColor, width: 1.5),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [cardColor, cardColor.withOpacity(0.5)],
-                stops: const [0.0, 1.0],
-              ),
-            ),
-            child: Container(
-              padding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+          filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                // Sıralama rozeti - İlk 3'e özel - Küçültüldü
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: isCurrentUser
+                          ? [AppTheme.secondaryColor, AppTheme.successColor]
+                          : isTopThree
+                              ? [getSpecialColor(), getSpecialColor().withOpacity(0.7)]
+                              : [Colors.white.withOpacity(0.2), Colors.white.withOpacity(0.1)],
+                    ),
+                    border: Border.all(
+                      color: isCurrentUser
+                          ? Colors.white.withOpacity(0.8)
+                          : isTopThree
+                              ? Colors.white.withOpacity(0.9)
+                              : Colors.white.withOpacity(0.3),
+                      width: isTopThree ? 1.5 : 1.0
+                    ),
+                  ),
+                  child: Stack(
+                    alignment: Alignment.center,
                     children: [
-                      _RankCapsule(rank: rank, highlight: isCurrentUser),
-                      const SizedBox(width: 12),
-                      CircleAvatar(
-                        backgroundColor: Colors.white10,
-                        radius: 22,
-                        child: ClipOval(
-                          child: (entry.avatarStyle != null &&
-                              entry.avatarSeed != null)
-                              ? SvgPicture.network(
-                              'https://api.dicebear.com/9.x/${entry.avatarStyle}/svg?seed=${entry.avatarSeed}',
-                              fit: BoxFit.cover)
-                              : Text(
-                              entry.userName.isNotEmpty
-                                  ? entry.userName
-                                  .substring(0, 1)
-                                  .toUpperCase()
-                                  : '?',
-                              style: textTheme.titleMedium),
+                      // İlk 3'e özel crown/medal ikonları
+                      if (isTopThree && !isCurrentUser)
+                        Icon(
+                          rank == 1 ? Icons.emoji_events : rank == 2 ? Icons.military_tech : Icons.workspace_premium,
+                          size: 14,
+                          color: Colors.white,
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              entry.userName,
-                              style: textTheme.titleMedium
-                                  ?.copyWith(fontWeight: FontWeight.w600),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            if (entry.username != null && entry.username!.isNotEmpty)
-                              Text(
-                                '@${entry.username}',
-                                style: textTheme.bodySmall
-                                    ?.copyWith(color: AppTheme.secondaryTextColor),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                          ],
+                      if (!isTopThree || isCurrentUser)
+                        Text(
+                          '#$rank',
+                          style: textTheme.labelMedium?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 11,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Text('${entry.score} BP',
-                          style: textTheme.titleSmall?.copyWith(
-                              color: AppTheme.secondaryColor,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.5)),
                     ],
                   ),
-                  if (topScore != null) ...[
-                    const SizedBox(height: 10),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
-                      child: LinearProgressIndicator(
-                        value: progress,
-                        minHeight: 6,
-                        backgroundColor: Colors.white.withOpacity(0.1),
-                        valueColor: AlwaysStoppedAnimation(isCurrentUser
-                            ? AppTheme.successColor
-                            : AppTheme.secondaryColor),
+                ),
+                const SizedBox(width: 12),
+
+                // Avatar - İlk 3'e özel çerçeve - Küçültüldü
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isCurrentUser
+                          ? AppTheme.secondaryColor.withOpacity(0.6)
+                          : isTopThree
+                              ? getSpecialColor().withOpacity(0.8)
+                              : Colors.white.withOpacity(0.3),
+                      width: isTopThree ? 2.5 : 1.5,
+                    ),
+                    boxShadow: isTopThree ? [
+                      BoxShadow(
+                        color: getSpecialColor().withOpacity(0.3),
+                        blurRadius: 6,
+                        spreadRadius: 0.5,
+                      )
+                    ] : null,
+                  ),
+                  child: CircleAvatar(
+                    backgroundColor: Colors.white.withOpacity(0.1),
+                    radius: 22,
+                    child: ClipOval(
+                      child: (entry.avatarStyle != null && entry.avatarSeed != null)
+                          ? SvgPicture.network(
+                              'https://api.dicebear.com/9.x/${entry.avatarStyle}/svg?seed=${entry.avatarSeed}',
+                              fit: BoxFit.cover,
+                            )
+                          : Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: LinearGradient(
+                                  colors: isTopThree ? [
+                                    getSpecialColor().withOpacity(0.8),
+                                    getSpecialColor().withOpacity(0.6),
+                                  ] : [
+                                    AppTheme.primaryColor.withOpacity(0.8),
+                                    AppTheme.secondaryColor.withOpacity(0.8),
+                                  ],
+                                ),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  entry.userName.isNotEmpty
+                                      ? entry.userName.substring(0, 1).toUpperCase()
+                                      : '?',
+                                  style: textTheme.titleMedium?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                            ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+
+                // Kullanıcı bilgileri (Twitter benzeri) - Pixel perfect
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Ad Soyad (üstte) - Optimize edilmiş
+                      Text(
+                        entry.userName.isNotEmpty ? entry.userName : 'İsimsiz Kullanıcı',
+                        style: textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                          fontSize: 13,
+                          height: 1.2,
+                          letterSpacing: 0.1,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
+
+                      // Kullanıcı adı (altta) - Gerçek verilerden
+                      Text(
+                        getUsernameDisplay(),
+                        style: textTheme.bodySmall?.copyWith(
+                          color: AppTheme.secondaryTextColor.withOpacity(0.8),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w400,
+                          height: 1.1,
+                          letterSpacing: 0.2,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
+
+                      // Puan ve progress bar - Daha kompakt
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(6),
+                              gradient: LinearGradient(
+                                colors: isTopThree ? [
+                                  getSpecialColor().withOpacity(0.9),
+                                  getSpecialColor().withOpacity(0.7),
+                                ] : [
+                                  AppTheme.goldColor.withOpacity(0.8),
+                                  AppTheme.goldColor.withOpacity(0.6),
+                                ],
+                              ),
+                            ),
+                            child: Text(
+                              '${entry.score} BP',
+                              style: textTheme.labelSmall?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 9,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 3),
+                          Expanded(
+                            child: Container(
+                              height: 2,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(1),
+                                color: Colors.white.withOpacity(0.12),
+                              ),
+                              child: FractionallySizedBox(
+                                alignment: Alignment.centerLeft,
+                                widthFactor: progress,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(1),
+                                    gradient: LinearGradient(
+                                      colors: isCurrentUser
+                                          ? [AppTheme.successColor, AppTheme.secondaryColor]
+                                          : isTopThree
+                                              ? [getSpecialColor(), getSpecialColor().withOpacity(0.7)]
+                                              : [AppTheme.goldColor, AppTheme.secondaryColor],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(width: 8),
+
+                // Takip et butonu - Küçültüldü
+                if (!isCurrentUser)
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      gradient: LinearGradient(
+                        colors: [
+                          AppTheme.secondaryColor.withOpacity(0.9),
+                          AppTheme.primaryColor.withOpacity(0.9),
+                        ],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.secondaryColor.withOpacity(0.25),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('${entry.userName} takip edildi!'),
+                              behavior: SnackBarBehavior.floating,
+                              backgroundColor: AppTheme.successColor,
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.person_add_rounded,
+                                size: 14,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Takip Et',
+                                style: textTheme.labelSmall?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
-                  ],
-                ],
-              ),
+                  ),
+
+                // Kendi kartımızsa crown ikonu veya ilk 3'e özel badge - Küçültüldü
+                if (isCurrentUser)
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: [
+                          AppTheme.goldColor.withOpacity(0.8),
+                          AppTheme.goldColor.withOpacity(0.6),
+                        ],
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.stars_rounded,
+                      size: 16,
+                      color: Colors.white,
+                    ),
+                  )
+                else if (isTopThree)
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: [
+                          getSpecialColor().withOpacity(0.8),
+                          getSpecialColor().withOpacity(0.6),
+                        ],
+                      ),
+                    ),
+                    child: Icon(
+                      rank == 1
+                          ? Icons.emoji_events
+                          : rank == 2
+                              ? Icons.military_tech
+                              : Icons.workspace_premium,
+                      size: 16,
+                      color: Colors.white,
+                    ),
+                  ),
+              ],
             ),
           ),
         ),
