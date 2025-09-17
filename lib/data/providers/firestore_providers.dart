@@ -6,6 +6,7 @@ import 'package:bilge_ai/data/models/user_model.dart';
 import 'package:bilge_ai/data/models/test_model.dart';
 import 'package:bilge_ai/features/arena/models/leaderboard_entry_model.dart'; // EKLENDİ
 import 'package:bilge_ai/features/auth/application/auth_controller.dart';
+import 'package:bilge_ai/features/profile/screens/user_search_screen.dart'; // SearchType enum için
 import '../repositories/firestore_service.dart';
 import 'package:bilge_ai/data/models/plan_document.dart';
 import 'package:bilge_ai/data/models/performance_summary.dart';
@@ -116,7 +117,7 @@ final unreadInAppCountProvider = StreamProvider<int>((ref) {
   return const Stream<int>.empty();
 });
 
-// YENI: Kullanıcı istatistik akışı (streak, engagementScore, focusMinutes, bp, pomodoroSessions)
+// YENİ: Kullanıcı istatistik akışı (streak, engagementScore, focusMinutes, bp, pomodoroSessions)
 final userStatsStreamProvider = StreamProvider<UserStats?>((ref) {
   final user = ref.watch(authControllerProvider).value;
   if (user != null) {
@@ -125,7 +126,7 @@ final userStatsStreamProvider = StreamProvider<UserStats?>((ref) {
   return const Stream<UserStats?>.empty();
 });
 
-// YENI: Son N günün odak dakikaları (focusMinutes) – haftalık/aylık grafikler için
+// YENİ: Son N günün odak dakikaları (focusMinutes) – haftalık/aylık grafikler için
 final focusMinutesForLastDaysProvider = FutureProvider.family.autoDispose<Map<String, int>, int>((ref, days) async {
   final user = ref.watch(authControllerProvider).value;
   if (user == null) return {};
@@ -148,16 +149,16 @@ final focusSessionsStreamProvider = StreamProvider.autoDispose<List<FocusSession
   return Stream.value(const <FocusSessionModel>[]);
 });
 
-// TAKIP: Sayaçlar (followers/following)
-final followCountsProvider = StreamProvider.family.autoDispose<(int followers, int following), String>((ref, userId) {
-  return ref.watch(firestoreServiceProvider).streamFollowCounts(userId);
-});
-
 // TAKIP: Mevcut kullanıcının hedef kullanıcıyı takip edip etmediği
 final isFollowingProvider = StreamProvider.family.autoDispose<bool, String>((ref, targetUserId) {
   final me = ref.watch(authControllerProvider).value;
   if (me == null) return const Stream<bool>.empty();
   return ref.watch(firestoreServiceProvider).streamIsFollowing(me.uid, targetUserId);
+});
+
+// TAKIP: Belirli bir kullanıcının takipçi/takip sayısı
+final followCountsProvider = StreamProvider.family.autoDispose<(int, int), String>((ref, userId) {
+  return ref.watch(firestoreServiceProvider).streamFollowCounts(userId);
 });
 
 // TAKIP: Listeleme için ID akışları
@@ -190,3 +191,24 @@ final publicProfileRawProvider = FutureProvider.family.autoDispose<Map<String, d
   return null;
 });
 
+// YENİ: Kullanıcı arama provider'ı
+final userSearchProvider = FutureProvider.family.autoDispose<List<Map<String, dynamic>>, String>((ref, query) async {
+  if (query.trim().isEmpty) return [];
+  final svc = ref.watch(firestoreServiceProvider);
+  final searchType = ref.watch(searchTypeProvider);
+  return await svc.searchUsersByName(query, searchType: searchType);
+});
+
+// YENİ: Kullanıcı arama sonuçları için state provider
+final userSearchQueryProvider = StateProvider<String>((ref) => '');
+
+// YENİ: Arama tipi provider'ı
+final searchTypeProvider = StateProvider<SearchType>((ref) => SearchType.name);
+
+// YENİ: Arama sonuçlarını reaktif olarak getiren provider
+final searchResultsProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  final query = ref.watch(userSearchQueryProvider);
+  final searchType = ref.watch(searchTypeProvider);
+  if (query.trim().isEmpty) return [];
+  return ref.watch(userSearchProvider(query).future);
+});

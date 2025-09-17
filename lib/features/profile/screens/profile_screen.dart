@@ -145,6 +145,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         elevation: 0,
         actions: [
           IconButton(
+            tooltip: 'Arkadaş Ara',
+            icon: const Icon(Icons.person_add_alt_1),
+            onPressed: () {
+              HapticFeedback.selectionClick();
+              context.push('/user-search');
+            },
+          ),
+          IconButton(
             tooltip: _sharing ? 'Hazırlanıyor...' : 'Paylaş',
             icon: const Icon(Icons.ios_share_rounded),
             onPressed: _sharing ? null : () { HapticFeedback.selectionClick(); _shareProfileImage(); },

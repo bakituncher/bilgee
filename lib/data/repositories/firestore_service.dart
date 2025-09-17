@@ -16,6 +16,7 @@ import 'package:bilge_ai/features/quests/models/quest_model.dart';
 import 'package:bilge_ai/features/stats/logic/stats_analysis.dart';
 import 'package:bilge_ai/data/models/user_stats_model.dart';
 import 'package:bilge_ai/features/blog/models/blog_post.dart';
+import 'package:bilge_ai/features/profile/screens/user_search_screen.dart'; // SearchType enum için
 import 'package:crypto/crypto.dart' as crypto;
 import 'dart:convert' show utf8;
 import 'package:bilge_ai/shared/notifications/in_app_notification_model.dart';
@@ -356,6 +357,13 @@ class FirestoreService {
       tutorialCompleted: false,
     );
     await usersCollection.doc(user.uid).set(userProfile.toJson());
+
+    // Create searchable keywords for the new user
+    final fullName = '$firstName $lastName'.trim();
+    if (fullName.isNotEmpty) {
+      await updateSearchableKeywords(user.uid, fullName);
+    }
+
     // Stats başlangıç değerleri
     await _userStatsDoc(user.uid).set({
       'streak': 0,
@@ -443,6 +451,12 @@ class FirestoreService {
     }
 
     await userDocRef.update(data);
+
+    // Update searchable keywords if name changed
+    if (data.containsKey('name')) {
+      final name = data['name'] as String;
+      await updateSearchableKeywords(userId, name);
+    }
 
     // Update leaderboard if name changed
     if (data.containsKey('name')) {
@@ -1162,6 +1176,204 @@ class FirestoreService {
     batch.set(usersCollection.doc(currentUserId), {'followingCount': FieldValue.increment(-1)}, SetOptions(merge: true));
 
     await batch.commit();
+  }
+
+  /// Search users by name/username
+  Future<List<Map<String, dynamic>>> searchUsersByName(String query, {SearchType searchType = SearchType.name}) async {
+    if (query.trim().isEmpty) return [];
+
+    final normalizedQuery = query.trim().toLowerCase();
+    List<Map<String, dynamic>> results = [];
+
+    try {
+      // Method 1: Search in public_profiles collection with keywords (only for name search)
+      if (searchType == SearchType.name) {
+        try {
+          final keywords = _generateSearchKeywords(normalizedQuery);
+          final publicProfilesQuery = await _firestore
+              .collection('public_profiles')
+              .where('searchableKeywords', arrayContainsAny: keywords.take(10).toList())
+              .limit(20)
+              .get();
+
+          for (var doc in publicProfilesQuery.docs) {
+            final data = doc.data();
+            data['userId'] = doc.id;
+            results.add(data);
+          }
+        } catch (e) {
+          print('Public profiles search failed: $e');
+        }
+      }
+
+      // Method 2: Direct search in users collection based on search type
+      try {
+        Query<Map<String, dynamic>> usersQuery;
+
+        if (searchType == SearchType.username) {
+          // Username search
+          usersQuery = usersCollection
+              .where('username', isGreaterThanOrEqualTo: normalizedQuery)
+              .where('username', isLessThan: normalizedQuery + '\uf8ff')
+              .limit(15);
+        } else {
+          // Name search
+          usersQuery = usersCollection
+              .where('name', isGreaterThanOrEqualTo: normalizedQuery)
+              .where('name', isLessThan: normalizedQuery + '\uf8ff')
+              .limit(15);
+        }
+
+        final querySnapshot = await usersQuery.get();
+
+        for (var doc in querySnapshot.docs) {
+          final data = doc.data();
+          final searchField = searchType == SearchType.username ? data['username'] : data['name'];
+
+          if (searchField != null && !results.any((r) => r['userId'] == doc.id)) {
+            results.add({
+              'userId': doc.id,
+              'name': data['name'],
+              'username': data['username'],
+              'avatarStyle': data['avatarStyle'],
+              'avatarSeed': data['avatarSeed'],
+              'selectedExam': data['selectedExam'],
+            });
+          }
+        }
+      } catch (e) {
+        print('Users collection search failed: $e');
+      }
+
+      // Method 3: Fallback contains search (only if no results found)
+      if (results.isEmpty) {
+        try {
+          final allUsersQuery = await usersCollection
+              .limit(100)
+              .get();
+
+          for (var doc in allUsersQuery.docs) {
+            final data = doc.data();
+            final searchField = searchType == SearchType.username
+                ? (data['username'] as String?)?.toLowerCase() ?? ''
+                : (data['name'] as String?)?.toLowerCase() ?? '';
+
+            if (searchField.contains(normalizedQuery) && searchField.isNotEmpty) {
+              results.add({
+                'userId': doc.id,
+                'name': data['name'],
+                'username': data['username'],
+                'avatarStyle': data['avatarStyle'],
+                'avatarSeed': data['avatarSeed'],
+                'selectedExam': data['selectedExam'],
+              });
+            }
+          }
+        } catch (e) {
+          print('Fallback search failed: $e');
+        }
+      }
+
+      // Remove duplicates and limit results
+      final uniqueResults = <String, Map<String, dynamic>>{};
+      for (final result in results) {
+        final userId = result['userId'] as String;
+        if (!uniqueResults.containsKey(userId)) {
+          uniqueResults[userId] = result;
+        }
+      }
+
+      return uniqueResults.values.take(20).toList();
+    } catch (e) {
+      print('Error searching users: $e');
+      return [];
+    }
+  }
+
+  /// Generate search keywords for better search functionality
+  List<String> _generateSearchKeywords(String text) {
+    final keywords = <String>[];
+    final normalizedText = text.toLowerCase().trim();
+
+    // Add the full text
+    keywords.add(normalizedText);
+
+    // Add substrings starting from beginning
+    for (int i = 1; i <= normalizedText.length; i++) {
+      keywords.add(normalizedText.substring(0, i));
+    }
+
+    // Add individual words
+    final words = normalizedText.split(' ');
+    for (String word in words) {
+      if (word.isNotEmpty) {
+        keywords.add(word);
+        // Add substrings of each word
+        for (int i = 1; i <= word.length; i++) {
+          keywords.add(word.substring(0, i));
+        }
+      }
+    }
+
+    return keywords.toSet().toList();
+  }
+
+  /// Update user's searchable keywords when profile is updated
+  Future<void> updateSearchableKeywords(String userId, String name) async {
+    try {
+      final keywords = _generateSearchKeywords(name);
+      await _firestore.collection('public_profiles').doc(userId).set({
+        'name': name,
+        'searchableKeywords': keywords,
+        'lastUpdated': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      print('Error updating searchable keywords: $e');
+    }
+  }
+
+  /// Batch update all users' searchable keywords (for migration)
+  Future<void> updateAllUsersSearchableKeywords() async {
+    print('Starting batch update of user searchable keywords...');
+    try {
+      // Get all users in batches
+      final allUsers = await usersCollection.get();
+      final batch = _firestore.batch();
+      int updateCount = 0;
+
+      for (final doc in allUsers.docs) {
+        final data = doc.data();
+        final name = data['name'] as String?;
+
+        if (name != null && name.trim().isNotEmpty) {
+          final keywords = _generateSearchKeywords(name);
+          final publicProfileRef = _firestore.collection('public_profiles').doc(doc.id);
+
+          batch.set(publicProfileRef, {
+            'name': name,
+            'searchableKeywords': keywords,
+            'avatarStyle': data['avatarStyle'],
+            'avatarSeed': data['avatarSeed'],
+            'selectedExam': data['selectedExam'],
+            'lastUpdated': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+
+          updateCount++;
+
+          // Commit in batches of 450 (Firestore limit is 500)
+          if (updateCount % 450 == 0) {
+            await batch.commit();
+            print('Updated $updateCount users so far...');
+          }
+        }
+      }
+
+      // Commit remaining operations
+      await batch.commit();
+      print('Successfully updated searchable keywords for $updateCount users');
+    } catch (e) {
+      print('Error in batch update: $e');
+    }
   }
 
 }

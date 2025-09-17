@@ -22,6 +22,7 @@ import 'package:bilge_ai/features/admin/screens/push_composer_screen.dart';
 import 'package:bilge_ai/features/admin/screens/admin_panel_screen.dart';
 import 'package:bilge_ai/features/admin/screens/user_management_screen.dart';
 import 'package:bilge_ai/shared/notifications/notification_center_screen.dart';
+import 'package:bilge_ai/features/profile/screens/user_search_screen.dart';
 import 'transition_utils.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
@@ -233,6 +234,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             child: BlogAdminEditorScreen(initialSlug: slug),
           );
         },
+      ),
+      GoRoute(
+        path: '/user-search',
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) => buildPageWithFadeTransition(
+          context: context,
+          state: state,
+          child: const UserSearchScreen(),
+        ),
       ),
       ...authRoutes,
       ...onboardingRoutes(rootNavigatorKey),
