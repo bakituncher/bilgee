@@ -3,13 +3,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:bilge_ai/features/onboarding/models/onboarding_step.dart';
-import 'package:bilge_ai/data/providers/firestore_providers.dart';
-import 'package:bilge_ai/features/auth/application/auth_controller.dart';
 
 class OnboardingController extends StateNotifier<OnboardingProgress> {
   OnboardingController() : super(const OnboardingProgress(
     currentStep: 0,
-    totalSteps: 8, // Demo kısmı kaldırıldığı için azaltıldı
+    totalSteps: 5, // Removed examSelection, goalSetting, availability
     isCompleted: false,
     completedSteps: {},
   ));
@@ -71,24 +69,6 @@ class OnboardingController extends StateNotifier<OnboardingProgress> {
       type: OnboardingStepType.personalization,
       title: 'Seni Tanıyalım 👤',
       description: 'Sana en uygun deneyimi sunmak için biraz bilgi alalım.',
-      isInteractive: true,
-    ),
-    OnboardingStep(
-      type: OnboardingStepType.examSelection,
-      title: 'Sınav Seç 📚',
-      description: 'Hangi sınava hazırlanıyorsun? YKS, LGS veya KPSS?',
-      isInteractive: true,
-    ),
-    OnboardingStep(
-      type: OnboardingStepType.goalSetting,
-      title: 'Hedefini Belirle 🎯',
-      description: 'Hangi üniversite, bölüm veya kurumu hedefliyorsun?',
-      isInteractive: true,
-    ),
-    OnboardingStep(
-      type: OnboardingStepType.availability,
-      title: 'Çalışma Saatlerin ⏰',
-      description: 'Ne zaman çalışabiliyorsun? Programını ona göre ayarlayalım.',
       isInteractive: true,
     ),
     OnboardingStep(
@@ -163,7 +143,7 @@ class OnboardingController extends StateNotifier<OnboardingProgress> {
   void reset() {
     state = const OnboardingProgress(
       currentStep: 0,
-      totalSteps: 8,
+      totalSteps: 5,
       isCompleted: false,
       completedSteps: {},
     );

@@ -12,7 +12,6 @@ import 'package:bilge_ai/features/onboarding/widgets/personalization_widget.dart
 import 'package:bilge_ai/features/onboarding/widgets/completion_widget.dart';
 import 'package:bilge_ai/features/auth/application/auth_controller.dart';
 import 'package:bilge_ai/data/providers/firestore_providers.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 class EnhancedOnboardingScreen extends ConsumerStatefulWidget {
   const EnhancedOnboardingScreen({super.key});
@@ -147,8 +146,17 @@ class _EnhancedOnboardingScreenState extends ConsumerState<EnhancedOnboardingScr
     final currentStep = controller.currentStepData;
     final user = ref.watch(authControllerProvider).value;
 
-    return WillPopScope(
-      onWillPop: _handleBackPressed,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (!didPop) {
+          final shouldPop = await _handleBackPressed();
+          if (shouldPop && context.canPop()) {
+            Navigator.of(context).pop();
+          }
+        }
+        // no return value required
+      },
       child: Scaffold(
         appBar: _shouldShowAppBar(currentStep.type) ? _buildAppBar(context, progress) : null,
         body: SafeArea(
@@ -168,7 +176,7 @@ class _EnhancedOnboardingScreenState extends ConsumerState<EnhancedOnboardingScr
               // Loading overlay
               if (_isLoading)
                 Container(
-                  color: Colors.black.withOpacity(0.5),
+                  color: Colors.black.withValues(alpha: 0.5),
                   child: Center(
                     child: Container(
                       padding: EdgeInsets.all(32),
@@ -239,14 +247,7 @@ class _EnhancedOnboardingScreenState extends ConsumerState<EnhancedOnboardingScr
         ],
       ),
       centerTitle: true,
-      actions: [
-        if (progress.currentStep < progress.totalSteps - 3) // Son 3 adımda atla gösterme
-          TextButton(
-            onPressed: () => _skipToStep(OnboardingStepType.personalization),
-            child: Text('Atla'),
-          ),
-        SizedBox(width: 8),
-      ],
+      actions: [],
     );
   }
 
@@ -276,15 +277,6 @@ class _EnhancedOnboardingScreenState extends ConsumerState<EnhancedOnboardingScr
           onDataCollected: _savePersonalizationData,
         );
 
-      case OnboardingStepType.goalSetting:
-        return _buildGoalSettingContent();
-
-      case OnboardingStepType.examSelection:
-        return _buildExamSelectionContent();
-
-      case OnboardingStepType.availability:
-        return _buildAvailabilityContent();
-
       case OnboardingStepType.practiceDemo:
         return InteractiveDemoWidget(
           onContinue: _nextStep,
@@ -299,75 +291,6 @@ class _EnhancedOnboardingScreenState extends ConsumerState<EnhancedOnboardingScr
       default:
         return _buildDefaultContent(step);
     }
-  }
-
-  Widget _buildGoalSettingContent() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.flag, size: 80, color: Colors.orange),
-          SizedBox(height: 20),
-          Text(
-            'Hedef Belirleme',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 10),
-          Text('Bu özellik geliştiriliyor...'),
-          SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: _nextStep,
-            child: Text('Devam Et'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildExamSelectionContent() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.school, size: 80, color: Colors.blue),
-          SizedBox(height: 20),
-          Text(
-            'Sınav Seçimi',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 10),
-          Text('Bu özellik geliştiriliyor...'),
-          SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: _nextStep,
-            child: Text('Devam Et'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAvailabilityContent() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.schedule, size: 80, color: Colors.green),
-          SizedBox(height: 20),
-          Text(
-            'Çalışma Saatleri',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 10),
-          Text('Bu özellik geliştiriliyor...'),
-          SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: _nextStep,
-            child: Text('Devam Et'),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _buildDefaultContent(OnboardingStep step) {
