@@ -19,10 +19,9 @@ class _PersonalizationWidgetState extends State<PersonalizationWidget>
     with TickerProviderStateMixin {
   final PageController _pageController = PageController();
   int _currentStep = 0;
-  final int _totalSteps = 4;
+  final int _totalSteps = 3;
 
   // Kişiselleştirme verileri
-  String? _selectedGoal;
   final TextEditingController _customGoalController = TextEditingController();
   final Map<String, bool> _challenges = {
     'Konu eksiği': false,
@@ -36,19 +35,6 @@ class _PersonalizationWidgetState extends State<PersonalizationWidget>
   };
   double _weeklyStudyHours = 15.0;
   String _studyStyle = '';
-
-  final List<String> _goalPresets = [
-    'Tıp Fakültesi',
-    'Mühendislik Fakültesi',
-    'Hukuk Fakültesi',
-    'Öğretmenlik',
-    'İşletme/İktisat',
-    'Fen Bilimleri',
-    'Sosyal Bilimler',
-    'Yabancı Dil',
-    'Devlet Kurumu',
-    'Diğer',
-  ];
 
   final List<StudyStyleOption> _studyStyles = [
     StudyStyleOption(
@@ -118,7 +104,6 @@ class _PersonalizationWidgetState extends State<PersonalizationWidget>
 
   void _collectAndContinue() {
     final data = {
-      'goal': _selectedGoal == 'Diğer' ? _customGoalController.text.trim() : _selectedGoal,
       'challenges': _challenges.entries.where((e) => e.value).map((e) => e.key).toList(),
       'weeklyStudyHours': _weeklyStudyHours,
       'studyStyle': _studyStyle,
@@ -130,13 +115,10 @@ class _PersonalizationWidgetState extends State<PersonalizationWidget>
   bool _canContinue() {
     switch (_currentStep) {
       case 0:
-        return _selectedGoal != null &&
-               (_selectedGoal != 'Diğer' || _customGoalController.text.trim().isNotEmpty);
-      case 1:
         return _challenges.values.any((selected) => selected);
-      case 2:
+      case 1:
         return true; // Haftalık saat her zaman geçerli
-      case 3:
+      case 2:
         return _studyStyle.isNotEmpty;
       default:
         return false;
@@ -218,7 +200,6 @@ class _PersonalizationWidgetState extends State<PersonalizationWidget>
             controller: _pageController,
             physics: NeverScrollableScrollPhysics(),
             children: [
-              _buildGoalStep(),
               _buildChallengesStep(),
               _buildStudyHoursStep(),
               _buildStudyStyleStep(),
@@ -268,114 +249,6 @@ class _PersonalizationWidgetState extends State<PersonalizationWidget>
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildGoalStep() {
-    final theme = Theme.of(context);
-
-    return SingleChildScrollView(
-      padding: EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Hedefin nedir? 🎯',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          )
-          .animate()
-          .fadeIn(duration: 600.ms)
-          .slideX(begin: -0.3, end: 0),
-
-          SizedBox(height: 8),
-
-          Text(
-            'Bu bilgi, sana özel içerik ve öneriler sunmamızı sağlar',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
-            ),
-          )
-          .animate(delay: 200.ms)
-          .fadeIn(duration: 600.ms),
-
-          SizedBox(height: 24),
-
-          GridView.builder(
-            shrinkWrap: true,
-            physics: NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 3,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-            ),
-            itemCount: _goalPresets.length,
-            itemBuilder: (context, index) {
-              final goal = _goalPresets[index];
-              final isSelected = _selectedGoal == goal;
-
-              return InkWell(
-                onTap: () {
-                  setState(() {
-                    _selectedGoal = goal;
-                  });
-                },
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? theme.colorScheme.primary.withOpacity(0.1)
-                        : theme.colorScheme.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isSelected
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.outline.withOpacity(0.3),
-                      width: isSelected ? 2 : 1,
-                    ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      goal,
-                      style: TextStyle(
-                        color: isSelected
-                            ? theme.colorScheme.primary
-                            : theme.colorScheme.onSurface,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                        fontSize: 13,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-              )
-              .animate(delay: Duration(milliseconds: index * 100))
-              .fadeIn(duration: 600.ms)
-              .scale(begin: Offset(0.8, 0.8), end: Offset(1.0, 1.0));
-            },
-          ),
-
-          if (_selectedGoal == 'Diğer') ...[
-            SizedBox(height: 16),
-            TextFormField(
-              controller: _customGoalController,
-              decoration: InputDecoration(
-                labelText: 'Hedefini yazabilirsin',
-                hintText: 'Örn: Veteriner Hekim olmak',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            )
-            .animate()
-            .fadeIn(duration: 600.ms)
-            .slideY(begin: 0.3, end: 0),
-          ],
-        ],
-      ),
     );
   }
 
@@ -463,8 +336,11 @@ class _PersonalizationWidgetState extends State<PersonalizationWidget>
                                 ? theme.colorScheme.primary
                                 : theme.colorScheme.onSurface,
                             fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                            fontSize: 13,
+                            fontSize: 12,
                           ),
+                          maxLines: 2,
+                          softWrap: true,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],

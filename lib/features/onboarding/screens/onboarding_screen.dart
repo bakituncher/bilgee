@@ -101,11 +101,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     try {
       final user = ref.read(authControllerProvider).value;
       if (user != null && _personalizationData != null) {
+        // "Hedef" adımı kaldırıldığı için burada güvenli bir varsayılan boş string gönderiyoruz.
+        final String safeGoal = (_personalizationData!['goal'] ?? '') as String;
         await ref.read(firestoreServiceProvider).updateOnboardingData(
           userId: user.uid,
-          goal: _personalizationData!['goal'],
-          challenges: List<String>.from(_personalizationData!['challenges']),
-          weeklyStudyGoal: _personalizationData!['weeklyStudyHours'],
+          goal: safeGoal,
+          challenges: List<String>.from(_personalizationData!['challenges'] ?? []),
+          weeklyStudyGoal: (_personalizationData!['weeklyStudyHours'] ?? 0.0) as double,
           additionalData: {
             'studyStyle': _personalizationData!['studyStyle'],
             'onboardingCompleted': true,

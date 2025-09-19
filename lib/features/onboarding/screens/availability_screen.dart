@@ -149,7 +149,8 @@ class _DayAvailabilityCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 4, 16),
+        // Sağ tarafa daha fazla boşluk verildi; yapıştır butonunun sağında pixel hatası oluşmasını engeller
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

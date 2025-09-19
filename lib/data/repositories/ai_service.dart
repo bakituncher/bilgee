@@ -317,8 +317,13 @@ class AiService {
   }
 
   Future<String> generateStudyGuideAndQuiz(UserModel user, List<TestModel> tests, PerformanceSummary performance, {Map<String, String>? topicOverride, String difficulty = 'normal', int attemptCount = 1, double? temperature}) async {
+    // Eğer test yoksa hemen hata döndürme: bazı yeni hesaplarda konu performansı (ör. manuel veri) olabilir.
     if (tests.isEmpty) {
-      return '{"error":"Analiz için en az bir deneme sonucu gereklidir."}';
+      final hasTopicData = performance.topicPerformances.values.any((subjectMap) => subjectMap.values.any((t) => (t.questionCount ?? 0) > 0));
+      if (!hasTopicData && topicOverride == null) {
+        return '{"error":"Analiz için en az bir deneme sonucu gereklidir."}';
+      }
+      // tests boş ama konu performansı varsa devam et; AI yine zayıf konuyu bulmaya çalışır.
     }
     if (user.selectedExam == null) {
       return '{"error":"Sınav türü bulunamadı."}';

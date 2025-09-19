@@ -377,13 +377,7 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () => context.push(AppRoutes.availability),
           ),
           const SettingsSection(title: "Uygulama"),
-          SettingsTile(
-            icon: Icons.notifications_outlined,
-            title: "Bildirimler",
-            subtitle: "Anımsatıcıları ve uyarıları yönetin",
-            onTap: () {},
-          ),
-          SettingsTile(
+           SettingsTile(
             icon: Icons.description_outlined,
             title: "Kullanım Sözleşmesi",
             subtitle: "Hizmet şartlarımızı okuyun",
