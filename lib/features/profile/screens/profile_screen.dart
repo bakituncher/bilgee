@@ -804,7 +804,9 @@ class _ProfileStatCard extends StatelessWidget {
               Icon(icon, size: 22, color: _accentProfile2),
               const Spacer(),
               Text(value, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
-              Text(label, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Colors.white70)),
+              FittedBox(
+                child: Text(label, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Colors.white70)),
+              ),
             ],
           ),
         ),
