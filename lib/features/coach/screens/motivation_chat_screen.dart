@@ -325,86 +325,135 @@ class _SmartBriefingView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const CircleAvatar(backgroundColor: AppTheme.secondaryColor, radius: 40,
-            child: Icon(Icons.auto_awesome, size: 40, color: AppTheme.primaryColor))
-            .animate().fadeIn(delay: 200.ms).scale(),
-        const SizedBox(height: 24),
-        Text('Motivasyon Süiti', style: Theme.of(context).textTheme.headlineSmall)
-            .animate().fadeIn(delay: 300.ms),
-        const SizedBox(height: 8),
-        Text('İhtiyacını seç, derin ve kişisel bir sohbet başlasın.', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.secondaryTextColor))
-            .animate().fadeIn(delay: 300.ms),
-        const SizedBox(height: 40),
-        _BriefingButton(
-          icon: Icons.flag_circle_rounded,
-          title: 'Deneme Değerlendirme',
-          subtitle: 'Son denemeni hızlı teşhis + 48 saatlik mini plan.',
-          onTap: () => onPromptSelected('trial_review'),
-          delay: 400.ms,
-        ),
-        _BriefingButton(
-          icon: Icons.track_changes_rounded,
-          title: 'Strateji Danışma',
-          subtitle: 'Haftalık ritim, öncelik ve takip metrikleri.',
-          onTap: () => onPromptSelected('strategy_consult'),
-          delay: 500.ms,
-        ),
-        _BriefingButton(
-          icon: Icons.favorite_rounded,
-          title: 'Psikolojik Destek',
-          subtitle: 'Kısa, güvenli, nefes odaklı destek ve mikro adım.',
-          onTap: () => onPromptSelected('psych_support'),
-          delay: 600.ms,
-        ),
-        _BriefingButton(
-          icon: Icons.bolt_rounded,
-          title: 'Motivasyon Köşesi',
-          subtitle: '5 dakikalık mikro meydan okuma ve takip önerisi.',
-          onTap: () => onPromptSelected('motivation_corner'),
-          delay: 700.ms,
-        ),
-      ],
+    final theme = Theme.of(context);
+    return SafeArea(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 28, 16, 32),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight - 60),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 4),
+                  const CircleAvatar(
+                    backgroundColor: AppTheme.secondaryColor,
+                    radius: 42,
+                    child: Icon(Icons.auto_awesome, size: 42, color: AppTheme.primaryColor),
+                  ).animate().fadeIn(delay: 180.ms).scale(),
+                  const SizedBox(height: 24),
+                  Text('Motivasyon Süiti', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700))
+                      .animate().fadeIn(delay: 260.ms),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Durumuna uygun derin ve kişisel yönlendirme al.',
+                    style: theme.textTheme.titleMedium?.copyWith(color: AppTheme.secondaryTextColor, height: 1.3),
+                    textAlign: TextAlign.center,
+                  ).animate().fadeIn(delay: 300.ms),
+                  const SizedBox(height: 36),
+                  _BriefingButton(
+                    icon: Icons.flag_circle_rounded,
+                    title: 'Deneme Değerlendirme',
+                    subtitle: 'Son deneme analizi + 48 saatlik mini toparlanma planı.',
+                    onTap: () => onPromptSelected('trial_review'),
+                    delay: 380.ms,
+                  ),
+                  _BriefingButton(
+                    icon: Icons.track_changes_rounded,
+                    title: 'Strateji Danışma',
+                    subtitle: 'Haftalık ritim, odak sırası ve takip metrikleri.',
+                    onTap: () => onPromptSelected('strategy_consult'),
+                    delay: 460.ms,
+                  ),
+                  _BriefingButton(
+                    icon: Icons.favorite_rounded,
+                    title: 'Psikolojik Destek',
+                    subtitle: 'Stres / moral düşüşü için kısa destek + mikro adım.',
+                    onTap: () => onPromptSelected('psych_support'),
+                    delay: 520.ms,
+                  ),
+                  _BriefingButton(
+                    icon: Icons.bolt_rounded,
+                    title: 'Motivasyon Köşesi',
+                    subtitle: '5 dk. mikro meydan okuma ve ritim önerisi.',
+                    onTap: () => onPromptSelected('motivation_corner'),
+                    delay: 580.ms,
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }
 
 class _BriefingButton extends StatelessWidget {
-  final String title, subtitle;
-  final IconData icon;
-  final VoidCallback onTap;
-  final Duration delay;
+  final String title, subtitle; final IconData icon; final VoidCallback onTap; final Duration delay;
   const _BriefingButton({required this.title, required this.subtitle, required this.icon, required this.onTap, required this.delay});
-
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 24),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            children: [
-              Icon(icon, size: 32, color: AppTheme.secondaryColor),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: Theme.of(context).textTheme.titleLarge),
-                    Text(subtitle, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor)),
-                  ],
-                ),
-              ),
-            ],
+    final theme = Theme.of(context);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0x18222C2C), Color(0x10222C2C)],
           ),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withValues(alpha: 0.25), blurRadius: 14, offset: const Offset(0, 4)),
+          ],
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 54,
+              height: 54,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const LinearGradient(colors: [AppTheme.secondaryColor, AppTheme.successColor]),
+              ),
+              child: Icon(icon, size: 30, color: AppTheme.primaryColor),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    subtitle,
+                    style: theme.textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor, height: 1.25),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Icon(Icons.arrow_forward_ios_rounded, size: 18, color: AppTheme.secondaryTextColor.withValues(alpha: 0.8)),
+          ],
         ),
       ),
-    ).animate().fadeIn(delay: delay).slideY(begin: 0.5, curve: Curves.easeOutCubic);
+    ).animate().fadeIn(delay: delay).slideY(begin: 0.35, curve: Curves.easeOutCubic);
   }
 }
 

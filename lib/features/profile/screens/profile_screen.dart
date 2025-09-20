@@ -307,11 +307,13 @@ class _ProfileView extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      // Takipçi / Takip alanı: Row -> Wrap (overflow engelleme)
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        spacing: 18,
+                        runSpacing: 8,
                         children: [
                           _FollowCount(label: 'Takipçi', value: followCounts.$1, onTap: () => context.push('/profile/follow-list?mode=followers')),
-                          const SizedBox(width: 12),
                           _FollowCount(label: 'Takip', value: followCounts.$2, onTap: () => context.push('/profile/follow-list?mode=following')),
                         ],
                       ),
@@ -393,22 +395,40 @@ class _FollowCount extends StatelessWidget {
   const _FollowCount({required this.label, required this.value, this.onTap});
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
     return InkWell(
       borderRadius: BorderRadius.circular(20),
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        constraints: const BoxConstraints(minWidth: 86, minHeight: 72),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           color: Colors.white.withValues(alpha: (Colors.white.a * 0.06).toDouble()),
           border: Border.all(color: Colors.white.withValues(alpha: (Colors.white.a * 0.12).toDouble())),
         ),
-        child: Row(
-          children: [
-            Text(value.toString(), style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-            const SizedBox(width: 6),
-            Text(label, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white70)),
-          ],
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              FittedBox(
+                child: Text(
+                  value.toString(),
+                  style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+                  maxLines: 1,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Flexible(
+                child: FittedBox(
+                  child: Text(
+                    label,
+                    style: textTheme.labelMedium?.copyWith(color: Colors.white70),
+                    maxLines: 1,
+                  ),
+                ),
+              ),
+            ],
         ),
       ),
     );
@@ -787,10 +807,12 @@ class _ProfileStatCard extends StatelessWidget {
   const _ProfileStatCard({required this.label, required this.value, required this.icon, required this.delay});
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
     return Semantics(
       label: '$label istatistiği: $value',
       child: Container(
-        height: 110,
+        // Sabit yükseklik kaldırıldı -> esnek, overflow engellendi
+        constraints: const BoxConstraints(minHeight: 104),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
           gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0x1FFFFFFF), Color(0x0DFFFFFF)]),
@@ -799,13 +821,24 @@ class _ProfileStatCard extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Icon(icon, size: 22, color: _accentProfile2),
-              const Spacer(),
-              Text(value, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+              const SizedBox(height: 10),
               FittedBox(
-                child: Text(label, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Colors.white70)),
+                child: Text(
+                  value,
+                  style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                  maxLines: 1,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: textTheme.labelMedium?.copyWith(color: Colors.white70),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
