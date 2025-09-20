@@ -34,6 +34,10 @@ class AuthRepository {
         password: password,
       );
       if (userCredential.user != null) {
+        // Send verification email
+        await userCredential.user!.sendEmailVerification();
+
+        // Create user profile in Firestore
         await _firestoreService.createUserProfile(
           user: userCredential.user!,
           firstName: firstName,

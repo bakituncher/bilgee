@@ -44,11 +44,17 @@ final goRouterProvider = Provider<GoRouter>((ref) {
 
 
       final isLoggedIn = authState.hasValue && authState.value != null;
-      final onAuthScreen = location == AppRoutes.login || location == AppRoutes.register;
+      final onAuthScreen = location == AppRoutes.login || location == AppRoutes.register || location == AppRoutes.verifyEmail;
 
       // If the user is not logged in, redirect to the login screen.
       if (!isLoggedIn) {
         return onAuthScreen ? null : AppRoutes.login;
+      }
+
+      // If the user is logged in but their email is not verified, redirect to the verify email screen.
+      final isEmailVerified = authState.value?.emailVerified ?? false;
+      if (!isEmailVerified) {
+        return location == AppRoutes.verifyEmail ? null : AppRoutes.verifyEmail;
       }
 
       // If there was an error fetching the user profile, something is wrong. Log them out.

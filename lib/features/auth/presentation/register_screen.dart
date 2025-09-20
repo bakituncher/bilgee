@@ -93,6 +93,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
         );
+        if (mounted) {
+          context.go(AppRoutes.verifyEmail);
+        }
       } catch (e) {
         if (mounted) {
           setState(() => _errorMessage = e.toString().replaceAll('Exception: ', ''));
