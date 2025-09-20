@@ -24,7 +24,10 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
       final user = FirebaseAuth.instance.currentUser;
       if (user?.emailVerified ?? false) {
         timer.cancel();
-        context.go(AppRoutes.home);
+        // Invalidate the auth provider to trigger the router's redirect logic
+        if (mounted) {
+          ref.invalidate(authControllerProvider);
+        }
       }
     });
   }
@@ -80,9 +83,10 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                 onPressed: () async {
                   await FirebaseAuth.instance.currentUser?.reload();
                   final user = FirebaseAuth.instance.currentUser;
+                  if (!mounted) return;
                   if (user?.emailVerified ?? false) {
                     _timer?.cancel();
-                    context.go(AppRoutes.home);
+                    ref.invalidate(authControllerProvider);
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
