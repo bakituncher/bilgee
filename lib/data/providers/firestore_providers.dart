@@ -22,7 +22,7 @@ final firestoreServiceProvider = Provider<FirestoreService>((ref) {
   return FirestoreService(ref.watch(firestoreProvider));
 });
 
-final userProfileProvider = StreamProvider<UserModel?>((ref) {
+final userProfileProvider = StreamProvider.autoDispose<UserModel?>((ref) {
   final user = ref.watch(authControllerProvider).value;
   if (user != null) {
     // KÖK + STATS birleşik akış
