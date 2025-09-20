@@ -1,6 +1,6 @@
 // lib/features/home/widgets/focus_hub_card.dart
-import 'package:bilge_ai/core/theme/app_theme.dart';
-import 'package:bilge_ai/features/home/providers/home_providers.dart';
+import 'package:taktik/core/theme/app_theme.dart';
+import 'package:taktik/features/home/providers/home_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

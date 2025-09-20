@@ -2,8 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:bilge_ai/features/auth/application/auth_controller.dart';
-import 'package:bilge_ai/core/navigation/app_routes.dart';
+import 'package:taktik/features/auth/application/auth_controller.dart';
+import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class VerifyEmailScreen extends ConsumerStatefulWidget {

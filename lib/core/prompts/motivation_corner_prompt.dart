@@ -1,7 +1,7 @@
 // lib/core/prompts/motivation_corner_prompt.dart
-import 'package:bilge_ai/data/models/user_model.dart';
+import 'package:taktik/data/models/user_model.dart';
 import 'tone_utils.dart';
-import 'package:bilge_ai/core/prompts/prompt_remote.dart';
+import 'package:taktik/core/prompts/prompt_remote.dart';
 
 class MotivationCornerPrompt {
   static String build({

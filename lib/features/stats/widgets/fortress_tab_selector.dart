@@ -1,8 +1,8 @@
 // lib/features/stats/widgets/fortress_tab_selector.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:bilge_ai/core/theme/app_theme.dart';
-import 'package:bilge_ai/features/stats/screens/stats_screen.dart'; // State provider'a erişim için
+import 'package:taktik/core/theme/app_theme.dart';
+import 'package:taktik/features/stats/screens/stats_screen.dart'; // State provider'a erişim için
 
 class FortressTabSelector extends ConsumerWidget {
   final List<String> tabs;

@@ -1,6 +1,6 @@
 // lib/features/home/widgets/dashboard_widgets/motivational_quote_card.dart
 import 'package:flutter/material.dart';
-import 'package:bilge_ai/core/theme/app_theme.dart';
+import 'package:taktik/core/theme/app_theme.dart';
 
 class MotivationalQuoteCard extends StatelessWidget {
   final String quote;

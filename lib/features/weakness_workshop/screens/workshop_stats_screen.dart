@@ -1,12 +1,12 @@
 // lib/features/weakness_workshop/screens/workshop_stats_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:bilge_ai/core/theme/app_theme.dart';
-import 'package:bilge_ai/data/providers/firestore_providers.dart';
+import 'package:taktik/core/theme/app_theme.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:collection/collection.dart';
 import 'package:go_router/go_router.dart';
-import 'package:bilge_ai/data/models/performance_summary.dart';
+import 'package:taktik/data/models/performance_summary.dart';
 
 class WorkshopStatsScreen extends ConsumerWidget {
   const WorkshopStatsScreen({super.key});

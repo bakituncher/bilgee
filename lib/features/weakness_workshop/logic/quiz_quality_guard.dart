@@ -1,5 +1,5 @@
 // lib/features/weakness_workshop/logic/quiz_quality_guard.dart
-import 'package:bilge_ai/features/weakness_workshop/models/study_guide_model.dart';
+import 'package:taktik/features/weakness_workshop/models/study_guide_model.dart';
 
 class QuizQualityGuardResult {
   final StudyGuideAndQuiz material;

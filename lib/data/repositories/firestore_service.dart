@@ -2,24 +2,24 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:bilge_ai/data/models/user_model.dart';
-import 'package:bilge_ai/data/models/test_model.dart';
-import 'package:bilge_ai/data/models/exam_model.dart';
-import 'package:bilge_ai/data/models/topic_performance_model.dart';
-import 'package:bilge_ai/data/models/focus_session_model.dart';
-import 'package:bilge_ai/features/weakness_workshop/models/saved_workshop_model.dart';
-import 'package:bilge_ai/data/models/plan_document.dart';
-import 'package:bilge_ai/data/models/performance_summary.dart';
-import 'package:bilge_ai/data/models/app_state.dart';
-import 'package:bilge_ai/features/arena/models/leaderboard_entry_model.dart';
-import 'package:bilge_ai/features/quests/models/quest_model.dart';
-import 'package:bilge_ai/features/stats/logic/stats_analysis.dart';
-import 'package:bilge_ai/data/models/user_stats_model.dart';
-import 'package:bilge_ai/features/blog/models/blog_post.dart';
-import 'package:bilge_ai/features/profile/screens/user_search_screen.dart'; // SearchType enum için
+import 'package:taktik/data/models/user_model.dart';
+import 'package:taktik/data/models/test_model.dart';
+import 'package:taktik/data/models/exam_model.dart';
+import 'package:taktik/data/models/topic_performance_model.dart';
+import 'package:taktik/data/models/focus_session_model.dart';
+import 'package:taktik/features/weakness_workshop/models/saved_workshop_model.dart';
+import 'package:taktik/data/models/plan_document.dart';
+import 'package:taktik/data/models/performance_summary.dart';
+import 'package:taktik/data/models/app_state.dart';
+import 'package:taktik/features/arena/models/leaderboard_entry_model.dart';
+import 'package:taktik/features/quests/models/quest_model.dart';
+import 'package:taktik/features/stats/logic/stats_analysis.dart';
+import 'package:taktik/data/models/user_stats_model.dart';
+import 'package:taktik/features/blog/models/blog_post.dart';
+import 'package:taktik/features/profile/screens/user_search_screen.dart'; // SearchType enum için
 import 'package:crypto/crypto.dart' as crypto;
 import 'dart:convert' show utf8;
-import 'package:bilge_ai/shared/notifications/in_app_notification_model.dart';
+import 'package:taktik/shared/notifications/in_app_notification_model.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 
 class FirestoreService {

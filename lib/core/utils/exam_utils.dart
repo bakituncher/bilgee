@@ -1,6 +1,6 @@
 // lib/core/utils/exam_utils.dart
-import 'package:bilge_ai/data/models/exam_model.dart';
-import 'package:bilge_ai/data/models/user_model.dart';
+import 'package:taktik/data/models/exam_model.dart';
+import 'package:taktik/data/models/user_model.dart';
 
 class ExamUtils {
   const ExamUtils._();

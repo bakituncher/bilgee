@@ -1,9 +1,9 @@
 // lib/features/coach/widgets/mastery_topic_bubble.dart
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:bilge_ai/core/theme/app_theme.dart';
-import 'package:bilge_ai/data/models/topic_performance_model.dart';
-import 'package:bilge_ai/data/models/exam_model.dart';
+import 'package:taktik/core/theme/app_theme.dart';
+import 'package:taktik/data/models/topic_performance_model.dart';
+import 'package:taktik/data/models/exam_model.dart';
 
 class MasteryTopicBubble extends StatefulWidget {
   final SubjectTopic topic;

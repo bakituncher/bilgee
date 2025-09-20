@@ -1,9 +1,9 @@
 // lib/features/pomodoro/logic/pomodoro_notifier.dart
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:bilge_ai/data/models/focus_session_model.dart';
-import 'package:bilge_ai/data/providers/firestore_providers.dart';
-import 'package:bilge_ai/features/auth/application/auth_controller.dart';
+import 'package:taktik/data/models/focus_session_model.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/features/auth/application/auth_controller.dart';
 import 'package:intl/intl.dart';
 
 enum PomodoroSessionState { idle, work, shortBreak, longBreak, completed }

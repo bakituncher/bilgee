@@ -1,6 +1,6 @@
 // lib/data/models/performance_summary.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:bilge_ai/data/models/topic_performance_model.dart';
+import 'package:taktik/data/models/topic_performance_model.dart';
 
 class PerformanceSummary {
   final Map<String, Map<String, TopicPerformanceModel>> topicPerformances;

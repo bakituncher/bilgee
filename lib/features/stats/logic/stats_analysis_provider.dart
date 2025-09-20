@@ -1,12 +1,12 @@
 // lib/features/stats/logic/stats_analysis_provider.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:bilge_ai/data/models/test_model.dart';
-import 'package:bilge_ai/data/models/user_model.dart';
-import 'package:bilge_ai/data/models/performance_summary.dart';
-import 'package:bilge_ai/data/models/exam_model.dart';
-import 'package:bilge_ai/data/providers/firestore_providers.dart';
-import 'package:bilge_ai/data/repositories/firestore_service.dart';
-import 'package:bilge_ai/features/stats/logic/stats_analysis.dart';
+import 'package:taktik/data/models/test_model.dart';
+import 'package:taktik/data/models/user_model.dart';
+import 'package:taktik/data/models/performance_summary.dart';
+import 'package:taktik/data/models/exam_model.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/data/repositories/firestore_service.dart';
+import 'package:taktik/features/stats/logic/stats_analysis.dart';
 
 const String kAllSectionsKey = '_all_sections_';
 

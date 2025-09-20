@@ -6,11 +6,11 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:bilge_ai/data/providers/admin_providers.dart';
+import 'package:taktik/data/providers/admin_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
-import 'package:bilge_ai/shared/widgets/logo_loader.dart';
+import 'package:taktik/shared/widgets/logo_loader.dart';
 
 class PushComposerScreen extends StatefulWidget {
   const PushComposerScreen({super.key});

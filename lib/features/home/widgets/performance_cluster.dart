@@ -1,9 +1,9 @@
 // lib/features/home/widgets/performance_cluster.dart
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:bilge_ai/data/models/test_model.dart';
-import 'package:bilge_ai/data/models/user_model.dart';
-import 'package:bilge_ai/core/theme/app_theme.dart';
+import 'package:taktik/data/models/test_model.dart';
+import 'package:taktik/data/models/user_model.dart';
+import 'package:taktik/core/theme/app_theme.dart';
 import 'package:go_router/go_router.dart';
 
 class PerformanceCluster extends StatefulWidget {

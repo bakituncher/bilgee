@@ -1,37 +1,37 @@
 // lib/core/navigation/main_shell_routes.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:bilge_ai/data/models/test_model.dart';
-import 'package:bilge_ai/data/models/topic_performance_model.dart';
-import 'package:bilge_ai/features/arena/screens/arena_screen.dart';
-import 'package:bilge_ai/features/arena/screens/public_profile_screen.dart';
-import 'package:bilge_ai/features/coach/screens/ai_hub_screen.dart';
-import 'package:bilge_ai/features/coach/screens/coach_screen.dart';
-import 'package:bilge_ai/features/coach/screens/motivation_chat_screen.dart';
-import 'package:bilge_ai/features/coach/screens/update_topic_performance_screen.dart';
-import 'package:bilge_ai/features/home/screens/add_test_screen.dart';
-import 'package:bilge_ai/features/home/screens/dashboard_screen.dart';
-import 'package:bilge_ai/features/home/screens/test_detail_screen.dart';
-import 'package:bilge_ai/features/home/screens/test_result_summary_screen.dart';
-import 'package:bilge_ai/features/pomodoro/pomodoro_screen.dart';
-import 'package:bilge_ai/features/profile/screens/profile_screen.dart';
-import 'package:bilge_ai/features/profile/presentation/screens/edit_profile_screen.dart';
-import 'package:bilge_ai/features/profile/screens/honor_wall_screen.dart';
-import 'package:bilge_ai/features/profile/models/badge_model.dart' as app_badge;
-import 'package:bilge_ai/features/stats/screens/stats_screen.dart';
-import 'package:bilge_ai/features/strategic_planning/screens/strategic_planning_screen.dart';
-import 'package:bilge_ai/features/strategic_planning/screens/strategy_review_screen.dart';
-import 'package:bilge_ai/features/weakness_workshop/models/saved_workshop_model.dart';
-import 'package:bilge_ai/features/weakness_workshop/screens/saved_workshop_detail_screen.dart';
-import 'package:bilge_ai/features/weakness_workshop/screens/saved_workshops_screen.dart';
-import 'package:bilge_ai/features/weakness_workshop/screens/weakness_workshop_screen.dart';
-import 'package:bilge_ai/shared/widgets/scaffold_with_nav_bar.dart';
+import 'package:taktik/data/models/test_model.dart';
+import 'package:taktik/data/models/topic_performance_model.dart';
+import 'package:taktik/features/arena/screens/arena_screen.dart';
+import 'package:taktik/features/arena/screens/public_profile_screen.dart';
+import 'package:taktik/features/coach/screens/ai_hub_screen.dart';
+import 'package:taktik/features/coach/screens/coach_screen.dart';
+import 'package:taktik/features/coach/screens/motivation_chat_screen.dart';
+import 'package:taktik/features/coach/screens/update_topic_performance_screen.dart';
+import 'package:taktik/features/home/screens/add_test_screen.dart';
+import 'package:taktik/features/home/screens/dashboard_screen.dart';
+import 'package:taktik/features/home/screens/test_detail_screen.dart';
+import 'package:taktik/features/home/screens/test_result_summary_screen.dart';
+import 'package:taktik/features/pomodoro/pomodoro_screen.dart';
+import 'package:taktik/features/profile/screens/profile_screen.dart';
+import 'package:taktik/features/profile/presentation/screens/edit_profile_screen.dart';
+import 'package:taktik/features/profile/screens/honor_wall_screen.dart';
+import 'package:taktik/features/profile/models/badge_model.dart' as app_badge;
+import 'package:taktik/features/stats/screens/stats_screen.dart';
+import 'package:taktik/features/strategic_planning/screens/strategic_planning_screen.dart';
+import 'package:taktik/features/strategic_planning/screens/strategy_review_screen.dart';
+import 'package:taktik/features/weakness_workshop/models/saved_workshop_model.dart';
+import 'package:taktik/features/weakness_workshop/screens/saved_workshop_detail_screen.dart';
+import 'package:taktik/features/weakness_workshop/screens/saved_workshops_screen.dart';
+import 'package:taktik/features/weakness_workshop/screens/weakness_workshop_screen.dart';
+import 'package:taktik/shared/widgets/scaffold_with_nav_bar.dart';
 import 'app_routes.dart';
-import 'package:bilge_ai/features/weakness_workshop/screens/workshop_stats_screen.dart';
-import 'package:bilge_ai/features/home/screens/weekly_plan_screen.dart';
-import 'package:bilge_ai/features/quests/screens/quests_screen.dart';
-import 'package:bilge_ai/features/profile/screens/avatar_selection_screen.dart'; // YENİ: Avatar ekranı import edildi
-import 'package:bilge_ai/features/profile/screens/follow_list_screen.dart'; // YENİ: Takip listesi ekranı import edildi
+import 'package:taktik/features/weakness_workshop/screens/workshop_stats_screen.dart';
+import 'package:taktik/features/home/screens/weekly_plan_screen.dart';
+import 'package:taktik/features/quests/screens/quests_screen.dart';
+import 'package:taktik/features/profile/screens/avatar_selection_screen.dart'; // YENİ: Avatar ekranı import edildi
+import 'package:taktik/features/profile/screens/follow_list_screen.dart'; // YENİ: Takip listesi ekranı import edildi
 import 'transition_utils.dart';
 
 StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {

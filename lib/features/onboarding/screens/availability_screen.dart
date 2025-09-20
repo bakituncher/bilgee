@@ -1,11 +1,11 @@
 // lib/features/onboarding/screens/availability_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:bilge_ai/core/theme/app_theme.dart';
-import 'package:bilge_ai/data/providers/firestore_providers.dart';
+import 'package:taktik/core/theme/app_theme.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
-import 'package:bilge_ai/core/navigation/app_routes.dart';
+import 'package:taktik/core/navigation/app_routes.dart';
 
 // --- STATE MANAGEMENT ---
 final availabilityProvider = StateProvider.autoDispose<Map<String, List<String>>>((ref) {

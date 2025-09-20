@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:bilge_ai/features/onboarding/widgets/app_tour_widget.dart';
+import 'package:taktik/features/onboarding/widgets/app_tour_widget.dart';
 
 class AppTourController extends StateNotifier<bool> {
   AppTourController() : super(false);

@@ -1,8 +1,8 @@
 // lib/core/prompts/strategy_prompts.dart
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:bilge_ai/data/models/user_model.dart';
-import 'package:bilge_ai/core/prompts/prompt_remote.dart';
+import 'package:taktik/data/models/user_model.dart';
+import 'package:taktik/core/prompts/prompt_remote.dart';
 
 class StrategyPrompts {
   static String? _yksTemplate;

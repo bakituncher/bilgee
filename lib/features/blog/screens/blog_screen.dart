@@ -1,9 +1,9 @@
 // lib/features/blog/screens/blog_screen.dart
 import 'dart:async';
-import 'package:bilge_ai/core/theme/app_theme.dart';
-import 'package:bilge_ai/features/blog/providers/blog_providers.dart';
-import 'package:bilge_ai/data/providers/admin_providers.dart';
-import 'package:bilge_ai/data/providers/firestore_providers.dart';
+import 'package:taktik/core/theme/app_theme.dart';
+import 'package:taktik/features/blog/providers/blog_providers.dart';
+import 'package:taktik/data/providers/admin_providers.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,7 +13,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:bilge_ai/features/blog/models/blog_post.dart';
+import 'package:taktik/features/blog/models/blog_post.dart';
 
 class BlogScreen extends ConsumerStatefulWidget {
   const BlogScreen({super.key});

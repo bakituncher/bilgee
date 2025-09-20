@@ -2,12 +2,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:bilge_ai/data/models/exam_model.dart';
-import 'package:bilge_ai/data/providers/firestore_providers.dart';
-import 'package:bilge_ai/features/auth/application/auth_controller.dart';
+import 'package:taktik/data/models/exam_model.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/features/auth/application/auth_controller.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:bilge_ai/core/navigation/app_routes.dart';
-import 'package:bilge_ai/core/theme/app_theme.dart';
+import 'package:taktik/core/navigation/app_routes.dart';
+import 'package:taktik/core/theme/app_theme.dart';
 
 class ExamSelectionScreen extends ConsumerWidget {
   const ExamSelectionScreen({super.key});

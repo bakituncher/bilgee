@@ -1,12 +1,12 @@
 // lib/features/home/widgets/hero_header.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:bilge_ai/data/providers/firestore_providers.dart';
-import 'package:bilge_ai/features/profile/logic/rank_service.dart';
-import 'package:bilge_ai/core/theme/app_theme.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/features/profile/logic/rank_service.dart';
+import 'package:taktik/core/theme/app_theme.dart';
 import 'package:go_router/go_router.dart';
-import 'package:bilge_ai/features/home/providers/home_providers.dart';
-import 'package:bilge_ai/shared/widgets/logo_loader.dart';
+import 'package:taktik/features/home/providers/home_providers.dart';
+import 'package:taktik/shared/widgets/logo_loader.dart';
 
 class HeroHeader extends ConsumerWidget {
   const HeroHeader({super.key});

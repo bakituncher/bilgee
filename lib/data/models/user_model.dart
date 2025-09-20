@@ -1,6 +1,6 @@
 // lib/data/models/user_model.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:bilge_ai/features/quests/models/quest_model.dart';
+import 'package:taktik/features/quests/models/quest_model.dart';
 
 class UserModel {
   final String id;

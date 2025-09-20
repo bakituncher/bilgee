@@ -1,7 +1,7 @@
 // lib/features/stats/widgets/subject_stat_card.dart
 import 'package:flutter/material.dart';
-import 'package:bilge_ai/core/theme/app_theme.dart';
-import 'package:bilge_ai/features/stats/logic/stats_analysis.dart';
+import 'package:taktik/core/theme/app_theme.dart';
+import 'package:taktik/features/stats/logic/stats_analysis.dart';
 
 class SubjectStatCard extends StatelessWidget {
   final String subjectName;

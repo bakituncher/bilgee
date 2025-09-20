@@ -2,16 +2,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:bilge_ai/core/theme/app_theme.dart';
-// import 'package:bilge_ai/data/models/exam_model.dart';
-// import 'package:bilge_ai/features/stats/logic/stats_analysis.dart';
-import 'package:bilge_ai/data/models/user_model.dart';
-import 'package:bilge_ai/data/models/test_model.dart';
-import 'package:bilge_ai/data/providers/firestore_providers.dart';
-import 'package:bilge_ai/core/navigation/app_routes.dart';
-import 'package:bilge_ai/data/models/performance_summary.dart';
-import 'package:bilge_ai/features/stats/logic/stats_analysis_provider.dart';
-import 'package:bilge_ai/shared/widgets/logo_loader.dart';
+import 'package:taktik/core/theme/app_theme.dart';
+// import 'package:taktik/data/models/exam_model.dart';
+// import 'package:taktik/features/stats/logic/stats_analysis.dart';
+import 'package:taktik/data/models/user_model.dart';
+import 'package:taktik/data/models/test_model.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/core/navigation/app_routes.dart';
+import 'package:taktik/data/models/performance_summary.dart';
+import 'package:taktik/features/stats/logic/stats_analysis_provider.dart';
+import 'package:taktik/shared/widgets/logo_loader.dart';
 
 class MissionCard extends ConsumerWidget {
   const MissionCard({super.key});

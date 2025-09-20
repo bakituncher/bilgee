@@ -3,16 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:bilge_ai/data/providers/firestore_providers.dart';
-import 'package:bilge_ai/data/models/exam_model.dart';
-import 'package:bilge_ai/data/models/user_model.dart';
-import 'package:bilge_ai/data/models/topic_performance_model.dart';
-import 'package:bilge_ai/core/theme/app_theme.dart';
-import 'package:bilge_ai/features/coach/widgets/mastery_topic_bubble.dart';
-import 'package:bilge_ai/features/coach/widgets/topic_stats_dialog.dart';
-import 'package:bilge_ai/core/utils/exam_utils.dart';
-import 'package:bilge_ai/data/models/performance_summary.dart';
-import 'package:bilge_ai/shared/widgets/logo_loader.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/data/models/exam_model.dart';
+import 'package:taktik/data/models/user_model.dart';
+import 'package:taktik/data/models/topic_performance_model.dart';
+import 'package:taktik/core/theme/app_theme.dart';
+import 'package:taktik/features/coach/widgets/mastery_topic_bubble.dart';
+import 'package:taktik/features/coach/widgets/topic_stats_dialog.dart';
+import 'package:taktik/core/utils/exam_utils.dart';
+import 'package:taktik/data/models/performance_summary.dart';
+import 'package:taktik/shared/widgets/logo_loader.dart';
 
 final coachScreenTabProvider = StateProvider<int>((ref) => 0);
 

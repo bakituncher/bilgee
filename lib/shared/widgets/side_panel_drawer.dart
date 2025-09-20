@@ -1,13 +1,13 @@
 // lib/shared/widgets/side_panel_drawer.dart
-import 'package:bilge_ai/core/theme/app_theme.dart';
-import 'package:bilge_ai/data/providers/firestore_providers.dart';
-import 'package:bilge_ai/data/providers/admin_providers.dart';
+import 'package:taktik/core/theme/app_theme.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/data/providers/admin_providers.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:bilge_ai/features/profile/logic/rank_service.dart';
+import 'package:taktik/features/profile/logic/rank_service.dart';
 
 class SidePanelDrawer extends ConsumerWidget {
   const SidePanelDrawer({super.key});

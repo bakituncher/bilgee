@@ -1,5 +1,5 @@
 // lib/features/home/screens/test_detail_screen.dart
-import 'package:bilge_ai/data/models/test_model.dart';
+import 'package:taktik/data/models/test_model.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 

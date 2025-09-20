@@ -1,12 +1,12 @@
 // lib/features/quests/logic/optimized_quests_provider.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:bilge_ai/data/providers/firestore_providers.dart';
-import 'package:bilge_ai/features/quests/models/quest_model.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/features/quests/models/quest_model.dart';
 import 'dart:async';
 // YENİ: Gelişmiş sistemler
-import 'package:bilge_ai/features/quests/logic/quest_tracking_service.dart';
-import 'package:bilge_ai/features/quests/logic/quest_navigation_manager.dart';
-import 'package:bilge_ai/features/quests/logic/quest_service.dart';
+import 'package:taktik/features/quests/logic/quest_tracking_service.dart';
+import 'package:taktik/features/quests/logic/quest_navigation_manager.dart';
+import 'package:taktik/features/quests/logic/quest_service.dart';
 
 /// Geliştirilmiş Quest Notifier - Günlük görevleri destekler
 class OptimizedQuestsNotifier extends StateNotifier<QuestsState> {

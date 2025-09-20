@@ -2,19 +2,19 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // EKLENDİ
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:bilge_ai/data/models/user_model.dart';
-import 'package:bilge_ai/data/models/test_model.dart';
-import 'package:bilge_ai/features/arena/models/leaderboard_entry_model.dart'; // EKLENDİ
-import 'package:bilge_ai/features/auth/application/auth_controller.dart';
-import 'package:bilge_ai/features/profile/screens/user_search_screen.dart'; // SearchType enum için
+import 'package:taktik/data/models/user_model.dart';
+import 'package:taktik/data/models/test_model.dart';
+import 'package:taktik/features/arena/models/leaderboard_entry_model.dart'; // EKLENDİ
+import 'package:taktik/features/auth/application/auth_controller.dart';
+import 'package:taktik/features/profile/screens/user_search_screen.dart'; // SearchType enum için
 import '../repositories/firestore_service.dart';
-import 'package:bilge_ai/data/models/plan_document.dart';
-import 'package:bilge_ai/data/models/performance_summary.dart';
-import 'package:bilge_ai/data/models/app_state.dart';
+import 'package:taktik/data/models/plan_document.dart';
+import 'package:taktik/data/models/performance_summary.dart';
+import 'package:taktik/data/models/app_state.dart';
 import 'package:cloud_functions/cloud_functions.dart'; // SUNUCU GÖREVLERİ İÇİN
-import 'package:bilge_ai/shared/notifications/in_app_notification_model.dart';
-import 'package:bilge_ai/data/models/user_stats_model.dart';
-import 'package:bilge_ai/data/models/focus_session_model.dart';
+import 'package:taktik/shared/notifications/in_app_notification_model.dart';
+import 'package:taktik/data/models/user_stats_model.dart';
+import 'package:taktik/data/models/focus_session_model.dart';
 
 final firestoreProvider = Provider<FirebaseFirestore>((ref) => FirebaseFirestore.instance);
 

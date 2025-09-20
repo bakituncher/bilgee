@@ -1,10 +1,10 @@
 // lib/features/quests/logic/quest_notifier.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:bilge_ai/features/quests/logic/quest_progress_controller.dart';
-import 'package:bilge_ai/features/quests/models/quest_model.dart';
-import 'package:bilge_ai/features/pomodoro/logic/pomodoro_notifier.dart';
-import 'package:bilge_ai/data/providers/firestore_providers.dart';
-import 'package:bilge_ai/features/quests/logic/quest_session_state.dart';
+import 'package:taktik/features/quests/logic/quest_progress_controller.dart';
+import 'package:taktik/features/quests/models/quest_model.dart';
+import 'package:taktik/features/pomodoro/logic/pomodoro_notifier.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/features/quests/logic/quest_session_state.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // FieldValue, SetOptions
 
 // Bu provider'ın varlığı devam etmeli, arayüzden çağrılar bunun üzerinden yapılacak.

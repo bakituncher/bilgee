@@ -1,7 +1,7 @@
 // lib/features/home/logic/add_test_notifier.dart
 import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:bilge_ai/data/models/exam_model.dart';
+import 'package:taktik/data/models/exam_model.dart';
 
 // 1. Bu özelliğin tüm durumunu tutan "hafıza" modeli
 class AddTestState extends Equatable {

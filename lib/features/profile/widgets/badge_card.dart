@@ -1,7 +1,7 @@
 // lib/features/profile/widgets/badge_card.dart
 import 'package:flutter/material.dart';
-import 'package:bilge_ai/core/theme/app_theme.dart';
-import 'package:bilge_ai/features/profile/models/badge_model.dart' as app_badge;
+import 'package:taktik/core/theme/app_theme.dart';
+import 'package:taktik/features/profile/models/badge_model.dart' as app_badge;
 
 class BadgeCard extends StatelessWidget {
   final app_badge.Badge badge;

@@ -1,7 +1,7 @@
 // lib/features/coach/screens/ai_hub_screen.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:bilge_ai/core/theme/app_theme.dart'; // AppTheme import geri eklendi
+import 'package:taktik/core/theme/app_theme.dart'; // AppTheme import geri eklendi
 import 'dart:math';
 import 'dart:ui';
 import 'dart:async';

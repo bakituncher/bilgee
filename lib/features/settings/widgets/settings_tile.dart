@@ -1,6 +1,6 @@
 // lib/features/settings/widgets/settings_tile.dart
 import 'package:flutter/material.dart';
-import 'package:bilge_ai/core/theme/app_theme.dart';
+import 'package:taktik/core/theme/app_theme.dart';
 
 class SettingsTile extends StatelessWidget {
   final IconData icon;

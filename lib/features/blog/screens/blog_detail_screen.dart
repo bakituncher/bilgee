@@ -1,7 +1,7 @@
 // lib/features/blog/screens/blog_detail_screen.dart
-import 'package:bilge_ai/core/theme/app_theme.dart';
-import 'package:bilge_ai/data/providers/admin_providers.dart';
-import 'package:bilge_ai/features/blog/providers/blog_providers.dart';
+import 'package:taktik/core/theme/app_theme.dart';
+import 'package:taktik/data/providers/admin_providers.dart';
+import 'package:taktik/features/blog/providers/blog_providers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';

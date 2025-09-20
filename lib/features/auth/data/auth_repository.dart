@@ -1,8 +1,8 @@
 // lib/features/auth/data/auth_repository.dart
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:bilge_ai/data/repositories/firestore_service.dart';
-import 'package:bilge_ai/data/providers/firestore_providers.dart';
+import 'package:taktik/data/repositories/firestore_service.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepository(

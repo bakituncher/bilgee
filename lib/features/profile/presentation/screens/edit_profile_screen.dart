@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:bilge_ai/data/models/user_model.dart';
-import 'package:bilge_ai/data/providers/firestore_providers.dart';
-import 'package:bilge_ai/features/profile/application/profile_controller.dart';
+import 'package:taktik/data/models/user_model.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/features/profile/application/profile_controller.dart';
 import 'package:intl/intl.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {

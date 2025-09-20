@@ -1,12 +1,12 @@
 // lib/features/home/providers/home_providers.dart
 import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:bilge_ai/data/providers/firestore_providers.dart';
-import 'package:bilge_ai/data/models/test_model.dart';
-import 'package:bilge_ai/features/quests/models/quest_model.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/data/models/test_model.dart';
+import 'package:taktik/features/quests/models/quest_model.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
-import 'package:bilge_ai/features/quests/logic/optimized_quests_provider.dart';
+import 'package:taktik/features/quests/logic/optimized_quests_provider.dart';
 
 final avgNetProvider = Provider<double>((ref) {
   final tests = ref.watch(testsProvider).valueOrNull ?? <TestModel>[];

@@ -2,10 +2,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:bilge_ai/core/theme/app_theme.dart';
+import 'package:taktik/core/theme/app_theme.dart';
 import 'package:intl/intl.dart';
-import 'package:bilge_ai/data/providers/firestore_providers.dart';
-import 'package:bilge_ai/features/pomodoro/logic/pomodoro_notifier.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/features/pomodoro/logic/pomodoro_notifier.dart';
 
 class PomodoroStatsView extends ConsumerStatefulWidget {
   const PomodoroStatsView({super.key});
