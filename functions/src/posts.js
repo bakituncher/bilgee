@@ -38,7 +38,10 @@ exports.cleanupExpiredPosts = onSchedule(
 );
 
 // Bir yazı silindiğinde kapak görsellerini de temizle
-exports.onPostDeletedCleanup = onDocumentDeleted("posts/{postId}", async (event) => {
+exports.onPostDeletedCleanup = onDocumentDeleted({
+  document: "posts/{postId}",
+  region: "us-central1"
+}, async (event) => {
   const snap = event.data; // DocumentSnapshot
   const slug = (snap && snap.data()?.slug) || event.params.postId;
   await deletePostAssetsBySlug(slug);

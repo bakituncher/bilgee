@@ -358,7 +358,10 @@ async function autoCompleteQuestIfNeeded(afterSnap) {
   }
 }
 
-exports.onDailyQuestProgress = onDocumentWritten("users/{userId}/daily_quests/{questId}", async (event) => {
+exports.onDailyQuestProgress = onDocumentWritten({
+  document: "users/{userId}/daily_quests/{questId}",
+  region: "us-central1"
+}, async (event) => {
   if (!(event && event.data && event.data.after)) return;
   await autoCompleteQuestIfNeeded(event.data.after);
 });

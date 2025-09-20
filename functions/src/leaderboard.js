@@ -155,7 +155,10 @@ async function cleanupOldLeaderboards() {
 }
 
 // ==== Stats tetikleyicisi: günlük/haftalık skorları türet ve public profile güncelle ====
-exports.onUserStatsWritten = onDocumentWritten("users/{userId}/state/stats", async (event) => {
+exports.onUserStatsWritten = onDocumentWritten({
+  document: "users/{userId}/state/stats",
+  region: "us-central1"
+}, async (event) => {
     const before = event.data?.before?.data() || {};
     const after = event.data?.after?.data() || {};
     const uid = event.params.userId;
@@ -177,7 +180,10 @@ exports.onUserStatsWritten = onDocumentWritten("users/{userId}/state/stats", asy
   });
 
   // Kullanıcı profil güncellemesi: public_profile yansıt
-exports.onUserProfileChanged = onDocumentWritten("users/{userId}", async (event) => {
+exports.onUserProfileChanged = onDocumentWritten({
+  document: "users/{userId}",
+  region: "us-central1"
+}, async (event) => {
     const uid = event.params.userId;
     const before = event.data?.before?.data() || {};
     const after = event.data?.after?.data() || {};

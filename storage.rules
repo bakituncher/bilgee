@@ -1,27 +1,63 @@
 rules_version = '2';
+
+// Craft rules based on data in your Firestore database
+// allow write: if firestore.get(
+//    /databases/(default)/documents/users/$(request.auth.uid)).data.isAdmin == true;
 service firebase.storage {
   match /b/{bucket}/o {
-
-    // Blog kapak görselleri herkes tarafından okunabilir, sadece admin yükleyebilir/silebilir
-    match /blog_covers/{postSlug}/{fileName} {
-      allow read: if true;
-      allow write: if request.auth != null && request.auth.token.admin == true
-        && request.resource.size < 1 * 1024 * 1024 // <= 1MB
-        && request.resource.contentType.matches('image/.*')
-        && request.resource.contentType in ['image/png','image/jpeg','image/webp'];
+    // =====================================================================
+    // KULLANICI AVATAR RESİMLERİ
+    // =====================================================================
+    match /avatars/{userId}/{allPaths=**} {
+      // Kullanıcı kendi avatar'ını okuyabilir ve yazabilir
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Bildirim banner görselleri (FCM tarafı resmi çekebilmek için public read gerekir)
-    match /push_banners/{year}/{month}/{fileName} {
+    // =====================================================================
+    // BLOG KAPAK RESİMLERİ
+    // =====================================================================
+    match /blog_covers/{slug}/{allPaths=**} {
+      // Herkes blog kapak resimlerini okuyabilir
       allow read: if true;
-      allow write: if request.auth != null && request.auth.token.admin == true
-        && request.resource.size < 1 * 1024 * 1024 // <= 1MB
-        && request.resource.contentType.matches('image/.*')
-        && request.resource.contentType in ['image/png','image/jpeg','image/webp'];
+      // Sadece admin kullanıcılar blog kapakları yükleyebilir
+      allow write: if request.auth != null && request.auth.token.admin == true;
     }
 
-    // Varsayılan: diğer tüm yollar için erişim yok (güvenli varsayılan)
+    // =====================================================================
+    // KULLANICI DOSYALARI (genel)
+    // =====================================================================
+    match /user_files/{userId}/{allPaths=**} {
+      // Kullanıcı kendi dosyalarını okuyabilir ve yazabilir
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // =====================================================================
+    // GENEL DOSYALAR (herkese açık)
+    // =====================================================================
+    match /public/{allPaths=**} {
+      // Herkes okuyabilir
+      allow read: if true;
+      // Sadece admin kullanıcılar yazabilir
+      allow write: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    // =====================================================================
+    // SORU RESİMLERİ
+    // =====================================================================
+    match /question_images/{allPaths=**} {
+      // Herkes soru resimlerini okuyabilir
+      allow read: if true;
+      // Sadece admin kullanıcılar soru resimleri yükleyebilir
+      allow write: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    // =====================================================================
+    // VARSAYILAN KURAL - DİĞER TÜM DOSYALAR
+    // =====================================================================
     match /{allPaths=**} {
+      // Diğer tüm dosyalar için erişim engellendi
       allow read, write: if false;
     }
   }
