@@ -72,6 +72,11 @@ class WeeklyPlan {
   final List<DailyPlan> plan;
   final DateTime creationDate;
 
+  // Planın süresinin dolup dolmadığını kontrol eder (7 günden eski mi?)
+  bool get isExpired {
+    return DateTime.now().difference(creationDate).inDays >= 7;
+  }
+
   WeeklyPlan({required this.planTitle, required this.strategyFocus, required this.plan, required this.creationDate});
 
   factory WeeklyPlan.fromJson(Map<String, dynamic> json) {

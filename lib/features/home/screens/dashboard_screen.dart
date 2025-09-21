@@ -20,11 +20,13 @@ import 'package:taktik/shared/widgets/scaffold_with_nav_bar.dart' show rootScaff
 import 'package:taktik/features/home/widgets/motivation_quotes_card.dart';
 import 'package:taktik/features/quests/logic/optimized_quests_provider.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
+import 'package:taktik/data/models/plan_model.dart';
 
 // Widget'ları vurgulamak için GlobalKey'ler artik highlight_keys.dart'tan geliyor, burada TANIM YOK.
 
 // KUTLAMA TARİHLERİ: static yerine Riverpod state
 final celebratedDatesProvider = StateProvider<Set<String>>((ref) => <String>{});
+final expiredPlanDialogShownProvider = StateProvider<bool>((ref) => false);
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -79,6 +81,26 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     });
   }
 
+  void _checkAndShowExpiredPlanDialog() {
+    final planAsync = ref.watch(planProvider);
+    final dialogShown = ref.watch(expiredPlanDialogShownProvider);
+
+    planAsync.whenData((planDoc) {
+      if (planDoc?.weeklyPlan != null && !dialogShown) {
+        final weeklyPlan = WeeklyPlan.fromJson(planDoc!.weeklyPlan!);
+        if (weeklyPlan.isExpired) {
+          // Prevent scheduling the dialog build during a build phase
+          Future.microtask(() {
+            if (mounted) {
+              _showExpiredPlanDialog(context);
+              ref.read(expiredPlanDialogShownProvider.notifier).state = true;
+            }
+          });
+        }
+      }
+    });
+  }
+
   @override
   void dispose() {
     _scrollController.removeListener(_onScroll);
@@ -86,10 +108,37 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     super.dispose();
   }
 
+  void _showExpiredPlanDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Haftalık Planın Sona Erdi'),
+          content: const Text('Yeni bir haftalık plan oluşturarak hedeflerine odaklanmaya ne dersin?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Daha Sonra'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Plan Oluştur'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                context.go('/home/weekly-plan');
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final userAsync = ref.watch(userProfileProvider);
-    // final testsAsync = ref.watch(testsProvider); // KALDIRILDI
+    _checkAndShowExpiredPlanDialog();
 
     return userAsync.when(
       data: (user) {
@@ -217,12 +266,12 @@ class _DailyQuestsCard extends ConsumerWidget {
         onTap: () => context.go('/home/quests'),
         child: Container(
           padding: const EdgeInsets.all(20.0),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [ (hasClaimable ? AppTheme.goldColor : _progressColor(progress)).withValues(alpha: 0.18), AppTheme.cardColor.withValues(alpha: 0.55), ],
-                begin: Alignment.topLeft, end: Alignment.bottomRight,
-              ),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [ (hasClaimable ? AppTheme.goldColor : _progressColor(progress)).withValues(alpha: 0.18), AppTheme.cardColor.withValues(alpha: 0.55), ],
+              begin: Alignment.topLeft, end: Alignment.bottomRight,
             ),
+          ),
           child: Row(children: [
             Stack(alignment: Alignment.center, children: [
               SizedBox(height: 56, width: 56, child: CircularProgressIndicator(value: progress == 0 ? null : progress, strokeWidth: 6, backgroundColor: AppTheme.lightSurfaceColor.withValues(alpha: .25), valueColor: AlwaysStoppedAnimation(hasClaimable ? AppTheme.goldColor : _progressColor(progress)),)),
