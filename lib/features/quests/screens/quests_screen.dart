@@ -26,6 +26,22 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> with SingleTickerPr
   void initState() {
     super.initState();
     _bgController = AnimationController(vsync: this, duration: const Duration(seconds: 20))..repeat();
+    // İlk frame sonrası gün kontrolü ve gerekirse yenileme
+    WidgetsBinding.instance.addPostFrameCallback((_) => _refreshQuestsIfNeeded());
+  }
+
+  void _refreshQuestsIfNeeded() {
+    if (!mounted) return;
+    final questsState = ref.read(optimizedQuestsProvider);
+    final lastUpdate = questsState.lastDailyUpdate;
+    final now = DateTime.now();
+    final needsRefresh = lastUpdate == null ||
+        lastUpdate.year != now.year ||
+        lastUpdate.month != now.month ||
+        lastUpdate.day != now.day;
+    if (needsRefresh) {
+      _refreshQuests();
+    }
   }
 
   void _refreshQuests() async {
@@ -86,7 +102,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> with SingleTickerPr
     return Padding(
       padding: const EdgeInsets.only(top: 20.0),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Row(
             children: [
@@ -103,11 +119,6 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> with SingleTickerPr
                 ),
               ),
             ],
-          ),
-          IconButton(
-            icon: const Icon(Icons.sync_rounded, color: AppTheme.secondaryTextColor),
-            onPressed: _refreshQuests,
-            tooltip: 'Görevleri Yenile',
           ),
         ],
       ),

@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/auth/data/auth_repository.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
@@ -23,6 +24,10 @@ class AuthController extends StreamNotifier<User?> {
 
   void _onUserActivity(User? user) {
     if (user != null) {
+      // Oturum açan kullanıcının admin yetkisini kontrol et ve ayarla.
+      // Bu işlem arka planda sessizce yapılır.
+      _updateAdminClaim(user);
+
       // --- ZİYARET KAYDI: user_activity aylık dokümanına yaz ---
       Future.delayed(const Duration(seconds: 2), () async {
         try {
@@ -37,6 +42,19 @@ class AuthController extends StreamNotifier<User?> {
         }
       });
       // ------------------------------------
+    }
+  }
+
+  Future<void> _updateAdminClaim(User user) async {
+    try {
+      // DÜZELTME: Fonksiyon adı yanlıştı ('setSelfAdmin').
+      // index.js içinde exports.admin = admin; olduğu için gerçek callable adı 'admin-setSelfAdmin'.
+      final callable = FirebaseFunctions.instanceFor(region: 'us-central1').httpsCallable('admin-setSelfAdmin');
+      await callable.call();
+      await user.getIdTokenResult(true); // claimleri yenile
+      print('Admin claim updated successfully.');
+    } catch (e) {
+      print('Failed to update admin claim: $e');
     }
   }
 
