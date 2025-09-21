@@ -25,6 +25,7 @@ import 'package:taktik/shared/notifications/notification_center_screen.dart';
 import 'package:taktik/features/profile/screens/user_search_screen.dart';
 import 'package:taktik/features/auth/presentation/pre_auth_welcome_screen.dart';
 import 'package:taktik/shared/widgets/splash_screen.dart';
+import 'package:taktik/data/providers/admin_providers.dart';
 import 'transition_utils.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
@@ -97,7 +98,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         }
 
         // Admin Panel Access Control
-        final isAdmin = user.isAdmin;
+        final isAdmin = ref.read(adminClaimProvider).valueOrNull ?? false;
         if (location.startsWith('/admin') && !isAdmin) {
           return AppRoutes.home;
         }
