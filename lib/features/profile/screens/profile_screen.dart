@@ -363,7 +363,7 @@ class _ProfileView extends ConsumerWidget {
                         ],
                       ),
                       const SizedBox(height: 12),
-                      if (ref.watch(adminClaimProvider).valueOrNull == true)
+                      if (user.isAdmin)
                         Row(
                           children: [
                             Expanded(child: _ActionNeo(icon: Icons.admin_panel_settings_rounded, label: 'Admin Paneli', onTap: () => context.push('/admin/panel'))),

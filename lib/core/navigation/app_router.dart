@@ -23,16 +23,12 @@ import 'package:taktik/features/admin/screens/admin_panel_screen.dart';
 import 'package:taktik/features/admin/screens/user_management_screen.dart';
 import 'package:taktik/shared/notifications/notification_center_screen.dart';
 import 'package:taktik/features/profile/screens/user_search_screen.dart';
+import 'package:taktik/features/auth/presentation/pre_auth_welcome_screen.dart';
+import 'package:taktik/shared/widgets/splash_screen.dart';
 import 'transition_utils.dart';
-
-final initialLocationProvider = Provider<String>((ref) {
-  // This will be overridden in main.dart before the app starts.
-  return AppRoutes.loading;
-});
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   final rootNavigatorKey = GlobalKey<NavigatorState>();
-  final initialLocation = ref.watch(initialLocationProvider);
 
   final listenable = ValueNotifier<bool>(false);
   ref.listen(authControllerProvider, (_, __) => listenable.value = !listenable.value);
@@ -40,7 +36,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
 
   return GoRouter(
     navigatorKey: rootNavigatorKey,
-    initialLocation: initialLocation,
+    initialLocation: '/',
     debugLogDiagnostics: true,
     refreshListenable: listenable,
     redirect: (BuildContext context, GoRouterState state) {
@@ -48,6 +44,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final userProfileState = ref.read(userProfileProvider);
       final location = state.matchedLocation;
 
+      // Allow splash and welcome screens to be shown without auth
+      if (location == '/' || location == AppRoutes.preAuthWelcome) {
+        return null;
+      }
 
       final isLoggedIn = authState.hasValue && authState.value != null;
       final onAuthScreen = location == AppRoutes.login || location == AppRoutes.register || location == AppRoutes.verifyEmail;
@@ -107,6 +107,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
+      GoRoute(
+        path: '/',
+        pageBuilder: (context, state) => buildPageWithFadeTransition(
+          context: context,
+          state: state,
+          child: const SplashScreen(),
+        ),
+      ),
       GoRoute(
         path: AppRoutes.loading,
         pageBuilder: (context, state) => buildPageWithFadeTransition(
