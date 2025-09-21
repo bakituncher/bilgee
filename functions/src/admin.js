@@ -2,24 +2,16 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { admin, auth, db, messaging } = require("./init");
 
 // ---- ADMIN CLAIM YÖNETİMİ ----
-const DEFAULT_SUPER_ADMINS = ['baki@gmail.com'];
-const SUPER_ADMINS = (process.env.SUPER_ADMINS || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
-
 async function getSuperAdmins() {
   try {
     const snap = await db.collection('config').doc('super_admins').get();
-    const data = snap.exists ? (snap.data() || {}) : {};
+    if (!snap.exists) return [];
+    const data = snap.data() || {};
     const emails = Array.isArray(data.emails) ? data.emails : [];
-    const list = [
-      ...DEFAULT_SUPER_ADMINS,
-      ...SUPER_ADMINS,
-      ...emails.map((e) => String(e).trim().toLowerCase()),
-    ];
-    // benzersizleştir
-    return Array.from(new Set(list.filter(Boolean)));
-  } catch (_) {
-    // fallback sadece default + env
-    return Array.from(new Set([...DEFAULT_SUPER_ADMINS, ...SUPER_ADMINS]));
+    return Array.from(new Set(emails.map((e) => String(e).trim().toLowerCase()).filter(Boolean)));
+  } catch (e) {
+    console.error("Error getting super admins", e);
+    return [];
   }
 }
 
