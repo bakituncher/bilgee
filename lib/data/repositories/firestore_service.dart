@@ -354,6 +354,7 @@ class FirestoreService {
       username: username,
       gender: gender,
       dateOfBirth: dateOfBirth,
+      profileCompleted: false,
       tutorialCompleted: false,
     );
     await usersCollection.doc(user.uid).set(userProfile.toJson());
@@ -376,6 +377,25 @@ class FirestoreService {
     await _appStateDoc(user.uid).set(AppState().toMap(), SetOptions(merge: true));
     await _planDoc(user.uid).set(PlanDocument().toMap(), SetOptions(merge: true));
     await _performanceDoc(user.uid).set(const PerformanceSummary().toMap(), SetOptions(merge: true));
+  }
+
+  Future<void> updateUserProfileDetails({
+    required String userId,
+    required String username,
+    required String gender,
+    required DateTime dateOfBirth,
+  }) async {
+    await usersCollection.doc(userId).update({
+      'username': username,
+      'gender': gender,
+      'dateOfBirth': Timestamp.fromDate(dateOfBirth),
+      'profileCompleted': true,
+    });
+  }
+
+  Future<bool> checkUsernameAvailability(String username) async {
+    final query = await usersCollection.where('username', isEqualTo: username).limit(1).get();
+    return query.docs.isEmpty;
   }
 
   Future<void> updateUserName({required String userId, required String newName}) async {
@@ -413,29 +433,6 @@ class FirestoreService {
   Future<void> markTutorialAsCompleted(String userId) async {
     await _appStateDoc(userId).set({'tutorialCompleted': true}, SetOptions(merge: true));
     await usersCollection.doc(userId).update({'tutorialCompleted': true});
-  }
-
-  Future<void> updateOnboardingData({
-    required String userId,
-    required String goal,
-    required List<String> challenges,
-    required double weeklyStudyGoal,
-    Map<String, dynamic>? additionalData,
-  }) async {
-    final updateData = <String, dynamic>{
-      'goal': goal,
-      'challenges': challenges,
-      'weeklyStudyGoal': weeklyStudyGoal,
-    };
-
-    // Ek veri varsa ekle
-    if (additionalData != null) {
-      updateData.addAll(additionalData);
-    }
-
-    await usersCollection.doc(userId).update(updateData);
-    await _appStateDoc(userId).set({'onboardingCompleted': true}, SetOptions(merge: true));
-    await usersCollection.doc(userId).update({'onboardingCompleted': true});
   }
 
   Future<void> updateUserProfile(String userId, Map<String, dynamic> data) async {
@@ -714,7 +711,6 @@ class FirestoreService {
     final WriteBatch batch = _firestore.batch();
     final userDocRef = usersCollection.doc(userId);
     batch.update(userDocRef, {
-      'onboardingCompleted': false,
       'tutorialCompleted': false,
       'selectedExam': null,
       'selectedExamSection': null,

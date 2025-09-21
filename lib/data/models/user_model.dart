@@ -19,7 +19,7 @@ class UserModel {
   final String? goal;
   final List<String>? challenges;
   final double? weeklyStudyGoal;
-  final bool onboardingCompleted;
+  final bool profileCompleted;
   final bool tutorialCompleted;
   final int streak;
   final DateTime? lastStreakUpdate;
@@ -77,7 +77,7 @@ class UserModel {
     this.goal,
     this.challenges,
     this.weeklyStudyGoal,
-    this.onboardingCompleted = false,
+    this.profileCompleted = false,
     this.tutorialCompleted = false,
     this.streak = 0,
     this.lastStreakUpdate,
@@ -125,7 +125,7 @@ class UserModel {
     String? goal,
     List<String>? challenges,
     double? weeklyStudyGoal,
-    bool? onboardingCompleted,
+    bool? profileCompleted,
     bool? tutorialCompleted,
     int? streak,
     DateTime? lastStreakUpdate,
@@ -171,7 +171,7 @@ class UserModel {
       goal: goal ?? this.goal,
       challenges: challenges ?? this.challenges,
       weeklyStudyGoal: weeklyStudyGoal ?? this.weeklyStudyGoal,
-      onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
+      profileCompleted: profileCompleted ?? this.profileCompleted,
       tutorialCompleted: tutorialCompleted ?? this.tutorialCompleted,
       streak: streak ?? this.streak,
       lastStreakUpdate: lastStreakUpdate ?? this.lastStreakUpdate,
@@ -245,7 +245,7 @@ class UserModel {
       goal: data['goal'],
       challenges: List<String>.from(data['challenges'] ?? []),
       weeklyStudyGoal: (data['weeklyStudyGoal'] as num?)?.toDouble(),
-      onboardingCompleted: data['onboardingCompleted'] ?? false,
+      profileCompleted: data['profileCompleted'] ?? false,
       tutorialCompleted: data['tutorialCompleted'] ?? false,
       streak: data['streak'] ?? 0,
       lastStreakUpdate: (data['lastStreakUpdate'] as Timestamp?)?.toDate(),
@@ -315,7 +315,7 @@ class UserModel {
       'goal': goal,
       'challenges': challenges,
       'weeklyStudyGoal': weeklyStudyGoal,
-      'onboardingCompleted': onboardingCompleted,
+      'profileCompleted': profileCompleted,
       'tutorialCompleted': tutorialCompleted,
       'streak': streak,
       'lastStreakUpdate': lastStreakUpdate != null ? Timestamp.fromDate(lastStreakUpdate!) : null,
@@ -381,7 +381,7 @@ class UserModel {
       goal: goal,
       challenges: challenges,
       weeklyStudyGoal: weeklyStudyGoal,
-      onboardingCompleted: onboardingCompleted,
+      profileCompleted: profileCompleted,
       tutorialCompleted: tutorialCompleted,
       streak: streak ?? this.streak,
       lastStreakUpdate: lastStreakUpdate ?? this.lastStreakUpdate,

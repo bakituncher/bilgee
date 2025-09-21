@@ -102,4 +102,9 @@ class AuthController extends StreamNotifier<User?> {
     final authRepository = ref.read(authRepositoryProvider);
     return authRepository.resetPassword(email);
   }
+
+  Future<void> signInWithGoogle() {
+    final authRepository = ref.read(authRepositoryProvider);
+    return authRepository.signInWithGoogle();
+  }
 }

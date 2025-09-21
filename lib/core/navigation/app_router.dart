@@ -23,6 +23,9 @@ import 'package:taktik/features/admin/screens/admin_panel_screen.dart';
 import 'package:taktik/features/admin/screens/user_management_screen.dart';
 import 'package:taktik/shared/notifications/notification_center_screen.dart';
 import 'package:taktik/features/profile/screens/user_search_screen.dart';
+import 'package:taktik/features/auth/presentation/pre_auth_welcome_screen.dart';
+import 'package:taktik/shared/widgets/splash_screen.dart';
+import 'package:taktik/data/providers/admin_providers.dart';
 import 'transition_utils.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
@@ -34,7 +37,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
 
   return GoRouter(
     navigatorKey: rootNavigatorKey,
-    initialLocation: AppRoutes.loading,
+    initialLocation: '/',
     debugLogDiagnostics: true,
     refreshListenable: listenable,
     redirect: (BuildContext context, GoRouterState state) {
@@ -42,6 +45,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final userProfileState = ref.read(userProfileProvider);
       final location = state.matchedLocation;
 
+      // Allow splash and welcome screens to be shown without auth
+      if (location == '/' || location == AppRoutes.preAuthWelcome) {
+        return null;
+      }
 
       final isLoggedIn = authState.hasValue && authState.value != null;
       final onAuthScreen = location == AppRoutes.login || location == AppRoutes.register || location == AppRoutes.verifyEmail;
@@ -66,9 +73,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       if (userProfileState.hasValue && userProfileState.value != null) {
         final user = userProfileState.value!;
 
-        // Onboarding Step 1: Basic info
-        if (!user.onboardingCompleted) {
-          return location == AppRoutes.onboarding ? null : AppRoutes.onboarding;
+        // Onboarding Step 1: Profile Completion
+        if (!user.profileCompleted) {
+          return location == AppRoutes.profileCompletion ? null : AppRoutes.profileCompletion;
         }
 
         // Onboarding Step 2: Exam Selection
@@ -89,12 +96,26 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         if (location == AppRoutes.login || location == AppRoutes.register || location == AppRoutes.loading) {
           return AppRoutes.home;
         }
+
+        // Admin Panel Access Control
+        final isAdmin = ref.read(adminClaimProvider).valueOrNull ?? false;
+        if (location.startsWith('/admin') && !isAdmin) {
+          return AppRoutes.home;
+        }
       }
 
       // If none of the above conditions are met, allow navigation.
       return null;
     },
     routes: [
+      GoRoute(
+        path: '/',
+        pageBuilder: (context, state) => buildPageWithFadeTransition(
+          context: context,
+          state: state,
+          child: const SplashScreen(),
+        ),
+      ),
       GoRoute(
         path: AppRoutes.loading,
         pageBuilder: (context, state) => buildPageWithFadeTransition(

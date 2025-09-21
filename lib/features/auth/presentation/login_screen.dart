@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -53,6 +54,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         if (mounted) {
           setState(() => _isLoading = false);
         }
+      }
+    }
+  }
+
+  void _signInWithGoogle() async {
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      await ref.read(authControllerProvider.notifier).signInWithGoogle();
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString();
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
     }
   }
@@ -266,6 +288,30 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   label: _isLoading
                                       ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                                       : const Text('Giriş Yap'),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Expanded(child: Divider(color: Theme.of(context).colorScheme.outline.withOpacity(0.5))),
+                                  const SizedBox(width: 12),
+                                  Text('veya', style: Theme.of(context).textTheme.bodySmall),
+                                  const SizedBox(width: 12),
+                                  Expanded(child: Divider(color: Theme.of(context).colorScheme.outline.withOpacity(0.5))),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              SizedBox(
+                                height: 48,
+                                child: OutlinedButton.icon(
+                                  icon: SvgPicture.asset('assets/images/google_logo.svg', height: 24),
+                                  onPressed: _isLoading ? null : _signInWithGoogle,
+                                  label: const Text('Google ile Giriş Yap'),
+                                  style: OutlinedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
                                 ),
                               ),
                             ],

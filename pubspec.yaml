@@ -13,6 +13,8 @@ dependencies:
 
   # iOS stili ikonlar için
   cupertino_icons: ^1.0.8
+  google_sign_in: ^6.2.1
+  sign_in_with_apple: ^6.1.1
 
   # State Management
   flutter_riverpod: ^2.5.1
