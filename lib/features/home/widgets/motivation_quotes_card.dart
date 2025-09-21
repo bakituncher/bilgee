@@ -17,14 +17,13 @@ class _MotivationQuotesCardState extends State<MotivationQuotesCard> {
   Timer? _timer;
   int _index = 0;
   final _quotes = const [
-    ('Hayatta en hakiki mürşit ilimdir, fendir.', 'M. Kemal Atatürk'),
-    ('Geleceği tahmin etmenin en iyi yolu, onu yaratmaktır.', 'Peter Drucker'),
-    ('Başarının sırrı, sıradan işleri sıra dışı bir şekilde yapmaktır.', 'John D. Rockefeller'),
-    ('Dehanın %1\'i ilham, %99\'u alın teridir.', 'Thomas Edison'),
-    ('Şimdi acı çek ve hayatının geri kalanını bir şampiyon olarak yaşa.', 'Muhammed Ali'),
-    ('Tek bildiğim, hiçbir şey bilmediğimdir.', 'Sokrates'),
-    ('Hayal gücü bilgiden daha önemlidir. Çünkü bilgi sınırlıyken, hayal gücü tüm dünyayı kapsar.', 'Albert Einstein'),
-    ('Yenilginin en büyük zaferden tek farkı, ayağa kalkma cesaretidir.', 'Bilge Baykuş'),
+    ('Zorluklar, fırsatların gizli kapılarıdır.', 'Albert Einstein'),
+    ('Hayal gücü bilgiden daha önemlidir.', 'Albert Einstein'),
+    ('Başarı, hazırlık ile fırsatın buluştuğu noktadır.', 'Bobby Unser'),
+    ('Kendine inan, her şey mümkün.', 'Audrey Hepburn'),
+    ('Yapabileceğin en büyük hata, hata yapmaktan korkmaktır.', 'Elbert Hubbard'),
+    ('Düşünmeden konuşmak, nişan almadan ateş etmektir.', 'Miguel de Cervantes'),
+    ('Başarı, azimle beslenen bir yolculuktur.', 'Zig Ziglar'),
   ];
 
   @override
