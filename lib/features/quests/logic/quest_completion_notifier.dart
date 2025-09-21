@@ -1,10 +1,10 @@
 // lib/features/quests/logic/quest_completion_notifier.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:bilge_ai/features/quests/models/quest_model.dart';
-import 'package:bilge_ai/data/providers/firestore_providers.dart';
+import 'package:taktik/features/quests/models/quest_model.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:bilge_ai/features/quests/logic/quest_service.dart';
-import 'package:bilge_ai/features/quests/logic/optimized_quests_provider.dart';
+import 'package:taktik/features/quests/logic/quest_service.dart';
+import 'package:taktik/features/quests/logic/optimized_quests_provider.dart';
 import 'package:flutter/foundation.dart';
 
 /// Geliştirilmiş Quest Completion Notifier

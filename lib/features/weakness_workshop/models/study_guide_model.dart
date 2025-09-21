@@ -1,5 +1,5 @@
 // lib/features/weakness_workshop/models/study_guide_model.dart
-import 'package:bilge_ai/core/utils/json_text_cleaner.dart';
+import 'package:taktik/core/utils/json_text_cleaner.dart';
 
 class StudyGuideAndQuiz {
   final String studyGuide; // Markdown formatında

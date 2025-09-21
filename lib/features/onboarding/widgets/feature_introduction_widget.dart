@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:bilge_ai/features/onboarding/models/onboarding_step.dart';
+import 'package:taktik/features/onboarding/models/onboarding_step.dart';
 
 class FeatureIntroductionWidget extends StatefulWidget {
   final OnboardingStep step;

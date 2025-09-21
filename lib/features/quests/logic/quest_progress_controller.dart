@@ -1,10 +1,10 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:bilge_ai/data/providers/firestore_providers.dart';
-import 'package:bilge_ai/features/quests/models/quest_model.dart';
-import 'package:bilge_ai/core/analytics/analytics_logger.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/features/quests/models/quest_model.dart';
+import 'package:taktik/core/analytics/analytics_logger.dart';
 // YENİ: Geliştirilmiş tracking service
-import 'package:bilge_ai/features/quests/logic/quest_tracking_service.dart';
+import 'package:taktik/features/quests/logic/quest_tracking_service.dart';
 
 enum PracticeSource { general, workshop }
 

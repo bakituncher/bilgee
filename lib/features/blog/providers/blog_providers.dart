@@ -1,7 +1,7 @@
 // lib/features/blog/providers/blog_providers.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:bilge_ai/data/providers/firestore_providers.dart';
-import 'package:bilge_ai/features/blog/models/blog_post.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/features/blog/models/blog_post.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 // Yayımlanmış blog yazıları (TR) listesi

@@ -2,8 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:bilge_ai/features/quests/models/quest_model.dart';
-import 'package:bilge_ai/features/quests/logic/quest_progress_controller.dart';
+import 'package:taktik/features/quests/models/quest_model.dart';
+import 'package:taktik/features/quests/logic/quest_progress_controller.dart';
 
 /// Görev yönlendirmelerini merkezi olarak yöneten servis
 /// Tüm görev tiplerini (günlük, başarım) destekler

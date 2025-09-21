@@ -2,9 +2,9 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:bilge_ai/data/providers/firestore_providers.dart';
-import 'package:bilge_ai/features/auth/data/auth_repository.dart';
-import 'package:bilge_ai/features/quests/logic/quest_notifier.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/features/auth/data/auth_repository.dart';
+import 'package:taktik/features/quests/logic/quest_notifier.dart';
 
 final authControllerProvider = StreamNotifierProvider<AuthController, User?>(() {
   return AuthController();

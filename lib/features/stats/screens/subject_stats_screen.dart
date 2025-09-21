@@ -2,8 +2,8 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:bilge_ai/core/theme/app_theme.dart';
-import 'package:bilge_ai/features/stats/logic/stats_analysis.dart'; // HATA DÜZELTİLDİ: EKSİK IMPORT EKLENDİ
+import 'package:taktik/core/theme/app_theme.dart';
+import 'package:taktik/features/stats/logic/stats_analysis.dart'; // HATA DÜZELTİLDİ: EKSİK IMPORT EKLENDİ
 
 class SubjectStatsScreen extends StatelessWidget {
   final String subjectName;

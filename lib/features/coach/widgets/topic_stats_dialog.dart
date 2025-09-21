@@ -2,8 +2,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:bilge_ai/core/theme/app_theme.dart';
-import 'package:bilge_ai/data/models/topic_performance_model.dart';
+import 'package:taktik/core/theme/app_theme.dart';
+import 'package:taktik/data/models/topic_performance_model.dart';
 
 class TopicStatsDialog extends StatelessWidget {
   final String topicName;

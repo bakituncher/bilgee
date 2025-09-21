@@ -1,6 +1,6 @@
 // lib/features/profile/models/badge_model.dart
 import 'package:flutter/material.dart';
-import 'package:bilge_ai/core/theme/app_theme.dart';
+import 'package:taktik/core/theme/app_theme.dart';
 
 // YENİ EKLENDİ: Madalya Rütbe Sistemi
 enum BadgeRarity { common, rare, epic, legendary }

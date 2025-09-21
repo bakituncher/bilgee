@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:bilge_ai/features/onboarding/models/onboarding_step.dart';
+import 'package:taktik/features/onboarding/models/onboarding_step.dart';
 
 class OnboardingController extends StateNotifier<OnboardingProgress> {
   OnboardingController() : super(const OnboardingProgress(

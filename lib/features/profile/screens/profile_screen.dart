@@ -3,29 +3,29 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:bilge_ai/features/auth/application/auth_controller.dart';
-import 'package:bilge_ai/data/providers/firestore_providers.dart';
-import 'package:bilge_ai/data/providers/admin_providers.dart';
-import 'package:bilge_ai/core/theme/app_theme.dart';
+import 'package:taktik/features/auth/application/auth_controller.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/data/providers/admin_providers.dart';
+import 'package:taktik/core/theme/app_theme.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:bilge_ai/data/models/user_model.dart';
-import 'package:bilge_ai/data/models/focus_session_model.dart';
-import 'package:bilge_ai/features/profile/models/badge_model.dart' as app_badge;
-import 'package:bilge_ai/core/navigation/app_routes.dart';
+import 'package:taktik/data/models/user_model.dart';
+import 'package:taktik/data/models/focus_session_model.dart';
+import 'package:taktik/features/profile/models/badge_model.dart' as app_badge;
+import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:confetti/confetti.dart';
 import 'package:flutter_svg/flutter_svg.dart'; // Avatar için eklendi
 import 'package:flutter/services.dart'; // HapticFeedback
 import 'dart:math' as math; // trig için
 import '../logic/rank_service.dart';
-import 'package:bilge_ai/data/models/performance_summary.dart';
-import 'package:bilge_ai/data/models/plan_document.dart'; // EKLENDİ
+import 'package:taktik/data/models/performance_summary.dart';
+import 'package:taktik/data/models/plan_document.dart'; // EKLENDİ
 import 'package:share_plus/share_plus.dart';
 import 'package:cross_file/cross_file.dart';
 import 'package:flutter/rendering.dart';
 import 'package:intl/intl.dart';
-import 'package:bilge_ai/data/providers/firestore_providers.dart' as providers;
+import 'package:taktik/data/providers/firestore_providers.dart' as providers;
 import 'dart:ui' as ui;
-import 'package:bilge_ai/shared/widgets/logo_loader.dart';
+import 'package:taktik/shared/widgets/logo_loader.dart';
 
 // ===== NovaPulse / Arena ile tutarlı premium accent renkleri =====
 const _accentProfile1 = AppTheme.secondaryColor; // camgöbeği

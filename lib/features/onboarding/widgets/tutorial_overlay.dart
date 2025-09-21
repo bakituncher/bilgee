@@ -3,9 +3,9 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:bilge_ai/core/theme/app_theme.dart';
-import 'package:bilge_ai/features/onboarding/models/tutorial_step.dart';
-import 'package:bilge_ai/features/onboarding/providers/tutorial_provider.dart';
+import 'package:taktik/core/theme/app_theme.dart';
+import 'package:taktik/features/onboarding/models/tutorial_step.dart';
+import 'package:taktik/features/onboarding/providers/tutorial_provider.dart';
 import 'tutorial_painter.dart';
 
 class TutorialOverlay extends ConsumerWidget {

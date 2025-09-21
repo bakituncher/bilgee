@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:bilge_ai/core/theme/app_theme.dart';
+import 'package:taktik/core/theme/app_theme.dart';
 import 'logic/pomodoro_notifier.dart';
 import 'widgets/pomodoro_stats_view.dart';
 import 'widgets/pomodoro_timer_view.dart';

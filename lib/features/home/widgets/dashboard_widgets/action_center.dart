@@ -1,7 +1,7 @@
 // lib/features/home/widgets/dashboard_widgets/action_center.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:bilge_ai/core/theme/app_theme.dart';
+import 'package:taktik/core/theme/app_theme.dart';
 
 class ActionCenter extends StatelessWidget {
   const ActionCenter({super.key});

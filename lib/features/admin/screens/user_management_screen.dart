@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:bilge_ai/data/providers/firestore_providers.dart';
-import 'package:bilge_ai/core/theme/app_theme.dart';
-import 'package:bilge_ai/shared/widgets/logo_loader.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/core/theme/app_theme.dart';
+import 'package:taktik/shared/widgets/logo_loader.dart';
 
 // State model for the user management screen
 class UserManagementState {

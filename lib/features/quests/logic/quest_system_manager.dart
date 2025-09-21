@@ -1,11 +1,11 @@
 // lib/features/quests/logic/quest_system_manager.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:bilge_ai/features/quests/models/quest_model.dart';
-import 'package:bilge_ai/features/quests/logic/quest_tracking_service.dart';
-import 'package:bilge_ai/features/quests/logic/quest_navigation_manager.dart';
-import 'package:bilge_ai/features/quests/logic/quest_progress_controller.dart';
-import 'package:bilge_ai/features/quests/logic/optimized_quests_provider.dart';
+import 'package:taktik/features/quests/models/quest_model.dart';
+import 'package:taktik/features/quests/logic/quest_tracking_service.dart';
+import 'package:taktik/features/quests/logic/quest_navigation_manager.dart';
+import 'package:taktik/features/quests/logic/quest_progress_controller.dart';
+import 'package:taktik/features/quests/logic/optimized_quests_provider.dart';
 
 /// Merkezi Quest System Manager
 /// Tüm görev işlemlerini tek noktadan yöneten ana servis

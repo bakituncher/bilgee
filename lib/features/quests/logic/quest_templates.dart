@@ -1,8 +1,8 @@
 // lib/features/quests/logic/quest_templates.dart
-import 'package:bilge_ai/data/models/test_model.dart';
-import 'package:bilge_ai/data/models/user_model.dart';
-import 'package:bilge_ai/features/stats/logic/stats_analysis.dart';
-import 'package:bilge_ai/features/quests/models/quest_model.dart';
+import 'package:taktik/data/models/test_model.dart';
+import 'package:taktik/data/models/user_model.dart';
+import 'package:taktik/features/stats/logic/stats_analysis.dart';
+import 'package:taktik/features/quests/models/quest_model.dart';
 
 /// Görev şablonları için bağlam nesnesi
 class QuestContext {

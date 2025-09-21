@@ -4,22 +4,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-// import 'package:bilge_ai/data/models/test_model.dart'; // KALDIRILDI
-import 'package:bilge_ai/data/providers/firestore_providers.dart';
-import 'package:bilge_ai/core/theme/app_theme.dart';
-import 'package:bilge_ai/features/home/widgets/todays_plan.dart';
-import 'package:bilge_ai/features/onboarding/providers/tutorial_provider.dart';
-import 'package:bilge_ai/features/home/widgets/hero_header.dart';
-// import 'package:bilge_ai/features/home/widgets/performance_momentum_card.dart'; // KALDIRILDI: Ayrı kart istenmiyor
-// import 'package:bilge_ai/features/home/widgets/performance_cluster.dart'; // KALDIRILDI
-// import 'package:bilge_ai/features/home/widgets/adaptive_action_center.dart'; // KALDIRILDI: tekrar eden üçlü kart
-import 'package:bilge_ai/shared/constants/highlight_keys.dart';
-import 'package:bilge_ai/features/home/providers/home_providers.dart';
-import 'package:bilge_ai/features/home/widgets/focus_hub_card.dart';
-import 'package:bilge_ai/shared/widgets/scaffold_with_nav_bar.dart' show rootScaffoldKey;
-import 'package:bilge_ai/features/home/widgets/motivation_quotes_card.dart';
-import 'package:bilge_ai/features/quests/logic/optimized_quests_provider.dart';
-import 'package:bilge_ai/shared/widgets/logo_loader.dart';
+// import 'package:taktik/data/models/test_model.dart'; // KALDIRILDI
+import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/core/theme/app_theme.dart';
+import 'package:taktik/features/home/widgets/todays_plan.dart';
+import 'package:taktik/features/onboarding/providers/tutorial_provider.dart';
+import 'package:taktik/features/home/widgets/hero_header.dart';
+// import 'package:taktik/features/home/widgets/performance_momentum_card.dart'; // KALDIRILDI: Ayrı kart istenmiyor
+// import 'package:taktik/features/home/widgets/performance_cluster.dart'; // KALDIRILDI
+// import 'package:taktik/features/home/widgets/adaptive_action_center.dart'; // KALDIRILDI: tekrar eden üçlü kart
+import 'package:taktik/shared/constants/highlight_keys.dart';
+import 'package:taktik/features/home/providers/home_providers.dart';
+import 'package:taktik/features/home/widgets/focus_hub_card.dart';
+import 'package:taktik/shared/widgets/scaffold_with_nav_bar.dart' show rootScaffoldKey;
+import 'package:taktik/features/home/widgets/motivation_quotes_card.dart';
+import 'package:taktik/features/quests/logic/optimized_quests_provider.dart';
+import 'package:taktik/shared/widgets/logo_loader.dart';
 
 // Widget'ları vurgulamak için GlobalKey'ler artik highlight_keys.dart'tan geliyor, burada TANIM YOK.
 

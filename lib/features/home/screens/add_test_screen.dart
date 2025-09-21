@@ -1,13 +1,13 @@
 // lib/features/home/screens/add_test_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:bilge_ai/data/models/exam_model.dart';
-import 'package:bilge_ai/data/providers/firestore_providers.dart';
+import 'package:taktik/data/models/exam_model.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
 import '../logic/add_test_notifier.dart';
 import '../widgets/add_test_step1.dart';
 import '../widgets/add_test_step2.dart';
 import '../widgets/add_test_step3.dart';
-import 'package:bilge_ai/shared/widgets/logo_loader.dart';
+import 'package:taktik/shared/widgets/logo_loader.dart';
 
 // Provider'lar artık logic dosyasında. Bu dosya sadece UI.
 

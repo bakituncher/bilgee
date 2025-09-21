@@ -1,7 +1,7 @@
 // lib/features/stats/widgets/key_stats_grid.dart
 import 'package:flutter/material.dart';
-import 'package:bilge_ai/core/theme/app_theme.dart';
-import 'package:bilge_ai/features/stats/logic/stats_analysis.dart';
+import 'package:taktik/core/theme/app_theme.dart';
+import 'package:taktik/features/stats/logic/stats_analysis.dart';
 
 class KeyStatsGrid extends StatelessWidget {
   final StatsAnalysis analysis;

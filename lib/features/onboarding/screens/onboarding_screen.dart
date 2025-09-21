@@ -3,14 +3,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:bilge_ai/features/onboarding/controllers/onboarding_controller.dart';
-import 'package:bilge_ai/features/onboarding/models/onboarding_step.dart';
-import 'package:bilge_ai/features/onboarding/widgets/welcome_step_widget.dart';
-import 'package:bilge_ai/features/onboarding/widgets/feature_introduction_widget.dart';
-import 'package:bilge_ai/features/onboarding/widgets/personalization_widget.dart';
-import 'package:bilge_ai/features/onboarding/widgets/completion_widget.dart';
-import 'package:bilge_ai/features/auth/application/auth_controller.dart';
-import 'package:bilge_ai/data/providers/firestore_providers.dart';
+import 'package:taktik/features/onboarding/controllers/onboarding_controller.dart';
+import 'package:taktik/features/onboarding/models/onboarding_step.dart';
+import 'package:taktik/features/onboarding/widgets/welcome_step_widget.dart';
+import 'package:taktik/features/onboarding/widgets/feature_introduction_widget.dart';
+import 'package:taktik/features/onboarding/widgets/personalization_widget.dart';
+import 'package:taktik/features/onboarding/widgets/completion_widget.dart';
+import 'package:taktik/features/auth/application/auth_controller.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});

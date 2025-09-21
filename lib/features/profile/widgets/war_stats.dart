@@ -1,8 +1,8 @@
 // lib/features/profile/widgets/war_stats.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:bilge_ai/shared/widgets/stat_card.dart';
-import 'package:bilge_ai/core/navigation/app_routes.dart';
+import 'package:taktik/shared/widgets/stat_card.dart';
+import 'package:taktik/core/navigation/app_routes.dart';
 
 class WarStats extends StatelessWidget {
   final int testCount;

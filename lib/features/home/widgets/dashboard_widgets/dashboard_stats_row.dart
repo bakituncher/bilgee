@@ -1,7 +1,7 @@
 // lib/features/home/widgets/dashboard_widgets/dashboard_stats_row.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:bilge_ai/shared/widgets/stat_card.dart';
+import 'package:taktik/shared/widgets/stat_card.dart';
 
 class DashboardStatsRow extends StatelessWidget {
   final double avgNet;

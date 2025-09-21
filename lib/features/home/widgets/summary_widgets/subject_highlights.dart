@@ -1,6 +1,6 @@
 // lib/features/home/widgets/summary_widgets/subject_highlights.dart
 import 'package:flutter/material.dart';
-import 'package:bilge_ai/core/theme/app_theme.dart';
+import 'package:taktik/core/theme/app_theme.dart';
 
 class SubjectHighlights extends StatelessWidget {
   final Map<String, MapEntry<String, double>> keySubjects;

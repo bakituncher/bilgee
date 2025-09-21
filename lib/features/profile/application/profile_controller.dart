@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:bilge_ai/data/providers/firestore_providers.dart';
-import 'package:bilge_ai/features/auth/application/auth_controller.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/features/auth/application/auth_controller.dart';
 
 final profileControllerProvider = StateNotifierProvider<ProfileController, AsyncValue<void>>((ref) {
   return ProfileController(ref);

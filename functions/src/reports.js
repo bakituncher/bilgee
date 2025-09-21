@@ -4,7 +4,10 @@ const { logger } = require("firebase-functions");
 const { db, admin } = require("./init");
 
 // Yeni: Soru bildirimi oluşturulunca indeks güncelle
-exports.onQuestionReportCreated = onDocumentCreated("questionReports/{reportId}", async (event) => {
+exports.onQuestionReportCreated = onDocumentCreated({
+  document: "questionReports/{reportId}",
+  region: "us-central1"
+}, async (event) => {
   const snap = event.data;
   if (!snap) return;
   const d = snap.data();
@@ -90,7 +93,10 @@ async function recomputeQuestionReportIndex(qhash) {
 }
 
 // Silme tetikleyicisi: bir rapor silindiğinde indeksi güncel tut
-exports.onQuestionReportDeleted = onDocumentDeleted("questionReports/{reportId}", async (event) => {
+exports.onQuestionReportDeleted = onDocumentDeleted({
+  document: "questionReports/{reportId}",
+  region: "us-central1"
+}, async (event) => {
   const snap = event.data; // DocumentSnapshot
   const d = snap && snap.data();
   const qhash = d && d.qhash;

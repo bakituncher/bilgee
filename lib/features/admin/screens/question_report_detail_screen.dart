@@ -1,11 +1,11 @@
 // lib/features/admin/screens/question_report_detail_screen.dart
-import 'package:bilge_ai/core/theme/app_theme.dart';
-import 'package:bilge_ai/data/providers/admin_providers.dart';
-import 'package:bilge_ai/data/providers/firestore_providers.dart';
+import 'package:taktik/core/theme/app_theme.dart';
+import 'package:taktik/data/providers/admin_providers.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:bilge_ai/shared/widgets/logo_loader.dart';
+import 'package:taktik/shared/widgets/logo_loader.dart';
 
 class QuestionReportDetailScreen extends ConsumerWidget {
   final String qhash;

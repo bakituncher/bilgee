@@ -2,8 +2,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:bilge_ai/core/theme/app_theme.dart';
-import 'package:bilge_ai/features/profile/models/badge_model.dart' as app_badge;
+import 'package:taktik/core/theme/app_theme.dart';
+import 'package:taktik/features/profile/models/badge_model.dart' as app_badge;
 import 'package:confetti/confetti.dart'; // YENİ: Partikül efekti için
 
 class HonorWallScreen extends StatelessWidget {

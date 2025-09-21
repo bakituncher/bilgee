@@ -2,14 +2,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:bilge_ai/data/models/exam_model.dart';
-import 'package:bilge_ai/data/models/test_model.dart';
-import 'package:bilge_ai/data/providers/firestore_providers.dart';
-import 'package:bilge_ai/core/theme/app_theme.dart';
-import 'package:bilge_ai/features/stats/widgets/fortress_tab_selector.dart';
-import 'package:bilge_ai/features/stats/widgets/cached_analysis_view.dart';
-import 'package:bilge_ai/features/quests/logic/quest_notifier.dart';
-import 'package:bilge_ai/shared/widgets/logo_loader.dart';
+import 'package:taktik/data/models/exam_model.dart';
+import 'package:taktik/data/models/test_model.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/core/theme/app_theme.dart';
+import 'package:taktik/features/stats/widgets/fortress_tab_selector.dart';
+import 'package:taktik/features/stats/widgets/cached_analysis_view.dart';
+import 'package:taktik/features/quests/logic/quest_notifier.dart';
+import 'package:taktik/shared/widgets/logo_loader.dart';
 
 final selectedTabIndexProvider = StateProvider<int>((ref) => 0);
 

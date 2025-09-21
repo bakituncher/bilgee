@@ -1,6 +1,6 @@
 // lib/data/models/test_model.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:bilge_ai/data/models/exam_model.dart';
+import 'package:taktik/data/models/exam_model.dart';
 
 class TestModel {
   final String id;

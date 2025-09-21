@@ -3,15 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:bilge_ai/core/navigation/app_routes.dart';
-import 'package:bilge_ai/core/theme/app_theme.dart';
-import 'package:bilge_ai/data/providers/firestore_providers.dart';
-import 'package:bilge_ai/features/auth/application/auth_controller.dart';
-import 'package:bilge_ai/features/settings/logic/settings_notifier.dart';
-import 'package:bilge_ai/features/settings/widgets/settings_section.dart';
-import 'package:bilge_ai/features/settings/widgets/settings_tile.dart';
-import 'package:bilge_ai/data/providers/admin_providers.dart';
-import 'package:bilge_ai/shared/widgets/logo_loader.dart';
+import 'package:taktik/core/navigation/app_routes.dart';
+import 'package:taktik/core/theme/app_theme.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/features/auth/application/auth_controller.dart';
+import 'package:taktik/features/settings/logic/settings_notifier.dart';
+import 'package:taktik/features/settings/widgets/settings_section.dart';
+import 'package:taktik/features/settings/widgets/settings_tile.dart';
+import 'package:taktik/data/providers/admin_providers.dart';
+import 'package:taktik/shared/widgets/logo_loader.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});

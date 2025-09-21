@@ -3,12 +3,12 @@ import 'dart:math';
 import 'package:collection/collection.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:bilge_ai/data/models/exam_model.dart';
-import 'package:bilge_ai/data/models/test_model.dart';
-import 'package:bilge_ai/data/models/user_model.dart';
-import 'package:bilge_ai/core/theme/app_theme.dart';
-import 'package:bilge_ai/data/models/performance_summary.dart';
-import 'package:bilge_ai/data/repositories/firestore_service.dart';
+import 'package:taktik/data/models/exam_model.dart';
+import 'package:taktik/data/models/test_model.dart';
+import 'package:taktik/data/models/user_model.dart';
+import 'package:taktik/core/theme/app_theme.dart';
+import 'package:taktik/data/models/performance_summary.dart';
+import 'package:taktik/data/repositories/firestore_service.dart';
 
 class TacticalAdvice {
   final String text;

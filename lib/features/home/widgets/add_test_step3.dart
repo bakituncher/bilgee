@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
-import 'package:bilge_ai/data/models/test_model.dart';
-import 'package:bilge_ai/data/providers/firestore_providers.dart';
-import 'package:bilge_ai/core/theme/app_theme.dart';
-import 'package:bilge_ai/features/home/logic/add_test_notifier.dart';
-import 'package:bilge_ai/data/models/exam_model.dart';
-import 'package:bilge_ai/features/quests/logic/quest_notifier.dart';
-import 'package:bilge_ai/features/quests/models/quest_model.dart';
-import 'package:bilge_ai/features/stats/logic/stats_analysis.dart';
+import 'package:taktik/data/models/test_model.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/core/theme/app_theme.dart';
+import 'package:taktik/features/home/logic/add_test_notifier.dart';
+import 'package:taktik/data/models/exam_model.dart';
+import 'package:taktik/features/quests/logic/quest_notifier.dart';
+import 'package:taktik/features/quests/models/quest_model.dart';
+import 'package:taktik/features/stats/logic/stats_analysis.dart';
 
 class Step3Summary extends ConsumerWidget {
   const Step3Summary({super.key});

@@ -3,15 +3,15 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:bilge_ai/data/repositories/ai_service.dart';
-import 'package:bilge_ai/data/providers/firestore_providers.dart';
-import 'package:bilge_ai/core/theme/app_theme.dart';
+import 'package:taktik/data/repositories/ai_service.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/core/theme/app_theme.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:bilge_ai/data/models/user_model.dart';
-import 'package:bilge_ai/core/navigation/app_routes.dart';
+import 'package:taktik/data/models/user_model.dart';
+import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:intl/intl.dart';
-import 'package:bilge_ai/data/models/plan_model.dart';
-import 'package:bilge_ai/data/models/plan_document.dart';
+import 'package:taktik/data/models/plan_model.dart';
+import 'package:taktik/data/models/plan_document.dart';
 
 
 enum Pacing { relaxed, moderate, intense }

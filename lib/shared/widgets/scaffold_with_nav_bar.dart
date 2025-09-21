@@ -1,21 +1,21 @@
 // lib/shared/widgets/scaffold_with_nav_bar.dart
-import 'package:bilge_ai/core/theme/app_theme.dart';
+import 'package:taktik/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:bilge_ai/features/onboarding/providers/tutorial_provider.dart';
-import 'package:bilge_ai/features/onboarding/widgets/tutorial_overlay.dart';
-import 'package:bilge_ai/features/onboarding/models/tutorial_step.dart';
-import 'package:bilge_ai/features/quests/models/quest_model.dart';
-import 'package:bilge_ai/features/quests/logic/quest_completion_notifier.dart';
-import 'package:bilge_ai/features/quests/logic/quest_notifier.dart';
-import 'package:bilge_ai/shared/widgets/quest_completion_celebration.dart';
-import 'package:bilge_ai/data/models/plan_model.dart';
+import 'package:taktik/features/onboarding/providers/tutorial_provider.dart';
+import 'package:taktik/features/onboarding/widgets/tutorial_overlay.dart';
+import 'package:taktik/features/onboarding/models/tutorial_step.dart';
+import 'package:taktik/features/quests/models/quest_model.dart';
+import 'package:taktik/features/quests/logic/quest_completion_notifier.dart';
+import 'package:taktik/features/quests/logic/quest_notifier.dart';
+import 'package:taktik/shared/widgets/quest_completion_celebration.dart';
+import 'package:taktik/data/models/plan_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:bilge_ai/data/providers/firestore_providers.dart';
-import 'package:bilge_ai/shared/constants/highlight_keys.dart';
-import 'package:bilge_ai/shared/widgets/side_panel_drawer.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/shared/constants/highlight_keys.dart';
+import 'package:taktik/shared/widgets/side_panel_drawer.dart';
 
 // Drawer'ı başka ekranlardan açmak için kök Scaffold anahtarı
 final GlobalKey<ScaffoldState> rootScaffoldKey = GlobalKey<ScaffoldState>();

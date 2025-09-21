@@ -2,27 +2,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:bilge_ai/data/providers/firestore_providers.dart';
-import 'package:bilge_ai/features/auth/application/auth_controller.dart';
-import 'package:bilge_ai/features/home/screens/library_screen.dart';
-import 'package:bilge_ai/features/settings/screens/settings_screen.dart';
-import 'package:bilge_ai/shared/widgets/loading_screen.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/features/auth/application/auth_controller.dart';
+import 'package:taktik/features/home/screens/library_screen.dart';
+import 'package:taktik/features/settings/screens/settings_screen.dart';
+import 'package:taktik/shared/widgets/loading_screen.dart';
 import 'app_routes.dart';
 import 'auth_routes.dart';
 import 'onboarding_routes.dart';
 import 'main_shell_routes.dart';
-import 'package:bilge_ai/features/blog/screens/blog_screen.dart';
-import 'package:bilge_ai/features/premium/screens/premium_screen.dart' as premium;
-import 'package:bilge_ai/features/stats/screens/general_overview_screen.dart';
+import 'package:taktik/features/blog/screens/blog_screen.dart';
+import 'package:taktik/features/premium/screens/premium_screen.dart' as premium;
+import 'package:taktik/features/stats/screens/general_overview_screen.dart';
 import '../../features/blog/screens/blog_admin_editor_screen.dart';
-import 'package:bilge_ai/features/blog/screens/blog_detail_screen.dart';
-import 'package:bilge_ai/features/admin/screens/question_reports_screen.dart';
-import 'package:bilge_ai/features/admin/screens/question_report_detail_screen.dart';
-import 'package:bilge_ai/features/admin/screens/push_composer_screen.dart';
-import 'package:bilge_ai/features/admin/screens/admin_panel_screen.dart';
-import 'package:bilge_ai/features/admin/screens/user_management_screen.dart';
-import 'package:bilge_ai/shared/notifications/notification_center_screen.dart';
-import 'package:bilge_ai/features/profile/screens/user_search_screen.dart';
+import 'package:taktik/features/blog/screens/blog_detail_screen.dart';
+import 'package:taktik/features/admin/screens/question_reports_screen.dart';
+import 'package:taktik/features/admin/screens/question_report_detail_screen.dart';
+import 'package:taktik/features/admin/screens/push_composer_screen.dart';
+import 'package:taktik/features/admin/screens/admin_panel_screen.dart';
+import 'package:taktik/features/admin/screens/user_management_screen.dart';
+import 'package:taktik/shared/notifications/notification_center_screen.dart';
+import 'package:taktik/features/profile/screens/user_search_screen.dart';
 import 'transition_utils.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
@@ -63,7 +63,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       }
 
       // If the user is logged in, proceed with onboarding checks.
-      if (userProfileState.hasValue) {
+      if (userProfileState.hasValue && userProfileState.value != null) {
         final user = userProfileState.value!;
 
         // Onboarding Step 1: Basic info

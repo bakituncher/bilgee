@@ -1,9 +1,9 @@
 // lib/core/prompts/default_motivation_prompts.dart
-import 'package:bilge_ai/data/models/user_model.dart';
-import 'package:bilge_ai/data/models/test_model.dart';
-import 'package:bilge_ai/features/stats/logic/stats_analysis.dart';
+import 'package:taktik/data/models/user_model.dart';
+import 'package:taktik/data/models/test_model.dart';
+import 'package:taktik/features/stats/logic/stats_analysis.dart';
 import 'tone_utils.dart';
-import 'package:bilge_ai/core/prompts/prompt_remote.dart';
+import 'package:taktik/core/prompts/prompt_remote.dart';
 
 class DefaultMotivationPrompts {
   static String _commonHeader(String? examName) =>

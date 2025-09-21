@@ -1,6 +1,6 @@
 // lib/features/weakness_workshop/models/saved_workshop_model.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:bilge_ai/features/weakness_workshop/models/study_guide_model.dart';
+import 'package:taktik/features/weakness_workshop/models/study_guide_model.dart';
 
 class SavedWorkshopModel {
   final String id;

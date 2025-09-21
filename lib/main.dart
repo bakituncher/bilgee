@@ -2,8 +2,8 @@
 //Rahman ve Rahim olan Allah'ın adıyla
 //Bismilahirrahmanirrahim
 import 'dart:async';
-import 'package:bilge_ai/core/navigation/app_router.dart';
-import 'package:bilge_ai/core/theme/app_theme.dart';
+import 'package:taktik/core/navigation/app_router.dart';
+import 'package:taktik/core/theme/app_theme.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart'; // kDebugMode için bu import gerekli
@@ -11,10 +11,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'firebase_options.dart';
-import 'package:bilge_ai/core/prompts/strategy_prompts.dart';
+import 'package:taktik/core/prompts/strategy_prompts.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'shared/notifications/notification_service.dart';
-import 'package:bilge_ai/core/prompts/prompt_remote.dart';
+import 'package:taktik/core/prompts/prompt_remote.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {

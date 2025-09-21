@@ -1,9 +1,9 @@
 // lib/core/navigation/onboarding_routes.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:bilge_ai/features/onboarding/screens/onboarding_screen.dart';
-import 'package:bilge_ai/features/onboarding/screens/exam_selection_screen.dart';
-import 'package:bilge_ai/features/onboarding/screens/availability_screen.dart';
+import 'package:taktik/features/onboarding/screens/onboarding_screen.dart';
+import 'package:taktik/features/onboarding/screens/exam_selection_screen.dart';
+import 'package:taktik/features/onboarding/screens/availability_screen.dart';
 import 'app_routes.dart';
 import 'transition_utils.dart';
 

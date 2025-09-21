@@ -1,7 +1,7 @@
 // lib/features/profile/widgets/warrior_id_card.dart
 import 'package:flutter/material.dart';
-import 'package:bilge_ai/data/models/user_model.dart';
-import 'package:bilge_ai/core/theme/app_theme.dart';
+import 'package:taktik/data/models/user_model.dart';
+import 'package:taktik/core/theme/app_theme.dart';
 
 class WarriorIDCard extends StatelessWidget {
   final UserModel user;

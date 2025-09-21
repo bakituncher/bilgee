@@ -50,19 +50,34 @@ async function adjustPublicCounts(uid, { followersDelta = 0, followingDelta = 0 
   });
 }
 
-exports.onFollowerCreated = onDocumentCreated("users/{userId}/followers/{followerId}", async (event) => {
+exports.onFollowerCreated = onDocumentCreated({
+  document: "users/{userId}/followers/{followerId}",
+  region: "us-central1"
+}, async (event) => {
   const uid = event.params.userId;
   try { await adjustPublicCounts(uid, { followersDelta: +1 }); } catch (e) { logger.warn("onFollowerCreated failed", { uid, error: String(e) }); }
 });
-exports.onFollowerDeleted = onDocumentDeleted("users/{userId}/followers/{followerId}", async (event) => {
+
+exports.onFollowerDeleted = onDocumentDeleted({
+  document: "users/{userId}/followers/{followerId}",
+  region: "us-central1"
+}, async (event) => {
   const uid = event.params.userId;
   try { await adjustPublicCounts(uid, { followersDelta: -1 }); } catch (e) { logger.warn("onFollowerDeleted failed", { uid, error: String(e) }); }
 });
-exports.onFollowingCreated = onDocumentCreated("users/{userId}/following/{followingId}", async (event) => {
+
+exports.onFollowingCreated = onDocumentCreated({
+  document: "users/{userId}/following/{followingId}",
+  region: "us-central1"
+}, async (event) => {
   const uid = event.params.userId;
   try { await adjustPublicCounts(uid, { followingDelta: +1 }); } catch (e) { logger.warn("onFollowingCreated failed", { uid, error: String(e) }); }
 });
-exports.onFollowingDeleted = onDocumentDeleted("users/{userId}/following/{followingId}", async (event) => {
+
+exports.onFollowingDeleted = onDocumentDeleted({
+  document: "users/{userId}/following/{followingId}",
+  region: "us-central1"
+}, async (event) => {
   const uid = event.params.userId;
   try { await adjustPublicCounts(uid, { followingDelta: -1 }); } catch (e) { logger.warn("onFollowingDeleted failed", { uid, error: String(e) }); }
 });

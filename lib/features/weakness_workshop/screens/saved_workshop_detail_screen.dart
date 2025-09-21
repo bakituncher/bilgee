@@ -1,9 +1,9 @@
 // lib/features/weakness_workshop/screens/saved_workshop_detail_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:bilge_ai/core/theme/app_theme.dart';
-import 'package:bilge_ai/features/weakness_workshop/models/saved_workshop_model.dart';
-import 'package:bilge_ai/features/weakness_workshop/models/study_guide_model.dart';
+import 'package:taktik/core/theme/app_theme.dart';
+import 'package:taktik/features/weakness_workshop/models/saved_workshop_model.dart';
+import 'package:taktik/features/weakness_workshop/models/study_guide_model.dart';
 
 class SavedWorkshopDetailScreen extends StatelessWidget {
   final SavedWorkshopModel workshop;
