@@ -14,7 +14,10 @@ import 'firebase_options.dart';
 import 'package:taktik/core/prompts/strategy_prompts.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'shared/notifications/notification_service.dart';
+import 'package:taktik/core/navigation/app_router.dart';
 import 'package:taktik/core/prompts/prompt_remote.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'core/navigation/app_routes.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -103,8 +106,21 @@ void main() async {
       if (kDebugMode) debugPrint('[Intl] Tarih format başlatılamadı: $e');
     }
 
+    // Check if the welcome screen has been seen
+    final prefs = await SharedPreferences.getInstance();
+    final hasSeenWelcome = prefs.getBool('hasSeenWelcomeScreen') ?? false;
+
+    final initialLocation = hasSeenWelcome ? AppRoutes.loading : AppRoutes.preAuthWelcome;
+
     // Uygulamayı hızlıca ayağa kaldır
-    runApp(const ProviderScope(child: BilgeAiApp()));
+    runApp(
+      ProviderScope(
+        overrides: [
+          initialLocationProvider.overrideWithValue(initialLocation),
+        ],
+        child: const BilgeAiApp(),
+      ),
+    );
 
     // Ağ bağımlı preload işleri uygulamayı bloklamasın
     // RemotePrompts, StrategyPrompts ve QuestArmory eşzamanlı ve hata yalıtımlı

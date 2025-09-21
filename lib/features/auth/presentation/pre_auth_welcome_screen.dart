@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:taktik/data/providers/firestore_providers.dart';
-import 'package:taktik/features/auth/application/auth_controller.dart';
+import 'package:go_router/go_router.dart';
+import 'package:taktik/core/navigation/app_routes.dart';
+import 'package:taktik/data/providers/shared_prefs_provider.dart';
 
-class WelcomeScreen extends ConsumerWidget {
-  const WelcomeScreen({super.key});
+class PreAuthWelcomeScreen extends ConsumerWidget {
+  const PreAuthWelcomeScreen({super.key});
 
   Future<void> _continue(BuildContext context, WidgetRef ref) async {
-    final userId = ref.read(authControllerProvider).value?.uid;
-    if (userId != null) {
-      await ref.read(firestoreServiceProvider).markTutorialAsCompleted(userId);
-      // The router will automatically redirect upon state change.
+    // Set the flag in SharedPreferences
+    final prefs = await ref.read(sharedPreferencesProvider.future);
+    await prefs.setBool('hasSeenWelcomeScreen', true);
+
+    // Navigate to the login screen
+    if (context.mounted) {
+      context.go(AppRoutes.login);
     }
   }
 

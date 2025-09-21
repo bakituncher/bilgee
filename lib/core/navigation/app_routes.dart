@@ -1,10 +1,10 @@
 // lib/core/navigation/app_routes.dart
 class AppRoutes {
+  static const String preAuthWelcome = '/pre-auth-welcome';
   static const String loading = '/loading';
   static const String login = '/login';
   static const String register = '/register';
   static const String verifyEmail = '/verify-email';
-  static const String welcome = '/welcome';
   static const String profileCompletion = '/profile-completion';
   static const String examSelection = '/exam-selection';
   static const String availability = '/availability';

@@ -25,8 +25,14 @@ import 'package:taktik/shared/notifications/notification_center_screen.dart';
 import 'package:taktik/features/profile/screens/user_search_screen.dart';
 import 'transition_utils.dart';
 
+final initialLocationProvider = Provider<String>((ref) {
+  // This will be overridden in main.dart before the app starts.
+  return AppRoutes.loading;
+});
+
 final goRouterProvider = Provider<GoRouter>((ref) {
   final rootNavigatorKey = GlobalKey<NavigatorState>();
+  final initialLocation = ref.watch(initialLocationProvider);
 
   final listenable = ValueNotifier<bool>(false);
   ref.listen(authControllerProvider, (_, __) => listenable.value = !listenable.value);
@@ -34,7 +40,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
 
   return GoRouter(
     navigatorKey: rootNavigatorKey,
-    initialLocation: AppRoutes.loading,
+    initialLocation: initialLocation,
     debugLogDiagnostics: true,
     refreshListenable: listenable,
     redirect: (BuildContext context, GoRouterState state) {
@@ -65,11 +71,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       // If the user is logged in, proceed with onboarding checks.
       if (userProfileState.hasValue && userProfileState.value != null) {
         final user = userProfileState.value!;
-
-        // Onboarding Step 0: Welcome / Tutorial
-        if (!user.tutorialCompleted) {
-          return location == AppRoutes.welcome ? null : AppRoutes.welcome;
-        }
 
         // Onboarding Step 1: Profile Completion
         if (!user.profileCompleted) {
