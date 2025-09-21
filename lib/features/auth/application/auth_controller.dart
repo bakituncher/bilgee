@@ -47,15 +47,14 @@ class AuthController extends StreamNotifier<User?> {
 
   Future<void> _updateAdminClaim(User user) async {
     try {
-      final callable = FirebaseFunctions.instanceFor(region: 'us-central1').httpsCallable('setSelfAdmin');
+      // DÜZELTME: Fonksiyon adı yanlıştı ('setSelfAdmin').
+      // index.js içinde exports.admin = admin; olduğu için gerçek callable adı 'admin-setSelfAdmin'.
+      final callable = FirebaseFunctions.instanceFor(region: 'us-central1').httpsCallable('admin-setSelfAdmin');
       await callable.call();
-      // Kullanıcının token'ını yenilemeye zorla, böylece yeni claim'ler alınır.
-      await user.getIdTokenResult(true);
+      await user.getIdTokenResult(true); // claimleri yenile
       print('Admin claim updated successfully.');
     } catch (e) {
       print('Failed to update admin claim: $e');
-      // Hata durumunda kullanıcı deneyimini etkileme.
-      // Bu sadece bir yetkilendirme kontrolüdür.
     }
   }
 
