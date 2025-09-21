@@ -1,6 +1,7 @@
 // lib/features/auth/data/auth_repository.dart
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:taktik/data/repositories/firestore_service.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 
@@ -8,14 +9,16 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepository(
     FirebaseAuth.instance,
     ref.watch(firestoreServiceProvider),
+    GoogleSignIn(),
   );
 });
 
 class AuthRepository {
   final FirebaseAuth _firebaseAuth;
   final FirestoreService _firestoreService;
+  final GoogleSignIn _googleSignIn;
 
-  AuthRepository(this._firebaseAuth, this._firestoreService);
+  AuthRepository(this._firebaseAuth, this._firestoreService, this._googleSignIn);
 
   Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
 
@@ -128,6 +131,41 @@ class AuthRepository {
       }
     } catch (_) {
       throw 'Şifre sıfırlama e-postası gönderilemedi.';
+    }
+  }
+
+  Future<void> signInWithGoogle() async {
+    try {
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        // The user canceled the sign-in
+        return;
+      }
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      final userCredential = await _firebaseAuth.signInWithCredential(credential);
+      if (userCredential.user != null) {
+        // Check if user is new
+        final isNewUser = userCredential.additionalUserInfo?.isNewUser ?? false;
+        if (isNewUser) {
+          final user = userCredential.user!;
+          final nameParts = user.displayName?.split(' ') ?? [''];
+          final firstName = nameParts.isNotEmpty ? nameParts.first : '';
+          final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+          await _firestoreService.createUserProfile(
+            user: user,
+            firstName: firstName,
+            lastName: lastName,
+            username: user.email!.split('@').first, // or some other logic for username
+          );
+        }
+      }
+    } catch (e) {
+      // Handle exceptions
+      throw 'Google ile giriş yapılamadı. Lütfen tekrar deneyin.';
     }
   }
 }

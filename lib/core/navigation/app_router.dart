@@ -89,6 +89,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         if (location == AppRoutes.login || location == AppRoutes.register || location == AppRoutes.loading) {
           return AppRoutes.home;
         }
+
+        // Admin Panel Access Control
+        final isAdmin = user.isAdmin;
+        if (location.startsWith('/admin') && !isAdmin) {
+          return AppRoutes.home;
+        }
       }
 
       // If none of the above conditions are met, allow navigation.
