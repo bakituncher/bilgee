@@ -71,11 +71,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           return location == AppRoutes.profileCompletion ? null : AppRoutes.profileCompletion;
         }
 
-        // Onboarding Step 2: Basic info
-        if (!user.onboardingCompleted) {
-          return location == AppRoutes.onboarding ? null : AppRoutes.onboarding;
-        }
-
         // Onboarding Step 2: Exam Selection
         if (user.selectedExam == null || user.selectedExam!.isEmpty) {
           return location == AppRoutes.examSelection ? null : AppRoutes.examSelection;

@@ -435,29 +435,6 @@ class FirestoreService {
     await usersCollection.doc(userId).update({'tutorialCompleted': true});
   }
 
-  Future<void> updateOnboardingData({
-    required String userId,
-    required String goal,
-    required List<String> challenges,
-    required double weeklyStudyGoal,
-    Map<String, dynamic>? additionalData,
-  }) async {
-    final updateData = <String, dynamic>{
-      'goal': goal,
-      'challenges': challenges,
-      'weeklyStudyGoal': weeklyStudyGoal,
-    };
-
-    // Ek veri varsa ekle
-    if (additionalData != null) {
-      updateData.addAll(additionalData);
-    }
-
-    await usersCollection.doc(userId).update(updateData);
-    await _appStateDoc(userId).set({'onboardingCompleted': true}, SetOptions(merge: true));
-    await usersCollection.doc(userId).update({'onboardingCompleted': true});
-  }
-
   Future<void> updateUserProfile(String userId, Map<String, dynamic> data) async {
     final userDocRef = usersCollection.doc(userId);
 
@@ -734,7 +711,6 @@ class FirestoreService {
     final WriteBatch batch = _firestore.batch();
     final userDocRef = usersCollection.doc(userId);
     batch.update(userDocRef, {
-      'onboardingCompleted': false,
       'tutorialCompleted': false,
       'selectedExam': null,
       'selectedExamSection': null,
