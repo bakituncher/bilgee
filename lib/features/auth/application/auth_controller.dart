@@ -26,7 +26,7 @@ class AuthController extends StreamNotifier<User?> {
     if (user != null) {
       // Oturum açan kullanıcının admin yetkisini kontrol et ve ayarla.
       // Bu işlem arka planda sessizce yapılır.
-      _updateAdminClaim();
+      _updateAdminClaim(user);
 
       // --- ZİYARET KAYDI: user_activity aylık dokümanına yaz ---
       Future.delayed(const Duration(seconds: 2), () async {
@@ -45,12 +45,12 @@ class AuthController extends StreamNotifier<User?> {
     }
   }
 
-  Future<void> _updateAdminClaim() async {
+  Future<void> _updateAdminClaim(User user) async {
     try {
       final callable = FirebaseFunctions.instanceFor(region: 'us-central1').httpsCallable('setSelfAdmin');
       await callable.call();
       // Kullanıcının token'ını yenilemeye zorla, böylece yeni claim'ler alınır.
-      await ref.read(authRepositoryProvider).currentUser?.getIdTokenResult(true);
+      await user.getIdTokenResult(true);
       print('Admin claim updated successfully.');
     } catch (e) {
       print('Failed to update admin claim: $e');
