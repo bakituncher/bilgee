@@ -66,7 +66,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       if (userProfileState.hasValue && userProfileState.value != null) {
         final user = userProfileState.value!;
 
-        // Onboarding Step 1: Basic info
+        // Onboarding Step 1: Profile Completion
+        if (!user.profileCompleted) {
+          return location == AppRoutes.profileCompletion ? null : AppRoutes.profileCompletion;
+        }
+
+        // Onboarding Step 2: Basic info
         if (!user.onboardingCompleted) {
           return location == AppRoutes.onboarding ? null : AppRoutes.onboarding;
         }

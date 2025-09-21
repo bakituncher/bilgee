@@ -19,6 +19,7 @@ class UserModel {
   final String? goal;
   final List<String>? challenges;
   final double? weeklyStudyGoal;
+  final bool profileCompleted;
   final bool onboardingCompleted;
   final bool tutorialCompleted;
   final int streak;
@@ -77,6 +78,7 @@ class UserModel {
     this.goal,
     this.challenges,
     this.weeklyStudyGoal,
+    this.profileCompleted = false,
     this.onboardingCompleted = false,
     this.tutorialCompleted = false,
     this.streak = 0,
@@ -125,6 +127,7 @@ class UserModel {
     String? goal,
     List<String>? challenges,
     double? weeklyStudyGoal,
+    bool? profileCompleted,
     bool? onboardingCompleted,
     bool? tutorialCompleted,
     int? streak,
@@ -171,6 +174,7 @@ class UserModel {
       goal: goal ?? this.goal,
       challenges: challenges ?? this.challenges,
       weeklyStudyGoal: weeklyStudyGoal ?? this.weeklyStudyGoal,
+      profileCompleted: profileCompleted ?? this.profileCompleted,
       onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
       tutorialCompleted: tutorialCompleted ?? this.tutorialCompleted,
       streak: streak ?? this.streak,
@@ -245,6 +249,7 @@ class UserModel {
       goal: data['goal'],
       challenges: List<String>.from(data['challenges'] ?? []),
       weeklyStudyGoal: (data['weeklyStudyGoal'] as num?)?.toDouble(),
+      profileCompleted: data['profileCompleted'] ?? false,
       onboardingCompleted: data['onboardingCompleted'] ?? false,
       tutorialCompleted: data['tutorialCompleted'] ?? false,
       streak: data['streak'] ?? 0,
@@ -315,6 +320,7 @@ class UserModel {
       'goal': goal,
       'challenges': challenges,
       'weeklyStudyGoal': weeklyStudyGoal,
+      'profileCompleted': profileCompleted,
       'onboardingCompleted': onboardingCompleted,
       'tutorialCompleted': tutorialCompleted,
       'streak': streak,
@@ -381,6 +387,7 @@ class UserModel {
       goal: goal,
       challenges: challenges,
       weeklyStudyGoal: weeklyStudyGoal,
+      profileCompleted: profileCompleted,
       onboardingCompleted: onboardingCompleted,
       tutorialCompleted: tutorialCompleted,
       streak: streak ?? this.streak,
