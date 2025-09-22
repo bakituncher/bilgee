@@ -127,7 +127,7 @@ class SettingsScreen extends ConsumerWidget {
 
   Future<void> _launchURL(BuildContext context, String url) async {
     final uri = Uri.parse(url);
-    if (!await launchUrl(uri)) {
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Bağlantı açılamadı: $url')),
       );
@@ -138,9 +138,9 @@ class SettingsScreen extends ConsumerWidget {
     final Uri emailUri = Uri(
       scheme: 'mailto',
       path: email,
-      query: 'subject=TaktikAI Geri Bildirim',
+      query: 'subject=Taktik Geri Bildirim',
     );
-    if (!await launchUrl(emailUri)) {
+    if (!await launchUrl(emailUri, mode: LaunchMode.externalApplication)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('E-posta uygulaması bulunamadı.')),
       );
@@ -381,13 +381,13 @@ class SettingsScreen extends ConsumerWidget {
             icon: Icons.description_outlined,
             title: "Kullanım Sözleşmesi",
             subtitle: "Hizmet şartlarımızı okuyun",
-            onTap: () => _launchURL(context, "https://codenzi.com"),
+            onTap: () => _launchURL(context, "https://www.codenzi.com/taktik-kullanim-sozlesmesi.html"),
           ),
           SettingsTile(
             icon: Icons.privacy_tip_outlined,
             title: "Gizlilik Politikası",
             subtitle: "Verilerinizi nasıl koruduğumuzu öğrenin",
-            onTap: () => _launchURL(context, "https://codenzi.com"),
+            onTap: () => _launchURL(context, "https://www.codenzi.com/taktik-gizlilik-politikasi.html"),
           ),
           SettingsTile(
             icon: Icons.contact_support_outlined,
@@ -402,13 +402,13 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () {
               showAboutDialog(
                 context: context,
-                applicationName: 'TaktikAI',
+                applicationName: 'Taktik',
                 applicationVersion: '1.0.0',
                 applicationLegalese: '© 2025 Codenzi. Tüm hakları saklıdır.',
                 children: <Widget>[
                   const Padding(
                     padding: EdgeInsets.only(top: 15),
-                    child: Text('TaktikAI, kişisel yapay zeka destekli sınav koçunuzdur.'),
+                    child: Text('Taktik, kişisel yapay zeka destekli sınav koçunuzdur.'),
                   )
                 ],
               );

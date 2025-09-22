@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/gestures.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -136,7 +138,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'TaktikAi\'ye Hoş Geldin!',
+                'Taktik\'e Hoş Geldin!',
                 style: Theme.of(context).textTheme.headlineMedium,
                 textAlign: TextAlign.center,
               ),
@@ -349,9 +351,56 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     onChanged: _isLoading ? null : (v) => setState(() => _acceptPolicy = v ?? false),
                   ),
                   Expanded(
-                    child: Text(
-                      'Kullanım şartlarını ve gizlilik politikasını kabul ediyorum.',
-                      style: Theme.of(context).textTheme.bodySmall,
+                    child: RichText(
+                      text: TextSpan(
+                        style: Theme.of(context).textTheme.bodySmall,
+                        children: [
+                          TextSpan(
+                            text: 'Kullanım Sözleşmesi',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.primary,
+                              decoration: TextDecoration.underline,
+                            ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () async {
+                                const url = 'https://www.codenzi.com/taktik-kullanim-sozlesmesi.html';
+                                final uri = Uri.parse(url);
+                                try {
+                                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                } catch (e) {
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Link açılamadı')),
+                                    );
+                                  }
+                                }
+                              },
+                          ),
+                          const TextSpan(text: ' ve '),
+                          TextSpan(
+                            text: 'Gizlilik Politikası',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.primary,
+                              decoration: TextDecoration.underline,
+                            ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () async {
+                                const url = 'https://www.codenzi.com/taktik-gizlilik-politikasi.html';
+                                final uri = Uri.parse(url);
+                                try {
+                                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                } catch (e) {
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Link açılamadı')),
+                                    );
+                                  }
+                                }
+                              },
+                          ),
+                          const TextSpan(text: "'nı kabul ediyorum."),
+                        ],
+                      ),
                     ),
                   ),
                 ],

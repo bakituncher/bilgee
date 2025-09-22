@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/gestures.dart';
 
 class ProfileCompletionScreen extends ConsumerStatefulWidget {
   const ProfileCompletionScreen({super.key});
@@ -19,6 +21,7 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
   DateTime? _dateOfBirth;
   bool _isLoading = false;
   String? _usernameError;
+  bool _acceptPolicy = false;
 
   @override
   void dispose() {
@@ -31,6 +34,13 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
     FocusScope.of(context).unfocus();
     // Reset previous error
     setState(() => _usernameError = null);
+
+    if (!_acceptPolicy) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Lütfen kullanım şartlarını ve gizlilik politikasını kabul edin.')),
+      );
+      return;
+    }
 
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
@@ -177,6 +187,68 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
                                 ),
                                 onTap: () => _selectDate(context),
                                 validator: (value) => _dateOfBirth == null ? 'Lütfen doğum tarihinizi seçin.' : null,
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Checkbox(
+                                    value: _acceptPolicy,
+                                    onChanged: _isLoading ? null : (value) => setState(() => _acceptPolicy = value ?? false),
+                                  ),
+                                  Expanded(
+                                    child: RichText(
+                                      text: TextSpan(
+                                        style: theme.textTheme.bodySmall,
+                                        children: [
+                                          TextSpan(
+                                            text: 'Kullanım Sözleşmesi',
+                                            style: TextStyle(
+                                              color: theme.colorScheme.primary,
+                                              decoration: TextDecoration.underline,
+                                            ),
+                                            recognizer: TapGestureRecognizer()
+                                              ..onTap = () async {
+                                                const url = 'https://www.codenzi.com/taktik-kullanim-sozlesmesi.html';
+                                                final uri = Uri.parse(url);
+                                                try {
+                                                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                                } catch (e) {
+                                                  if (mounted) {
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      const SnackBar(content: Text('Link açılamadı')),
+                                                    );
+                                                  }
+                                                }
+                                              },
+                                          ),
+                                          const TextSpan(text: ' ve '),
+                                          TextSpan(
+                                            text: 'Gizlilik Politikası',
+                                            style: TextStyle(
+                                              color: theme.colorScheme.primary,
+                                              decoration: TextDecoration.underline,
+                                            ),
+                                            recognizer: TapGestureRecognizer()
+                                              ..onTap = () async {
+                                                const url = 'https://www.codenzi.com/taktik-gizlilik-politikasi.html';
+                                                final uri = Uri.parse(url);
+                                                try {
+                                                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                                } catch (e) {
+                                                  if (mounted) {
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      const SnackBar(content: Text('Link açılamadı')),
+                                                    );
+                                                  }
+                                                }
+                                              },
+                                          ),
+                                          const TextSpan(text: "'nı kabul ediyorum."),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                               const SizedBox(height: 24),
                               SizedBox(
