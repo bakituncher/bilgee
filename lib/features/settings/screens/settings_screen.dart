@@ -13,8 +13,14 @@ import 'package:taktik/features/settings/widgets/settings_tile.dart';
 import 'package:taktik/data/providers/admin_providers.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
 
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   // ONAY AKIŞINI YÖNETEN FONKSİYONLAR
 
@@ -77,6 +83,7 @@ class SettingsScreen extends ConsumerWidget {
                     key: formKey,
                     child: TextFormField(
                       controller: confirmationController,
+                      onChanged: (_) => setState(() {}), // Buton durumunu anında güncelle
                       validator: (value) {
                         if (value == null || value.trim() != confirmationText) {
                           return 'Lütfen büyük harflerle "SİL" yazın.';
@@ -193,9 +200,9 @@ class SettingsScreen extends ConsumerWidget {
               setState(() => isSubmitting = true);
               try {
                 await ref.read(authControllerProvider.notifier).updatePassword(
-                      currentPassword: currentController.text.trim(),
-                      newPassword: newController.text.trim(),
-                    );
+                  currentPassword: currentController.text.trim(),
+                  newPassword: newController.text.trim(),
+                );
                 if (context.mounted) {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -304,7 +311,7 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     // Sadece hata durumunda kullanıcıya mesaj göstermek için dinle
     ref.listen<SettingsState>(settingsNotifierProvider, (previous, next) {
       if (next.resetStatus == ResetStatus.failure) {
@@ -346,7 +353,7 @@ class SettingsScreen extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         children: [
           const SettingsSection(title: "Hesap"),
-           SettingsTile(
+          SettingsTile(
             icon: Icons.person_outline_rounded,
             title: "Profili Düzenle",
             subtitle: "Kişisel bilgilerinizi güncelleyin",
@@ -377,7 +384,7 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () => context.push(AppRoutes.availability),
           ),
           const SettingsSection(title: "Uygulama"),
-           SettingsTile(
+          SettingsTile(
             icon: Icons.description_outlined,
             title: "Kullanım Sözleşmesi",
             subtitle: "Hizmet şartlarımızı okuyun",
