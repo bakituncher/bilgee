@@ -30,6 +30,38 @@ exports.registerFcmToken = onCall({region: 'us-central1'}, async (request) => {
     return {ok: true};
   });
 
+// ---- FCM TOKEN TEMİZLEME ----
+exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => {
+  if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
+  const uid = request.auth.uid;
+  const token = String(request.data?.token || '');
+  if (!token || token.length < 10) throw new HttpsError('invalid-argument', 'Geçerli token gerekli');
+
+  try {
+    // Token'a sahip tüm cihaz kayıtlarını bul ve devre dışı bırak
+    const devicesRef = db.collection('users').doc(uid).collection('devices');
+    const snapshot = await devicesRef.where('token', '==', token).get();
+
+    const batch = db.batch();
+    snapshot.docs.forEach(doc => {
+      batch.update(doc.ref, {
+        disabled: true,
+        unregisteredAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+    });
+
+    if (!snapshot.empty) {
+      await batch.commit();
+      logger.info('FCM token unregistered', { uid, tokenLength: token.length, devicesUpdated: snapshot.size });
+    }
+
+    return { ok: true, devicesUpdated: snapshot.size };
+  } catch (error) {
+    logger.error('FCM token unregister failed', { uid, error: String(error) });
+    throw new HttpsError('internal', 'Token temizleme işlemi başarısız');
+  }
+});
+
   async function getActiveTokens(uid) {
     const snap = await db.collection('users').doc(uid).collection('devices').where('disabled','==', false).limit(50).get();
     if (snap.empty) return [];
@@ -401,3 +433,4 @@ async function createInAppForUser(uid, payload) {
       return false;
     }
   }
+

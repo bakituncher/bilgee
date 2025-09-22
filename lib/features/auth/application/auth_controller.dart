@@ -6,6 +6,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/auth/data/auth_repository.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
+import '../../../shared/notifications/notification_service.dart';
 
 final authControllerProvider = StreamNotifierProvider<AuthController, User?>(() {
   return AuthController();
@@ -27,6 +28,15 @@ class AuthController extends StreamNotifier<User?> {
       // Oturum açan kullanıcının admin yetkisini kontrol et ve ayarla.
       // Bu işlem arka planda sessizce yapılır.
       _updateAdminClaim(user);
+
+      // Yeni giriş için bildirim token'ını yenile
+      Future.delayed(const Duration(seconds: 1), () async {
+        try {
+          await NotificationService.instance.refreshTokenOnLogin();
+        } catch (e) {
+          print("Bildirim token yenileme hatası (güvenli): $e");
+        }
+      });
 
       // --- ZİYARET KAYDI: user_activity aylık dokümanına yaz ---
       Future.delayed(const Duration(seconds: 2), () async {

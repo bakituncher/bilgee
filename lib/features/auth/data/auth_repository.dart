@@ -1,9 +1,11 @@
 // lib/features/auth/data/auth_repository.dart
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:taktik/data/repositories/firestore_service.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
+import '../../../shared/notifications/notification_service.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepository(
@@ -80,6 +82,14 @@ class AuthRepository {
   }
 
   Future<void> signOut() async {
+    // Çıkış yapıldığında bildirim token'ını temizle
+    try {
+      await NotificationService.instance.clearTokenOnLogout();
+    } catch (e) {
+      // Bildirim temizleme hatası uygulamayı engellemesin
+      if (kDebugMode) debugPrint('Bildirim temizleme hatası: $e');
+    }
+
     await _firebaseAuth.signOut();
   }
 

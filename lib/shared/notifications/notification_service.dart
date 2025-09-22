@@ -17,25 +17,37 @@ class NotificationService {
   AndroidNotificationChannel? _channel;
   void Function(String route)? _navigate;
 
-  // Son gösterilenleri kısa süreliğine tut (2 dk) – çift bildirimi engelle
+  // Son gösterilenleri daha uzun süre tut (10 dk) – çift bildirimi engelle
   final Map<String, DateTime> _recent = {};
   bool _isDuplicate(RemoteMessage msg, {required String title, required String body, required String route}) {
     try {
       final now = DateTime.now();
-      // Eski kayıtları temizle
-      _recent.removeWhere((key, ts) => now.difference(ts).inSeconds > 120);
-      String key = msg.messageId ?? msg.data['campaignId'] as String? ?? '';
-      if (key.isEmpty) key = '${title}|${body}|${route}';
-      if (_recent.containsKey(key)) return true;
+      // Eski kayıtları temizle (10 dakika)
+      _recent.removeWhere((key, ts) => now.difference(ts).inMinutes > 10);
+
+      // Daha güvenilir bir anahtar oluştur
+      String key = msg.messageId ?? msg.data['messageId'] as String? ?? '';
+      if (key.isEmpty) {
+        // Mesaj ID yoksa hash tabanlı anahtar oluştur
+        final content = '${title}|${body}|${route}|${msg.data.toString()}';
+        key = content.hashCode.toString();
+      }
+
+      if (_recent.containsKey(key)) {
+        if (kDebugMode) debugPrint('Çift bildirim engellendi: $key');
+        return true;
+      }
       _recent[key] = now;
       return false;
-    } catch (_) {
+    } catch (e) {
+      if (kDebugMode) debugPrint('Çift bildirim kontrolü hatası: $e');
       return false;
     }
   }
 
   String? _appVersion;
   int? _appBuild;
+  String? _currentToken;
 
   Future<void> initialize({required void Function(String route) onNavigate}) async {
     if (_initialized) return;
@@ -141,6 +153,7 @@ class NotificationService {
 
   Future<void> _registerToken(String token, String? appVersion, int? appBuild) async {
     try {
+      _currentToken = token;
       final HttpsCallable fn = FirebaseFunctions.instance.httpsCallable('notifications-registerFcmToken');
       final platform = Platform.isAndroid ? 'android' : (Platform.isIOS ? 'ios' : 'other');
       final lang = Intl.getCurrentLocale();
@@ -151,8 +164,48 @@ class NotificationService {
         if (appVersion != null) 'appVersion': appVersion,
         if (appBuild != null) 'appBuild': appBuild,
       });
+      if (kDebugMode) debugPrint('FCM token başarıyla kaydedildi');
     } catch (e) {
       if (kDebugMode) debugPrint('Token kaydı başarısız: $e');
+    }
+  }
+
+  /// Kullanıcı çıkış yaptığında çağrılmalı - eski hesabın token'ını temizler
+  Future<void> clearTokenOnLogout() async {
+    try {
+      if (_currentToken != null) {
+        final HttpsCallable fn = FirebaseFunctions.instance.httpsCallable('notifications-unregisterFcmToken');
+        await fn.call({
+          'token': _currentToken,
+        });
+        if (kDebugMode) debugPrint('FCM token temizlendi: $_currentToken');
+        _currentToken = null;
+      }
+
+      // Çift bildirim önleme cache'ini de temizle
+      _recent.clear();
+
+      // Firebase Messaging token'ını sil
+      await FirebaseMessaging.instance.deleteToken();
+
+      if (kDebugMode) debugPrint('Çıkış işlemi tamamlandı - tüm bildirim verileri temizlendi');
+    } catch (e) {
+      if (kDebugMode) debugPrint('Token temizleme hatası: $e');
+    }
+  }
+
+  /// Yeni hesap girişinde çağrılmalı - yeni token'ı kaydeder
+  Future<void> refreshTokenOnLogin() async {
+    try {
+      // Eski cache'i temizle
+      _recent.clear();
+
+      // Yeni token al ve kaydet
+      await _ensureAndRegisterToken();
+
+      if (kDebugMode) debugPrint('Yeni giriş için token yenilendi');
+    } catch (e) {
+      if (kDebugMode) debugPrint('Token yenileme hatası: $e');
     }
   }
 
