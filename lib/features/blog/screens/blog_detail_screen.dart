@@ -84,10 +84,10 @@ class BlogDetailScreen extends ConsumerWidget {
           }
 
           final chips = post.tags.map((t) => Chip(
-                label: Text(t, style: GoogleFonts.montserrat(fontWeight: FontWeight.w600)),
-                backgroundColor: AppTheme.lightSurfaceColor.withValues(alpha: .25),
-                shape: StadiumBorder(side: BorderSide(color: AppTheme.lightSurfaceColor.withValues(alpha: .4))),
-              ));
+            label: Text(t, style: GoogleFonts.montserrat(fontWeight: FontWeight.w600)),
+            backgroundColor: AppTheme.lightSurfaceColor.withValues(alpha: .25),
+            shape: StadiumBorder(side: BorderSide(color: AppTheme.lightSurfaceColor.withValues(alpha: .4))),
+          ));
 
           return CustomScrollView(
             slivers: [
@@ -143,7 +143,7 @@ class BlogDetailScreen extends ConsumerWidget {
                             children: [
                               Icon(Icons.person_outline_rounded, size: 16, color: AppTheme.secondaryTextColor),
                               const SizedBox(width: 6),
-                              Text(post.author ?? 'TaktikAI', style: TextStyle(color: AppTheme.secondaryTextColor)),
+                              Text('Taktik Ekibi', style: TextStyle(color: AppTheme.secondaryTextColor)),
                               const SizedBox(width: 12),
                               Icon(Icons.schedule_rounded, size: 16, color: AppTheme.secondaryTextColor),
                               const SizedBox(width: 6),
