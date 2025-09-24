@@ -30,8 +30,7 @@ async function isSuperAdmin(uid) {
 exports.setAdminClaim = onCall({region: 'us-central1'}, async (request) => {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
   const isSuper = await isSuperAdmin(request.auth.uid);
-  const isAdmin = request.auth.token && request.auth.token.admin === true;
-  if (!isSuper && !isAdmin) throw new HttpsError('permission-denied', 'Admin yetkisi gerekli');
+  if (!isSuper) throw new HttpsError('permission-denied', 'Bu işlem için süper admin yetkisi gereklidir.');
 
   const uid = request.data?.uid;
   const makeAdmin = !!request.data?.makeAdmin;
@@ -242,4 +241,9 @@ exports.findUserByEmail = onCall({region: 'us-central1'}, async (request) => {
         }
         throw new HttpsError('internal', 'Kullanıcı aranırken bir hata oluştu.');
     }
+});
+
+exports.isCurrentUserSuperAdmin = onCall({region: 'us-central1'}, async (request) => {
+    if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
+    return { isSuperAdmin: await isSuperAdmin(request.auth.uid) };
 });

@@ -1,7 +1,8 @@
 // lib/data/providers/admin_providers.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:taktik/features/auth/application/auth_controller.dart'; // Add this import
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:taktik/features/auth/application/auth_controller.dart';
 
 final firebaseAuthProvider = Provider<FirebaseAuth>((ref) => FirebaseAuth.instance);
 
@@ -20,5 +21,24 @@ final adminClaimProvider = FutureProvider<bool>((ref) async {
 
   // Return true if the 'admin' claim is set to true.
   return claims['admin'] == true;
+});
+
+final superAdminProvider = FutureProvider<bool>((ref) async {
+  // Re-evaluate if the user changes
+  final user = ref.watch(authControllerProvider).value;
+  if (user == null) return false;
+
+  try {
+    final callable = FirebaseFunctions.instanceFor(region: 'us-central1')
+        .httpsCallable('admin-isCurrentUserSuperAdmin');
+    final result = await callable.call();
+    return result.data['isSuperAdmin'] ?? false;
+  } on FirebaseFunctionsException catch (e) {
+    print('Error checking super admin status: ${e.code} ${e.message}');
+    return false;
+  } catch (e) {
+    print('An unexpected error occurred while checking super admin status: $e');
+    return false;
+  }
 });
 
