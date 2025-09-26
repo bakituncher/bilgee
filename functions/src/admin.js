@@ -1,4 +1,6 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const sanitizeHtml = require("sanitize-html");
+const validator = require("validator");
 const { admin, auth, db, messaging } = require("./init");
 const { logAdminAction } = require("./utils");
 
@@ -190,8 +192,22 @@ exports.adminSendPush = onCall({
 
     const { title, body, route, imageUrl, audience, sendType } = request.data;
 
-    if (!title || !body) {
+    const sanitizedTitle = sanitizeHtml(title, {
+      allowedTags: [],
+      allowedAttributes: {},
+    });
+
+    const sanitizedBody = sanitizeHtml(body, {
+      allowedTags: [],
+      allowedAttributes: {},
+    });
+
+    if (!sanitizedTitle || !sanitizedBody) {
         throw new HttpsError('invalid-argument', 'Başlık ve içerik gerekli');
+    }
+
+    if (imageUrl && !validator.isURL(imageUrl)) {
+      throw new HttpsError('invalid-argument', 'Geçersiz resim URL adresi');
     }
 
     const query = await _getAudienceQuery(audience);
@@ -217,8 +233,8 @@ exports.adminSendPush = onCall({
 
     const message = {
         notification: {
-            title: title,
-            body: body,
+            title: sanitizedTitle,
+            body: sanitizedBody,
         },
         android: {
             notification: {
@@ -249,8 +265,8 @@ exports.adminSendPush = onCall({
     console.log(`Push sent. Success: ${successCount}, Failure: ${failureCount}`);
 
   await logAdminAction(request.auth.uid, "ADMIN_SEND_PUSH", {
-    title,
-    body,
+    title: sanitizedTitle,
+    body: sanitizedBody,
     route,
     imageUrl: imageUrl || null,
     audience,

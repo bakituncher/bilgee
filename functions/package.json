@@ -15,7 +15,9 @@
   "main": "index.js",
   "dependencies": {
     "firebase-admin": "^12.1.1",
-    "firebase-functions": "^5.0.1"
+    "firebase-functions": "^5.0.1",
+    "sanitize-html": "^2.11.0",
+    "validator": "^13.11.0"
   },
   "devDependencies": {
     "eslint": "^8.57.0",
