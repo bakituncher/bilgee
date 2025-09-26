@@ -156,9 +156,13 @@ final isFollowingProvider = StreamProvider.family.autoDispose<bool, String>((ref
   return ref.watch(firestoreServiceProvider).streamIsFollowing(me.uid, targetUserId);
 });
 
-// TAKIP: Belirli bir kullanıcının takipçi/takip sayısı
+// TAKIP: Belirli bir kullanıcının takipçi/takip sayısı (Optimize Edilmiş)
 final followCountsProvider = StreamProvider.family.autoDispose<(int, int), String>((ref, userId) {
-  return ref.watch(firestoreServiceProvider).streamFollowCounts(userId);
+  // userProfileByIdProvider zaten kullanıcı dokümanını dinliyor.
+  // Bu provider'dan gelen UserModel içindeki sayaçları kullanalım.
+  return ref.watch(userProfileByIdProvider(userId)).map((user) {
+    return (user.followerCount ?? 0, user.followingCount ?? 0);
+  });
 });
 
 // TAKIP: Listeleme için ID akışları

@@ -1132,33 +1132,6 @@ class FirestoreService {
         .map((snap) => snap.exists);
   }
 
-  /// Stream follow counts as a record (followers, following)
-  Stream<(int followers, int following)> streamFollowCounts(String userId) {
-    return Stream<(int, int)>.multi((controller) {
-      int? lastFollowers;
-      int? lastFollowing;
-
-      void emitIfReady() {
-        if (lastFollowers == null || lastFollowing == null) return;
-        controller.add((lastFollowers!, lastFollowing!));
-      }
-
-      final subF = _followersCollection(userId).snapshots().listen((qs) {
-        lastFollowers = qs.size;
-        emitIfReady();
-      }, onError: controller.addError);
-
-      final subG = _followingCollection(userId).snapshots().listen((qs) {
-        lastFollowing = qs.size;
-        emitIfReady();
-      }, onError: controller.addError);
-
-      controller.onCancel = () async {
-        await subF.cancel();
-        await subG.cancel();
-      };
-    });
-  }
 
   /// Follow a user (adds docs both sides)
   Future<void> followUser({required String currentUserId, required String targetUserId}) async {
