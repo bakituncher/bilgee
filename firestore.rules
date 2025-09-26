@@ -1,6 +1,80 @@
 rules_version = '2';
 
 service cloud.firestore {
+  // --- Helper Functions for Schema Validation ---
+
+  function isValidUserCreate(data) {
+    // Gerekli alanlar ve türleri
+    let requiredKeys = ['id', 'email', 'firstName', 'lastName', 'username', 'profileCompleted', 'tutorialCompleted', 'isAdmin'];
+    let stringKeys = ['id', 'email', 'firstName', 'lastName', 'username'];
+    let boolKeys = ['profileCompleted', 'tutorialCompleted', 'isAdmin'];
+
+    // İzin verilen opsiyonel alanlar ve türleri
+    let optionalStringKeys = ['gender', 'goal', 'selectedExam', 'selectedExamSection', 'avatarStyle', 'avatarSeed'];
+    let optionalTimestampKeys = ['dateOfBirth'];
+    let optionalNumberKeys = ['weeklyStudyGoal'];
+    let optionalListKeys = ['challenges'];
+
+    let allAllowedKeys = requiredKeys.concat(optionalStringKeys).concat(optionalTimestampKeys).concat(optionalNumberKeys).concat(optionalListKeys);
+
+    return data.keys().hasAll(requiredKeys) &&
+           data.keys().hasOnly(allAllowedKeys) &&
+           // Gerekli alanların tür kontrolü
+           (data.id is string && data.id == request.auth.uid) &&
+           data.email is string &&
+           data.firstName is string &&
+           data.lastName is string &&
+           (data.username is string && data.username.size() > 2 && data.username.size() < 25) &&
+           data.profileCompleted is bool &&
+           data.tutorialCompleted is bool &&
+           // Güvenlik: isAdmin oluşturulurken false olmalı
+           data.isAdmin == false &&
+           // Opsiyonel alanların tür kontrolü
+           (data.get('gender', '') is string) &&
+           (data.get('goal', '') is string) &&
+           (data.get('selectedExam', '') is string) &&
+           (data.get('selectedExamSection', '') is string) &&
+           (data.get('avatarStyle', '') is string) &&
+           (data.get('avatarSeed', '') is string) &&
+           (data.get('dateOfBirth', timestamp.date(1900,1,1)) is timestamp) &&
+           (data.get('weeklyStudyGoal', 0.0) is number) &&
+           (data.get('challenges', []) is list);
+  }
+
+  function isValidUserUpdate(request, resource) {
+    let data = request.resource.data;
+    let oldData = resource.data;
+    // Güncellenmesine izin verilen alanlar
+    let updatableFields = [
+      'name', 'firstName', 'lastName', 'username', 'gender', 'dateOfBirth',
+      'goal', 'challenges', 'weeklyStudyGoal', 'profileCompleted',
+      'tutorialCompleted', 'selectedExam', 'selectedExamSection',
+      'weeklyAvailability', 'avatarStyle', 'avatarSeed', 'updatedAt'
+    ];
+
+    return
+      // Değiştirilemez alanların kontrolü
+      data.email == oldData.email &&
+      data.isAdmin == oldData.isAdmin &&
+      // Yalnızca izin verilen alanların güncellendiğinden emin ol
+      request.resource.data.diff(resource.data).affectedKeys().hasOnly(updatableFields) &&
+      // Güncellenen alanların tür kontrolü
+      (data.username is string && data.username.size() > 2 && data.username.size() < 25) &&
+      (data.firstName is string) && (data.lastName is string) && (data.name is string) &&
+      (data.gender is string) &&
+      (data.dateOfBirth is timestamp) &&
+      (data.goal is string) &&
+      (data.challenges is list) &&
+      (data.weeklyStudyGoal is number) &&
+      (data.profileCompleted is bool) &&
+      (data.tutorialCompleted is bool) &&
+      (data.selectedExam is string) &&
+      (data.selectedExamSection is string) &&
+      (data.weeklyAvailability is map) &&
+      (data.avatarStyle is string) &&
+      (data.avatarSeed is string);
+  }
+
   match /databases/{database}/documents {
 
     // =====================================================================
@@ -11,48 +85,72 @@ service cloud.firestore {
       // Diğer kullanıcıların genel profil bilgileri için "public_profiles" koleksiyonu kullanılır.
       allow read: if request.auth.uid == userId;
 
-      // YAZMA İZNİ - Kullanıcı kendi verilerini yazabilir
-      allow write: if request.auth != null && request.auth.uid == userId;
+      // YAZMA İZNİ - Kullanıcı kendi verilerini, şema doğrulaması ile yazabilir
+      allow create: if request.auth.uid == userId && isValidUserCreate(request.resource.data);
+      allow update: if request.auth.uid == userId && isValidUserUpdate(request, resource);
+      // Kullanıcı silme işlemi istemci tarafından yapılamaz.
+      allow delete: if false;
 
 
-      // --- ALT KOLEKSİYONLAR ---
+      // --- ALT KOLEKSİYONLAR (GÜVENLİK GÜÇLENDİRİLDİ) ---
+      function isValidQuestUpdate(request, resource) {
+        return request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['progress', 'isCompleted', 'completedAt', 'rewardClaimed', 'rewardClaimedAt', 'actualReward']);
+      }
+
       match /daily_quests/{questId} {
-        allow read, write: if request.auth.uid == userId;
+        allow read: if request.auth.uid == userId;
+        allow update: if request.auth.uid == userId && isValidQuestUpdate(request, resource);
+        allow create, delete: if false;
       }
-
       match /weekly_quests/{questId} {
-        allow read, write: if request.auth.uid == userId;
+        allow read: if request.auth.uid == userId;
+        allow update: if request.auth.uid == userId && isValidQuestUpdate(request, resource);
+        allow create, delete: if false;
       }
-
       match /monthly_quests/{questId} {
-        allow read, write: if request.auth.uid == userId;
+        allow read: if request.auth.uid == userId;
+        allow update: if request.auth.uid == userId && isValidQuestUpdate(request, resource);
+        allow create, delete: if false;
       }
 
       match /state/{docId} {
-        allow read, write: if request.auth.uid == userId;
+        allow read: if request.auth.uid == userId;
+        allow update: if request.auth.uid == userId && (docId == 'app_state' && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['tutorialCompleted', 'updatedAt']));
+        allow create, delete: if false;
       }
 
       match /plans/{docId} {
-        allow read, write: if request.auth.uid == userId;
+        allow read: if request.auth.uid == userId;
+        allow create: if request.auth.uid == userId;
+        allow update: if request.auth.uid == userId && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['studyPacing', 'weeklyPlan', 'updatedAt']);
+        allow delete: if false;
       }
 
       match /performance/{docId} {
-        allow read, write: if request.auth.uid == userId;
+        allow read: if request.auth.uid == userId;
+        allow write: if false;
         match /masteredTopics/{masteredTopicId} {
-          allow read, write: if request.auth.uid == userId;
+          allow read: if request.auth.uid == userId;
+          allow write: if false;
         }
       }
 
       match /topic_performance/{topicId} {
-        allow read, write: if request.auth.uid == userId;
+        allow read: if request.auth.uid == userId;
+        allow write: if false;
       }
 
       match /savedWorkshops/{workshopId} {
-        allow read, write: if request.auth.uid == userId;
+        allow read, create, delete: if request.auth.uid == userId;
+        allow update: if false;
       }
 
       match /user_activity/{activityId} {
-        allow read, write: if request.auth.uid == userId;
+        allow read: if request.auth.uid == userId;
+        allow create: if request.auth.uid == userId;
+        allow update: if request.auth.uid == userId && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['practiceVolume', 'visits', 'focusMinutes', 'completedTasks', 'date', 'dateKey', 'updatedAt']);
+        allow delete: if false;
       }
 
       match /devices/{deviceId} {
