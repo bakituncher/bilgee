@@ -754,64 +754,6 @@ class FirestoreService {
     }, SetOptions(merge: true));
   }
 
-  Future<void> resetUserDataForNewExam(String userId) async {
-    final WriteBatch batch = _firestore.batch();
-    final userDocRef = usersCollection.doc(userId);
-    batch.update(userDocRef, {
-      'tutorialCompleted': false,
-      'selectedExam': null,
-      'selectedExamSection': null,
-      // Kökteki sayaçları temizleme (artık stats'ta tutuluyor)
-      'weeklyAvailability': {},
-      'goal': null,
-      'challenges': [],
-      'weeklyStudyGoal': null,
-    });
-
-    // Stats sıfırla
-    final statsRef = _userStatsDoc(userId);
-    batch.set(statsRef, {
-      'streak': 0,
-      'lastStreakUpdate': null,
-      'testCount': 0,
-      'totalNetSum': 0.0,
-      'engagementScore': 0,
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
-
-    batch.set(_performanceDoc(userId), const PerformanceSummary().toMap());
-    batch.set(_planDoc(userId), PlanDocument().toMap());
-
-    final testsSnapshot = await _testsCollection.where('userId', isEqualTo: userId).get();
-    for (final doc in testsSnapshot.docs) {
-      batch.delete(doc.reference);
-    }
-
-    final focusSnapshot = await _focusSessionsCollection.where('userId', isEqualTo: userId).get();
-    for (final doc in focusSnapshot.docs) {
-      batch.delete(doc.reference);
-    }
-
-    // user_activity alt koleksiyonunu temizle
-    final activitySnap = await _userActivityCollection(userId).get();
-    for (final doc in activitySnap.docs) {
-      batch.delete(doc.reference);
-    }
-
-    // topic_performance alt koleksiyonunu temizle
-    final topicSnap = await _topicPerformanceCollection(userId).get();
-    for (final doc in topicSnap.docs) {
-      batch.delete(doc.reference);
-    }
-
-    // masteredTopics alt koleksiyonunu temizle
-    final masteredSnap = await _masteredTopicsCollection(userId).get();
-    for (final doc in masteredSnap.docs) {
-      batch.delete(doc.reference);
-    }
-
-    await batch.commit();
-  }
 
   Future<List<LeaderboardEntry>> getLeaderboardUsers(String examType) async {
     final snapshot = await _leaderboardsCollection
