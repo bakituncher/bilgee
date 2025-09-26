@@ -213,5 +213,15 @@ service cloud.firestore {
       // Sadece sunucu (admin SDK) erişebilir.
       allow read, write: if false;
     }
+
+    // =====================================================================
+    // ADMIN LOGS (/admin_logs)
+    // =====================================================================
+    match /admin_logs/{logId} {
+      // Sadece adminler okuyabilir.
+      allow read: if request.auth != null && request.auth.token.admin == true;
+      // İstemci tarafından yazılamaz.
+      allow write: if false;
+    }
   }
 }

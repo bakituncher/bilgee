@@ -1,5 +1,6 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { admin, auth, db, messaging } = require("./init");
+const { logAdminAction } = require("./utils");
 
 // ---- ADMIN CLAIM YÖNETİMİ ----
 async function getSuperAdmins() {
@@ -45,6 +46,12 @@ exports.setAdminClaim = onCall({region: 'us-central1'}, async (request) => {
     // Revoke tokens to force re-login and claim refresh
     await auth.revokeRefreshTokens(uid);
   }
+
+  await logAdminAction(request.auth.uid, "SET_ADMIN_CLAIM", {
+    targetUid: uid,
+    makeAdmin,
+  });
+
   return {ok: true, uid, admin: makeAdmin};
 });
 
@@ -56,6 +63,9 @@ exports.setSelfAdmin = onCall({region: 'us-central1'}, async (request) => {
   const me = await auth.getUser(uid);
   const existing = me.customClaims || {};
   await auth.setCustomUserClaims(uid, {...existing, admin: true});
+
+  await logAdminAction(uid, "SET_SELF_ADMIN_CLAIM");
+
   return {ok: true, uid, admin: true};
 });
 
@@ -207,6 +217,16 @@ exports.adminSendPush = onCall({region: 'us-central1'}, async (request) => {
     const failureCount = response.failureCount;
 
     console.log(`Push sent. Success: ${successCount}, Failure: ${failureCount}`);
+
+  await logAdminAction(request.auth.uid, "ADMIN_SEND_PUSH", {
+    title,
+    body,
+    route,
+    imageUrl: imageUrl || null,
+    audience,
+    successCount,
+    failureCount,
+  });
 
     return { ok: true, totalSent: successCount, totalUsers: totalUsers };
 });

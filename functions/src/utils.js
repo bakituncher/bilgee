@@ -86,10 +86,31 @@ async function computeTestAggregates(input) {
   };
 }
 
+const { db } = require("./init");
+
+async function logAdminAction(adminUid, action, data = {}) {
+  if (!adminUid || !action) {
+    console.error("logAdminAction: adminUid and action are required");
+    return;
+  }
+
+  try {
+    await db.collection("admin_logs").add({
+      adminUid,
+      action,
+      timestamp: new Date(),
+      ...data,
+    });
+  } catch (error) {
+    console.error(`Failed to log admin action: ${action}`, error);
+  }
+}
+
 module.exports = {
   nowIstanbul,
   dayKeyIstanbul,
   weekKeyIstanbul,
   routeKeyFromPath,
   computeTestAggregates,
+  logAdminAction,
 };
