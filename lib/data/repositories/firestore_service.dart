@@ -488,10 +488,27 @@ class FirestoreService {
     );
   }
 
-  Future<List<UserModel>> getAllUsers() async {
-    final snapshot = await usersCollection.get();
-    return snapshot.docs.map((doc) => UserModel.fromSnapshot(doc)).toList();
+  // YENİ: Kullanıcıları sayfalı olarak getirme
+  Future<(List<UserModel> users, DocumentSnapshot? lastDoc)> getUsersPaginated({
+    int limit = 20,
+    DocumentSnapshot? startAfter,
+  }) async {
+    Query<Map<String, dynamic>> q = usersCollection
+        .orderBy('username')
+        .limit(limit);
+
+    if (startAfter != null) {
+      q = q.startAfterDocument(startAfter);
+    }
+
+    final qs = await q.get();
+    final users = qs.docs
+        .map((d) => UserModel.fromSnapshot(d as DocumentSnapshot<Map<String, dynamic>>))
+        .toList();
+    final last = qs.docs.isNotEmpty ? qs.docs.last : null;
+    return (users, last);
   }
+
 
   // GÜNCEL: Puan güncelleme artık Cloud Function üzerinden yapılır
   Future<void> updateEngagementScore(String userId, int pointsToAdd) async {
