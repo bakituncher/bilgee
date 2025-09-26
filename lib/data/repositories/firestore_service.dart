@@ -416,35 +416,19 @@ class FirestoreService {
     return query.docs.isEmpty;
   }
 
+  // KULLANICI ADI GÜNCELLEME (BASİTLEŞTİRİLDİ)
+  // Veri senkronizasyonu artık onUserUpdate Cloud Function'ı tarafından yapılıyor.
   Future<void> updateUserName({required String userId, required String newName}) async {
     final userDocRef = usersCollection.doc(userId);
     final parts = newName.split(' ');
     final firstName = parts.isNotEmpty ? parts.first : '';
     final lastName = parts.length > 1 ? parts.sublist(1).join(' ') : '';
 
-    await _firestore.runTransaction((txn) async {
-      final snap = await txn.get(userDocRef);
-      final data = snap.data();
-      final String? examType = data?['selectedExam'];
-      txn.update(userDocRef, {
-        'name': newName,
-        'firstName': firstName,
-        'lastName': lastName,
-      });
-      if (examType != null) {
-        final statsSnap = await txn.get(_userStatsDoc(userId));
-        final stats = statsSnap.data() ?? const <String, dynamic>{};
-        final lbRef = _leaderboardUserDoc(examType: examType, userId: userId);
-        txn.set(lbRef, {
-          'userId': userId,
-          'userName': newName,
-          'score': stats['engagementScore'] ?? 0,
-          'testCount': stats['testCount'] ?? 0,
-          'avatarStyle': data?['avatarStyle'],
-          'avatarSeed': data?['avatarSeed'],
-          'updatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
-      }
+    await userDocRef.update({
+      'name': newName,
+      'firstName': firstName,
+      'lastName': lastName,
+      'updatedAt': FieldValue.serverTimestamp(),
     });
   }
 
@@ -453,10 +437,12 @@ class FirestoreService {
     await usersCollection.doc(userId).update({'tutorialCompleted': true});
   }
 
+  // KULLANICI PROFİLİ GÜNCELLEME (BASİTLEŞTİRİLDİ)
+  // Veri senkronizasyonu artık onUserUpdate Cloud Function'ı tarafından yapılıyor.
   Future<void> updateUserProfile(String userId, Map<String, dynamic> data) async {
     final userDocRef = usersCollection.doc(userId);
 
-    // Also update the full name for backward compatibility
+    // Geriye dönük uyumluluk için name alanını da ekle
     if (data.containsKey('firstName') || data.containsKey('lastName')) {
       final userSnap = await userDocRef.get();
       final existingData = userSnap.data() ?? {};
@@ -465,24 +451,10 @@ class FirestoreService {
       data['name'] = '$firstName $lastName'.trim();
     }
 
+    data['updatedAt'] = FieldValue.serverTimestamp();
+
+    // onUserUpdate trigger'ı senkronizasyonu halledecek.
     await userDocRef.update(data);
-
-    // Update searchable keywords if name changed
-    if (data.containsKey('name')) {
-      final name = data['name'] as String;
-      await updateSearchableKeywords(userId, name);
-    }
-
-    // Update leaderboard if name changed
-    if (data.containsKey('name')) {
-      final userSnap = await userDocRef.get();
-      final userData = userSnap.data();
-      final String? examType = userData?['selectedExam'];
-      if (examType != null) {
-        final lbRef = _leaderboardUserDoc(examType: examType, userId: userId);
-        await lbRef.set({'userName': data['name'], 'username': data['username']}, SetOptions(merge: true));
-      }
-    }
   }
 
   Stream<UserModel> getUserProfile(String userId) {
