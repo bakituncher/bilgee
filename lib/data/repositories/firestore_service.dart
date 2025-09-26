@@ -154,15 +154,12 @@ class FirestoreService {
     return const [];
   }
 
-  // GÜNCEL: Haftalık tamamlanan görevler (7 günlük günlük doküman okuması)
+  // GÜNCEL: Haftalık tamamlanan görevler (Optimize Edilmiş: Tek sorgu)
   Future<Map<String, List<String>>> getCompletedTasksForWeek(String userId, DateTime weekStart) async {
-    final start = DateTime(weekStart.year, weekStart.month, weekStart.day);
-    final days = List<DateTime>.generate(7, (i) => start.add(Duration(days: i)));
-    final results = await Future.wait(days.map((d) async {
-      final list = await getCompletedTasksForDate(userId, d);
-      return MapEntry(_dateKey(d), list);
-    }));
-    return Map<String, List<String>>.fromEntries(results);
+    final startDay = DateTime(weekStart.year, weekStart.month, weekStart.day);
+    // Haftanın son günü, başlangıçtan 6 gün sonradır.
+    final endDay = startDay.add(const Duration(days: 6));
+    return getCompletedTasksInRange(userId, start: startDay, end: endDay);
   }
 
   // YENİ: Belirli bir tarih aralığındaki (start dahil, end dahil) günlerin tamamlanan görevlerini tek sorguda getir
