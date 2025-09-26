@@ -363,6 +363,7 @@ class FirestoreService {
     required String username,
     String? gender,
     DateTime? dateOfBirth,
+    bool profileCompleted = false,
   }) async {
     final userProfile = UserModel(
       id: user.uid,
@@ -372,7 +373,7 @@ class FirestoreService {
       username: username,
       gender: gender,
       dateOfBirth: dateOfBirth,
-      profileCompleted: false,
+      profileCompleted: profileCompleted,
       tutorialCompleted: false,
     );
     await usersCollection.doc(user.uid).set(userProfile.toJson());

@@ -50,6 +50,7 @@ class AuthRepository {
           username: username,
           gender: gender,
           dateOfBirth: dateOfBirth,
+          profileCompleted: true,
         );
       }
     } on FirebaseAuthException catch (e) {
