@@ -11,9 +11,11 @@ const profile = require("./src/profile");
 const quests = require("./src/quests");
 const reports = require("./src/reports");
 const tests = require("./src/tests");
+const users = require("./src/users");
 
 exports.admin = admin;
 exports.ai = ai;
+exports.users = users;
 exports.leaderboard = leaderboard;
 exports.notifications = notifications;
 exports.posts = posts;

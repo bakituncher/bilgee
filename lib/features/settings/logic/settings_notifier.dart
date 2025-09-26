@@ -2,6 +2,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
 
@@ -66,7 +67,10 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     }
 
     try {
-      await _ref.read(firestoreServiceProvider).resetUserDataForNewExam(userId);
+      // İstemci tarafı silme işlemi yerine Cloud Function'ı çağır
+      final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
+      final callable = functions.httpsCallable('users-resetUserDataForNewExam');
+      await callable.call();
       // İşlem başarılıysa durumu "success" olarak güncelle
       state = state.copyWith(isLoading: false, resetStatus: ResetStatus.success);
     } catch (e) {

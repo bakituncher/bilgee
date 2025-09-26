@@ -1,4 +1,4 @@
-const { onDocumentCreated, onDocumentDeleted } = require("firebase-functions/v2/firestore");
+const { onDocumentCreated, onDocumentDeleted, onDocumentUpdated } = require("firebase-functions/v2/firestore");
 const { logger } = require("firebase-functions");
 const { db, admin } = require("./init");
 
@@ -80,6 +80,61 @@ exports.onFollowingDeleted = onDocumentDeleted({
 }, async (event) => {
   const uid = event.params.userId;
   try { await adjustPublicCounts(uid, { followingDelta: -1 }); } catch (e) { logger.warn("onFollowingDeleted failed", { uid, error: String(e) }); }
+});
+
+exports.onUserUpdate = onDocumentUpdated("users/{userId}", async (event) => {
+  const before = event.data.before.data();
+  const after = event.data.after.data();
+  const uid = event.params.userId;
+
+  const fieldsToSync = ['name', 'username', 'avatarStyle', 'avatarSeed', 'selectedExam'];
+  const needsSync = fieldsToSync.some(field => before[field] !== after[field]);
+
+  if (!needsSync) {
+    logger.log(`No relevant fields changed for user ${uid}. Skipping sync.`);
+    return null;
+  }
+
+  logger.log(`Syncing profile for user ${uid} due to field changes.`);
+  const batch = db.batch();
+
+  // 1. Update public_profiles
+  const publicProfileRef = db.collection("public_profiles").doc(uid);
+  const publicData = {
+    name: after.name || "",
+    username: after.username || "",
+    avatarStyle: after.avatarStyle || null,
+    avatarSeed: after.avatarSeed || null,
+    selectedExam: after.selectedExam || null,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  };
+  batch.set(publicProfileRef, publicData, { merge: true });
+
+  // 2. Update leaderboards if exam type is selected
+  if (after.selectedExam) {
+    const leaderboardRef = db.collection("leaderboards").doc(after.selectedExam).collection("users").doc(uid);
+    const leaderboardData = {
+      userName: after.name || "",
+      username: after.username || "",
+      avatarStyle: after.avatarStyle || null,
+      avatarSeed: after.avatarSeed || null,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
+    batch.set(leaderboardRef, leaderboardData, { merge: true });
+  }
+
+  // 3. If exam type changed, delete old leaderboard entry
+  if (before.selectedExam && before.selectedExam !== after.selectedExam) {
+      const oldLeaderboardRef = db.collection("leaderboards").doc(before.selectedExam).collection("users").doc(uid);
+      batch.delete(oldLeaderboardRef);
+  }
+
+  try {
+    await batch.commit();
+    logger.log(`Successfully synced profile for user ${uid}.`);
+  } catch (e) {
+    logger.error("onUserUpdate failed", { uid, error: String(e) });
+  }
 });
 
 module.exports = {

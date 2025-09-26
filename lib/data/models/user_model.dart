@@ -63,6 +63,10 @@ class UserModel {
   final int currentQuestStreak; // Mevcut görev tamamlama serisi
   final Timestamp? lastQuestCompletionDate; // Son görev tamamlama tarihi
 
+  // TAKIP SİSTEMİ SAYAÇLARI
+  final int? followerCount;
+  final int? followingCount;
+
   UserModel({
     required this.id,
     required this.email,
@@ -110,6 +114,8 @@ class UserModel {
     this.usedFeatures = const {},
     this.currentQuestStreak = 0,
     this.lastQuestCompletionDate,
+    this.followerCount,
+    this.followingCount,
   });
 
   UserModel copyWith({
@@ -157,6 +163,8 @@ class UserModel {
     Map<String, bool>? usedFeatures,
     int? currentQuestStreak,
     Timestamp? lastQuestCompletionDate,
+    int? followerCount,
+    int? followingCount,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -203,6 +211,8 @@ class UserModel {
       usedFeatures: usedFeatures ?? this.usedFeatures,
       currentQuestStreak: currentQuestStreak ?? this.currentQuestStreak,
       lastQuestCompletionDate: lastQuestCompletionDate ?? this.lastQuestCompletionDate,
+      followerCount: followerCount ?? this.followerCount,
+      followingCount: followingCount ?? this.followingCount,
     );
   }
 
@@ -292,6 +302,8 @@ class UserModel {
       usedFeatures: Map<String, bool>.from(data['usedFeatures'] ?? {}),
       currentQuestStreak: data['currentQuestStreak'] ?? 0,
       lastQuestCompletionDate: data['lastQuestCompletionDate'] as Timestamp?,
+      followerCount: data['followerCount'] as int?,
+      followingCount: data['followingCount'] as int?,
     );
   }
 
@@ -357,6 +369,8 @@ class UserModel {
       'usedFeatures': usedFeatures,
       'currentQuestStreak': currentQuestStreak,
       'lastQuestCompletionDate': lastQuestCompletionDate,
+      'followerCount': followerCount,
+      'followingCount': followingCount,
     };
   }
 

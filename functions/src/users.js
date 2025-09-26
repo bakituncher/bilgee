@@ -1,5 +1,77 @@
+const functions = require("firebase-functions");
+const admin = require("firebase-admin");
 const { db } = require("./init");
 const { dayKeyIstanbul, nowIstanbul } = require("./utils");
+
+/**
+ * Deletes all data for a user when they reset their profile for a new exam.
+ * This is a critical, multi-step operation handled by a callable function
+ * to ensure atomicity and prevent data inconsistencies.
+ */
+const resetUserDataForNewExam = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'The function must be called while authenticated.');
+  }
+  const userId = context.auth.uid;
+  const batch = db.batch();
+
+  // 1. Reset main user document fields
+  const userDocRef = db.collection('users').doc(userId);
+  batch.update(userDocRef, {
+    tutorialCompleted: false,
+    selectedExam: null,
+    selectedExamSection: null,
+    weeklyAvailability: {},
+    goal: null,
+    challenges: [],
+    weeklyStudyGoal: null,
+  });
+
+  // 2. Reset stats, performance, and plan documents
+  const statsRef = userDocRef.collection('state').doc('stats');
+  batch.set(statsRef, {
+    streak: 0,
+    lastStreakUpdate: null,
+    testCount: 0,
+    totalNetSum: 0.0,
+    engagementScore: 0,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  }, { merge: true });
+
+  const performanceDocRef = userDocRef.collection('performance').doc('summary');
+  batch.set(performanceDocRef, {
+      netGains: {}, lastTenNetAvgs: [], lastTenWarriorScores: [],
+      masteredTopics: [], recentPerformance: {}, strongestSubject: null,
+      strongestTopic: null, totalCorrect: 0, totalIncorrect: 0,
+      totalNet: 0.0, totalTests: 0, weakestSubject: null, weakestTopic: null,
+  });
+
+  const planDocRef = userDocRef.collection('plans').doc('current_plan');
+  batch.set(planDocRef, { studyPacing: 'balanced', weeklyPlan: {} });
+
+  // 3. Delete all documents in subcollections
+  const subcollections = [
+    'tests', 'focusSessions', 'user_activity',
+    'topic_performance', 'savedWorkshops'
+  ];
+
+  for (const collectionName of subcollections) {
+    const snapshot = await db.collection('users').doc(userId).collection(collectionName).limit(500).get();
+    snapshot.docs.forEach(doc => batch.delete(doc.ref));
+  }
+
+  const masteredTopicsSnap = await performanceDocRef.collection('masteredTopics').limit(500).get();
+  masteredTopicsSnap.docs.forEach(doc => batch.delete(doc.ref));
+
+  // 4. Commit the atomic batch
+  try {
+    await batch.commit();
+    return { success: true, message: `User data for ${userId} has been reset.` };
+  } catch (error) {
+    console.error(`Failed to reset data for user ${userId}`, error);
+    throw new functions.https.HttpsError('internal', 'Failed to reset user data.', error);
+  }
+});
 
 async function computeInactivityHours(userRef) {
   // user_activity bugun ve dunden kontrol edilir; yoksa app_state.lastActiveTs kullan
@@ -69,4 +141,5 @@ async function selectAudienceUids(audience) {
 module.exports = {
   computeInactivityHours,
   selectAudienceUids,
+  resetUserDataForNewExam,
 };
