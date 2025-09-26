@@ -47,3 +47,4 @@ app.*.symbols
 # Obfuscation related
 app.*.map.json
 /assets/rive/space_background.riv
+/devtools_options.yaml

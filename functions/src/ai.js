@@ -49,15 +49,15 @@ exports.generateGemini = onCall(
       temperature = Math.min(1.0, Math.max(0.1, request.data.temperature));
     }
 
-    // Yeni: model seçimi (varsayılan: gemini-1.5-flash-latest)
-    let modelId = 'gemini-1.5-flash-latest';
+    // Yeni: model seçimi (varsayılan: gemini-2.0-flash-lite-001)
+    let modelId = 'gemini-2.0-flash-lite-001';
     const reqModel = typeof request.data?.model === 'string' ? String(request.data.model).toLowerCase().trim() : '';
     if (reqModel) {
       if (reqModel.includes('pro')) {
-        modelId = 'gemini-1.5-pro-latest';
+        modelId = 'gemini-2.0-flash-001';
       } else if (reqModel.includes('flash')) {
-        modelId = 'gemini-1.5-flash-latest';
-      } else if (/^gemini-1\.5-(flash|pro)(?:-[a-z]+)?(?:-latest)?$/.test(reqModel)) {
+        modelId = 'gemini-2.0-flash-lite-001';
+      } else if (/^gemini-2\.0-flash(?:-lite)?-001$/.test(reqModel)) {
         modelId = reqModel; // ileri kullanıcılar tam model adı gönderebilir
       }
     }
