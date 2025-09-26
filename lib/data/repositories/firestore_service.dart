@@ -162,42 +162,53 @@ class FirestoreService {
     return getCompletedTasksInRange(userId, start: startDay, end: endDay);
   }
 
-  // YENİ: Belirli bir tarih aralığındaki (start dahil, end dahil) günlerin tamamlanan görevlerini tek sorguda getir
+  // YENİ: Belirli bir tarih aralığındaki (start dahil, end dahil) günlerin tamamlanan görevlerini tek sorguda getir (Collection Group Query)
   Future<Map<String, List<String>>> getCompletedTasksInRange(String userId, {required DateTime start, required DateTime end}) async {
-    final startDay = DateTime(start.year, start.month, start.day);
-    final endNextDay = DateTime(end.year, end.month, end.day).add(const Duration(days: 1));
-    final qs = await _userActivityCollection(userId)
-        .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startDay))
-        .where('date', isLessThan: Timestamp.fromDate(endNextDay))
+    final startTs = Timestamp.fromDate(DateTime(start.year, start.month, start.day));
+    final endTs = Timestamp.fromDate(DateTime(end.year, end.month, end.day).add(const Duration(days: 1)));
+
+    final qs = await _firestore.collectionGroup('completed_tasks')
+        .where('userId', isEqualTo: userId)
+        .where('completedAt', isGreaterThanOrEqualTo: startTs)
+        .where('completedAt', isLessThan: endTs)
         .get();
+
     final Map<String, List<String>> out = {};
     for (final doc in qs.docs) {
-      final data = doc.data();
-      final v = data['completedTasks'];
-      if (v is List && v.isNotEmpty) {
-        out[doc.id] = v.map((e) => e.toString()).toList();
-      }
+        final data = doc.data();
+        final taskId = data['taskId'] as String;
+        // The document ID of the parent is the dateKey
+        final dateKey = doc.reference.parent.parent!.id;
+
+        if (out.containsKey(dateKey)) {
+            out[dateKey]!.add(taskId);
+        } else {
+            out[dateKey] = [taskId];
+        }
     }
     return out;
   }
 
-  // GÜNCEL: Ay içindeki tüm ziyaretleri getir (günlük dokümanları aralıktan sorgula)
+  // GÜNCEL: Ay içindeki tüm ziyaretleri getir (Ölçeklenebilir: Collection Group Query)
   Future<List<Timestamp>> getVisitsForMonth(String userId, DateTime anyDayInMonth) async {
     final monthStart = DateTime(anyDayInMonth.year, anyDayInMonth.month, 1);
     final nextMonth = DateTime(anyDayInMonth.year, anyDayInMonth.month + 1, 1);
     final startTs = Timestamp.fromDate(monthStart);
     final endTs = Timestamp.fromDate(nextMonth);
 
-    final qs = await _userActivityCollection(userId)
-        .where('date', isGreaterThanOrEqualTo: startTs)
-        .where('date', isLessThan: endTs)
+    final qs = await _firestore.collectionGroup('visits')
+        .where('userId', isEqualTo: userId)
+        .where('visitTime', isGreaterThanOrEqualTo: startTs)
+        .where('visitTime', isLessThan: endTs)
         .get();
+
     final List<Timestamp> visits = [];
-    for (final d in qs.docs) {
-      final v = d.data()['visits'];
-      if (v is List) {
-        visits.addAll(v.whereType<Timestamp>());
-      }
+    for (final doc in qs.docs) {
+        final data = doc.data();
+        final visitTime = data['visitTime'] as Timestamp?;
+        if (visitTime != null) {
+            visits.add(visitTime);
+        }
     }
     return visits;
   }
@@ -214,28 +225,38 @@ class FirestoreService {
     }, SetOptions(merge: true));
   }
 
-  // GÜNCEL: Ziyaret kaydı (günlük doküman)
+  // GÜNCEL: Ziyaret kaydı (Ölçeklenebilir: Alt koleksiyon modeli)
   Future<void> recordUserVisit(String userId, {Timestamp? at}) async {
     final nowTs = at ?? Timestamp.now();
     final now = nowTs.toDate();
-    final d0 = DateTime(now.year, now.month, now.day);
     final dailyRef = _userActivityDailyDoc(userId, now);
+    final visitsCollection = dailyRef.collection('visits');
 
-    await _firestore.runTransaction((txn) async {
-      final snap = await txn.get(dailyRef);
-      final data = snap.data() ?? <String, dynamic>{};
-      final List<Timestamp> visits = List<Timestamp>.from(data['visits'] ?? const <Timestamp>[]);
-      visits.sort((a, b) => a.compareTo(b));
-      if (visits.isEmpty || now.difference(visits.last.toDate()).inHours >= 1) {
-        visits.add(nowTs);
+    // Son ziyareti kontrol et
+    final lastVisitQuery = await visitsCollection.orderBy('visitTime', descending: true).limit(1).get();
+
+    bool shouldRecord = true;
+    if (lastVisitQuery.docs.isNotEmpty) {
+      final lastVisitData = lastVisitQuery.docs.first.data();
+      final lastVisitTs = lastVisitData['visitTime'] as Timestamp;
+      if (now.difference(lastVisitTs.toDate()).inHours < 1) {
+        shouldRecord = false;
       }
-      txn.set(dailyRef, {
-        'visits': visits,
-        'date': Timestamp.fromDate(d0),
-        'dateKey': _dateKey(d0),
+    }
+
+    if (shouldRecord) {
+      // Ziyareti yeni bir doküman olarak ekle
+      await visitsCollection.add({
+        'visitTime': nowTs,
+        'userId': userId, // Koleksiyon grubu sorguları için eklendi
+      });
+      // Ana günlük dokümanı (meta veri için) oluştur/güncelle
+      await dailyRef.set({
+        'date': Timestamp.fromDate(DateTime(now.year, now.month, now.day)),
+        'dateKey': _dateKey(now),
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
-    });
+    }
   }
 
   DocumentReference<Map<String, dynamic>> _planDoc(String userId) => usersCollection.doc(userId).collection('plans').doc('current_plan');
@@ -669,7 +690,7 @@ class FirestoreService {
     });
   }
 
-  // GÜNCEL: Günlük görev tamamlama basitleştirildi (günlük doküman + stats artış)
+  // GÜNCEL: Günlük görev tamamlama (Ölçeklenebilir: Alt koleksiyon modeli)
   Future<void> updateDailyTaskCompletion({
     required String userId,
     required String dateKey, // yyyy-MM-dd
@@ -677,11 +698,23 @@ class FirestoreService {
     required bool isCompleted,
   }) async {
     final dailyRef = _userActivityCollection(userId).doc(dateKey);
-    // arrayUnion/arrayRemove ile atomik güncelleme
+    final completedTasksCollection = dailyRef.collection('completed_tasks');
+    final taskDocRef = completedTasksCollection.doc(task);
+
+    if (isCompleted) {
+      // Görevi tamamlandı olarak işaretle (doküman oluştur)
+      await taskDocRef.set({
+        'completedAt': FieldValue.serverTimestamp(),
+        'taskId': task,
+        'userId': userId, // Koleksiyon grubu sorguları için eklendi
+      });
+    } else {
+      // Tamamlanmış görevi geri al (dokümanı sil)
+      await taskDocRef.delete();
+    }
+
+    // Ana günlük dokümanı (meta veri için) oluştur/güncelle
     await dailyRef.set({
-      'completedTasks': isCompleted
-          ? FieldValue.arrayUnion([task])
-          : FieldValue.arrayRemove([task]),
       'date': Timestamp.fromDate(DateTime.parse(dateKey)),
       'dateKey': dateKey,
       'updatedAt': FieldValue.serverTimestamp(),
@@ -1228,34 +1261,9 @@ class FirestoreService {
         print('Users collection search failed: $e');
       }
 
-      // Method 3: Fallback contains search (only if no results found)
-      if (results.isEmpty) {
-        try {
-          final allUsersQuery = await usersCollection
-              .limit(100)
-              .get();
-
-          for (var doc in allUsersQuery.docs) {
-            final data = doc.data();
-            final searchField = searchType == SearchType.username
-                ? (data['username'] as String?)?.toLowerCase() ?? ''
-                : (data['name'] as String?)?.toLowerCase() ?? '';
-
-            if (searchField.contains(normalizedQuery) && searchField.isNotEmpty) {
-              results.add({
-                'userId': doc.id,
-                'name': data['name'],
-                'username': data['username'],
-                'avatarStyle': data['avatarStyle'],
-                'avatarSeed': data['avatarSeed'],
-                'selectedExam': data['selectedExam'],
-              });
-            }
-          }
-        } catch (e) {
-          print('Fallback search failed: $e');
-        }
-      }
+      // Method 3: Fallback contains search (only if no results found) - REMOVED
+      // This part was removed because it is inefficient and not scalable.
+      // It was fetching all users and filtering on the client-side.
 
       // Remove duplicates and limit results
       final uniqueResults = <String, Map<String, dynamic>>{};
