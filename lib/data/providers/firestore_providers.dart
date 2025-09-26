@@ -159,8 +159,8 @@ final isFollowingProvider = StreamProvider.family.autoDispose<bool, String>((ref
 // TAKIP: Belirli bir kullanıcının takipçi/takip sayısı (Optimize Edilmiş)
 final followCountsProvider = StreamProvider.family.autoDispose<(int, int), String>((ref, userId) {
   // userProfileByIdProvider zaten kullanıcı dokümanını dinliyor.
-  // Bu provider'dan gelen UserModel içindeki sayaçları kullanalım.
-  return ref.watch(userProfileByIdProvider(userId)).map((user) {
+  // .stream'i izleyerek AsyncValue yerine doğrudan Stream'i map'liyoruz.
+  return ref.watch(userProfileByIdProvider(userId).stream).map((user) {
     return (user.followerCount ?? 0, user.followingCount ?? 0);
   });
 });
