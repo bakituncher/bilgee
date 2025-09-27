@@ -30,6 +30,7 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
   bool _isTyping = false;
   bool _showScrollToBottom = false;
   late AnimationController _backgroundAnimationController;
+  String _currentPromptType = 'user_chat'; // YENİ: Aktif sohbet modunu saklamak için
 
   // YENI: Sohbetten Süit ekranına dönüş helper
   void _exitToSuite() {
@@ -112,7 +113,7 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
       user: user,
       tests: tests,
       performance: performance,
-      promptType: 'user_chat',
+      promptType: _currentPromptType, // DÜZELTME: 'user_chat' yerine mevcut modu kullan
       emotion: null,
       conversationHistory: historySummary,
       lastUserMessage: text,
@@ -135,6 +136,11 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
 
     // Seçilen modun hafızasını temizle
     await aiService.clearChatMemory(user.id, moodType);
+
+    // YENİ: Seçilen kişilik türünü state'e kaydet.
+    setState(() {
+      _currentPromptType = moodType;
+    });
 
     // moodType'a göre ruh halini belirle
     Mood mood = Mood.neutral;
