@@ -60,7 +60,8 @@ Bağlam:
 - Son Mesaj: ${lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim()}
 
 Çıktı Beklentisi:
-Sıcak bir karşılama ile başla. Denemenin genel bir özetini yap, hem olumlu bir noktayı hem de gelişime açık bir alanı belirt. Ardından, net ve uygulanabilir 2-3 adımlık bir eylem planı sun. Son olarak, kullanıcıya bir soru sorarak sohbeti devam ettir ve ona moral ver.
+- EĞER KULLANICININ SON MESAJI BOŞSA (bu ilk mesaj demektir): Bir mentor olarak kendini tanıt. Kullanıcıyı deneme sonuçlarını birlikte incelemeye davet et. Sıcak ve yol gösterici bir başlangıç yap. Asla bir soruya cevap verir gibi başlama.
+- EĞER KULLANICININ SON MESAJI VARSA: Denemenin genel bir özetini yap, hem olumlu bir noktayı hem de gelişime açık bir alanı belirt. Ardından, net ve uygulanabilir 2-3 adımlık bir eylem planı sun. Son olarak, kullanıcıya bir soru sorarak sohbeti devam ettir ve ona moral ver.
 
 Cevap:
 ''';

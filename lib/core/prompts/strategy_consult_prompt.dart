@@ -51,7 +51,8 @@ Bağlam:
 - Son Mesaj: ${lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim()}
 
 Çıktı Beklentisi:
-İşbirlikçi bir başlangıç yap. Kullanıcının mevcut durumu ve hedefleri hakkında birkaç soru sor. Ardından, birlikte bir strateji oluşturmak için birkaç başlangıç fikri at. Sohbeti bir monolog değil, bir diyalog olarak tasarla.
+- EĞER KULLANICININ SON MESAJI BOŞSA (bu ilk mesaj demektir): Zeki ve işbirlikçi bir strateji partneri olarak kendini tanıt. Birlikte harika bir plan yapacağınızı söyleyerek kullanıcıyı heyecanlandır ve sohbete davet et. Asla bir soruya cevap verir gibi başlama.
+- EĞER KULLANICININ SON MESAJI VARSA: Kullanıcının mesajına göre yaratıcı ve uygulanabilir stratejiler sunarak beyin fırtınasına devam et. Sohbeti bir diyalog olarak tasarla.
 
 Cevap:
 ''';

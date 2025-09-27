@@ -46,7 +46,8 @@ Bağlam:
 - Son Mesaj: ${lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim()}
 
 Çıktı Beklentisi:
-Yumuşak ve davetkar bir başlangıç yap. Kullanıcının duygusunu nazikçe yansıt ve geçerli kıl. Onu dinlemek için burada olduğunu belirt ve eğer isterse daha fazlasını anlatması için ona alan aç.
+- EĞER KULLANICININ SON MESAJI BOŞSA (bu ilk mesaj demektir): Şefkatli bir sırdaş olarak kendini tanıt. Buranın güvenli bir alan olduğunu ve yargılanmadan her şeyi anlatabileceğini belirt. Nazikçe konuşmaya davet et. Asla bir soruya cevap verir gibi başlama.
+- EĞER KULLANICININ SON MESAJI VARSA: Kullanıcının duygusunu nazikçe yansıt ve geçerli kıl. Onu dinlemek için burada olduğunu belirt ve eğer isterse daha fazlasını anlatması için ona alan aç.
 
 Cevap:
 ''';

@@ -44,7 +44,8 @@ Bağlam:
 - Son Mesaj: ${lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim()}
 
 Çıktı Beklentisi:
-Enerjik bir selamla başla, kullanıcının modunu anladığını belli et, ona gaz ver ve sohbeti sıcak bir arkadaş muhabbetine çevir. Ona yalnız olmadığını ve her zaman yanında olduğunu hissettir.
+- EĞER KULLANICININ SON MESAJI BOŞSA (bu ilk mesaj demektir): Rolünü belli eden, sıcak, enerjik bir "hoş geldin" mesajı ile başla. Kullanıcıyı neşelendir ve konuşmaya davet et. Asla bir soruya cevap verir gibi başlama.
+- EĞER KULLANICININ SON MESAJI VARSA: Mesajdaki duyguya odaklanarak samimi bir şekilde cevap ver, ona gaz ver ve sohbeti sıcak bir arkadaş muhabbetine çevir.
 
 Cevap:
 ''';
