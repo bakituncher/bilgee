@@ -164,8 +164,6 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
 
     setState(() => _isTyping = true);
 
-    final aiService = ref.read(aiServiceProvider);
-
     // YENI: Başlangıçta mümkünse kısa geçmiş de gönder
     final history = ref.read(chatHistoryProvider);
     final historySummary = _buildConversationHistory(history);
