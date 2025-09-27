@@ -227,7 +227,7 @@ service cloud.firestore {
     // =====================================================================
     // COLLECTION GROUP QUERIES
     // =====================================================================
-    match /completed_tasks/{taskId} {
+    match /{path=**}/completed_tasks/{taskId} {
       // Kullanıcının kendi tamamladığı görevleri okumasına izin ver.
       allow read: if request.auth.uid == resource.data.userId;
     }
