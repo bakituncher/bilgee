@@ -126,15 +126,17 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
 
   Future<void> _onMoodSelected(String moodType, {Map<String, dynamic>? extraContext}) async {
     if (_isTyping) return; // yeniden tetiklemeyi engelle
+
+    // Servisleri ve provider'ları en başta tanımla
+    final aiService = ref.read(aiServiceProvider);
     final user = ref.read(userProfileProvider).value!;
     final tests = ref.read(testsProvider).value!;
     final performance = ref.read(performanceProvider).value!;
 
-    // YENİ: Sohbete başlamadan önce o modun hafızasını temizle.
-    // Bu, AI'nin eski konuşmaları hatırlayıp "Aleyküm selam" gibi garip başlangıçlar yapmasını önler.
-    final aiService = ref.read(aiServiceProvider);
+    // Seçilen modun hafızasını temizle
     await aiService.clearChatMemory(user.id, moodType);
 
+    // moodType'a göre ruh halini belirle
     Mood mood = Mood.neutral;
     if (moodType == 'trial_review') {
       if (tests.isNotEmpty && user.testCount > 0) {
@@ -151,7 +153,7 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
     } else if (moodType == 'motivation_corner') {
       mood = Mood.workshop;
     } else {
-      // Eski modlar için geriye dönük destek
+      // Eski modlar için geriye dönük uyumluluk
       final Map<String, Mood> moodMapping = {
         'welcome': Mood.neutral, 'new_test_good': Mood.goodResult,
         'new_test_bad': Mood.badResult, 'focused': Mood.focused,
@@ -160,20 +162,29 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
       };
       mood = moodMapping[moodType] ?? Mood.neutral;
     }
-    ref.read(chatScreenStateProvider.notifier).state = mood;
 
+    // UI durumunu güncelle
+    ref.read(chatScreenStateProvider.notifier).state = mood;
     setState(() => _isTyping = true);
 
-    // YENI: Başlangıçta mümkünse kısa geçmiş de gönder
+    // AI'dan ilk cevabı al
     final history = ref.read(chatHistoryProvider);
     final historySummary = _buildConversationHistory(history);
 
     final aiResponse = await aiService.getPersonalizedMotivation(
-      user: user, tests: tests, performance: performance, promptType: moodType, emotion: null, workshopContext: extraContext,
-      conversationHistory: historySummary, lastUserMessage: '',
+      user: user,
+      tests: tests,
+      performance: performance,
+      promptType: moodType,
+      emotion: null,
+      workshopContext: extraContext,
+      conversationHistory: historySummary,
+      lastUserMessage: '',
     );
 
     if (!mounted) return;
+
+    // Sohbet geçmişini AI'nin ilk mesajıyla güncelle
     ref.read(chatHistoryProvider.notifier).state = [ChatMessage(aiResponse, isUser: false)];
     setState(() => _isTyping = false);
     _scrollToBottom(isNewMessage: true);
