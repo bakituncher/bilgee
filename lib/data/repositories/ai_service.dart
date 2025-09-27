@@ -84,6 +84,18 @@ class AiService {
     }
   }
 
+  // YENİ: Belirli bir sohbet modunun hafızasını temizle
+  Future<void> clearChatMemory(String userId, String mode) async {
+    try {
+      final svc = _ref.read(firestoreServiceProvider);
+      await svc.usersCollection.doc(userId).collection('state').doc('ai_memory').update({
+        '${mode}_summary': FieldValue.delete(),
+      });
+    } catch (_) {
+      // Başarısız olursa sessizce geç, kritik bir hata değil.
+    }
+  }
+
   String _preprocessAiTextForJson(String input) {
     return JsonTextCleaner.cleanString(input);
   }

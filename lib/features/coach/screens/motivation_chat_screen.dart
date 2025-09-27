@@ -130,6 +130,11 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
     final tests = ref.read(testsProvider).value!;
     final performance = ref.read(performanceProvider).value!;
 
+    // YENİ: Sohbete başlamadan önce o modun hafızasını temizle.
+    // Bu, AI'nin eski konuşmaları hatırlayıp "Aleyküm selam" gibi garip başlangıçlar yapmasını önler.
+    final aiService = ref.read(aiServiceProvider);
+    await aiService.clearChatMemory(user.id, moodType);
+
     Mood mood = Mood.neutral;
     if (moodType == 'trial_review') {
       if (tests.isNotEmpty && user.testCount > 0) {
