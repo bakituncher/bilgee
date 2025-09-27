@@ -1,5 +1,8 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const sanitizeHtml = require("sanitize-html");
+const validator = require("validator");
 const { admin, auth, db, messaging } = require("./init");
+const { logAdminAction } = require("./utils");
 
 // ---- ADMIN CLAIM YÖNETİMİ ----
 async function getSuperAdmins() {
@@ -27,7 +30,13 @@ async function isSuperAdmin(uid) {
   }
 }
 
-exports.setAdminClaim = onCall({region: 'us-central1'}, async (request) => {
+exports.setAdminClaim = onCall({
+  region: 'us-central1',
+  rateLimits: {
+    maxCalls: 10,
+    timeFrameSeconds: 60,
+  },
+}, async (request) => {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
   const isSuper = await isSuperAdmin(request.auth.uid);
   if (!isSuper) throw new HttpsError('permission-denied', 'Bu işlem için süper admin yetkisi gereklidir.');
@@ -45,10 +54,22 @@ exports.setAdminClaim = onCall({region: 'us-central1'}, async (request) => {
     // Revoke tokens to force re-login and claim refresh
     await auth.revokeRefreshTokens(uid);
   }
+
+  await logAdminAction(request.auth.uid, "SET_ADMIN_CLAIM", {
+    targetUid: uid,
+    makeAdmin,
+  });
+
   return {ok: true, uid, admin: makeAdmin};
 });
 
-exports.setSelfAdmin = onCall({region: 'us-central1'}, async (request) => {
+exports.setSelfAdmin = onCall({
+  region: 'us-central1',
+  rateLimits: {
+    maxCalls: 5,
+    timeFrameSeconds: 60,
+  },
+}, async (request) => {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
   const allowed = await isSuperAdmin(request.auth.uid);
   if (!allowed) throw new HttpsError('permission-denied', 'Yetki yok');
@@ -56,10 +77,19 @@ exports.setSelfAdmin = onCall({region: 'us-central1'}, async (request) => {
   const me = await auth.getUser(uid);
   const existing = me.customClaims || {};
   await auth.setCustomUserClaims(uid, {...existing, admin: true});
+
+  await logAdminAction(uid, "SET_SELF_ADMIN_CLAIM");
+
   return {ok: true, uid, admin: true};
 });
 
-exports.getUsers = onCall({region: 'us-central1'}, async (request) => {
+exports.getUsers = onCall({
+  region: 'us-central1',
+  rateLimits: {
+    maxCalls: 20,
+    timeFrameSeconds: 60,
+  },
+}, async (request) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
     const isSuper = await isSuperAdmin(request.auth.uid);
     const isAdmin = request.auth.token && request.auth.token.admin === true;
@@ -124,7 +154,13 @@ async function _getAudienceQuery(audience) {
     return query;
 }
 
-exports.adminEstimateAudience = onCall({region: 'us-central1'}, async (request) => {
+exports.adminEstimateAudience = onCall({
+  region: 'us-central1',
+  rateLimits: {
+    maxCalls: 30,
+    timeFrameSeconds: 60,
+  },
+}, async (request) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
     const allowed = await isSuperAdmin(request.auth.uid);
     if (!allowed) throw new HttpsError('permission-denied', 'Yetki yok');
@@ -143,15 +179,35 @@ exports.adminEstimateAudience = onCall({region: 'us-central1'}, async (request) 
     return { users: count, tokenHolders: count };
 });
 
-exports.adminSendPush = onCall({region: 'us-central1'}, async (request) => {
+exports.adminSendPush = onCall({
+  region: 'us-central1',
+  rateLimits: {
+    maxCalls: 5,
+    timeFrameSeconds: 60,
+  },
+}, async (request) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
     const allowed = await isSuperAdmin(request.auth.uid);
     if (!allowed) throw new HttpsError('permission-denied', 'Yetki yok');
 
     const { title, body, route, imageUrl, audience, sendType } = request.data;
 
-    if (!title || !body) {
+    const sanitizedTitle = sanitizeHtml(title, {
+      allowedTags: [],
+      allowedAttributes: {},
+    });
+
+    const sanitizedBody = sanitizeHtml(body, {
+      allowedTags: [],
+      allowedAttributes: {},
+    });
+
+    if (!sanitizedTitle || !sanitizedBody) {
         throw new HttpsError('invalid-argument', 'Başlık ve içerik gerekli');
+    }
+
+    if (imageUrl && !validator.isURL(imageUrl)) {
+      throw new HttpsError('invalid-argument', 'Geçersiz resim URL adresi');
     }
 
     const query = await _getAudienceQuery(audience);
@@ -177,8 +233,8 @@ exports.adminSendPush = onCall({region: 'us-central1'}, async (request) => {
 
     const message = {
         notification: {
-            title: title,
-            body: body,
+            title: sanitizedTitle,
+            body: sanitizedBody,
         },
         android: {
             notification: {
@@ -208,10 +264,26 @@ exports.adminSendPush = onCall({region: 'us-central1'}, async (request) => {
 
     console.log(`Push sent. Success: ${successCount}, Failure: ${failureCount}`);
 
+  await logAdminAction(request.auth.uid, "ADMIN_SEND_PUSH", {
+    title: sanitizedTitle,
+    body: sanitizedBody,
+    route,
+    imageUrl: imageUrl || null,
+    audience,
+    successCount,
+    failureCount,
+  });
+
     return { ok: true, totalSent: successCount, totalUsers: totalUsers };
 });
 
-exports.findUserByEmail = onCall({region: 'us-central1'}, async (request) => {
+exports.findUserByEmail = onCall({
+  region: 'us-central1',
+  rateLimits: {
+    maxCalls: 30,
+    timeFrameSeconds: 60,
+  },
+}, async (request) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
     const isSuper = await isSuperAdmin(request.auth.uid);
     const isAdmin = request.auth.token && request.auth.token.admin === true;
@@ -243,7 +315,13 @@ exports.findUserByEmail = onCall({region: 'us-central1'}, async (request) => {
     }
 });
 
-exports.isCurrentUserSuperAdmin = onCall({region: 'us-central1'}, async (request) => {
+exports.isCurrentUserSuperAdmin = onCall({
+  region: 'us-central1',
+  rateLimits: {
+    maxCalls: 30,
+    timeFrameSeconds: 60,
+  },
+}, async (request) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
     return { isSuperAdmin: await isSuperAdmin(request.auth.uid) };
 });

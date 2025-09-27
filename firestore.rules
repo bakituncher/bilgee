@@ -204,5 +204,32 @@ service cloud.firestore {
       allow read, list: if request.auth != null;
       allow create, update, delete: if request.auth != null && request.auth.token.admin == true;
     }
+
+    // =====================================================================
+    // CONFIGURATION (/config)
+    // =====================================================================
+    match /config/{docId} {
+      // Bu koleksiyona istemci tarafından erişilemez.
+      // Sadece sunucu (admin SDK) erişebilir.
+      allow read, write: if false;
+    }
+
+    // =====================================================================
+    // ADMIN LOGS (/admin_logs)
+    // =====================================================================
+    match /admin_logs/{logId} {
+      // Sadece adminler okuyabilir.
+      allow read: if request.auth != null && request.auth.token.admin == true;
+      // İstemci tarafından yazılamaz.
+      allow write: if false;
+    }
+
+    // =====================================================================
+    // COLLECTION GROUP QUERIES
+    // =====================================================================
+    match /completed_tasks/{taskId} {
+      // Kullanıcının kendi tamamladığı görevleri okumasına izin ver.
+      allow read: if request.auth.uid == resource.data.userId;
+    }
   }
 }
