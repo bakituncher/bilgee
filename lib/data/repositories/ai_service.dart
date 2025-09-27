@@ -52,23 +52,47 @@ class AiService {
 
   Future<void> _updateChatMemory(String userId, String mode, {required String lastUserMessage, required String aiResponse, String previous = ''}) async {
     try {
-      // Basit bir kuyruk: önceki özet + son tur (Kullanıcı/AI), sondan keserek ~1200 char'a indir
-      String appended = [
-        if (previous.trim().isNotEmpty) previous.trim(),
+      // AKILLI ÖZET: Önceki özet + son tur (Kullanıcı/AI), başlangıcı ve sonu koruyarak ~1200 karaktere indir.
+      final newTurn = [
         if (lastUserMessage.trim().isNotEmpty) 'Kullanıcı: ${lastUserMessage.trim().replaceAll('\n', ' ')}',
         if (aiResponse.trim().isNotEmpty) 'AI: ${aiResponse.trim().replaceAll('\n', ' ')}',
       ].join(' | ');
-      const maxChars = 1200;
-      if (appended.length > maxChars) {
-        appended = appended.substring(appended.length - maxChars);
+
+      String updatedHistory = previous.trim().isEmpty ? newTurn : '${previous.trim()} | $newTurn';
+
+      const int maxChars = 1200;
+      if (updatedHistory.length > maxChars) {
+        const int preserveStart = 300;
+        const int preserveEnd = maxChars - preserveStart - 5; // " ... " için 5 karakter
+        if (preserveEnd > 0) {
+          final start = updatedHistory.substring(0, preserveStart);
+          final end = updatedHistory.substring(updatedHistory.length - preserveEnd);
+          updatedHistory = '$start ... $end';
+        } else {
+          // Eğer maxChars çok küçükse, sadece sonu al.
+          updatedHistory = updatedHistory.substring(updatedHistory.length - maxChars);
+        }
       }
+
       final svc = _ref.read(firestoreServiceProvider);
       await svc.usersCollection.doc(userId).collection('state').doc('ai_memory').set({
-        '${mode}_summary': appended,
+        '${mode}_summary': updatedHistory,
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
     } catch (_) {
       // sessiz geç
+    }
+  }
+
+  // YENİ: Belirli bir sohbet modunun hafızasını temizle
+  Future<void> clearChatMemory(String userId, String mode) async {
+    try {
+      final svc = _ref.read(firestoreServiceProvider);
+      await svc.usersCollection.doc(userId).collection('state').doc('ai_memory').update({
+        '${mode}_summary': FieldValue.delete(),
+      });
+    } catch (_) {
+      // Başarısız olursa sessizce geç, kritik bir hata değil.
     }
   }
 
@@ -518,7 +542,7 @@ class AiService {
     // Belleği güncelle (son tur)
     unawaited(_updateChatMemory(user.id, promptType, lastUserMessage: lastUserMessage, aiResponse: raw, previous: mem));
 
-    return _limitSentences(raw, maxSentences: maxSentences);
+    return raw;
   }
 
   // Hafif yardımcılar: UI dış�� tek seferlik hesaplamalarda kullanılabilir
@@ -537,14 +561,5 @@ class AiService {
       });
     }
     return subjectNets.map((k, v) => MapEntry(k, v.isEmpty ? 0.0 : v.reduce((a, b) => a + b) / v.length));
-  }
-
-  // YENI: Chat çıktısını 3 cümle ile sınırla
-  String _limitSentences(String text, {int maxSentences = 3}) {
-    final cleaned = text.trim();
-    if (cleaned.isEmpty) return cleaned;
-    final parts = cleaned.split(RegExp(r'(?<=[.!?])\s+'));
-    if (parts.length <= maxSentences) return cleaned;
-    return parts.take(maxSentences).join(' ').trim();
   }
 }
