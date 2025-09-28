@@ -5,7 +5,7 @@ const { nowIstanbul, computeTestAggregates } = require("./utils");
 const { upsertLeaderboardScore } = require("./leaderboard");
 const { updatePublicProfile } = require("./profile");
 
-exports.addEngagementPoints = onCall({ region: "us-central1" }, async (request) => {
+exports.addEngagementPoints = onCall({ region: "us-central1", enforceAppCheck: true }, async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Oturum gerekli");
   const uid = request.auth.uid;
   const deltaRaw = request.data && request.data.pointsToAdd;
@@ -51,7 +51,7 @@ exports.addEngagementPoints = onCall({ region: "us-central1" }, async (request) 
   return { ok: true, added: delta };
 });
 
-exports.addTestResult = onCall({ region: "us-central1", timeoutSeconds: 30 }, async (request) => {
+exports.addTestResult = onCall({ region: "us-central1", timeoutSeconds: 30, enforceAppCheck: true }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Oturum gerekli");
   }

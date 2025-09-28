@@ -282,7 +282,7 @@ exports.cleanupLeaderboards = onSchedule({ schedule: '30 3 * * *', timeZone: 'Eu
 
   // ==== Kullanıcı rütbe ve komşu sorgusu (callable) ====
 // YENİ: Optimize edilmiş: Anlık görüntüden sıralama ve komşuları al
-exports.getLeaderboardRank = onCall({region: 'us-central1', timeoutSeconds: 30}, async (request) => {
+exports.getLeaderboardRank = onCall({region: 'us-central1', timeoutSeconds: 30, enforceAppCheck: true}, async (request) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
     const uid = request.auth.uid;
     const examType = String(request.data?.examType || '').trim();
@@ -327,7 +327,7 @@ exports.getLeaderboardRank = onCall({region: 'us-central1', timeoutSeconds: 30},
   });
 
   // Admin: Liderlik tablolarını geriye dönük doldurma (backfill)
-exports.adminBackfillLeaderboard = onCall({region: 'us-central1', timeoutSeconds: 540}, async (request) => {
+exports.adminBackfillLeaderboard = onCall({region: 'us-central1', timeoutSeconds: 540, enforceAppCheck: true}, async (request) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
     const isAdmin = request.auth.token && request.auth.token.admin === true;
     if (!isAdmin) throw new HttpsError('permission-denied', 'Admin gerekli');

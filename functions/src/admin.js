@@ -32,6 +32,7 @@ async function isSuperAdmin(uid) {
 
 exports.setAdminClaim = onCall({
   region: 'us-central1',
+  enforceAppCheck: true,
   rateLimits: {
     maxCalls: 10,
     timeFrameSeconds: 60,
@@ -65,6 +66,7 @@ exports.setAdminClaim = onCall({
 
 exports.setSelfAdmin = onCall({
   region: 'us-central1',
+  enforceAppCheck: true,
   rateLimits: {
     maxCalls: 5,
     timeFrameSeconds: 60,
@@ -85,6 +87,7 @@ exports.setSelfAdmin = onCall({
 
 exports.getUsers = onCall({
   region: 'us-central1',
+  enforceAppCheck: true,
   rateLimits: {
     maxCalls: 20,
     timeFrameSeconds: 60,
@@ -156,6 +159,7 @@ async function _getAudienceQuery(audience) {
 
 exports.adminEstimateAudience = onCall({
   region: 'us-central1',
+  enforceAppCheck: true,
   rateLimits: {
     maxCalls: 30,
     timeFrameSeconds: 60,
@@ -181,6 +185,7 @@ exports.adminEstimateAudience = onCall({
 
 exports.adminSendPush = onCall({
   region: 'us-central1',
+  enforceAppCheck: true,
   rateLimits: {
     maxCalls: 5,
     timeFrameSeconds: 60,
@@ -279,6 +284,7 @@ exports.adminSendPush = onCall({
 
 exports.findUserByEmail = onCall({
   region: 'us-central1',
+  enforceAppCheck: true,
   rateLimits: {
     maxCalls: 30,
     timeFrameSeconds: 60,
@@ -317,6 +323,7 @@ exports.findUserByEmail = onCall({
 
 exports.isCurrentUserSuperAdmin = onCall({
   region: 'us-central1',
+  enforceAppCheck: true,
   rateLimits: {
     maxCalls: 30,
     timeFrameSeconds: 60,
