@@ -4,18 +4,19 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // =====================================================================
-    // KULLANICI KOLEKSİYONU (/users) - KULLANICI ARAMA İÇİN GÜNCELLENDİ
+    // KULLANICI KOLEKSİYONU (/users) - GÜVENLİK DÜZELTMESİ
     // =====================================================================
     match /users/{userId} {
-      // Kullanıcı kendi profilini tamamen okuyabilir VE
-      // KULLANICI ARAMA İÇİN: Giriş yapmış kullanıcılar temel profil bilgilerini okuyabilir
-      allow read: if request.auth.uid == userId
-        || (request.auth != null && resource != null);
+      // GÜVENLİK AÇIĞI KAPATILDI: Kullanıcılar sadece kendi özel verilerini okuyabilir.
+      // Genel profil verileri (diğer kullanıcılar tarafından görülebilen) için /public_profiles koleksiyonu kullanılır.
+      allow read: if request.auth.uid == userId;
 
       // YAZMA İZNİ - Kullanıcı kendi verilerini yazabilir
       allow write: if request.auth != null && request.auth.uid == userId;
 
-      // Takip sayaçları için yazma izni (followerCount, followingCount)
+      // Takip sayaçları için yazma izni (followerCount, followingCount) - Cloud Function'a taşındı
+      // Bu kural, public_profiles üzerinde çalışan Cloud Function ile yönetildiği için kaldırılabilir veya
+      // sadece sunucu tarafı güncellemelere izin verecek şekilde kısıtlanabilir. Şimdilik bırakıldı.
       allow update: if request.auth != null
         && request.resource.data.diff(resource.data).affectedKeys()
         .hasOnly(['followerCount', 'followingCount', 'updatedAt']);
@@ -58,7 +59,6 @@ service cloud.firestore {
 
       match /user_activity/{activityId} {
         allow read, create: if request.auth.uid == userId;
-        // visits ve completedTasks artık alt koleksiyon olduğu için buradan kaldırıldı.
         allow update: if request.auth.uid == userId && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['practiceVolume', 'focusMinutes', 'date', 'dateKey', 'updatedAt']);
         allow delete: if false;
 
@@ -99,11 +99,15 @@ service cloud.firestore {
     }
 
     // =====================================================================
-    // PUBLIC PROFILES - KULLANICI ARAMA İÇİN
+    // PUBLIC PROFILES - GÜVENLİK DÜZELTMESİ
     // =====================================================================
     match /public_profiles/{userId} {
+      // Herkese açık profilleri tüm giriş yapmış kullanıcılar okuyabilir.
       allow read, list: if request.auth != null;
-      allow create, update: if request.auth != null;
+      // GÜVENLİK AÇIĞI KAPATILDI: Kullanıcılar sadece kendi herkese açık profillerini oluşturabilir veya güncelleyebilir.
+      // Veri senkronizasyonu Cloud Function tarafından yapılır.
+      allow create, update: if request.auth.uid == userId;
+      // Profillerin silinmesine istemci tarafından izin verilmez.
       allow delete: if false;
     }
 

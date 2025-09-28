@@ -458,8 +458,34 @@ class FirestoreService {
     await userDocRef.update(data);
   }
 
+  // GÜVENLİK GÜNCELLEMESİ: Bu fonksiyon artık diğer kullanıcıların genel profilini
+  // güvenli bir şekilde `/public_profiles` koleksiyonundan okur.
+  // Mevcut giriş yapmış kullanıcının kendi tam profili için `streamCombinedUserModel` kullanılır.
   Stream<UserModel> getUserProfile(String userId) {
-    return usersCollection.doc(userId).snapshots().map((doc) => UserModel.fromSnapshot(doc));
+    return _publicProfileDoc(userId).snapshots().map((doc) {
+      if (!doc.exists || doc.data() == null) {
+        // Belge yoksa veya boşsa, UI'da hata oluşmasını önlemek için
+        // varsayılan bir UserModel döndür.
+        return UserModel(id: userId, email: '', name: 'Kullanıcı Bulunamadı', username: '');
+      }
+      final data = doc.data()!;
+      // `public_profiles`'tan gelen verilerle bir UserModel oluştur.
+      // Özel alanlar (email, gender vb.) burada bulunmayacaktır, bu beklenen bir durumdur.
+      return UserModel(
+        id: userId,
+        email: '', // Özel alan, public profilde yok.
+        name: data['name'] ?? '',
+        username: data['username'] ?? '',
+        avatarStyle: data['avatarStyle'],
+        avatarSeed: data['avatarSeed'],
+        selectedExam: data['selectedExam'],
+        // İstatistikler de public profile ile senkronize edilir
+        engagementScore: (data['engagementScore'] as num?)?.toInt() ?? 0,
+        streak: (data['streak'] as num?)?.toInt() ?? 0,
+        testCount: (data['testCount'] as num?)?.toInt() ?? 0,
+        totalNetSum: (data['totalNetSum'] as num?)?.toDouble() ?? 0.0,
+      );
+    });
   }
 
   Future<UserModel?> getUserById(String userId) async {
@@ -1109,78 +1135,42 @@ class FirestoreService {
     await batch.commit();
   }
 
-  /// Search users by name/username
+  /// Search users by name/username - GÜVENLİK GÜNCELLEMESİ
   Future<List<Map<String, dynamic>>> searchUsersByName(String query, {SearchType searchType = SearchType.name}) async {
     if (query.trim().isEmpty) return [];
 
     final normalizedQuery = query.trim().toLowerCase();
-    List<Map<String, dynamic>> results = [];
 
     try {
-      // Method 1: Search in public_profiles collection with keywords (only for name search)
-      if (searchType == SearchType.name) {
-        try {
-          final keywords = _generateSearchKeywords(normalizedQuery);
-          final publicProfilesQuery = await _firestore
-              .collection('public_profiles')
-              .where('searchableKeywords', arrayContainsAny: keywords.take(10).toList())
-              .limit(20)
-              .get();
+      Query<Map<String, dynamic>> searchQuery;
 
-          for (var doc in publicProfilesQuery.docs) {
-            final data = doc.data();
-            data['userId'] = doc.id;
-            results.add(data);
-          }
-        } catch (e) {
-          print('Public profiles search failed: $e');
-        }
+      // Arama mantığı artık yalnızca `public_profiles` koleksiyonunu hedefliyor.
+      final publicProfiles = _firestore.collection('public_profiles');
+
+      if (searchType == SearchType.username) {
+        // Kullanıcı adına göre arama
+        searchQuery = publicProfiles
+            .where('username', isGreaterThanOrEqualTo: normalizedQuery)
+            .where('username', isLessThan: normalizedQuery + '\uf8ff')
+            .limit(20);
+      } else {
+        // İsimle arama (keywords kullanarak)
+        // Cloud Function'ın `searchableKeywords` alanını doldurduğunu varsayıyoruz.
+        final keywords = _generateSearchKeywords(normalizedQuery);
+        searchQuery = publicProfiles
+            .where('searchableKeywords', arrayContainsAny: keywords.take(10).toList())
+            .limit(20);
       }
 
-      // Method 2: Direct search in users collection based on search type
-      try {
-        Query<Map<String, dynamic>> usersQuery;
+      final querySnapshot = await searchQuery.get();
 
-        if (searchType == SearchType.username) {
-          // Username search
-          usersQuery = usersCollection
-              .where('username', isGreaterThanOrEqualTo: normalizedQuery)
-              .where('username', isLessThan: normalizedQuery + '\uf8ff')
-              .limit(15);
-        } else {
-          // Name search
-          usersQuery = usersCollection
-              .where('name', isGreaterThanOrEqualTo: normalizedQuery)
-              .where('name', isLessThan: normalizedQuery + '\uf8ff')
-              .limit(15);
-        }
+      final results = querySnapshot.docs.map((doc) {
+        final data = doc.data();
+        data['userId'] = doc.id; // Sonuçlara userId'yi ekle
+        return data;
+      }).toList();
 
-        final querySnapshot = await usersQuery.get();
-
-        for (var doc in querySnapshot.docs) {
-          final data = doc.data();
-          final searchField = searchType == SearchType.username ? data['username'] : data['name'];
-
-          if (searchField != null && !results.any((r) => r['userId'] == doc.id)) {
-            results.add({
-              'userId': doc.id,
-              'name': data['name'],
-              'username': data['username'],
-              'avatarStyle': data['avatarStyle'],
-              'avatarSeed': data['avatarSeed'],
-              'selectedExam': data['selectedExam'],
-            });
-          }
-        }
-      } catch (e) {
-        print('Users collection search failed: $e');
-      }
-
-      // Method 3: Fallback contains search (only if no results found) - REMOVED
-      // This part was removed because it is inefficient and not scalable.
-      // It was fetching all users and filtering on the client-side.
-
-      // Remove duplicates and limit results
+      // Yinelenen sonuçları engellemek için (farklı keyword'ler aynı dokümanı getirebilir)
       final uniqueResults = <String, Map<String, dynamic>>{};
       for (final result in results) {
         final userId = result['userId'] as String;
@@ -1189,9 +1179,10 @@ class FirestoreService {
         }
       }
 
-      return uniqueResults.values.take(20).toList();
+      return uniqueResults.values.toList();
+
     } catch (e) {
-      print('Error searching users: $e');
+      print('Error searching users in public_profiles: $e');
       return [];
     }
   }
