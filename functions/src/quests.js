@@ -246,7 +246,7 @@ async function generateQuestsForAllUsers() {
 }
 
 // İSTEMCİDEN GÜNLÜK GÖREV YENİLEME (CALLABLE)
-exports.regenerateDailyQuests = onCall({ region: "us-central1", timeoutSeconds: 60 }, async (request) => {
+exports.regenerateDailyQuests = onCall({ region: "us-central1", timeoutSeconds: 60, enforceAppCheck: true }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Oturum gerekli");
   }
@@ -290,7 +290,7 @@ exports.regenerateDailyQuests = onCall({ region: "us-central1", timeoutSeconds: 
 });
 
 // İstemciden görevi TAMAMLAMA (CALLABLE) — isCompleted sadece sunucuda set edilir
-exports.completeQuest = onCall({ region: "us-central1", timeoutSeconds: 30 }, async (request) => {
+exports.completeQuest = onCall({ region: "us-central1", timeoutSeconds: 30, enforceAppCheck: true }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Oturum gerekli");
   }

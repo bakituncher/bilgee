@@ -6,7 +6,7 @@ const { dayKeyIstanbul } = require("./utils");
 const { computeInactivityHours, selectAudienceUids } = require("./users");
 
 // ---- FCM TOKEN KAYDI ----
-exports.registerFcmToken = onCall({region: 'us-central1'}, async (request) => {
+exports.registerFcmToken = onCall({region: 'us-central1', enforceAppCheck: true}, async (request) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
     const uid = request.auth.uid;
     const token = String(request.data?.token || '');
@@ -31,7 +31,7 @@ exports.registerFcmToken = onCall({region: 'us-central1'}, async (request) => {
   });
 
 // ---- FCM TOKEN TEMİZLEME ----
-exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => {
+exports.unregisterFcmToken = onCall({region: 'us-central1', enforceAppCheck: true}, async (request) => {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
   const uid = request.auth.uid;
   const token = String(request.data?.token || '');
@@ -239,7 +239,7 @@ exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => 
   });
 
   // ---- ADMIN KAMPANYA GÖNDERİMİ ----
-  exports.adminEstimateAudience = onCall({region: 'us-central1', timeoutSeconds: 300}, async (request) => {
+  exports.adminEstimateAudience = onCall({region: 'us-central1', timeoutSeconds: 300, enforceAppCheck: true}, async (request) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
     const isAdmin = request.auth.token && request.auth.token.admin === true;
     if (!isAdmin) throw new HttpsError('permission-denied', 'Admin gerekli');
@@ -282,7 +282,7 @@ exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => 
     return {users, baseUsers, tokenHolders};
   });
 
-  exports.adminSendPush = onCall({region: 'us-central1', timeoutSeconds: 540}, async (request) => {
+  exports.adminSendPush = onCall({region: 'us-central1', timeoutSeconds: 540, enforceAppCheck: true}, async (request) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
     const isAdmin = request.auth.token && request.auth.token.admin === true;
     if (!isAdmin) throw new HttpsError('permission-denied', 'Admin gerekli');

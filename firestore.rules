@@ -111,7 +111,7 @@ service cloud.firestore {
       allow read, list: if request.auth != null;
       // GÜVENLİK AÇIĞI KAPATILDI: Kullanıcılar sadece kendi herkese açık profillerini oluşturabilir veya güncelleyebilir.
       // Veri senkronizasyonu Cloud Function tarafından yapılır.
-      allow create, update: if request.auth.uid == userId;
+      allow write: if false;
       // Profillerin silinmesine istemci tarafından izin verilmez.
       allow delete: if false;
     }
@@ -121,8 +121,8 @@ service cloud.firestore {
     // =====================================================================
     match /leaderboards/{examType}/users/{userId} {
       allow read: if request.auth != null;
-      allow write: if request.auth.uid == userId;
-      allow delete: if request.auth.uid == userId;
+      allow write: if false;
+      allow delete: if false;
     }
 
     // =====================================================================

@@ -109,7 +109,7 @@ exports.onQuestionReportDeleted = onDocumentDeleted({
 });
 
 // Admin: bildirimi silmek için callable (tekil veya toplu)
-exports.adminDeleteQuestionReports = onCall({ region: "us-central1", timeoutSeconds: 300 }, async (request) => {
+exports.adminDeleteQuestionReports = onCall({ region: "us-central1", timeoutSeconds: 300, enforceAppCheck: true }, async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Oturum gerekli");
   const isAdmin = request.auth.token && request.auth.token.admin === true;
   if (!isAdmin) throw new HttpsError("permission-denied", "Admin gerekli");
