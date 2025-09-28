@@ -1,4 +1,4 @@
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const { db } = require("./init");
 const { dayKeyIstanbul, nowIstanbul } = require("./utils");
@@ -8,11 +8,11 @@ const { dayKeyIstanbul, nowIstanbul } = require("./utils");
  * This is a critical, multi-step operation handled by a callable function
  * to ensure atomicity and prevent data inconsistencies.
  */
-exports.resetUserDataForNewExam = onCall({ region: "us-central1", enforceAppCheck: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError('unauthenticated', 'The function must be called while authenticated.');
+const resetUserDataForNewExam = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'The function must be called while authenticated.');
   }
-  const userId = request.auth.uid;
+  const userId = context.auth.uid;
   const batch = db.batch();
 
   // 1. Reset main user document fields
@@ -69,7 +69,7 @@ exports.resetUserDataForNewExam = onCall({ region: "us-central1", enforceAppChec
     return { success: true, message: `User data for ${userId} has been reset.` };
   } catch (error) {
     console.error(`Failed to reset data for user ${userId}`, error);
-    throw new HttpsError('internal', 'Failed to reset user data.', error);
+    throw new functions.https.HttpsError('internal', 'Failed to reset user data.', error);
   }
 });
 
@@ -139,7 +139,7 @@ async function selectAudienceUids(audience) {
 }
 
 module.exports = {
-  ...exports,
   computeInactivityHours,
   selectAudienceUids,
+  resetUserDataForNewExam,
 };
