@@ -4,21 +4,27 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // =====================================================================
-    // KULLANICI KOLEKSİYONU (/users) - KULLANICI ARAMA İÇİN GÜNCELLENDİ
+    // KULLANICI KOLEKSİYONU (/users) - GÜVENLİK DÜZELTMESİ
     // =====================================================================
     match /users/{userId} {
-      // Kullanıcı kendi profilini tamamen okuyabilir VE
-      // KULLANICI ARAMA İÇİN: Giriş yapmış kullanıcılar temel profil bilgilerini okuyabilir
-      allow read: if request.auth.uid == userId
-        || (request.auth != null && resource != null);
+      // GÜVENLİK AÇIĞI KAPATILDI: Kullanıcılar sadece kendi özel verilerini okuyabilir.
+      // Genel profil verileri (diğer kullanıcılar tarafından görülebilen) için /public_profiles koleksiyonu kullanılır.
+      allow read: if request.auth.uid == userId;
 
-      // YAZMA İZNİ - Kullanıcı kendi verilerini yazabilir
-      allow write: if request.auth != null && request.auth.uid == userId;
+      // NİHAİ GÜVENLİK GÜNCELLEMESİ: Genel 'write' izni, daha güvenli olan
+      // 'create' ve 'update' izinleriyle değiştirildi.
 
-      // Takip sayaçları için yazma izni (followerCount, followingCount)
-      allow update: if request.auth != null
-        && request.resource.data.diff(resource.data).affectedKeys()
-        .hasOnly(['followerCount', 'followingCount', 'updatedAt']);
+      // Kullanıcı kendi profil belgesini oluşturabilir.
+      allow create: if request.auth != null && request.auth.uid == userId;
+
+      // Kullanıcı kendi profilini güncelleyebilir, ancak SADECE belirli alanları.
+      // Bu kural, 'followerCount' ve 'followingCount' gibi sunucu tarafından yönetilen
+      // alanların istemci tarafından manipüle edilmesini kesinlikle engeller.
+      allow update: if request.auth != null && request.auth.uid == userId &&
+                       request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly(['name', 'firstName', 'lastName', 'username', 'gender', 'dateOfBirth',
+                                 'profileCompleted', 'tutorialCompleted', 'avatarStyle', 'avatarSeed',
+                                 'selectedExam', 'selectedExamSection', 'weeklyAvailability', 'updatedAt']);
 
       // --- ALT KOLEKSİYONLAR ---
       match /daily_quests/{questId} {
@@ -58,7 +64,6 @@ service cloud.firestore {
 
       match /user_activity/{activityId} {
         allow read, create: if request.auth.uid == userId;
-        // visits ve completedTasks artık alt koleksiyon olduğu için buradan kaldırıldı.
         allow update: if request.auth.uid == userId && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['practiceVolume', 'focusMinutes', 'date', 'dateKey', 'updatedAt']);
         allow delete: if false;
 
@@ -99,11 +104,15 @@ service cloud.firestore {
     }
 
     // =====================================================================
-    // PUBLIC PROFILES - KULLANICI ARAMA İÇİN
+    // PUBLIC PROFILES - GÜVENLİK DÜZELTMESİ
     // =====================================================================
     match /public_profiles/{userId} {
+      // Herkese açık profilleri tüm giriş yapmış kullanıcılar okuyabilir.
       allow read, list: if request.auth != null;
-      allow create, update: if request.auth != null;
+      // GÜVENLİK AÇIĞI KAPATILDI: Kullanıcılar sadece kendi herkese açık profillerini oluşturabilir veya güncelleyebilir.
+      // Veri senkronizasyonu Cloud Function tarafından yapılır.
+      allow create, update: if request.auth.uid == userId;
+      // Profillerin silinmesine istemci tarafından izin verilmez.
       allow delete: if false;
     }
 
@@ -137,9 +146,11 @@ service cloud.firestore {
 
     // YENİ: Liderlik tablosu anlık görüntüleri (optimize edilmiş)
     match /leaderboard_snapshots/{snapshotId} {
-      // KALICI KURAL: Eski hali request.auth.uid != null idi ve authenticated olmayan istemciler için PERMISSION_DENIED veriyordu.
-      // HIZLI DÜZELTME: Bu koleksiyonu herkese açık yapıyoruz. Eğer güvenlik gerekiyorsa daha ince yetkilendirme ekleyin.
-      allow read, list: if request.auth != null;
+      // GÜVENLİK GÜNCELLEMESİ: Liderlik tablolarını yalnızca, kendi profillerinde
+      // aynı sınav türünü seçmiş olan kullanıcılar okuyabilir.
+      // `snapshotId` formatı: `{examType}_{period}` (örn: "TYT_daily").
+      allow read, list: if request.auth != null &&
+                           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.selectedExam == snapshotId.split('_')[0];
       allow write: if false; // Sadece sunucu yazmalı
     }
 

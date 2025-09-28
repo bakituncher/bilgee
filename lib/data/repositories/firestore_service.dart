@@ -458,8 +458,43 @@ class FirestoreService {
     await userDocRef.update(data);
   }
 
+  // GÜVENLİK GÜNCELLEMESİ: Bu fonksiyon artık diğer kullanıcıların genel profilini
+  // güvenli bir şekilde `/public_profiles` koleksiyonundan okur.
+  // Mevcut giriş yapmış kullanıcının kendi tam profili için `streamCombinedUserModel` kullanılır.
   Stream<UserModel> getUserProfile(String userId) {
-    return usersCollection.doc(userId).snapshots().map((doc) => UserModel.fromSnapshot(doc));
+    return _publicProfileDoc(userId).snapshots().map((doc) {
+      if (!doc.exists || doc.data() == null) {
+        // Belge yoksa veya boşsa, UI'da hata oluşmasını önlemek için
+        // varsayılan bir UserModel döndür.
+        return UserModel(id: userId, email: '', firstName: 'Kullanıcı', lastName: 'Bulunamadı', username: 'bulunamadi');
+      }
+      final data = doc.data()!;
+      final name = data['name'] as String? ?? '';
+      final parts = name.split(' ');
+      final firstName = parts.isNotEmpty ? parts.first : '';
+      final lastName = parts.length > 1 ? parts.sublist(1).join(' ') : '';
+
+      // `public_profiles`'tan gelen verilerle bir UserModel oluştur.
+      // Özel alanlar (email, gender vb.) burada bulunmayacaktır, bu beklenen bir durumdur.
+      return UserModel(
+        id: userId,
+        email: '', // Özel alan, public profilde yok.
+        firstName: firstName,
+        lastName: lastName,
+        username: data['username'] as String? ?? '',
+        name: name,
+        avatarStyle: data['avatarStyle'] as String?,
+        avatarSeed: data['avatarSeed'] as String?,
+        selectedExam: data['selectedExam'] as String?,
+        // İstatistikler de public profile ile senkronize edilir
+        engagementScore: (data['engagementScore'] as num?)?.toInt() ?? 0,
+        streak: (data['streak'] as num?)?.toInt() ?? 0,
+        testCount: (data['testCount'] as num?)?.toInt() ?? 0,
+        totalNetSum: (data['totalNetSum'] as num?)?.toDouble() ?? 0.0,
+        followerCount: (data['followerCount'] as num?)?.toInt() ?? 0,
+        followingCount: (data['followingCount'] as num?)?.toInt() ?? 0,
+      );
+    });
   }
 
   Future<UserModel?> getUserById(String userId) async {
@@ -1082,105 +1117,67 @@ class FirestoreService {
 
 
   /// Follow a user (adds docs both sides)
+  // GÜVENLİK GÜNCELLEMESİ: Sayaç güncellemeleri artık Cloud Function tarafından yapılıyor.
+  // İstemci yalnızca takip ilişkisini oluşturan dokümanları ekler.
   Future<void> followUser({required String currentUserId, required String targetUserId}) async {
     if (currentUserId == targetUserId) return;
     final batch = _firestore.batch();
     final now = FieldValue.serverTimestamp();
+    // Takip edilen kullanıcının 'followers' alt koleksiyonuna takip edeni ekle
     batch.set(_followersCollection(targetUserId).doc(currentUserId), {'createdAt': now});
+    // Takip eden kullanıcının 'following' alt koleksiyonuna takip edileni ekle
     batch.set(_followingCollection(currentUserId).doc(targetUserId), {'createdAt': now});
-
-    // Optionally update counters on user docs
-    batch.set(usersCollection.doc(targetUserId), {'followerCount': FieldValue.increment(1)}, SetOptions(merge: true));
-    batch.set(usersCollection.doc(currentUserId), {'followingCount': FieldValue.increment(1)}, SetOptions(merge: true));
-
     await batch.commit();
   }
 
   /// Unfollow a user
+  // GÜVENLİK GÜNCELLEMESİ: Sayaç güncellemeleri artık Cloud Function tarafından yapılıyor.
+  // İstemci yalnızca takip ilişkisini bozan dokümanları siler.
   Future<void> unfollowUser({required String currentUserId, required String targetUserId}) async {
     if (currentUserId == targetUserId) return;
     final batch = _firestore.batch();
+    // İlgili dokümanları her iki taraftan da sil
     batch.delete(_followersCollection(targetUserId).doc(currentUserId));
     batch.delete(_followingCollection(currentUserId).doc(targetUserId));
-
-    batch.set(usersCollection.doc(targetUserId), {'followerCount': FieldValue.increment(-1)}, SetOptions(merge: true));
-    batch.set(usersCollection.doc(currentUserId), {'followingCount': FieldValue.increment(-1)}, SetOptions(merge: true));
-
     await batch.commit();
   }
 
-  /// Search users by name/username
+  /// Search users by name/username - GÜVENLİK GÜNCELLEMESİ
   Future<List<Map<String, dynamic>>> searchUsersByName(String query, {SearchType searchType = SearchType.name}) async {
     if (query.trim().isEmpty) return [];
 
     final normalizedQuery = query.trim().toLowerCase();
-    List<Map<String, dynamic>> results = [];
 
     try {
-      // Method 1: Search in public_profiles collection with keywords (only for name search)
-      if (searchType == SearchType.name) {
-        try {
-          final keywords = _generateSearchKeywords(normalizedQuery);
-          final publicProfilesQuery = await _firestore
-              .collection('public_profiles')
-              .where('searchableKeywords', arrayContainsAny: keywords.take(10).toList())
-              .limit(20)
-              .get();
+      Query<Map<String, dynamic>> searchQuery;
 
-          for (var doc in publicProfilesQuery.docs) {
-            final data = doc.data();
-            data['userId'] = doc.id;
-            results.add(data);
-          }
-        } catch (e) {
-          print('Public profiles search failed: $e');
-        }
+      // Arama mantığı artık yalnızca `public_profiles` koleksiyonunu hedefliyor.
+      final publicProfiles = _firestore.collection('public_profiles');
+
+      if (searchType == SearchType.username) {
+        // Kullanıcı adına göre arama
+        searchQuery = publicProfiles
+            .where('username', isGreaterThanOrEqualTo: normalizedQuery)
+            .where('username', isLessThan: normalizedQuery + '\uf8ff')
+            .limit(20);
+      } else {
+        // İsimle arama (keywords kullanarak)
+        // Cloud Function'ın `searchableKeywords` alanını doldurduğunu varsayıyoruz.
+        final keywords = _generateSearchKeywords(normalizedQuery);
+        searchQuery = publicProfiles
+            .where('searchableKeywords', arrayContainsAny: keywords.take(10).toList())
+            .limit(20);
       }
 
-      // Method 2: Direct search in users collection based on search type
-      try {
-        Query<Map<String, dynamic>> usersQuery;
+      final querySnapshot = await searchQuery.get();
 
-        if (searchType == SearchType.username) {
-          // Username search
-          usersQuery = usersCollection
-              .where('username', isGreaterThanOrEqualTo: normalizedQuery)
-              .where('username', isLessThan: normalizedQuery + '\uf8ff')
-              .limit(15);
-        } else {
-          // Name search
-          usersQuery = usersCollection
-              .where('name', isGreaterThanOrEqualTo: normalizedQuery)
-              .where('name', isLessThan: normalizedQuery + '\uf8ff')
-              .limit(15);
-        }
+      final results = querySnapshot.docs.map((doc) {
+        final data = doc.data();
+        data['userId'] = doc.id; // Sonuçlara userId'yi ekle
+        return data;
+      }).toList();
 
-        final querySnapshot = await usersQuery.get();
-
-        for (var doc in querySnapshot.docs) {
-          final data = doc.data();
-          final searchField = searchType == SearchType.username ? data['username'] : data['name'];
-
-          if (searchField != null && !results.any((r) => r['userId'] == doc.id)) {
-            results.add({
-              'userId': doc.id,
-              'name': data['name'],
-              'username': data['username'],
-              'avatarStyle': data['avatarStyle'],
-              'avatarSeed': data['avatarSeed'],
-              'selectedExam': data['selectedExam'],
-            });
-          }
-        }
-      } catch (e) {
-        print('Users collection search failed: $e');
-      }
-
-      // Method 3: Fallback contains search (only if no results found) - REMOVED
-      // This part was removed because it is inefficient and not scalable.
-      // It was fetching all users and filtering on the client-side.
-
-      // Remove duplicates and limit results
+      // Yinelenen sonuçları engellemek için (farklı keyword'ler aynı dokümanı getirebilir)
       final uniqueResults = <String, Map<String, dynamic>>{};
       for (final result in results) {
         final userId = result['userId'] as String;
@@ -1189,9 +1186,10 @@ class FirestoreService {
         }
       }
 
-      return uniqueResults.values.take(20).toList();
+      return uniqueResults.values.toList();
+
     } catch (e) {
-      print('Error searching users: $e');
+      print('Error searching users in public_profiles: $e');
       return [];
     }
   }
