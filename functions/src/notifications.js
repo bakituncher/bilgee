@@ -2,8 +2,23 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions");
 const { db, admin, messaging } = require("./init");
-const { dayKeyIstanbul } = require("./utils");
+const { dayKeyIstanbul, nowIstanbul } = require("./utils");
 const { computeInactivityHours, selectAudienceUids } = require("./users");
+const fs = require("fs");
+const path = require("path");
+
+// ---- NOTIFICATION TEMPLATES ----
+const NOTIFICATION_TEMPLATES = (() => {
+  try {
+    const p = path.join(__dirname, "../notification_templates.json");
+    const raw = fs.readFileSync(p, "utf8");
+    return JSON.parse(raw);
+  } catch (error) {
+    logger.error("notification_templates.json dosyası okunamadı!", error);
+    return [];
+  }
+})();
+
 
 // ---- FCM TOKEN KAYDI ----
 exports.registerFcmToken = onCall({region: 'us-central1', enforceAppCheck: true}, async (request) => {
@@ -142,31 +157,159 @@ exports.unregisterFcmToken = onCall({region: 'us-central1', enforceAppCheck: tru
     return allowed;
   }
 
-  function buildInactivityTemplate(inactHours, examType) {
-    // Basit örnek şablonlar
-    if (inactHours >= 72) {
-      return {
-        title: 'Geri dön ve hedefini yakala! 💪',
-        body: examType ? `${examType} için kaldığın yerden devam edelim. Şimdi 1 mini görevle açılış yap!` : 'Bugün bir adım atmak için harika bir an. 10 dakikalık bir görev seni bekliyor!',
-        route: '/home/quests',
-      };
+async function getUserContextForNotifications(userRef) {
+    const ctx = {
+      user: null,
+      stats: null,
+      app: null,
+      analysis: null,
+      plan: null,
+      quests: [],
+      inactive_hours: 0,
+      last_notification_ids: [],
+    };
+
+    try {
+      const [userSnap, statsSnap, appSnap, analysisSnap, planSnap, questsSnap, notifSnap] = await Promise.all([
+        userRef.get(),
+        userRef.collection("state").doc("stats").get(),
+        userRef.collection("state").doc("app_state").get(),
+        userRef.collection("performance").doc("analysis_summary").get(),
+        userRef.collection("plans").doc("current_plan").get(),
+        userRef.collection("daily_quests").get(),
+        userRef.collection("state").doc("notification_history").get(),
+      ]);
+
+      if (userSnap.exists) ctx.user = userSnap.data();
+      if (statsSnap.exists) ctx.stats = statsSnap.data();
+      if (appSnap.exists) ctx.app = appSnap.data();
+      if (analysisSnap.exists) ctx.analysis = analysisSnap.data();
+      if (planSnap.exists) ctx.plan = planSnap.data();
+      if (notifSnap.exists) ctx.last_notification_ids = (notifSnap.data()?.recent_ids || []).slice(0, 10);
+      if (!questsSnap.empty) {
+        questsSnap.forEach(doc => ctx.quests.push(doc.data()));
+      }
+
+      ctx.inactive_hours = await computeInactivityHours(userRef);
+
+    } catch (error) {
+      logger.error(`Failed to get user context for ${userRef.id}`, { error: String(error) });
     }
-    if (inactHours >= 24) {
-      return {
-        title: 'Bir gün ara verdin. Şimdi hızlanma zamanı! ⚡',
-        body: 'Hedefini 10’a çıkar: kısa bir pratikle ivme yakala! 🎯',
-        route: '/home/add-test',
-      };
+
+    return ctx;
+}
+
+function evaluateNotificationConditions(template, ctx) {
+    const cond = template.conditions || {};
+    if (!cond || Object.keys(cond).length === 0) return true; // No conditions, always true.
+
+    // Inactivity
+    if (cond.min_inactive_hours && !(ctx.inactive_hours >= cond.min_inactive_hours)) return false;
+    if (cond.max_inactive_hours && !(ctx.inactive_hours < cond.max_inactive_hours)) return false;
+
+    // Time-based
+    const now = nowIstanbul();
+    if (cond.time_of_day) {
+      const h = now.getHours();
+      const timeOfDay = h < 12 ? "morning" : h < 18 ? "afternoon" : "evening";
+      if (timeOfDay !== cond.time_of_day) return false;
     }
-    if (inactHours >= 3) {
-      return {
-        title: 'Mini odak molası ister misin? ⏱️',
-        body: 'Sadece 15 dakikalık Pomodoro ile müthiş bir geri dönüş yap. 10’a çıkarma yolunda ilk adım!',
-        route: '/home/pomodoro',
-      };
+    if (cond.day_of_week) {
+        const map = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+        const today = map[now.getDay()];
+        const wanted = Array.isArray(cond.day_of_week) ? cond.day_of_week : [cond.day_of_week];
+        if (!wanted.includes(today)) return false;
     }
-    return null;
-  }
+
+    // Weekly Plan
+    if (cond.has_weekly_plan && !(ctx.plan && ctx.plan.weeklyPlan && Object.keys(ctx.plan.weeklyPlan).length > 0)) return false;
+    if (cond.weekly_plan_progress_percent === 0) {
+        const progress = ctx.plan?.completionRatio ?? 1; // Assume 1 if not available
+        if (progress > 0) return false;
+    }
+    if (cond.min_weekly_plan_progress_percent && !(ctx.plan?.completionRatio * 100 >= cond.min_weekly_plan_progress_percent)) return false;
+    if (cond.max_weekly_plan_progress_percent && !(ctx.plan?.completionRatio * 100 < cond.max_weekly_plan_progress_percent)) return false;
+    if (cond.min_hours_since_plan_creation) {
+        const createdAt = ctx.plan?.createdAt?.toMillis() ?? 0;
+        const hoursSince = (Date.now() - createdAt) / (1000 * 60 * 60);
+        if(hoursSince < cond.min_hours_since_plan_creation) return false;
+    }
+
+    // Streak
+    if (cond.min_streak && !(ctx.stats?.streak >= cond.min_streak)) return false;
+    if (cond.just_broke_streak_record && !(ctx.stats?.justBrokeStreakRecord === true)) return false; // This needs to be set elsewhere
+
+    // Performance
+    if (cond.has_weak_subject && !(ctx.analysis?.weakestSubjectByNet && ctx.analysis.weakestSubjectByNet !== "Belirlenemedi")) return false;
+    if (cond.has_strong_subject && !(ctx.analysis?.strongestSubjectByNet && ctx.analysis.strongestSubjectByNet !== "Belirlenemedi")) return false;
+    if (cond.last_test_high_score && !(ctx.stats?.lastTestWasHighScore === true)) return false; // Needs to be set
+    if (cond.last_test_low_score && !(ctx.stats?.lastTestWasLowScore === true)) return false; // Needs to be set
+
+    // Activity
+    if (cond.days_since_last_test) {
+        const lastTestDate = ctx.stats?.lastTestDate?.toMillis() ?? 0;
+        const daysSince = (Date.now() - lastTestDate) / (1000 * 60 * 60 * 24);
+        if(daysSince < cond.days_since_last_test) return false;
+    }
+    if (cond.is_first_test_of_week && !(ctx.stats?.isFirstTestOfWeek === true)) return false; // Needs to be set
+    if (cond.all_daily_quests_completed) {
+        if (ctx.quests.length === 0 || ctx.quests.some(q => !q.isCompleted)) return false;
+    }
+    if (cond.min_study_time_today_minutes) {
+        // This requires tracking study time, which is not in the current context.
+        // For now, we'll assume this condition is not met.
+        return false;
+    }
+
+    // Feature Usage
+    if (cond.feature_not_used) {
+      const feature = cond.feature_not_used;
+      if (ctx.app && ctx.app[`feature_${feature}_used`] === true) return false;
+    }
+
+    // Exam
+    if (cond.days_until_exam) {
+        const examDate = ctx.user?.examDate?.toMillis() ?? 0;
+        if(examDate === 0) return false;
+        const daysUntil = (examDate - Date.now()) / (1000 * 60 * 60 * 24);
+        if(daysUntil > cond.days_until_exam) return false;
+    }
+
+    return true;
+}
+
+function selectNotificationForUser(ctx) {
+    const eligible = NOTIFICATION_TEMPLATES.filter(template => {
+      // Don't send the same notification twice in a row
+      if (ctx.last_notification_ids.includes(template.id)) {
+        return false;
+      }
+      return evaluateNotificationConditions(template, ctx);
+    });
+
+    if (eligible.length === 0) {
+      return null;
+    }
+
+    // Simple random selection among eligible templates for now
+    const selected = eligible[Math.floor(Math.random() * eligible.length)];
+
+    // Personalize body
+    let body = selected.body;
+    if (ctx.analysis?.weakestSubjectByNet) {
+        body = body.replace('{weakest_subject}', ctx.analysis.weakestSubjectByNet);
+    }
+    if (ctx.analysis?.strongestSubjectByNet) {
+        body = body.replace('{strongest_subject}', ctx.analysis.strongestSubjectByNet);
+    }
+
+    return {
+      id: selected.id,
+      title: selected.title,
+      body: body,
+      route: selected.route,
+    };
+}
 
   async function sendPushToTokens(tokens, payload) {
     if (!tokens || tokens.length === 0) return {successCount: 0, failureCount: 0};
@@ -201,27 +344,46 @@ exports.unregisterFcmToken = onCall({region: 'us-central1', enforceAppCheck: tru
     }
   }
 
+async function recordNotificationHistory(uid, notificationId) {
+    const historyRef = db.collection('users').doc(uid).collection('state').doc('notification_history');
+    try {
+      await historyRef.set({
+        recent_ids: admin.firestore.FieldValue.arrayUnion(notificationId),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
+    } catch (error) {
+      logger.error(`Failed to record notification history for ${uid}`, { error: String(error) });
+    }
+}
+
   async function dispatchInactivityPushBatch(limitUsers = 500) {
     const usersSnap = await db.collection('users').limit(5000).get();
-    let processed = 0, sent = 0;
+    let processed = 0, sent = 0, eligible = 0;
     for (const doc of usersSnap.docs) {
       if (processed >= limitUsers) break;
+      processed++;
+
       const uid = doc.id;
       const userRef = doc.ref;
-      const inact = await computeInactivityHours(userRef);
-      const examType = (doc.data()||{}).selectedExam || null;
-      const tpl = buildInactivityTemplate(inact, examType);
-      if (!tpl) { processed++; continue; }
+
       const allowed = await canSendMoreToday(uid, 3);
-      if (!allowed) { processed++; continue; }
+      if (!allowed) continue;
+
+      const ctx = await getUserContextForNotifications(userRef);
+      const template = selectNotificationForUser(ctx);
+
+      if (!template) continue;
+
+      eligible++;
       const tokens = await getActiveTokens(uid);
-      if (tokens.length === 0) { processed++; continue; }
-      await sendPushToTokens(tokens, { ...tpl, type: 'inactivity' });
+      if (tokens.length === 0) continue;
+
+      await sendPushToTokens(tokens, { ...template, type: 'contextual' });
+      await recordNotificationHistory(uid, template.id);
       sent++;
-      processed++;
     }
-    logger.info('dispatchInactivityPushBatch done', {processed, sent});
-    return {processed, sent};
+    logger.info('dispatchInactivityPushBatch done', {processed, eligible, sent});
+    return {processed, eligible, sent};
   }
 
   function scheduleSpecAt(hour, minute = 0) {
@@ -410,6 +572,26 @@ exports.unregisterFcmToken = onCall({region: 'us-central1', enforceAppCheck: tru
       }
     }
   });
+
+// ---- ADMIN TEST NOTIFICATION ----
+exports.adminTestNotification = onCall({region: 'us-central1'}, async (request) => {
+    if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
+    const isAdmin = request.auth.token && request.auth.token.admin === true;
+    if (!isAdmin) throw new HttpsError('permission-denied', 'Admin gerekli');
+
+    const uid = request.data?.uid;
+    if (!uid) throw new HttpsError('invalid-argument', 'UID zorunludur');
+
+    const userRef = db.collection('users').doc(uid);
+    const ctx = await getUserContextForNotifications(userRef);
+    const template = selectNotificationForUser(ctx);
+
+    return {
+        uid: uid,
+        context: ctx,
+        selectedTemplate: template,
+    };
+});
 
   // Uygulama içi bildirim oluşturucu
 async function createInAppForUser(uid, payload) {
