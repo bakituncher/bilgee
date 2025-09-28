@@ -466,24 +466,33 @@ class FirestoreService {
       if (!doc.exists || doc.data() == null) {
         // Belge yoksa veya boşsa, UI'da hata oluşmasını önlemek için
         // varsayılan bir UserModel döndür.
-        return UserModel(id: userId, email: '', name: 'Kullanıcı Bulunamadı', username: '');
+        return UserModel(id: userId, email: '', firstName: 'Kullanıcı', lastName: 'Bulunamadı', username: 'bulunamadi');
       }
       final data = doc.data()!;
+      final name = data['name'] as String? ?? '';
+      final parts = name.split(' ');
+      final firstName = parts.isNotEmpty ? parts.first : '';
+      final lastName = parts.length > 1 ? parts.sublist(1).join(' ') : '';
+
       // `public_profiles`'tan gelen verilerle bir UserModel oluştur.
       // Özel alanlar (email, gender vb.) burada bulunmayacaktır, bu beklenen bir durumdur.
       return UserModel(
         id: userId,
         email: '', // Özel alan, public profilde yok.
-        name: data['name'] ?? '',
-        username: data['username'] ?? '',
-        avatarStyle: data['avatarStyle'],
-        avatarSeed: data['avatarSeed'],
-        selectedExam: data['selectedExam'],
+        firstName: firstName,
+        lastName: lastName,
+        username: data['username'] as String? ?? '',
+        name: name,
+        avatarStyle: data['avatarStyle'] as String?,
+        avatarSeed: data['avatarSeed'] as String?,
+        selectedExam: data['selectedExam'] as String?,
         // İstatistikler de public profile ile senkronize edilir
         engagementScore: (data['engagementScore'] as num?)?.toInt() ?? 0,
         streak: (data['streak'] as num?)?.toInt() ?? 0,
         testCount: (data['testCount'] as num?)?.toInt() ?? 0,
         totalNetSum: (data['totalNetSum'] as num?)?.toDouble() ?? 0.0,
+        followerCount: (data['followerCount'] as num?)?.toInt() ?? 0,
+        followingCount: (data['followingCount'] as num?)?.toInt() ?? 0,
       );
     });
   }
