@@ -1108,30 +1108,28 @@ class FirestoreService {
 
 
   /// Follow a user (adds docs both sides)
+  // GÜVENLİK GÜNCELLEMESİ: Sayaç güncellemeleri artık Cloud Function tarafından yapılıyor.
+  // İstemci yalnızca takip ilişkisini oluşturan dokümanları ekler.
   Future<void> followUser({required String currentUserId, required String targetUserId}) async {
     if (currentUserId == targetUserId) return;
     final batch = _firestore.batch();
     final now = FieldValue.serverTimestamp();
+    // Takip edilen kullanıcının 'followers' alt koleksiyonuna takip edeni ekle
     batch.set(_followersCollection(targetUserId).doc(currentUserId), {'createdAt': now});
+    // Takip eden kullanıcının 'following' alt koleksiyonuna takip edileni ekle
     batch.set(_followingCollection(currentUserId).doc(targetUserId), {'createdAt': now});
-
-    // Optionally update counters on user docs
-    batch.set(usersCollection.doc(targetUserId), {'followerCount': FieldValue.increment(1)}, SetOptions(merge: true));
-    batch.set(usersCollection.doc(currentUserId), {'followingCount': FieldValue.increment(1)}, SetOptions(merge: true));
-
     await batch.commit();
   }
 
   /// Unfollow a user
+  // GÜVENLİK GÜNCELLEMESİ: Sayaç güncellemeleri artık Cloud Function tarafından yapılıyor.
+  // İstemci yalnızca takip ilişkisini bozan dokümanları siler.
   Future<void> unfollowUser({required String currentUserId, required String targetUserId}) async {
     if (currentUserId == targetUserId) return;
     final batch = _firestore.batch();
+    // İlgili dokümanları her iki taraftan da sil
     batch.delete(_followersCollection(targetUserId).doc(currentUserId));
     batch.delete(_followingCollection(currentUserId).doc(targetUserId));
-
-    batch.set(usersCollection.doc(targetUserId), {'followerCount': FieldValue.increment(-1)}, SetOptions(merge: true));
-    batch.set(usersCollection.doc(currentUserId), {'followingCount': FieldValue.increment(-1)}, SetOptions(merge: true));
-
     await batch.commit();
   }
 
