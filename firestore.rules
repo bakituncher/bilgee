@@ -11,16 +11,20 @@ service cloud.firestore {
       // Genel profil verileri (diğer kullanıcılar tarafından görülebilen) için /public_profiles koleksiyonu kullanılır.
       allow read: if request.auth.uid == userId;
 
-      // YAZMA İZNİ - Kullanıcı kendi verilerini yazabilir
-      // GÜVENLİK GÜNCELLEMESİ: 'followerCount' ve 'followingCount' alanları
-      // artık sadece Cloud Function tarafından güncellenebilir. 'allow write'
-      // kuralı, bu alanların değiştirilmesini engellemez, ancak istemci kodu
-      // bu alanları güncellemeyi denemeyeceği için bu kabul edilebilir bir risktir.
-      // Daha güvenli bir yaklaşım, 'update' iznini daha kısıtlayıcı hale getirmektir.
-      allow write: if request.auth != null && request.auth.uid == userId;
+      // NİHAİ GÜVENLİK GÜNCELLEMESİ: Genel 'write' izni, daha güvenli olan
+      // 'create' ve 'update' izinleriyle değiştirildi.
 
-      // GÜVENLİK AÇIĞI KAPATILDI: Takipçi sayılarını güncelleyen kural kaldırıldı.
-      // Bu güncelleme artık yalnızca sunucu tarafında (Cloud Function) yapılabilir.
+      // Kullanıcı kendi profil belgesini oluşturabilir.
+      allow create: if request.auth != null && request.auth.uid == userId;
+
+      // Kullanıcı kendi profilini güncelleyebilir, ancak SADECE belirli alanları.
+      // Bu kural, 'followerCount' ve 'followingCount' gibi sunucu tarafından yönetilen
+      // alanların istemci tarafından manipüle edilmesini kesinlikle engeller.
+      allow update: if request.auth != null && request.auth.uid == userId &&
+                       request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly(['name', 'firstName', 'lastName', 'username', 'gender', 'dateOfBirth',
+                                 'profileCompleted', 'tutorialCompleted', 'avatarStyle', 'avatarSeed',
+                                 'selectedExam', 'selectedExamSection', 'weeklyAvailability', 'updatedAt']);
 
       // --- ALT KOLEKSİYONLAR ---
       match /daily_quests/{questId} {
