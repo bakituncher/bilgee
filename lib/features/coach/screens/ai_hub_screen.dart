@@ -10,6 +10,7 @@ import 'dart:async';
 final GlobalKey strategicPlanningKey = GlobalKey();
 final GlobalKey weaknessWorkshopKey = GlobalKey();
 final GlobalKey motivationChatKey = GlobalKey();
+final GlobalKey analysisStrategyKey = GlobalKey(); // YENİ: Analiz & Strateji (birleşik)
 
 class AiHubScreen extends StatefulWidget {
   const AiHubScreen({super.key});
@@ -40,7 +41,7 @@ class _AiHubScreenState extends State<AiHubScreen> with SingleTickerProviderStat
     final tools = [
       _AiTool(
         key: strategicPlanningKey,
-        title: 'Stratejik Planlama',
+        title: 'Haftalık Planlama',
         subtitle: 'Uzun vadeli zafer stratejini ve haftalık planını oluştur.',
         icon: Icons.insights_rounded,
         route: '/ai-hub/strategic-planning',
@@ -57,6 +58,17 @@ class _AiHubScreenState extends State<AiHubScreen> with SingleTickerProviderStat
         color: AppTheme.successColor,
         heroTag: 'weakness-core',
         chip: 'Gelişim',
+      ),
+      // Birleşik: Analiz & Strateji
+      _AiTool(
+        key: analysisStrategyKey,
+        title: 'Analiz & Strateji',
+        subtitle: 'Deneme değerlendirme ve strateji danışmayı tek panelden yönet.',
+        icon: Icons.dashboard_customize_rounded,
+        route: '/ai-hub/analysis-strategy',
+        color: Colors.amberAccent,
+        heroTag: 'analysis-strategy-core',
+        chip: 'Suite',
       ),
       _AiTool(
         key: motivationChatKey,
@@ -103,26 +115,38 @@ class _AiHubScreenState extends State<AiHubScreen> with SingleTickerProviderStat
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _CoreVisual(glow: _glow),
-                      const SizedBox(height: 40),
-                      Text('Yapay Zeka Araçları', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 24), // 40 -> 24: daha kompakt üst alan
+                      Text(
+                        'Yapay Zeka Araçları',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                      ),
+                      const SizedBox(height: 12),
                     ],
                   ),
                 ),
               ),
+              // Liste yerine 2 sütunlu, kompakt grid
               SliverPadding(
-                padding: EdgeInsets.fromLTRB(16, 0, 16, bottomInset + 32), // alt boşluk optimize
-                sliver: SliverList(
+                padding: EdgeInsets.fromLTRB(16, 0, 16, bottomInset + 24),
+                sliver: SliverGrid(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    mainAxisExtent: 168, // daha az dikey kaydırma
+                  ),
                   delegate: SliverChildBuilderDelegate(
-                        (context, index) {
+                    (context, index) {
                       final tool = tools[index];
-                      return _AiToolCard(tool: tool, onTap: () => context.go(tool.route));
+                      return _AiToolTile(
+                        tool: tool,
+                        onTap: () => context.go(tool.route, extra: tool.extra), // extra gerekli değil burada
+                      );
                     },
                     childCount: tools.length,
                   ),
                 ),
               ),
-              // ekstra boşluk küçültüldü
               SliverToBoxAdapter(child: SizedBox(height: bottomInset + 8)),
             ],
           ),
@@ -139,8 +163,8 @@ class _CoreVisual extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: SizedBox(
-        width: 220,
-        height: 220,
+        width: 200, // 220 -> 200: daha az yer kaplasın
+        height: 200,
         child: AnimatedBuilder(
           animation: glow,
           builder: (context, _) {
@@ -161,8 +185,8 @@ class _CoreVisual extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  width: 180 + g * 6,
-                  height: 180 + g * 6,
+                  width: 164 + g * 6,
+                  height: 164 + g * 6,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     boxShadow: [
@@ -184,7 +208,7 @@ class _CoreVisual extends StatelessWidget {
                     ),
                   ),
                   child: Container(
-                    margin: const EdgeInsets.all(18),
+                    margin: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
@@ -195,7 +219,7 @@ class _CoreVisual extends StatelessWidget {
                       ),
                       border: Border.all(color: AppTheme.secondaryColor.withOpacity(.2), width: 1.5),
                     ),
-                    child: Icon(Icons.auto_awesome, size: 64 + g * 6, color: Colors.white.withOpacity(.92)),
+                    child: Icon(Icons.auto_awesome, size: 60 + g * 6, color: Colors.white.withOpacity(.92)),
                   ),
                 ),
               ],
@@ -325,7 +349,8 @@ class _AiTool {
   final Color color;
   final String heroTag;
   final String chip;
-  _AiTool({required this.key, required this.title, required this.subtitle, required this.icon, required this.route, required this.color, required this.heroTag, required this.chip});
+  final Object? extra; // YENİ: Rotaya ekstra veri göndermek için
+  _AiTool({required this.key, required this.title, required this.subtitle, required this.icon, required this.route, required this.color, required this.heroTag, required this.chip, this.extra});
 }
 
 class _AnimatedBackground extends StatelessWidget {
@@ -381,4 +406,142 @@ class _ParticlePainter extends CustomPainter {
   }
   @override
   bool shouldRepaint(covariant _ParticlePainter oldDelegate) => oldDelegate.progress != progress;
+}
+
+// Yeni: Grid için kompakt, premium görünümlü frosted tile
+class _AiToolTile extends StatelessWidget {
+  const _AiToolTile({required this.tool, required this.onTap});
+  final _AiTool tool;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(20);
+
+    return Hero(
+      tag: tool.heroTag,
+      flightShuttleBuilder: (context, animation, direction, from, to) => FadeTransition(opacity: animation, child: to.widget),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          key: tool.key,
+          borderRadius: radius,
+          onTap: onTap,
+          child: Ink(
+            decoration: BoxDecoration(
+              borderRadius: radius,
+              boxShadow: [
+                BoxShadow(color: tool.color.withOpacity(.18), blurRadius: 18, spreadRadius: -2, offset: const Offset(0, 10)),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: radius,
+              child: Stack(
+                children: [
+                  // Cam efekti
+                  BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                    child: Container(),
+                  ),
+                  // Yarı saydam cam panel + gradient kenar vurgusu
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: radius,
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.white.withOpacity(.08),
+                          Colors.white.withOpacity(.03),
+                        ],
+                      ),
+                      border: Border.all(color: Colors.white.withOpacity(.12)),
+                    ),
+                  ),
+                  // Dekoratif ışık lekesi
+                  Positioned(
+                    right: -24,
+                    top: -24,
+                    child: Container(
+                      width: 96,
+                      height: 96,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(colors: [tool.color.withOpacity(.28), Colors.transparent]),
+                      ),
+                    ),
+                  ),
+                  // İçerik
+                  Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _IconOrb(icon: tool.icon, color: tool.color),
+                            const Spacer(),
+                            _Badge(label: tool.chip, color: tool.color),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          tool.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          tool.subtitle,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor),
+                        ),
+                        const Spacer(),
+                        Row(
+                          children: [
+                            Icon(Icons.flash_on_rounded, size: 16, color: tool.color.withOpacity(.9)),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Hızlı başla',
+                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: tool.color.withOpacity(.9),
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                            ),
+                            const Spacer(),
+                            Icon(Icons.arrow_forward_rounded, size: 20, color: Colors.white.withOpacity(.9)),
+                          ],
+                        )
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _IconOrb extends StatelessWidget {
+  const _IconOrb({required this.icon, required this.color});
+  final IconData icon; final Color color;
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(colors: [color.withOpacity(.35), Colors.transparent]),
+        border: Border.all(color: color.withOpacity(.35)),
+      ),
+      child: Icon(icon, size: 22, color: color),
+    );
+  }
 }

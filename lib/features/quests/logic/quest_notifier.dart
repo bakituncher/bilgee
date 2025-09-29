@@ -104,7 +104,7 @@ class QuestNotifier extends StateNotifier<bool> {
 
   /// Kullanıcı yeni bir stratejik planı onayladığında bu metot çağrılır.
   void userApprovedStrategy() {
-    // YENİ: Stratejik planlama için spesifik route güncellemesi
+    // YENİ: Haftalık Planlama için spesifik route güncellemesi
     _controller.updateEngagementForRoute(_ref, QuestRoute.strategy, amount: 1);
 
     // Kullanıcının strateji özelliğini kullandığını işaretle

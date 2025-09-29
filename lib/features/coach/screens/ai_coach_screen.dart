@@ -29,7 +29,7 @@ class AiCoachScreen extends StatelessWidget {
         child: Padding(
           padding: EdgeInsets.all(16.0),
           child: Text(
-            "Bu bölümün işlevleri 'Stratejik Planlama Atölyesi'ne taşınmıştır.",
+            "Bu bölümün işlevleri 'Haftalık Planlama Atölyesi'ne taşınmıştır.",
             textAlign: TextAlign.center,
           ),
         ),

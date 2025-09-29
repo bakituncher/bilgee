@@ -363,44 +363,31 @@ class _SmartBriefingView extends ConsumerWidget {
                     child: Icon(Icons.auto_awesome, size: 42, color: AppTheme.primaryColor),
                   ).animate().fadeIn(delay: 180.ms).scale(),
                   const SizedBox(height: 24),
-                  Text('Motivasyon Süiti', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700))
+                  Text('Motivasyon Sohbeti', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700))
                       .animate().fadeIn(delay: 260.ms),
                   const SizedBox(height: 10),
                   Text(
-                    'Durumuna uygun derin ve kişisel yönlendirme al.',
+                    'Hızlı destek için bir başlık seç. Deneme Değerlendirme ve Strateji Danışma AiHub’a taşındı.',
                     style: theme.textTheme.titleMedium?.copyWith(color: AppTheme.secondaryTextColor, height: 1.3),
                     textAlign: TextAlign.center,
                   ).animate().fadeIn(delay: 300.ms),
-                  const SizedBox(height: 36),
-                  _BriefingButton(
-                    icon: Icons.flag_circle_rounded,
-                    title: 'Deneme Değerlendirme',
-                    subtitle: 'Son deneme analizi + 48 saatlik mini toparlanma planı.',
-                    onTap: () => onPromptSelected('trial_review'),
-                    delay: 380.ms,
-                  ),
-                  _BriefingButton(
-                    icon: Icons.track_changes_rounded,
-                    title: 'Strateji Danışma',
-                    subtitle: 'Haftalık ritim, odak sırası ve takip metrikleri.',
-                    onTap: () => onPromptSelected('strategy_consult'),
-                    delay: 460.ms,
-                  ),
+                  const SizedBox(height: 24),
+                  // KALDI: Psikolojik Destek
                   _BriefingButton(
                     icon: Icons.favorite_rounded,
                     title: 'Psikolojik Destek',
                     subtitle: 'Stres / moral düşüşü için kısa destek + mikro adım.',
                     onTap: () => onPromptSelected('psych_support'),
-                    delay: 520.ms,
+                    delay: 380.ms,
                   ),
+                  // KALDI: Motivasyon Köşesi
                   _BriefingButton(
                     icon: Icons.bolt_rounded,
                     title: 'Motivasyon Köşesi',
                     subtitle: '5 dk. mikro meydan okuma ve ritim önerisi.',
                     onTap: () => onPromptSelected('motivation_corner'),
-                    delay: 580.ms,
+                    delay: 460.ms,
                   ),
-                  const SizedBox(height: 8),
                 ],
               ),
             ),

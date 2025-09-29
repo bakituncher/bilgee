@@ -79,7 +79,7 @@ class PreAuthWelcomeScreen extends ConsumerWidget {
                   const SizedBox(height: 24),
                   _FeatureHighlight(
                     icon: Icons.checklist_rtl_rounded,
-                    title: 'Stratejik Planlama',
+                    title: 'Haftalık Planlama',
                     subtitle: 'Haftalık ve günlük hedeflerini belirle, zamanını en verimli şekilde kullan.',
                   ),
                   const SizedBox(height: 48),
