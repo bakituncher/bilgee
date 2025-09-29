@@ -413,8 +413,13 @@ class FirestoreService {
   }
 
   Future<bool> checkUsernameAvailability(String username) async {
-    final query = await usersCollection.where('username', isEqualTo: username).limit(1).get();
-    return query.docs.isEmpty;
+    // Güvenli okuma: public_profiles herkesçe (auth) okunabilir
+    final q = await _firestore
+        .collection('public_profiles')
+        .where('username', isEqualTo: username)
+        .limit(1)
+        .get();
+    return q.docs.isEmpty;
   }
 
   // KULLANICI ADI GÜNCELLEME (BASİTLEŞTİRİLDİ)
@@ -586,38 +591,12 @@ class FirestoreService {
     required ExamType examType,
     required String sectionName,
   }) async {
-    final userDocRef = usersCollection.doc(userId);
-    await _firestore.runTransaction((txn) async {
-      // *** HATA DÜZELTİLDİ: ÖNCE TÜM OKUMALARI YAP ***
-      final prevSnap = await txn.get(userDocRef);
-      final statsSnap = await txn.get(_userStatsDoc(userId));
-
-      // *** OKUMA SONUÇLARINI DEĞİŞKENLERE ATA ***
-      final prevData = prevSnap.data();
-      final stats = statsSnap.data() ?? const <String, dynamic>{};
-      final String? prevExam = prevData?['selectedExam'];
-
-      // *** ŞİMDİ GÜVENLE TÜM YAZMALARI YAP ***
-      txn.update(userDocRef, {
-        'selectedExam': examType.name,
-        'selectedExamSection': sectionName,
-      });
-
-      if (prevExam != null && prevExam != examType.name) {
-        final oldLbRef = _leaderboardUserDoc(examType: prevExam, userId: userId);
-        txn.delete(oldLbRef);
-      }
-
-      final newLbRef = _leaderboardUserDoc(examType: examType.name, userId: userId);
-      txn.set(newLbRef, {
-        'userId': userId,
-        'userName': prevData?['name'],
-        'score': stats['engagementScore'] ?? 0,
-        'testCount': stats['testCount'] ?? 0,
-        'avatarStyle': prevData?['avatarStyle'],
-        'avatarSeed': prevData?['avatarSeed'],
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+    // Yalnızca kullanıcı belgesini güncelle. Leaderboard/public_profiles
+    // senkronizasyonu Cloud Function (onUserUpdate) tarafından yapılır.
+    await usersCollection.doc(userId).update({
+      'selectedExam': examType.name,
+      'selectedExamSection': sectionName,
+      'updatedAt': FieldValue.serverTimestamp(),
     });
   }
 
@@ -1280,4 +1259,13 @@ class FirestoreService {
     }
   }
 
+  Future<void> resetUserDataForNewExam() async {
+    try {
+      final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
+      final callable = functions.httpsCallable('users-resetUserDataForNewExam');
+      await callable.call(<String, dynamic>{});
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

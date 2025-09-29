@@ -13,11 +13,28 @@ const resetUserDataForNewExam = functions.https.onCall(async (data, context) => 
     throw new functions.https.HttpsError('unauthenticated', 'The function must be called while authenticated.');
   }
   const userId = context.auth.uid;
-  const batch = db.batch();
 
-  // 1. Reset main user document fields
+  // 0) Helper: delete query in batches (top-level collections)
+  async function deleteQueryInBatches(query, batchSize = 300) {
+    // Loop until no docs left
+    // Each iteration loads up to batchSize docs and deletes them in a write batch
+    // to avoid timeouts and write limits.
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const snap = await query.limit(batchSize).get();
+      if (snap.empty) break;
+      const batch = db.batch();
+      snap.docs.forEach((doc) => batch.delete(doc.ref));
+      await batch.commit();
+      // Small delay to yield
+      await new Promise((r) => setTimeout(r, 25));
+    }
+  }
+
+  // 1) Reset main user document fields and core state via a batch
   const userDocRef = db.collection('users').doc(userId);
-  batch.update(userDocRef, {
+  const batch1 = db.batch();
+  batch1.update(userDocRef, {
     tutorialCompleted: false,
     selectedExam: null,
     selectedExamSection: null,
@@ -27,9 +44,9 @@ const resetUserDataForNewExam = functions.https.onCall(async (data, context) => 
     weeklyStudyGoal: null,
   });
 
-  // 2. Reset stats, performance, and plan documents
+  // 2) Reset stats, performance, and plan documents
   const statsRef = userDocRef.collection('state').doc('stats');
-  batch.set(statsRef, {
+  batch1.set(statsRef, {
     streak: 0,
     lastStreakUpdate: null,
     testCount: 0,
@@ -39,38 +56,53 @@ const resetUserDataForNewExam = functions.https.onCall(async (data, context) => 
   }, { merge: true });
 
   const performanceDocRef = userDocRef.collection('performance').doc('summary');
-  batch.set(performanceDocRef, {
-      netGains: {}, lastTenNetAvgs: [], lastTenWarriorScores: [],
-      masteredTopics: [], recentPerformance: {}, strongestSubject: null,
-      strongestTopic: null, totalCorrect: 0, totalIncorrect: 0,
-      totalNet: 0.0, totalTests: 0, weakestSubject: null, weakestTopic: null,
-  });
+  batch1.set(performanceDocRef, {
+    netGains: {}, lastTenNetAvgs: [], lastTenWarriorScores: [],
+    masteredTopics: [], recentPerformance: {}, strongestSubject: null,
+    strongestTopic: null, totalCorrect: 0, totalIncorrect: 0,
+    totalNet: 0.0, totalTests: 0, weakestSubject: null, weakestTopic: null,
+  }, { merge: true });
 
   const planDocRef = userDocRef.collection('plans').doc('current_plan');
-  batch.set(planDocRef, { studyPacing: 'balanced', weeklyPlan: {} });
+  batch1.set(planDocRef, { studyPacing: 'balanced', weeklyPlan: {} }, { merge: true });
 
-  // 3. Delete all documents in subcollections
+  // Commit the initial resets (this will also trigger onUserUpdate to clean leaderboards)
+  await batch1.commit();
+
+  // 3) Delete all documents in subcollections under the user (iterate until empty)
+  async function deleteAllDocsInSubcollection(path) {
+    // path example: users/{userId}/topic_performance
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const snap = await db.collection(path).limit(300).get();
+      if (snap.empty) break;
+      const batch = db.batch();
+      snap.docs.forEach((doc) => batch.delete(doc.ref));
+      await batch.commit();
+      await new Promise((r) => setTimeout(r, 25));
+    }
+  }
+
+  // These subcollections exist under the user document
   const subcollections = [
-    'tests', 'focusSessions', 'user_activity',
-    'topic_performance', 'savedWorkshops'
+    `users/${userId}/user_activity`,
+    `users/${userId}/topic_performance`,
+    `users/${userId}/savedWorkshops`,
   ];
 
-  for (const collectionName of subcollections) {
-    const snapshot = await db.collection('users').doc(userId).collection(collectionName).limit(500).get();
-    snapshot.docs.forEach(doc => batch.delete(doc.ref));
+  for (const sub of subcollections) {
+    await deleteAllDocsInSubcollection(sub);
   }
 
-  const masteredTopicsSnap = await performanceDocRef.collection('masteredTopics').limit(500).get();
-  masteredTopicsSnap.docs.forEach(doc => batch.delete(doc.ref));
+  // masteredTopics is a subcollection of the performance doc
+  await deleteAllDocsInSubcollection(`users/${userId}/performance/summary/masteredTopics`);
 
-  // 4. Commit the atomic batch
-  try {
-    await batch.commit();
-    return { success: true, message: `User data for ${userId} has been reset.` };
-  } catch (error) {
-    console.error(`Failed to reset data for user ${userId}`, error);
-    throw new functions.https.HttpsError('internal', 'Failed to reset user data.', error);
-  }
+  // 4) Delete top-level collections filtered by userId (true data locations)
+  await deleteQueryInBatches(db.collection('tests').where('userId', '==', userId));
+  await deleteQueryInBatches(db.collection('focusSessions').where('userId', '==', userId));
+
+  // Done
+  return { success: true, message: `User data for ${userId} has been reset.` };
 });
 
 async function computeInactivityHours(userRef) {

@@ -8,6 +8,7 @@ import 'package:taktik/features/auth/application/auth_controller.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:taktik/core/theme/app_theme.dart';
+import 'package:taktik/data/repositories/firestore_service.dart';
 
 class ExamSelectionScreen extends ConsumerWidget {
   const ExamSelectionScreen({super.key});
@@ -31,6 +32,23 @@ class ExamSelectionScreen extends ConsumerWidget {
         ),
       ],
     );
+  }
+
+  Future<bool> _confirmResetIfNeeded(BuildContext context) async {
+    // Bu ekran 'Sınavı Değiştir' olarak açıldıysa tüm veriler silinecek.
+    if (!context.canPop()) return true; // onboarding akışı: reset yok, direkt devam
+    return await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Tüm Veriler Silinecek'),
+            content: const Text('Sınavı değiştirirsen tüm denemelerin, odak seansların ve performans verilerin kalıcı olarak silinecek. Devam etmek istiyor musun?'),
+            actions: [
+              TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Vazgeç')),
+              ElevatedButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Evet, Sil')),
+            ],
+          ),
+        ) ?? false;
   }
 
   // Bu fonksiyon artık hem seçim sonrası navigasyonu hem de veritabanı kaydını yönetecek.
@@ -118,6 +136,14 @@ class ExamSelectionScreen extends ConsumerWidget {
     final exam = await ExamData.getExamByType(examType);
     final userId = ref.read(authControllerProvider).value!.uid;
     final firestoreService = ref.read(firestoreServiceProvider);
+
+    final proceed = await _confirmResetIfNeeded(context);
+    if (!proceed) return;
+
+    // Eğer değişim akışı ise önce verileri temizle
+    if (context.canPop()) {
+      await firestoreService.resetUserDataForNewExam();
+    }
 
     // LGS ve tek bölümlü sınavlar için (KPSS gibi)
     if (exam.sections.length == 1 || examType == ExamType.lgs) {
