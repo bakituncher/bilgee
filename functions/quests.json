@@ -176,7 +176,7 @@
   {
     "id": "daily_tes_02_analysis_pro",
     "title": "Analiz Profesyoneli",
-    "description": "BilgeAI ile deneme sonuçlarınızı detaylı analiz ettirin ve zayıf noktalarınızı belirleyin.",
+    "description": "TaktikAI ile deneme sonuçlarınızı detaylı analiz ettirin ve zayıf noktalarınızı belirleyin.",
     "type": "daily",
     "category": "study",
     "reward": 90,
@@ -474,7 +474,7 @@
   {
     "id": "daily_tes_06_review_analysis",
     "title": "Analizi İncele",
-    "description": "BilgeAI'nin sizin için yaptığı deneme analizini detaylıca inceleyin ve bir sonraki adımlarınızı planlayın.",
+    "description": "Taktik'nin sizin için yaptığı deneme analizini detaylıca inceleyin ve bir sonraki adımlarınızı planlayın.",
     "type": "daily",
     "category": "study",
     "reward": 55,

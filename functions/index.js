@@ -27,5 +27,5 @@ exports.tests = tests;
 // Basit test fonksiyonu
 exports.helloWorld = onRequest((request, response) => {
   logger.info("Hello logs!", { structuredData: true });
-  response.send("Hello from BilgeAI!");
+  response.send("Hello from TAKTİK!");
 });
