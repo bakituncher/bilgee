@@ -180,3 +180,13 @@
 
 # Projenize özel model sınıfları (gerekirse ekleyin)
 # -keep class com.codenzi.taktik.models.** { *; }
+
+# Release'te Log çağrılarını kaldır (bilgi sızıntısını azalt)
+-assumenosideeffects class android.util.Log {
+    public static *** d(...);
+    public static *** v(...);
+    public static *** i(...);
+    public static *** w(...);
+    public static *** e(...);
+    public static *** wtf(...);
+}

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Varsayılan yapılandırma: cleartext yasak, sadece sistem sertifikaları -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+            <!-- Kullanıcı tarafından eklenen sertifikalara güvenme -->
+        </trust-anchors>
+    </base-config>
+
+    <!-- Debug build için kullanıcı sertifikalarını da kabul et (geliştirme kolaylığı) -->
+    <debug-overrides>
+        <trust-anchors>
+            <certificates src="user" />
+            <certificates src="system" />
+        </trust-anchors>
+    </debug-overrides>
+</network-security-config>
+
