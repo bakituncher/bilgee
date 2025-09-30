@@ -39,16 +39,16 @@ class CachedAnalysisView extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       children: [
-        const TitleWidget(title: 'Kader Tayfı', subtitle: 'Netlerinin ve doğruluğunun zamansal analizi'),
+        const TitleWidget(title: 'Kader Çizgin', subtitle: 'Netlerinin ve doğruluğunun zamansal analizi'),
         NetEvolutionChart(analysis: analysis),
         const SizedBox(height: 24),
         const TitleWidget(title: 'Zafer Anıtları', subtitle: 'Genel performans metriklerin'),
         KeyStatsGrid(analysis: analysis),
         const SizedBox(height: 24),
-        const TitleWidget(title: 'Komutan Emirleri', subtitle: 'Taktik Göz\'ün taktiksel raporu'),
+        const TitleWidget(title: 'Taktik Raporun', subtitle: 'Sana özel Taktik\'sel rapor'),
         AiInsightCard(analysis: analysis),
         const SizedBox(height: 24),
-        const TitleWidget(title: 'Fetih Haritası', subtitle: 'Ders kalelerine tıklayarak detaylı istihbarat al'),
+        const TitleWidget(title: 'Ders Haritası', subtitle: 'Ders kalelerine tıklayarak detaylı istihbarat al'),
         ...analysis.sortedSubjects.map((subjectEntry) {
           final subjectAnalysis = analysis.getAnalysisForSubject(subjectEntry.key);
           return SubjectStatCard(

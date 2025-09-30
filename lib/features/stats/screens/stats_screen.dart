@@ -46,21 +46,21 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
 
   Widget _buildLoadingState() {
     return Scaffold(
-      appBar: AppBar(title: const Text('Performans Kalesi')),
+      appBar: AppBar(title: const Text('Deneme Gelişimi')),
       body: const LogoLoader(),
     );
   }
 
   Widget _buildErrorState(String error) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Performans Kalesi')),
+      appBar: AppBar(title: const Text('Deneme Gelişimi')),
       body: Center(child: Text(error)),
     );
   }
 
   Widget _buildEmptyState(BuildContext context, {bool isCompletelyEmpty = false, String sectionName = ''}) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Performans Kalesi')),
+      appBar: AppBar(title: const Text('Deneme Gelişimi')),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32.0),
@@ -154,7 +154,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
 
               return Scaffold(
                 appBar: AppBar(
-                  title: const Text('Performans Kalesi'),
+                  title: const Text('Deneme Gelişimi'),
                 ),
                 body: Column(
                   children: [
