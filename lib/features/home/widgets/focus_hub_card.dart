@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:taktik/shared/widgets/section_header.dart';
 
 class FocusHubCard extends ConsumerWidget {
   const FocusHubCard({super.key});
@@ -50,9 +51,24 @@ class FocusHubCard extends ConsumerWidget {
 
     // Hızlı eylemler şeridi
     final actions = [
-      _QuickAction(icon: Icons.add_chart_rounded, label: 'Deneme', onTap: () => context.push('/home/add-test')),
-      _QuickAction(icon: Icons.timer_rounded, label: 'Odaklan', onTap: () => context.push('/home/pomodoro')),
-      _QuickAction(icon: Icons.construction_rounded, label: 'Atölye', onTap: () => context.go('/ai-hub/weakness-workshop')),
+      _QuickAction(
+        icon: Icons.add_chart_rounded,
+        label: 'Deneme',
+        description: 'Yeni sonuç ekleyerek verilerini canlı tut.',
+        onTap: () => context.push('/home/add-test'),
+      ),
+      _QuickAction(
+        icon: Icons.timer_rounded,
+        label: 'Odaklan',
+        description: '25 dk derin çalışma seansı başlat.',
+        onTap: () => context.push('/home/pomodoro'),
+      ),
+      _QuickAction(
+        icon: Icons.construction_rounded,
+        label: 'Atölye',
+        description: 'Yapay zekâ ile zayıf konunu güçlendir.',
+        onTap: () => context.go('/ai-hub/weakness-workshop'),
+      ),
     ];
 
     return Card(
@@ -66,49 +82,22 @@ class FocusHubCard extends ConsumerWidget {
         onTap: primary,
         borderRadius: BorderRadius.circular(24),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Üst CTA
-              Row(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: AppTheme.secondaryColor.withValues(alpha: .15),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppTheme.secondaryColor.withValues(alpha: .6)),
-                    ),
-                    padding: const EdgeInsets.all(10),
-                    child: Icon(icon, color: AppTheme.secondaryColor),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
-                        const SizedBox(height: 2),
-                        Text(subtitle, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.secondaryTextColor)),
-                      ],
-                    ),
-                  ),
-                  const Icon(Icons.chevron_right_rounded, color: AppTheme.secondaryTextColor),
-                ],
+              SectionHeader(
+                icon: icon,
+                title: title,
+                subtitle: subtitle,
+                trailing: const Icon(Icons.chevron_right_rounded, color: AppTheme.secondaryTextColor),
               ),
-
-              const SizedBox(height: 14),
-              // Ayrıştırıcı çizgi
-              Divider(color: AppTheme.lightSurfaceColor.withValues(alpha: .35), height: 1),
-              const SizedBox(height: 12),
-
-              // Hızlı İşlemler
-              Row(
-                children: actions
-                    .map((a) => Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: a)))
-                    .toList(),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 14,
+                runSpacing: 14,
+                children: actions,
               ),
-              const SizedBox(height: 4),
             ],
           ),
         ),
@@ -125,29 +114,61 @@ class FocusHubCard extends ConsumerWidget {
 }
 
 class _QuickAction extends StatelessWidget {
-  final IconData icon; final String label; final VoidCallback onTap;
-  const _QuickAction({required this.icon, required this.label, required this.onTap});
+  const _QuickAction({
+    required this.icon,
+    required this.label,
+    required this.description,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final String description;
+  final VoidCallback onTap;
+
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(18),
       child: Ink(
+        width: 180,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(18),
           color: AppTheme.cardColor,
           border: Border.all(color: AppTheme.lightSurfaceColor.withValues(alpha: .45)),
         ),
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: AppTheme.secondaryColor),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppTheme.secondaryColor.withValues(alpha: .12),
+              ),
+              child: Icon(icon, color: AppTheme.secondaryColor, size: 22),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
             const SizedBox(height: 6),
-            Text(label, style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600)),
+            Text(
+              description,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppTheme.secondaryTextColor,
+                    height: 1.4,
+                  ),
+            ),
           ],
         ),
       ),
-    ).animate().scale(duration: 120.ms, curve: Curves.easeOut);
+    ).animate().fadeIn(duration: 180.ms).scale(begin: const Offset(0.97, 0.97));
   }
 }
