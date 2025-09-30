@@ -157,7 +157,7 @@ class _HeaderBar extends ConsumerWidget {
         ]),
         const SizedBox(width:16),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children:[
-          Text('Haftalık Harekât', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+          Text('Haftalık Plan', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
           const SizedBox(height:4),
           Text(DateFormat.yMMMMd('tr').format(dateForTab), style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.secondaryTextColor)),
           const SizedBox(height:6),
