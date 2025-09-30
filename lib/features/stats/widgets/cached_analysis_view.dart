@@ -36,38 +36,41 @@ class CachedAnalysisView extends ConsumerWidget {
   }
 
   Widget _buildBody(BuildContext context, StatsAnalysis analysis) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      children: [
-        const TitleWidget(title: 'Kader Çizgin', subtitle: 'Netlerinin ve doğruluğunun zamansal analizi'),
-        NetEvolutionChart(analysis: analysis),
-        const SizedBox(height: 24),
-        const TitleWidget(title: 'Zafer Anıtları', subtitle: 'Genel performans metriklerin'),
-        KeyStatsGrid(analysis: analysis),
-        const SizedBox(height: 24),
-        const TitleWidget(title: 'Taktik Raporun', subtitle: 'Sana özel Taktik\'sel rapor'),
-        AiInsightCard(analysis: analysis),
-        const SizedBox(height: 24),
-        const TitleWidget(title: 'Ders Haritası', subtitle: 'Ders kalelerine tıklayarak detaylı istihbarat al'),
-        ...analysis.sortedSubjects.map((subjectEntry) {
-          final subjectAnalysis = analysis.getAnalysisForSubject(subjectEntry.key);
-          return SubjectStatCard(
-            subjectName: subjectEntry.key,
-            analysis: subjectAnalysis,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => SubjectStatsScreen(
-                    subjectName: subjectEntry.key,
-                    analysis: subjectAnalysis,
+    return RepaintBoundary(
+      child: ListView(
+        key: PageStorageKey('analysis-$sectionName'),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        children: [
+          const TitleWidget(title: 'Kader Çizgin', subtitle: 'Netlerinin ve doğruluğunun zamansal analizi'),
+          NetEvolutionChart(analysis: analysis).animate().fadeIn(duration: 250.ms),
+          const SizedBox(height: 24),
+          const TitleWidget(title: 'Zafer Anıtları', subtitle: 'Genel performans metriklerin'),
+          KeyStatsGrid(analysis: analysis).animate().fadeIn(duration: 250.ms),
+          const SizedBox(height: 24),
+          const TitleWidget(title: 'Taktik Raporun', subtitle: 'Sana özel Taktik\'sel rapor'),
+          AiInsightCard(analysis: analysis).animate().fadeIn(duration: 250.ms),
+          const SizedBox(height: 24),
+          const TitleWidget(title: 'Ders Haritası', subtitle: 'Ders kalelerine tıklayarak detaylı istihbarat al'),
+          ...analysis.sortedSubjects.map((subjectEntry) {
+            final subjectAnalysis = analysis.getAnalysisForSubject(subjectEntry.key);
+            return SubjectStatCard(
+              subjectName: subjectEntry.key,
+              analysis: subjectAnalysis,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SubjectStatsScreen(
+                      subjectName: subjectEntry.key,
+                      analysis: subjectAnalysis,
+                    ),
                   ),
-                ),
-              );
-            },
-          ).animate().fadeIn(delay: (100 * analysis.sortedSubjects.indexOf(subjectEntry)).ms).slideX(begin: -0.2);
-        }).toList(),
-      ].animate(interval: 100.ms).fadeIn(duration: 400.ms),
+                );
+              },
+            ).animate().fadeIn(duration: 220.ms);
+          }).toList(),
+        ],
+      ),
     );
   }
 }

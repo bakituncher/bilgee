@@ -44,51 +44,38 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
     super.dispose();
   }
 
-  Widget _buildLoadingState() {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Deneme Gelişimi')),
-      body: const LogoLoader(),
-    );
-  }
+  // Yükleme/hata/boş state'lerde sadece içerik döndür.
+  Widget _buildLoadingState() => const Center(child: LogoLoader());
 
-  Widget _buildErrorState(String error) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Deneme Gelişimi')),
-      body: Center(child: Text(error)),
-    );
-  }
+  Widget _buildErrorState(String error) => Center(child: Text(error));
 
   Widget _buildEmptyState(BuildContext context, {bool isCompletelyEmpty = false, String sectionName = ''}) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Deneme Gelişimi')),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.insights_rounded, size: 80, color: AppTheme.secondaryTextColor),
-              const SizedBox(height: 16),
-              Text(
-                'Kale Henüz İnşa Edilmedi',
-                style: Theme.of(context).textTheme.headlineSmall,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                isCompletelyEmpty
-                    ? 'Stratejik analizleri ve fetih haritalarını görmek için deneme sonuçları ekleyerek kalenin temellerini atmalısın.'
-                    : 'Bu cephede anlamlı bir strateji oluşturmak için en az 2 adet "$sectionName" denemesi eklemelisin.',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.secondaryTextColor, height: 1.5),
-              ),
-            ],
-          ).animate().fadeIn(duration: 600.ms).scale(begin: const Offset(0.8, 0.8)),
-        ),
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.insights_rounded, size: 80, color: AppTheme.secondaryTextColor),
+            const SizedBox(height: 16),
+            Text(
+              'Kale Henüz İnşa Edilmedi',
+              style: Theme.of(context).textTheme.headlineSmall,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              isCompletelyEmpty
+                  ? 'Stratejik analizleri ve fetih haritalarını görmek için deneme sonuçları ekleyerek kalenin temellerini atmalısın.'
+                  : 'Bu cephede anlamlı bir strateji oluşturmak için en az 2 adet "$sectionName" denemesi eklemelisin.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.secondaryTextColor, height: 1.5),
+            ),
+          ],
+        ).animate().fadeIn(duration: 600.ms).scale(begin: const Offset(0.8, 0.8)),
       ),
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -105,7 +92,8 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
       }
     });
 
-    return userAsyncValue.when(
+    // Durumdan bağımsız tek Scaffold kullanmak için 'body'yi üret.
+    final Widget body = userAsyncValue.when(
       data: (user) => testsAsyncValue.when(
         data: (tests) {
           if (user == null || tests.isEmpty) {
@@ -152,34 +140,30 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                 });
               }
 
-              return Scaffold(
-                appBar: AppBar(
-                  title: const Text('Deneme Gelişimi'),
-                ),
-                body: Column(
-                  children: [
-                    FortressTabSelector(
-                      tabs: sortedGroups.map((e) => e.key).toList(),
+              // İç Scaffold yerine içerik döndür.
+              return Column(
+                children: [
+                  FortressTabSelector(
+                    tabs: sortedGroups.map((e) => e.key).toList(),
+                  ),
+                  Expanded(
+                    child: PageView(
+                      controller: _pageController,
+                      onPageChanged: (index) {
+                        ref.read(selectedTabIndexProvider.notifier).state = index;
+                      },
+                      children: sortedGroups.map((entry) {
+                        if (entry.value.length < 2) {
+                          return _buildEmptyState(context, sectionName: entry.key);
+                        }
+                        return CachedAnalysisView(
+                          key: ValueKey(entry.key),
+                          sectionName: entry.key,
+                        );
+                      }).toList(),
                     ),
-                    Expanded(
-                      child: PageView(
-                        controller: _pageController,
-                        onPageChanged: (index) {
-                          ref.read(selectedTabIndexProvider.notifier).state = index;
-                        },
-                        children: sortedGroups.map((entry) {
-                          if(entry.value.length < 2) {
-                            return _buildEmptyState(context, sectionName: entry.key);
-                          }
-                          return CachedAnalysisView(
-                            key: ValueKey(entry.key),
-                            sectionName: entry.key,
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               );
             },
           );
@@ -189,6 +173,16 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
       ),
       loading: () => _buildLoadingState(),
       error: (err, stack) => _buildErrorState('Kullanıcı verisi yüklenemedi: $err'),
+    );
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Deneme Gelişimi')),
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 250),
+        switchInCurve: Curves.easeOut,
+        switchOutCurve: Curves.easeIn,
+        child: body,
+      ),
     );
   }
 }
