@@ -114,7 +114,7 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Taktik Yazıları'),
+        title: const Text('Taktik Blog'),
         automaticallyImplyLeading: false,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),

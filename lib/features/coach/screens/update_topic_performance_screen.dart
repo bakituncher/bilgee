@@ -129,7 +129,7 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
                   performance: newPerformance,
                 );
 
-                // Bilgi Galaksisi verisini tazele
+                // Ders Netlerim verisini tazele
                 ref.invalidate(performanceProvider);
                 // Görev ilerlemesi (ders, konu, çözülen soru sayısı)
                 ref.read(questNotifierProvider.notifier).userUpdatedTopicPerformance(subject, topic, sessionQuestions);

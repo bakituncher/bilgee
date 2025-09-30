@@ -28,7 +28,7 @@ class DashboardHeader extends StatelessWidget {
         ),
         IconButton(
           icon: const Icon(Icons.history_edu_rounded, color: AppTheme.secondaryTextColor, size: 28),
-          tooltip: 'Performans Arşivi',
+          tooltip: 'Deneme Arşivi',
           onPressed: () => context.go('/library'),
         ),
       ],

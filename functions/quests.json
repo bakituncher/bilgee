@@ -131,7 +131,7 @@
   {
     "id": "daily_stu_02_topic_mastery_push",
     "title": "Konu Hakimiyeti İtişi",
-    "description": "Bilgi Galaksisi'nde kırmızı renkteki bir konuyu sarı seviyeye çıkarın.",
+    "description": "Ders Netlerim'nde kırmızı renkteki bir konuyu sarı seviyeye çıkarın.",
     "type": "daily",
     "category": "study",
     "reward": 80,

@@ -38,7 +38,7 @@ SEN, {{EXAM_NAME}}'DE YÜKSEK PUAN ALARAK ATANMAYI GARANTİLEMEK ÜZERE TASARLAN
 **JSON ÇIKTI FORMATI (AÇIKLAMA YOK, SADECE BU):**
 {
   "weeklyPlan": {
-    "planTitle": "HAFTALIK HAREKÂT PLANI ({{EXAM_NAME}})",
+    "planTitle": "HAFTALIK PLAN ({{EXAM_NAME}})",
     "strategyFocus": "Bu hafta iş ve özel hayat bahaneleri bir kenara bırakılıyor. Tek odak atanmak. Plan tavizsiz uygulanacak.",
     "weekNumber": 1,
     "plan": [

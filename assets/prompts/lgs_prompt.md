@@ -40,7 +40,7 @@ SEN, LGS'DE %0.01'LİK DİLİME GİRMEK İÇİN YARATILMIŞ, KİŞİYE ÖZEL Bİ
 **JSON ÇIKTI FORMATI (AÇIKLAMA YOK, SADECE BU):**
 {
   "weeklyPlan": {
-    "planTitle": "HAFTALIK HAREKÂT PLANI (LGS)",
+    "planTitle": "HAFTALIK PLAN (LGS)",
     "strategyFocus": "Okul sonrası hayatın bu hafta iptal edildi. Tek odak: Zayıf konuların imhası.",
     "weekNumber": 1,
     "plan": [

@@ -53,7 +53,7 @@ class BlogDetailScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Taktik Yazısı'),
+        title: const Text('Taktik Blog'),
         automaticallyImplyLeading: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),

@@ -51,7 +51,7 @@ class ScaffoldWithNavBar extends ConsumerWidget {
       ),
       TutorialStep(
         highlightKey: coachKey,
-        title: "Bilgi Galaksisi",
+        title: "Ders Netlerim",
         text: "Şimdi en güçlü silahımızın olduğu yer, çözdüğün testlerin sonuçlarını bu kısıma girerek yapay zekanın sana özel koçluk yapmasını sağlayabilirsin.",
         buttonText: "Harika! ",
         isNavigational: true,

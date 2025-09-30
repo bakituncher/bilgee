@@ -24,7 +24,11 @@ service cloud.firestore {
                        request.resource.data.diff(resource.data).affectedKeys()
                        .hasOnly(['name', 'firstName', 'lastName', 'username', 'gender', 'dateOfBirth',
                                  'profileCompleted', 'tutorialCompleted', 'avatarStyle', 'avatarSeed',
-                                 'selectedExam', 'selectedExamSection', 'weeklyAvailability', 'updatedAt']);
+                                 'selectedExam', 'selectedExamSection', 'weeklyAvailability', 'updatedAt',
+                                 // Uygulama içi özelliği kullandı bilgisini tutar
+                                 'usedFeatures',
+                                 // Stratejik plan işaretleri
+                                 'hasCreatedStrategicPlan', 'lastStrategyCreationDate']);
 
       // --- ALT KOLEKSİYONLAR ---
       match /daily_quests/{questId} {

@@ -160,12 +160,19 @@ class QuestNotifier extends StateNotifier<bool> {
     final user = _ref.read(userProfileProvider).value;
     if (user == null) return;
 
-    // Firestore'da kullanıcının usedFeatures alanını güncelle
     final fs = _ref.read(firestoreProvider);
-    fs.collection('users').doc(user.id).set(
-      {'usedFeatures.$feature': true},
-      SetOptions(merge: true),
-    ).catchError((e) {
+    final docRef = fs.collection('users').doc(user.id);
+
+    fs.runTransaction((transaction) async {
+      final snap = await transaction.get(docRef);
+      final data = snap.data() as Map<String, dynamic>?;
+      final current = Map<String, dynamic>.from((data?['usedFeatures'] as Map<String, dynamic>?) ?? {});
+      if (current[feature] == true) {
+        return; // zaten işaretlenmiş
+      }
+      current[feature] = true;
+      transaction.set(docRef, {'usedFeatures': current}, SetOptions(merge: true));
+    }).catchError((e) {
       print('[QuestNotifier] Feature usage update failed: $e');
     });
   }

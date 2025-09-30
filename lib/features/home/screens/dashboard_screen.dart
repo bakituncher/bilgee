@@ -253,7 +253,7 @@ class _DailyQuestsCard extends ConsumerWidget {
       if (!celebratedDates.contains(todayKey)) {
         // Set'i immutably güncelle
         ref.read(celebratedDatesProvider.notifier).update((s) => {...s, todayKey});
-        WidgetsBinding.instance.addPostFrameCallback((_){ if (context.mounted) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Row(children: const [Icon(Icons.celebration_rounded, color: Colors.greenAccent), SizedBox(width: 8), Expanded(child: Text('Tüm günlük fetihler tamamlandı! 🔥')),],),)); }});
+        WidgetsBinding.instance.addPostFrameCallback((_){ if (context.mounted) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Row(children: const [Icon(Icons.celebration_rounded, color: Colors.greenAccent), SizedBox(width: 8), Expanded(child: Text('Tüm Günlük Görevler tamamlandı! 🔥')),],),)); }});
       }
     }
 
@@ -279,7 +279,7 @@ class _DailyQuestsCard extends ConsumerWidget {
             ]),
             const SizedBox(width: 16),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-              Text(hasClaimable ? "Ödül Zamanı!" : (progress >=1 ? "Zafer!" : "Günlük Fetihler"), style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.white)),
+              Text(hasClaimable ? "Ödül Zamanı!" : (progress >=1 ? "Zafer!" : "Günlük Görevler"), style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.white)),
               const SizedBox(height: 4),
               Text(total == 0 ? 'Bugün görev yok' : '$completed / $total tamamlandı • Kalan ${_formatRemaining(remaining)}', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor)),
               const SizedBox(height: 6),
