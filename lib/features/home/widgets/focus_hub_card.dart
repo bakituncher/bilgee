@@ -22,7 +22,7 @@ class FocusHubCard extends ConsumerWidget {
     VoidCallback? primary;
 
     if (quests.total > 0 && quests.progress < 1.0) {
-      title = 'Günlük Fetihler';
+      title = 'Günlük Görevler';
       subtitle = '${quests.completed}/${quests.total} tamamlandı • Kalan ${_humanize(quests.remaining)}';
       icon = Icons.shield_moon_rounded;
       primary = () => context.go('/home/quests');

@@ -122,12 +122,12 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                     padding: EdgeInsets.zero,
                     children: [
                       _navTile(context, currentLocation: location, icon: Icons.dashboard_rounded, title: 'Ana Panel', route: '/home'),
-                      _navTile(context, currentLocation: location, icon: Icons.bar_chart_rounded, title: 'İstatistik Kalen', route: '/home/stats'),
+                      _navTile(context, currentLocation: location, icon: Icons.bar_chart_rounded, title: 'Deneme Gelişimi', route: '/home/stats'),
                       _navTile(context, currentLocation: location, icon: Icons.insights_rounded, title: 'Genel Bakış', route: '/stats/overview'),
-                      _navTile(context, currentLocation: location, icon: Icons.shield_moon_rounded, title: 'Günlük Fetihler', route: '/home/quests'),
+                      _navTile(context, currentLocation: location, icon: Icons.shield_moon_rounded, title: 'Günlük Görevler', route: '/home/quests'),
                       // Odaklanma Mabedi kaldırıldı
-                      _navTile(context, currentLocation: location, icon: Icons.inventory_2_outlined, title: 'Performans Arşivi', route: '/library'),
-                      _navTile(context, currentLocation: location, icon: Icons.article_rounded, title: 'Taktik Yazıları', route: '/blog'),
+                      _navTile(context, currentLocation: location, icon: Icons.inventory_2_outlined, title: 'Deneme Arşivi', route: '/library'),
+                      _navTile(context, currentLocation: location, icon: Icons.article_rounded, title: 'Taktik Blog', route: '/blog'),
                       const SizedBox(height: 12),
                       const Padding(
                         padding: EdgeInsets.symmetric(horizontal: 16),

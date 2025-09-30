@@ -20,7 +20,7 @@ class QuestSystemManager {
   QuestProgressController get _progressController => const QuestProgressController();
 
   /// =====================
-  /// GÜNLÜK FETİHLER İŞLEMLERİ
+  /// Günlük Görevler İŞLEMLERİ
   /// =====================
 
   /// Günlük fetih sayfasına güvenli navigasyon
@@ -28,7 +28,7 @@ class QuestSystemManager {
     await _navigationManager.navigateToQuest(context, quest, _ref);
   }
 
-  /// Günlük fetihlerdeki aktif görevleri getir
+  /// Günlük Görevlerdeki aktif görevleri getir
   List<Quest> getDailyActiveQuests() {
     final questsState = _ref.read(optimizedQuestsProvider);
     return questsState.dailyQuests?.where((q) => !q.isCompleted).toList() ?? [];

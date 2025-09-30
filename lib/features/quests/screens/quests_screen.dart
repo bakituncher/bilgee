@@ -112,7 +112,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> with SingleTickerPr
               ),
               const SizedBox(width: 8),
               Text(
-                'Günlük Emirler',
+                'Günlük Görevler',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -186,12 +186,12 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> with SingleTickerPr
             ),
             const SizedBox(height: 20),
             Text(
-              'Tüm Emirler Tamamlandı!',
+              'Tüm Görevler Tamamlandı!',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.white),
             ),
             const SizedBox(height: 8),
             const Text(
-              'Yeni emirler için yarını bekle, Savaşçı.',
+              'Yeni Görevler için yarını bekle, Savaşçı.',
               style: TextStyle(color: AppTheme.secondaryTextColor, fontSize: 16),
             ),
           ],
