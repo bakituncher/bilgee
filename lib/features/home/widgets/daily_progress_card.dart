@@ -28,7 +28,7 @@ class DailyProgressCard extends ConsumerWidget {
     final progress = questProgress.progress;
     final remaining = questProgress.remaining;
 
-    final displayProgress = total == 0 ? 0.0 : progress.clamp(0, 1);
+    final double displayProgress = total == 0 ? 0.0 : progress.clamp(0.0, 1.0);
     final statusColor = hasClaimable
         ? AppTheme.goldColor
         : (displayProgress >= 1.0

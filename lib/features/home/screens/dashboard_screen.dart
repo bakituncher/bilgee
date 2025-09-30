@@ -180,9 +180,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       child: const Text('Komuta Merkezi'),
                     ),
                     centerTitle: true,
-                    actions: const [
-                      _NotificationBell(),
-                      SizedBox(width: 6),
+                    actions: [
+                      const _NotificationBell(),
+                      const SizedBox(width: 6),
                     ],
                     flexibleSpace: ClipRect(
                       child: BackdropFilter(

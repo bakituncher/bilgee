@@ -42,7 +42,21 @@ class _SecurityHealthCardState extends ConsumerState<SecurityHealthCard> {
     final user = authState.asData?.value;
 
     final emailVerified = user?.emailVerified ?? false;
-    final hasMfa = (user?.multiFactor.enrolledFactors.length ?? 0) > 0;
+
+    bool hasMfa = false;
+    if (user != null) {
+      try {
+        final dynamic multiFactor = user.multiFactor;
+        final dynamic factors = multiFactor.enrolledFactors;
+        if (factors is List && factors.isNotEmpty) {
+          hasMfa = true;
+        }
+      } catch (_) {
+        // Multi-factor enrollment list isn't available on this platform yet.
+        hasMfa = user.providerData.any((p) => p.providerId == 'phone');
+      }
+    }
+
     final hasPassword = user?.providerData.any((p) => p.providerId == 'password') ?? false;
 
     final indicators = <_Indicator>[];
@@ -101,7 +115,7 @@ class _SecurityHealthCardState extends ConsumerState<SecurityHealthCard> {
           }
         }
 
-        score = score.clamp(0, 100);
+        score = score.clamp(0, 100).toInt();
         final isHealthy = score >= 75;
 
         return Card(
