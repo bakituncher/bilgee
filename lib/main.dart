@@ -40,7 +40,7 @@ void main() async {
     // Binding ve runApp aynı zone'da olmalı
     WidgetsFlutterBinding.ensureInitialized();
 
-    // Android 15+ uyumlu system UI ayarları
+    // Android 15+ SDK 35 için zorunlu edge-to-edge ayarları - öncelik sırası önemli
     AppTheme.configureSystemUI();
 
     try {

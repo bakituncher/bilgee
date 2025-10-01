@@ -46,7 +46,7 @@ class AppTheme {
     contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
   );
 
-  // Android 15+ uyumlu System UI Overlay ayarları
+  // Android 15+ SDK 35 uyumlu System UI Overlay ayarları
   static const SystemUiOverlayStyle systemUiOverlayStyle = SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.light,
@@ -54,7 +54,7 @@ class AppTheme {
     systemNavigationBarColor: Colors.transparent,
     systemNavigationBarIconBrightness: Brightness.light,
     systemNavigationBarDividerColor: Colors.transparent,
-    // Android 15+ için edge-to-edge desteği
+    // Android 15+ için zorunlu edge-to-edge ayarları
     systemNavigationBarContrastEnforced: false,
   );
 
@@ -122,12 +122,29 @@ class AppTheme {
     ),
   );
 
-  // System UI'yi ayarlamak için yardımcı metod
+  // System UI'yi ayarlamak için güncellenmiş metod
   static void configureSystemUI() {
+    // System UI overlay style ayarla
     SystemChrome.setSystemUIOverlayStyle(systemUiOverlayStyle);
-    // Android 15+ için edge-to-edge modu
+
+    // Android 15+ SDK 35 için zorunlu edge-to-edge modu
     SystemChrome.setEnabledSystemUIMode(
       SystemUiMode.edgeToEdge,
+    );
+
+    // Preferred orientations ayarla (opsiyonel)
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+  }
+
+  // Edge-to-edge layout için SafeArea padding hesaplama yardımcısı
+  static EdgeInsets getSafeAreaPadding(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
+    return EdgeInsets.only(
+      top: mediaQuery.padding.top,
+      bottom: mediaQuery.padding.bottom,
     );
   }
 }
