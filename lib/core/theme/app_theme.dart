@@ -1,5 +1,6 @@
 // lib/core/theme/app_theme.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
@@ -43,6 +44,18 @@ class AppTheme {
     labelStyle: TextStyle(color: secondaryTextColor),
     hintStyle: TextStyle(color: secondaryTextColor.withValues(alpha: 0.7)),
     contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+  );
+
+  // Android 15+ uyumlu System UI Overlay ayarları
+  static const SystemUiOverlayStyle systemUiOverlayStyle = SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.light,
+    statusBarBrightness: Brightness.dark,
+    systemNavigationBarColor: Colors.transparent,
+    systemNavigationBarIconBrightness: Brightness.light,
+    systemNavigationBarDividerColor: Colors.transparent,
+    // Android 15+ için edge-to-edge desteği
+    systemNavigationBarContrastEnforced: false,
   );
 
   // Tek ve güçlü "Modern Bilge" teması.
@@ -108,4 +121,13 @@ class AppTheme {
       actionTextColor: secondaryColor,
     ),
   );
+
+  // System UI'yi ayarlamak için yardımcı metod
+  static void configureSystemUI() {
+    SystemChrome.setSystemUIOverlayStyle(systemUiOverlayStyle);
+    // Android 15+ için edge-to-edge modu
+    SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.edgeToEdge,
+    );
+  }
 }

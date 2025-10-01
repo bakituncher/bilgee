@@ -8,6 +8,7 @@ import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart'; // kDebugMode için bu import gerekli
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // SystemChrome için gerekli
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'firebase_options.dart';
@@ -36,8 +37,11 @@ void main() async {
   };
 
   await runZonedGuarded(() async {
-    // Binding ve runApp aynı zone’da olmalı
+    // Binding ve runApp aynı zone'da olmalı
     WidgetsFlutterBinding.ensureInitialized();
+
+    // Android 15+ uyumlu system UI ayarları
+    AppTheme.configureSystemUI();
 
     try {
       await Firebase.initializeApp(
