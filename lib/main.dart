@@ -57,11 +57,12 @@ void main() async {
     }
 
     // App Check'i başlat ve güvenlik sağlayıcılarını aktive et.
+    // SafetyNet yerine Play Integrity API kullanımı (Android 15+ uyumluluk)
     try {
       await FirebaseAppCheck.instance.activate(
         androidProvider: kDebugMode
             ? AndroidProvider.debug
-            : AndroidProvider.playIntegrity,
+            : AndroidProvider.playIntegrity, // SafetyNet yerine Play Integrity
         appleProvider: kDebugMode
             ? AppleProvider.debug
             : AppleProvider.appAttest,
@@ -72,14 +73,14 @@ void main() async {
         await FirebaseAppCheck.instance.activate(
           androidProvider: kDebugMode
               ? AndroidProvider.debug
-              : AndroidProvider.playIntegrity,
+              : AndroidProvider.playIntegrity, // Fallback'te de Play Integrity
           appleProvider: kDebugMode
               ? AppleProvider.debug
               : AppleProvider.deviceCheck,
         );
       } catch (e2) {
         if (kDebugMode) {
-          debugPrint('[AppCheck] Aktivasyon başarısız: $e | Fallback hata: $e2');
+          debugPrint('[AppCheck] Play Integrity aktivasyon başarısız: $e | DeviceCheck fallback hata: $e2');
         }
       }
     }

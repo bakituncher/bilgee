@@ -1,4 +1,4 @@
-const functions = require("firebase-functions");
+const { onCall } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 const { db } = require("./init");
 const { dayKeyIstanbul, nowIstanbul } = require("./utils");
@@ -8,101 +8,131 @@ const { dayKeyIstanbul, nowIstanbul } = require("./utils");
  * This is a critical, multi-step operation handled by a callable function
  * to ensure atomicity and prevent data inconsistencies.
  */
-const resetUserDataForNewExam = functions.https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError('unauthenticated', 'The function must be called while authenticated.');
+const resetUserDataForNewExam = onCall({ region: "us-central1", timeoutSeconds: 300, enforceAppCheck: true }, async (request) => {
+  if (!request.auth) {
+    throw new Error('The function must be called while authenticated.');
   }
-  const userId = context.auth.uid;
+  const userId = request.auth.uid;
 
-  // 0) Helper: delete query in batches (top-level collections)
-  async function deleteQueryInBatches(query, batchSize = 300) {
-    // Loop until no docs left
-    // Each iteration loads up to batchSize docs and deletes them in a write batch
-    // to avoid timeouts and write limits.
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-      const snap = await query.limit(batchSize).get();
-      if (snap.empty) break;
-      const batch = db.batch();
-      snap.docs.forEach((doc) => batch.delete(doc.ref));
-      await batch.commit();
-      // Small delay to yield
-      await new Promise((r) => setTimeout(r, 25));
+  try {
+    // 0.1) Kullanıcının varlığını kontrol et
+    const userDoc = await db.collection('users').doc(userId).get();
+    if (!userDoc.exists) {
+      throw new Error('User document not found');
     }
-  }
 
-  // 1) Reset main user document fields and core state via a batch
-  const userDocRef = db.collection('users').doc(userId);
-  const batch1 = db.batch();
-  batch1.update(userDocRef, {
-    tutorialCompleted: false,
-    selectedExam: null,
-    selectedExamSection: null,
-    weeklyAvailability: {},
-    goal: null,
-    challenges: [],
-    weeklyStudyGoal: null,
-  });
+    // 0.2) Rate limiting kontrolü (son 24 saatte kaç kez çağrıldı?)
+    const resetLogRef = db.collection('reset_logs').doc(userId);
+    const resetLog = await resetLogRef.get();
 
-  // 2) Reset stats, performance, and plan documents
-  const statsRef = userDocRef.collection('state').doc('stats');
-  batch1.set(statsRef, {
-    streak: 0,
-    lastStreakUpdate: null,
-    testCount: 0,
-    totalNetSum: 0.0,
-    engagementScore: 0,
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-  }, { merge: true });
-
-  const performanceDocRef = userDocRef.collection('performance').doc('summary');
-  batch1.set(performanceDocRef, {
-    netGains: {}, lastTenNetAvgs: [], lastTenWarriorScores: [],
-    masteredTopics: [], recentPerformance: {}, strongestSubject: null,
-    strongestTopic: null, totalCorrect: 0, totalIncorrect: 0,
-    totalNet: 0.0, totalTests: 0, weakestSubject: null, weakestTopic: null,
-  }, { merge: true });
-
-  const planDocRef = userDocRef.collection('plans').doc('current_plan');
-  batch1.set(planDocRef, { studyPacing: 'balanced', weeklyPlan: {} }, { merge: true });
-
-  // Commit the initial resets (this will also trigger onUserUpdate to clean leaderboards)
-  await batch1.commit();
-
-  // 3) Delete all documents in subcollections under the user (iterate until empty)
-  async function deleteAllDocsInSubcollection(path) {
-    // path example: users/{userId}/topic_performance
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-      const snap = await db.collection(path).limit(300).get();
-      if (snap.empty) break;
-      const batch = db.batch();
-      snap.docs.forEach((doc) => batch.delete(doc.ref));
-      await batch.commit();
-      await new Promise((r) => setTimeout(r, 25));
+    if (resetLog.exists) {
+      const lastReset = resetLog.data()?.lastReset;
+      if (lastReset && (Date.now() - lastReset.toMillis()) < 24 * 60 * 60 * 1000) {
+        throw new Error('Reset can only be performed once per 24 hours');
+      }
     }
+
+    // 0.3) Reset log'u güncelle
+    await resetLogRef.set({
+      lastReset: admin.firestore.FieldValue.serverTimestamp(),
+      userId: userId
+    }, { merge: true });
+
+    // 0) Helper: delete query in batches (top-level collections)
+    async function deleteQueryInBatches(query, batchSize = 300) {
+      // Loop until no docs left
+      // Each iteration loads up to batchSize docs and deletes them in a write batch
+      // to avoid timeouts and write limits.
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const snap = await query.limit(batchSize).get();
+        if (snap.empty) break;
+        const batch = db.batch();
+        snap.docs.forEach((doc) => batch.delete(doc.ref));
+        await batch.commit();
+        // Small delay to yield
+        await new Promise((r) => setTimeout(r, 25));
+      }
+    }
+
+    // 1) Reset main user document fields and core state via a batch
+    const userDocRef = db.collection('users').doc(userId);
+    const batch1 = db.batch();
+    batch1.update(userDocRef, {
+      tutorialCompleted: false,
+      selectedExam: null,
+      selectedExamSection: null,
+      weeklyAvailability: {},
+      goal: null,
+      challenges: [],
+      weeklyStudyGoal: null,
+    });
+
+    // 2) Reset stats, performance, and plan documents
+    const statsRef = userDocRef.collection('state').doc('stats');
+    batch1.set(statsRef, {
+      streak: 0,
+      lastStreakUpdate: null,
+      testCount: 0,
+      totalNetSum: 0.0,
+      engagementScore: 0,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    const performanceDocRef = userDocRef.collection('performance').doc('summary');
+    batch1.set(performanceDocRef, {
+      netGains: {}, lastTenNetAvgs: [], lastTenWarriorScores: [],
+      masteredTopics: [], recentPerformance: {}, strongestSubject: null,
+      strongestTopic: null, totalCorrect: 0, totalIncorrect: 0,
+      totalNet: 0.0, totalTests: 0, weakestSubject: null, weakestTopic: null,
+    }, { merge: true });
+
+    const planDocRef = userDocRef.collection('plans').doc('current_plan');
+    batch1.set(planDocRef, { studyPacing: 'balanced', weeklyPlan: {} }, { merge: true });
+
+    // Commit the initial resets (this will also trigger onUserUpdate to clean leaderboards)
+    await batch1.commit();
+
+    // 3) Delete all documents in subcollections under the user (iterate until empty)
+    async function deleteAllDocsInSubcollection(path) {
+      // path example: users/{userId}/topic_performance
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const snap = await db.collection(path).limit(300).get();
+        if (snap.empty) break;
+        const batch = db.batch();
+        snap.docs.forEach((doc) => batch.delete(doc.ref));
+        await batch.commit();
+        await new Promise((r) => setTimeout(r, 25));
+      }
+    }
+
+    // These subcollections exist under the user document
+    const subcollections = [
+      `users/${userId}/user_activity`,
+      `users/${userId}/topic_performance`,
+      `users/${userId}/savedWorkshops`,
+    ];
+
+    for (const sub of subcollections) {
+      await deleteAllDocsInSubcollection(sub);
+    }
+
+    // masteredTopics is a subcollection of the performance doc
+    await deleteAllDocsInSubcollection(`users/${userId}/performance/summary/masteredTopics`);
+
+    // 4) Delete top-level collections filtered by userId (true data locations)
+    await deleteQueryInBatches(db.collection('tests').where('userId', '==', userId));
+    await deleteQueryInBatches(db.collection('focusSessions').where('userId', '==', userId));
+
+    // Done - başarı loglaması
+    console.log(`User data reset completed for ${userId}`);
+    return { success: true, message: `User data for ${userId} has been reset.`, timestamp: Date.now() };
+
+  } catch (error) {
+    console.error(`Reset failed for user ${userId}:`, error);
+    throw new Error(`Reset operation failed: ${error.message}`);
   }
-
-  // These subcollections exist under the user document
-  const subcollections = [
-    `users/${userId}/user_activity`,
-    `users/${userId}/topic_performance`,
-    `users/${userId}/savedWorkshops`,
-  ];
-
-  for (const sub of subcollections) {
-    await deleteAllDocsInSubcollection(sub);
-  }
-
-  // masteredTopics is a subcollection of the performance doc
-  await deleteAllDocsInSubcollection(`users/${userId}/performance/summary/masteredTopics`);
-
-  // 4) Delete top-level collections filtered by userId (true data locations)
-  await deleteQueryInBatches(db.collection('tests').where('userId', '==', userId));
-  await deleteQueryInBatches(db.collection('focusSessions').where('userId', '==', userId));
-
-  // Done
-  return { success: true, message: `User data for ${userId} has been reset.` };
 });
 
 async function computeInactivityHours(userRef) {

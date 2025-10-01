@@ -28,7 +28,7 @@ dependencies:
   cloud_firestore: ^5.0.2
   firebase_storage: ^12.1.0
   cloud_functions: ^5.0.1
-  firebase_app_check: ^0.3.0
+  firebase_app_check: ^0.3.1+2  # SafetyNet'ten Play Integrity'ye geçiş için güncellenmiş sürüm
   firebase_messaging: ^15.0.3
 
   # Bildirimlerin foreground'da gösterimi için

@@ -190,3 +190,17 @@
     public static *** e(...);
     public static *** wtf(...);
 }
+
+# Firebase App Check ve Play Integrity API kuralları (SafetyNet yerine)
+-keep class com.google.firebase.appcheck.** { *; }
+-keep class com.google.android.play.core.integrity.** { *; }
+-keep class com.google.android.gms.tasks.** { *; }
+-dontwarn com.google.firebase.appcheck.**
+-dontwarn com.google.android.play.core.integrity.**
+
+# Play Services Base kuralları
+-keep class com.google.android.gms.base.** { *; }
+-keep class com.google.android.gms.tasks.** { *; }
+
+# SafetyNet deprecated - Play Integrity kullanımı için kurallar
+-dontwarn com.google.android.gms.safetynet.**
