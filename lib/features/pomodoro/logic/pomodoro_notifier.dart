@@ -26,6 +26,7 @@ class PomodoroModel {
   final int currentRound;
   final String currentTask;
   final String? currentTaskIdentifier;
+  final String? currentTaskDateKey; // YENI: görev ait olduğu gün (yyyy-MM-dd)
   final FocusSessionResult? lastResult;
 
   PomodoroModel({
@@ -39,6 +40,7 @@ class PomodoroModel {
     this.currentRound = 1,
     this.currentTask = "Genel Çalışma",
     this.currentTaskIdentifier,
+    this.currentTaskDateKey,
     this.lastResult,
   });
 
@@ -53,7 +55,9 @@ class PomodoroModel {
     int? currentRound,
     String? currentTask,
     String? currentTaskIdentifier,
+    String? currentTaskDateKey,
     bool clearTaskIdentifier = false,
+    bool clearTaskDateKey = false,
     FocusSessionResult? lastResult,
     bool clearLastResult = false,
   }) {
@@ -68,6 +72,7 @@ class PomodoroModel {
       currentRound: currentRound ?? this.currentRound,
       currentTask: currentTask ?? this.currentTask,
       currentTaskIdentifier: clearTaskIdentifier ? null : currentTaskIdentifier ?? this.currentTaskIdentifier,
+      currentTaskDateKey: clearTaskDateKey ? null : currentTaskDateKey ?? this.currentTaskDateKey,
       lastResult: clearLastResult ? null : lastResult ?? this.lastResult,
     );
   }
@@ -178,25 +183,36 @@ class PomodoroNotifier extends StateNotifier<PomodoroModel> {
     );
   }
 
-  void setTask({required String task, String? identifier}) {
+  void setTask({required String task, String? identifier, String? dateKey}) {
     state = state.copyWith(
       currentTask: task,
       currentTaskIdentifier: identifier,
+      currentTaskDateKey: dateKey,
       clearTaskIdentifier: identifier == null,
+      clearTaskDateKey: dateKey == null,
     );
   }
 
-  void markTaskAsCompleted() {
+  void markTaskAsCompleted() async {
     if (state.currentTaskIdentifier == null) return;
     final userId = _ref.read(authControllerProvider).value?.uid;
     if (userId == null) return;
-    final dateKey = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    _ref.read(firestoreServiceProvider).updateDailyTaskCompletion(
+    // Görev hangi güne aitse onu kullan; yoksa bugünü al.
+    final date = DateTime.tryParse(state.currentTaskDateKey ?? '') ?? DateTime.now();
+    final dateKey = DateFormat('yyyy-MM-dd').format(date);
+    await _ref.read(firestoreServiceProvider).updateDailyTaskCompletion(
       userId: userId,
       dateKey: dateKey,
       task: state.currentTaskIdentifier!,
       isCompleted: true,
     );
+    // Haftalık ve günlük sağlayıcıları yenile
+    final day0 = DateTime(date.year, date.month, date.day);
+    final startOfWeek = day0.subtract(Duration(days: day0.weekday - 1));
+    try {
+      await _ref.refresh(completedTasksForWeekProvider(startOfWeek).future);
+    } catch (_) {}
+    _ref.invalidate(completedTasksForDateProvider(day0));
   }
 
   void updateSettings({int? work, int? short, int? long, int? interval}) {

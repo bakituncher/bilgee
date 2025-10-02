@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:taktik/features/pomodoro/logic/pomodoro_notifier.dart';
 import 'package:intl/intl.dart';
 import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/models/plan_model.dart';
@@ -239,6 +240,49 @@ class _TaskTile extends ConsumerWidget {
     final completedList = completedByDate[dateKey] ?? const <String>[];
     final isCompleted = completedList.contains(taskIdentifier);
 
+    Future<_DashTaskAction?> _askAction() async {
+      return showModalBottomSheet<_DashTaskAction>(
+        context: context,
+        backgroundColor: AppTheme.cardColor.withValues(alpha: .95),
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+        builder: (_) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(children:[
+                  const Icon(Icons.play_circle_fill_rounded, color: AppTheme.secondaryColor),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text('Ne yapalım?', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)))
+                ]),
+                const SizedBox(height: 8),
+                Text("'${item.activity}' için bir aksiyon seç.", style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor)),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: ()=> Navigator.of(context).pop(_DashTaskAction.startPomodoro),
+                  icon: const Icon(Icons.timer_outlined),
+                  label: const Text('Pomodoro Başlat'),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: ()=> Navigator.of(context).pop(_DashTaskAction.completeNow),
+                  icon: const Icon(Icons.check_circle_outline),
+                  label: const Text('Görevi Tamamla'),
+                ),
+                const SizedBox(height: 4),
+                TextButton(
+                  onPressed: ()=> Navigator.of(context).pop(null),
+                  child: const Text('Vazgeç'),
+                )
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -262,6 +306,23 @@ class _TaskTile extends ConsumerWidget {
             IconButton(
               icon: AnimatedSwitcher(duration:250.ms, switchInCurve: Curves.elasticOut, child: Icon(isCompleted? Icons.check_circle_rounded: Icons.radio_button_unchecked_rounded, key: ValueKey<bool>(isCompleted), color: isCompleted? AppTheme.successColor: AppTheme.lightSurfaceColor, size:30)),
               onPressed: () async {
+                // Eğer görev tamamlanmamışsa önce aksiyon sor
+                if (!isCompleted) {
+                  final action = await _askAction();
+                  if (action == _DashTaskAction.startPomodoro) {
+                    final pomodoro = ref.read(pomodoroProvider.notifier);
+                    pomodoro.setTask(task: item.activity, identifier: taskIdentifier, dateKey: dateKey);
+                    pomodoro.prepareForWork();
+                    pomodoro.start();
+                    if (context.mounted) context.go('/home/pomodoro');
+                    return; // Tamamlama akışına girmeden çık
+                  } else if (action == null) {
+                    // Vazgeçildi
+                    return;
+                  }
+                  // Aksi halde completeNow ile devam eder
+                }
+
                 await ref.read(firestoreServiceProvider).updateDailyTaskCompletion(
                   userId: userId,
                   dateKey: dateKey,
@@ -290,6 +351,8 @@ class _TaskTile extends ConsumerWidget {
     );
   }
 }
+
+enum _DashTaskAction { startPomodoro, completeNow }
 
 class _EmptyStateCard extends StatelessWidget {
   const _EmptyStateCard();

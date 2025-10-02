@@ -8,6 +8,8 @@ import 'package:taktik/data/models/plan_model.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:flutter/services.dart'; // Haptic için
+import 'package:go_router/go_router.dart';
+import 'package:taktik/features/pomodoro/logic/pomodoro_notifier.dart';
 
 final _selectedDayProvider = StateProvider.autoDispose<int>((ref) {
   int todayIndex = DateTime.now().weekday - 1;
@@ -205,8 +207,27 @@ class _TaskListViewState extends ConsumerState<_TaskListView> with AutomaticKeep
                   dateKey: dateKey,
                   onToggle: () async {
                     HapticFeedback.selectionClick();
-                    // Optimistik: anında UI
                     final desired = !isCompleted;
+                    // Eğer tamamlanmamış bir görevi bitirmek üzereyse, aksiyon sor
+                    if (desired) {
+                      final action = await _askAction(context, item.activity);
+                      if (action == _TaskAction.startPomodoro) {
+                        // Görevi Pomodoro’ya taşı ve ekranı aç
+                        final id = '$taskIdentifier';
+                        final pomodoro = ref.read(pomodoroProvider.notifier);
+                        pomodoro.setTask(task: item.activity, identifier: id, dateKey: dateKey);
+                        pomodoro.prepareForWork();
+                        pomodoro.start();
+                        if (context.mounted) context.go('/home/pomodoro');
+                        return; // Tamamlama akışına girme
+                      } else if (action == null) {
+                        // Vazgeçildi
+                        return;
+                      }
+                      // Aksi halde completeNow ile devam eder
+                    }
+
+                    // Optimistik: anında UI
                     setState(() { overrides[taskIdentifier] = desired; });
                     try {
                       await ref.read(firestoreServiceProvider).updateDailyTaskCompletion(
@@ -215,14 +236,11 @@ class _TaskListViewState extends ConsumerState<_TaskListView> with AutomaticKeep
                         task: taskIdentifier,
                         isCompleted: desired,
                       );
-                      // Haftalık veriyi bekleyerek yenile
                       final newMap = await ref.refresh(completedTasksForWeekProvider(startOfWeek).future);
                       final confirmed = (newMap[dateKey] ?? const <String>[]).contains(taskIdentifier) == desired;
                       if (confirmed) {
-                        // Artık taban veri güncel, override'ı temizle
                         if (mounted) setState(() { overrides.remove(taskIdentifier); });
                       } else {
-                        // Veri henüz yansımadıysa override'ı koru ve bir kez daha tazele
                         Future.microtask(() async {
                           await ref.refresh(completedTasksForWeekProvider(startOfWeek).future);
                           if (!mounted) return;
@@ -232,13 +250,10 @@ class _TaskListViewState extends ConsumerState<_TaskListView> with AutomaticKeep
                         });
                       }
                     } catch (_) {
-                      // Hata olursa geri al
                       if (mounted) setState(() { overrides.remove(taskIdentifier); });
                     }
                     if(desired) {
-                      // Plan görevi tetikleyici: Planlı Harekât vb. Study görevlerini ilerlet
                       ref.read(questNotifierProvider.notifier).userCompletedWeeklyPlanTask();
-                      // Eski schedule tabanlı görev varsa (geriye dönük), onu da tamamlamayı dene
                       final questId = 'schedule_${dateKey}_${taskIdentifier.hashCode}';
                       ref.read(questNotifierProvider.notifier).updateQuestProgressById(questId);
                       if(context.mounted) {
@@ -252,6 +267,49 @@ class _TaskListViewState extends ConsumerState<_TaskListView> with AutomaticKeep
           ),
         ),
       ],
+    );
+  }
+
+  Future<_TaskAction?> _askAction(BuildContext context, String taskTitle) async {
+    return showModalBottomSheet<_TaskAction>(
+      context: context,
+      backgroundColor: AppTheme.cardColor.withValues(alpha: .95),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(children:[
+                const Icon(Icons.play_circle_fill_rounded, color: AppTheme.secondaryColor),
+                const SizedBox(width: 8),
+                Expanded(child: Text('Ne yapalım?', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)))
+              ]),
+              const SizedBox(height: 8),
+              Text("'${taskTitle}' için bir aksiyon seç.", style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor)),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: ()=> Navigator.of(context).pop(_TaskAction.startPomodoro),
+                icon: const Icon(Icons.timer_outlined),
+                label: const Text('Pomodoro Başlat'),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: ()=> Navigator.of(context).pop(_TaskAction.completeNow),
+                icon: const Icon(Icons.check_circle_outline),
+                label: const Text('Görevi Tamamla'),
+              ),
+              const SizedBox(height: 4),
+              TextButton(
+                onPressed: ()=> Navigator.of(context).pop(null),
+                child: const Text('Vazgeç'),
+              )
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -543,3 +601,5 @@ class _TaskTimelineTile extends StatelessWidget {
     );
   }
 }
+
+enum _TaskAction { startPomodoro, completeNow }
