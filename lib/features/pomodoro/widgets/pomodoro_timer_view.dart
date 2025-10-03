@@ -40,6 +40,8 @@ class PomodoroTimerView extends ConsumerWidget {
   }
 
   Widget _buildHeader(BuildContext context, String title, String message, PomodoroModel pomodoro, WidgetRef ref) {
+    final endTime = DateTime.now().add(Duration(seconds: pomodoro.timeRemaining));
+    final endStr = DateFormat('HH:mm').format(endTime);
     return Column(
       children: [
         Text(title, style: Theme.of(context).textTheme.headlineMedium),
@@ -51,6 +53,8 @@ class PomodoroTimerView extends ConsumerWidget {
           label: Text(pomodoro.currentTask, overflow: TextOverflow.ellipsis),
           onPressed: () => _showTaskSelectionSheet(context, ref),
         ),
+        const SizedBox(height: 6),
+        Text("Bitiş: $endStr", style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor)),
         const SizedBox(height: 8),
         Text("Tur: ${pomodoro.currentRound} / ${pomodoro.longBreakInterval}",
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.secondaryTextColor)),
@@ -59,6 +63,7 @@ class PomodoroTimerView extends ConsumerWidget {
   }
 
   Widget _buildControls(BuildContext context, PomodoroModel pomodoro, PomodoroNotifier notifier, WidgetRef ref) {
+    final onBreak = pomodoro.sessionState == PomodoroSessionState.shortBreak || pomodoro.sessionState == PomodoroSessionState.longBreak;
     return Column(
       children: [
         Row(
@@ -83,9 +88,18 @@ class PomodoroTimerView extends ConsumerWidget {
             ),
           ],
         ),
+        if (onBreak)
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: TextButton.icon(
+              onPressed: notifier.skipBreakAndStartWork,
+              icon: const Icon(Icons.skip_next_rounded, color: AppTheme.secondaryColor),
+              label: const Text("Molayı atla ve çalışmaya başla", style: TextStyle(color: AppTheme.secondaryColor)),
+            ),
+          ),
         if(pomodoro.sessionState == PomodoroSessionState.work && pomodoro.currentTaskIdentifier != null)
           Padding(
-            padding: const EdgeInsets.only(top: 16.0),
+            padding: const EdgeInsets.only(top: 8.0),
             child: TextButton.icon(
                 onPressed: (){
                   notifier.markTaskAsCompleted();
@@ -181,6 +195,11 @@ class _TimerDial extends StatelessWidget {
     final minutes = time.inMinutes.remainder(60).toString().padLeft(2, '0');
     final seconds = time.inSeconds.remainder(60).toString().padLeft(2, '0');
     final progress = totalDuration > 0 ? pomodoro.timeRemaining / totalDuration : 1.0;
+    final endTime = DateTime.now().add(Duration(seconds: pomodoro.timeRemaining));
+    final endStr = DateFormat('HH:mm').format(endTime);
+
+    final interval = pomodoro.longBreakInterval.clamp(1, 12);
+    final completedInCycle = ((pomodoro.currentRound - 1) % interval).clamp(0, interval - 1);
 
     return Animate(
       target: pomodoro.isPaused ? 1 : 0,
@@ -192,9 +211,18 @@ class _TimerDial extends StatelessWidget {
             progress: 1 - progress,
             color: color,
             isPaused: pomodoro.isPaused,
+            interval: interval,
+            completedInCycle: completedInCycle,
           ),
           child: Center(
-            child: Text('$minutes:$seconds', style: Theme.of(context).textTheme.displayLarge?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 2)),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('$minutes:$seconds', style: Theme.of(context).textTheme.displayLarge?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 2)),
+                const SizedBox(height: 6),
+                Text('Bitiş: $endStr', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor)),
+              ],
+            ),
           ),
         ),
       ),
@@ -206,7 +234,9 @@ class _DialPainter extends CustomPainter {
   final double progress;
   final Color color;
   final bool isPaused;
-  _DialPainter({required this.progress, required this.color, required this.isPaused});
+  final int interval;
+  final int completedInCycle;
+  _DialPainter({required this.progress, required this.color, required this.isPaused, required this.interval, required this.completedInCycle});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -233,6 +263,25 @@ class _DialPainter extends CustomPainter {
       canvas.drawArc(rect, -pi / 2, 2 * pi * progress, false, progressPaint);
     }
 
+    // Tur noktaları
+    final dotRadius = 6.0;
+    final dotDistance = radius - 8;
+    for (int i = 0; i < interval; i++) {
+      final angle = -pi / 2 + 2 * pi * (i / interval);
+      final dx = center.dx + cos(angle) * dotDistance;
+      final dy = center.dy + sin(angle) * dotDistance;
+      final paint = Paint()
+        ..color = i < completedInCycle ? color : AppTheme.lightSurfaceColor.withOpacity(0.4)
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(Offset(dx, dy), dotRadius, paint);
+      // Dış hat
+      final stroke = Paint()
+        ..color = Colors.black.withOpacity(0.1)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1;
+      canvas.drawCircle(Offset(dx, dy), dotRadius, stroke);
+    }
+
     final breath = sin(DateTime.now().millisecondsSinceEpoch / (isPaused ? 2000 : 500)) * 5;
     final breathPaint = Paint()
       ..color = color.withOpacity(isPaused ? 0.05 : 0.1)
@@ -255,6 +304,7 @@ class PomodoroSettingsSheet extends ConsumerStatefulWidget {
 
 class _PomodoroSettingsSheetState extends ConsumerState<PomodoroSettingsSheet> {
   late double _work, _short, _long, _interval;
+  late bool _autoStartBreaks, _autoStartWork, _keepScreenOn;
 
   @override
   void initState() {
@@ -264,6 +314,9 @@ class _PomodoroSettingsSheetState extends ConsumerState<PomodoroSettingsSheet> {
     _short = (pomodoro.shortBreakDuration / 60).roundToDouble();
     _long = (pomodoro.longBreakDuration / 60).roundToDouble();
     _interval = pomodoro.longBreakInterval.toDouble();
+    _autoStartBreaks = pomodoro.autoStartBreaks;
+    _autoStartWork = pomodoro.autoStartWork;
+    _keepScreenOn = pomodoro.keepScreenOn;
   }
 
   @override
@@ -284,7 +337,26 @@ class _PomodoroSettingsSheetState extends ConsumerState<PomodoroSettingsSheet> {
             ScoreSlider(label: "Kısa Mola (dk)", value: _short, max: 15, color: AppTheme.successColor, onChanged: (v) => setState(() => _short = v.roundToDouble())),
             ScoreSlider(label: "Uzun Mola (dk)", value: _long, max: 30, color: AppTheme.successColor, onChanged: (v) => setState(() => _long = v.roundToDouble())),
             ScoreSlider(label: "Uzun Mola Aralığı (Tur)", value: _interval, max: 8, color: AppTheme.lightSurfaceColor, onChanged: (v) => setState(() => _interval = v.roundToDouble())),
-            const SizedBox(height: 24),
+            const SizedBox(height: 8),
+            SwitchListTile.adaptive(
+              value: _autoStartBreaks,
+              onChanged: (v) => setState(() => _autoStartBreaks = v),
+              title: const Text('Çalışma bitince molayı otomatik başlat'),
+              subtitle: const Text('Seans bittiğinde mola sayacı otomatik başlar'),
+            ),
+            SwitchListTile.adaptive(
+              value: _autoStartWork,
+              onChanged: (v) => setState(() => _autoStartWork = v),
+              title: const Text('Mola bitince çalışmayı otomatik başlat'),
+              subtitle: const Text('Mola tamamlanınca yeni tura otomatik geç'),
+            ),
+            SwitchListTile.adaptive(
+              value: _keepScreenOn,
+              onChanged: (v) => setState(() => _keepScreenOn = v),
+              title: const Text('Zamanlayıcı sırasında ekranı açık tut'),
+              subtitle: const Text('Yanıp sönmeden, kapanmadan sürekli açık kalsın'),
+            ),
+            const SizedBox(height: 16),
             ElevatedButton(
                 onPressed: (){
                   ref.read(pomodoroProvider.notifier).updateSettings(
@@ -292,6 +364,11 @@ class _PomodoroSettingsSheetState extends ConsumerState<PomodoroSettingsSheet> {
                     short: _short.toInt(),
                     long: _long.toInt(),
                     interval: _interval.toInt(),
+                  );
+                  ref.read(pomodoroProvider.notifier).updatePreferences(
+                    autoStartBreaks: _autoStartBreaks,
+                    autoStartWork: _autoStartWork,
+                    keepScreenOn: _keepScreenOn,
                   );
                   Navigator.pop(context);
                 },

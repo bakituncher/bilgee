@@ -311,4 +311,28 @@ class NotificationService {
       payload: route,
     );
   }
+
+  // Basit yerel bildirim (route opsiyonel). Pomodoro gibi dahili olaylarda kullanılır.
+  Future<void> showLocalSimple({required String title, required String body, String? route}) async {
+    try {
+      final androidDetails = AndroidNotificationDetails(
+        _channel?.id ?? 'bilge_general',
+        _channel?.name ?? 'TaktikAI Genel',
+        channelDescription: _channel?.description,
+        importance: Importance.high,
+        priority: Priority.high,
+      );
+      const iosDetails = DarwinNotificationDetails();
+      final details = NotificationDetails(android: androidDetails, iOS: iosDetails);
+      await _fln.show(
+        DateTime.now().millisecondsSinceEpoch % 100000,
+        title,
+        body,
+        details,
+        payload: route ?? '',
+      );
+    } catch (e) {
+      if (kDebugMode) debugPrint('Yerel bildirim gösterilemedi: $e');
+    }
+  }
 }

@@ -5,6 +5,8 @@ import 'package:taktik/data/models/focus_session_model.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
 import 'package:intl/intl.dart';
+import 'package:taktik/shared/notifications/notification_service.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 enum PomodoroSessionState { idle, work, shortBreak, longBreak, completed }
 
@@ -28,6 +30,10 @@ class PomodoroModel {
   final String? currentTaskIdentifier;
   final String? currentTaskDateKey; // YENI: görev ait olduğu gün (yyyy-MM-dd)
   final FocusSessionResult? lastResult;
+  // Yeni tercihler
+  final bool autoStartBreaks;
+  final bool autoStartWork;
+  final bool keepScreenOn;
 
   PomodoroModel({
     this.sessionState = PomodoroSessionState.idle,
@@ -42,6 +48,9 @@ class PomodoroModel {
     this.currentTaskIdentifier,
     this.currentTaskDateKey,
     this.lastResult,
+    this.autoStartBreaks = false,
+    this.autoStartWork = false,
+    this.keepScreenOn = false,
   });
 
   PomodoroModel copyWith({
@@ -60,6 +69,9 @@ class PomodoroModel {
     bool clearTaskDateKey = false,
     FocusSessionResult? lastResult,
     bool clearLastResult = false,
+    bool? autoStartBreaks,
+    bool? autoStartWork,
+    bool? keepScreenOn,
   }) {
     return PomodoroModel(
       sessionState: sessionState ?? this.sessionState,
@@ -74,6 +86,9 @@ class PomodoroModel {
       currentTaskIdentifier: clearTaskIdentifier ? null : currentTaskIdentifier ?? this.currentTaskIdentifier,
       currentTaskDateKey: clearTaskDateKey ? null : currentTaskDateKey ?? this.currentTaskDateKey,
       lastResult: clearLastResult ? null : lastResult ?? this.lastResult,
+      autoStartBreaks: autoStartBreaks ?? this.autoStartBreaks,
+      autoStartWork: autoStartWork ?? this.autoStartWork,
+      keepScreenOn: keepScreenOn ?? this.keepScreenOn,
     );
   }
 }
@@ -84,9 +99,22 @@ class PomodoroNotifier extends StateNotifier<PomodoroModel> {
 
   PomodoroNotifier(this._ref) : super(PomodoroModel());
 
+  void _applyWakelock() async {
+    if (state.keepScreenOn && !state.isPaused &&
+        (state.sessionState == PomodoroSessionState.work ||
+         state.sessionState == PomodoroSessionState.shortBreak ||
+         state.sessionState == PomodoroSessionState.longBreak)) {
+      await WakelockPlus.enable();
+    } else {
+      await WakelockPlus.disable();
+    }
+  }
+
   void _startTimer() {
     _timer?.cancel();
     state = state.copyWith(isPaused: false);
+    _applyWakelock();
+
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (state.timeRemaining > 0) {
         state = state.copyWith(timeRemaining: state.timeRemaining - 1);
@@ -97,28 +125,47 @@ class PomodoroNotifier extends StateNotifier<PomodoroModel> {
     });
   }
 
+  void _notify(String title, String body) {
+    NotificationService.instance.showLocalSimple(title: title, body: body);
+  }
+
   void _handleSessionEnd() {
     if (state.sessionState == PomodoroSessionState.work) {
       // 1. Odaklanma seansını veritabanına kaydet.
       _saveSession(state.currentTask, state.workDuration);
 
       // 2. Sonucu oluştur ve ekran durumunu "tamamlandı" olarak değiştir.
-      // Not: QuestNotifier bu state değişikliğini dinleyerek görevi OTOMATİK tamamlayacak.
       final result = FocusSessionResult(
         totalFocusSeconds: state.workDuration,
         roundsCompleted: state.currentRound,
         task: state.currentTask,
       );
       state = state.copyWith(sessionState: PomodoroSessionState.completed, isPaused: true, lastResult: result);
+      _applyWakelock();
+
+      _notify('Odak tamamlandı', '"${state.currentTask}" için mola zamanı.');
+
+      if (state.autoStartBreaks) {
+        // Otomatik mola başlat
+        startNextSession();
+        if (state.sessionState == PomodoroSessionState.shortBreak || state.sessionState == PomodoroSessionState.longBreak) {
+          _startTimer();
+        }
+      }
     } else {
       // Mola bittiyse, bir sonraki çalışma turuna hazırlan.
+      final nextRound = (state.sessionState == PomodoroSessionState.longBreak) ? 1 : state.currentRound + 1;
       state = state.copyWith(
         sessionState: PomodoroSessionState.work,
         timeRemaining: state.workDuration,
         isPaused: true,
-        // Eğer uzun bir aradan geliyorsak tur sayısını sıfırla, değilse bir artır.
-        currentRound: (state.sessionState == PomodoroSessionState.longBreak) ? 1 : state.currentRound + 1,
+        currentRound: nextRound,
       );
+      _applyWakelock();
+      _notify('Mola bitti', 'Yeni bir odak turu seni bekliyor.');
+      if (state.autoStartWork) {
+        _startTimer();
+      }
     }
   }
 
@@ -130,13 +177,16 @@ class PomodoroNotifier extends StateNotifier<PomodoroModel> {
         isPaused: true,
         currentRound: 1,
       );
+      if (state.autoStartWork) {
+        _startTimer();
+      }
     }
   }
 
   void startNextSession() {
     if (state.lastResult == null) return;
     final previousRound = state.lastResult!.roundsCompleted;
-    final isLongBreakTime = previousRound % state.longBreakInterval == 0;
+    final isLongBreakTime = state.longBreakInterval > 0 && previousRound % state.longBreakInterval == 0;
 
     if (isLongBreakTime) {
       state = state.copyWith(
@@ -146,6 +196,7 @@ class PomodoroNotifier extends StateNotifier<PomodoroModel> {
         clearLastResult: true,
         currentRound: previousRound,
       );
+      _notify('Uzun mola başladı', '${(state.longBreakDuration / 60).round()} dk dinlen.');
     } else {
       state = state.copyWith(
         sessionState: PomodoroSessionState.shortBreak,
@@ -154,6 +205,12 @@ class PomodoroNotifier extends StateNotifier<PomodoroModel> {
         clearLastResult: true,
         currentRound: previousRound,
       );
+      _notify('Mola başladı', '${(state.shortBreakDuration / 60).round()} dk nefes al.');
+    }
+
+    _applyWakelock();
+    if (state.autoStartBreaks) {
+      _startTimer();
     }
   }
 
@@ -171,6 +228,7 @@ class PomodoroNotifier extends StateNotifier<PomodoroModel> {
   void pause() {
     _timer?.cancel();
     state = state.copyWith(isPaused: true);
+    _applyWakelock();
   }
 
   void reset() {
@@ -180,7 +238,25 @@ class PomodoroNotifier extends StateNotifier<PomodoroModel> {
       shortBreakDuration: state.shortBreakDuration,
       longBreakDuration: state.longBreakDuration,
       longBreakInterval: state.longBreakInterval,
+      autoStartBreaks: state.autoStartBreaks,
+      autoStartWork: state.autoStartWork,
+      keepScreenOn: state.keepScreenOn,
     );
+    _applyWakelock();
+  }
+
+  void skipBreakAndStartWork() {
+    if (state.sessionState == PomodoroSessionState.shortBreak || state.sessionState == PomodoroSessionState.longBreak) {
+      state = state.copyWith(
+        sessionState: PomodoroSessionState.work,
+        timeRemaining: state.workDuration,
+        isPaused: true,
+      );
+      _applyWakelock();
+      if (state.autoStartWork) {
+        _startTimer();
+      }
+    }
   }
 
   void setTask({required String task, String? identifier, String? dateKey}) {
@@ -230,6 +306,15 @@ class PomodoroNotifier extends StateNotifier<PomodoroModel> {
     }
   }
 
+  void updatePreferences({bool? autoStartBreaks, bool? autoStartWork, bool? keepScreenOn}) {
+    state = state.copyWith(
+      autoStartBreaks: autoStartBreaks ?? state.autoStartBreaks,
+      autoStartWork: autoStartWork ?? state.autoStartWork,
+      keepScreenOn: keepScreenOn ?? state.keepScreenOn,
+    );
+    _applyWakelock();
+  }
+
   void _saveSession(String task, int duration) {
     final userId = _ref.read(authControllerProvider).value?.uid;
     if (userId == null) return;
@@ -245,6 +330,7 @@ class PomodoroNotifier extends StateNotifier<PomodoroModel> {
   @override
   void dispose() {
     _timer?.cancel();
+    WakelockPlus.disable();
     super.dispose();
   }
 }

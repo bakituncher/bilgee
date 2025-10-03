@@ -65,6 +65,9 @@ dependencies:
   cross_file: ^0.3.4
   shared_preferences: ^2.5.3
 
+  # Ekranı açık tutmak için
+  wakelock_plus: ^1.2.7
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
