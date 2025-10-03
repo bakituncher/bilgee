@@ -18,6 +18,7 @@ import 'package:taktik/data/models/plan_document.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:taktik/data/repositories/exam_schedule.dart';
 
 class ChatMessage {
   final String text;
@@ -231,29 +232,8 @@ class AiService {
   }
 
   int _getDaysUntilExam(ExamType examType) {
-    final now = DateTime.now();
-    DateTime examDate;
-    switch (examType) {
-      case ExamType.lgs:
-        examDate = DateTime(now.year, 6, 2);
-        break;
-      case ExamType.yks:
-        examDate = DateTime(now.year, 6, 15);
-        break;
-      case ExamType.kpssLisans:
-        examDate = DateTime(now.year, 7, 14);
-        break;
-      case ExamType.kpssOnlisans:
-        examDate = DateTime(now.year, 9, 7);
-        break;
-      case ExamType.kpssOrtaogretim:
-        examDate = DateTime(now.year, 9, 21);
-        break;
-    }
-    if (now.isAfter(examDate)) {
-      examDate = DateTime(now.year + 1, examDate.month, examDate.day);
-    }
-    return examDate.difference(now).inDays;
+    // Merkezî takvimden hesapla
+    return ExamSchedule.daysUntilExam(examType);
   }
 
   String _encodeTopicPerformances(Map<String, Map<String, TopicPerformanceModel>> performances) {
@@ -294,10 +274,15 @@ class AiService {
     final availabilityJson = jsonEncode(user.weeklyAvailability);
     final weeklyPlanJson = planDoc?.weeklyPlan != null ? jsonEncode(planDoc!.weeklyPlan!) : null;
 
-    // ESKİ: jsonEncode(user.completedDailyTasks) her zaman {} dönüyordu.
-    // YENİ: Son 28 günün tamamlanan görevlerini oku ve gönder.
+    // Son 28 gün tamamlanan görevler
     final recentCompleted = await _loadRecentCompletedTasks(user.id, days: 28);
     final completedTasksJson = jsonEncode(recentCompleted);
+
+    // MÜFREDAT SIRASI: Seçili sınav ve bölüm için konu listesini sırayla çıkar
+    final curriculumJson = await _buildCurriculumOrderJson(examType, user.selectedExamSection);
+
+    // GUARDRAILS: backlog + konu renkleri + politika
+    final guardrailsJson = _buildGuardrailsJson(planDoc?.weeklyPlan, recentCompleted, performance);
 
     String prompt;
     switch (examType) {
@@ -310,6 +295,8 @@ class AiService {
             subjectAverages: subjectAverages, topicPerformancesJson: topicPerformancesJson,
             availabilityJson: availabilityJson, weeklyPlanJson: weeklyPlanJson,
             completedTasksJson: completedTasksJson,
+            curriculumJson: curriculumJson,
+            guardrailsJson: guardrailsJson,
             revisionRequest: revisionRequest
         );
         break;
@@ -321,6 +308,8 @@ class AiService {
             topicPerformancesJson: topicPerformancesJson, availabilityJson: availabilityJson,
             weeklyPlanJson: weeklyPlanJson,
             completedTasksJson: completedTasksJson,
+            curriculumJson: curriculumJson,
+            guardrailsJson: guardrailsJson,
             revisionRequest: revisionRequest
         );
         break;
@@ -333,11 +322,109 @@ class AiService {
             examName: examType.displayName,
             weeklyPlanJson: weeklyPlanJson,
             completedTasksJson: completedTasksJson,
+            curriculumJson: curriculumJson,
+            guardrailsJson: guardrailsJson,
             revisionRequest: revisionRequest
         );
         break;
     }
     return _callGemini(prompt, expectJson: true);
+  }
+
+  Future<String> _buildCurriculumOrderJson(ExamType examType, String? selectedSection) async {
+    try {
+      final exam = await ExamData.getExamByType(examType);
+      final sections = (selectedSection != null && selectedSection.isNotEmpty)
+          ? exam.sections.where((s) => s.name.toLowerCase() == selectedSection.toLowerCase()).toList()
+          : exam.sections;
+      final Map<String, List<String>> subjects = {};
+      for (final sec in sections) {
+        sec.subjects.forEach((subject, details) {
+          subjects[subject] = details.topics.map((t) => t.name).toList();
+        });
+      }
+      final payload = {
+        'section': selectedSection ?? 'all',
+        'subjects': subjects,
+      };
+      return jsonEncode(payload);
+    } catch (_) {
+      return jsonEncode({'section': selectedSection ?? 'all', 'subjects': {}});
+    }
+  }
+
+  String _buildGuardrailsJson(Map<String, dynamic>? weeklyPlanRaw, Map<String, List<String>> recentCompleted, PerformanceSummary performance){
+    // Tamamlanan görevleri tek set'e indir (date bağımsız)
+    final completedFlat = <String>{};
+    recentCompleted.values.forEach((list){ for(final t in list){ completedFlat.add(t); }});
+
+    // Backlog: geçen haftanın planından tamamlanmamış görevler
+    final backlogActivities = <String>[];
+    if (weeklyPlanRaw != null) {
+      try {
+        final planList = (weeklyPlanRaw['plan'] as List? ) ?? const [];
+        for (final day in planList) {
+          if (day is Map && day['schedule'] is List) {
+            for (final item in (day['schedule'] as List)) {
+              if (item is Map) {
+                final time = (item['time'] ?? '').toString();
+                final activity = (item['activity'] ?? '').toString();
+                final id = '$time-$activity';
+                if (!completedFlat.contains(id)) {
+                  backlogActivities.add(activity);
+                }
+              } else if (item is String) {
+                final id = 'Görev-$item';
+                if (!completedFlat.contains(id)) backlogActivities.add(item);
+              }
+            }
+          }
+        }
+      } catch (_) {
+        // yoksay
+      }
+    }
+
+    // Konu renkleri: kırmızı/sarı/yeşil/unknown
+    final topicStatus = <String, Map<String, dynamic>>{}; // subject -> { topic -> status }
+    int redCount = 0, yellowCount = 0, unknownCount = 0;
+    performance.topicPerformances.forEach((subject, topics){
+      final map = <String, String>{};
+      topics.forEach((topic, tp){
+        final attempts = tp.correctCount + tp.wrongCount;
+        String status;
+        if (tp.questionCount < 8 || attempts < 6) {
+          status = 'unknown';
+          unknownCount++;
+        } else {
+          final denom = attempts == 0 ? 1 : attempts;
+          final acc = tp.correctCount / denom;
+          if (acc < 0.5 || tp.wrongCount >= tp.correctCount) { status = 'red'; redCount++; }
+          else if (acc < 0.7) { status = 'yellow'; yellowCount++; }
+          else { status = 'green'; }
+        }
+        map[topic] = status;
+      });
+      topicStatus[subject] = map;
+    });
+
+    // Politika: ne zaman müfredat vs metrik
+    final policy = <String, dynamic>{
+      'allowNewTopics': backlogActivities.isEmpty && redCount == 0,
+      'priorities': backlogActivities.isNotEmpty
+          ? ['backlog','red','yellow','curriculum']
+          : (redCount>0 ? ['red','yellow','curriculum'] : ['curriculum','yellow','red']),
+      'notes': 'Backlog veya kırmızı konular varsa yeni konu açma; önce bunları bitir. Unknown konularda kısa tanılayıcı set uygula.'
+    };
+
+    final guardrails = {
+      'backlogCount': backlogActivities.length,
+      'backlogSample': backlogActivities.take(10).toList(),
+      'topicStatus': topicStatus,
+      'policy': policy,
+    };
+
+    return jsonEncode(guardrails);
   }
 
   Future<String> generateStudyGuideAndQuiz(UserModel user, List<TestModel> tests, PerformanceSummary performance, {Map<String, String>? topicOverride, String difficulty = 'normal', int attemptCount = 1, double? temperature}) async {
@@ -561,5 +648,23 @@ class AiService {
       });
     }
     return subjectNets.map((k, v) => MapEntry(k, v.isEmpty ? 0.0 : v.reduce((a, b) => a + b) / v.length));
+  }
+
+  Future<Map<String, dynamic>> computeGuardrailsForDisplay({
+    required PlanDocument? planDoc,
+    required PerformanceSummary performance,
+    int daysWindow = 28,
+  }) async {
+    final user = _ref.read(userProfileProvider).value;
+    if (user == null) return {};
+    final recentCompleted = await _loadRecentCompletedTasks(user.id, days: daysWindow);
+    final guardrailsJson = _buildGuardrailsJson(planDoc?.weeklyPlan, recentCompleted, performance);
+    try {
+      final decoded = jsonDecode(guardrailsJson);
+      if (decoded is Map<String, dynamic>) return decoded;
+      return {};
+    } catch (_) {
+      return {};
+    }
   }
 }

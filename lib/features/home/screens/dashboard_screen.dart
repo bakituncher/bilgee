@@ -21,12 +21,14 @@ import 'package:taktik/features/home/widgets/motivation_quotes_card.dart';
 import 'package:taktik/features/quests/logic/optimized_quests_provider.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
 import 'package:taktik/data/models/plan_model.dart';
+import 'package:taktik/data/providers/shared_prefs_provider.dart';
 
 // Widget'ları vurgulamak için GlobalKey'ler artik highlight_keys.dart'tan geliyor, burada TANIM YOK.
 
 // KUTLAMA TARİHLERİ: static yerine Riverpod state
 final celebratedDatesProvider = StateProvider<Set<String>>((ref) => <String>{});
 final expiredPlanDialogShownProvider = StateProvider<bool>((ref) => false);
+const _weeklyPlanNudgeIntervalHours = 18; // tekrar gösterim aralığı
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -83,22 +85,96 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   void _checkAndShowExpiredPlanDialog() {
     final planAsync = ref.watch(planProvider);
-    final dialogShown = ref.watch(expiredPlanDialogShownProvider);
 
-    planAsync.whenData((planDoc) {
-      if (planDoc?.weeklyPlan != null && !dialogShown) {
-        final weeklyPlan = WeeklyPlan.fromJson(planDoc!.weeklyPlan!);
-        if (weeklyPlan.isExpired) {
-          // Prevent scheduling the dialog build during a build phase
-          Future.microtask(() {
-            if (mounted) {
-              _showExpiredPlanDialog(context);
-              ref.read(expiredPlanDialogShownProvider.notifier).state = true;
-            }
+    planAsync.whenData((planDoc) async {
+      if (planDoc?.weeklyPlan == null) return;
+      final weeklyPlan = WeeklyPlan.fromJson(planDoc!.weeklyPlan!);
+      if (!weeklyPlan.isExpired) return;
+
+      // SharedPreferences üzerinden en son ne zaman gösterildiğine bak
+      try {
+        final prefs = await ref.read(sharedPreferencesProvider.future);
+        final lastMs = prefs.getInt('weekly_plan_nudge_last') ?? 0;
+        final nowMs = DateTime.now().millisecondsSinceEpoch;
+        final diffH = (nowMs - lastMs) / (1000 * 60 * 60);
+        if (diffH >= _weeklyPlanNudgeIntervalHours) {
+          // Göster ve zaman damgasını güncelle
+          Future.microtask(() async {
+            if (!mounted) return;
+            await _showExpiredPlanNudge(context);
+            await prefs.setInt('weekly_plan_nudge_last', DateTime.now().millisecondsSinceEpoch);
           });
         }
+      } catch (_) {
+        // prefs alınamazsa sessiz geç
       }
     });
+  }
+
+  Future<void> _showExpiredPlanNudge(BuildContext context) async {
+    if (!mounted) return;
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.cardColor.withValues(alpha: .98),
+      isScrollControlled: false,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(children: const [
+                  Icon(Icons.auto_awesome_rounded, color: AppTheme.secondaryColor, size: 28),
+                  SizedBox(width: 8),
+                  Expanded(child: Text('Yeni Haftayı Mühürleyelim', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)))
+                ]),
+                const SizedBox(height: 8),
+                Text(
+                  'Haftalık planının süresi doldu. Güncel hedeflerin, müfredat sırası ve son performansına göre taptaze bir harekât planı çıkaralım.',
+                  style: const TextStyle(color: AppTheme.secondaryTextColor),
+                ),
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(14),
+                    gradient: LinearGradient(colors: [
+                      AppTheme.secondaryColor.withOpacity(.12),
+                      AppTheme.lightSurfaceColor.withOpacity(.10)
+                    ], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                    border: Border.all(color: AppTheme.lightSurfaceColor.withOpacity(.35)),
+                  ),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: const [
+                    _NudgeBullet(icon: Icons.route_rounded, text: 'Müfredat sırasına sadık, tekrar etmeyen konu akışı'),
+                    SizedBox(height: 8),
+                    _NudgeBullet(icon: Icons.speed_rounded, text: 'Seçtiğin yoğunluğa göre akıllı görev ve soru adetleri'),
+                    SizedBox(height: 8),
+                    _NudgeBullet(icon: Icons.event_available_rounded, text: 'Sınava kalan güne göre vurucu strateji'),
+                  ]),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                    if (mounted) context.go('/ai-hub/strategic-planning');
+                  },
+                  icon: const Icon(Icons.auto_fix_high_rounded),
+                  label: const Text('Yeni Haftalık Plan Oluştur'),
+                ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: const Text('Daha Sonra'),
+                )
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -330,5 +406,21 @@ class _NotificationBell extends ConsumerWidget {
           ),
       ],
     );
+  }
+}
+
+class _NudgeBullet extends StatelessWidget {
+  final IconData icon; final String text;
+  const _NudgeBullet({required this.icon, required this.text});
+  @override
+  Widget build(BuildContext context) {
+    return Row(children: [
+      Container(
+        decoration: BoxDecoration(shape: BoxShape.circle, color: AppTheme.secondaryColor.withOpacity(.18)),
+        padding: const EdgeInsets.all(6), child: Icon(icon, size: 16, color: AppTheme.secondaryColor),
+      ),
+      const SizedBox(width: 10),
+      Expanded(child: Text(text, style: const TextStyle(color: Colors.white)))
+    ]);
   }
 }
