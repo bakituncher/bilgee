@@ -28,11 +28,14 @@ class QuestNotifier extends StateNotifier<bool> {
   /// Pomodoro gibi state değişikliklerini dinleyerek görevleri günceller.
   void _listenToSystemEvents() {
     _ref.listen<PomodoroModel>(pomodoroProvider, (previous, next) {
-      // Sadece 'completed' durumuna ilk geçişte tetikle
-      if (previous?.sessionState != PomodoroSessionState.completed && next.sessionState == PomodoroSessionState.completed) {
-        if (next.lastResult != null) {
-          userCompletedPomodoroSession(next.lastResult!.totalFocusSeconds);
-        }
+      // Sadece 'completed' durumuna ilk geçişte tetikle ve henüz ödüllendirilmemişse
+      if (previous?.sessionState != PomodoroSessionState.completed &&
+          next.sessionState == PomodoroSessionState.completed &&
+          next.lastResult != null &&
+          !(next.lastResultRewarded)) {
+        userCompletedPomodoroSession(next.lastResult!.totalFocusSeconds);
+        // Tekrarlamayı engelle
+        _ref.read(pomodoroProvider.notifier).markLastResultRewarded();
       }
     });
 

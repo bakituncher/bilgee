@@ -124,10 +124,13 @@ class PomodoroTimerView extends ConsumerWidget {
       (task: "Genel Çalışma", identifier: null),
     ];
 
+    String? dateKeyForSelection;
+
     if (user != null && weeklyPlan != null) {
       final today = DateTime.now();
       final todayName = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'][today.weekday - 1];
       final dateKey = DateFormat('yyyy-MM-dd').format(today);
+      dateKeyForSelection = dateKey;
 
       final todayPlan = weeklyPlan.plan.firstWhere((day) => day.day == todayName, orElse: () => DailyPlan(day: todayName, schedule: []));
       final completedToday = ref.read(completedTasksForDateProvider(today)).maybeWhen(data: (list)=> list, orElse: ()=> const <String>[]);
@@ -164,7 +167,9 @@ class PomodoroTimerView extends ConsumerWidget {
     );
 
     if (selectedTask != null) {
-      ref.read(pomodoroProvider.notifier).setTask(task: selectedTask.task, identifier: selectedTask.identifier);
+      // Tarih anahtarını her durumda bugüne ayarla; weekly plan varsa yukarıda üretildi
+      final dateKey = dateKeyForSelection ?? DateFormat('yyyy-MM-dd').format(DateTime.now());
+      ref.read(pomodoroProvider.notifier).setTask(task: selectedTask.task, identifier: selectedTask.identifier, dateKey: dateKey);
     }
   }
 
@@ -186,10 +191,8 @@ class _TimerDial extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final totalDuration = switch (pomodoro.sessionState) {
-      PomodoroSessionState.work => pomodoro.workDuration,
-      PomodoroSessionState.shortBreak => pomodoro.shortBreakDuration,
-      PomodoroSessionState.longBreak => pomodoro.longBreakDuration,
-      _ => pomodoro.workDuration,
+      PomodoroSessionState.idle => pomodoro.workDuration,
+      _ => pomodoro.activeSessionTotalDuration,
     };
     final time = Duration(seconds: pomodoro.timeRemaining);
     final minutes = time.inMinutes.remainder(60).toString().padLeft(2, '0');
@@ -364,6 +367,7 @@ class _PomodoroSettingsSheetState extends ConsumerState<PomodoroSettingsSheet> {
                     short: _short.toInt(),
                     long: _long.toInt(),
                     interval: _interval.toInt(),
+                    applyToCurrent: true,
                   );
                   ref.read(pomodoroProvider.notifier).updatePreferences(
                     autoStartBreaks: _autoStartBreaks,
