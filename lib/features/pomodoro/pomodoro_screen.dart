@@ -16,61 +16,114 @@ class PomodoroScreen extends ConsumerStatefulWidget {
 }
 
 
-class _PomodoroScreenState extends ConsumerState<PomodoroScreen> with TickerProviderStateMixin {
+class _PomodoroScreenState extends ConsumerState<PomodoroScreen> with TickerProviderStateMixin, WidgetsBindingObserver {
   late final AnimationController _bgController;
 
   @override
   void initState() {
     super.initState();
     _bgController = AnimationController(vsync: this, duration: 20.seconds)..repeat();
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _bgController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive || state == AppLifecycleState.detached) {
+      // Arka plana geçince sayaç otomatik duraklatılsın
+      ref.read(pomodoroProvider.notifier).pause();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final pomodoro = ref.watch(pomodoroProvider);
 
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: const Text('Zihinsel Gözlemevi'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
-      body: AnimatedContainer(
-        duration: 1.seconds,
-        curve: Curves.easeOutCubic,
-        decoration: BoxDecoration(
-          color: AppTheme.primaryColor,
-          gradient: RadialGradient(
-            center: const Alignment(0, -1.2),
-            radius: 1.5,
-            colors: [
-              _getBackgroundColor(pomodoro.sessionState).withOpacity(0.4),
-              AppTheme.primaryColor,
-            ],
-            stops: const [0.0, 0.7],
-          ),
-        ),
-        child: Stack(
-          children: [
-            _StarsBackground(controller: _bgController, state: pomodoro.sessionState),
-            Center(
-              child: AnimatedSwitcher(
-                duration: 800.ms,
-                transitionBuilder: (child, animation) => FadeTransition(
-                  opacity: animation,
-                  child: ScaleTransition(scale: animation, alignment: Alignment.center, child: child),
+    return WillPopScope(
+      onWillPop: () async {
+        final shouldExit = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Çıkmak istiyor musun?'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Pomodoro ekranından ayrılırsan sayaç duraklatılacak.'),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(44)),
+                        onPressed: () => Navigator.of(ctx).pop(false),
+                        child: const Text('Vazgeç'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(44)),
+                        onPressed: () => Navigator.of(ctx).pop(true),
+                        child: const Text('Çık ve Duraklat'),
+                      ),
+                    ),
+                  ],
                 ),
-                child: _buildCurrentView(pomodoro),
-              ),
+              ],
             ),
-          ],
+          ),
+        ) ?? false;
+        if (shouldExit) {
+          ref.read(pomodoroProvider.notifier).pause();
+          return true;
+        }
+        return false;
+      },
+      child: Scaffold(
+        extendBodyBehindAppBar: true,
+        appBar: AppBar(
+          title: const Text('Zihinsel Gözlemevi'),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+        ),
+        body: AnimatedContainer(
+          duration: 1.seconds,
+          curve: Curves.easeOutCubic,
+          decoration: BoxDecoration(
+            color: AppTheme.primaryColor,
+            gradient: RadialGradient(
+              center: const Alignment(0, -1.2),
+              radius: 1.5,
+              colors: [
+                _getBackgroundColor(pomodoro.sessionState).withOpacity(0.4),
+                AppTheme.primaryColor,
+              ],
+              stops: const [0.0, 0.7],
+            ),
+          ),
+          child: Stack(
+            children: [
+              _StarsBackground(controller: _bgController, state: pomodoro.sessionState),
+              Center(
+                child: AnimatedSwitcher(
+                  duration: 800.ms,
+                  transitionBuilder: (child, animation) => FadeTransition(
+                    opacity: animation,
+                    child: ScaleTransition(scale: animation, alignment: Alignment.center, child: child),
+                  ),
+                  child: _buildCurrentView(pomodoro),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
