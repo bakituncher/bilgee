@@ -1,13 +1,22 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions");
 const { db, admin } = require("./init");
-const { nowIstanbul, computeTestAggregates } = require("./utils");
+const { nowIstanbul, computeTestAggregates, enforceRateLimit, enforceDailyQuota, getClientIpFromRawRequest } = require("./utils");
 const { upsertLeaderboardScore } = require("./leaderboard");
 const { updatePublicProfile } = require("./profile");
 
-exports.addEngagementPoints = onCall({ region: "us-central1", enforceAppCheck: true }, async (request) => {
+exports.addEngagementPoints = onCall({ region: "us-central1", enforceAppCheck: true, maxInstances: 20 }, async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Oturum gerekli");
   const uid = request.auth.uid;
+
+  // Rate limit + günlük kota (istismar önleme)
+  const ip = getClientIpFromRawRequest(request.rawRequest) || 'unknown';
+  await Promise.all([
+    enforceRateLimit(`eng_points_uid_${uid}`, 60, 10),
+    enforceRateLimit(`eng_points_ip_${ip}`, 60, 60),
+    enforceDailyQuota(`eng_points_daily_${uid}`, 500),
+  ]);
+
   const deltaRaw = request.data && request.data.pointsToAdd;
   const delta = typeof deltaRaw === "number" ? Math.floor(deltaRaw) : parseInt(String(deltaRaw || "0"), 10);
   if (!Number.isFinite(delta) || delta <= 0 || delta > 100000) {
@@ -19,7 +28,7 @@ exports.addEngagementPoints = onCall({ region: "us-central1", enforceAppCheck: t
   let examType = null;
   let userDocData = null;
   await db.runTransaction(async (tx) => {
-    const [uSnap, sSnap] = await Promise.all([tx.get(userRef), tx.get(statsRef)]);
+    const [uSnap] = await Promise.all([tx.get(userRef)]);
     if (!uSnap.exists) throw new HttpsError("failed-precondition", "Kullanıcı bulunamadı");
     userDocData = uSnap.data() || {};
     examType = (userDocData && userDocData.selectedExam) || null;
@@ -29,7 +38,6 @@ exports.addEngagementPoints = onCall({ region: "us-central1", enforceAppCheck: t
     }, { merge: true });
   });
 
-  // Liderlik tablolarını güncelle (günlük/haftalık) ve klasik koleksiyon
   try {
     if (examType) {
       await upsertLeaderboardScore({ examType, uid, delta, userDocData });
@@ -51,14 +59,33 @@ exports.addEngagementPoints = onCall({ region: "us-central1", enforceAppCheck: t
   return { ok: true, added: delta };
 });
 
-exports.addTestResult = onCall({ region: "us-central1", timeoutSeconds: 30, enforceAppCheck: true }, async (request) => {
+exports.addTestResult = onCall({ region: "us-central1", timeoutSeconds: 30, enforceAppCheck: true, maxInstances: 20 }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Oturum gerekli");
   }
   const uid = request.auth.uid;
   const input = request.data || {};
 
-  logger.info(`[addTestResult] User: ${uid} | Input:`, { input: JSON.stringify(input) });
+  // Rate limit + günlük kota
+  const ip = getClientIpFromRawRequest(request.rawRequest) || 'unknown';
+  await Promise.all([
+    enforceRateLimit(`add_test_uid_${uid}`, 60, 5),
+    enforceRateLimit(`add_test_ip_${ip}`, 60, 30),
+    enforceDailyQuota(`tests_submit_${uid}`, 200),
+  ]);
+
+  // Sade log: sadece gerekli alanlar
+  try {
+    const logSafe = {
+      uid,
+      testName: String(input.testName || '').slice(0, 64),
+      examType: String(input.examType || '').slice(0, 32),
+      sectionName: String(input.sectionName || '').slice(0, 32),
+      dateMs: Number.isFinite(input.dateMs) ? Number(input.dateMs) : null,
+      scoresKeys: input && input.scores ? Object.keys(input.scores).slice(0, 20) : [],
+    };
+    logger.info('[addTestResult] incoming', logSafe);
+  } catch (_) { /* ignore logging errors */ }
 
   try {
     const testName = String(input.testName || "").trim();
@@ -178,13 +205,11 @@ exports.addTestResult = onCall({ region: "us-central1", timeoutSeconds: 30, enfo
     await updatePublicProfile(uid).catch(() => { });
     return { ok: true, testId: newTestId, awarded: pointsAward };
   } catch (error) {
-    logger.error(`[addTestResult] User: ${uid} | Error:`, {
-      errorMessage: error.message,
-      errorStack: error.stack,
-      errorCode: error.code,
-      errorDetails: error.details,
+    logger.error(`[addTestResult] error`, {
+      uid,
+      message: error.message,
+      code: error.code,
     });
-    // İstemciye yeniden fırlat
     throw error;
   }
 });

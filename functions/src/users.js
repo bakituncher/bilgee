@@ -1,18 +1,26 @@
 const { onCall } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 const { db } = require("./init");
-const { dayKeyIstanbul, nowIstanbul } = require("./utils");
+const { dayKeyIstanbul, nowIstanbul, enforceRateLimit, enforceDailyQuota, getClientIpFromRawRequest } = require("./utils");
 
 /**
  * Deletes all data for a user when they reset their profile for a new exam.
  * This is a critical, multi-step operation handled by a callable function
  * to ensure atomicity and prevent data inconsistencies.
  */
-const resetUserDataForNewExam = onCall({ region: "us-central1", timeoutSeconds: 300, enforceAppCheck: true }, async (request) => {
+const resetUserDataForNewExam = onCall({ region: "us-central1", timeoutSeconds: 300, enforceAppCheck: true, maxInstances: 10 }, async (request) => {
   if (!request.auth) {
     throw new Error('The function must be called while authenticated.');
   }
   const userId = request.auth.uid;
+
+  // Rate limit ve günlük kota: suistimali önlemek için
+  const ip = getClientIpFromRawRequest(request.rawRequest) || 'unknown';
+  await Promise.all([
+    enforceRateLimit(`reset_user_uid_${userId}`, 60, 2),
+    enforceRateLimit(`reset_user_ip_${ip}`, 60, 10),
+    enforceDailyQuota(`reset_user_daily_${userId}`, 2),
+  ]);
 
   try {
     // 0.1) Kullanıcının varlığını kontrol et

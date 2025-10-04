@@ -2,7 +2,7 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const sanitizeHtml = require("sanitize-html");
 const validator = require("validator");
 const { admin, auth, db, messaging } = require("./init");
-const { logAdminAction } = require("./utils");
+const { logAdminAction, enforceRateLimit, getClientIpFromRawRequest } = require("./utils");
 
 // ---- ADMIN CLAIM YÖNETİMİ ----
 async function getSuperAdmins() {
@@ -33,12 +33,16 @@ async function isSuperAdmin(uid) {
 exports.setAdminClaim = onCall({
   region: 'us-central1',
   enforceAppCheck: true,
-  rateLimits: {
-    maxCalls: 10,
-    timeFrameSeconds: 60,
-  },
+  maxInstances: 5,
+  rateLimits: { maxCalls: 10, timeFrameSeconds: 60 },
 }, async (request) => {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
+  const ip = getClientIpFromRawRequest(request.rawRequest) || 'unknown';
+  await Promise.all([
+    enforceRateLimit(`admin_set_claim_uid_${request.auth.uid}`, 60, 2),
+    enforceRateLimit(`admin_set_claim_ip_${ip}`, 60, 10),
+  ]);
+
   const isSuper = await isSuperAdmin(request.auth.uid);
   if (!isSuper) throw new HttpsError('permission-denied', 'Bu işlem için süper admin yetkisi gereklidir.');
 
@@ -67,12 +71,15 @@ exports.setAdminClaim = onCall({
 exports.setSelfAdmin = onCall({
   region: 'us-central1',
   enforceAppCheck: true,
-  rateLimits: {
-    maxCalls: 5,
-    timeFrameSeconds: 60,
-  },
+  maxInstances: 5,
+  rateLimits: { maxCalls: 5, timeFrameSeconds: 60 },
 }, async (request) => {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
+  const ip = getClientIpFromRawRequest(request.rawRequest) || 'unknown';
+  await Promise.all([
+    enforceRateLimit(`admin_self_uid_${request.auth.uid}`, 60, 2),
+    enforceRateLimit(`admin_self_ip_${ip}`, 60, 10),
+  ]);
   const allowed = await isSuperAdmin(request.auth.uid);
   if (!allowed) throw new HttpsError('permission-denied', 'Yetki yok');
   const uid = request.auth.uid;
@@ -88,12 +95,15 @@ exports.setSelfAdmin = onCall({
 exports.getUsers = onCall({
   region: 'us-central1',
   enforceAppCheck: true,
-  rateLimits: {
-    maxCalls: 20,
-    timeFrameSeconds: 60,
-  },
+  maxInstances: 10,
+  rateLimits: { maxCalls: 20, timeFrameSeconds: 60 },
 }, async (request) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
+    const ip = getClientIpFromRawRequest(request.rawRequest) || 'unknown';
+    await Promise.all([
+      enforceRateLimit(`admin_get_users_uid_${request.auth.uid}`, 60, 30),
+      enforceRateLimit(`admin_get_users_ip_${ip}`, 60, 120),
+    ]);
     const isSuper = await isSuperAdmin(request.auth.uid);
     const isAdmin = request.auth.token && request.auth.token.admin === true;
     if (!isSuper && !isAdmin) throw new HttpsError('permission-denied', 'Admin yetkisi gerekli');
@@ -160,12 +170,15 @@ async function _getAudienceQuery(audience) {
 exports.adminEstimateAudience = onCall({
   region: 'us-central1',
   enforceAppCheck: true,
-  rateLimits: {
-    maxCalls: 30,
-    timeFrameSeconds: 60,
-  },
+  maxInstances: 10,
+  rateLimits: { maxCalls: 30, timeFrameSeconds: 60 },
 }, async (request) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
+    const ip = getClientIpFromRawRequest(request.rawRequest) || 'unknown';
+    await Promise.all([
+      enforceRateLimit(`admin_estimate_uid_${request.auth.uid}`, 60, 10),
+      enforceRateLimit(`admin_estimate_ip_${ip}`, 60, 60),
+    ]);
     const allowed = await isSuperAdmin(request.auth.uid);
     if (!allowed) throw new HttpsError('permission-denied', 'Yetki yok');
 
@@ -186,15 +199,15 @@ exports.adminEstimateAudience = onCall({
 exports.adminSendPush = onCall({
   region: 'us-central1',
   enforceAppCheck: true,
-  rateLimits: {
-    maxCalls: 5,
-    timeFrameSeconds: 60,
-  },
+  maxInstances: 5,
+  rateLimits: { maxCalls: 5, timeFrameSeconds: 60 },
 }, async (request) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
-    const allowed = await isSuperAdmin(request.auth.uid);
-    if (!allowed) throw new HttpsError('permission-denied', 'Yetki yok');
-
+    const ip = getClientIpFromRawRequest(request.rawRequest) || 'unknown';
+    await Promise.all([
+      enforceRateLimit(`admin_send_push_uid_${request.auth.uid}`, 60, 2),
+      enforceRateLimit(`admin_send_push_ip_${ip}`, 60, 10),
+    ]);
     const { title, body, route, imageUrl, audience, sendType } = request.data;
 
     const sanitizedTitle = sanitizeHtml(title, {
@@ -285,12 +298,15 @@ exports.adminSendPush = onCall({
 exports.findUserByEmail = onCall({
   region: 'us-central1',
   enforceAppCheck: true,
-  rateLimits: {
-    maxCalls: 30,
-    timeFrameSeconds: 60,
-  },
+  maxInstances: 10,
+  rateLimits: { maxCalls: 30, timeFrameSeconds: 60 },
 }, async (request) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
+    const ip = getClientIpFromRawRequest(request.rawRequest) || 'unknown';
+    await Promise.all([
+      enforceRateLimit(`admin_find_user_uid_${request.auth.uid}`, 60, 60),
+      enforceRateLimit(`admin_find_user_ip_${ip}`, 60, 240),
+    ]);
     const isSuper = await isSuperAdmin(request.auth.uid);
     const isAdmin = request.auth.token && request.auth.token.admin === true;
     if (!isSuper && !isAdmin) throw new HttpsError('permission-denied', 'Admin yetkisi gerekli');
@@ -324,11 +340,14 @@ exports.findUserByEmail = onCall({
 exports.isCurrentUserSuperAdmin = onCall({
   region: 'us-central1',
   enforceAppCheck: true,
-  rateLimits: {
-    maxCalls: 30,
-    timeFrameSeconds: 60,
-  },
+  maxInstances: 20,
+  rateLimits: { maxCalls: 30, timeFrameSeconds: 60 },
 }, async (request) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
+    const ip = getClientIpFromRawRequest(request.rawRequest) || 'unknown';
+    await Promise.all([
+      enforceRateLimit(`admin_is_super_uid_${request.auth.uid}`, 60, 60),
+      enforceRateLimit(`admin_is_super_ip_${ip}`, 60, 240),
+    ]);
     return { isSuperAdmin: await isSuperAdmin(request.auth.uid) };
 });

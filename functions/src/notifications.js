@@ -2,7 +2,7 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions");
 const { db, admin, messaging } = require("./init");
-const { dayKeyIstanbul, nowIstanbul } = require("./utils");
+const { dayKeyIstanbul, nowIstanbul, enforceRateLimit, getClientIpFromRawRequest } = require("./utils");
 const { computeInactivityHours, selectAudienceUids } = require("./users");
 const fs = require("fs");
 const path = require("path");
@@ -19,11 +19,18 @@ const NOTIFICATION_TEMPLATES = (() => {
   }
 })();
 
-
 // ---- FCM TOKEN KAYDI ----
-exports.registerFcmToken = onCall({region: 'us-central1', enforceAppCheck: true}, async (request) => {
+exports.registerFcmToken = onCall({region: 'us-central1', enforceAppCheck: true, maxInstances: 50}, async (request) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
     const uid = request.auth.uid;
+
+    // Rate limit: kullanıcı ve IP bazlı (pencere: 60 sn)
+    const ip = getClientIpFromRawRequest(request.rawRequest) || 'unknown';
+    await Promise.all([
+      enforceRateLimit(`fcm_register_uid_${uid}`, 60, 10),
+      enforceRateLimit(`fcm_register_ip_${ip}`, 60, 50),
+    ]);
+
     const token = String(request.data?.token || '');
     const platform = String(request.data?.platform || 'unknown');
     const lang = String(request.data?.lang || 'tr');
@@ -31,7 +38,16 @@ exports.registerFcmToken = onCall({region: 'us-central1', enforceAppCheck: true}
     const deviceId = token.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 140);
     const appVersion = request.data?.appVersion ? String(request.data.appVersion) : null;
     const appBuild = request.data?.appBuild != null ? Number(request.data.appBuild) : null;
-    const ref = db.collection('users').doc(uid).collection('devices').doc(deviceId);
+
+    // Kullanıcı başına cihaz limiti (aktif kayıtlar)
+    const devicesRef = db.collection('users').doc(uid).collection('devices');
+    const existingActive = await devicesRef.where('disabled','==', false).limit(50).get();
+    const MAX_ACTIVE_DEVICES = 20;
+    if (existingActive.size >= MAX_ACTIVE_DEVICES) {
+      throw new HttpsError('resource-exhausted', `Cihaz limiti aşıldı (en fazla ${MAX_ACTIVE_DEVICES}). Eski cihazlarınızı kaldırın.`);
+    }
+
+    const ref = devicesRef.doc(deviceId);
     await ref.set({
       uid,
       token,
@@ -46,9 +62,17 @@ exports.registerFcmToken = onCall({region: 'us-central1', enforceAppCheck: true}
   });
 
 // ---- FCM TOKEN TEMİZLEME ----
-exports.unregisterFcmToken = onCall({region: 'us-central1', enforceAppCheck: true}, async (request) => {
+exports.unregisterFcmToken = onCall({region: 'us-central1', enforceAppCheck: true, maxInstances: 50}, async (request) => {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
   const uid = request.auth.uid;
+
+  // Rate limit: kullanıcı ve IP bazlı (pencere: 60 sn)
+  const ip = getClientIpFromRawRequest(request.rawRequest) || 'unknown';
+  await Promise.all([
+    enforceRateLimit(`fcm_unregister_uid_${uid}`, 60, 20),
+    enforceRateLimit(`fcm_unregister_ip_${ip}`, 60, 100),
+  ]);
+
   const token = String(request.data?.token || '');
   if (!token || token.length < 10) throw new HttpsError('invalid-argument', 'Geçerli token gerekli');
 
@@ -401,7 +425,7 @@ async function recordNotificationHistory(uid, notificationId) {
   });
 
   // ---- ADMIN KAMPANYA GÖNDERİMİ ----
-  exports.adminEstimateAudience = onCall({region: 'us-central1', timeoutSeconds: 300, enforceAppCheck: true}, async (request) => {
+  exports.adminEstimateAudience = onCall({region: 'us-central1', timeoutSeconds: 300, enforceAppCheck: true, maxInstances: 10}, async (request) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
     const isAdmin = request.auth.token && request.auth.token.admin === true;
     if (!isAdmin) throw new HttpsError('permission-denied', 'Admin gerekli');
@@ -444,7 +468,7 @@ async function recordNotificationHistory(uid, notificationId) {
     return {users, baseUsers, tokenHolders};
   });
 
-  exports.adminSendPush = onCall({region: 'us-central1', timeoutSeconds: 540, enforceAppCheck: true}, async (request) => {
+  exports.adminSendPush = onCall({region: 'us-central1', timeoutSeconds: 540, enforceAppCheck: true, maxInstances: 10}, async (request) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
     const isAdmin = request.auth.token && request.auth.token.admin === true;
     if (!isAdmin) throw new HttpsError('permission-denied', 'Admin gerekli');
@@ -574,7 +598,7 @@ async function recordNotificationHistory(uid, notificationId) {
   });
 
 // ---- ADMIN TEST NOTIFICATION ----
-exports.adminTestNotification = onCall({region: 'us-central1'}, async (request) => {
+exports.adminTestNotification = onCall({region: 'us-central1', enforceAppCheck: true, maxInstances: 10}, async (request) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
     const isAdmin = request.auth.token && request.auth.token.admin === true;
     if (!isAdmin) throw new HttpsError('permission-denied', 'Admin gerekli');
@@ -615,4 +639,3 @@ async function createInAppForUser(uid, payload) {
       return false;
     }
   }
-

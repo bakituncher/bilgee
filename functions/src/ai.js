@@ -2,6 +2,7 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions");
 const { db } = require("./init");
 const { defineSecret } = require('firebase-functions/params');
+const { enforceRateLimit, getClientIpFromRawRequest, enforceDailyQuota } = require('./utils');
 const GEMINI_API_KEY = defineSecret('GEMINI_API_KEY');
 
 // Güvenlik ve kötüye kullanım önleme ayarları
@@ -9,47 +10,25 @@ const GEMINI_PROMPT_MAX_CHARS = parseInt(process.env.GEMINI_PROMPT_MAX_CHARS || 
 const GEMINI_MAX_OUTPUT_TOKENS = parseInt(process.env.GEMINI_MAX_OUTPUT_TOKENS || '50000', 10);
 const GEMINI_RATE_LIMIT_WINDOW_SEC = parseInt(process.env.GEMINI_RATE_LIMIT_WINDOW_SEC || '60', 10);
 const GEMINI_RATE_LIMIT_MAX = parseInt(process.env.GEMINI_RATE_LIMIT_MAX || '5', 10);
-
-async function enforceRateLimit(key, windowSeconds, maxCount) {
-  const ref = db.collection('rate_limits').doc(key);
-  const now = Date.now();
-  const windowMs = windowSeconds * 1000;
-  await db.runTransaction(async (tx) => {
-    const snap = await tx.get(ref);
-    if (!snap.exists) {
-      tx.set(ref, {count: 1, windowStart: now});
-      return;
-    }
-    const data = snap.data();
-    let {count, windowStart} = data;
-    if (typeof windowStart !== 'number') windowStart = now;
-    if (now - windowStart > windowMs) {
-      tx.set(ref, {count: 1, windowStart: now});
-      return;
-    }
-    if (count >= maxCount) {
-      throw new HttpsError('resource-exhausted', 'Oran sınırı aşıldı. Lütfen sonra tekrar deneyin.');
-    }
-    tx.update(ref, {count: count + 1});
-  });
-}
+const GEMINI_RATE_LIMIT_IP_MAX = parseInt(process.env.GEMINI_RATE_LIMIT_IP_MAX || '20', 10);
 
 exports.generateGemini = onCall(
-  {region: 'us-central1', timeoutSeconds: 60, memory: '512MiB', secrets: [GEMINI_API_KEY], enforceAppCheck: true},
+  {region: 'us-central1', timeoutSeconds: 60, memory: '512MiB', secrets: [GEMINI_API_KEY], enforceAppCheck: true, maxInstances: 20, concurrency: 10},
   async (request) => {
     if (!request.auth) {
       throw new HttpsError('unauthenticated', 'Oturum gerekli');
     }
+
     const prompt = request.data?.prompt;
     const expectJson = !!request.data?.expectJson;
-    // Yeni: sıcaklık isteğe bağlı
+
+    // Sıcaklık aralığını güvenli tut
     let temperature = 0.8;
     if (typeof request.data?.temperature === 'number' && isFinite(request.data.temperature)) {
-      // Güvenli aralık [0.1, 1.0]
       temperature = Math.min(1.0, Math.max(0.1, request.data.temperature));
     }
 
-    // Yeni: model seçimi (varsayılan: gemini-2.0-flash-lite-001)
+    // Model seçimi (whitelist)
     let modelId = 'gemini-2.0-flash-lite-001';
     const reqModel = typeof request.data?.model === 'string' ? String(request.data.model).toLowerCase().trim() : '';
     if (reqModel) {
@@ -58,7 +37,7 @@ exports.generateGemini = onCall(
       } else if (reqModel.includes('flash')) {
         modelId = 'gemini-2.0-flash-lite-001';
       } else if (/^gemini-2\.0-flash(?:-lite)?-001$/.test(reqModel)) {
-        modelId = reqModel; // ileri kullanıcılar tam model adı gönderebilir
+        modelId = reqModel;
       }
     }
 
@@ -71,7 +50,15 @@ exports.generateGemini = onCall(
 
     const normalizedPrompt = prompt.replace(/\s+/g, ' ').trim();
 
-    await enforceRateLimit(`gemini_${request.auth.uid}`, GEMINI_RATE_LIMIT_WINDOW_SEC, GEMINI_RATE_LIMIT_MAX);
+    // Oran sınırlama: kullanıcı ve IP bazlı + günlük kota
+    const uidKey = `gemini_uid_${request.auth.uid}`;
+    const ip = getClientIpFromRawRequest(request.rawRequest) || 'unknown';
+    const ipKey = `gemini_ip_${ip}`;
+    await Promise.all([
+      enforceRateLimit(uidKey, GEMINI_RATE_LIMIT_WINDOW_SEC, GEMINI_RATE_LIMIT_MAX),
+      enforceRateLimit(ipKey, GEMINI_RATE_LIMIT_WINDOW_SEC, GEMINI_RATE_LIMIT_IP_MAX),
+      enforceDailyQuota(`gemini_daily_uid_${request.auth.uid}`, Number(process.env.GEMINI_DAILY_QUOTA || 100)),
+    ]);
 
     try {
       const body = {

@@ -106,6 +106,71 @@ async function logAdminAction(adminUid, action, data = {}) {
   }
 }
 
+// Yeni: Genel amaçlı oran sınırlama yardımcıları (TTL içeren)
+async function enforceRateLimit(key, windowSeconds, maxCount) {
+  if (!key) return;
+  const ref = db.collection('rate_limits').doc(String(key));
+  const now = Date.now();
+  const windowMs = windowSeconds * 1000;
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) {
+      tx.set(ref, { count: 1, windowStart: now, expireAt: new Date(now + 3 * 24 * 60 * 60 * 1000) });
+      return;
+    }
+    const data = snap.data() || {};
+    let count = Number(data.count || 0);
+    let windowStart = typeof data.windowStart === 'number' ? data.windowStart : now;
+    if (now - windowStart > windowMs) {
+      tx.set(ref, { count: 1, windowStart: now, expireAt: new Date(now + 3 * 24 * 60 * 60 * 1000) });
+      return;
+    }
+    if (count >= maxCount) {
+      const { HttpsError } = require('firebase-functions/v2/https');
+      throw new HttpsError('resource-exhausted', 'Oran sınırı aşıldı. Lütfen sonra tekrar deneyin.');
+    }
+    tx.update(ref, { count: count + 1, expireAt: new Date(now + 3 * 24 * 60 * 60 * 1000) });
+  });
+}
+
+// Yeni: Günlük kota (YYYY-MM-DD bazlı doc ile)
+async function enforceDailyQuota(key, limitPerDay) {
+  const day = dayKeyIstanbul();
+  const ref = db.collection('quotas').doc(`${key}_${day}`);
+  let allowed = false;
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) {
+      tx.set(ref, { day, count: 1, key, createdAt: new Date(), expireAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000) });
+      allowed = true;
+      return;
+    }
+    const data = snap.data() || {};
+    const count = Number(data.count || 0);
+    if (count >= limitPerDay) {
+      const { HttpsError } = require('firebase-functions/v2/https');
+      throw new HttpsError('resource-exhausted', 'Günlük kota aşıldı');
+    }
+    tx.update(ref, { count: count + 1, expireAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000) });
+    allowed = true;
+  });
+  return allowed;
+}
+
+function getClientIpFromRawRequest(rawRequest) {
+  try {
+    if (!rawRequest) return null;
+    // Cloud Run/Functions arkasındaki tipik başlıklar
+    const xf = rawRequest.headers && (rawRequest.headers['x-forwarded-for'] || rawRequest.headers['X-Forwarded-For']);
+    if (typeof xf === 'string' && xf.length > 0) {
+      const first = xf.split(',')[0].trim();
+      return first || null;
+    }
+    if (rawRequest.ip) return rawRequest.ip;
+  } catch (_) { /* ignore */ }
+  return null;
+}
+
 module.exports = {
   nowIstanbul,
   dayKeyIstanbul,
@@ -113,4 +178,7 @@ module.exports = {
   routeKeyFromPath,
   computeTestAggregates,
   logAdminAction,
+  enforceRateLimit,
+  enforceDailyQuota,
+  getClientIpFromRawRequest,
 };

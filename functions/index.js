@@ -24,8 +24,8 @@ exports.quests = quests;
 exports.reports = reports;
 exports.tests = tests;
 
-// Basit test fonksiyonu
-exports.helloWorld = onRequest((request, response) => {
+// Basit test fonksiyonu (erişimi özel): DDoS yüzeyini kapatmak için IAM gerekli
+exports.helloWorld = onRequest({ region: 'us-central1', invoker: 'private', maxInstances: 1 }, (request, response) => {
   logger.info("Hello logs!", { structuredData: true });
   response.send("Hello from TAKTİK!");
 });

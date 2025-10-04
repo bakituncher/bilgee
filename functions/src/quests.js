@@ -3,6 +3,7 @@ const { onDocumentWritten } = require("firebase-functions/v2/firestore");
 const { logger } = require("firebase-functions");
 const { db, admin } = require("./init");
 const { nowIstanbul, routeKeyFromPath } = require("./utils");
+const { enforceRateLimit, enforceDailyQuota, getClientIpFromRawRequest } = require("./utils");
 const fs = require("fs");
 const path = require("path");
 
@@ -246,11 +247,20 @@ async function generateQuestsForAllUsers() {
 }
 
 // İSTEMCİDEN GÜNLÜK GÖREV YENİLEME (CALLABLE)
-exports.regenerateDailyQuests = onCall({ region: "us-central1", timeoutSeconds: 60, enforceAppCheck: true }, async (request) => {
+exports.regenerateDailyQuests = onCall({ region: "us-central1", timeoutSeconds: 60, enforceAppCheck: true, maxInstances: 20 }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Oturum gerekli");
   }
   const uid = request.auth.uid;
+
+  // Rate limit + günlük kota
+  const ip = getClientIpFromRawRequest(request.rawRequest) || 'unknown';
+  await Promise.all([
+    enforceRateLimit(`quests_regen_uid_${uid}`, 60, 4),
+    enforceRateLimit(`quests_regen_ip_${ip}`, 60, 40),
+    enforceDailyQuota(`quests_regen_daily_${uid}`, 20),
+  ]);
+
   try {
     const userRef = db.collection("users").doc(uid);
     const userSnap = await userRef.get();
@@ -290,11 +300,20 @@ exports.regenerateDailyQuests = onCall({ region: "us-central1", timeoutSeconds: 
 });
 
 // İstemciden görevi TAMAMLAMA (CALLABLE) — isCompleted sadece sunucuda set edilir
-exports.completeQuest = onCall({ region: "us-central1", timeoutSeconds: 30, enforceAppCheck: true }, async (request) => {
+exports.completeQuest = onCall({ region: "us-central1", timeoutSeconds: 30, enforceAppCheck: true, maxInstances: 20 }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Oturum gerekli");
   }
   const uid = request.auth.uid;
+
+  // Rate limit + günlük kota (spam engelleme)
+  const ip = getClientIpFromRawRequest(request.rawRequest) || 'unknown';
+  await Promise.all([
+    enforceRateLimit(`quests_complete_uid_${uid}`, 60, 30),
+    enforceRateLimit(`quests_complete_ip_${ip}`, 60, 200),
+    enforceDailyQuota(`quests_complete_daily_${uid}`, 500),
+  ]);
+
   const questId = String((request.data && request.data.questId) || "").trim();
   if (!questId) throw new HttpsError("invalid-argument", "questId zorunlu");
 

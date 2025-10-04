@@ -5,6 +5,7 @@ const { logger } = require("firebase-functions");
 const { db, admin } = require("./init");
 const { weekKeyIstanbul, dayKeyIstanbul } = require("./utils");
 const { updatePublicProfile } = require("./profile");
+const { enforceRateLimit, getClientIpFromRawRequest } = require("./utils");
 
 // ==== Liderlik Tabloları: Yardımcılar ====
 
@@ -282,8 +283,16 @@ exports.cleanupLeaderboards = onSchedule({ schedule: '30 3 * * *', timeZone: 'Eu
 
   // ==== Kullanıcı rütbe ve komşu sorgusu (callable) ====
 // YENİ: Optimize edilmiş: Anlık görüntüden sıralama ve komşuları al
-exports.getLeaderboardRank = onCall({region: 'us-central1', timeoutSeconds: 30, enforceAppCheck: true}, async (request) => {
+exports.getLeaderboardRank = onCall({region: 'us-central1', timeoutSeconds: 30, enforceAppCheck: true, maxInstances: 20, concurrency: 10}, async (request) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
+
+    // Rate limit: kullanıcı ve IP bazlı
+    const ip = getClientIpFromRawRequest(request.rawRequest) || 'unknown';
+    await Promise.all([
+      enforceRateLimit(`lb_rank_uid_${request.auth.uid}`, 60, 20),
+      enforceRateLimit(`lb_rank_ip_${ip}`, 60, 120),
+    ]);
+
     const uid = request.auth.uid;
     const examType = String(request.data?.examType || '').trim();
     const period = String(request.data?.period || 'daily').trim();
