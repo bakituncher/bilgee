@@ -1,6 +1,3 @@
-const { logger } = require("firebase-functions");
-const { onRequest } = require("firebase-functions/v2/https");
-
 // Import and re-export all the functions from the new modules
 const admin = require("./src/admin");
 const ai = require("./src/ai");
@@ -23,9 +20,3 @@ exports.profile = profile;
 exports.quests = quests;
 exports.reports = reports;
 exports.tests = tests;
-
-// Basit test fonksiyonu (erişimi özel): DDoS yüzeyini kapatmak için IAM gerekli
-exports.helloWorld = onRequest({ region: 'us-central1', invoker: 'private', maxInstances: 1 }, (request, response) => {
-  logger.info("Hello logs!", { structuredData: true });
-  response.send("Hello from TAKTİK!");
-});

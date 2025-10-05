@@ -1,11 +1,9 @@
 const { onDocumentWritten, onDocumentCreated, onDocumentDeleted } = require("firebase-functions/v2/firestore");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions");
 const { db, admin } = require("./init");
 const { weekKeyIstanbul, dayKeyIstanbul } = require("./utils");
 const { updatePublicProfile } = require("./profile");
-const { enforceRateLimit, getClientIpFromRawRequest } = require("./utils");
 
 // ==== Liderlik Tabloları: Yardımcılar ====
 
@@ -279,107 +277,6 @@ exports.publishLeaderboardSnapshots = onSchedule({ schedule: '*/15 * * * *', tim
 exports.cleanupLeaderboards = onSchedule({ schedule: '30 3 * * *', timeZone: 'Europe/Istanbul' }, async () => {
     await cleanupOldLeaderboards();
     logger.info('cleanupLeaderboards completed');
-  });
-
-  // ==== Kullanıcı rütbe ve komşu sorgusu (callable) ====
-// YENİ: Optimize edilmiş: Anlık görüntüden sıralama ve komşuları al
-exports.getLeaderboardRank = onCall({region: 'us-central1', timeoutSeconds: 30, enforceAppCheck: true, maxInstances: 20, concurrency: 10}, async (request) => {
-    if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
-
-    // Rate limit: kullanıcı ve IP bazlı
-    const ip = getClientIpFromRawRequest(request.rawRequest) || 'unknown';
-    await Promise.all([
-      enforceRateLimit(`lb_rank_uid_${request.auth.uid}`, 60, 20),
-      enforceRateLimit(`lb_rank_ip_${ip}`, 60, 120),
-    ]);
-
-    const uid = request.auth.uid;
-    const examType = String(request.data?.examType || '').trim();
-    const period = String(request.data?.period || 'daily').trim();
-    if (!examType) throw new HttpsError('invalid-argument', 'examType gerekli');
-
-    const kind = period === 'weekly' ? 'weekly' : 'daily';
-    const snapshotRef = db.collection('leaderboard_snapshots').doc(`${examType}_${kind}`);
-    const snapshot = await snapshotRef.get();
-
-    if (!snapshot.exists) {
-      // Anlık görüntü henüz yoksa, kullanıcıya boş bir yanıt döndür.
-      // İstemci bunu "Sıralama hesaplanıyor..." olarak gösterebilir.
-      return { rank: null, score: 0, neighbors: [] };
-    }
-
-    const data = snapshot.data() || {};
-    const entries = Array.isArray(data.entries) ? data.entries : [];
-    const userIndex = entries.findIndex((e) => e.userId === uid);
-
-    if (userIndex === -1) {
-      // Kullanıcı listede (örneğin ilk 200'de) değilse.
-      // Bu durumda, kendi skorunu `leaderboard_scores`'dan okuyabiliriz.
-      const periodId = kind === 'daily' ? dayKeyIstanbul() : weekKeyIstanbul();
-      const userScoreRef = db.collection('leaderboard_scores').doc(examType).collection(kind).doc(periodId).collection('users').doc(uid);
-      const userScoreSnap = await userScoreRef.get();
-      const score = userScoreSnap.exists ? (userScoreSnap.data()?.score || 0) : 0;
-      // Sıralamayı "200+" gibi bir ifadeyle döndürebiliriz veya null bırakabiliriz.
-      return { rank: null, score: score, neighbors: [], totalCount: entries.length };
-    }
-
-    const userEntry = entries[userIndex];
-    const rank = userEntry.rank;
-    const score = userEntry.score;
-
-    // Komşuları hesapla: kendisinden önceki 2 ve sonraki 2
-    const start = Math.max(0, userIndex - 2);
-    const end = Math.min(entries.length, userIndex + 3);
-    const neighbors = entries.slice(start, end);
-
-    return { rank, score, neighbors, totalCount: entries.length };
-  });
-
-  // Admin: Liderlik tablolarını geriye dönük doldurma (backfill)
-exports.adminBackfillLeaderboard = onCall({region: 'us-central1', timeoutSeconds: 540, enforceAppCheck: true}, async (request) => {
-    if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
-    const isAdmin = request.auth.token && request.auth.token.admin === true;
-    if (!isAdmin) throw new HttpsError('permission-denied', 'Admin gerekli');
-
-    const kindsReq = request.data?.period;
-    const kinds = kindsReq === 'daily' ? ['daily'] : (kindsReq === 'weekly' ? ['weekly'] : ['daily','weekly']);
-    const pageSize = Math.min(1000, Math.max(50, Number(request.data?.pageSize || 500)));
-    const startAfterId = typeof request.data?.startAfter === 'string' ? request.data.startAfter : null;
-    const dryRun = !!request.data?.dryRun;
-
-    let q = db.collection('users').orderBy(admin.firestore.FieldPath.documentId());
-    if (startAfterId) q = q.startAfter(startAfterId);
-    const snap = await q.limit(pageSize).get();
-    if (snap.empty) return { processed: 0, done: true };
-
-    const examsTouched = new Set();
-    let processed = 0;
-    for (const doc of snap.docs) {
-      const uid = doc.id; const u = doc.data() || {};
-      const examType = u.selectedExam || null; if (!examType) continue;
-      try {
-        const stats = await db.collection('users').doc(uid).collection('state').doc('stats').get();
-        const s = stats.exists ? (stats.data() || {}) : {};
-        const score = typeof s.engagementScore === 'number' ? s.engagementScore : 0;
-        if (!dryRun) {
-          await setLeaderboardScoreAbsolute({ examType, uid, score, userDocData: u, kinds });
-        }
-        examsTouched.add(String(examType));
-        processed++;
-      } catch (e) {
-        logger.warn('Backfill user failed', { uid, error: String(e) });
-      }
-    }
-
-    if (!dryRun) {
-      for (const ex of examsTouched) {
-        if (kinds.includes('daily')) await publishTopFor(ex, 'daily');
-        if (kinds.includes('weekly')) await publishTopFor(ex, 'weekly');
-      }
-    }
-
-    const lastId = snap.docs[snap.docs.length - 1].id;
-    return { processed, nextPageToken: lastId, exams: Array.from(examsTouched), dryRun };
   });
 
 module.exports = {

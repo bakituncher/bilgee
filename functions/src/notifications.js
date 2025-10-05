@@ -597,26 +597,6 @@ async function recordNotificationHistory(uid, notificationId) {
     }
   });
 
-// ---- ADMIN TEST NOTIFICATION ----
-exports.adminTestNotification = onCall({region: 'us-central1', enforceAppCheck: true, maxInstances: 10}, async (request) => {
-    if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
-    const isAdmin = request.auth.token && request.auth.token.admin === true;
-    if (!isAdmin) throw new HttpsError('permission-denied', 'Admin gerekli');
-
-    const uid = request.data?.uid;
-    if (!uid) throw new HttpsError('invalid-argument', 'UID zorunludur');
-
-    const userRef = db.collection('users').doc(uid);
-    const ctx = await getUserContextForNotifications(userRef);
-    const template = selectNotificationForUser(ctx);
-
-    return {
-        uid: uid,
-        context: ctx,
-        selectedTemplate: template,
-    };
-});
-
   // Uygulama içi bildirim oluşturucu
 async function createInAppForUser(uid, payload) {
     try {
