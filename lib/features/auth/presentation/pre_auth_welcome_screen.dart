@@ -65,19 +65,19 @@ class PreAuthWelcomeScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 48),
-                  _FeatureHighlight(
+                  const _FeatureHighlight(
                     icon: Icons.auto_awesome_rounded,
                     title: 'Kişiye Özel Yapay Zeka Koçu',
                     subtitle: 'Seni anlayan, zayıf yönlerini belirleyen ve sana özel stratejiler üreten koçun.',
                   ),
                   const SizedBox(height: 24),
-                  _FeatureHighlight(
+                  const _FeatureHighlight(
                     icon: Icons.bar_chart_rounded,
                     title: 'Detaylı Performans Analizi',
                     subtitle: 'Her deneme sonrası netlerini, konu başarılarını ve gelişimini takip et.',
                   ),
                   const SizedBox(height: 24),
-                  _FeatureHighlight(
+                  const _FeatureHighlight(
                     icon: Icons.checklist_rtl_rounded,
                     title: 'Haftalık Planlama',
                     subtitle: 'Haftalık ve günlük hedeflerini belirle, zamanını en verimli şekilde kullan.',
@@ -86,7 +86,7 @@ class PreAuthWelcomeScreen extends ConsumerWidget {
                   ElevatedButton(
                     onPressed: () => _continue(context, ref),
                     style: theme.elevatedButtonTheme.style?.copyWith(
-                      minimumSize: MaterialStateProperty.all(const Size(0, 52)),
+                      minimumSize: WidgetStateProperty.all(const Size(0, 52)),
                     ),
                     child: const Text('Hadi Başlayalım!'),
                   ),

@@ -16,7 +16,7 @@ class AppTourController extends StateNotifier<bool> {
 
     if (!tourCompleted && mounted) {
       // Kısa bir gecikme ile tour'u başlat
-      Future.delayed(Duration(milliseconds: 1000), () {
+      Future.delayed(const Duration(milliseconds: 1000), () {
         if (context.mounted) {
           showAppTour(context);
         }
@@ -51,32 +51,32 @@ class AppTourController extends StateNotifier<bool> {
 
   List<TourStep> _getTourSteps() {
     return [
-      TourStep(
+      const TourStep(
         title: 'AI Asistanın 🤖',
         description: 'Burada AI asistanın ile konuşabilirsin. Soru çözümü, konu açıklaması ve strateji geliştirme için tıkla.',
         icon: Icons.psychology,
       ),
-      TourStep(
+      const TourStep(
         title: 'Soru Bankası 📚',
         description: 'Binlerce soru ile pratik yap. Seviyene uygun sorular ve detaylı çözümler burada.',
         icon: Icons.quiz,
       ),
-      TourStep(
+      const TourStep(
         title: 'Çalışma Planın 📋',
         description: 'Kişisel çalışma programını görüntüle ve güncellemeler yap.',
         icon: Icons.calendar_today,
       ),
-      TourStep(
+      const TourStep(
         title: 'İlerleme Takibi 📊',
         description: 'Performansını takip et, güçlü ve zayıf yönlerini gör. Hedefine ne kadar yakın olduğunu öğren.',
         icon: Icons.trending_up,
       ),
-      TourStep(
+      const TourStep(
         title: 'Profil Ayarları ⚙️',
         description: 'Profil bilgilerini düzenle, hedeflerini güncelle ve uygulama ayarlarını yönet.',
         icon: Icons.person,
       ),
-      TourStep(
+      const TourStep(
         title: 'Başarıya Hazırsın! 🎯',
         description: 'Taktik ile sınav başarına giden yolculuğun başladı. İyi çalışmalar!',
         icon: Icons.flag,

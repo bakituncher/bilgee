@@ -155,8 +155,8 @@ class _RecentNetSparkline extends StatelessWidget {
               height: 140,
               child: LineChart(
                 LineChartData(
-                  gridData: FlGridData(show: false),
-                  titlesData: FlTitlesData(show: false),
+                  gridData: const FlGridData(show: false),
+                  titlesData: const FlTitlesData(show: false),
                   borderData: FlBorderData(show: false),
                   minY: minY - 1,
                   maxY: maxY + 1,
@@ -166,7 +166,7 @@ class _RecentNetSparkline extends StatelessWidget {
                       isCurved: true,
                       color: AppTheme.secondaryColor,
                       barWidth: 3,
-                      dotData: FlDotData(show: false),
+                      dotData: const FlDotData(show: false),
                       belowBarData: BarAreaData(show: true, color: AppTheme.secondaryColor.withValues(alpha: AppTheme.secondaryColor.a * .12)),
                     ),
                   ],
@@ -211,7 +211,7 @@ class _WeeklyTasksCard extends StatelessWidget {
               height: 140,
               child: BarChart(
                 BarChartData(
-                  gridData: FlGridData(show: false),
+                  gridData: const FlGridData(show: false),
                   titlesData: FlTitlesData(
                     leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                     topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),

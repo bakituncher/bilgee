@@ -17,7 +17,7 @@ class ResumeCta extends ConsumerWidget {
 
     final label = activity.label;
     final icon = activity.icon;
-    final onTap = () => context.go(activity.route);
+    void onTap() => context.go(activity.route);
     final color = activity.color;
 
     return InkWell(

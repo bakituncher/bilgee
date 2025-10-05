@@ -240,7 +240,7 @@ class _TaskTile extends ConsumerWidget {
     final completedList = completedByDate[dateKey] ?? const <String>[];
     final isCompleted = completedList.contains(taskIdentifier);
 
-    Future<_DashTaskAction?> _askAction() async {
+    Future<_DashTaskAction?> askAction() async {
       return showModalBottomSheet<_DashTaskAction>(
         context: context,
         backgroundColor: AppTheme.cardColor.withValues(alpha: .95),
@@ -308,7 +308,7 @@ class _TaskTile extends ConsumerWidget {
               onPressed: () async {
                 // Eğer görev tamamlanmamışsa önce aksiyon sor
                 if (!isCompleted) {
-                  final action = await _askAction();
+                  final action = await askAction();
                   if (action == _DashTaskAction.startPomodoro) {
                     final pomodoro = ref.read(pomodoroProvider.notifier);
                     pomodoro.setTask(task: item.activity, identifier: taskIdentifier, dateKey: dateKey);

@@ -111,7 +111,9 @@ class _MasteryTopicBubbleState extends State<MasteryTopicBubble>
                 final baseSize = widget.compact ? 13.0 : 14.0;
                 double fontSize = baseSize;
                 if (widget.compact) {
-                  if (len > 30) fontSize = 10.5; else if (len > 26) fontSize = 11.0; else if (len > 22) fontSize = 12.0; else if (len > 18) fontSize = 12.5;
+                  if (len > 30) {
+                    fontSize = 10.5;
+                  } else if (len > 26) fontSize = 11.0; else if (len > 22) fontSize = 12.0; else if (len > 18) fontSize = 12.5;
                 }
                 return Text(
                   name,

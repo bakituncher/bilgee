@@ -44,7 +44,7 @@ final workshopSessionProvider = FutureProvider.autoDispose<StudyGuideAndQuiz>((r
     return Future.error("Analiz için kullanıcı, test veya performans verisi bulunamadı.");
   }
 
-  Future<StudyGuideAndQuiz> _attempt({double? temperature}) async {
+  Future<StudyGuideAndQuiz> attempt({double? temperature}) async {
     final jsonString = await ref.read(aiServiceProvider).generateStudyGuideAndQuiz(
       user,
       tests,
@@ -73,7 +73,7 @@ final workshopSessionProvider = FutureProvider.autoDispose<StudyGuideAndQuiz>((r
   Exception? lastErr;
   for (final t in attempts) {
     try {
-      return await _attempt(temperature: t);
+      return await attempt(temperature: t);
     } catch (e) {
       lastErr = Exception(e.toString());
       // denemeye devam
@@ -151,7 +151,7 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
     final double quizScore = material.quiz.isEmpty ? 0.0 : (correct / material.quiz.length);
 
     _masteredAchieved = false;
-    final alreadyMasteredKey = '${sanitizedSubject}-${sanitizedTopic}';
+    final alreadyMasteredKey = '$sanitizedSubject-$sanitizedTopic';
     final alreadyMastered = performanceSummary.masteredTopics.contains(alreadyMasteredKey);
     if (!alreadyMastered && newPerformance.questionCount >= 20 && cumAccuracy >= 0.75 && quizScore >= 0.85) {
       firestoreService.markTopicAsMastered(userId: user.id, subject: material.subject, topic: material.topic);
@@ -981,8 +981,7 @@ class _SummaryView extends ConsumerStatefulWidget {
     required this.onNextTopic,
     required this.onRetryHarder,
     required this.onShowReview,
-    required this.masteredAchieved,
-    super.key
+    required this.masteredAchieved
   });
 
   @override
@@ -1101,8 +1100,8 @@ class _SummaryViewState extends ConsumerState<_SummaryView> {
                 );
               }
             },
-            child: (_isSaving) ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator()) : null,
             overrideColor: _isSaved ? AppTheme.successColor : null,
+            child: (_isSaving) ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator()) : null,
           ),
           const SizedBox(height: 16),
           _ResultActionCard(title: "Sıradaki Cevhere Geç", subtitle: "Başka bir zayıf halkanı güçlendir.", icon: Icons.diamond_outlined, onTap: widget.onNextTopic),
@@ -1120,7 +1119,6 @@ class _QuizReviewView extends StatelessWidget {
   const _QuizReviewView({
     required this.material,
     required this.selectedAnswers,
-    super.key,
   });
 
   @override
@@ -1326,7 +1324,7 @@ class _ResultsBottomBar extends StatelessWidget {
       top: false,
       child: Container(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           color: AppTheme.cardColor,
           border: Border(top: BorderSide(color: AppTheme.lightSurfaceColor, width: 1)),
         ),

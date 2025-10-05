@@ -346,7 +346,7 @@ class _SubjectStatsCard extends StatelessWidget {
                 widthFactor: overallMastery,
                 child: Container(
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(colors: [AppTheme.accentColor, AppTheme.successColor]),
+                    gradient: const LinearGradient(colors: [AppTheme.accentColor, AppTheme.successColor]),
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
@@ -449,7 +449,7 @@ class _GalaxyToolbar extends StatelessWidget {
 
 class _MasteryPill extends StatelessWidget {
   final double mastery;
-  const _MasteryPill({super.key, required this.mastery});
+  const _MasteryPill({required this.mastery});
 
   @override
   Widget build(BuildContext context) {

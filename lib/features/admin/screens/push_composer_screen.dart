@@ -522,7 +522,7 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
               Row(children: [
                 const Icon(Icons.swap_horiz_rounded, size: 18),
                 const SizedBox(width: 6),
-                Expanded(child: Text('Gönderim: ' + (_sendType == 'push' ? 'Sadece Anlık' : _sendType == 'inapp' ? 'Sadece Uygulama İçi' : 'Her İkisi'))),
+                Expanded(child: Text('Gönderim: ${_sendType == 'push' ? 'Sadece Anlık' : _sendType == 'inapp' ? 'Sadece Uygulama İçi' : 'Her İkisi'}')),
               ]),
               const SizedBox(height: 8),
               Row(children: [
@@ -637,14 +637,14 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
     final base = (() {
       switch (_audience) {
         case 'exam':
-          if (_selectedExams.isNotEmpty) return 'Kitle: ' + _selectedExams.join(', ');
+          if (_selectedExams.isNotEmpty) return 'Kitle: ${_selectedExams.join(', ')}';
           return 'Kitle: ${_examType ?? 'YKS'}';
         case 'uids':
           final n = _uidsCtrl.text.trim().split(RegExp(r'[\s,;]+')).where((e) => e.isNotEmpty).length;
-          return 'Kitle: UID listesi (${n})';
+          return 'Kitle: UID listesi ($n)';
         case 'inactive':
           final hrs = int.tryParse(_inactiveHoursCtrl.text.trim()) ?? 24;
-          return 'Kitle: Son ${hrs} saattir inaktif';
+          return 'Kitle: Son $hrs saattir inaktif';
         default:
           return 'Kitle: Tümü';
       }

@@ -175,13 +175,13 @@ class StrategicPlanningScreen extends ConsumerWidget {
       case PlanningStep.pacing:
         return _buildPacingView(context, ref);
       case PlanningStep.loading:
-        return Center(
-            key: const ValueKey('loading'),
+        return const Center(
+            key: ValueKey('loading'),
             child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const CircularProgressIndicator(color: AppTheme.secondaryColor),
-                  const SizedBox(height: 24),
+                  CircularProgressIndicator(color: AppTheme.secondaryColor),
+                  SizedBox(height: 24),
                   Text("Strateji güncelleniyor,\nbekleyin komutanım...",
                       textAlign: TextAlign.center,
                       style: TextStyle(color: AppTheme.secondaryTextColor, fontSize: 16)

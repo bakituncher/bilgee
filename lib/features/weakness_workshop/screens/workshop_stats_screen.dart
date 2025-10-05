@@ -149,7 +149,7 @@ class WorkshopStatsScreen extends ConsumerWidget {
       children: [
         Text("Bilgi Tayfı", style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 12),
-        ...chartData.map((data) => _SubjectCrystalBar(data: data)).toList(),
+        ...chartData.map((data) => _SubjectCrystalBar(data: data)),
       ],
     );
   }
@@ -208,7 +208,7 @@ class WorkshopStatsScreen extends ConsumerWidget {
         if (subtitle != null)
           Text(subtitle, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor)),
         const SizedBox(height: 12),
-        ...topics.map((topic) => _TopicCard(topic: topic, isPolished: isPolished)).toList()
+        ...topics.map((topic) => _TopicCard(topic: topic, isPolished: isPolished))
       ],
     );
   }

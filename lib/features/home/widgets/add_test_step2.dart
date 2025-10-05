@@ -6,7 +6,6 @@ import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/shared/widgets/score_slider.dart';
 import 'package:taktik/features/home/logic/add_test_notifier.dart';
-import 'package:taktik/data/models/test_model.dart';
 
 class Step2ScoreEntry extends ConsumerStatefulWidget {
   const Step2ScoreEntry({super.key});

@@ -64,7 +64,7 @@ class TutorialOverlay extends ConsumerWidget {
   }
 
   Widget _buildTutorialContent(BuildContext context, WidgetRef ref, TutorialStep step, Rect? rect) {
-    final bottomNavBarHeight = kBottomNavigationBarHeight + 20;
+    const bottomNavBarHeight = kBottomNavigationBarHeight + 20;
 
     return Positioned.fill(
       child: LayoutBuilder(builder: (context, constraints) {

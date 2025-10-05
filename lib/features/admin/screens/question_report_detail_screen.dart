@@ -15,7 +15,7 @@ class QuestionReportDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isAdminAsync = ref.watch(adminClaimProvider);
 
-    Future<void> _callAdminFn(String mode, {String? reportId}) async {
+    Future<void> callAdminFn(String mode, {String? reportId}) async {
       try {
         final callable = FirebaseFunctions.instanceFor(region: 'us-central1').httpsCallable('reports-adminDeleteQuestionReports');
         final payload = {
@@ -61,7 +61,7 @@ class QuestionReportDetailScreen extends ConsumerWidget {
                     ],
                   ),
                 );
-                if (ok == true) await _callAdminFn('byQhash');
+                if (ok == true) await callAdminFn('byQhash');
               } else if (v == 'delete_index') {
                 final ok = await showDialog<bool>(
                   context: context,
@@ -74,7 +74,7 @@ class QuestionReportDetailScreen extends ConsumerWidget {
                     ],
                   ),
                 );
-                if (ok == true) await _callAdminFn('indexOnly');
+                if (ok == true) await callAdminFn('indexOnly');
               }
             },
             itemBuilder: (c) => const [
@@ -170,7 +170,7 @@ class QuestionReportDetailScreen extends ConsumerWidget {
                       },
                       onDismissed: (_) async {
                         if (rid != null) {
-                          await _callAdminFn('single', reportId: rid);
+                          await callAdminFn('single', reportId: rid);
                         }
                       },
                       background: Container(
@@ -198,14 +198,14 @@ class QuestionReportDetailScreen extends ConsumerWidget {
                                 ),
                               );
                               if (ok == true && rid != null) {
-                                await _callAdminFn('single', reportId: rid);
+                                await callAdminFn('single', reportId: rid);
                               }
                             },
                           ),
                         ),
                       ),
                     );
-                  }).toList(),
+                  }),
                 ],
               );
             },

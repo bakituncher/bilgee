@@ -67,7 +67,7 @@ class NotificationCenterScreen extends ConsumerWidget {
                       );
                       if (ok == true) {
                         try {
-                          await ref.read(firestoreServiceProvider).clearAllInAppNotifications(user!.uid);
+                          await ref.read(firestoreServiceProvider).clearAllInAppNotifications(user.uid);
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tüm bildirimler silindi')));
                           }
@@ -258,7 +258,7 @@ class _NotificationTile extends ConsumerWidget {
                           margin: const EdgeInsets.only(left: 8),
                           width: 8,
                           height: 8,
-                          decoration: BoxDecoration(
+                          decoration: const BoxDecoration(
                             color: AppTheme.secondaryColor,
                             shape: BoxShape.circle,
                           ),
@@ -376,7 +376,7 @@ class _NotificationDetailSheet extends ConsumerWidget {
   }
 
   String _formatDate(DateTime d) {
-    final two = (int n) => n.toString().padLeft(2, '0');
+    String two(int n) => n.toString().padLeft(2, '0');
     return '${two(d.day)}.${two(d.month)}.${two(d.year)} ${two(d.hour)}:${two(d.minute)}';
   }
 }

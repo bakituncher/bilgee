@@ -1,22 +1,11 @@
 // lib/features/quests/logic/quest_service.dart
-import 'dart:math';
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taktik/data/models/user_model.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/quests/models/quest_model.dart';
-import 'package:taktik/features/stats/logic/stats_analysis.dart';
-import 'package:uuid/uuid.dart';
-import 'package:taktik/data/models/exam_model.dart';
-import 'package:taktik/data/models/plan_model.dart';
 import 'package:flutter/foundation.dart';
-import 'package:crypto/crypto.dart';
-import 'dart:convert';
-import 'package:taktik/data/models/test_model.dart';
-import 'package:taktik/features/quests/logic/quest_templates.dart';
-import 'package:taktik/data/models/performance_summary.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:taktik/core/app_check/app_check_helper.dart';
 import 'package:taktik/features/quests/logic/quest_session_state.dart';
 

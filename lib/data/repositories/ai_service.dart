@@ -356,7 +356,7 @@ class AiService {
   String _buildGuardrailsJson(Map<String, dynamic>? weeklyPlanRaw, Map<String, List<String>> recentCompleted, PerformanceSummary performance){
     // Tamamlanan görevleri tek set'e indir (date bağımsız)
     final completedFlat = <String>{};
-    recentCompleted.values.forEach((list){ for(final t in list){ completedFlat.add(t); }});
+    for (var list in recentCompleted.values) { for(final t in list){ completedFlat.add(t); }}
 
     // Backlog: geçen haftanın planından tamamlanmamış görevler
     final backlogActivities = <String>[];

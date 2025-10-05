@@ -69,8 +69,8 @@ class WeeklyPlanScreen extends ConsumerWidget {
                 child: WeeklyOverviewCard(weeklyPlan: weeklyPlan, userId: user.id),
               ),
               const SizedBox(height: 4),
-              _DaySelector(
-                days: const ['PZT', 'SAL', 'ÇAR', 'PER', 'CUM', 'CMT', 'PAZ'],
+              const _DaySelector(
+                days: ['PZT', 'SAL', 'ÇAR', 'PER', 'CUM', 'CMT', 'PAZ'],
               ),
               const Divider(height: 1, color: AppTheme.lightSurfaceColor),
               _buildPlanView(context, ref, weeklyPlan, user.id),
@@ -213,7 +213,7 @@ class _TaskListViewState extends ConsumerState<_TaskListView> with AutomaticKeep
                       final action = await _askAction(context, item.activity);
                       if (action == _TaskAction.startPomodoro) {
                         // Görevi Pomodoro’ya taşı ve ekranı aç
-                        final id = '$taskIdentifier';
+                        final id = taskIdentifier;
                         final pomodoro = ref.read(pomodoroProvider.notifier);
                         pomodoro.setTask(task: item.activity, identifier: id, dateKey: dateKey);
                         pomodoro.prepareForWork();
@@ -288,7 +288,7 @@ class _TaskListViewState extends ConsumerState<_TaskListView> with AutomaticKeep
                 Expanded(child: Text('Ne yapalım?', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)))
               ]),
               const SizedBox(height: 8),
-              Text("'${taskTitle}' için bir aksiyon seç.", style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor)),
+              Text("'$taskTitle' için bir aksiyon seç.", style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor)),
               const SizedBox(height: 16),
               ElevatedButton.icon(
                 onPressed: ()=> Navigator.of(context).pop(_TaskAction.startPomodoro),
@@ -457,7 +457,7 @@ class WeeklyOverviewCard extends ConsumerWidget {
               ),
             ),
             const SizedBox(width: 8),
-            if (totalTasks>0) Text('${remainingLabel(completedTasks,totalTasks)}', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.secondaryTextColor)),
+            if (totalTasks>0) Text(remainingLabel(completedTasks,totalTasks), style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.secondaryTextColor)),
           ],
         ),
       ),

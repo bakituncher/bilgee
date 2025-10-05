@@ -177,7 +177,7 @@ class _PomodoroStatsViewState extends ConsumerState<PomodoroStatsView> {
                     IntrinsicHeight(
                       child: Row(
                         children: [
-                          Expanded(child: _KpiCard(icon: Icons.timer, label: 'Toplam', value: (totalSeconds / 3600).toStringAsFixed(1) + ' saat', delay: 200.ms)),
+                          Expanded(child: _KpiCard(icon: Icons.timer, label: 'Toplam', value: '${(totalSeconds / 3600).toStringAsFixed(1)} saat', delay: 200.ms)),
                           const SizedBox(width: 12),
                           Expanded(child: _KpiCard(icon: Icons.check_circle_outline, label: 'Seans', value: '$count', delay: 300.ms)),
                         ],
@@ -197,7 +197,7 @@ class _PomodoroStatsViewState extends ConsumerState<PomodoroStatsView> {
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-              error: (e, s) => Text('Veri yüklenemedi'),
+              error: (e, s) => const Text('Veri yüklenemedi'),
             ),
 
             const SizedBox(height: 28),

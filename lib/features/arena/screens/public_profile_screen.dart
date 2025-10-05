@@ -276,9 +276,9 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                                 final isFollowingNow = isFollowingAsync.valueOrNull ?? false;
                                 if (me?.uid == null || me!.uid == widget.userId) return;
                                 if (isFollowingNow) {
-                                  await svc.unfollowUser(currentUserId: me!.uid, targetUserId: widget.userId);
+                                  await svc.unfollowUser(currentUserId: me.uid, targetUserId: widget.userId);
                                 } else {
-                                  await svc.followUser(currentUserId: me!.uid, targetUserId: widget.userId);
+                                  await svc.followUser(currentUserId: me.uid, targetUserId: widget.userId);
                                 }
                               }),
                               _ActionTile(icon: Icons.share_rounded, label: 'Paylaş', onTap: () {
@@ -414,9 +414,9 @@ class _FollowButtonState extends ConsumerState<_FollowButton> {
         try {
           final svc = ref.read(firestoreServiceProvider);
           if (isFollowing) {
-            await svc.unfollowUser(currentUserId: me!.uid, targetUserId: widget.targetUserId);
+            await svc.unfollowUser(currentUserId: me.uid, targetUserId: widget.targetUserId);
           } else {
-            await svc.followUser(currentUserId: me!.uid, targetUserId: widget.targetUserId);
+            await svc.followUser(currentUserId: me.uid, targetUserId: widget.targetUserId);
           }
         } catch (e) {
           if (mounted) {
@@ -438,7 +438,7 @@ class _FollowButtonState extends ConsumerState<_FollowButton> {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       ),
       icon: (loading == true && _optimistic == null) || _busy
-          ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: _accentProfile2))
+          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: _accentProfile2))
           : Icon(icon),
       label: Text(label),
     );
@@ -474,7 +474,7 @@ class _AvatarHalo extends StatelessWidget {
               child: ClipOval(
                 child: avatarStyle != null && avatarSeed != null
                     ? SvgPicture.network(
-                  "https://api.dicebear.com/9.x/${avatarStyle}/svg?seed=${avatarSeed}",
+                  "https://api.dicebear.com/9.x/$avatarStyle/svg?seed=$avatarSeed",
                   fit: BoxFit.cover,
                 )
                     : Text(

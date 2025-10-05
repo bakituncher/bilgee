@@ -17,7 +17,7 @@ class QuestionReportsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isAdminAsync = ref.watch(adminClaimProvider);
 
-    Future<void> _callAdminFn({required String mode, required String qhash}) async {
+    Future<void> callAdminFn({required String mode, required String qhash}) async {
       try {
         final callable = FirebaseFunctions.instanceFor(region: 'us-central1').httpsCallable('reports-adminDeleteQuestionReports');
         final res = await callable.call({'mode': mode, 'qhash': qhash});
@@ -124,7 +124,7 @@ class QuestionReportsScreen extends ConsumerWidget {
                             return ok ?? false;
                           },
                           onDismissed: (_) async {
-                            await _callAdminFn(mode: 'indexOnly', qhash: qhash);
+                            await callAdminFn(mode: 'indexOnly', qhash: qhash);
                           },
                           child: Card(
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -168,7 +168,7 @@ class QuestionReportsScreen extends ConsumerWidget {
                                         ],
                                       ),
                                     );
-                                    if (ok == true) await _callAdminFn(mode: 'indexOnly', qhash: qhash);
+                                    if (ok == true) await callAdminFn(mode: 'indexOnly', qhash: qhash);
                                   } else if (v == 'byQhash') {
                                     final ok = await showDialog<bool>(
                                       context: context,
@@ -181,7 +181,7 @@ class QuestionReportsScreen extends ConsumerWidget {
                                         ],
                                       ),
                                     );
-                                    if (ok == true) await _callAdminFn(mode: 'byQhash', qhash: qhash);
+                                    if (ok == true) await callAdminFn(mode: 'byQhash', qhash: qhash);
                                   }
                                 },
                                 itemBuilder: (c) => const [

@@ -11,7 +11,6 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:taktik/features/blog/models/blog_post.dart';
 
@@ -76,28 +75,13 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
     String? examKey;
     final sel = user?.selectedExam?.toLowerCase();
     if (sel != null) {
-      if (sel == 'yks') examKey = 'yks';
-      else if (sel == 'lgs') examKey = 'lgs';
+      if (sel == 'yks') {
+        examKey = 'yks';
+      } else if (sel == 'lgs') examKey = 'lgs';
       else if (sel.startsWith('kpss')) examKey = 'kpss';
     }
     final dateFmt = DateFormat('d MMM y', 'tr');
     final isAdminAsync = ref.watch(adminClaimProvider);
-
-    Future<void> requestSelfAdmin() async {
-      try {
-        final functions = ref.read(functionsProvider);
-        await functions.httpsCallable('admin-setSelfAdmin').call();
-        await FirebaseAuth.instance.currentUser?.getIdToken(true);
-        ref.invalidate(adminClaimProvider);
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Admin yetkisi verildi. Tekrar deneyin.')));
-        }
-      } catch (e) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('İşlem başarısız: $e')));
-        }
-      }
-    }
 
     Widget? buildFab() {
       final isAdmin = isAdminAsync.asData?.value ?? false;
@@ -131,7 +115,7 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
           final targeted = posts.where((p) {
             final tg = p.targetExams.map((e) => e.toLowerCase()).toList();
             if (examKey == null) return true; // sınav seçilmemişse tümü
-            final key = examKey!; // non-null garanti
+            final key = examKey; // non-null garanti
             if (tg.contains('all')) return true;
             if (tg.contains(key)) return true;
             return tg.any((e) => e.startsWith(key));
@@ -363,7 +347,7 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                                           const SizedBox(height: 10),
                                           Row(
                                             children: [
-                                              Icon(Icons.calendar_month_rounded, size: 16, color: AppTheme.secondaryTextColor),
+                                              const Icon(Icons.calendar_month_rounded, size: 16, color: AppTheme.secondaryTextColor),
                                               const SizedBox(width: 6),
                                               Text(
                                                 p.publishedAt != null ? dateFmt.format(p.publishedAt!) : '-',

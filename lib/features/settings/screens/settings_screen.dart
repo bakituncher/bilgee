@@ -329,7 +329,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     // Admin claim durumunu oku (yükleneceği için null olabilir)
     final isAdmin = ref.watch(adminClaimProvider).value ?? false;
 
-    Future<void> _handleBack() async {
+    Future<void> handleBack() async {
       if (Navigator.of(context).canPop()) {
         Navigator.of(context).pop();
       } else {
@@ -344,7 +344,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
           tooltip: 'Geri',
-          onPressed: _handleBack,
+          onPressed: handleBack,
         ),
       ),
       body: user == null

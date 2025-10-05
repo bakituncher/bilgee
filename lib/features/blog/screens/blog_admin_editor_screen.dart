@@ -61,7 +61,7 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
             child: ListTile(
               leading: Icon(icon, color: AppTheme.secondaryColor),
               title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
-              subtitle: Text(desc, style: TextStyle(color: AppTheme.secondaryTextColor)),
+              subtitle: Text(desc, style: const TextStyle(color: AppTheme.secondaryTextColor)),
               onTap: () { Navigator.of(c).pop(); onTap(); },
             ),
           );
@@ -133,8 +133,9 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
         _locale = (loc == 'tr' || loc == 'en') ? loc : 'tr';
         // Hedef kitleyi oku
         final t = (d['targetExams'] as List?)?.map((e) => e.toString().toLowerCase()).toList() ?? const ['all'];
-        if (t.contains('all')) _targetExam = 'all';
-        else if (t.contains('yks')) _targetExam = 'yks';
+        if (t.contains('all')) {
+          _targetExam = 'all';
+        } else if (t.contains('yks')) _targetExam = 'yks';
         else if (t.contains('lgs')) _targetExam = 'lgs';
         else if (t.any((e) => e.startsWith('kpss'))) _targetExam = 'kpss';
         _isEditing = true;
@@ -592,7 +593,11 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
     final sel = _contentCtrl.selection;
     final pos = (sel.start < 0 ? text.length : sel.start).clamp(0, text.length);
     int lineStart = text.lastIndexOf('\n', pos - 1);
-    if (lineStart == -1) lineStart = 0; else lineStart += 1;
+    if (lineStart == -1) {
+      lineStart = 0;
+    } else {
+      lineStart += 1;
+    }
     final newText = text.replaceRange(lineStart, lineStart, prefix);
     _contentCtrl.value = TextEditingValue(text: newText, selection: TextSelection.collapsed(offset: pos + prefix.length));
     setState(() {});
@@ -643,11 +648,11 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
               Row(children: [
                 const Icon(Icons.person_outline_rounded, size: 16, color: AppTheme.secondaryTextColor),
                 const SizedBox(width: 6),
-                Text(_authorCtrl.text.trim().isEmpty ? 'TaktikAI' : _authorCtrl.text.trim(), style: TextStyle(color: AppTheme.secondaryTextColor)),
+                Text(_authorCtrl.text.trim().isEmpty ? 'TaktikAI' : _authorCtrl.text.trim(), style: const TextStyle(color: AppTheme.secondaryTextColor)),
                 const SizedBox(width: 12),
                 const Icon(Icons.schedule_rounded, size: 16, color: AppTheme.secondaryTextColor),
                 const SizedBox(width: 6),
-                Text('$readTime dk', style: TextStyle(color: AppTheme.secondaryTextColor)),
+                Text('$readTime dk', style: const TextStyle(color: AppTheme.secondaryTextColor)),
               ]),
               const SizedBox(height: 10),
               if (tags.isNotEmpty)
@@ -682,10 +687,10 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
                 blockquotePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 blockquoteDecoration: BoxDecoration(
                   color: AppTheme.lightSurfaceColor.withValues(alpha: .08),
-                  border: Border(left: BorderSide(color: AppTheme.secondaryColor, width: 3)),
+                  border: const Border(left: BorderSide(color: AppTheme.secondaryColor, width: 3)),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                listBullet: TextStyle(color: AppTheme.secondaryColor),
+                listBullet: const TextStyle(color: AppTheme.secondaryColor),
                 a: const TextStyle(color: Color(0xFF55C1FF), fontWeight: FontWeight.w600),
                 horizontalRuleDecoration: BoxDecoration(
                   border: Border(top: BorderSide(color: AppTheme.lightSurfaceColor.withValues(alpha: .6), width: 1)),
@@ -866,7 +871,7 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
                       Text('Yayın Süresi', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
-                        value: _expiryType,
+                        initialValue: _expiryType,
                         items: const [
                           DropdownMenuItem(value: 'forever', child: Text('Süresiz')),
                           DropdownMenuItem(value: '1d', child: Text('1 Gün')),
@@ -890,7 +895,7 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
                           return Row(children: [
                             const Icon(Icons.info_outline_rounded, size: 16),
                             const SizedBox(width: 6),
-                            Expanded(child: Text(info, style: TextStyle(color: AppTheme.secondaryTextColor))),
+                            Expanded(child: Text(info, style: const TextStyle(color: AppTheme.secondaryTextColor))),
                           ]);
                         },
                       ),

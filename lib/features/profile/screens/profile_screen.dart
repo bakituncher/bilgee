@@ -20,7 +20,6 @@ import '../logic/rank_service.dart';
 import 'package:taktik/data/models/performance_summary.dart';
 import 'package:taktik/data/models/plan_document.dart'; // EKLENDİ
 import 'package:share_plus/share_plus.dart';
-import 'package:cross_file/cross_file.dart';
 import 'package:flutter/rendering.dart';
 import 'package:intl/intl.dart';
 import 'package:taktik/data/providers/firestore_providers.dart' as providers;
@@ -541,7 +540,7 @@ class _ProfileAvatarHalo extends StatelessWidget {
                   fit: BoxFit.cover,
                   width: avatarDiameter,
                   height: avatarDiameter,
-                  placeholderBuilder: (_) => Center(
+                  placeholderBuilder: (_) => const Center(
                     child: SizedBox(
                       width: 30,
                       height: 30,

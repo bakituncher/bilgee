@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:taktik/core/theme/app_theme.dart'; // AppTheme import geri eklendi
 import 'dart:math';
 import 'dart:ui';
-import 'dart:async';
 
 // Öğretici için GlobalKey'ler
 final GlobalKey strategicPlanningKey = GlobalKey();
@@ -140,7 +139,7 @@ class _AiHubScreenState extends State<AiHubScreen> with SingleTickerProviderStat
                       final tool = tools[index];
                       return _AiToolTile(
                         tool: tool,
-                        onTap: () => context.go(tool.route, extra: tool.extra), // extra gerekli değil burada
+                        onTap: () => context.go(tool.route),
                       );
                     },
                     childCount: tools.length,
@@ -231,114 +230,29 @@ class _CoreVisual extends StatelessWidget {
   }
 }
 
-class _AiToolCard extends StatelessWidget {
-  const _AiToolCard({required this.tool, required this.onTap});
-  final _AiTool tool; final VoidCallback onTap;
-  @override
-  Widget build(BuildContext context) {
-    return Hero(
-      tag: tool.heroTag,
-      flightShuttleBuilder: (context, animation, direction, from, to) => FadeTransition(opacity: animation, child: to.widget),
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 16),
-        child: _FrostedCard(
-          key: tool.key,
-          onTap: onTap,
-          leading: Icon(tool.icon, size: 38, color: tool.color),
-          title: tool.title,
-          subtitle: tool.subtitle,
-          chip: tool.chip,
-          color: tool.color,
-        ),
-      ),
-    );
-  }
-}
-
-class _FrostedCard extends StatelessWidget {
-  const _FrostedCard({super.key, required this.leading, required this.title, required this.subtitle, required this.onTap, required this.chip, required this.color});
-  final Widget leading; final String title; final String subtitle; final VoidCallback onTap; final String chip; final Color color;
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(24),
-      child: Ink(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          gradient: LinearGradient(
-            colors: [
-              Colors.white.withOpacity(.06),
-              Colors.white.withOpacity(.02),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          border: Border.all(color: Colors.white.withOpacity(.09)),
-          boxShadow: [
-            BoxShadow(color: color.withOpacity(.25), blurRadius: 22, spreadRadius: -4, offset: const Offset(0, 8)),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(colors: [color.withOpacity(.25), Colors.transparent]),
-                ),
-                padding: const EdgeInsets.all(4),
-                child: leading,
-              ),
-              const SizedBox(width: 18),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(child: Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold))),
-                        _Badge(label: chip, color: color),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Text(subtitle, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor)),
-                    const SizedBox(height: 12),
-                    Row(children: [
-                      Icon(Icons.flash_on_rounded, size: 16, color: color.withOpacity(.8)),
-                      const SizedBox(width: 4),
-                      Text('AI hızlandırıcı aktif', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: color.withOpacity(.8), fontWeight: FontWeight.w600)),
-                      const Spacer(),
-                      const Icon(Icons.arrow_forward_ios_rounded, size: 18, color: AppTheme.secondaryTextColor),
-                    ])
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Badge extends StatelessWidget {
-  const _Badge({required this.label, required this.color});
-  final String label; final Color color;
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        gradient: LinearGradient(colors: [color.withOpacity(.7), color.withOpacity(.4)]),
-      ),
-      child: Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-    );
-  }
-}
+// class _AiToolCard extends StatelessWidget {
+//   const _AiToolCard({required this.tool, required this.onTap});
+//   final _AiTool tool; final VoidCallback onTap;
+//   @override
+//   Widget build(BuildContext context) {
+//     return Hero(
+//       tag: tool.heroTag,
+//       flightShuttleBuilder: (context, animation, direction, from, to) => FadeTransition(opacity: animation, child: to.widget),
+//       child: Padding(
+//         padding: const EdgeInsets.only(bottom: 16),
+//         child: _FrostedCard(
+//           key: tool.key,
+//           onTap: onTap,
+//           leading: Icon(tool.icon, size: 38, color: tool.color),
+//           title: tool.title,
+//           subtitle: tool.subtitle,
+//           chip: tool.chip,
+//           color: tool.color,
+//         ),
+//       ),
+//     );
+//   }
+// }
 
 class _AiTool {
   final GlobalKey key;
@@ -349,8 +263,7 @@ class _AiTool {
   final Color color;
   final String heroTag;
   final String chip;
-  final Object? extra; // YENİ: Rotaya ekstra veri göndermek için
-  _AiTool({required this.key, required this.title, required this.subtitle, required this.icon, required this.route, required this.color, required this.heroTag, required this.chip, this.extra});
+  _AiTool({required this.key, required this.title, required this.subtitle, required this.icon, required this.route, required this.color, required this.heroTag, required this.chip});
 }
 
 class _AnimatedBackground extends StatelessWidget {
@@ -542,6 +455,30 @@ class _IconOrb extends StatelessWidget {
         border: Border.all(color: color.withOpacity(.35)),
       ),
       child: Icon(icon, size: 22, color: color),
+    );
+  }
+}
+
+class _Badge extends StatelessWidget {
+  const _Badge({required this.label, required this.color});
+  final String label; final Color color;
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        gradient: LinearGradient(colors: [color.withOpacity(.25), color.withOpacity(.12)]),
+        border: Border.all(color: color.withOpacity(.35)),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+              letterSpacing: .2,
+            ),
+      ),
     );
   }
 }

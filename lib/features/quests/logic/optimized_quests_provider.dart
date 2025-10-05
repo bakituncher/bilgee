@@ -5,7 +5,6 @@ import 'package:taktik/features/quests/models/quest_model.dart';
 import 'dart:async';
 // YENİ: Gelişmiş sistemler
 import 'package:taktik/features/quests/logic/quest_tracking_service.dart';
-import 'package:taktik/features/quests/logic/quest_navigation_manager.dart';
 import 'package:taktik/features/quests/logic/quest_service.dart';
 
 /// Geliştirilmiş Quest Notifier - Günlük görevleri destekler

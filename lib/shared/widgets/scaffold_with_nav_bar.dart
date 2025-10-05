@@ -7,7 +7,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:taktik/features/onboarding/providers/tutorial_provider.dart';
 import 'package:taktik/features/onboarding/widgets/tutorial_overlay.dart';
 import 'package:taktik/features/onboarding/models/tutorial_step.dart';
-import 'package:taktik/features/quests/models/quest_model.dart';
 import 'package:taktik/features/quests/logic/quest_completion_notifier.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:taktik/shared/widgets/quest_completion_celebration.dart';
@@ -138,9 +137,9 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                     heroTag: 'main_fab',
                     onPressed: () => _onTap(2, ref, tutorialSteps),
                     backgroundColor: AppTheme.secondaryColor,
-                    child: const Icon(Icons.auto_awesome, color: AppTheme.primaryColor, size: 28),
                     elevation: 4.0,
                     shape: const CircleBorder(),
+                    child: const Icon(Icons.auto_awesome, color: AppTheme.primaryColor, size: 28),
                   ).animate().scale(delay: 500.ms),
                   floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
                   bottomNavigationBar: BottomAppBar(
@@ -296,7 +295,7 @@ class _WeeklyPlanVictoryOverlay extends StatelessWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.emoji_events_rounded, size: 72, color: AppTheme.secondaryColor)
+                          const Icon(Icons.emoji_events_rounded, size: 72, color: AppTheme.secondaryColor)
                               .animate().scale(duration: 600.ms, curve: Curves.elasticOut),
                           const SizedBox(height: 16),
                           Text('Haftalık Plan Tamamlandı!', textAlign: TextAlign.center,

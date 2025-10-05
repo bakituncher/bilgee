@@ -150,9 +150,9 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                         return isAdminAsync.maybeWhen(
                           data: (isAdmin) {
                             if (!isAdmin) return const SizedBox.shrink();
-                            return Column(
+                            return const Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: const [
+                              children: [
                                 Padding(
                                   padding: EdgeInsets.symmetric(horizontal: 16),
                                   child: _SectionLabel('Yönetim'),
@@ -277,7 +277,7 @@ class _Avatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final url = _buildSvgUrl();
-    final radius = 28.0;
+    const radius = 28.0;
     if (url == null) {
       final initials = (userName ?? 'G').trim();
       return CircleAvatar(

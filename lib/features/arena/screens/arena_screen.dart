@@ -245,9 +245,9 @@ class _CurrentUserCard extends StatelessWidget {
                 ]),
             padding: const EdgeInsets.all(2),
             child: Container(
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(24)),
+                BorderRadius.vertical(top: Radius.circular(24)),
                 gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -340,159 +340,10 @@ class _CurrentUserCard extends StatelessWidget {
   }
 }
 
-class _PodiumDisplay extends StatelessWidget {
-  final List<LeaderboardEntry> topThree;
-  final String? currentUserId;
-  const _PodiumDisplay({required this.topThree, this.currentUserId});
-
-  @override
-  Widget build(BuildContext context) {
-    final entries = topThree.length > 1
-        ? [
-      topThree[1],
-      topThree[0],
-      if (topThree.length > 2) topThree[2],
-    ]
-        : topThree;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 24.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: List.generate(entries.length, (index) {
-          final entry = entries[index];
-          final isFirstPlace = entries.length > 1 && index == 1;
-          return _PodiumPlaceCard(
-            entry: entry,
-            isCurrentUser: entry.userId == currentUserId,
-            isFirstPlace: isFirstPlace,
-          )
-              .animate()
-              .slideY(
-              begin: 1,
-              duration: 600.ms,
-              delay: (200 * index).ms,
-              curve: Curves.easeOutCubic)
-              .fadeIn();
-        }),
-      ),
-    );
-  }
-}
-
-class _PodiumPlaceCard extends StatelessWidget {
-  final LeaderboardEntry entry;
-  final bool isCurrentUser;
-  final bool isFirstPlace;
-
-  const _PodiumPlaceCard({
-    required this.entry,
-    this.isCurrentUser = false,
-    this.isFirstPlace = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final medalColor = switch (entry.rank) {
-      1 => AppTheme.goldColor,
-      2 => AppTheme.secondaryColor,
-      3 => AppTheme.successColor,
-      _ => Colors.white54,
-    };
-    final height = isFirstPlace ? 180.0 : 150.0;
-    final avatarRadius = isFirstPlace ? 32.0 : 26.0;
-
-    return GestureDetector(
-      onTap: () => context.push('${AppRoutes.arena}/${entry.userId}'),
-      child: Container(
-        width: 110,
-        height: height,
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        decoration: BoxDecoration(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
-          gradient: LinearGradient(
-            begin: Alignment.bottomCenter,
-            end: Alignment.topCenter,
-            colors: [
-              medalColor.withOpacity(0.5),
-              medalColor.withOpacity(0.1)
-            ],
-          ),
-          border: Border.all(color: medalColor, width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: medalColor.withOpacity(0.3),
-              blurRadius: 20,
-              spreadRadius: 2,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Stack(
-              clipBehavior: Clip.none,
-              alignment: Alignment.center,
-              children: [
-                CircleAvatar(
-                  radius: avatarRadius,
-                  backgroundColor: Colors.white10,
-                  child: ClipOval(
-                    child: (entry.avatarStyle != null &&
-                        entry.avatarSeed != null)
-                        ? SvgPicture.network(
-                        'https://api.dicebear.com/9.x/${entry.avatarStyle}/svg?seed=${entry.avatarSeed}',
-                        fit: BoxFit.cover)
-                        : Text(
-                        entry.userName.isNotEmpty
-                            ? entry.userName.substring(0, 1).toUpperCase()
-                            : '?',
-                        style: textTheme.titleMedium),
-                  ),
-                ),
-                Positioned(
-                  bottom: -10,
-                  child:
-                  _RankCapsule(rank: entry.rank, highlight: isCurrentUser),
-                ),
-              ],
-            ),
-            const SizedBox(height: 18),
-            Column(
-              children: [
-                Text(
-                  entry.userName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
-                ),
-                if (entry.username != null && entry.username!.isNotEmpty)
-                  Text(
-                    '@${entry.username}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: textTheme.labelSmall?.copyWith(color: AppTheme.secondaryTextColor),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text('${entry.score} BP',
-                style: textTheme.labelSmall?.copyWith(
-                    color: AppTheme.goldColor, fontWeight: FontWeight.bold)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _RankCapsule extends StatelessWidget {
   final int rank;
   final bool highlight;
-  const _RankCapsule({super.key, required this.rank, required this.highlight});
+  const _RankCapsule({required this.rank, required this.highlight});
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;

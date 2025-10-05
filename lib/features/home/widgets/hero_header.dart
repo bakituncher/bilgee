@@ -100,7 +100,7 @@ class HeroHeader extends ConsumerWidget {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.workspace_premium_rounded, size: 14, color: AppTheme.secondaryColor),
+                                  const Icon(Icons.workspace_premium_rounded, size: 14, color: AppTheme.secondaryColor),
                                   const SizedBox(width: 4),
                                   Text(current.name, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.secondaryColor, fontWeight: FontWeight.w600)),
                                 ],
@@ -117,7 +117,7 @@ class HeroHeader extends ConsumerWidget {
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.checklist_rounded, size: 14, color: AppTheme.secondaryTextColor),
+                                    const Icon(Icons.checklist_rounded, size: 14, color: AppTheme.secondaryTextColor),
                                     const SizedBox(width: 4),
                                     Text('%${(plan.ratio*100).toStringAsFixed(0)} Plan', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.secondaryTextColor)),
                                   ],
@@ -156,7 +156,7 @@ class HeroHeader extends ConsumerWidget {
           ),
         );
       },
-      loading: () => SizedBox(height: 72, child: LogoLoader(size: 60)),
+      loading: () => const SizedBox(height: 72, child: LogoLoader(size: 60)),
       error: (_, __) => const SizedBox.shrink(),
     );
   }

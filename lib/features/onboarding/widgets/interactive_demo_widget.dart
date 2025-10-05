@@ -50,7 +50,7 @@ class _InteractiveDemoWidgetState extends State<InteractiveDemoWidget>
   void initState() {
     super.initState();
     _confettiController = AnimationController(
-      duration: Duration(seconds: 3),
+      duration: const Duration(seconds: 3),
       vsync: this,
     );
   }
@@ -98,7 +98,7 @@ class _InteractiveDemoWidgetState extends State<InteractiveDemoWidget>
           children: [
             // Başlık
             Container(
-              padding: EdgeInsets.all(24),
+              padding: const EdgeInsets.all(24),
               child: Column(
                 children: [
                   Text(
@@ -113,7 +113,7 @@ class _InteractiveDemoWidgetState extends State<InteractiveDemoWidget>
                   .fadeIn(duration: 800.ms)
                   .slideY(begin: -0.2, end: 0),
 
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
                   Text(
                     'Birkaç örnek soru ile uygulamayı keşfedelim',
@@ -125,12 +125,12 @@ class _InteractiveDemoWidgetState extends State<InteractiveDemoWidget>
                   .animate(delay: 300.ms)
                   .fadeIn(duration: 800.ms),
 
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
                   // İlerleme göstergesi
                   LinearProgressIndicator(
                     value: (_currentDemo + 1) / _demoQuestions.length,
-                    backgroundColor: theme.colorScheme.surfaceVariant,
+                    backgroundColor: theme.colorScheme.surfaceContainerHighest,
                     valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
                   )
                   .animate(delay: 500.ms)
@@ -142,14 +142,14 @@ class _InteractiveDemoWidgetState extends State<InteractiveDemoWidget>
             // Soru kartı
             Expanded(
               child: Container(
-                margin: EdgeInsets.symmetric(horizontal: 24),
+                margin: const EdgeInsets.symmetric(horizontal: 24),
                 child: Card(
                   elevation: 8,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Container(
-                    padding: EdgeInsets.all(24),
+                    padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(20),
                       gradient: LinearGradient(
@@ -166,14 +166,14 @@ class _InteractiveDemoWidgetState extends State<InteractiveDemoWidget>
                       children: [
                         // Konu etiketi
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
                             color: _getSubjectColor(question.subject),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
                             question.subject,
-                            style: TextStyle(
+                            style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
                               fontSize: 12,
@@ -184,7 +184,7 @@ class _InteractiveDemoWidgetState extends State<InteractiveDemoWidget>
                         .fadeIn(duration: 600.ms)
                         .slideX(begin: -0.3, end: 0),
 
-                        SizedBox(height: 20),
+                        const SizedBox(height: 20),
 
                         // Soru metni
                         Text(
@@ -198,7 +198,7 @@ class _InteractiveDemoWidgetState extends State<InteractiveDemoWidget>
                         .fadeIn(duration: 800.ms)
                         .slideY(begin: 0.2, end: 0),
 
-                        SizedBox(height: 24),
+                        const SizedBox(height: 24),
 
                         // Seçenekler
                         Expanded(
@@ -212,9 +212,9 @@ class _InteractiveDemoWidgetState extends State<InteractiveDemoWidget>
 
                         // Açıklama (cevap verildikten sonra)
                         if (_isAnswered) ...[
-                          SizedBox(height: 16),
+                          const SizedBox(height: 16),
                           Container(
-                            padding: EdgeInsets.all(16),
+                            padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
                               color: _selectedAnswer == question.correctAnswer
                                   ? Colors.green.withOpacity(0.1)
@@ -240,7 +240,7 @@ class _InteractiveDemoWidgetState extends State<InteractiveDemoWidget>
                                           ? Colors.green
                                           : Colors.red,
                                     ),
-                                    SizedBox(width: 8),
+                                    const SizedBox(width: 8),
                                     Text(
                                       _selectedAnswer == question.correctAnswer
                                           ? 'Doğru cevap! 🎉'
@@ -254,10 +254,10 @@ class _InteractiveDemoWidgetState extends State<InteractiveDemoWidget>
                                     ),
                                   ],
                                 ),
-                                SizedBox(height: 8),
+                                const SizedBox(height: 8),
                                 Text(
                                   question.explanation,
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     fontSize: 14,
                                     height: 1.4,
                                   ),
@@ -278,23 +278,23 @@ class _InteractiveDemoWidgetState extends State<InteractiveDemoWidget>
 
             // Alt buton
             Container(
-              padding: EdgeInsets.all(24),
+              padding: const EdgeInsets.all(24),
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: _isAnswered ? _nextQuestion : null,
                   style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
-                    disabledBackgroundColor: theme.colorScheme.surfaceVariant,
+                    disabledBackgroundColor: theme.colorScheme.surfaceContainerHighest,
                   ),
                   child: Text(
                     _currentDemo < _demoQuestions.length - 1
                         ? 'Sonraki Soru'
                         : 'Demo Tamamlandı',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -336,16 +336,16 @@ class _InteractiveDemoWidgetState extends State<InteractiveDemoWidget>
     } else if (isWrong) {
       cardColor = Colors.red.withOpacity(0.1);
     } else {
-      cardColor = theme.colorScheme.surfaceVariant;
+      cardColor = theme.colorScheme.surfaceContainerHighest;
     }
 
     return Container(
-      margin: EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         onTap: () => _selectAnswer(index),
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: cardColor,
             borderRadius: BorderRadius.circular(12),
@@ -378,7 +378,7 @@ class _InteractiveDemoWidgetState extends State<InteractiveDemoWidget>
                   ),
                 ),
               ),
-              SizedBox(width: 16),
+              const SizedBox(width: 16),
               Expanded(
                 child: Text(
                   question.options[index],
@@ -389,12 +389,12 @@ class _InteractiveDemoWidgetState extends State<InteractiveDemoWidget>
                 ),
               ),
               if (_isAnswered && isCorrect)
-                Icon(
+                const Icon(
                   Icons.check_circle,
                   color: Colors.green,
                 ),
               if (_isAnswered && isWrong)
-                Icon(
+                const Icon(
                   Icons.cancel,
                   color: Colors.red,
                 ),

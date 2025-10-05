@@ -124,7 +124,7 @@ class TestDetailScreen extends StatelessWidget {
                   ),
                 ),
               );
-            }).toList(),
+            }),
           ],
         ),
       ),

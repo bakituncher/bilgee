@@ -222,7 +222,7 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
                   subtitle: Text(user['email'] ?? 'E-posta yok'),
                   trailing: Switch(
                     value: isAdmin,
-                    activeColor: AppTheme.successColor,
+                    activeThumbColor: AppTheme.successColor,
                     onChanged: (bool value) async {
                       try {
                         final functions = ref.read(functionsProvider);

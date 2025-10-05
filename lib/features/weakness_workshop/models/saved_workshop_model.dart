@@ -27,14 +27,14 @@ class SavedWorkshopModel {
 
     String trimmedStudyGuide = guide.studyGuide;
     if (trimmedStudyGuide.length > maxStudyGuideChars) {
-      trimmedStudyGuide = trimmedStudyGuide.substring(0, maxStudyGuideChars) + "\n\n[Not: Çalışma kartı kısaltıldı]";
+      trimmedStudyGuide = "${trimmedStudyGuide.substring(0, maxStudyGuideChars)}\n\n[Not: Çalışma kartı kısaltıldı]";
     }
 
     final trimmedQuiz = guide.quiz.map((q) {
       final options = q.options;
       String exp = q.explanation;
       if (exp.length > maxExplanationChars) {
-        exp = exp.substring(0, maxExplanationChars) + " …";
+        exp = "${exp.substring(0, maxExplanationChars)} …";
       }
       return {
         'question': q.question,

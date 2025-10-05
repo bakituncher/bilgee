@@ -234,8 +234,8 @@ class _FollowListTileState extends ConsumerState<_FollowListTile> {
           border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
         ),
         padding: const EdgeInsets.all(12),
-        child: Row(
-          children: const [
+        child: const Row(
+          children: [
             CircleAvatar(radius: 24, backgroundColor: Colors.white12),
             SizedBox(width: 12),
             Expanded(child: LinearProgressIndicator(minHeight: 8)),

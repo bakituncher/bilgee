@@ -428,9 +428,9 @@ class _BriefingButton extends StatelessWidget {
             Container(
               width: 54,
               height: 54,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: const LinearGradient(colors: [AppTheme.secondaryColor, AppTheme.successColor]),
+                gradient: LinearGradient(colors: [AppTheme.secondaryColor, AppTheme.successColor]),
               ),
               child: Icon(icon, size: 30, color: AppTheme.primaryColor),
             ),
@@ -543,13 +543,13 @@ class _TypingBubble extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            const CircleAvatar(backgroundColor: AppTheme.secondaryColor,
-                child: Icon(Icons.auto_awesome, size: 20, color: AppTheme.primaryColor), radius: 16),
+            const CircleAvatar(backgroundColor: AppTheme.secondaryColor, radius: 16,
+                child: Icon(Icons.auto_awesome, size: 20, color: AppTheme.primaryColor)),
             const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: AppTheme.lightSurfaceColor,
-                  borderRadius: const BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20),
+              decoration: const BoxDecoration(color: AppTheme.lightSurfaceColor,
+                  borderRadius: BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20),
                       bottomRight: Radius.circular(20), bottomLeft: Radius.circular(4))),
               child: Row(
                 mainAxisSize: MainAxisSize.min,

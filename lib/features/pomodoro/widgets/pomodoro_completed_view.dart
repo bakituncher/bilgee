@@ -1,5 +1,4 @@
 // lib/features/pomodoro/widgets/pomodoro_completed_view.dart
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';

@@ -74,7 +74,7 @@ class FirestoreService {
   }
 
   String _computeQuestionHash(String question, List<String> options) {
-    final normalized = (question.trim().toLowerCase() + '|' + options.map((o) => o.trim().toLowerCase()).join('||'));
+    final normalized = ('${question.trim().toLowerCase()}|${options.map((o) => o.trim().toLowerCase()).join('||')}');
     final bytes = utf8.encode(normalized);
     return crypto.sha256.convert(bytes).toString();
   }
@@ -393,7 +393,7 @@ class FirestoreService {
       'lastStreakUpdate': null,
       'createdAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
-    await _appStateDoc(user.uid).set(AppState().toMap(), SetOptions(merge: true));
+    await _appStateDoc(user.uid).set(const AppState().toMap(), SetOptions(merge: true));
     await _planDoc(user.uid).set(PlanDocument().toMap(), SetOptions(merge: true));
     await _performanceDoc(user.uid).set(const PerformanceSummary().toMap(), SetOptions(merge: true));
   }
@@ -627,7 +627,7 @@ class FirestoreService {
   }) async {
     final sanitizedSubject = sanitizeKey(subject);
     final sanitizedTopic = sanitizeKey(topic);
-    final docId = '${sanitizedSubject}_${sanitizedTopic}';
+    final docId = '${sanitizedSubject}_$sanitizedTopic';
     // Her konuyu ayrı bir dokümanda tut
     await _topicPerformanceCollection(userId).doc(docId).set({
       'subject': sanitizedSubject,
@@ -1137,7 +1137,7 @@ class FirestoreService {
         // Kullanıcı adına göre arama
         searchQuery = publicProfiles
             .where('username', isGreaterThanOrEqualTo: normalizedQuery)
-            .where('username', isLessThan: normalizedQuery + '\uf8ff')
+            .where('username', isLessThan: '$normalizedQuery\uf8ff')
             .limit(20);
       } else {
         // İsimle arama (keywords kullanarak)

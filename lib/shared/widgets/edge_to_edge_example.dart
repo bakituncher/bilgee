@@ -30,13 +30,13 @@ class EdgeToEdgeExampleScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              Card(
+              const Card(
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: EdgeInsets.all(16.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Önemli Notlar:',
                         style: TextStyle(
                           fontSize: 18,
@@ -44,8 +44,8 @@ class EdgeToEdgeExampleScreen extends StatelessWidget {
                           color: AppTheme.secondaryColor,
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      const Text(
+                      SizedBox(height: 12),
+                      Text(
                         '• SDK 35 hedefleyen uygulamalar için edge-to-edge zorunludur\n'
                         '• Status bar ve navigation bar şeffaf olmalıdır\n'
                         '• EdgeToEdgeWrapper veya EdgeToEdgeScaffold kullanın\n'

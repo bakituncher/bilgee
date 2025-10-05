@@ -46,7 +46,7 @@ class PomodoroTimerView extends ConsumerWidget {
       children: [
         Text(title, style: Theme.of(context).textTheme.headlineMedium),
         const SizedBox(height: 4),
-        Text(message, style: TextStyle(color: AppTheme.secondaryTextColor, fontStyle: FontStyle.italic)),
+        Text(message, style: const TextStyle(color: AppTheme.secondaryTextColor, fontStyle: FontStyle.italic)),
         const SizedBox(height: 12),
         ActionChip(
           avatar: const Icon(Icons.assignment_outlined, size: 18),
@@ -159,7 +159,7 @@ class PomodoroTimerView extends ConsumerWidget {
                 leading: Icon(task.identifier == null ? Icons.workspaces_outline : Icons.checklist_rtl_rounded),
                 title: Text(task.task, maxLines: 2, overflow: TextOverflow.ellipsis),
                 onTap: () => Navigator.of(context).pop(task),
-              )).toList(),
+              )),
             ],
           ),
         ),
@@ -267,7 +267,7 @@ class _DialPainter extends CustomPainter {
     }
 
     // Tur noktaları
-    final dotRadius = 6.0;
+    const dotRadius = 6.0;
     final dotDistance = radius - 8;
     for (int i = 0; i < interval; i++) {
       final angle = -pi / 2 + 2 * pi * (i / interval);

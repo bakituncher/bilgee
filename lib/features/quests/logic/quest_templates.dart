@@ -147,23 +147,23 @@ class GenericQuestTemplate extends QuestTemplate {
 }
 
 class ConsistencyQuestTemplate extends GenericQuestTemplate {
-  ConsistencyQuestTemplate(Map<String, dynamic> data) : super(data);
+  ConsistencyQuestTemplate(super.data);
 }
 
 class PracticeQuestTemplate extends GenericQuestTemplate {
-  PracticeQuestTemplate(Map<String, dynamic> data) : super(data);
+  PracticeQuestTemplate(super.data);
 }
 
 class EngagementQuestTemplate extends GenericQuestTemplate {
-  EngagementQuestTemplate(Map<String, dynamic> data) : super(data);
+  EngagementQuestTemplate(super.data);
 }
 
 class StudyQuestTemplate extends GenericQuestTemplate {
-  StudyQuestTemplate(Map<String, dynamic> data) : super(data);
+  StudyQuestTemplate(super.data);
 }
 
 class TestSubmissionQuestTemplate extends GenericQuestTemplate {
-  TestSubmissionQuestTemplate(Map<String, dynamic> data) : super(data);
+  TestSubmissionQuestTemplate(super.data);
 }
 
 class QuestTemplateFactory {

@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -101,7 +100,7 @@ class _QuestCompletionCelebrationState extends ConsumerState<QuestCompletionCele
           children: [
             _buildTrophyIcon(),
             const SizedBox(height: 16),
-            Text(
+            const Text(
               'GÖREV TAMAMLANDI!',
               style: TextStyle(
                 fontSize: 24,
@@ -153,7 +152,7 @@ class _QuestCompletionCelebrationState extends ConsumerState<QuestCompletionCele
         shape: BoxShape.circle,
         color: AppTheme.goldColor.withOpacity(0.1),
       ),
-      child: Icon(
+      child: const Icon(
         Icons.emoji_events_rounded,
         size: 60,
         color: AppTheme.goldColor,
@@ -179,7 +178,7 @@ class _QuestCompletionCelebrationState extends ConsumerState<QuestCompletionCele
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.star_rounded, color: AppTheme.goldColor, size: 24),
+          const Icon(Icons.star_rounded, color: AppTheme.goldColor, size: 24),
           const SizedBox(width: 8),
           Text(
             '+${widget.completedQuest.reward} BP',

@@ -23,7 +23,7 @@ class BlogDetailScreen extends ConsumerWidget {
     final postForActions = postAsync.asData?.value; // null olabilir
     final dateFmt = DateFormat('d MMM y', 'tr');
 
-    Future<void> _deletePost() async {
+    Future<void> deletePost() async {
       final post = postForActions;
       if (post == null) return;
       final ok = await showDialog<bool>(
@@ -71,7 +71,7 @@ class BlogDetailScreen extends ConsumerWidget {
             IconButton(
               icon: const Icon(Icons.delete_outline_rounded),
               tooltip: 'Sil',
-              onPressed: _deletePost,
+              onPressed: deletePost,
             ),
         ],
       ),
@@ -141,18 +141,18 @@ class BlogDetailScreen extends ConsumerWidget {
                           const SizedBox(height: 8),
                           Row(
                             children: [
-                              Icon(Icons.person_outline_rounded, size: 16, color: AppTheme.secondaryTextColor),
+                              const Icon(Icons.person_outline_rounded, size: 16, color: AppTheme.secondaryTextColor),
                               const SizedBox(width: 6),
-                              Text('Taktik Ekibi', style: TextStyle(color: AppTheme.secondaryTextColor)),
+                              const Text('Taktik Ekibi', style: TextStyle(color: AppTheme.secondaryTextColor)),
                               const SizedBox(width: 12),
-                              Icon(Icons.schedule_rounded, size: 16, color: AppTheme.secondaryTextColor),
+                              const Icon(Icons.schedule_rounded, size: 16, color: AppTheme.secondaryTextColor),
                               const SizedBox(width: 6),
                               Text(
                                 [
                                   if (post.publishedAt != null) dateFmt.format(post.publishedAt!),
                                   if (post.readTime != null) '${post.readTime} dk'
                                 ].join(' • '),
-                                style: TextStyle(color: AppTheme.secondaryTextColor),
+                                style: const TextStyle(color: AppTheme.secondaryTextColor),
                               ),
                             ],
                           ),
@@ -191,10 +191,10 @@ class BlogDetailScreen extends ConsumerWidget {
                       blockquotePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       blockquoteDecoration: BoxDecoration(
                         color: AppTheme.lightSurfaceColor.withValues(alpha: .08),
-                        border: Border(left: BorderSide(color: AppTheme.secondaryColor, width: 3)),
+                        border: const Border(left: BorderSide(color: AppTheme.secondaryColor, width: 3)),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      listBullet: TextStyle(color: AppTheme.secondaryColor),
+                      listBullet: const TextStyle(color: AppTheme.secondaryColor),
                       a: const TextStyle(color: Color(0xFF55C1FF), fontWeight: FontWeight.w600),
                       horizontalRuleDecoration: BoxDecoration(
                         border: Border(top: BorderSide(color: AppTheme.lightSurfaceColor.withValues(alpha: .6), width: 1)),

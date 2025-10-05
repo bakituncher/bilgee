@@ -81,7 +81,7 @@ class Quest extends Equatable {
   final QuestRoute route; // yeni: type-safe rota
   final bool rewardClaimed; // yeni: ödül tahsil edildi mi
 
-  Quest({
+  const Quest({
     required this.id,
     required this.title,
     required this.description,

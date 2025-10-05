@@ -186,7 +186,7 @@ class _SavedWorkshopCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(Icons.arrow_forward_ios_rounded, color: AppTheme.secondaryTextColor),
+              const Icon(Icons.arrow_forward_ios_rounded, color: AppTheme.secondaryTextColor),
             ],
           ),
         ),

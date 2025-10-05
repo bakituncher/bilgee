@@ -329,7 +329,7 @@ class _RevisionWorkshopState extends State<RevisionWorkshop> {
       ));
       return;
     }
-    widget.onRevisionRequested("- " + allFeedbacks);
+    widget.onRevisionRequested("- $allFeedbacks");
   }
 
   @override

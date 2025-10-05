@@ -52,7 +52,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
 
   void _onScroll() {
     if (!_scrollController.hasClients || _isLoading || !_hasMore) return;
-    final threshold = 200.0;
+    const threshold = 200.0;
     if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - threshold) {
       _loadMore();
     }

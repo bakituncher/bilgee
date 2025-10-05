@@ -55,7 +55,7 @@ class _MotivationQuotesCardState extends State<MotivationQuotesCard> {
 
   @override
   Widget build(BuildContext context) {
-    final height = 168.0;
+    const height = 168.0;
     return Card(
       elevation: 10,
       shadowColor: AppTheme.lightSurfaceColor.withValues(alpha: .45),

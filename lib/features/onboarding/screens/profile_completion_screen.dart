@@ -166,7 +166,7 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
                               ),
                               const SizedBox(height: 16),
                               DropdownButtonFormField<String>(
-                                value: _gender,
+                                initialValue: _gender,
                                 decoration: const InputDecoration(
                                   labelText: 'Cinsiyet',
                                   prefixIcon: Icon(Icons.wc_rounded),

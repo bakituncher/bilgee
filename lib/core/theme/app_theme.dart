@@ -41,7 +41,7 @@ class AppTheme {
     ),
     filled: true,
     fillColor: lightSurfaceColor.withValues(alpha: 0.5),
-    labelStyle: TextStyle(color: secondaryTextColor),
+    labelStyle: const TextStyle(color: secondaryTextColor),
     hintStyle: TextStyle(color: secondaryTextColor.withValues(alpha: 0.7)),
     contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
   );
@@ -63,7 +63,7 @@ class AppTheme {
     brightness: Brightness.dark,
     primaryColor: primaryColor,
     scaffoldBackgroundColor: scaffoldBackgroundColor,
-    colorScheme: ColorScheme(
+    colorScheme: const ColorScheme(
       brightness: Brightness.dark,
       primary: secondaryColor,        // Ana etkileşim rengi: camgöbeği
       onPrimary: Colors.black,         // Kontrast için koyu
@@ -107,7 +107,7 @@ class AppTheme {
       ),
       textStyle: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
     ),
-    bottomAppBarTheme: BottomAppBarThemeData(
+    bottomAppBarTheme: const BottomAppBarThemeData(
       color: cardColor,
       elevation: 0,
     ),

@@ -1,6 +1,5 @@
 // lib/features/quests/screens/quests_screen.dart
 import 'dart:async';
-import 'dart:ui';
 import 'package:taktik/core/analytics/analytics_logger.dart';
 import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
@@ -238,8 +237,8 @@ class GamifiedQuestCard extends ConsumerWidget {
       ref.invalidate(optimizedQuestsProvider);
     } else if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Ödül alınırken bir hata oluştu.'),
+        const SnackBar(
+          content: Text('Ödül alınırken bir hata oluştu.'),
           backgroundColor: AppTheme.accentColor,
         ),
       );
@@ -298,7 +297,7 @@ class GamifiedQuestCard extends ConsumerWidget {
                           const SizedBox(height: 4),
                           Text(
                             quest.description,
-                            style: TextStyle(fontSize: 14, color: AppTheme.secondaryTextColor),
+                            style: const TextStyle(fontSize: 14, color: AppTheme.secondaryTextColor),
                           ),
                         ],
                       ),

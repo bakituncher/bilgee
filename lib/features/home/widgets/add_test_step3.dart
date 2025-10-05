@@ -9,7 +9,6 @@ import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/home/logic/add_test_notifier.dart';
 import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
-import 'package:taktik/features/quests/models/quest_model.dart';
 import 'package:taktik/features/stats/logic/stats_analysis.dart';
 
 class Step3Summary extends ConsumerWidget {

@@ -168,7 +168,7 @@ class QuestNotifier extends StateNotifier<bool> {
 
     fs.runTransaction((transaction) async {
       final snap = await transaction.get(docRef);
-      final data = snap.data() as Map<String, dynamic>?;
+      final data = snap.data();
       final current = Map<String, dynamic>.from((data?['usedFeatures'] as Map<String, dynamic>?) ?? {});
       if (current[feature] == true) {
         return; // zaten işaretlenmiş

@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/data/models/test_model.dart';
 import 'package:taktik/features/quests/models/quest_model.dart';
-import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:taktik/features/quests/logic/optimized_quests_provider.dart';
 

@@ -29,7 +29,7 @@ class NotificationService {
       String key = msg.messageId ?? msg.data['messageId'] as String? ?? '';
       if (key.isEmpty) {
         // Mesaj ID yoksa hash tabanlı anahtar oluştur
-        final content = '${title}|${body}|${route}|${msg.data.toString()}';
+        final content = '$title|$body|$route|${msg.data.toString()}';
         key = content.hashCode.toString();
       }
 

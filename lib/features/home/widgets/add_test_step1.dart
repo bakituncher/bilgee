@@ -68,7 +68,7 @@ class Step1TestInfo extends ConsumerWidget {
             isSelected: state.selectedSection == section,
             onTap: () => notifier.setSection(section),
           ))
-              .toList(),
+              ,
         ],
         const SizedBox(height: 32),
 

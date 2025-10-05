@@ -125,7 +125,7 @@ class AvailabilityScreen extends ConsumerWidget {
                 day: day,
                 timeSlotGroups: timeSlotGroups,
               ).animate().fadeIn(delay: (100 * days.indexOf(day)).ms).slideX(begin: -0.2);
-            }).toList(),
+            }),
             const SizedBox(height: 80),
           ],
         ),
@@ -162,7 +162,7 @@ class _DayAvailabilityCard extends StatelessWidget {
                 slots: entry.value,
                 day: day,
               );
-            }).toList(),
+            }),
           ],
         ),
       ),

@@ -17,7 +17,7 @@ class PremiumView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final perks = const [
+    const perks = [
       (Icons.bolt_rounded, 'Hızlı Öneriler', 'Anında kişiselleştirilmiş çalışma önerileri'),
       (Icons.auto_awesome_rounded, 'Akıllı Planlama', 'Yoğunluğa göre dinamik program revizyonu'),
       (Icons.insights_rounded, 'Derin Analizler', 'Zayıflık tespiti ve mikro hedefler'),
@@ -75,7 +75,7 @@ class PremiumView extends StatelessWidget {
                   child: ListTile(
                     leading: Icon(icon, color: AppTheme.secondaryColor),
                     title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
-                    subtitle: Text(desc, style: TextStyle(color: AppTheme.secondaryTextColor)),
+                    subtitle: Text(desc, style: const TextStyle(color: AppTheme.secondaryTextColor)),
                   ),
                 );
               },

@@ -21,7 +21,7 @@ final authRoutes = [
     pageBuilder: (context, state) => buildPageWithFadeTransition(
       context: context,
       state: state,
-      child: LoginScreen(),
+      child: const LoginScreen(),
     ),
   ),
   GoRoute(
@@ -29,7 +29,7 @@ final authRoutes = [
     pageBuilder: (context, state) => buildPageWithFadeTransition(
       context: context,
       state: state,
-      child: RegisterScreen(),
+      child: const RegisterScreen(),
     ),
   ),
   GoRoute(

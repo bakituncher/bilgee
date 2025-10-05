@@ -116,7 +116,7 @@ class JsonTextCleaner {
     bool changed = true;
     while (changed && text.isNotEmpty) {
       changed = false;
-      if ((text.startsWith("\'") && text.endsWith("\'")) ||
+      if ((text.startsWith("'") && text.endsWith("'")) ||
           (text.startsWith('"') && text.endsWith('"'))) {
         text = text.substring(1, text.length - 1).trim();
         changed = true;
@@ -138,7 +138,7 @@ class JsonTextCleaner {
     // Kaçışlı JSON dizeleri için tek katman çöz
     if (text.contains('\\"') && text.contains('{') && text.contains('}')) {
       try {
-        final unescaped = jsonDecode('"' + text.replaceAll('"', '\\"') + '"');
+        final unescaped = jsonDecode('"${text.replaceAll('"', '\\"')}"');
         if (unescaped is String) {
           text = unescaped;
         }

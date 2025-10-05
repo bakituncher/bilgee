@@ -23,7 +23,6 @@ import 'package:taktik/features/admin/screens/admin_panel_screen.dart';
 import 'package:taktik/features/admin/screens/user_management_screen.dart';
 import 'package:taktik/shared/notifications/notification_center_screen.dart';
 import 'package:taktik/features/profile/screens/user_search_screen.dart';
-import 'package:taktik/features/auth/presentation/pre_auth_welcome_screen.dart';
 import 'package:taktik/shared/widgets/splash_screen.dart';
 import 'package:taktik/data/providers/admin_providers.dart';
 import 'transition_utils.dart';

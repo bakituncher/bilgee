@@ -126,15 +126,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Row(children: const [
+                const Row(children: [
                   Icon(Icons.auto_awesome_rounded, color: AppTheme.secondaryColor, size: 28),
                   SizedBox(width: 8),
                   Expanded(child: Text('Yeni Haftayı Mühürleyelim', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)))
                 ]),
                 const SizedBox(height: 8),
-                Text(
+                const Text(
                   'Haftalık planının süresi doldu. Güncel hedeflerin, müfredat sırası ve son performansına göre taptaze bir harekât planı çıkaralım.',
-                  style: const TextStyle(color: AppTheme.secondaryTextColor),
+                  style: TextStyle(color: AppTheme.secondaryTextColor),
                 ),
                 const SizedBox(height: 14),
                 Container(
@@ -147,7 +147,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     ], begin: Alignment.topLeft, end: Alignment.bottomRight),
                     border: Border.all(color: AppTheme.lightSurfaceColor.withOpacity(.35)),
                   ),
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: const [
+                  child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     _NudgeBullet(icon: Icons.route_rounded, text: 'Müfredat sırasına sadık, tekrar etmeyen konu akışı'),
                     SizedBox(height: 8),
                     _NudgeBullet(icon: Icons.speed_rounded, text: 'Seçtiğin yoğunluğa göre akıllı görev ve soru adetleri'),
@@ -306,7 +306,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
 // --- GÜNLÜK GÖREVLER KARTI (zenginleştirildi) ---
 class _DailyQuestsCard extends ConsumerWidget {
-  _DailyQuestsCard();
+  const _DailyQuestsCard();
   String _formatRemaining(Duration d) { final h = d.inHours; final m = d.inMinutes.remainder(60); if (h == 0) return '${m}dk'; return '${h}sa ${m}dk'; }
   Color _progressColor(double p) {
     if (p >= .999) return Colors.greenAccent;
@@ -329,7 +329,7 @@ class _DailyQuestsCard extends ConsumerWidget {
       if (!celebratedDates.contains(todayKey)) {
         // Set'i immutably güncelle
         ref.read(celebratedDatesProvider.notifier).update((s) => {...s, todayKey});
-        WidgetsBinding.instance.addPostFrameCallback((_){ if (context.mounted) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Row(children: const [Icon(Icons.celebration_rounded, color: Colors.greenAccent), SizedBox(width: 8), Expanded(child: Text('Tüm Günlük Görevler tamamlandı! 🔥')),],),)); }});
+        WidgetsBinding.instance.addPostFrameCallback((_){ if (context.mounted) { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Row(children: [Icon(Icons.celebration_rounded, color: Colors.greenAccent), SizedBox(width: 8), Expanded(child: Text('Tüm Günlük Görevler tamamlandı! 🔥')),],),)); }});
       }
     }
 

@@ -218,7 +218,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 children: [
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      value: _selectedGender,
+                      initialValue: _selectedGender,
                       isExpanded: true,
                       decoration: const InputDecoration(
                         labelText: 'Cinsiyet',
@@ -226,8 +226,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       ),
                       items: ['Erkek', 'Kadın', 'Belirtmek istemiyorum']
                           .map((label) => DropdownMenuItem(
-                        child: Text(label, overflow: TextOverflow.ellipsis),
                         value: label,
+                        child: Text(label, overflow: TextOverflow.ellipsis),
                       ))
                           .toList(),
                       onChanged: (value) {

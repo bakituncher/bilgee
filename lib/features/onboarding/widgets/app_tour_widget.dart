@@ -29,11 +29,11 @@ class _AppTourWidgetState extends State<AppTourWidget>
   void initState() {
     super.initState();
     _overlayController = AnimationController(
-      duration: Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 500),
       vsync: this,
     );
     _bubbleController = AnimationController(
-      duration: Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 800),
       vsync: this,
     );
 
@@ -51,7 +51,7 @@ class _AppTourWidgetState extends State<AppTourWidget>
 
   void _startTour() {
     _overlayController.forward();
-    Future.delayed(Duration(milliseconds: 300), () {
+    Future.delayed(const Duration(milliseconds: 300), () {
       _bubbleController.forward();
     });
   }
@@ -147,7 +147,7 @@ class _AppTourWidgetState extends State<AppTourWidget>
                     ),
                   )
                   .animate(controller: _bubbleController)
-                  .scale(begin: Offset(0.8, 0.8), end: Offset(1, 1))
+                  .scale(begin: const Offset(0.8, 0.8), end: const Offset(1, 1))
                   .fadeIn(),
 
                 // Açıklama balonu
@@ -165,7 +165,7 @@ class _AppTourWidgetState extends State<AppTourWidget>
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
-                    child: Row(
+                    child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
@@ -188,7 +188,7 @@ class _AppTourWidgetState extends State<AppTourWidget>
                     children: List.generate(
                       widget.steps.length,
                       (index) => Container(
-                        margin: EdgeInsets.symmetric(horizontal: 4),
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
                         width: 8,
                         height: 8,
                         decoration: BoxDecoration(
@@ -247,7 +247,7 @@ class _AppTourWidgetState extends State<AppTourWidget>
           return Transform.scale(
             scale: _bubbleController.value,
             child: Container(
-              padding: EdgeInsets.all(20),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
@@ -255,7 +255,7 @@ class _AppTourWidgetState extends State<AppTourWidget>
                   BoxShadow(
                     color: Colors.black.withOpacity(0.2),
                     blurRadius: 10,
-                    offset: Offset(0, 5),
+                    offset: const Offset(0, 5),
                   ),
                 ],
               ),
@@ -270,7 +270,7 @@ class _AppTourWidgetState extends State<AppTourWidget>
                         color: Theme.of(context).colorScheme.primary,
                         size: 24,
                       ),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           step.title,
@@ -283,7 +283,7 @@ class _AppTourWidgetState extends State<AppTourWidget>
                       ),
                     ],
                   ),
-                  SizedBox(height: 12),
+                  const SizedBox(height: 12),
                   Text(
                     step.description,
                     style: TextStyle(
@@ -292,7 +292,7 @@ class _AppTourWidgetState extends State<AppTourWidget>
                       height: 1.4,
                     ),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -309,7 +309,7 @@ class _AppTourWidgetState extends State<AppTourWidget>
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          padding: EdgeInsets.symmetric(
+                          padding: const EdgeInsets.symmetric(
                             horizontal: 20,
                             vertical: 8,
                           ),
@@ -318,7 +318,7 @@ class _AppTourWidgetState extends State<AppTourWidget>
                           currentStep < widget.steps.length - 1
                               ? 'Devam'
                               : 'Tamam',
-                          style: TextStyle(fontSize: 14),
+                          style: const TextStyle(fontSize: 14),
                         ),
                       ),
                     ],

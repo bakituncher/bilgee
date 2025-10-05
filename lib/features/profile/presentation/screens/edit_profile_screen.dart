@@ -6,7 +6,7 @@ import 'package:taktik/features/profile/application/profile_controller.dart';
 import 'package:intl/intl.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
-  const EditProfileScreen({Key? key}) : super(key: key);
+  const EditProfileScreen({super.key});
 
   @override
   _EditProfileScreenState createState() => _EditProfileScreenState();
@@ -179,7 +179,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     children: [
                       Expanded(
                         child: DropdownButtonFormField<String>(
-                          value: _selectedGender,
+                          initialValue: _selectedGender,
                           isExpanded: true,
                           decoration: const InputDecoration(
                             labelText: 'Cinsiyet',
@@ -187,8 +187,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           ),
                           items: ['Erkek', 'Kadın', 'Belirtmek istemiyorum']
                               .map((label) => DropdownMenuItem(
-                            child: Text(label, overflow: TextOverflow.ellipsis),
                             value: label,
+                            child: Text(label, overflow: TextOverflow.ellipsis),
                           ))
                               .toList(),
                           onChanged: (value) {

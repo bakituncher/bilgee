@@ -57,7 +57,7 @@ class QuestNavigationManager {
 
   /// Navigation engagement güncellemesi - Ref tipini düzelt
   Future<void> _updateEngagementForNavigation(Ref ref, Quest quest) async {
-    final controller = const QuestProgressController();
+    const controller = QuestProgressController();
 
     // Sadece engagement kategorisindeki görevler için otomatik güncelleme
     if (quest.category == QuestCategory.engagement && !quest.isCompleted) {

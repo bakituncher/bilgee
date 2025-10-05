@@ -68,7 +68,7 @@ class CachedAnalysisView extends ConsumerWidget {
                 );
               },
             ).animate().fadeIn(duration: 220.ms);
-          }).toList(),
+          }),
         ],
       ),
     );
