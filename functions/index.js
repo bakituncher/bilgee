@@ -1,3 +1,7 @@
+// App Check global zorunluluğu
+const { setGlobalOptions } = require('firebase-functions/v2');
+setGlobalOptions({ enforceAppCheck: true });
+
 // Import and re-export all the functions from the new modules
 const admin = require("./src/admin");
 const ai = require("./src/ai");

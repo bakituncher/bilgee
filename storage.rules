@@ -47,7 +47,11 @@ service firebase.storage {
       // Kullanıcı kendi dosyalarını okuyabilir ve yazabilir
       allow read: if request.auth != null && request.auth.uid == userId;
       allow write: if request.auth != null && request.auth.uid == userId &&
-                   request.resource.size < 20 * 1024 * 1024; // < 20MB
+                   (
+                     request.resource.contentType.matches('image/.*') ||
+                     request.resource.contentType == 'application/pdf'
+                   ) &&
+                   request.resource.size < 20 * 1024 * 1024; // < 20MB, sadece görsel veya PDF
     }
 
     // =====================================================================
@@ -58,6 +62,10 @@ service firebase.storage {
       allow read: if true;
       // Sadece admin kullanıcılar yazabilir (tip ve boyut sınırı)
       allow write: if request.auth != null && request.auth.token.admin == true &&
+                   (
+                     request.resource.contentType.matches('image/.*') ||
+                     request.resource.contentType == 'application/pdf'
+                   ) &&
                    request.resource.size < 20 * 1024 * 1024;
     }
 

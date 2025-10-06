@@ -429,6 +429,15 @@ async function recordNotificationHistory(uid, notificationId) {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
     const isAdmin = request.auth.token && request.auth.token.admin === true;
     if (!isAdmin) throw new HttpsError('permission-denied', 'Admin gerekli');
+
+    // Ek oran sınırlama (admin istismarına karşı)
+    const uid = request.auth.uid;
+    const ip = getClientIpFromRawRequest(request.rawRequest) || 'unknown';
+    await Promise.all([
+      enforceRateLimit(`admin_estimate_uid_${uid}`, 60, 20),
+      enforceRateLimit(`admin_estimate_ip_${ip}`, 60, 60),
+    ]);
+
     const audience = request.data?.audience || {type: 'all'};
     let uids = await selectAudienceUids(audience);
 
@@ -472,6 +481,14 @@ async function recordNotificationHistory(uid, notificationId) {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
     const isAdmin = request.auth.token && request.auth.token.admin === true;
     if (!isAdmin) throw new HttpsError('permission-denied', 'Admin gerekli');
+
+    // Ek oran sınırlama (admin istismarına karşı)
+    const uid = request.auth.uid;
+    const ip = getClientIpFromRawRequest(request.rawRequest) || 'unknown';
+    await Promise.all([
+      enforceRateLimit(`admin_sendpush_uid_${uid}`, 60, 10),
+      enforceRateLimit(`admin_sendpush_ip_${ip}`, 60, 30),
+    ]);
 
     const title = String(request.data?.title || '').trim();
     const body = String(request.data?.body || '').trim();
