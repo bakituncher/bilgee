@@ -169,7 +169,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => buildPageWithFadeTransition(
           context: context,
           state: state,
-          child: const premium.PremiumView(),
+          child: const premium.PremiumScreen(),
         ),
       ),
       GoRoute(
