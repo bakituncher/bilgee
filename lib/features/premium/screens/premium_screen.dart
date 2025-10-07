@@ -329,7 +329,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
                 Text(
                   title,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold, color: AppTheme.primaryTextColor),
+                      fontWeight: FontWeight.bold, color: AppTheme.textColor),
                 ),
                 if (subtitle != null) ...[
                   const SizedBox(height: 4),
@@ -353,7 +353,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
               style: Theme.of(context)
                   .textTheme
                   .headlineSmall
-                  ?.copyWith(fontWeight: FontWeight.bold, color: AppTheme.primaryTextColor),
+                  ?.copyWith(fontWeight: FontWeight.bold, color: AppTheme.textColor),
             ),
           ],
         ),
