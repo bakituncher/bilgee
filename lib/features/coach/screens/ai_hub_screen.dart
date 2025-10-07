@@ -1,9 +1,13 @@
 // lib/features/coach/screens/ai_hub_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taktik/core/theme/app_theme.dart'; // AppTheme import geri eklendi
 import 'dart:math';
 import 'dart:ui';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/shared/widgets/premium_gate.dart';
 
 // Öğretici için GlobalKey'ler
 final GlobalKey strategicPlanningKey = GlobalKey();
@@ -11,16 +15,17 @@ final GlobalKey weaknessWorkshopKey = GlobalKey();
 final GlobalKey motivationChatKey = GlobalKey();
 final GlobalKey analysisStrategyKey = GlobalKey(); // YENİ: Analiz & Strateji (birleşik)
 
-class AiHubScreen extends StatefulWidget {
+class AiHubScreen extends ConsumerStatefulWidget {
   const AiHubScreen({super.key});
 
   @override
-  State<AiHubScreen> createState() => _AiHubScreenState();
+  ConsumerState<AiHubScreen> createState() => _AiHubScreenState();
 }
 
-class _AiHubScreenState extends State<AiHubScreen> with SingleTickerProviderStateMixin {
+class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProviderStateMixin {
   late final AnimationController _pulse;
   late final Animation<double> _glow;
+  bool _isGenerating = false;
 
   @override
   void initState() {
@@ -35,8 +40,43 @@ class _AiHubScreenState extends State<AiHubScreen> with SingleTickerProviderStat
     super.dispose();
   }
 
+  Future<void> _handleAiToolTap(_AiTool tool) async {
+    if (_isGenerating) return;
+
+    setState(() => _isGenerating = true);
+
+    final functions = ref.read(functionsProvider);
+    final callable = functions.httpsCallable('premium-generateGemini');
+
+    try {
+      await callable.call();
+      if (mounted) context.go(tool.route);
+    } on FirebaseFunctionsException catch (e) {
+      if (!mounted) return;
+      String message = e.message ?? 'Bilinmeyen bir sunucu hatası oluştu.';
+      if (e.code == 'resource-exhausted') {
+        message = 'Bu işlemi yapmak için yeterli yıldızınız yok.';
+      } else if (e.code == 'failed-precondition') {
+        message = 'Bu özellik yalnızca Premium üyelere açıktır.';
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), backgroundColor: Colors.red),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Beklenmedik bir hata oluştu.'), backgroundColor: Colors.red),
+      );
+    } finally {
+      if (mounted) setState(() => _isGenerating = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final userProfile = ref.watch(userProfileProvider);
+    final stars = userProfile.value?.stars ?? 0;
+
     final tools = [
       _AiTool(
         key: strategicPlanningKey,
@@ -83,72 +123,116 @@ class _AiHubScreenState extends State<AiHubScreen> with SingleTickerProviderStat
 
     final bottomInset = MediaQuery.of(context).padding.bottom;
 
-    return Scaffold(
-      extendBodyBehindAppBar: false, // çakışmayı önle
-      appBar: null,
-      body: Stack(
+    return PremiumGate(
+      featureName: 'AI Hub',
+      featureIcon: Icons.auto_awesome_rounded,
+      child: Stack(
         children: [
-          _AnimatedBackground(glow: _glow),
-          CustomScrollView(
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              SliverAppBar(
-                pinned: true,
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                toolbarHeight: kToolbarHeight,
-                title: const Text('TaktikAI Çekirdeği'),
-                flexibleSpace: ClipRect(
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-                    child: Container(
-                      color: Colors.black.withOpacity(0.25),
-                    ),
-                  ),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8), // azaltıldı
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _CoreVisual(glow: _glow),
-                      const SizedBox(height: 24), // 40 -> 24: daha kompakt üst alan
-                      Text(
-                        'Yapay Zeka Araçları',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+          Scaffold(
+            extendBodyBehindAppBar: false, // çakışmayı önle
+            appBar: null,
+            body: Stack(
+              children: [
+                _AnimatedBackground(glow: _glow),
+                CustomScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  slivers: [
+                    SliverAppBar(
+                      pinned: true,
+                      backgroundColor: Colors.transparent,
+                      elevation: 0,
+                      toolbarHeight: kToolbarHeight,
+                      title: const Text('TaktikAI Çekirdeği'),
+                      actions: [
+                        Padding(
+                          padding: const EdgeInsets.only(right: 16.0),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.star_rounded, color: Colors.amber, size: 24),
+                              const SizedBox(width: 8),
+                              Text(
+                                stars.toString(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      flexibleSpace: ClipRect(
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+                          child: Container(
+                            color: Colors.black.withOpacity(0.25),
+                          ),
+                        ),
                       ),
-                      const SizedBox(height: 12),
-                    ],
-                  ),
+                    ),
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8), // azaltıldı
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _CoreVisual(glow: _glow),
+                            const SizedBox(height: 24), // 40 -> 24: daha kompakt üst alan
+                            Text(
+                              'Yapay Zeka Araçları',
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+                        ),
+                      ),
+                    ),
+                    // Liste yerine 2 sütunlu, kompakt grid
+                    SliverPadding(
+                      padding: EdgeInsets.fromLTRB(16, 0, 16, bottomInset + 24),
+                      sliver: SliverGrid(
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          mainAxisExtent: 168, // daha az dikey kaydırma
+                        ),
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final tool = tools[index];
+                            return _AiToolTile(
+                              tool: tool,
+                              onTap: () => _handleAiToolTap(tool),
+                            );
+                          },
+                          childCount: tools.length,
+                        ),
+                      ),
+                    ),
+                    SliverToBoxAdapter(child: SizedBox(height: bottomInset + 8)),
+                  ],
                 ),
-              ),
-              // Liste yerine 2 sütunlu, kompakt grid
-              SliverPadding(
-                padding: EdgeInsets.fromLTRB(16, 0, 16, bottomInset + 24),
-                sliver: SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    mainAxisExtent: 168, // daha az dikey kaydırma
-                  ),
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final tool = tools[index];
-                      return _AiToolTile(
-                        tool: tool,
-                        onTap: () => context.go(tool.route),
-                      );
-                    },
-                    childCount: tools.length,
-                  ),
-                ),
-              ),
-              SliverToBoxAdapter(child: SizedBox(height: bottomInset + 8)),
-            ],
+              ],
+            ),
           ),
+          if (_isGenerating)
+            Container(
+              color: Colors.black.withOpacity(0.5),
+              child: const Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
+                    SizedBox(height: 20),
+                    Text(
+                      'AI aracı hazırlanıyor...',
+                      style: TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );
