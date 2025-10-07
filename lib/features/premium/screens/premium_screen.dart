@@ -8,10 +8,11 @@ import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/shared/widgets/loading_screen.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
-// Product IDs from Google Play Store
-const String _monthlySubscriptionId = 'taktikai_monthly_subscription';
-const String _yearlySubscriptionId = 'taktikai_yearly_subscription';
+// NEW Product IDs from Google Play Store
+const String _monthlySubscriptionId = 'premium_aylik';
+const String _yearlySubscriptionId = 'premium_yillik';
 const List<String> _kProductIds = <String>[
   _monthlySubscriptionId,
   _yearlySubscriptionId,
@@ -38,17 +39,11 @@ class PurchaseService {
   Future<List<ProductDetails>> loadProducts() async {
     final bool available = await _inAppPurchase.isAvailable();
     if (!available) {
-      if (kDebugMode) {
-        print("IAP not available. Returning empty list for mock UI.");
-      }
       return [];
     }
     final ProductDetailsResponse response =
         await _inAppPurchase.queryProductDetails(_kProductIds.toSet());
     if (response.error != null) {
-      if (kDebugMode) {
-        print("IAP error: ${response.error}. Returning empty list for mock UI.");
-      }
       return [];
     }
     return response.productDetails;
@@ -60,7 +55,7 @@ class PurchaseService {
       (purchaseDetailsList) {
         for (var purchaseDetails in purchaseDetailsList) {
           if (purchaseDetails.status == PurchaseStatus.pending) {
-            // Show pending UI
+            // Handled by loading overlay
           } else {
             if (purchaseDetails.status == PurchaseStatus.error) {
               onError();
@@ -74,36 +69,24 @@ class PurchaseService {
           }
         }
       },
-      onDone: () {
-        _subscription.cancel();
-      },
-      onError: (error) {
-        onError();
-      },
+      onDone: () => _subscription.cancel(),
+      onError: (error) => onError(),
     );
   }
 
   Future<void> buySubscription(ProductDetails productDetails) async {
-    final PurchaseParam purchaseParam =
-        PurchaseParam(productDetails: productDetails);
+    final PurchaseParam purchaseParam = PurchaseParam(productDetails: productDetails);
     await _inAppPurchase.buyNonConsumable(purchaseParam: purchaseParam);
   }
 
   Future<void> verifyPurchase(PurchaseDetails purchaseDetails) async {
-    final HttpsCallable callable =
-        _functions.httpsCallable('premium-verifyPurchase');
+    final HttpsCallable callable = _functions.httpsCallable('premium-verifyPurchase');
     final packageInfo = await PackageInfo.fromPlatform();
-
-    try {
-      await callable.call(<String, dynamic>{
-        'productId': purchaseDetails.productID,
-        'purchaseToken': purchaseDetails.verificationData.serverVerificationData,
-        'packageName': packageInfo.packageName,
-      });
-    } on FirebaseFunctionsException {
-      // Re-throw to be handled by the UI
-      rethrow;
-    }
+    await callable.call(<String, dynamic>{
+      'productId': purchaseDetails.productID,
+      'purchaseToken': purchaseDetails.verificationData.serverVerificationData,
+      'packageName': packageInfo.packageName,
+    });
   }
 
   void dispose() {
@@ -125,35 +108,35 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
   @override
   void initState() {
     super.initState();
-    final purchaseService = ref.read(purchaseServiceProvider);
-    purchaseService.listenToPurchaseUpdated((purchaseDetails) async {
-      setState(() => _isLoading = true);
-      try {
-        await purchaseService.verifyPurchase(purchaseDetails);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Abonelik doğrulandı! Premium özellikler aktif.'),
-              backgroundColor: Colors.green),
-        );
-        // Pop the screen on success
-        if (mounted) context.pop();
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Doğrulama hatası: ${e.toString()}'),
-              backgroundColor: Colors.red),
-        );
-      } finally {
-        if (mounted) setState(() => _isLoading = false);
-      }
-    }, () {
-      // Handle purchase stream error
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Satın alma işlemi sırasında bir hata oluştu.'),
-            backgroundColor: Colors.red),
-      );
-    });
+    ref.read(purchaseServiceProvider).listenToPurchaseUpdated(
+      (details) async {
+        setState(() => _isLoading = true);
+        try {
+          await ref.read(purchaseServiceProvider).verifyPurchase(details);
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Abonelik doğrulandı! Premium özellikler aktif.'),
+            backgroundColor: Colors.green,
+          ));
+          context.pop();
+        } catch (e) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Doğrulama hatası: ${e.toString()}'),
+            backgroundColor: AppTheme.accentColor,
+          ));
+        } finally {
+          if (mounted) setState(() => _isLoading = false);
+        }
+      },
+      () {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Satın alma işlemi sırasında bir hata oluştu.'),
+          backgroundColor: AppTheme.accentColor,
+        ));
+      },
+    );
   }
 
   @override
@@ -164,312 +147,352 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final productsAsyncValue = ref.watch(productsProvider);
+    final productsAsync = ref.watch(productsProvider);
     return Scaffold(
-      backgroundColor: AppTheme.primaryColor,
-      appBar: AppBar(
-        title: const Text('TaktikAI Premium', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        backgroundColor: AppTheme.primaryColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-          onPressed: () => context.pop(),
-        ),
-      ),
+      backgroundColor: const Color(0xFF0A101A),
       body: Stack(
         children: [
-          productsAsyncValue.when(
+          productsAsync.when(
             data: (products) {
-              // In debug mode, if products are empty, show a mock UI.
-              if (products.isEmpty && kDebugMode) {
-                return _buildMockBody(context);
-              }
-              // In release mode, or if products fail to load for other reasons.
               if (products.isEmpty) {
-                return const Center(
-                  child: Text(
-                    'Abonelikler yüklenemedi.\nLütfen daha sonra tekrar deneyin.',
-                    style: TextStyle(color: Colors.white, height: 1.5),
-                    textAlign: TextAlign.center,
-                  ),
-                );
+                // In debug mode, show mock UI if products fail to load
+                if (kDebugMode) return _buildMockBody(context);
+                // In release mode, show error
+                return _buildErrorBody('Abonelikler yüklenemedi.\nLütfen Google Play ayarlarınızı kontrol edin.');
               }
               return _buildRealBody(context, products);
             },
-            loading: () => const LoadingScreen(),
-            error: (err, stack) => Center(
-              child: Text('Hata: ${err.toString()}', style: const TextStyle(color: Colors.white)),
-            ),
+            loading: () => const Center(child: CircularProgressIndicator(color: AppTheme.goldColor)),
+            error: (err, _) => _buildErrorBody('Bir hata oluştu: ${err.toString()}'),
           ),
-          if (_isLoading)
-            Container(
-              color: Colors.black.withOpacity(0.5),
-              child: const Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
-                    SizedBox(height: 20),
-                    Text(
-                      'Abonelik doğrulanıyor...',
-                      style: TextStyle(color: Colors.white, fontSize: 16),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+          if (_isLoading) _buildLoadingOverlay(),
         ],
       ),
     );
   }
 
-  // Body for when real products are loaded
   Widget _buildRealBody(BuildContext context, List<ProductDetails> products) {
-    final monthly = products.firstWhere((p) => p.id == _monthlySubscriptionId);
-    final yearly = products.firstWhere((p) => p.id == _yearlySubscriptionId);
-    final selectedProduct = products.firstWhere((p) => p.id == _selectedProductId);
+    ProductDetails? monthly;
+    ProductDetails? yearly;
+    try {
+      monthly = products.firstWhere((p) => p.id == _monthlySubscriptionId);
+      yearly = products.firstWhere((p) => p.id == _yearlySubscriptionId);
+    } catch (e) {
+      return _buildErrorBody('Abonelik ürünleri bulunamadı. Lütfen ürün IDlerini kontrol edin.');
+    }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildHeader(context),
-          const SizedBox(height: 32),
-          _buildSubscriptionCard(
-            context: context,
-            price: yearly.price,
-            title: 'Yıllık Plan',
-            subtitle: 'En Avantajlı Seçim',
-            isSelected: _selectedProductId == _yearlySubscriptionId,
-            onTap: () => setState(() => _selectedProductId = _yearlySubscriptionId),
-          ),
-          const SizedBox(height: 16),
-          _buildSubscriptionCard(
-            context: context,
-            price: monthly.price,
-            title: 'Aylık Plan',
-            subtitle: null,
-            isSelected: _selectedProductId == _monthlySubscriptionId,
-            onTap: () => setState(() => _selectedProductId = _monthlySubscriptionId),
-          ),
-          const SizedBox(height: 32),
-          _buildPerksList(context),
-          const SizedBox(height: 32),
-          _buildCTAButton(
-            context: context,
-            onPressed: () {
-              final purchaseService = ref.read(purchaseServiceProvider);
-              purchaseService.buySubscription(selectedProduct);
-            },
-          ),
-          const SizedBox(height: 16),
-          _buildTermsAndConditions(context),
-        ],
-      ),
-    );
-  }
+    final selectedProduct = _selectedProductId == _yearlySubscriptionId ? yearly : monthly;
 
-  // Mock body for development when IAP is not available
-  Widget _buildMockBody(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildHeader(context),
-          const SizedBox(height: 32),
-          _buildSubscriptionCard(
-            context: context,
-            price: '₺199.99', // Placeholder price
-            title: 'Yıllık Plan',
-            subtitle: 'En Avantajlı Seçim',
-            isSelected: _selectedProductId == _yearlySubscriptionId,
-            onTap: () => setState(() => _selectedProductId = _yearlySubscriptionId),
+    return CustomScrollView(
+      slivers: [
+        _buildSliverAppBar(context),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: Column(
+              children: [
+                _buildHeader(),
+                const SizedBox(height: 32),
+                _buildSubscriptionCard(
+                  title: 'YILLIK ABONELİK',
+                  price: yearly.price,
+                  priceDetails: 'Yıllık',
+                  isSelected: _selectedProductId == _yearlySubscriptionId,
+                  onTap: () => setState(() => _selectedProductId = _yearlySubscriptionId),
+                  bannerText: '7 GÜN ÜCRETSİZ DENE',
+                ).animate().fadeIn(delay: 200.ms).slideX(begin: -0.1),
+                const SizedBox(height: 16),
+                _buildSubscriptionCard(
+                  title: 'AYLIK ABONELİK',
+                  price: monthly.price,
+                  priceDetails: 'Aylık',
+                  isSelected: _selectedProductId == _monthlySubscriptionId,
+                  onTap: () => setState(() => _selectedProductId = _monthlySubscriptionId),
+                ).animate().fadeIn(delay: 300.ms).slideX(begin: 0.1),
+                const SizedBox(height: 40),
+                _buildPerksList().animate().fadeIn(delay: 400.ms),
+                const SizedBox(height: 40),
+              ],
+            ),
           ),
-          const SizedBox(height: 16),
-          _buildSubscriptionCard(
-            context: context,
-            price: '₺24.99', // Placeholder price
-            title: 'Aylık Plan',
-            subtitle: null,
-            isSelected: _selectedProductId == _monthlySubscriptionId,
-            onTap: () => setState(() => _selectedProductId = _monthlySubscriptionId),
-          ),
-          const SizedBox(height: 32),
-          _buildPerksList(context),
-          const SizedBox(height: 32),
-          _buildCTAButton(context: context, onPressed: null), // Disabled button
-          const SizedBox(height: 16),
-          _buildTermsAndConditions(context),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    return Column(
-      children: [
-        const Icon(Icons.auto_awesome_rounded, color: Colors.amber, size: 60),
-        const SizedBox(height: 16),
-        Text(
-          'Potansiyelini Ortaya Çıkar',
-          textAlign: TextAlign.center,
-          style: Theme.of(context)
-              .textTheme
-              .headlineMedium
-              ?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: 8),
-        Text(
-          'TaktikAI\'ın tüm gücünü kullanarak hedeflerine daha hızlı ulaş.',
-          textAlign: TextAlign.center,
-          style: Theme.of(context)
-              .textTheme
-              .titleMedium
-              ?.copyWith(color: Colors.white70),
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: _buildBottomBar(
+              context,
+              onPressed: () {
+                ref.read(purchaseServiceProvider).buySubscription(selectedProduct);
+              },
+              buttonText: _selectedProductId == _yearlySubscriptionId
+                  ? 'Ücretsiz Denemeyi Başlat'
+                  : 'Şimdi Abone Ol',
+            ),
+          ),
         ),
       ],
     );
   }
 
+  Widget _buildMockBody(BuildContext context) {
+    // This is the placeholder UI for development
+    return CustomScrollView(
+       slivers: [
+        _buildSliverAppBar(context),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: Column(
+              children: [
+                _buildHeader(),
+                const SizedBox(height: 32),
+                _buildSubscriptionCard(
+                  title: 'YILLIK ABONELİK',
+                  price: '₺1,199.99',
+                  priceDetails: 'Yıllık',
+                  isSelected: _selectedProductId == _yearlySubscriptionId,
+                  onTap: () => setState(() => _selectedProductId = _yearlySubscriptionId),
+                  bannerText: '7 GÜN ÜCRETSİZ DENE',
+                ),
+                const SizedBox(height: 16),
+                _buildSubscriptionCard(
+                  title: 'AYLIK ABONELİK',
+                  price: '₺149.99',
+                  priceDetails: 'Aylık',
+                  isSelected: _selectedProductId == _monthlySubscriptionId,
+                  onTap: () => setState(() => _selectedProductId = _monthlySubscriptionId),
+                ),
+                const SizedBox(height: 40),
+                _buildPerksList(),
+                const SizedBox(height: 40),
+              ],
+            ),
+          ),
+        ),
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: _buildBottomBar(
+              context,
+              onPressed: null, // Disabled in mock mode
+              buttonText: _selectedProductId == _yearlySubscriptionId
+                  ? 'Ücretsiz Denemeyi Başlat'
+                  : 'Şimdi Abone Ol',
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildErrorBody(String message) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Text(
+          message,
+          style: const TextStyle(color: AppTheme.secondaryTextColor, height: 1.5),
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingOverlay() {
+    return Container(
+      color: Colors.black.withOpacity(0.7),
+      child: const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(AppTheme.goldColor)),
+            SizedBox(height: 20),
+            Text(
+              'Abonelik doğrulanıyor...',
+              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  SliverAppBar _buildSliverAppBar(BuildContext context) {
+    return SliverAppBar(
+      pinned: true,
+      backgroundColor: const Color(0xFF0A101A),
+      elevation: 0,
+      leading: IconButton(
+        icon: const Icon(Icons.close, color: AppTheme.secondaryTextColor),
+        onPressed: () => context.pop(),
+      ),
+      centerTitle: true,
+      title: Text(
+        'Premium\'a Geç',
+        style: GoogleFonts.montserrat(
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+            color: AppTheme.textColor),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Column(
+      children: [
+        const SizedBox(height: 16),
+        const Icon(Icons.workspace_premium_rounded, color: AppTheme.goldColor, size: 50),
+        const SizedBox(height: 24),
+        Text(
+          'Tüm Potansiyelini Ortaya Çıkar',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.montserrat(
+              color: Colors.white, fontSize: 26, fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 12),
+        const Text(
+          'AI Koç, Cevher Atölyesi ve daha fazlasına sınırsız erişim sağla.',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: AppTheme.secondaryTextColor, fontSize: 16, height: 1.5),
+        ),
+      ],
+    ).animate().fadeIn(delay: 100.ms, duration: 400.ms);
+  }
+
   Widget _buildSubscriptionCard({
-    required BuildContext context,
-    required String price,
     required String title,
-    String? subtitle,
+    required String price,
+    required String priceDetails,
     required bool isSelected,
     required VoidCallback onTap,
+    String? bannerText,
   }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
         decoration: BoxDecoration(
-          color: AppTheme.lightSurfaceColor,
-          borderRadius: BorderRadius.circular(16),
-          border: isSelected
-              ? Border.all(color: Colors.amber, width: 3)
-              : Border.all(color: Colors.transparent, width: 3),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? AppTheme.goldColor : AppTheme.lightSurfaceColor,
+            width: 2.5,
+          ),
+          gradient: LinearGradient(
+            colors: isSelected
+                ? [const Color(0xFF3A2D0B), const Color(0xFF1C1604)]
+                : [AppTheme.cardColor, AppTheme.cardColor],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Stack(
+          clipBehavior: Clip.none,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold, color: AppTheme.textColor),
-                ),
-                if (subtitle != null) ...[
-                  const SizedBox(height: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.amber,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      subtitle,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppTheme.primaryColor, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-            Text(
-              price,
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineSmall
-                  ?.copyWith(fontWeight: FontWeight.bold, color: AppTheme.textColor),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPerksList(BuildContext context) {
-    const perks = [
-      'Sınırsız AI Koç Desteği',
-      'Kişiselleştirilmiş Strateji Planları',
-      'Derinlemesine Zayıflık Analizi',
-      'Yeni Özelliklere Erken Erişim',
-      'Reklamsız Deneyim',
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Tüm Premium Özellikler',
-          style: Theme.of(context)
-              .textTheme
-              .titleLarge
-              ?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 16),
-        ...perks.map((perk) => Padding(
-              padding: const EdgeInsets.only(bottom: 12.0),
+            Padding(
+              padding: const EdgeInsets.all(20.0),
               child: Row(
                 children: [
-                  const Icon(Icons.check_circle_rounded, color: Colors.amber, size: 24),
+                  Icon(
+                    isSelected ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+                    color: isSelected ? AppTheme.goldColor : AppTheme.secondaryTextColor,
+                    size: 28,
+                  ),
                   const SizedBox(width: 16),
-                  Expanded(
-                    child: Text(
-                      perk,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(color: Colors.white70),
-                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 4),
+                      Text(
+                        '$price / $priceDetails',
+                        style: const TextStyle(color: AppTheme.secondaryTextColor, fontSize: 14),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            )),
-      ],
-    );
-  }
-
-  Widget _buildCTAButton({
-    required BuildContext context,
-    required VoidCallback? onPressed,
-  }) {
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.amber,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+            ),
+            if (bannerText != null)
+              Positioned(
+                top: -15,
+                right: 20,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppTheme.goldColor,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    bannerText,
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
-        textStyle: const TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-        ),
-        disabledBackgroundColor: Colors.grey.shade700,
       ),
-      onPressed: onPressed,
-      child: const Text('Premium\'a Geç'),
     );
   }
 
-  Widget _buildTermsAndConditions(BuildContext context) {
-    return Text(
-      'Aboneliğiniz, mevcut dönemin bitiminden en az 24 saat önce iptal edilmediği sürece otomatik olarak yenilenir. '
-      'Ayarları istediğiniz zaman Google Play aboneliklerinizden yönetebilirsiniz.',
-      textAlign: TextAlign.center,
-      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white54),
+  Widget _buildPerksList() {
+    final perks = [
+      ('Sınırsız AI Koç Desteği', Icons.auto_awesome_rounded),
+      ('Kişiselleştirilmiş Strateji Planları', Icons.insights_rounded),
+      ('Derinlemesine Zayıflık Analizi', Icons.construction_rounded),
+      ('Reklamsız Deneyim', Icons.ad_units_rounded),
+    ];
+    return Column(
+      children: perks.map((perk) => Padding(
+        padding: const EdgeInsets.only(bottom: 16.0),
+        child: Row(
+          children: [
+            Icon(perk.$2, color: AppTheme.successColor, size: 24),
+            const SizedBox(width: 16),
+            Text(perk.$1, style: const TextStyle(color: AppTheme.textColor, fontSize: 16)),
+          ],
+        ),
+      )).toList(),
+    );
+  }
+
+  Widget _buildBottomBar(BuildContext context, {required VoidCallback? onPressed, required String buttonText}) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0A101A).withOpacity(0.8),
+        border: const Border(
+          top: BorderSide(color: AppTheme.lightSurfaceColor, width: 0.5),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.goldColor,
+              foregroundColor: Colors.black,
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              disabledBackgroundColor: AppTheme.lightSurfaceColor,
+            ),
+            onPressed: onPressed,
+            child: Text(buttonText),
+          ).animate().slide(begin: const Offset(0, 0.5)).fadeIn(),
+          const SizedBox(height: 16),
+          const Text(
+            'Abonelik, deneme süresinin bitiminde otomatik olarak yenilenir. İstediğiniz zaman iptal edebilirsiniz.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: AppTheme.secondaryTextColor, fontSize: 12),
+          ),
+        ],
+      ),
     );
   }
 }
