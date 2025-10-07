@@ -4,16 +4,18 @@ import 'package:go_router/go_router.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/core/theme/app_theme.dart';
 
+typedef PremiumBuilder = Widget Function(BuildContext context, bool isPremium);
+
 class PremiumGate extends ConsumerWidget {
-  final Widget child;
-  final String featureName;
-  final IconData featureIcon;
+  final PremiumBuilder builder;
+  final Widget? nonPremiumPlaceholder;
+  final Widget? loadingPlaceholder;
 
   const PremiumGate({
     super.key,
-    required this.child,
-    this.featureName = 'Bu Özellik',
-    this.featureIcon = Icons.auto_awesome_rounded,
+    required this.builder,
+    this.nonPremiumPlaceholder,
+    this.loadingPlaceholder,
   });
 
   @override
@@ -22,26 +24,28 @@ class PremiumGate extends ConsumerWidget {
 
     return userProfile.when(
       data: (user) {
-        if (user?.isPremium == true) {
-          return child;
+        final isPremium = user?.isPremium ?? false;
+        if (isPremium) {
+          return builder(context, true);
         } else {
-          return _Paywall(
-            featureName: featureName,
-            featureIcon: featureIcon,
-          );
+          return nonPremiumPlaceholder ?? builder(context, false);
         }
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => loadingPlaceholder ?? const Center(child: CircularProgressIndicator()),
       error: (err, stack) => Center(child: Text('Hata: $err')),
     );
   }
 }
 
-class _Paywall extends StatelessWidget {
+class Paywall extends StatelessWidget {
   final String featureName;
   final IconData featureIcon;
 
-  const _Paywall({required this.featureName, required this.featureIcon});
+  const Paywall({
+    super.key,
+    this.featureName = 'Bu Özellik',
+    this.featureIcon = Icons.auto_awesome_rounded,
+  });
 
   @override
   Widget build(BuildContext context) {

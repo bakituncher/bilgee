@@ -80,7 +80,7 @@ class PurchaseService {
   Future<void> buySubscription(ProductDetails productDetails) async {
     // Android: varsa offerToken kullan, yoksa standart akış
     if (defaultTargetPlatform == TargetPlatform.android && productDetails is GooglePlayProductDetails) {
-      final String? offerToken = _getAndroidOfferToken(productDetails);
+      final String? offerToken = _getAndroidFreeTrialOfferToken(productDetails);
       if (offerToken != null && offerToken.isNotEmpty) {
         final purchaseParam = GooglePlayPurchaseParam(
           productDetails: productDetails,
@@ -111,19 +111,37 @@ class PurchaseService {
   }
 }
 
-// Android için offerToken'ı güvenli şekilde almaya çalış
-String? _getAndroidOfferToken(ProductDetails p) {
+// Android için ÜCRETSİZ DENEME offerToken'ını güvenli şekilde al
+String? _getAndroidFreeTrialOfferToken(ProductDetails p) {
   try {
     if (p is GooglePlayProductDetails) {
-      final dyn = p as dynamic; // Eski sürümlerde alan olmayabilir
-      final offers = dyn.subscriptionOfferDetails;
-      if (offers != null && offers.isNotEmpty) {
-        final offer = offers.first;
-        return offer.offerToken as String?;
-      }
+      // 'subscriptionOfferDetails' alanına dinamik olarak erişmek, eski eklenti sürümleriyle uyumluluk sağlar.
+      final offers = (p as dynamic).subscriptionOfferDetails as List?;
+      if (offers == null || offers.isEmpty) return null;
+
+      // Ücretsiz deneme içeren teklifi bul (genellikle ilk faz 0 ücretlidir)
+      final freeTrialOffer = offers.firstWhere(
+        (offer) {
+          final phases = (offer.pricingPhases.pricingPhaseList as List?);
+          if (phases == null || phases.isEmpty) return false;
+          // İlk ödeme fazının fiyatı 0 mı diye kontrol et
+          final firstPhase = phases.first;
+          return firstPhase.priceAmountMicros == 0;
+        },
+        orElse: () => null, // Eşleşen teklif yoksa null dön
+      );
+
+      return freeTrialOffer?.offerToken as String?;
     }
-  } catch (_) {}
+  } catch (_) {
+    // Hata durumunda (alan yok, tip uyuşmazlığı vb.) null dön
+  }
   return null;
+}
+
+// Bir ürünün ücretsiz deneme içerip içermediğini kontrol et
+bool _hasFreeTrial(ProductDetails p) {
+  return _getAndroidFreeTrialOfferToken(p) != null;
 }
 
 // Abonelik fiyatı: yeni API varsa fazların sonunu, yoksa price döndür
@@ -233,6 +251,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
     }
 
     final selectedProduct = _selectedProductId == _yearlySubscriptionId ? yearly : monthly;
+    final monthlyHasFreeTrial = _hasFreeTrial(monthly);
 
     return CustomScrollView(
       slivers: [
@@ -259,7 +278,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
                   priceDetails: 'Aylık',
                   isSelected: _selectedProductId == _monthlySubscriptionId,
                   onTap: () => setState(() => _selectedProductId = _monthlySubscriptionId),
-                  bannerText: '7 GÜN ÜCRETSİZ DENE',
+                  bannerText: monthlyHasFreeTrial ? '7 GÜN ÜCRETSİZ DENE' : null,
                 ).animate().fadeIn(delay: 300.ms).slideX(begin: 0.1),
                 const SizedBox(height: 40),
                 _buildPerksList().animate().fadeIn(delay: 400.ms),
@@ -277,9 +296,10 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
               onPressed: () {
                 ref.read(purchaseServiceProvider).buySubscription(selectedProduct);
               },
-              buttonText: _selectedProductId == _monthlySubscriptionId
-                  ? '7 Gün Ücretsiz Dene'
+              buttonText: (_selectedProductId == _monthlySubscriptionId && monthlyHasFreeTrial)
+                  ? '7 Gün Ücretsiz Dene ve Abone Ol'
                   : 'Şimdi Abone Ol',
+              hasFreeTrial: monthlyHasFreeTrial,
             ),
           ),
         ),
@@ -513,7 +533,12 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
     );
   }
 
-  Widget _buildBottomBar(BuildContext context, {required VoidCallback? onPressed, required String buttonText}) {
+  Widget _buildBottomBar(
+    BuildContext context, {
+    required VoidCallback? onPressed,
+    required String buttonText,
+    required bool hasFreeTrial,
+  }) {
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
       decoration: BoxDecoration(
@@ -541,10 +566,12 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
             child: Text(buttonText),
           ).animate().slide(begin: const Offset(0, 0.5)).fadeIn(),
           const SizedBox(height: 16),
-          const Text(
-            '7 günlük deneme sadece Aylık plan için geçerlidir. Deneme bitiminde otomatik olarak yenilenir. İstediğiniz zaman iptal edebilirsiniz.',
+          Text(
+            hasFreeTrial
+                ? '7 günlük deneme sadece Aylık plan için geçerlidir. Deneme bitiminde otomatik olarak yenilenir. İstediğiniz zaman iptal edebilirsiniz.'
+                : 'Abonelik, satın almayı onayladığınızda başlar ve bir sonraki faturalama döneminde otomatik olarak yenilenir. Google Play Store ayarlarından istediğiniz zaman iptal edebilirsiniz.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppTheme.secondaryTextColor, fontSize: 12),
+            style: const TextStyle(color: AppTheme.secondaryTextColor, fontSize: 12),
           ),
         ],
       ),

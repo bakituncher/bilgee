@@ -43,6 +43,14 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
   Future<void> _handleAiToolTap(_AiTool tool) async {
     if (_isGenerating) return;
 
+    final user = ref.read(userProfileProvider).value;
+    final isPremium = user?.isPremium ?? false;
+
+    if (!isPremium) {
+      context.push('/premium');
+      return;
+    }
+
     setState(() => _isGenerating = true);
 
     final functions = ref.read(functionsProvider);
@@ -76,6 +84,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
   Widget build(BuildContext context) {
     final userProfile = ref.watch(userProfileProvider);
     final stars = userProfile.value?.stars ?? 0;
+    final isPremium = userProfile.value?.isPremium ?? false;
 
     final tools = [
       _AiTool(
@@ -123,118 +132,115 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
 
     final bottomInset = MediaQuery.of(context).padding.bottom;
 
-    return PremiumGate(
-      featureName: 'AI Hub',
-      featureIcon: Icons.auto_awesome_rounded,
-      child: Stack(
-        children: [
-          Scaffold(
-            extendBodyBehindAppBar: false, // çakışmayı önle
-            appBar: null,
-            body: Stack(
-              children: [
-                _AnimatedBackground(glow: _glow),
-                CustomScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  slivers: [
-                    SliverAppBar(
-                      pinned: true,
-                      backgroundColor: Colors.transparent,
-                      elevation: 0,
-                      toolbarHeight: kToolbarHeight,
-                      title: const Text('TaktikAI Çekirdeği'),
-                      actions: [
-                        Padding(
-                          padding: const EdgeInsets.only(right: 16.0),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.star_rounded, color: Colors.amber, size: 24),
-                              const SizedBox(width: 8),
-                              Text(
-                                stars.toString(),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                      flexibleSpace: ClipRect(
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-                          child: Container(
-                            color: Colors.black.withOpacity(0.25),
-                          ),
-                        ),
-                      ),
-                    ),
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8), // azaltıldı
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+    return Stack(
+      children: [
+        Scaffold(
+          extendBodyBehindAppBar: false, // çakışmayı önle
+          appBar: null,
+          body: Stack(
+            children: [
+              _AnimatedBackground(glow: _glow),
+              CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  SliverAppBar(
+                    pinned: true,
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
+                    toolbarHeight: kToolbarHeight,
+                    title: const Text('TaktikAI Çekirdeği'),
+                    actions: [
+                      Padding(
+                        padding: const EdgeInsets.only(right: 16.0),
+                        child: Row(
                           children: [
-                            _CoreVisual(glow: _glow),
-                            const SizedBox(height: 24), // 40 -> 24: daha kompakt üst alan
+                            const Icon(Icons.star_rounded, color: Colors.amber, size: 24),
+                            const SizedBox(width: 8),
                             Text(
-                              'Yapay Zeka Araçları',
-                              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                              stars.toString(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                            const SizedBox(height: 12),
                           ],
                         ),
                       ),
-                    ),
-                    // Liste yerine 2 sütunlu, kompakt grid
-                    SliverPadding(
-                      padding: EdgeInsets.fromLTRB(16, 0, 16, bottomInset + 24),
-                      sliver: SliverGrid(
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 12,
-                          crossAxisSpacing: 12,
-                          mainAxisExtent: 168, // daha az dikey kaydırma
-                        ),
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final tool = tools[index];
-                            return _AiToolTile(
-                              tool: tool,
-                              onTap: () => _handleAiToolTap(tool),
-                            );
-                          },
-                          childCount: tools.length,
+                    ],
+                    flexibleSpace: ClipRect(
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+                        child: Container(
+                          color: Colors.black.withOpacity(0.25),
                         ),
                       ),
                     ),
-                    SliverToBoxAdapter(child: SizedBox(height: bottomInset + 8)),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          if (_isGenerating)
-            Container(
-              color: Colors.black.withOpacity(0.5),
-              child: const Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
-                    SizedBox(height: 20),
-                    Text(
-                      'AI aracı hazırlanıyor...',
-                      style: TextStyle(color: Colors.white, fontSize: 16),
+                  ),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8), // azaltıldı
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _CoreVisual(glow: _glow),
+                          const SizedBox(height: 24), // 40 -> 24: daha kompakt üst alan
+                          Text(
+                            'Yapay Zeka Araçları',
+                            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                      ),
                     ),
-                  ],
-                ),
+                  ),
+                  // Liste yerine 2 sütunlu, kompakt grid
+                  SliverPadding(
+                    padding: EdgeInsets.fromLTRB(16, 0, 16, bottomInset + 24),
+                    sliver: SliverGrid(
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 12,
+                        crossAxisSpacing: 12,
+                        mainAxisExtent: 168, // daha az dikey kaydırma
+                      ),
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final tool = tools[index];
+                          return _AiToolTile(
+                            tool: tool,
+                            onTap: () => _handleAiToolTap(tool),
+                              isPremium: isPremium,
+                          );
+                        },
+                        childCount: tools.length,
+                      ),
+                    ),
+                  ),
+                  SliverToBoxAdapter(child: SizedBox(height: bottomInset + 8)),
+                ],
+              ),
+            ],
+          ),
+        ),
+        if (_isGenerating)
+          Container(
+            color: Colors.black.withOpacity(0.5),
+            child: const Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
+                  SizedBox(height: 20),
+                  Text(
+                    'AI aracı hazırlanıyor...',
+                    style: TextStyle(color: Colors.white, fontSize: 16),
+                  ),
+                ],
               ),
             ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 }
@@ -407,9 +413,10 @@ class _ParticlePainter extends CustomPainter {
 
 // Yeni: Grid için kompakt, premium görünümlü frosted tile
 class _AiToolTile extends StatelessWidget {
-  const _AiToolTile({required this.tool, required this.onTap});
+  const _AiToolTile({required this.tool, required this.onTap, required this.isPremium});
   final _AiTool tool;
   final VoidCallback onTap;
+  final bool isPremium;
 
   @override
   Widget build(BuildContext context) {
@@ -479,7 +486,10 @@ class _AiToolTile extends StatelessWidget {
                           children: [
                             _IconOrb(icon: tool.icon, color: tool.color),
                             const Spacer(),
-                            _Badge(label: tool.chip, color: tool.color),
+                            if (isPremium)
+                              _Badge(label: tool.chip, color: tool.color)
+                            else
+                              const _PremiumBadge(),
                           ],
                         ),
                         const SizedBox(height: 12),
@@ -520,6 +530,39 @@ class _AiToolTile extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _PremiumBadge extends StatelessWidget {
+  const _PremiumBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        gradient: LinearGradient(
+          colors: [Colors.amber.withOpacity(.3), Colors.amber.withOpacity(.15)],
+        ),
+        border: Border.all(color: Colors.amber.withOpacity(.4)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.workspace_premium_rounded, color: Colors.amber, size: 14),
+          const SizedBox(width: 4),
+          Text(
+            'Premium',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: Colors.amber,
+                  letterSpacing: .2,
+                ),
+          ),
+        ],
       ),
     );
   }
