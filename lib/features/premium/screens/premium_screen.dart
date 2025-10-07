@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/shared/widgets/loading_screen.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:taktik/core/app_check/app_check_helper.dart';
 
 // NEW Product IDs from Google Play Store
 const String _monthlySubscriptionId = 'premium_aylik';
@@ -21,7 +23,7 @@ const List<String> _kProductIds = <String>[
 
 // Provider for the purchase service
 final purchaseServiceProvider = Provider<PurchaseService>((ref) {
-  return PurchaseService(FirebaseFunctions.instance);
+  return PurchaseService(FirebaseFunctions.instanceFor(region: 'us-central1'));
 });
 
 // Provider for the subscription products
@@ -76,11 +78,25 @@ class PurchaseService {
   }
 
   Future<void> buySubscription(ProductDetails productDetails) async {
+    // Android: varsa offerToken kullan, yoksa standart akış
+    if (defaultTargetPlatform == TargetPlatform.android && productDetails is GooglePlayProductDetails) {
+      final String? offerToken = _getAndroidOfferToken(productDetails);
+      if (offerToken != null && offerToken.isNotEmpty) {
+        final purchaseParam = GooglePlayPurchaseParam(
+          productDetails: productDetails,
+          offerToken: offerToken,
+        );
+        await _inAppPurchase.buyNonConsumable(purchaseParam: purchaseParam);
+        return;
+      }
+    }
     final PurchaseParam purchaseParam = PurchaseParam(productDetails: productDetails);
     await _inAppPurchase.buyNonConsumable(purchaseParam: purchaseParam);
   }
 
   Future<void> verifyPurchase(PurchaseDetails purchaseDetails) async {
+    // App Check token hazır olsun (Console'da zorunlu ise çağrı reddedilmesin)
+    await ensureAppCheckTokenReady();
     final HttpsCallable callable = _functions.httpsCallable('premium-verifyPurchase');
     final packageInfo = await PackageInfo.fromPlatform();
     await callable.call(<String, dynamic>{
@@ -95,6 +111,40 @@ class PurchaseService {
   }
 }
 
+// Android için offerToken'ı güvenli şekilde almaya çalış
+String? _getAndroidOfferToken(ProductDetails p) {
+  try {
+    if (p is GooglePlayProductDetails) {
+      final dyn = p as dynamic; // Eski sürümlerde alan olmayabilir
+      final offers = dyn.subscriptionOfferDetails;
+      if (offers != null && offers.isNotEmpty) {
+        final offer = offers.first;
+        return offer.offerToken as String?;
+      }
+    }
+  } catch (_) {}
+  return null;
+}
+
+// Abonelik fiyatı: yeni API varsa fazların sonunu, yoksa price döndür
+String _displayPriceFor(ProductDetails p) {
+  try {
+    if (p is GooglePlayProductDetails) {
+      final dyn = p as dynamic; // Derleme hatası olmaması için dinamik erişim
+      final offers = dyn.subscriptionOfferDetails;
+      if (offers != null && offers.isNotEmpty) {
+        final phases = offers.first.pricingPhases.pricingPhaseList as List?;
+        if (phases != null && phases.isNotEmpty) {
+          final last = phases.last;
+          final formatted = (last.formattedPrice ?? last.priceFormatted) as String?; // farklı sürümler
+          if (formatted != null && formatted.isNotEmpty) return formatted;
+        }
+      }
+    }
+  } catch (_) {}
+  return p.price;
+}
+
 class PremiumScreen extends ConsumerStatefulWidget {
   const PremiumScreen({super.key});
 
@@ -103,7 +153,7 @@ class PremiumScreen extends ConsumerStatefulWidget {
 }
 
 class _PremiumScreenState extends ConsumerState<PremiumScreen> {
-  String _selectedProductId = _yearlySubscriptionId;
+  String _selectedProductId = _monthlySubscriptionId;
   bool _isLoading = false;
 
   @override
@@ -196,19 +246,20 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
                 const SizedBox(height: 32),
                 _buildSubscriptionCard(
                   title: 'YILLIK ABONELİK',
-                  price: yearly.price,
+                  price: _displayPriceFor(yearly),
                   priceDetails: 'Yıllık',
                   isSelected: _selectedProductId == _yearlySubscriptionId,
                   onTap: () => setState(() => _selectedProductId = _yearlySubscriptionId),
-                  bannerText: '7 GÜN ÜCRETSİZ DENE',
+                  // Yıllık planda deneme yok
                 ).animate().fadeIn(delay: 200.ms).slideX(begin: -0.1),
                 const SizedBox(height: 16),
                 _buildSubscriptionCard(
                   title: 'AYLIK ABONELİK',
-                  price: monthly.price,
+                  price: _displayPriceFor(monthly),
                   priceDetails: 'Aylık',
                   isSelected: _selectedProductId == _monthlySubscriptionId,
                   onTap: () => setState(() => _selectedProductId = _monthlySubscriptionId),
+                  bannerText: '7 GÜN ÜCRETSİZ DENE',
                 ).animate().fadeIn(delay: 300.ms).slideX(begin: 0.1),
                 const SizedBox(height: 40),
                 _buildPerksList().animate().fadeIn(delay: 400.ms),
@@ -226,8 +277,8 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
               onPressed: () {
                 ref.read(purchaseServiceProvider).buySubscription(selectedProduct);
               },
-              buttonText: _selectedProductId == _yearlySubscriptionId
-                  ? 'Ücretsiz Denemeyi Başlat'
+              buttonText: _selectedProductId == _monthlySubscriptionId
+                  ? '7 Gün Ücretsiz Dene'
                   : 'Şimdi Abone Ol',
             ),
           ),
@@ -254,7 +305,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
                   priceDetails: 'Yıllık',
                   isSelected: _selectedProductId == _yearlySubscriptionId,
                   onTap: () => setState(() => _selectedProductId = _yearlySubscriptionId),
-                  bannerText: '7 GÜN ÜCRETSİZ DENE',
+                  // Deneme yok
                 ),
                 const SizedBox(height: 16),
                 _buildSubscriptionCard(
@@ -263,6 +314,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
                   priceDetails: 'Aylık',
                   isSelected: _selectedProductId == _monthlySubscriptionId,
                   onTap: () => setState(() => _selectedProductId = _monthlySubscriptionId),
+                  bannerText: '7 GÜN ÜCRETSİZ DENE',
                 ),
                 const SizedBox(height: 40),
                 _buildPerksList(),
@@ -278,8 +330,8 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
             child: _buildBottomBar(
               context,
               onPressed: null, // Disabled in mock mode
-              buttonText: _selectedProductId == _yearlySubscriptionId
-                  ? 'Ücretsiz Denemeyi Başlat'
+              buttonText: _selectedProductId == _monthlySubscriptionId
+                  ? '7 Gün Ücretsiz Dene'
                   : 'Şimdi Abone Ol',
             ),
           ),
@@ -482,13 +534,15 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               disabledBackgroundColor: AppTheme.lightSurfaceColor,
+              shadowColor: AppTheme.goldColor.withOpacity(0.5),
+              elevation: 4,
             ),
             onPressed: onPressed,
             child: Text(buttonText),
           ).animate().slide(begin: const Offset(0, 0.5)).fadeIn(),
           const SizedBox(height: 16),
           const Text(
-            'Abonelik, deneme süresinin bitiminde otomatik olarak yenilenir. İstediğiniz zaman iptal edebilirsiniz.',
+            '7 günlük deneme sadece Aylık plan için geçerlidir. Deneme bitiminde otomatik olarak yenilenir. İstediğiniz zaman iptal edebilirsiniz.',
             textAlign: TextAlign.center,
             style: TextStyle(color: AppTheme.secondaryTextColor, fontSize: 12),
           ),
