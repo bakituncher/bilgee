@@ -16,6 +16,9 @@ class UserModel {
   final DateTime? dateOfBirth;
 
   final bool isAdmin;
+  final bool isPremium;
+  final int stars;
+  final DateTime? premiumUntil;
   final String? goal;
   final List<String>? challenges;
   final double? weeklyStudyGoal;
@@ -78,6 +81,9 @@ class UserModel {
     this.gender,
     this.dateOfBirth,
     this.isAdmin = false,
+    this.isPremium = false,
+    this.stars = 0,
+    this.premiumUntil,
     this.goal,
     this.challenges,
     this.weeklyStudyGoal,
@@ -128,6 +134,9 @@ class UserModel {
     String? gender,
     DateTime? dateOfBirth,
     bool? isAdmin,
+    bool? isPremium,
+    int? stars,
+    DateTime? premiumUntil,
     String? goal,
     List<String>? challenges,
     double? weeklyStudyGoal,
@@ -176,6 +185,9 @@ class UserModel {
       gender: gender ?? this.gender,
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       isAdmin: isAdmin ?? this.isAdmin,
+      isPremium: isPremium ?? this.isPremium,
+      stars: stars ?? this.stars,
+      premiumUntil: premiumUntil ?? this.premiumUntil,
       goal: goal ?? this.goal,
       challenges: challenges ?? this.challenges,
       weeklyStudyGoal: weeklyStudyGoal ?? this.weeklyStudyGoal,
@@ -252,6 +264,9 @@ class UserModel {
       username: data['username'] ?? '',
       gender: data['gender'],
       dateOfBirth: (data['dateOfBirth'] as Timestamp?)?.toDate(),
+      isPremium: data['isPremium'] ?? false,
+      stars: data['stars'] ?? 0,
+      premiumUntil: (data['premiumUntil'] as Timestamp?)?.toDate(),
       goal: data['goal'],
       challenges: List<String>.from(data['challenges'] ?? []),
       weeklyStudyGoal: (data['weeklyStudyGoal'] as num?)?.toDouble(),
@@ -324,6 +339,9 @@ class UserModel {
       'username': username,
       'gender': gender,
       'dateOfBirth': dateOfBirth != null ? Timestamp.fromDate(dateOfBirth!) : null,
+      'isPremium': isPremium,
+      'stars': stars,
+      'premiumUntil': premiumUntil != null ? Timestamp.fromDate(premiumUntil!) : null,
       'goal': goal,
       'challenges': challenges,
       'weeklyStudyGoal': weeklyStudyGoal,
