@@ -9,6 +9,7 @@ import 'package:taktik/shared/widgets/loading_screen.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 // NEW Product IDs from Google Play Store
 const String _monthlySubscriptionId = 'premium_aylik';
