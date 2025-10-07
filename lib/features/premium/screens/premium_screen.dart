@@ -38,13 +38,17 @@ class PurchaseService {
   Future<List<ProductDetails>> loadProducts() async {
     final bool available = await _inAppPurchase.isAvailable();
     if (!available) {
-      // Handle store not available
+      if (kDebugMode) {
+        print("IAP not available. Returning empty list for mock UI.");
+      }
       return [];
     }
     final ProductDetailsResponse response =
         await _inAppPurchase.queryProductDetails(_kProductIds.toSet());
     if (response.error != null) {
-      // Handle error
+      if (kDebugMode) {
+        print("IAP error: ${response.error}. Returning empty list for mock UI.");
+      }
       return [];
     }
     return response.productDetails;
@@ -115,7 +119,7 @@ class PremiumScreen extends ConsumerStatefulWidget {
 }
 
 class _PremiumScreenState extends ConsumerState<PremiumScreen> {
-  ProductDetails? _selectedProduct;
+  String _selectedProductId = _yearlySubscriptionId;
   bool _isLoading = false;
 
   @override
@@ -176,35 +180,21 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
         children: [
           productsAsyncValue.when(
             data: (products) {
+              // In debug mode, if products are empty, show a mock UI.
+              if (products.isEmpty && kDebugMode) {
+                return _buildMockBody(context);
+              }
+              // In release mode, or if products fail to load for other reasons.
               if (products.isEmpty) {
                 return const Center(
                   child: Text(
-                    'Abonelikler yüklenemedi. Lütfen daha sonra tekrar deneyin.',
-                    style: TextStyle(color: Colors.white),
+                    'Abonelikler yüklenemedi.\nLütfen daha sonra tekrar deneyin.',
+                    style: TextStyle(color: Colors.white, height: 1.5),
                     textAlign: TextAlign.center,
                   ),
                 );
               }
-              // Set default selection
-              _selectedProduct ??= products.firstWhere((p) => p.id == _yearlySubscriptionId);
-
-              return SingleChildScrollView(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildHeader(context),
-                    const SizedBox(height: 32),
-                    _buildSubscriptionOptions(context, products),
-                    const SizedBox(height: 32),
-                    _buildPerksList(context),
-                    const SizedBox(height: 32),
-                    _buildCTAButton(context),
-                    const SizedBox(height: 16),
-                    _buildTermsAndConditions(context),
-                  ],
-                ),
-              );
+              return _buildRealBody(context, products);
             },
             loading: () => const LoadingScreen(),
             error: (err, stack) => Center(
@@ -228,6 +218,90 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  // Body for when real products are loaded
+  Widget _buildRealBody(BuildContext context, List<ProductDetails> products) {
+    final monthly = products.firstWhere((p) => p.id == _monthlySubscriptionId);
+    final yearly = products.firstWhere((p) => p.id == _yearlySubscriptionId);
+    final selectedProduct = products.firstWhere((p) => p.id == _selectedProductId);
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildHeader(context),
+          const SizedBox(height: 32),
+          _buildSubscriptionCard(
+            context: context,
+            price: yearly.price,
+            title: 'Yıllık Plan',
+            subtitle: 'En Avantajlı Seçim',
+            isSelected: _selectedProductId == _yearlySubscriptionId,
+            onTap: () => setState(() => _selectedProductId = _yearlySubscriptionId),
+          ),
+          const SizedBox(height: 16),
+          _buildSubscriptionCard(
+            context: context,
+            price: monthly.price,
+            title: 'Aylık Plan',
+            subtitle: null,
+            isSelected: _selectedProductId == _monthlySubscriptionId,
+            onTap: () => setState(() => _selectedProductId = _monthlySubscriptionId),
+          ),
+          const SizedBox(height: 32),
+          _buildPerksList(context),
+          const SizedBox(height: 32),
+          _buildCTAButton(
+            context: context,
+            onPressed: () {
+              final purchaseService = ref.read(purchaseServiceProvider);
+              purchaseService.buySubscription(selectedProduct);
+            },
+          ),
+          const SizedBox(height: 16),
+          _buildTermsAndConditions(context),
+        ],
+      ),
+    );
+  }
+
+  // Mock body for development when IAP is not available
+  Widget _buildMockBody(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildHeader(context),
+          const SizedBox(height: 32),
+          _buildSubscriptionCard(
+            context: context,
+            price: '₺199.99', // Placeholder price
+            title: 'Yıllık Plan',
+            subtitle: 'En Avantajlı Seçim',
+            isSelected: _selectedProductId == _yearlySubscriptionId,
+            onTap: () => setState(() => _selectedProductId = _yearlySubscriptionId),
+          ),
+          const SizedBox(height: 16),
+          _buildSubscriptionCard(
+            context: context,
+            price: '₺24.99', // Placeholder price
+            title: 'Aylık Plan',
+            subtitle: null,
+            isSelected: _selectedProductId == _monthlySubscriptionId,
+            onTap: () => setState(() => _selectedProductId = _monthlySubscriptionId),
+          ),
+          const SizedBox(height: 32),
+          _buildPerksList(context),
+          const SizedBox(height: 32),
+          _buildCTAButton(context: context, onPressed: null), // Disabled button
+          const SizedBox(height: 16),
+          _buildTermsAndConditions(context),
         ],
       ),
     );
@@ -259,44 +333,9 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
     );
   }
 
-  Widget _buildSubscriptionOptions(BuildContext context, List<ProductDetails> products) {
-    final monthly = products.firstWhere((p) => p.id == _monthlySubscriptionId);
-    final yearly = products.firstWhere((p) => p.id == _yearlySubscriptionId);
-
-    return Column(
-      children: [
-        _buildSubscriptionCard(
-          context: context,
-          product: yearly,
-          title: 'Yıllık Plan',
-          subtitle: 'En Avantajlı Seçim',
-          isSelected: _selectedProduct?.id == _yearlySubscriptionId,
-          onTap: () {
-            setState(() {
-              _selectedProduct = yearly;
-            });
-          },
-        ),
-        const SizedBox(height: 16),
-        _buildSubscriptionCard(
-          context: context,
-          product: monthly,
-          title: 'Aylık Plan',
-          subtitle: null,
-          isSelected: _selectedProduct?.id == _monthlySubscriptionId,
-          onTap: () {
-            setState(() {
-              _selectedProduct = monthly;
-            });
-          },
-        ),
-      ],
-    );
-  }
-
   Widget _buildSubscriptionCard({
     required BuildContext context,
-    required ProductDetails product,
+    required String price,
     required String title,
     String? subtitle,
     required bool isSelected,
@@ -349,7 +388,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
               ],
             ),
             Text(
-              product.price,
+              price,
               style: Theme.of(context)
                   .textTheme
                   .headlineSmall
@@ -403,7 +442,10 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
     );
   }
 
-  Widget _buildCTAButton(BuildContext context) {
+  Widget _buildCTAButton({
+    required BuildContext context,
+    required VoidCallback? onPressed,
+  }) {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.amber,
@@ -415,13 +457,9 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
           fontSize: 18,
           fontWeight: FontWeight.bold,
         ),
+        disabledBackgroundColor: Colors.grey.shade700,
       ),
-      onPressed: () {
-        if (_selectedProduct != null) {
-          final purchaseService = ref.read(purchaseServiceProvider);
-          purchaseService.buySubscription(_selectedProduct!);
-        }
-      },
+      onPressed: onPressed,
       child: const Text('Premium\'a Geç'),
     );
   }
