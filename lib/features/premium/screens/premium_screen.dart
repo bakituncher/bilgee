@@ -353,6 +353,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
               buttonText: _selectedProductId == _monthlySubscriptionId
                   ? '7 Gün Ücretsiz Dene'
                   : 'Şimdi Abone Ol',
+              hasFreeTrial: false, // Mock data doesn't have a trial
             ),
           ),
         ),
