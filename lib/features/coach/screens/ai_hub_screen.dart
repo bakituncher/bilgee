@@ -7,7 +7,6 @@ import 'dart:math';
 import 'dart:ui';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
-import 'package:taktik/shared/widgets/premium_gate.dart';
 
 // Öğretici için GlobalKey'ler
 final GlobalKey strategicPlanningKey = GlobalKey();
@@ -83,7 +82,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
   @override
   Widget build(BuildContext context) {
     final userProfile = ref.watch(userProfileProvider);
-    final stars = userProfile.value?.stars ?? 0;
+    // stars kaldırıldı: kullanıcıya gösterilmeyecek
     final isPremium = userProfile.value?.isPremium ?? false;
 
     final tools = [
@@ -149,25 +148,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
                     elevation: 0,
                     toolbarHeight: kToolbarHeight,
                     title: const Text('TaktikAI Çekirdeği'),
-                    actions: [
-                      Padding(
-                        padding: const EdgeInsets.only(right: 16.0),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.star_rounded, color: Colors.amber, size: 24),
-                            const SizedBox(width: 8),
-                            Text(
-                              stars.toString(),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                    // Yıldız gösterimi kaldırıldı
                     flexibleSpace: ClipRect(
                       child: BackdropFilter(
                         filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
@@ -210,7 +191,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
                           return _AiToolTile(
                             tool: tool,
                             onTap: () => _handleAiToolTap(tool),
-                              isPremium: isPremium,
+                            isPremium: isPremium,
                           );
                         },
                         childCount: tools.length,
