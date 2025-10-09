@@ -69,6 +69,9 @@ dependencies:
   wakelock_plus: ^1.2.7
 
   collection: any
+
+  # RevenueCat
+  purchases_flutter: ^9.7.1
 dev_dependencies:
   flutter_test:
     sdk: flutter

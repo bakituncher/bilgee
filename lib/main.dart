@@ -16,6 +16,9 @@ import 'package:taktik/core/prompts/strategy_prompts.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'shared/notifications/notification_service.dart';
 import 'package:taktik/core/prompts/prompt_remote.dart';
+import 'package:taktik/core/services/revenuecat_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -54,6 +57,17 @@ void main() async {
       }
       runApp(const ErrorApp(message: 'Başlatma hatası: Firebase yüklenemedi.'));
       return;
+    }
+
+    // Initialize RevenueCat
+    try {
+      await RevenueCatService.init();
+      // Sync RevenueCat with Firebase Auth
+      _setupAuthListener();
+    } catch (e) {
+        if (kDebugMode) {
+            debugPrint('[RevenueCat] Initialization failed: $e');
+        }
     }
 
     // App Check'i başlat ve güvenlik sağlayıcılarını aktive et.
@@ -130,6 +144,26 @@ void main() async {
     if (kDebugMode) {
       debugPrint('[Zoned] Yakalanmamış hata: $error');
       debugPrint(stack.toString());
+    }
+  });
+}
+
+void _setupAuthListener() {
+  FirebaseAuth.instance.authStateChanges().listen((User? user) {
+    if (user != null) {
+      // User is signed in, log in to RevenueCat
+      Purchases.logIn(user.uid).catchError((e) {
+        if (kDebugMode) {
+          debugPrint('[RevenueCat] Login failed: $e');
+        }
+      });
+    } else {
+      // User is signed out, log out from RevenueCat
+      Purchases.logOut().catchError((e) {
+        if (kDebugMode) {
+          debugPrint('[RevenueCat] Logout failed: $e');
+        }
+      });
     }
   });
 }
