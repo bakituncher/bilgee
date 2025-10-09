@@ -71,7 +71,7 @@ dependencies:
   collection: any
 
   # RevenueCat
-  purchases_flutter: ^6.34.0
+  purchases_flutter: ^9.7.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
