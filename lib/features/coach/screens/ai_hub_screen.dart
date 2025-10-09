@@ -1,7 +1,10 @@
 // lib/features/coach/screens/ai_hub_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:taktik/core/theme/app_theme.dart'; // AppTheme import geri eklendi
+import 'package:taktik/core/theme/app_theme.dart';
+import 'package:taktik/data/providers/premium_provider.dart';
+import 'package:taktik/shared/widgets/premium_lock_widget.dart';
 import 'dart:math';
 import 'dart:ui';
 
@@ -9,16 +12,16 @@ import 'dart:ui';
 final GlobalKey strategicPlanningKey = GlobalKey();
 final GlobalKey weaknessWorkshopKey = GlobalKey();
 final GlobalKey motivationChatKey = GlobalKey();
-final GlobalKey analysisStrategyKey = GlobalKey(); // YENİ: Analiz & Strateji (birleşik)
+final GlobalKey analysisStrategyKey = GlobalKey();
 
-class AiHubScreen extends StatefulWidget {
+class AiHubScreen extends ConsumerStatefulWidget {
   const AiHubScreen({super.key});
 
   @override
-  State<AiHubScreen> createState() => _AiHubScreenState();
+  ConsumerState<AiHubScreen> createState() => _AiHubScreenState();
 }
 
-class _AiHubScreenState extends State<AiHubScreen> with SingleTickerProviderStateMixin {
+class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProviderStateMixin {
   late final AnimationController _pulse;
   late final Animation<double> _glow;
 
@@ -37,6 +40,8 @@ class _AiHubScreenState extends State<AiHubScreen> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
+    final isPremium = ref.watch(premiumStatusProvider);
+
     final tools = [
       _AiTool(
         key: strategicPlanningKey,
@@ -58,7 +63,6 @@ class _AiHubScreenState extends State<AiHubScreen> with SingleTickerProviderStat
         heroTag: 'weakness-core',
         chip: 'Gelişim',
       ),
-      // Birleşik: Analiz & Strateji
       _AiTool(
         key: analysisStrategyKey,
         title: 'Analiz & Strateji',
@@ -84,7 +88,7 @@ class _AiHubScreenState extends State<AiHubScreen> with SingleTickerProviderStat
     final bottomInset = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
-      extendBodyBehindAppBar: false, // çakışmayı önle
+      extendBodyBehindAppBar: false,
       appBar: null,
       body: Stack(
         children: [
@@ -109,12 +113,12 @@ class _AiHubScreenState extends State<AiHubScreen> with SingleTickerProviderStat
               ),
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8), // azaltıldı
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _CoreVisual(glow: _glow),
-                      const SizedBox(height: 24), // 40 -> 24: daha kompakt üst alan
+                      const SizedBox(height: 24),
                       Text(
                         'Yapay Zeka Araçları',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
@@ -124,7 +128,6 @@ class _AiHubScreenState extends State<AiHubScreen> with SingleTickerProviderStat
                   ),
                 ),
               ),
-              // Liste yerine 2 sütunlu, kompakt grid
               SliverPadding(
                 padding: EdgeInsets.fromLTRB(16, 0, 16, bottomInset + 24),
                 sliver: SliverGrid(
@@ -132,14 +135,21 @@ class _AiHubScreenState extends State<AiHubScreen> with SingleTickerProviderStat
                     crossAxisCount: 2,
                     mainAxisSpacing: 12,
                     crossAxisSpacing: 12,
-                    mainAxisExtent: 168, // daha az dikey kaydırma
+                    mainAxisExtent: 168,
                   ),
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
                       final tool = tools[index];
-                      return _AiToolTile(
-                        tool: tool,
-                        onTap: () => context.go(tool.route),
+                      return PremiumLock(
+                        isLocked: !isPremium,
+                        child: _AiToolTile(
+                          tool: tool,
+                          onTap: () {
+                            if (isPremium) {
+                              context.go(tool.route);
+                            }
+                          },
+                        ),
                       );
                     },
                     childCount: tools.length,
@@ -162,7 +172,7 @@ class _CoreVisual extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: SizedBox(
-        width: 200, // 220 -> 200: daha az yer kaplasın
+        width: 200,
         height: 200,
         child: AnimatedBuilder(
           animation: glow,
@@ -230,30 +240,6 @@ class _CoreVisual extends StatelessWidget {
   }
 }
 
-// class _AiToolCard extends StatelessWidget {
-//   const _AiToolCard({required this.tool, required this.onTap});
-//   final _AiTool tool; final VoidCallback onTap;
-//   @override
-//   Widget build(BuildContext context) {
-//     return Hero(
-//       tag: tool.heroTag,
-//       flightShuttleBuilder: (context, animation, direction, from, to) => FadeTransition(opacity: animation, child: to.widget),
-//       child: Padding(
-//         padding: const EdgeInsets.only(bottom: 16),
-//         child: _FrostedCard(
-//           key: tool.key,
-//           onTap: onTap,
-//           leading: Icon(tool.icon, size: 38, color: tool.color),
-//           title: tool.title,
-//           subtitle: tool.subtitle,
-//           chip: tool.chip,
-//           color: tool.color,
-//         ),
-//       ),
-//     );
-//   }
-// }
-
 class _AiTool {
   final GlobalKey key;
   final String title;
@@ -306,7 +292,7 @@ class _ParticlePainter extends CustomPainter {
   final int count = 22;
   @override
   void paint(Canvas canvas, Size size) {
-    final rnd = Random(42); // deterministik
+    final rnd = Random(42);
     for (var i = 0; i < count; i++) {
       final dx = rnd.nextDouble() * size.width;
       final dy = rnd.nextDouble() * size.height;
@@ -321,7 +307,6 @@ class _ParticlePainter extends CustomPainter {
   bool shouldRepaint(covariant _ParticlePainter oldDelegate) => oldDelegate.progress != progress;
 }
 
-// Yeni: Grid için kompakt, premium görünümlü frosted tile
 class _AiToolTile extends StatelessWidget {
   const _AiToolTile({required this.tool, required this.onTap});
   final _AiTool tool;
@@ -351,12 +336,10 @@ class _AiToolTile extends StatelessWidget {
               borderRadius: radius,
               child: Stack(
                 children: [
-                  // Cam efekti
                   BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
                     child: Container(),
                   ),
-                  // Yarı saydam cam panel + gradient kenar vurgusu
                   Container(
                     decoration: BoxDecoration(
                       borderRadius: radius,
@@ -371,7 +354,6 @@ class _AiToolTile extends StatelessWidget {
                       border: Border.all(color: Colors.white.withOpacity(.12)),
                     ),
                   ),
-                  // Dekoratif ışık lekesi
                   Positioned(
                     right: -24,
                     top: -24,
@@ -384,7 +366,6 @@ class _AiToolTile extends StatelessWidget {
                       ),
                     ),
                   ),
-                  // İçerik
                   Padding(
                     padding: const EdgeInsets.all(14),
                     child: Column(
