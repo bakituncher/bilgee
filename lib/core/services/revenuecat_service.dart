@@ -5,6 +5,14 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 const String _googleApiKey = 'goog_JStBnogEUetfbcoYdIHKyTZEdXf';
 const String _appleApiKey = 'appl_api_key_placeholder'; // Replace if you have an Apple key
 
+class PurchaseOutcome {
+  final CustomerInfo? info;
+  final bool cancelled;
+  final String? error;
+  const PurchaseOutcome({this.info, this.cancelled = false, this.error});
+  bool get success => info != null;
+}
+
 class RevenueCatService {
   static Future<void> init() async {
     await Purchases.setLogLevel(LogLevel.debug);
@@ -33,16 +41,20 @@ class RevenueCatService {
     }
   }
 
-  static Future<bool> makePurchase(Package package) async {
+  // Satın alma sonucu: başarı (CustomerInfo), iptal (cancelled) veya hata (error)
+  static Future<PurchaseOutcome> makePurchase(Package package) async {
     try {
-      await Purchases.purchasePackage(package);
-      return true;
+      final result = await Purchases.purchasePackage(package); // PurchaseResult
+      return PurchaseOutcome(info: result.customerInfo);
     } on PlatformException catch (e) {
       final errorCode = PurchasesErrorHelper.getErrorCode(e);
-      if (errorCode != PurchasesErrorCode.purchaseCancelledError) {
-        print("Error making purchase: $e");
+      if (errorCode == PurchasesErrorCode.purchaseCancelledError) {
+        return const PurchaseOutcome(info: null, cancelled: true);
       }
-      return false;
+      print("Error making purchase: $e");
+      return PurchaseOutcome(info: null, cancelled: false, error: e.message);
+    } catch (e) {
+      return PurchaseOutcome(info: null, error: e.toString());
     }
   }
 }

@@ -864,6 +864,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.1.5+1"
+  purchases_flutter:
+    dependency: "direct main"
+    description:
+      name: purchases_flutter
+      sha256: f0f710cdc399d4aad7c9e36d1abac7c00f40ddfedd387d3775810034962fac4b
+      url: "https://pub.dev"
+    source: hosted
+    version: "9.7.1"
   riverpod:
     dependency: transitive
     description:

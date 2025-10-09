@@ -23,15 +23,15 @@ class PremiumView extends ConsumerWidget {
     final offeringsAsyncValue = ref.watch(offeringsProvider);
     final isPremium = ref.watch(premiumStatusProvider);
 
-    // If the user is already premium, redirect them.
-    ref.listen<bool>(premiumStatusProvider, (previous, next) {
-      if (next == true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Premium üyeliğiniz aktif!')),
-        );
-        _handleBack(context);
-      }
-    });
+    // Otomatik geri dönüş dinleyicisini kaldırdık; navigasyon sadece işlem akışında yapılacak
+    // ref.listen<bool>(premiumStatusProvider, (previous, next) {
+    //   if (next == true) {
+    //     ScaffoldMessenger.of(context).showSnackBar(
+    //       const SnackBar(content: Text('Premium üyeliğiniz aktif!')),
+    //     );
+    //     _handleBack(context);
+    //   }
+    // });
 
     return Scaffold(
       appBar: AppBar(
@@ -55,6 +55,22 @@ class PremiumView extends ConsumerWidget {
               data: (offerings) => _buildPurchaseOptions(context, ref, offerings),
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, stack) => Center(child: Text('Hata: $error')),
+            ),
+            const SizedBox(height: 12),
+            TextButton.icon(
+              onPressed: () async {
+                await ref.read(premiumStatusProvider.notifier).restorePurchases();
+                if (context.mounted) {
+                  final isPremium = ref.read(premiumStatusProvider);
+                  final msg = isPremium ? 'Satın alımlar geri yüklendi. Premium aktif.' : 'Aktif satın alım bulunamadı.';
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+                  if (isPremium) {
+                    _handleBack(context);
+                  }
+                }
+              },
+              icon: const Icon(Icons.restore_rounded),
+              label: const Text('Satın alımları geri yükle'),
             ),
           ],
         ),
@@ -117,7 +133,8 @@ class PremiumView extends ConsumerWidget {
   }
 
   Widget _buildPurchaseOptions(BuildContext context, WidgetRef ref, Offerings? offerings) {
-    if (offerings?.current == null) {
+    // Offerings null ise gösterilecek bir şey yok
+    if (offerings == null) {
       return const Center(
         child: Text(
           'Satın alma seçenekleri şu anda mevcut değil.\nLütfen daha sonra tekrar deneyin.',
@@ -126,9 +143,67 @@ class PremiumView extends ConsumerWidget {
       );
     }
 
-    final offering = offerings!.current!;
-    final monthly = offering.getPackage('premium_aylik');
-    final yearly = offering.getPackage('premium_yillik');
+    // current boş ya da paketsizse, all içinden paketi olan ilk offering’i seç
+    Offering? selected = offerings.current;
+    if (selected == null || selected.availablePackages.isEmpty) {
+      final candidates = offerings.all.values.where((o) => o.availablePackages.isNotEmpty);
+      if (candidates.isNotEmpty) {
+        selected = candidates.first;
+      }
+    }
+
+    if (selected == null) {
+      return const Center(child: Text('Geçerli bir abonelik planı bulunamadı.'));
+    }
+
+    final offering = selected;
+
+    // 1) En güvenilir: packageType kısayolları
+    Package? monthly = offering.monthly;
+    Package? yearly = offering.annual;
+
+    // 2) Özel tanımlı paket kimlikleri (RevenueCat Portal):
+    monthly ??= offering.getPackage('aylik-normal');
+    yearly ??= offering.getPackage('yillik-normal');
+
+    // 3) availablePackages içinden packageType'a göre seç (null-safe)
+    if (monthly == null) {
+      final byTypeMonthly = offering.availablePackages.where((p) => p.packageType == PackageType.monthly);
+      if (byTypeMonthly.isNotEmpty) monthly = byTypeMonthly.first;
+    }
+    if (yearly == null) {
+      final byTypeYearly = offering.availablePackages.where((p) => p.packageType == PackageType.annual);
+      if (byTypeYearly.isNotEmpty) yearly = byTypeYearly.first;
+    }
+
+    // 4) Ürün kimliğine göre geniş arama (SKU tam eşleşmiyorsa):
+    if (monthly == null) {
+      final byIdMonthly = offering.availablePackages.where(
+        (p) => p.storeProduct.identifier.contains('premium_aylik') ||
+                p.identifier.contains('aylik') ||
+                p.identifier.contains('monthly'),
+      );
+      if (byIdMonthly.isNotEmpty) monthly = byIdMonthly.first;
+    }
+    if (yearly == null) {
+      final byIdYearly = offering.availablePackages.where(
+        (p) => p.storeProduct.identifier.contains('premium_yillik') ||
+                p.identifier.contains('yillik') ||
+                p.identifier.contains('annual') ||
+                p.identifier.contains('year'),
+      );
+      if (byIdYearly.isNotEmpty) yearly = byIdYearly.first;
+    }
+
+    // Eğer halen yoksa, elde ne varsa göster (kullanıcı bir şey seçebilsin)
+    if (monthly == null && yearly == null && offering.availablePackages.isNotEmpty) {
+      if (offering.availablePackages.length == 1) {
+        monthly = offering.availablePackages.first;
+      } else {
+        monthly = offering.availablePackages.first;
+        yearly = offering.availablePackages.skip(1).first;
+      }
+    }
 
     if (monthly == null && yearly == null) {
       return const Center(child: Text('Geçerli bir abonelik planı bulunamadı.'));
@@ -136,39 +211,74 @@ class PremiumView extends ConsumerWidget {
 
     return Column(
       children: [
-        if (monthly != null)
-          _PurchaseOptionCard(
-            package: monthly,
-            title: 'Aylık',
-            subtitle: monthly.storeProduct.priceString,
-            isTrial: true,
-            onTap: () => _purchasePackage(context, ref, monthly),
-          ),
-        const SizedBox(height: 12),
+        if (monthly != null) ...[
+          () {
+            final m = monthly!;
+            return _PurchaseOptionCard(
+              package: m,
+              title: 'Aylık',
+              subtitle: m.storeProduct.priceString,
+              isTrial: true,
+              onTap: () => _purchasePackage(context, ref, m),
+            );
+          }(),
+          const SizedBox(height: 12),
+        ],
         if (yearly != null)
-          _PurchaseOptionCard(
-            package: yearly,
-            title: 'Yıllık',
-            subtitle: yearly.storeProduct.priceString,
-            isBestValue: true,
-            onTap: () => _purchasePackage(context, ref, yearly),
-          ),
+          () {
+            final y = yearly!;
+            return _PurchaseOptionCard(
+              package: y,
+              title: 'Yıllık',
+              subtitle: y.storeProduct.priceString,
+              isBestValue: true,
+              onTap: () => _purchasePackage(context, ref, y),
+            );
+          }(),
       ],
     );
   }
 
   Future<void> _purchasePackage(BuildContext context, WidgetRef ref, Package package) async {
+    // Basit bir loading göstergesi (UI donmasın ve çift tık önlensin)
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
     try {
-      final success = await RevenueCatService.makePurchase(package);
-      if (success && context.mounted) {
-        // The listener will handle the premium status update and navigation.
-      }
-    } catch (e) {
-      if (context.mounted) {
+      final outcome = await RevenueCatService.makePurchase(package);
+
+      if (!context.mounted) return;
+      Navigator.of(context, rootNavigator: true).pop(); // loading kapat
+
+      if (outcome.cancelled) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Satın alma sırasında bir hata oluştu: $e')),
+          const SnackBar(content: Text('Satın alma iptal edildi.')),
         );
+        return;
       }
+
+      if (outcome.success && outcome.info != null) {
+        ref.read(premiumStatusProvider.notifier).updateFromCustomerInfo(outcome.info!);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Satın alma başarılı. Premium aktif!')),
+        );
+        _handleBack(context);
+        return;
+      }
+
+      final errMsg = outcome.error ?? 'Bilinmeyen bir hata oluştu.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Satın alma başarısız: $errMsg')),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Satın alma sırasında bir hata oluştu: $e')),
+      );
     }
   }
 }

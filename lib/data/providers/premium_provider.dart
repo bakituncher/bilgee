@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:taktik/core/services/revenuecat_service.dart';
@@ -24,16 +25,53 @@ class PremiumStatusNotifier extends StateNotifier<bool> {
     });
 
     // Check initial status
-    final customerInfo = await Purchases.getCustomerInfo();
+    try {
+      final customerInfo = await Purchases.getCustomerInfo();
+      _updatePremiumStatus(customerInfo);
+    } catch (e) {
+      if (kDebugMode) debugPrint('[RC] getCustomerInfo failed: $e');
+    }
+  }
+
+  Future<void> refresh() async {
+    try {
+      final customerInfo = await Purchases.getCustomerInfo();
+      _updatePremiumStatus(customerInfo);
+    } catch (e) {
+      if (kDebugMode) debugPrint('[RC] refresh getCustomerInfo failed: $e');
+    }
+  }
+
+  Future<void> restorePurchases() async {
+    try {
+      final customerInfo = await Purchases.restorePurchases();
+      _updatePremiumStatus(customerInfo);
+    } catch (e) {
+      if (kDebugMode) debugPrint('[RC] restorePurchases failed: $e');
+    }
+  }
+
+  void updateFromCustomerInfo(CustomerInfo customerInfo) {
     _updatePremiumStatus(customerInfo);
   }
 
   void _updatePremiumStatus(CustomerInfo customerInfo) {
-    // Check if the user has an active entitlement.
-    // The entitlement identifier 'Taktik (Play Store)' was provided by the user.
-    final isActive = customerInfo.entitlements.all['Taktik (Play Store)']?.isActive == true;
-    if (state != isActive) {
-      state = isActive;
+    // Debug: aktif entitlement anahtarlarını ve aktif abonelik ürünlerini logla
+    if (kDebugMode) {
+      try {
+        final entKeys = customerInfo.entitlements.active.keys.toList();
+        final subs = customerInfo.activeSubscriptions.toList();
+        debugPrint('[RC] Active entitlements: $entKeys | Active subscriptions: $subs');
+      } catch (_) {}
+    }
+
+    // Premium durumu: aktif entitlement VARSA ya da aktif abonelik VARSA
+    final hasAnyActiveEntitlement = customerInfo.entitlements.active.isNotEmpty;
+    final hasAnyActiveSubscription = customerInfo.activeSubscriptions.isNotEmpty;
+    final isPremium = hasAnyActiveEntitlement || hasAnyActiveSubscription;
+
+    if (state != isPremium) {
+      state = isPremium;
     }
   }
 }
