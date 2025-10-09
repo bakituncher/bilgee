@@ -116,15 +116,23 @@ class PremiumView extends ConsumerWidget {
     );
   }
 
-  Widget _buildPurchaseOptions(BuildContext context, WidgetRef ref, List<Offering> offerings) {
-    if (offerings.isEmpty) {
-      return const Center(child: Text('Satın alma seçenekleri bulunamadı.'));
+  Widget _buildPurchaseOptions(BuildContext context, WidgetRef ref, Offerings? offerings) {
+    if (offerings?.current == null) {
+      return const Center(
+        child: Text(
+          'Satın alma seçenekleri şu anda mevcut değil.\nLütfen daha sonra tekrar deneyin.',
+          textAlign: TextAlign.center,
+        ),
+      );
     }
 
-    // Assuming the first offering is the one we want to display.
-    final offering = offerings.firstWhere((o) => o.identifier == 'Taktik', orElse: () => offerings.first);
+    final offering = offerings!.current!;
     final monthly = offering.getPackage('premium_aylik');
     final yearly = offering.getPackage('premium_yillik');
+
+    if (monthly == null && yearly == null) {
+      return const Center(child: Text('Geçerli bir abonelik planı bulunamadı.'));
+    }
 
     return Column(
       children: [

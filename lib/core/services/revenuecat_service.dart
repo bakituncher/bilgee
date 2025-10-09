@@ -24,13 +24,12 @@ class RevenueCatService {
   static bool get isAndroid => TargetPlatform.android == defaultTargetPlatform;
   static bool get isIOS => TargetPlatform.iOS == defaultTargetPlatform;
 
-  static Future<List<Offering>> getOfferings() async {
+  static Future<Offerings> getOfferings() async {
     try {
-      final offerings = await Purchases.getOfferings();
-      return offerings.all.values.toList();
+      return await Purchases.getOfferings();
     } on PlatformException catch (e) {
       print("Error fetching offerings: $e");
-      return [];
+      rethrow; // Rethrow to be handled by the provider
     }
   }
 

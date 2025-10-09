@@ -3,7 +3,7 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:taktik/core/services/revenuecat_service.dart';
 
 // Provider to fetch offerings from RevenueCat
-final offeringsProvider = FutureProvider<List<Offering>>((ref) async {
+final offeringsProvider = FutureProvider<Offerings>((ref) async {
   return await RevenueCatService.getOfferings();
 });
 
@@ -29,11 +29,9 @@ class PremiumStatusNotifier extends StateNotifier<bool> {
   }
 
   void _updatePremiumStatus(CustomerInfo customerInfo) {
-    // Check if the user has an active entitlement
-    // "Taktik (Play Store)" is the entitlement identifier from RevenueCat dashboard.
-    // We should use the provided one. The user provided "Taktik (Play Store)".
-    // Let's assume the identifier is "premium". We can change it later if needed.
-    final isActive = customerInfo.entitlements.all['Taktik']?.isActive == true;
+    // Check if the user has an active entitlement.
+    // The entitlement identifier 'Taktik (Play Store)' was provided by the user.
+    final isActive = customerInfo.entitlements.all['Taktik (Play Store)']?.isActive == true;
     if (state != isActive) {
       state = isActive;
     }
