@@ -1,206 +1,236 @@
-// lib/features/premium/screens/premium_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:taktik/core/services/revenuecat_service.dart';
 import 'package:taktik/core/theme/app_theme.dart';
+import 'package:collection/collection.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
+import 'dart:math';
+import 'dart:ui';
 
-class PremiumView extends ConsumerWidget {
-  const PremiumView({super.key});
+class PremiumScreen extends ConsumerStatefulWidget {
+  const PremiumScreen({super.key});
 
-  Future<void> _handleBack(BuildContext context) async {
-    if (Navigator.of(context).canPop()) {
-      Navigator.of(context).pop();
+  @override
+  ConsumerState<PremiumScreen> createState() => _PremiumScreenState();
+}
+
+class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProviderStateMixin {
+  late final AnimationController _glowController;
+  late final Animation<double> _glow;
+  late final AnimationController _slideController;
+
+  @override
+  void initState() {
+    super.initState();
+    _glowController = AnimationController(vsync: this, duration: const Duration(seconds: 5))..repeat(reverse: true);
+    _glow = CurvedAnimation(parent: _glowController, curve: Curves.easeInOut);
+    _slideController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200), value: 0);
+    _slideController.forward();
+  }
+
+  @override
+  void dispose() {
+    _glowController.dispose();
+    _slideController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleBack() async {
+    if (context.canPop()) {
+      context.pop();
     } else {
       context.go('/home');
     }
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final offeringsAsyncValue = ref.watch(offeringsProvider);
-    final isPremium = ref.watch(premiumStatusProvider);
+    final bottomInset = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Premium'),
-        automaticallyImplyLeading: false,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Geri',
-          onPressed: () => _handleBack(context),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-        child: Column(
-          children: [
-            const _MinimalHero(),
-            const SizedBox(height: 16),
-            _buildBenefitsList(context),
-            const SizedBox(height: 22),
-            offeringsAsyncValue.when(
-              data: (offerings) => _buildPurchaseOptions(context, ref, offerings),
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stack) => Center(child: Text('Hata: $error')),
-            ),
-            const SizedBox(height: 12),
-            TextButton.icon(
-              onPressed: () async {
-                await ref.read(premiumStatusProvider.notifier).restorePurchases();
-                if (context.mounted) {
-                  final isPremium = ref.read(premiumStatusProvider);
-                  final msg = isPremium ? 'Satın alımlar geri yüklendi. Premium aktif.' : 'Aktif satın alım bulunamadı.';
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-                  if (isPremium) {
-                    _handleBack(context);
-                  }
-                }
-              },
-              icon: const Icon(Icons.restore_rounded),
-              label: const Text('Satın alımları geri yükle'),
-            ),
-            const SizedBox(height: 8),
-            const _TrustBadges(),
-          ],
-        ),
+      backgroundColor: AppTheme.primaryColor.withBlue(25),
+      body: Stack(
+        children: [
+          _AnimatedBackground(glow: _glow),
+          CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              SliverAppBar(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                pinned: true,
+                automaticallyImplyLeading: false,
+                leading: IconButton(
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+                  tooltip: 'Geri',
+                  onPressed: _handleBack,
+                ),
+                centerTitle: true,
+                title: const Text('Zirveye Oyna', style: TextStyle(fontWeight: FontWeight.bold)),
+                flexibleSpace: ClipRect(
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                    child: Container(color: Colors.black.withOpacity(0.2)),
+                  ),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  child: Column(
+                    children: [
+                      const _HeroVisual(),
+                      const SizedBox(height: 24),
+                      _AnimatedSlide(
+                        controller: _slideController,
+                        from: const Offset(0, 50),
+                        interval: const Interval(0.1, 0.5, curve: Curves.easeOutCubic),
+                        child: const _SectionHeader(
+                          title: 'Potansiyelini İkiye Katla',
+                          subtitle: 'TaktikAI\'ın tüm gücünü serbest bırakarak hedeflerine daha hızlı ulaş.',
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      _AnimatedSlide(
+                        controller: _slideController,
+                        from: const Offset(0, 50),
+                        interval: const Interval(0.2, 0.6, curve: Curves.easeOutCubic),
+                        child: _buildBenefitsList(),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                ),
+              ),
+              SliverPadding(
+                padding: EdgeInsets.fromLTRB(16, 0, 16, bottomInset > 0 ? bottomInset + 8 : 24),
+                sliver: offeringsAsyncValue.when(
+                  data: (offerings) => _buildPurchaseOptions(context, ref, offerings),
+                  loading: () => const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator(strokeWidth: 2))),
+                  error: (error, stack) => SliverToBoxAdapter(child: Center(child: Text('Hata: $error'))),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: _AnimatedSlide(
+                  controller: _slideController,
+                  from: const Offset(0, 50),
+                  interval: const Interval(0.5, 0.9, curve: Curves.easeOutCubic),
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(16, 0, 16, bottomInset > 0 ? bottomInset + 8 : 24),
+                    child: _buildFooter(context, ref),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
-  // Klasik fayda listesi (check ikonlarıyla)
-  Widget _buildBenefitsList(BuildContext context) {
+  Widget _buildBenefitsList() {
     const items = [
-      ('Sınırsız AI yanıtları', Icons.check_circle_outline_rounded),
-      ('Kişiselleştirilmiş planlar', Icons.check_circle_outline_rounded),
-      ('Gerçek zamanlı koçluk', Icons.check_circle_outline_rounded),
-      ('Detaylı analiz ve içgörüler', Icons.check_circle_outline_rounded),
+      ('Stratejik Planlama', 'Uzun vadeli hedefler ve haftalık yol haritası.', Icons.insights_rounded, AppTheme.secondaryColor),
+      ('Cevher Atölyesi', 'Zayıf yönlerini güce dönüştüren kişisel atölye.', Icons.construction_rounded, AppTheme.successColor),
+      ('Analiz & Strateji', 'Deneme sonuçlarını ve stratejini tek panelden yönet.', Icons.dashboard_customize_rounded, Colors.amberAccent),
+      ('Kesintisiz Odaklanma', 'Reklamsız bir deneyimle dikkat dağıtan her şeyi ortadan kaldır.', Icons.remove_red_eye_outlined, Colors.pinkAccent),
     ];
 
     return Column(
+      children: items.map((item) {
+        final index = items.indexOf(item);
+        return _AnimatedSlide(
+          controller: _slideController,
+          from: const Offset(0, 40),
+          interval: Interval(0.3 + index * 0.1, 0.7 + index * 0.1, curve: Curves.easeOutCubic),
+          child: _BenefitItem(icon: item.$3, title: item.$1, subtitle: item.$2, color: item.$4),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildFooter(BuildContext context, WidgetRef ref) {
+    return Column(
       children: [
-        for (final item in items)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6.0),
-            child: Row(
-              children: [
-                Icon(item.$2, color: AppTheme.successColor, size: 22),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(item.$1, style: const TextStyle(fontWeight: FontWeight.w700)),
-                ),
-              ],
-            ),
-          ),
+        TextButton.icon(
+          onPressed: () async {
+            await ref.read(premiumStatusProvider.notifier).restorePurchases();
+            if (context.mounted) {
+              final isPremium = ref.read(premiumStatusProvider);
+              final msg = isPremium ? 'Satın alımlar geri yüklendi. Premium aktif.' : 'Aktif satın alım bulunamadı.';
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+              if (isPremium) _handleBack();
+            }
+          },
+          icon: const Icon(Icons.restore_rounded, size: 20),
+          label: const Text('Satın alımları geri yükle'),
+          style: TextButton.styleFrom(foregroundColor: AppTheme.secondaryTextColor),
+        ),
+        const SizedBox(height: 12),
+        const _TrustBadges(),
       ],
     );
   }
 
-  // SATIN ALMA SEÇENEKLERİ (iki plan kartı: Aylık/Yıllık)
-  Widget _buildPurchaseOptions(BuildContext context, WidgetRef ref, Offerings? offerings) {
-    if (offerings == null) {
-      return const Center(
-        child: Text(
-          'Satın alma seçenekleri şu anda mevcut değil.\nLütfen daha sonra tekrar deneyin.',
-          textAlign: TextAlign.center,
-        ),
-      );
-    }
-
-    Offering? selected = offerings.current;
-    if (selected == null || selected.availablePackages.isEmpty) {
-      final candidates = offerings.all.values.where((o) => o.availablePackages.isNotEmpty);
-      if (candidates.isNotEmpty) {
-        selected = candidates.first;
-      }
-    }
-
-    if (selected == null) {
-      return const Center(child: Text('Geçerli bir abonelik planı bulunamadı.'));
-    }
-
-    final offering = selected;
-
-    Package? monthly = offering.monthly;
-    Package? yearly = offering.annual;
-
-    monthly ??= offering.getPackage('aylik-normal');
-    yearly ??= offering.getPackage('yillik-normal');
-
-    if (monthly == null) {
-      final byTypeMonthly = offering.availablePackages.where((p) => p.packageType == PackageType.monthly);
-      if (byTypeMonthly.isNotEmpty) monthly = byTypeMonthly.first;
-    }
-    if (yearly == null) {
-      final byTypeYearly = offering.availablePackages.where((p) => p.packageType == PackageType.annual);
-      if (byTypeYearly.isNotEmpty) yearly = byTypeYearly.first;
-    }
-
-    if (monthly == null) {
-      final byIdMonthly = offering.availablePackages.where(
-        (p) => p.storeProduct.identifier.contains('premium_aylik') ||
-                p.identifier.contains('aylik') ||
-                p.identifier.contains('monthly'),
-      );
-      if (byIdMonthly.isNotEmpty) monthly = byIdMonthly.first;
-    }
-    if (yearly == null) {
-      final byIdYearly = offering.availablePackages.where(
-        (p) => p.storeProduct.identifier.contains('premium_yillik') ||
-                p.identifier.contains('yillik') ||
-                p.identifier.contains('annual') ||
-                p.identifier.contains('year'),
-      );
-      if (byIdYearly.isNotEmpty) yearly = byIdYearly.first;
-    }
-
-    if (monthly == null && yearly == null && offering.availablePackages.isNotEmpty) {
-      if (offering.availablePackages.length == 1) {
-        monthly = offering.availablePackages.first;
-      } else {
-        monthly = offering.availablePackages.first;
-        yearly = offering.availablePackages.skip(1).first;
-      }
-    }
-
-    if (monthly == null && yearly == null) {
-      return const Center(child: Text('Geçerli bir abonelik planı bulunamadı.'));
-    }
-
+  SliverToBoxAdapter _buildPurchaseOptions(BuildContext context, WidgetRef ref, Offerings? offerings) {
+    Package? monthly, yearly;
     double? savePercent;
-    if (monthly != null && yearly != null) {
-      final m = monthly!.storeProduct.price;
-      final y = yearly!.storeProduct.price;
-      if (m > 0 && (m * 12) > 0 && y > 0) {
-        final ratio = 1 - (y / (m * 12));
-        if (ratio > 0.01) savePercent = (ratio * 100).floorToDouble();
+
+    if (offerings != null) {
+      final current = offerings.current ?? offerings.all.values.firstWhereOrNull((o) => o.availablePackages.isNotEmpty);
+      if (current != null) {
+        monthly = current.monthly ?? current.getPackage('aylik-normal') ?? current.availablePackages.firstWhereOrNull((p) => p.packageType == PackageType.monthly);
+        yearly = current.annual ?? current.getPackage('yillik-normal') ?? current.availablePackages.firstWhereOrNull((p) => p.packageType == PackageType.annual);
+
+        if (monthly == null || yearly == null) {
+           final sortedPackages = List.from(current.availablePackages)..sort((a,b) => a.storeProduct.price.compareTo(b.storeProduct.price));
+           if (sortedPackages.isNotEmpty) monthly ??= sortedPackages.first;
+           if (sortedPackages.length > 1) yearly ??= sortedPackages.last;
+        }
+
+        if (monthly != null && yearly != null) {
+          final mPrice = monthly.storeProduct.price;
+          final yPrice = yearly.storeProduct.price;
+          if (mPrice > 0 && yPrice > 0) {
+            savePercent = (1 - (yPrice / (mPrice * 12))) * 100;
+          }
+        }
       }
     }
 
-    return Column(
-      children: [
-        if (monthly != null) ...[
-          _PurchaseOptionCard(
-            package: monthly!,
-            title: 'Aylık',
-            subtitle: monthly!.storeProduct.priceString,
-            tag: 'Popüler',
-            onTap: () => _purchasePackage(context, ref, monthly!),
+    return SliverToBoxAdapter(
+      child: _AnimatedSlide(
+        controller: _slideController,
+        from: const Offset(0, 50),
+        interval: const Interval(0.4, 0.8, curve: Curves.easeOutCubic),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            children: [
+              if (yearly != null)
+                _PurchaseOptionCard(
+                  package: yearly,
+                  title: 'Yıllık Plan',
+                  subtitle: '${yearly.storeProduct.priceString} / yıl',
+                  tag: savePercent != null ? 'En İyi Değer • %${savePercent.toStringAsFixed(0)} Tasarruf' : 'En İyi Değer',
+                  highlight: true,
+                  onTap: () => _purchasePackage(context, ref, yearly!),
+                ),
+              const SizedBox(height: 12),
+              if (monthly != null)
+                _PurchaseOptionCard(
+                  package: monthly,
+                  title: 'Aylık Plan',
+                  subtitle: '${monthly.storeProduct.priceString} / ay',
+                  onTap: () => _purchasePackage(context, ref, monthly!),
+                ),
+            ],
           ),
-          const SizedBox(height: 12),
-        ],
-        if (yearly != null)
-          _PurchaseOptionCard(
-            package: yearly!,
-            title: 'Yıllık',
-            subtitle: yearly!.storeProduct.priceString,
-            tag: savePercent != null ? 'En İyi Değer • %${savePercent!.toStringAsFixed(0)} Tasarruf' : 'En İyi Değer',
-            highlight: true,
-            onTap: () => _purchasePackage(context, ref, yearly!),
-          ),
-      ],
+        ),
+      ),
     );
   }
 
@@ -213,7 +243,6 @@ class PremiumView extends ConsumerWidget {
 
     try {
       final outcome = await RevenueCatService.makePurchase(package);
-
       if (!context.mounted) return;
       Navigator.of(context, rootNavigator: true).pop();
 
@@ -227,9 +256,9 @@ class PremiumView extends ConsumerWidget {
       if (outcome.success && outcome.info != null) {
         ref.read(premiumStatusProvider.notifier).updateFromCustomerInfo(outcome.info!);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Satın alma başarılı. Premium aktif!')),
+          const SnackBar(content: Text('Görev Başarılı! Premium artık aktif.')),
         );
-        _handleBack(context);
+        _handleBack();
         return;
       }
 
@@ -247,34 +276,165 @@ class PremiumView extends ConsumerWidget {
   }
 }
 
-// ——— Sade kahraman alanı ———
-class _MinimalHero extends StatelessWidget {
-  const _MinimalHero();
+// --- WIDGETS ---
+
+class _AnimatedSlide extends StatelessWidget {
+  const _AnimatedSlide({
+    required this.controller,
+    required this.child,
+    required this.from,
+    required this.interval,
+  });
+
+  final AnimationController controller;
+  final Widget child;
+  final Offset from;
+  final Interval interval;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) {
+        final animation = CurvedAnimation(parent: controller, curve: interval);
+        return Opacity(
+          opacity: animation.value,
+          child: Transform.translate(
+            offset: Offset(from.dx * (1 - animation.value), from.dy * (1 - animation.value)),
+            child: child,
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _HeroVisual extends StatelessWidget {
+  const _HeroVisual();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: SizedBox(
+        width: 180,
+        height: 180,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.secondaryColor.withOpacity(.25),
+                    blurRadius: 60,
+                    spreadRadius: 10,
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.auto_awesome,
+              size: 100,
+              color: AppTheme.secondaryColor,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.title, required this.subtitle});
+  final String title;
+  final String subtitle;
 
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(
-          'Premium\'a Geç',
+          title,
           textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.w900,
+                color: Colors.white,
               ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         Text(
-          'Tüm yapay zeka özelliklerine sınırsız erişim.\n7 gün ücretsiz dene, dilediğinde iptal et.',
+          subtitle,
           textAlign: TextAlign.center,
-          style: const TextStyle(color: AppTheme.secondaryTextColor, fontWeight: FontWeight.w600),
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: AppTheme.secondaryTextColor,
+                fontWeight: FontWeight.w500,
+              ),
         ),
       ],
     );
   }
 }
 
-class _PurchaseOptionCard extends StatelessWidget {
+class _BenefitItem extends StatelessWidget {
+  const _BenefitItem({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+  });
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10.0),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: color.withOpacity(0.15),
+              border: Border.all(color: color.withOpacity(0.3)),
+            ),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    color: AppTheme.secondaryTextColor,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PurchaseOptionCard extends StatefulWidget {
   const _PurchaseOptionCard({
     required this.package,
     required this.title,
@@ -292,49 +452,127 @@ class _PurchaseOptionCard extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
+  State<_PurchaseOptionCard> createState() => _PurchaseOptionCardState();
+}
+
+class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 200));
+    _scale = Tween(begin: 1.0, end: 0.97).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onTapDown(_) => _controller.forward();
+  void _onTapUp(_) => _controller.reverse();
+  void _onTapCancel() => _controller.reverse();
+  void _onTap() {
+    _controller.forward().then((_) {
+      _controller.reverse();
+      widget.onTap();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: highlight ? 12 : 8,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-        side: highlight ? const BorderSide(color: AppTheme.secondaryColor, width: 2) : BorderSide.none,
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    final cardColor = widget.highlight ? AppTheme.secondaryColor.withOpacity(0.1) : Colors.white.withOpacity(0.05);
+    final borderColor = widget.highlight ? AppTheme.secondaryColor : Colors.white.withOpacity(0.2);
+
+    return ScaleTransition(
+      scale: _scale,
+      child: GestureDetector(
+        onTapDown: _onTapDown,
+        onTapUp: _onTapUp,
+        onTapCancel: _onTapCancel,
+        onTap: _onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            color: cardColor,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: borderColor, width: widget.highlight ? 2.5 : 1.5),
+            boxShadow: widget.highlight
+                ? [
+                    BoxShadow(
+                      color: AppTheme.secondaryColor.withOpacity(0.2),
+                      blurRadius: 25,
+                      spreadRadius: -5,
+                      offset: const Offset(0, 10),
+                    )
+                  ]
+                : [],
+          ),
+          child: Stack(
+            clipBehavior: Clip.none,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                  if (tag != null)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppTheme.secondaryColor,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        tag!,
-                        style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.title,
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            widget.subtitle,
+                            style: const TextStyle(fontSize: 15, color: AppTheme.secondaryTextColor),
+                          ),
+                        ],
                       ),
                     ),
-                ],
+                    const SizedBox(width: 12),
+                    Text(
+                      'Misyona Katıl',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: widget.highlight ? AppTheme.secondaryColor : Colors.white,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 16,
+                      color: widget.highlight ? AppTheme.secondaryColor : Colors.white,
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 8),
-              Text(subtitle, style: Theme.of(context).textTheme.headlineSmall),
-              const SizedBox(height: 8),
-              Row(
-                children: const [
-                  Icon(Icons.check_circle_rounded, size: 18, color: AppTheme.successColor),
-                  SizedBox(width: 6),
-                  Text('İstediğin zaman iptal et', style: TextStyle(color: AppTheme.secondaryTextColor)),
-                ],
-              ),
+              if (widget.tag != null)
+                Positioned(
+                  top: -14,
+                  left: 20,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppTheme.secondaryColor,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      widget.tag!,
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -343,19 +581,17 @@ class _PurchaseOptionCard extends StatelessWidget {
   }
 }
 
-// ——— GÜVEN ROZETLERİ ———
 class _TrustBadges extends StatelessWidget {
   const _TrustBadges();
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: const [
-        SizedBox(height: 4),
-        _TrustRow(icon: Icons.verified_user_rounded, text: 'Gizli ücret yok'),
-        SizedBox(height: 4),
-        _TrustRow(icon: Icons.lock_open_rounded, text: 'Güvenli ödeme • App Store / Google Play'),
+        _TrustRow(icon: Icons.verified_user_outlined, text: 'Gizli ücret yok'),
+        SizedBox(width: 24),
+        _TrustRow(icon: Icons.lock_open_rounded, text: 'Güvenli Ödeme'),
       ],
     );
   }
@@ -369,14 +605,70 @@ class _TrustRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Icon(icon, color: AppTheme.secondaryTextColor, size: 16),
-        const SizedBox(width: 6),
-        Text(text, style: const TextStyle(color: AppTheme.secondaryTextColor)),
+        const SizedBox(width: 8),
+        Text(
+          text,
+          style: const TextStyle(color: AppTheme.secondaryTextColor, fontWeight: FontWeight.w600),
+        ),
       ],
     );
   }
 }
 
+class _AnimatedBackground extends StatelessWidget {
+  const _AnimatedBackground({required this.glow});
+  final Animation<double> glow;
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: glow,
+      builder: (context, _) {
+        final g = glow.value;
+        return Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppTheme.primaryColor.withBlue(30),
+                AppTheme.primaryColor.blend(Colors.black, .3 + g * .15),
+              ],
+            ),
+          ),
+          child: CustomPaint(
+            painter: _ParticlePainter(progress: g),
+          ),
+        );
+      },
+    );
+  }
+}
 
+extension on Color {
+  Color blend(Color other, double t) => Color.lerp(this, other, t)!;
+}
+
+class _ParticlePainter extends CustomPainter {
+  _ParticlePainter({required this.progress});
+  final double progress;
+  final int count = 25;
+  final rnd = Random(42);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (var i = 0; i < count; i++) {
+      final dx = rnd.nextDouble() * size.width;
+      final dy = rnd.nextDouble() * size.height;
+      final radius = (rnd.nextDouble() * 2.5 + 1.5) * (1 + (sin(progress * pi) * .4));
+      final paint = Paint()
+        ..color = AppTheme.secondaryColor.withOpacity(.03 + rnd.nextDouble() * .05)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
+      canvas.drawCircle(Offset(dx, dy), radius, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ParticlePainter oldDelegate) => oldDelegate.progress != progress;
+}

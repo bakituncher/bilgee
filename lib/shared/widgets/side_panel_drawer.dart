@@ -2,6 +2,7 @@
 import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/data/providers/admin_providers.dart';
+import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -39,6 +40,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(userProfileProvider).value;
+    final isPremium = ref.watch(premiumStatusProvider);
     final rankInfo = RankService.getRankInfo(user?.engagementScore ?? 0);
     final location = GoRouter.of(context).routeInformationProvider.value.location ?? '';
 
@@ -134,17 +136,18 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                         child: _SectionLabel('Öne Çıkan'),
                       ),
                       const SizedBox(height: 8),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _PremiumButton(onTap: () { Navigator.of(context).pop(); context.go('/premium'); }),
-                            const SizedBox(height: 6),
-                            Text('Premium avantajlarını keşfet', textAlign: TextAlign.center, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.secondaryTextColor)),
-                          ],
+                      if (!isPremium)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _PremiumButton(onTap: () { Navigator.of(context).pop(); context.go('/premium'); }),
+                              const SizedBox(height: 6),
+                              Text('Premium avantajlarını keşfet', textAlign: TextAlign.center, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.secondaryTextColor)),
+                            ],
+                          ),
                         ),
-                      ),
                       Consumer(builder: (context, ref, _) {
                         final isAdminAsync = ref.watch(adminClaimProvider);
                         return isAdminAsync.maybeWhen(

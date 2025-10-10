@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
-import 'package:taktik/shared/widgets/premium_lock_widget.dart';
+import 'package:taktik/shared/widgets/premium_gate.dart';
 import 'dart:math';
 import 'dart:ui';
 
@@ -140,15 +140,11 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
                       final tool = tools[index];
-                      return PremiumLock(
-                        isLocked: !isPremium,
+                      return PremiumGate(
+                        isPremium: isPremium,
                         child: _AiToolTile(
                           tool: tool,
-                          onTap: () {
-                            if (isPremium) {
-                              context.go(tool.route);
-                            }
-                          },
+                          onTap: () => context.go(tool.route),
                         ),
                       );
                     },
