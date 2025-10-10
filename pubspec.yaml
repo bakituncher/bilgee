@@ -72,6 +72,9 @@ dependencies:
 
   # RevenueCat
   purchases_flutter: ^9.7.1
+
+  # Environment variables for secure API key management
+  flutter_dotenv: ^5.1.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -86,6 +89,7 @@ flutter:
     - assets/data/
     - assets/prompts/
     - assets/images/
+    - .env
 
 flutter_native_splash:
   color: "#0F172A"

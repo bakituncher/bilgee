@@ -19,6 +19,7 @@ import 'package:taktik/core/prompts/prompt_remote.dart';
 import 'package:taktik/core/services/revenuecat_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -42,6 +43,15 @@ void main() async {
   await runZonedGuarded(() async {
     // Binding ve runApp aynı zone'da olmalı
     WidgetsFlutterBinding.ensureInitialized();
+
+    // Environment variables'ı yükle
+    try {
+      await dotenv.load(fileName: ".env");
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[Init] .env dosyası yüklenemedi: $e');
+      }
+    }
 
     // Android 15+ SDK 35 için zorunlu edge-to-edge ayarları - öncelik sırası önemli
     AppTheme.configureSystemUI();

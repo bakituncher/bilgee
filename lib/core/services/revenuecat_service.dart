@@ -1,9 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
-
-// TODO: Replace with your actual RevenueCat API keys
-const String _googleApiKey = 'goog_JStBnogEUetfbcoYdIHKyTZEdXf';
-const String _appleApiKey = 'appl_api_key_placeholder'; // Replace if you have an Apple key
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class PurchaseOutcome {
   final CustomerInfo? info;
@@ -17,11 +14,21 @@ class RevenueCatService {
   static Future<void> init() async {
     await Purchases.setLogLevel(LogLevel.debug);
 
+    // Environment variables'dan API anahtarlarını al
+    final googleApiKey = dotenv.env['REVENUECAT_GOOGLE_API_KEY'];
+    final appleApiKey = dotenv.env['REVENUECAT_APPLE_API_KEY'];
+
     PurchasesConfiguration configuration;
     if (isAndroid) {
-      configuration = PurchasesConfiguration(_googleApiKey);
+      if (googleApiKey == null || googleApiKey.isEmpty) {
+        throw Exception('RevenueCat Google API key not found in environment variables');
+      }
+      configuration = PurchasesConfiguration(googleApiKey);
     } else if (isIOS) {
-      configuration = PurchasesConfiguration(_appleApiKey);
+      if (appleApiKey == null || appleApiKey.isEmpty) {
+        throw Exception('RevenueCat Apple API key not found in environment variables');
+      }
+      configuration = PurchasesConfiguration(appleApiKey);
     } else {
       // Unsupported platform
       return;
