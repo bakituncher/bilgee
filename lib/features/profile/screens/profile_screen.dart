@@ -275,10 +275,23 @@ class _ProfileView extends ConsumerWidget {
                             children: [
                               _ProfileAvatarHalo(user: user, color: currentRank.color, rankIndex: rankIndex),
                               const SizedBox(height: 10),
-                              Text(
-                                user.name ?? 'İsimsiz Savaşçı',
-                                style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 0.5),
-                                textAlign: TextAlign.center,
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      user.name ?? 'İsimsiz Savaşçı',
+                                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 0.5),
+                                      textAlign: TextAlign.center,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  if (user.isPremium) ...[
+                                    const SizedBox(width: 8),
+                                    const _PremiumStatusBadge(),
+                                  ],
+                                ],
                               ),
                               const SizedBox(height: 6),
                               _RankPill(rank: currentRank),
@@ -921,3 +934,37 @@ class _ActionNeoState extends State<_ActionNeo> {
 }
 
 extension _ColorOpacityXProfile on Color { Color o(double factor) => withValues(alpha: (a * factor).toDouble()); }
+
+class _PremiumStatusBadge extends StatelessWidget {
+  const _PremiumStatusBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    const gold = Color(0xFFFFC107); // Using a vibrant gold
+    return Tooltip(
+      message: 'Premium Üye',
+      child: Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: gold.withOpacity(0.7),
+              blurRadius: 14,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: Icon(
+          Icons.workspace_premium_rounded,
+          color: gold,
+          size: 26,
+        ),
+      ).animate(onPlay: (c) => c.repeat(reverse: true)).scale(
+            begin: const Offset(0.95, 0.95),
+            end: const Offset(1.1, 1.1),
+            duration: 1800.ms,
+            curve: Curves.easeInOut,
+          ),
+    );
+  }
+}
