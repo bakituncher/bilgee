@@ -334,10 +334,30 @@ class _AnimatedHeader extends StatelessWidget {
               .animate(CurvedAnimation(parent: slideController, curve: Curves.easeOutCubic)),
           child: FadeTransition(
             opacity: fadeController,
-            child: const Icon(Icons.workspace_premium_rounded, size: 90, color: Colors.amberAccent),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.amberAccent.withOpacity(0.35),
+                    blurRadius: 60,
+                    spreadRadius: -10,
+                  ),
+                ],
+                gradient: const SweepGradient(
+                  colors: [
+                    Color(0xFFFFC857),
+                    Color(0xFFFFF6D6),
+                    Color(0xFFFFC857),
+                  ],
+                ),
+              ),
+              child: const Icon(Icons.workspace_premium_rounded, size: 62, color: AppTheme.primaryColor),
+            ),
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 28),
         SlideTransition(
           position: Tween<Offset>(begin: const Offset(0, 0.5), end: Offset.zero)
               .animate(CurvedAnimation(parent: slideController, curve: const Interval(0.2, 1, curve: Curves.easeOutCubic))),
@@ -354,7 +374,45 @@ class _AnimatedHeader extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 20),
+        SlideTransition(
+          position: Tween<Offset>(begin: const Offset(0, 0.5), end: Offset.zero)
+              .animate(CurvedAnimation(parent: slideController, curve: const Interval(0.32, 1, curve: Curves.easeOutCubic))),
+          child: FadeTransition(
+            opacity: CurvedAnimation(parent: fadeController, curve: const Interval(0.32, 1)),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white.withOpacity(0.28),
+                    Colors.white.withOpacity(0.05),
+                  ],
+                ),
+                border: Border.all(color: Colors.white.withOpacity(0.25)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.18),
+                    blurRadius: 20,
+                    offset: const Offset(0, 12),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Icon(Icons.bolt_rounded, color: Colors.white, size: 18),
+                  SizedBox(width: 8),
+                  Text('Yeni nesil Premium deneyimi', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
         SlideTransition(
           position: Tween<Offset>(begin: const Offset(0, 0.5), end: Offset.zero)
               .animate(CurvedAnimation(parent: slideController, curve: const Interval(0.4, 1, curve: Curves.easeOutCubic))),
@@ -370,6 +428,8 @@ class _AnimatedHeader extends StatelessWidget {
             ),
           ),
         ),
+        const SizedBox(height: 28),
+        const _HeroHighlights(),
       ],
     );
   }
@@ -424,49 +484,164 @@ class _AnimatedBenefitItemState extends State<_AnimatedBenefitItem> {
       child: FadeTransition(
         opacity: _fadeAnimation,
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 14.0),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: widget.color.withOpacity(0.18),
-                  border: Border.all(color: widget.color.withOpacity(0.4), width: 1.5),
-                ),
-                child: Icon(widget.icon, color: widget.color, size: 28),
+          padding: const EdgeInsets.symmetric(vertical: 12.0),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(22),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  widget.color.withOpacity(0.18),
+                  widget.color.withOpacity(0.05),
+                ],
               ),
-              const SizedBox(width: 18),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.title,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      widget.subtitle,
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 15,
-                        height: 1.4,
-                      ),
-                    ),
-                  ],
+              border: Border.all(color: Colors.white.withOpacity(0.08)),
+              boxShadow: [
+                BoxShadow(
+                  color: widget.color.withOpacity(0.16),
+                  blurRadius: 30,
+                  offset: const Offset(0, 18),
                 ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: widget.color.withOpacity(0.25),
+                      border: Border.all(color: Colors.white.withOpacity(0.15)),
+                    ),
+                    child: Icon(widget.icon, color: Colors.white, size: 26),
+                  ),
+                  const SizedBox(width: 18),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.title,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 18,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          widget.subtitle,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 15,
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _HeroHighlights extends StatelessWidget {
+  const _HeroHighlights();
+
+  @override
+  Widget build(BuildContext context) {
+    final items = [
+      (
+        Icons.auto_graph_rounded,
+        '3.4x daha hızlı gelişim',
+        'Yapay zeka koçluğuyla başarı grafiğini yukarı taşı.',
+      ),
+      (
+        Icons.shield_moon_rounded,
+        '%98 memnuniyet',
+        'Profesyonel sporcuların tercih ettiği güvenli destek.',
+      ),
+      (
+        Icons.flash_on_rounded,
+        'Anlık strateji güncellemeleri',
+        'Her maça özel, gerçek zamanlı tavsiyeler.',
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth > 520;
+        final rawWidth = isWide ? (constraints.maxWidth - 32) / 3 : constraints.maxWidth;
+        final width = rawWidth.isFinite ? rawWidth : constraints.maxWidth;
+        return Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 16,
+          runSpacing: 16,
+          children: items.map((item) {
+            return Container(
+              width: width,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(18),
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.white.withOpacity(0.18),
+                    Colors.white.withOpacity(0.04),
+                  ],
+                ),
+                border: Border.all(color: Colors.white.withOpacity(0.12)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.16),
+                    blurRadius: 25,
+                    offset: const Offset(0, 20),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withOpacity(0.14),
+                    ),
+                    padding: const EdgeInsets.all(10),
+                    child: Icon(item.$1, color: Colors.white, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.$2,
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          item.$3,
+                          style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.3),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        );
+      },
     );
   }
 }
