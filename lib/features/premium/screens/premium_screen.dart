@@ -6,8 +6,7 @@ import 'package:taktik/core/services/revenuecat_service.dart';
 import 'package:taktik/core/theme/app_theme.dart';
 import 'package:collection/collection.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
-import 'dart:math';
-import 'dart:ui';
+import 'dart:ui'; // For BackdropFilter
 
 class PremiumScreen extends ConsumerStatefulWidget {
   const PremiumScreen({super.key});
@@ -17,23 +16,39 @@ class PremiumScreen extends ConsumerStatefulWidget {
 }
 
 class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProviderStateMixin {
-  late final AnimationController _glowController;
-  late final Animation<double> _glow;
-  late final AnimationController _slideController;
+  late final AnimationController _headerSlideController;
+  late final AnimationController _fadeController;
+  late final AnimationController _cardPopController;
+  late final AnimationController _gradientController;
+
+  late final Animation<double> _gradientAnimation;
 
   @override
   void initState() {
     super.initState();
-    _glowController = AnimationController(vsync: this, duration: const Duration(seconds: 5))..repeat(reverse: true);
-    _glow = CurvedAnimation(parent: _glowController, curve: Curves.easeInOut);
-    _slideController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200), value: 0);
-    _slideController.forward();
+    _headerSlideController = AnimationController(vsync: this, duration: const Duration(milliseconds: 800));
+    _fadeController = AnimationController(vsync: this, duration: const Duration(milliseconds: 700));
+    _cardPopController = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
+    _gradientController = AnimationController(vsync: this, duration: const Duration(seconds: 15))..repeat(reverse: true);
+
+    _gradientAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(CurvedAnimation(
+      parent: _gradientController,
+      curve: Curves.easeInOutSine,
+    ));
+
+    Future.delayed(const Duration(milliseconds: 100), () {
+      _headerSlideController.forward();
+      _fadeController.forward();
+      _cardPopController.forward();
+    });
   }
 
   @override
   void dispose() {
-    _glowController.dispose();
-    _slideController.dispose();
+    _headerSlideController.dispose();
+    _fadeController.dispose();
+    _cardPopController.dispose();
+    _gradientController.dispose();
     super.dispose();
   }
 
@@ -51,10 +66,16 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     final bottomInset = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
-      backgroundColor: AppTheme.primaryColor.withBlue(25),
+      backgroundColor: AppTheme.primaryColor,
       body: Stack(
         children: [
-          _AnimatedBackground(glow: _glow),
+          _buildAnimatedGradientBackground(),
+          BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0), // Hafif bir blur efekti
+            child: Container(
+              color: Colors.black.withOpacity(0.2), // Blur üzerine hafif bir overlay
+            ),
+          ),
           CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
@@ -64,63 +85,67 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                 pinned: true,
                 automaticallyImplyLeading: false,
                 leading: IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-                  tooltip: 'Geri',
+                  icon: const Icon(Icons.close_rounded, size: 28, color: Colors.white),
+                  tooltip: 'Kapat',
                   onPressed: _handleBack,
                 ),
-                centerTitle: true,
-                title: const Text('Zirveye Oyna', style: TextStyle(fontWeight: FontWeight.bold)),
-                flexibleSpace: ClipRect(
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                    child: Container(color: Colors.black.withOpacity(0.2)),
-                  ),
-                ),
+                actions: [
+                  TextButton(
+                    onPressed: () async {
+                      await ref.read(premiumStatusProvider.notifier).restorePurchases();
+                      if (context.mounted) {
+                        final isPremium = ref.read(premiumStatusProvider);
+                        final msg = isPremium ? 'Satın alımlar geri yüklendi. Premium aktif.' : 'Aktif satın alım bulunamadı.';
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(msg),
+                            backgroundColor: isPremium ? AppTheme.successColor : AppTheme.accentColor,
+                          ),
+                        );
+                        if (isPremium) _handleBack();
+                      }
+                    },
+                    child: Text(
+                      'Geri Yükle',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Colors.white70,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  )
+                ],
               ),
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Column(
                     children: [
-                      const _HeroVisual(),
-                      const SizedBox(height: 24),
-                      _AnimatedSlide(
-                        controller: _slideController,
-                        from: const Offset(0, 50),
-                        interval: const Interval(0.1, 0.5, curve: Curves.easeOutCubic),
-                        child: const _SectionHeader(
-                          title: 'Potansiyelini İkiye Katla',
-                          subtitle: 'TaktikAI\'ın tüm gücünü serbest bırakarak hedeflerine daha hızlı ulaş.',
-                        ),
-                      ),
                       const SizedBox(height: 20),
-                      _AnimatedSlide(
-                        controller: _slideController,
-                        from: const Offset(0, 50),
-                        interval: const Interval(0.2, 0.6, curve: Curves.easeOutCubic),
-                        child: _buildBenefitsList(),
+                      _AnimatedHeader(
+                        slideController: _headerSlideController,
+                        fadeController: _fadeController,
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 40),
+                      _buildBenefitsList(),
+                      const SizedBox(height: 32),
                     ],
                   ),
                 ),
               ),
               SliverPadding(
-                padding: EdgeInsets.fromLTRB(16, 0, 16, bottomInset > 0 ? bottomInset + 8 : 24),
+                padding: EdgeInsets.fromLTRB(16, 16, 16, bottomInset > 0 ? bottomInset + 8 : 24),
                 sliver: offeringsAsyncValue.when(
                   data: (offerings) => _buildPurchaseOptions(context, ref, offerings),
-                  loading: () => const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator(strokeWidth: 2))),
-                  error: (error, stack) => SliverToBoxAdapter(child: Center(child: Text('Hata: $error'))),
+                  loading: () => const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.secondaryColor))),
+                  error: (error, stack) => SliverToBoxAdapter(child: Center(child: Text('Hata: $error', style: const TextStyle(color: AppTheme.accentColor)))),
                 ),
               ),
               SliverToBoxAdapter(
-                child: _AnimatedSlide(
-                  controller: _slideController,
-                  from: const Offset(0, 50),
-                  interval: const Interval(0.5, 0.9, curve: Curves.easeOutCubic),
+                child: FadeTransition(
+                  opacity: _fadeController,
                   child: Padding(
                     padding: EdgeInsets.fromLTRB(16, 0, 16, bottomInset > 0 ? bottomInset + 8 : 24),
-                    child: _buildFooter(context, ref),
+                    child: const _TrustBadges(),
                   ),
                 ),
               ),
@@ -131,47 +156,49 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     );
   }
 
+  Widget _buildAnimatedGradientBackground() {
+    return AnimatedBuilder(
+      animation: _gradientAnimation,
+      builder: (context, child) {
+        return Container(
+          decoration: BoxDecoration(
+            gradient: RadialGradient(
+              center: Alignment(0.5 + 0.5 * (1 - _gradientAnimation.value), 0.5 - 0.5 * _gradientAnimation.value),
+              radius: 1.2,
+              colors: const [
+                Color(0xFF282f42), // slightly lighter dark blue
+                Color(0xFF1a202c), // primary dark blue
+                Color(0xFF0e1218), // even darker
+              ],
+              stops: const [0.0, 0.5, 1.0],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildBenefitsList() {
     const items = [
-      ('Stratejik Planlama', 'Uzun vadeli hedefler ve haftalık yol haritası.', Icons.insights_rounded, AppTheme.secondaryColor),
-      ('Cevher Atölyesi', 'Zayıf yönlerini güce dönüştüren kişisel atölye.', Icons.construction_rounded, AppTheme.successColor),
-      ('Analiz & Strateji', 'Deneme sonuçlarını ve stratejini tek panelden yönet.', Icons.dashboard_customize_rounded, Colors.amberAccent),
-      ('Kesintisiz Odaklanma', 'Reklamsız bir deneyimle dikkat dağıtan her şeyi ortadan kaldır.', Icons.remove_red_eye_outlined, Colors.pinkAccent),
+      ('Sınırsız Yapay Zeka Koçu', 'Tüm TaktikAI özelliklerini limit olmadan kullan, zirveye oyna!', Icons.rocket_launch_rounded, Color(0xFF8A2BE2)), // Violet
+      ('Stratejik Yol Haritası', 'Hedeflerine özel, kişiselleştirilmiş haftalık planlama ile her adımın garantide.', Icons.lightbulb_outline_rounded, Color(0xFF1E90FF)), // DodgerBlue
+      ('Cevher Atölyesi', 'Zayıf yönlerini parlayan güce dönüştür, benzersiz yeteneklerini keşfet.', Icons.diamond_outlined, Color(0xFFDAA520)), // Goldenrod
+      ('Reklamsız Odaklanma', 'Kesintisiz bir deneyimle dikkat dağıtmadan sadece hedefine odaklan.', Icons.self_improvement_rounded, Color(0xFFDC143C)), // Crimson
     ];
 
     return Column(
       children: items.map((item) {
         final index = items.indexOf(item);
-        return _AnimatedSlide(
-          controller: _slideController,
-          from: const Offset(0, 40),
-          interval: Interval(0.3 + index * 0.1, 0.7 + index * 0.1, curve: Curves.easeOutCubic),
-          child: _BenefitItem(icon: item.$3, title: item.$1, subtitle: item.$2, color: item.$4),
+        return _AnimatedBenefitItem(
+          slideController: _headerSlideController, // Reusing for coordinated animation
+          fadeController: _fadeController,
+          icon: item.$3,
+          title: item.$1,
+          subtitle: item.$2,
+          color: item.$4,
+          delay: Duration(milliseconds: 250 + 120 * index),
         );
       }).toList(),
-    );
-  }
-
-  Widget _buildFooter(BuildContext context, WidgetRef ref) {
-    return Column(
-      children: [
-        TextButton.icon(
-          onPressed: () async {
-            await ref.read(premiumStatusProvider.notifier).restorePurchases();
-            if (context.mounted) {
-              final isPremium = ref.read(premiumStatusProvider);
-              final msg = isPremium ? 'Satın alımlar geri yüklendi. Premium aktif.' : 'Aktif satın alım bulunamadı.';
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-              if (isPremium) _handleBack();
-            }
-          },
-          icon: const Icon(Icons.restore_rounded, size: 20),
-          label: const Text('Satın alımları geri yükle'),
-          style: TextButton.styleFrom(foregroundColor: AppTheme.secondaryTextColor),
-        ),
-        const SizedBox(height: 12),
-        const _TrustBadges(),
-      ],
     );
   }
 
@@ -186,9 +213,9 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
         yearly = current.annual ?? current.getPackage('yillik-normal') ?? current.availablePackages.firstWhereOrNull((p) => p.packageType == PackageType.annual);
 
         if (monthly == null || yearly == null) {
-           final sortedPackages = List.from(current.availablePackages)..sort((a,b) => a.storeProduct.price.compareTo(b.storeProduct.price));
-           if (sortedPackages.isNotEmpty) monthly ??= sortedPackages.first;
-           if (sortedPackages.length > 1) yearly ??= sortedPackages.last;
+          final sortedPackages = List.from(current.availablePackages)..sort((a,b) => a.storeProduct.price.compareTo(b.storeProduct.price));
+          if (sortedPackages.isNotEmpty) monthly ??= sortedPackages.first;
+          if (sortedPackages.length > 1) yearly ??= sortedPackages.last;
         }
 
         if (monthly != null && yearly != null) {
@@ -202,29 +229,31 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     }
 
     return SliverToBoxAdapter(
-      child: _AnimatedSlide(
-        controller: _slideController,
-        from: const Offset(0, 50),
-        interval: const Interval(0.4, 0.8, curve: Curves.easeOutCubic),
+      child: FadeTransition(
+        opacity: _fadeController,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(
             children: [
               if (yearly != null)
                 _PurchaseOptionCard(
+                  animationController: _cardPopController,
                   package: yearly,
                   title: 'Yıllık Plan',
                   subtitle: '${yearly.storeProduct.priceString} / yıl',
-                  tag: savePercent != null ? 'En İyi Değer • %${savePercent.toStringAsFixed(0)} Tasarruf' : 'En İyi Değer',
+                  tag: savePercent != null ? '%${savePercent.toStringAsFixed(0)} AVANTAJLI' : 'EN POPÜLER',
                   highlight: true,
+                  delay: const Duration(milliseconds: 0),
                   onTap: () => _purchasePackage(context, ref, yearly!),
                 ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               if (monthly != null)
                 _PurchaseOptionCard(
+                  animationController: _cardPopController,
                   package: monthly,
                   title: 'Aylık Plan',
                   subtitle: '${monthly.storeProduct.priceString} / ay',
+                  delay: const Duration(milliseconds: 100),
                   onTap: () => _purchasePackage(context, ref, monthly!),
                 ),
             ],
@@ -238,7 +267,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator()),
+      builder: (_) => const Center(child: CircularProgressIndicator(color: AppTheme.secondaryColor)),
     );
 
     try {
@@ -248,7 +277,10 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
 
       if (outcome.cancelled) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Satın alma iptal edildi.')),
+          const SnackBar(
+            content: Text('Satın alma iptal edildi.'),
+            backgroundColor: AppTheme.accentColor,
+          ),
         );
         return;
       }
@@ -256,7 +288,10 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
       if (outcome.success && outcome.info != null) {
         ref.read(premiumStatusProvider.notifier).updateFromCustomerInfo(outcome.info!);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Görev Başarılı! Premium artık aktif.')),
+          const SnackBar(
+            content: Text('Harika! Premium özellikler artık aktif.'),
+            backgroundColor: AppTheme.successColor,
+          ),
         );
         _handleBack();
         return;
@@ -264,13 +299,19 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
 
       final errMsg = outcome.error ?? 'Bilinmeyen bir hata oluştu.';
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Satın alma başarısız: $errMsg')),
+        SnackBar(
+          content: Text('Satın alma başarısız: $errMsg'),
+          backgroundColor: AppTheme.accentColor,
+        ),
       );
     } catch (e) {
       if (!context.mounted) return;
       Navigator.of(context, rootNavigator: true).pop();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Satın alma sırasında bir hata oluştu: $e')),
+        SnackBar(
+          content: Text('Satın alma sırasında bir hata oluştu: $e'),
+          backgroundColor: AppTheme.accentColor,
+        ),
       );
     }
   }
@@ -278,302 +319,331 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
 
 // --- WIDGETS ---
 
-class _AnimatedSlide extends StatelessWidget {
-  const _AnimatedSlide({
-    required this.controller,
-    required this.child,
-    required this.from,
-    required this.interval,
-  });
+class _AnimatedHeader extends StatelessWidget {
+  final AnimationController slideController;
+  final AnimationController fadeController;
 
-  final AnimationController controller;
-  final Widget child;
-  final Offset from;
-  final Interval interval;
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: controller,
-      builder: (context, _) {
-        final animation = CurvedAnimation(parent: controller, curve: interval);
-        return Opacity(
-          opacity: animation.value,
-          child: Transform.translate(
-            offset: Offset(from.dx * (1 - animation.value), from.dy * (1 - animation.value)),
-            child: child,
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _HeroVisual extends StatelessWidget {
-  const _HeroVisual();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: SizedBox(
-        width: 180,
-        height: 180,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.secondaryColor.withOpacity(.25),
-                    blurRadius: 60,
-                    spreadRadius: 10,
-                  ),
-                ],
-              ),
-            ),
-            const Icon(
-              Icons.auto_awesome,
-              size: 100,
-              color: AppTheme.secondaryColor,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.title, required this.subtitle});
-  final String title;
-  final String subtitle;
+  const _AnimatedHeader({required this.slideController, required this.fadeController});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(
-          title,
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+        SlideTransition(
+          position: Tween<Offset>(begin: const Offset(0, 0.5), end: Offset.zero)
+              .animate(CurvedAnimation(parent: slideController, curve: Curves.easeOutCubic)),
+          child: FadeTransition(
+            opacity: fadeController,
+            child: const Icon(Icons.workspace_premium_rounded, size: 90, color: Colors.amberAccent),
+          ),
+        ),
+        const SizedBox(height: 24),
+        SlideTransition(
+          position: Tween<Offset>(begin: const Offset(0, 0.5), end: Offset.zero)
+              .animate(CurvedAnimation(parent: slideController, curve: const Interval(0.2, 1, curve: Curves.easeOutCubic))),
+          child: FadeTransition(
+            opacity: CurvedAnimation(parent: fadeController, curve: const Interval(0.2, 1)),
+            child: Text(
+              'Limitleri Zorla, Fark Yarat!',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.w900,
                 color: Colors.white,
+                letterSpacing: 1.2,
               ),
+            ),
+          ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          subtitle,
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: AppTheme.secondaryTextColor,
+        const SizedBox(height: 12),
+        SlideTransition(
+          position: Tween<Offset>(begin: const Offset(0, 0.5), end: Offset.zero)
+              .animate(CurvedAnimation(parent: slideController, curve: const Interval(0.4, 1, curve: Curves.easeOutCubic))),
+          child: FadeTransition(
+            opacity: CurvedAnimation(parent: fadeController, curve: const Interval(0.4, 1)),
+            child: Text(
+              'TaktikAI Premium ile hedeflerine giden yolda sınırları kaldır, rekabette öne geç ve başarı seninle olsun.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: Colors.white70,
                 fontWeight: FontWeight.w500,
               ),
+            ),
+          ),
         ),
       ],
     );
   }
 }
 
-class _BenefitItem extends StatelessWidget {
-  const _BenefitItem({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.color,
-  });
+class _AnimatedBenefitItem extends StatefulWidget {
+  final AnimationController slideController;
+  final AnimationController fadeController;
   final IconData icon;
   final String title;
   final String subtitle;
   final Color color;
+  final Duration delay;
+
+  const _AnimatedBenefitItem({
+    required this.slideController,
+    required this.fadeController,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.delay,
+  });
+
+  @override
+  State<_AnimatedBenefitItem> createState() => _AnimatedBenefitItemState();
+}
+
+class _AnimatedBenefitItemState extends State<_AnimatedBenefitItem> {
+  late final Animation<Offset> _slideAnimation;
+  late final Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _slideAnimation = Tween<Offset>(begin: const Offset(0, 0.5), end: Offset.zero).animate(
+      CurvedAnimation(
+        parent: widget.slideController,
+        curve: Interval(widget.delay.inMilliseconds / 1000, 1.0, curve: Curves.easeOutCubic),
+      ),
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: widget.fadeController,
+      curve: Interval(widget.delay.inMilliseconds / 1000, 1.0, curve: Curves.easeOut),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10.0),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: color.withOpacity(0.15),
-              border: Border.all(color: color.withOpacity(0.3)),
-            ),
-            child: Icon(icon, color: color, size: 24),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: Colors.white,
-                  ),
+    return SlideTransition(
+      position: _slideAnimation,
+      child: FadeTransition(
+        opacity: _fadeAnimation,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 14.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: widget.color.withOpacity(0.18),
+                  border: Border.all(color: widget.color.withOpacity(0.4), width: 1.5),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    color: AppTheme.secondaryTextColor,
-                    fontSize: 14,
-                  ),
+                child: Icon(widget.icon, color: widget.color, size: 28),
+              ),
+              const SizedBox(width: 18),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      widget.subtitle,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 15,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 }
 
+
 class _PurchaseOptionCard extends StatefulWidget {
   const _PurchaseOptionCard({
+    required this.animationController,
     required this.package,
     required this.title,
     required this.subtitle,
     this.tag,
     this.highlight = false,
     required this.onTap,
+    required this.delay,
   });
 
+  final AnimationController animationController;
   final Package package;
   final String title;
   final String subtitle;
   final String? tag;
   final bool highlight;
   final VoidCallback onTap;
+  final Duration delay;
 
   @override
   State<_PurchaseOptionCard> createState() => _PurchaseOptionCardState();
 }
 
 class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _scale;
+  late final AnimationController _innerController; // For tap animation
+  late final Animation<double> _scaleAnimation;
+  late final Animation<Offset> _slideAnimation;
+  late final Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 200));
-    _scale = Tween(begin: 1.0, end: 0.97).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    _innerController = AnimationController(vsync: this, duration: const Duration(milliseconds: 200));
+    _scaleAnimation = Tween(begin: 1.0, end: 0.97).animate(
+      CurvedAnimation(parent: _innerController, curve: Curves.easeOut),
+    );
+
+    _slideAnimation = Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+      CurvedAnimation(
+        parent: widget.animationController,
+        curve: Interval(widget.delay.inMilliseconds / widget.animationController.duration!.inMilliseconds, 1.0, curve: Curves.easeOutCubic),
+      ),
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: widget.animationController,
+      curve: Interval(widget.delay.inMilliseconds / widget.animationController.duration!.inMilliseconds, 1.0, curve: Curves.easeOut),
     );
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _innerController.dispose();
     super.dispose();
   }
 
-  void _onTapDown(_) => _controller.forward();
-  void _onTapUp(_) => _controller.reverse();
-  void _onTapCancel() => _controller.reverse();
+  void _onTapDown(_) => _innerController.forward();
+  void _onTapUp(_) => _innerController.reverse();
+  void _onTapCancel() => _innerController.reverse();
   void _onTap() {
-    _controller.forward().then((_) {
-      _controller.reverse();
+    _innerController.forward().then((_) {
+      _innerController.reverse();
       widget.onTap();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final cardColor = widget.highlight ? AppTheme.secondaryColor.withOpacity(0.1) : Colors.white.withOpacity(0.05);
-    final borderColor = widget.highlight ? AppTheme.secondaryColor : Colors.white.withOpacity(0.2);
+    final cardColor = widget.highlight ? AppTheme.secondaryColor.withOpacity(0.15) : const Color(0xFF2a3547).withOpacity(0.7);
+    final borderColor = widget.highlight ? AppTheme.secondaryColor : const Color(0xFF434f63);
 
-    return ScaleTransition(
-      scale: _scale,
-      child: GestureDetector(
-        onTapDown: _onTapDown,
-        onTapUp: _onTapUp,
-        onTapCancel: _onTapCancel,
-        onTap: _onTap,
-        child: Container(
-          decoration: BoxDecoration(
-            color: cardColor,
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: borderColor, width: widget.highlight ? 2.5 : 1.5),
-            boxShadow: widget.highlight
-                ? [
-                    BoxShadow(
-                      color: AppTheme.secondaryColor.withOpacity(0.2),
-                      blurRadius: 25,
-                      spreadRadius: -5,
-                      offset: const Offset(0, 10),
-                    )
-                  ]
-                : [],
-          ),
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.title,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            widget.subtitle,
-                            style: const TextStyle(fontSize: 15, color: AppTheme.secondaryTextColor),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Misyona Katıl',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: widget.highlight ? AppTheme.secondaryColor : Colors.white,
-                        fontSize: 16,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 16,
-                      color: widget.highlight ? AppTheme.secondaryColor : Colors.white,
-                    ),
-                  ],
-                ),
+    return SlideTransition(
+      position: _slideAnimation,
+      child: FadeTransition(
+        opacity: _fadeAnimation,
+        child: ScaleTransition(
+          scale: _scaleAnimation,
+          child: GestureDetector(
+            onTapDown: _onTapDown,
+            onTapUp: _onTapUp,
+            onTapCancel: _onTapCancel,
+            onTap: _onTap,
+            child: Container(
+              decoration: BoxDecoration(
+                color: cardColor,
+                borderRadius: BorderRadius.circular(25),
+                border: Border.all(color: borderColor, width: widget.highlight ? 2.5 : 1.5),
+                boxShadow: widget.highlight
+                    ? [
+                  BoxShadow(
+                    color: AppTheme.secondaryColor.withOpacity(0.4),
+                    blurRadius: 30,
+                    spreadRadius: -8,
+                    offset: const Offset(0, 15),
+                  )
+                ]
+                    : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 15,
+                    spreadRadius: -5,
+                    offset: const Offset(0, 8),
+                  )
+                ],
               ),
-              if (widget.tag != null)
-                Positioned(
-                  top: -14,
-                  left: 20,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: AppTheme.secondaryColor,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      widget.tag!,
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.title,
+                                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 19, color: Colors.white),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                widget.subtitle,
+                                style: const TextStyle(fontSize: 16, color: Colors.white70),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 20,
+                          color: widget.highlight ? AppTheme.secondaryColor : Colors.white70,
+                        ),
+                      ],
                     ),
                   ),
-                ),
-            ],
+                  if (widget.tag != null)
+                    Positioned(
+                      top: -16,
+                      left: 20,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [AppTheme.secondaryColor, Colors.amber],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(15),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.secondaryColor.withOpacity(0.4),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          widget.tag!,
+                          style: const TextStyle(
+                            color: AppTheme.primaryColor,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -589,9 +659,9 @@ class _TrustBadges extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: const [
-        _TrustRow(icon: Icons.verified_user_outlined, text: 'Gizli ücret yok'),
-        SizedBox(width: 24),
-        _TrustRow(icon: Icons.lock_open_rounded, text: 'Güvenli Ödeme'),
+        _TrustRow(icon: Icons.security_rounded, text: 'Güvenli Ödeme'),
+        SizedBox(width: 32),
+        _TrustRow(icon: Icons.redo_rounded, text: 'Kolay İptal'),
       ],
     );
   }
@@ -606,69 +676,13 @@ class _TrustRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, color: AppTheme.secondaryTextColor, size: 16),
-        const SizedBox(width: 8),
+        Icon(icon, color: Colors.white70, size: 20),
+        const SizedBox(width: 10),
         Text(
           text,
-          style: const TextStyle(color: AppTheme.secondaryTextColor, fontWeight: FontWeight.w600),
+          style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600, fontSize: 15),
         ),
       ],
     );
   }
-}
-
-class _AnimatedBackground extends StatelessWidget {
-  const _AnimatedBackground({required this.glow});
-  final Animation<double> glow;
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: glow,
-      builder: (context, _) {
-        final g = glow.value;
-        return Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppTheme.primaryColor.withBlue(30),
-                AppTheme.primaryColor.blend(Colors.black, .3 + g * .15),
-              ],
-            ),
-          ),
-          child: CustomPaint(
-            painter: _ParticlePainter(progress: g),
-          ),
-        );
-      },
-    );
-  }
-}
-
-extension on Color {
-  Color blend(Color other, double t) => Color.lerp(this, other, t)!;
-}
-
-class _ParticlePainter extends CustomPainter {
-  _ParticlePainter({required this.progress});
-  final double progress;
-  final int count = 25;
-  final rnd = Random(42);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    for (var i = 0; i < count; i++) {
-      final dx = rnd.nextDouble() * size.width;
-      final dy = rnd.nextDouble() * size.height;
-      final radius = (rnd.nextDouble() * 2.5 + 1.5) * (1 + (sin(progress * pi) * .4));
-      final paint = Paint()
-        ..color = AppTheme.secondaryColor.withOpacity(.03 + rnd.nextDouble() * .05)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
-      canvas.drawCircle(Offset(dx, dy), radius, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _ParticlePainter oldDelegate) => oldDelegate.progress != progress;
 }

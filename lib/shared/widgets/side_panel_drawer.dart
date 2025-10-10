@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taktik/features/profile/logic/rank_service.dart';
+import 'package:taktik/shared/widgets/premium_badge.dart';
 
 class SidePanelDrawer extends ConsumerStatefulWidget {
   const SidePanelDrawer({super.key});
@@ -127,7 +128,6 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                       _navTile(context, currentLocation: location, icon: Icons.bar_chart_rounded, title: 'Deneme Gelişimi', route: '/home/stats'),
                       _navTile(context, currentLocation: location, icon: Icons.insights_rounded, title: 'Genel Bakış', route: '/stats/overview'),
                       _navTile(context, currentLocation: location, icon: Icons.shield_moon_rounded, title: 'Günlük Görevler', route: '/home/quests'),
-                      // Odaklanma Mabedi kaldırıldı
                       _navTile(context, currentLocation: location, icon: Icons.inventory_2_outlined, title: 'Deneme Arşivi', route: '/library'),
                       _navTile(context, currentLocation: location, icon: Icons.article_rounded, title: 'Taktik Blog', route: '/blog'),
                       const SizedBox(height: 12),
@@ -136,18 +136,23 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                         child: _SectionLabel('Öne Çıkan'),
                       ),
                       const SizedBox(height: 8),
-                      if (!isPremium)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              _PremiumButton(onTap: () { Navigator.of(context).pop(); context.go('/premium'); }),
-                              const SizedBox(height: 6),
-                              Text('Premium avantajlarını keşfet', textAlign: TextAlign.center, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.secondaryTextColor)),
-                            ],
-                          ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: isPremium
+                            ? const PremiumBadge()
+                            : Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _PremiumButton(onTap: () { Navigator.of(context).pop(); context.go('/premium'); }),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Premium avantajlarını keşfet',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.secondaryTextColor),
+                            ),
+                          ],
                         ),
+                      ),
                       Consumer(builder: (context, ref, _) {
                         final isAdminAsync = ref.watch(adminClaimProvider);
                         return isAdminAsync.maybeWhen(
@@ -206,13 +211,13 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
   }
 
   Widget _navTile(
-    BuildContext context, {
-    required String currentLocation,
-    required IconData icon,
-    required String title,
-    required String route,
-  }) {
-    final bool selected = currentLocation == route || currentLocation.startsWith(route);
+      BuildContext context, {
+        required String currentLocation,
+        required IconData icon,
+        required String title,
+        required String route,
+      }) {
+    final bool selected = currentLocation == route || (route != '/home' && currentLocation.startsWith(route));
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -256,12 +261,12 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
   }
 
   Widget _actionTile(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    Color iconColor = AppTheme.secondaryTextColor,
-    required VoidCallback onTap,
-  }) {
+      BuildContext context, {
+        required IconData icon,
+        required String title,
+        Color iconColor = AppTheme.secondaryTextColor,
+        required VoidCallback onTap,
+      }) {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16),
       leading: Icon(icon, color: iconColor),
@@ -383,10 +388,10 @@ class _SectionLabel extends StatelessWidget {
       child: Text(
         text.toUpperCase(),
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              letterSpacing: 1.1,
-              color: AppTheme.secondaryTextColor.withOpacity(.8),
-              fontWeight: FontWeight.w700,
-            ),
+          letterSpacing: 1.1,
+          color: AppTheme.secondaryTextColor.withOpacity(.8),
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
