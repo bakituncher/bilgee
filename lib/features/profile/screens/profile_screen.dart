@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/data/providers/admin_providers.dart';
+import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:taktik/core/theme/app_theme.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:taktik/data/models/user_model.dart';
