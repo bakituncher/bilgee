@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:taktik/core/services/revenuecat_service.dart';
 import 'package:taktik/core/theme/app_theme.dart';
+import 'package:collection/collection.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
 import 'dart:math';
 import 'dart:ui';
@@ -179,10 +180,10 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     double? savePercent;
 
     if (offerings != null) {
-      final current = offerings.current ?? offerings.all.values.firstWhere((o) => o.availablePackages.isNotEmpty, orElse: () => null);
+      final current = offerings.current ?? offerings.all.values.firstWhereOrNull((o) => o.availablePackages.isNotEmpty);
       if (current != null) {
-        monthly = current.monthly ?? current.getPackage('aylik-normal') ?? current.availablePackages.firstWhere((p) => p.packageType == PackageType.monthly, orElse: () => null);
-        yearly = current.annual ?? current.getPackage('yillik-normal') ?? current.availablePackages.firstWhere((p) => p.packageType == PackageType.annual, orElse: () => null);
+        monthly = current.monthly ?? current.getPackage('aylik-normal') ?? current.availablePackages.firstWhereOrNull((p) => p.packageType == PackageType.monthly);
+        yearly = current.annual ?? current.getPackage('yillik-normal') ?? current.availablePackages.firstWhereOrNull((p) => p.packageType == PackageType.annual);
 
         if (monthly == null || yearly == null) {
            final sortedPackages = List.from(current.availablePackages)..sort((a,b) => a.storeProduct.price.compareTo(b.storeProduct.price));

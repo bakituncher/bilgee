@@ -213,6 +213,7 @@ class _ProfileView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isPremium = ref.watch(premiumStatusProvider);
     final testsAsync = ref.watch(testsProvider);
     final focusSessionsAsync = ref.watch(focusSessionsProvider);
     final performanceAsync = ref.watch(performanceProvider);
@@ -287,7 +288,7 @@ class _ProfileView extends ConsumerWidget {
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
-                                  if (user.isPremium) ...[
+                                  if (isPremium) ...[
                                     const SizedBox(width: 8),
                                     const _PremiumStatusBadge(),
                                   ],
