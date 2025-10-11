@@ -156,87 +156,75 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
             child: Container(color: Colors.black.withOpacity(0.3)),
           ),
 
-          Column(
-            children: [
-              // 1. ÜST SABİT KISIM (Kapat/Geri Yükle butonları)
-              _buildCustomHeader(context),
+          SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              children: [
+                // 1. ÜST KISIM (Artık kaydırılabilir)
+                _buildCustomHeader(context),
 
-              // 2. DİNAMİK PAZARLAMA ALANI (Expanded ve Gerekirse Kaydırılabilir)
-              Expanded(
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: Column(
-                    children: [
-                      // Başlıklar
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-                        child: _AnimatedHeader(
-                          slideController: _headerSlideController,
-                          fadeController: _fadeController,
-                        ),
-                      ),
-
-                      const SizedBox(height: 15),
-
-                      // PageView (Özellik Carousel - DYNAMIC)
-                      _buildMarketingCarousel(),
-
-                      const SizedBox(height: 15),
-
-                      // Page Indicator
-                      _buildPageIndicator(),
-
-                      const SizedBox(height: 20), // Spacer yerine sabit boşluk
-                    ],
+                // 2. PAZARLAMA ALANI
+                // Başlıklar
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                  child: _AnimatedHeader(
+                    slideController: _headerSlideController,
+                    fadeController: _fadeController,
                   ),
                 ),
-              ),
+                const SizedBox(height: 15),
+                // PageView (Özellik Carousel - DYNAMIC)
+                _buildMarketingCarousel(),
+                const SizedBox(height: 15),
+                // Page Indicator
+                _buildPageIndicator(),
+                const SizedBox(height: 20),
 
-              // 3. ALT SABİT FİYATLANDIRMA ALANI (Fixed Bottom)
-              Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: _fixedBottomBarColor,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.5),
-                      spreadRadius: 5,
-                      blurRadius: 15,
-                      offset: const Offset(0, -5),
+                // 3. FİYATLANDIRMA ALANI (Artık kaydırılabilir)
+                Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: _fixedBottomBarColor,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.5),
+                        spreadRadius: 5,
+                        blurRadius: 15,
+                        offset: const Offset(0, -5),
+                      ),
+                    ],
+                  ),
+                  child: offeringsAsyncValue.when(
+                    data: (offerings) => Column(
+                      children: [
+                        _buildPurchaseOptions(context, ref, offerings),
+                        // Güven Rozetleri ve Yasal Metin
+                        FadeTransition(
+                          opacity: _fadeController,
+                          child: Column(
+                            children: [
+                              const _TrustBadges(),
+                              Padding(
+                                padding: EdgeInsets.only(bottom: bottomInset > 0 ? bottomInset + 4 : 10),
+                                child: const _LegalFooter(isCompact: true),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                child: offeringsAsyncValue.when(
-                  data: (offerings) => Column(
-                    children: [
-                      _buildPurchaseOptions(context, ref, offerings),
-
-                      // Güven Rozetleri ve Yasal Metin
-                      FadeTransition(
-                        opacity: _fadeController,
-                        child: Column(
-                          children: [
-                            const _TrustBadges(),
-                            Padding(
-                              padding: EdgeInsets.only(bottom: bottomInset > 0 ? bottomInset + 4 : 10),
-                              child: const _LegalFooter(isCompact: true),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  loading: () => const Padding(
-                    padding: EdgeInsets.all(32.0),
-                    child: CircularProgressIndicator(strokeWidth: 3, color: AppTheme.secondaryColor),
-                  ),
-                  error: (error, stack) => Padding(
-                    padding: const EdgeInsets.all(32.0),
-                    child: Text('Hata: $error', style: const TextStyle(color: AppTheme.accentColor)),
+                    loading: () => const Padding(
+                      padding: EdgeInsets.all(32.0),
+                      child: CircularProgressIndicator(strokeWidth: 3, color: AppTheme.secondaryColor),
+                    ),
+                    error: (error, stack) => Padding(
+                      padding: const EdgeInsets.all(32.0),
+                      child: Text('Hata: $error', style: const TextStyle(color: AppTheme.accentColor)),
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -387,7 +375,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                 title: 'Yıllık Premium Plan',
                 price: yearly.storeProduct.priceString,
                 billingPeriod: '/ yıl',
-                tag: savePercent != null ? '%${savePercent.toStringAsFixed(0)} TASARRUF ET' : 'EN POPÜLER',
+                tag: savePercent != null ? '%${savePercent.toStringAsFixed(0)} İNDİRİM' : 'EN POPÜLER',
                 highlight: true,
                 delay: const Duration(milliseconds: 0),
                 onTap: () => _purchasePackage(context, ref, yearly!),
@@ -401,7 +389,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                 title: 'Aylık Premium Plan',
                 price: monthly.storeProduct.priceString,
                 billingPeriod: '/ ay',
-                tag: 'ESNEK',
+                tag: 'Sana Özel',
                 highlight: false,
                 delay: const Duration(milliseconds: 100),
                 onTap: () => _purchasePackage(context, ref, monthly!),
@@ -800,7 +788,7 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                           ),
                           child: Center(
                             child: Text(
-                              widget.highlight ? 'ŞİMDİ KATIL (En İyi Fırsat)' : 'AYLIK ABONE OL',
+                              widget.highlight ? 'Fırsatı Yakala' : 'AYLIK ABONE OL',
                               style: TextStyle(
                                 fontSize: 17,
                                 fontWeight: FontWeight.w900,
@@ -867,7 +855,7 @@ class _TrustBadges extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: const [
-          _TrustRow(icon: Icons.lock_rounded, text: 'Güvenli Ödeme'),
+          _TrustRow(icon: Icons.lock_rounded, text: 'Google ile Güvenli Ödeme'),
           SizedBox(width: 20),
           _TrustRow(icon: Icons.cancel_schedule_send_rounded, text: 'Kolay İptal'),
         ],
