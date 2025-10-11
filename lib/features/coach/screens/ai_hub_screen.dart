@@ -140,8 +140,39 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
                       final tool = tools[index];
+                      final marketingMap = {
+                        'Haftalık Planlama': {
+                          'title': 'Kişisel Başarı Yol Haritanız',
+                          'subtitle': 'Yapay zeka, sınav hedeflerinize ve takviminize göre size özel, dinamik bir haftalık çalışma planı oluşturur. Ne zaman ne çalışacağınızı bilerek, stresi azaltın ve verimliliği en üst düzeye çıkarın.',
+                        },
+                        'Cevher Atölyesi': {
+                          'title': 'Zayıflıkları Güce Dönüştürün',
+                          'subtitle': 'En zayıf olduğunuz konuları tespit edip, onlara özel çalışma kartları ve mini testlerle nokta atışı yapın. Her bir eksiğinizi kalıcı olarak kapatarak netlerinizi artırın.',
+                        },
+                        'Analiz & Strateji': {
+                          'title': 'Her Denemeden Ders Çıkarın',
+                          'subtitle': 'Deneme sonuçlarınızı saniyeler içinde analiz edin ve bir sonraki adımınız için stratejik öneriler alın. Nerede yanlış yaptığınızı değil, nasıl daha iyi olacağınızı öğrenin.',
+                        },
+                        'Motivasyon Sohbeti': {
+                          'title': 'Sınav Sürecindeki En Yakın Dostunuz',
+                          'subtitle': 'Stresli veya motivasyonsuz hissettiğinizde, yapay zeka koçunuzla sohbet edin. Size özel tavsiyeler ve psikolojik destekle mental olarak her zaman zirvede kalın.',
+                        },
+                      };
+
                       return PremiumGate(
                         isPremium: isPremium,
+                        onTap: () => context.go(
+                          '/ai-hub/offer',
+                          extra: {
+                            'title': tool.title,
+                            'subtitle': tool.subtitle,
+                            'icon': tool.icon,
+                            'color': tool.color,
+                            'heroTag': tool.heroTag,
+                            'marketingTitle': marketingMap[tool.title]!['title']!,
+                            'marketingSubtitle': marketingMap[tool.title]!['subtitle']!,
+                          },
+                        ),
                         child: _AiToolTile(
                           tool: tool,
                           onTap: () => context.go(tool.route),

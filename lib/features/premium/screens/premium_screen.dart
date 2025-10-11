@@ -680,6 +680,9 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
 
   @override
   Widget build(BuildContext context) {
+    final introPrice = widget.package.storeProduct.introductoryPrice;
+    final hasFreeTrial = introPrice != null && introPrice.price == 0;
+
     final borderColor = widget.highlight ? AppTheme.secondaryColor : _cardBorderColor;
     final backgroundColor = widget.highlight ? AppTheme.secondaryColor.withOpacity(0.2) : _cardBackgroundColor;
 
@@ -700,7 +703,6 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                 color: backgroundColor,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: borderColor, width: widget.highlight ? 3.0 : 1.5),
-                // Yıllık plana çarpıcı bir dış gölge eklendi (Sektör Standardı)
                 boxShadow: widget.highlight
                     ? [
                   BoxShadow(
@@ -709,7 +711,7 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                     spreadRadius: 2,
                   ),
                   BoxShadow(
-                    color: AppTheme.goldColor.withOpacity(0.15), // Hafif altın ışıltısı
+                    color: AppTheme.goldColor.withOpacity(0.15),
                     blurRadius: 15,
                     spreadRadius: 2,
                   )
@@ -730,7 +732,7 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                     children: [
                       Text(
                         widget.title,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 20,
                           color: Colors.white,
@@ -760,6 +762,26 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                           ),
                         ],
                       ),
+                      if (hasFreeTrial && !widget.highlight)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: AppTheme.successColor.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: AppTheme.successColor.withOpacity(0.5))
+                            ),
+                            child: const Text(
+                              '7 GÜN ÜCRETSİZ DENE',
+                              style: TextStyle(
+                                color: AppTheme.successColor,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ),
                       const SizedBox(height: 12),
                       Container(
                         width: double.infinity,
@@ -783,18 +805,18 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                   ),
                   if (widget.tag != null)
                     Positioned(
-                      top: -10,
-                      right: 15,
+                      top: -14,
+                      right: 18,
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: widget.highlight ? AppTheme.secondaryColor : AppTheme.goldColor,
-                          borderRadius: BorderRadius.circular(15),
-                          border: Border.all(color: Colors.white, width: 1.0),
+                          borderRadius: BorderRadius.circular(99),
+                          border: Border.all(color: Colors.white.withOpacity(0.8), width: 1.5),
                         ),
                         child: Text(
                           widget.tag!,
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: AppTheme.primaryColor,
                             fontWeight: FontWeight.w900,
                             fontSize: 12,

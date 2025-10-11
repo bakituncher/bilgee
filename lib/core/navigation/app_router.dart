@@ -13,6 +13,7 @@ import 'onboarding_routes.dart';
 import 'main_shell_routes.dart';
 import 'package:taktik/features/blog/screens/blog_screen.dart';
 import 'package:taktik/features/premium/screens/premium_screen.dart' as premium;
+import 'package:taktik/features/premium/screens/tool_offer_screen.dart';
 import 'package:taktik/features/stats/screens/general_overview_screen.dart';
 import '../../features/blog/screens/blog_admin_editor_screen.dart';
 import 'package:taktik/features/blog/screens/blog_detail_screen.dart';
@@ -171,6 +172,26 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           state: state,
           child: const premium.PremiumScreen(),
         ),
+      ),
+       GoRoute(
+        path: '/ai-hub/offer',
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) {
+          final args = state.extra as Map<String, dynamic>;
+          return buildPageWithFadeTransition(
+            context: context,
+            state: state,
+            child: ToolOfferScreen(
+              title: args['title'] as String,
+              subtitle: args['subtitle'] as String,
+              icon: args['icon'] as IconData,
+              color: args['color'] as Color,
+              heroTag: args['heroTag'] as String,
+              marketingTitle: args['marketingTitle'] as String,
+              marketingSubtitle: args['marketingSubtitle'] as String,
+            ),
+          );
+        },
       ),
       GoRoute(
         path: '/stats/overview',
