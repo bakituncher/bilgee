@@ -34,18 +34,23 @@ exports.handleRevenueCatWebhook = onRequest(
       // For this exercise, we'll simulate this by directly using the webhook data, but a real implementation should call the API.
 
       const entitlements = event?.event?.entitlements || {};
-      const premiumEntitlement = Object.values(entitlements).find(e => e.product_identifier.includes('premium')); // Adjust identifier as needed
-
       let isPremium = false;
-      let premiumUntil = null;
+      let latestExpiration = 0;
 
-      if (premiumEntitlement && premiumEntitlement.expires_date_ms) {
-        const expiration = new Date(premiumEntitlement.expires_date_ms);
-        if (expiration > new Date()) {
+      // Check all entitlements. If any are active (expire in the future), the user is premium.
+      for (const key in entitlements) {
+        const entitlement = entitlements[key];
+        const expires_ms = entitlement.expires_date_ms;
+
+        if (expires_ms && expires_ms > Date.now()) {
           isPremium = true;
-          premiumUntil = expiration;
+          if (expires_ms > latestExpiration) {
+            latestExpiration = expires_ms;
+          }
         }
       }
+
+      const premiumUntil = isPremium ? new Date(latestExpiration) : null;
 
       const userRef = db.collection('users').doc(userId);
       const historyRef = userRef.collection('purchase_history').doc(event.event.id); // Use event ID for idempotency
