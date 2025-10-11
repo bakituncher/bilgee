@@ -2,7 +2,7 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions");
 const { db } = require("./init");
 const { defineSecret } = require('firebase-functions/params');
-const { enforceRateLimit, getClientIpFromRawRequest, enforceDailyQuota } = require('./utils');
+const { enforceRateLimit, getClientIpFromRawRequest, dayKeyIstanbul } = require('./utils');
 const GEMINI_API_KEY = defineSecret('GEMINI_API_KEY');
 
 // Güvenlik ve kötüye kullanım önleme ayarları
@@ -17,6 +17,12 @@ exports.generateGemini = onCall(
   async (request) => {
     if (!request.auth) {
       throw new HttpsError('unauthenticated', 'Oturum gerekli');
+    }
+
+    // Premium kontrolü
+    const userDoc = await db.collection('users').doc(request.auth.uid).get();
+    if (!userDoc.exists || !userDoc.data().isPremium) {
+      throw new HttpsError('permission-denied', 'Bu özellik yalnızca premium kullanıcılara açıktır.');
     }
 
     const prompt = request.data?.prompt;
@@ -50,15 +56,33 @@ exports.generateGemini = onCall(
 
     const normalizedPrompt = prompt.replace(/\s+/g, ' ').trim();
 
-    // Oran sınırlama: kullanıcı ve IP bazlı + günlük kota
+    // Oran sınırlama: kullanıcı ve IP bazlı
     const uidKey = `gemini_uid_${request.auth.uid}`;
     const ip = getClientIpFromRawRequest(request.rawRequest) || 'unknown';
     const ipKey = `gemini_ip_${ip}`;
     await Promise.all([
       enforceRateLimit(uidKey, GEMINI_RATE_LIMIT_WINDOW_SEC, GEMINI_RATE_LIMIT_MAX),
       enforceRateLimit(ipKey, GEMINI_RATE_LIMIT_WINDOW_SEC, GEMINI_RATE_LIMIT_IP_MAX),
-      enforceDailyQuota(`gemini_daily_uid_${request.auth.uid}`, Number(process.env.GEMINI_DAILY_QUOTA || 100)),
     ]);
+
+    // Günlük "yıldız" kotası
+    const today = dayKeyIstanbul();
+    const starRef = db.collection('users').doc(request.auth.uid).collection('stars').doc(today);
+    await db.runTransaction(async (tx) => {
+      const starDoc = await tx.get(starRef);
+      if (!starDoc.exists) {
+        // Belge yoksa, varsayılan 100 yıldızla oluştur
+        tx.set(starRef, { balance: 99 }); // 100 - 1
+        logger.info(`Star quota initialized for user ${request.auth.uid}`, { day: today, balance: 99 });
+      } else {
+        const currentBalance = starDoc.data().balance || 0;
+        if (currentBalance <= 0) {
+          throw new HttpsError('resource-exhausted', 'Günlük AI kullanım limitine ulaştınız.');
+        }
+        tx.update(starRef, { balance: currentBalance - 1 });
+        logger.info(`Star deducted for user ${request.auth.uid}`, { day: today, newBalance: currentBalance - 1 });
+      }
+    });
 
     try {
       const body = {

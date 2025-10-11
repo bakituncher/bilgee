@@ -18,7 +18,7 @@ service cloud.firestore {
       allow create: if request.auth != null && request.auth.uid == userId;
 
       // Kullanıcı kendi profilini güncelleyebilir, ancak SADECE belirli alanları.
-      // Bu kural, 'followerCount' ve 'followingCount' gibi sunucu tarafından y��netilen
+      // Bu kural, 'followerCount', 'followingCount', 'isPremium' ve 'premiumUntil' gibi sunucu tarafından yönetilen
       // alanların istemci tarafından manipüle edilmesini kesinlikle engeller.
       allow update: if request.auth != null && request.auth.uid == userId &&
                        request.resource.data.diff(resource.data).affectedKeys()
@@ -31,6 +31,13 @@ service cloud.firestore {
                                  'hasCreatedStrategicPlan', 'lastStrategyCreationDate']);
 
       // --- ALT KOLEKSİYONLAR ---
+      match /stars/{day} {
+        // Kullanıcı kendi yıldız bakiyesini okuyabilir.
+        allow read: if request.auth.uid == userId;
+        // İstemci bakiye oluşturamaz, güncelleyemez veya silemez.
+        allow write: if false;
+      }
+
       match /daily_quests/{questId} {
         // Yalnızca sahibi okuyabilir
         allow read: if request.auth.uid == userId;
