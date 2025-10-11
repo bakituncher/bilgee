@@ -85,29 +85,35 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen> with TickerPr
                 Expanded(
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const SizedBox(height: 20),
-                        _ToolFeatureHeader(
-                          heroTag: widget.heroTag,
-                          icon: widget.icon,
-                          color: widget.color,
-                          title: widget.title,
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const SizedBox(height: 20),
+                              _ToolFeatureHeader(
+                                heroTag: widget.heroTag,
+                                icon: widget.icon,
+                                color: widget.color,
+                                title: widget.title,
+                              ),
+                              const SizedBox(height: 24),
+                              _MarketingInfo(
+                                fadeController: _fadeController,
+                                title: widget.marketingTitle,
+                                subtitle: widget.marketingSubtitle,
+                              ),
+                              const SizedBox(height: 32),
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: 24),
-                        _MarketingInfo(
-                          fadeController: _fadeController,
-                          title: widget.marketingTitle,
-                          subtitle: widget.marketingSubtitle,
-                        ),
-                        const SizedBox(height: 32),
+                        _buildPurchaseSection(offeringsAsyncValue, bottomInset),
                       ],
                     ),
                   ),
                 ),
-                _buildPurchaseSection(offeringsAsyncValue, bottomInset),
               ],
             ),
           ),
@@ -328,6 +334,18 @@ class _ToolFeatureHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Hero(
       tag: heroTag,
+      flightShuttleBuilder: (
+        BuildContext flightContext,
+        Animation<double> animation,
+        HeroFlightDirection flightDirection,
+        BuildContext fromHeroContext,
+        BuildContext toHeroContext,
+      ) {
+        return Material(
+          color: Colors.transparent,
+          child: toHeroContext.widget,
+        );
+      },
       child: Material(
         color: Colors.transparent,
         child: Column(

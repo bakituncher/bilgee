@@ -161,31 +161,34 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
               // 1. ÜST SABİT KISIM (Kapat/Geri Yükle butonları)
               _buildCustomHeader(context),
 
-              // 2. DİNAMİK PAZARLAMA ALANI (Expanded)
+              // 2. DİNAMİK PAZARLAMA ALANI (Expanded ve Gerekirse Kaydırılabilir)
               Expanded(
-                child: Column(
-                  children: [
-                    // Başlıklar
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-                      child: _AnimatedHeader(
-                        slideController: _headerSlideController,
-                        fadeController: _fadeController,
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    children: [
+                      // Başlıklar
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                        child: _AnimatedHeader(
+                          slideController: _headerSlideController,
+                          fadeController: _fadeController,
+                        ),
                       ),
-                    ),
 
-                    const SizedBox(height: 15),
+                      const SizedBox(height: 15),
 
-                    // PageView (Özellik Carousel - DYNAMIC)
-                    _buildMarketingCarousel(),
+                      // PageView (Özellik Carousel - DYNAMIC)
+                      _buildMarketingCarousel(),
 
-                    const SizedBox(height: 15),
+                      const SizedBox(height: 15),
 
-                    // Page Indicator
-                    _buildPageIndicator(),
+                      // Page Indicator
+                      _buildPageIndicator(),
 
-                    const Spacer(),
-                  ],
+                      const SizedBox(height: 20), // Spacer yerine sabit boşluk
+                    ],
+                  ),
                 ),
               ),
 
