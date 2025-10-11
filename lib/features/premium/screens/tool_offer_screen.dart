@@ -556,22 +556,23 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                                   ),
                                 ],
                               ),
+                              // ÜCRETSİZ DENEME VURGUSU
                                if (hasFreeTrial && !widget.highlight)
                                 Padding(
-                                  padding: const EdgeInsets.only(top: 6),
+                                  padding: const EdgeInsets.only(top: 8),
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                                     decoration: BoxDecoration(
                                       color: AppTheme.successColor.withOpacity(0.15),
                                       borderRadius: BorderRadius.circular(8),
                                       border: Border.all(color: AppTheme.successColor.withOpacity(0.5))
                                     ),
                                     child: const Text(
-                                      '7 GÜN ÜCRETSİZ DENE',
+                                      'İLK 7 GÜN ÜCRETSİZ DENE',
                                       style: TextStyle(
                                         color: AppTheme.successColor,
                                         fontWeight: FontWeight.bold,
-                                        fontSize: 11,
+                                        fontSize: 12,
                                       ),
                                     ),
                                   ),
@@ -590,21 +591,31 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                   ),
                   if (widget.tag != null)
                     Positioned(
-                      top: -14,
-                      right: 18,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: widget.highlight ? widget.color : AppTheme.goldColor,
-                          borderRadius: BorderRadius.circular(99),
-                           border: Border.all(color: Colors.white.withOpacity(0.8), width: 1.5),
-                        ),
-                        child: Text(
-                          widget.tag!,
-                          style: TextStyle(
-                            color: AppTheme.primaryColor,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
+                      top: -15, // Dikeyde hizalama
+                      right: -5, // Yatayda hizalama
+                      child: Transform.rotate(
+                        angle: 0.0,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: widget.highlight ? widget.color : AppTheme.goldColor,
+                            borderRadius: BorderRadius.circular(99),
+                            border: Border.all(color: Colors.white.withOpacity(0.8), width: 1.5),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.3),
+                                blurRadius: 5,
+                                offset: const Offset(0, 2),
+                              )
+                            ],
+                          ),
+                          child: Text(
+                            widget.tag!,
+                            style: TextStyle(
+                              color: AppTheme.primaryColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
                           ),
                         ),
                       ),

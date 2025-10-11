@@ -686,6 +686,7 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
     final borderColor = widget.highlight ? AppTheme.secondaryColor : _cardBorderColor;
     final backgroundColor = widget.highlight ? AppTheme.secondaryColor.withOpacity(0.2) : _cardBackgroundColor;
 
+    // --- SEKTÖR STANDARDI TASARIM İYİLEŞTİRMELERİ ---
     return SlideTransition(
       position: _slideAnimation,
       child: FadeTransition(
@@ -698,7 +699,6 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
             onTapCancel: _onTapCancel,
             onTap: _onTap,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
               decoration: BoxDecoration(
                 color: backgroundColor,
                 borderRadius: BorderRadius.circular(20),
@@ -727,99 +727,116 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.title,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 20,
-                          color: Colors.white,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.title,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 20,
+                            color: Colors.white,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 5),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                        textBaseline: TextBaseline.alphabetic,
-                        children: [
-                          Text(
-                            widget.price,
-                            style: TextStyle(
-                              fontSize: 26,
-                              fontWeight: FontWeight.w900,
-                              color: widget.highlight ? AppTheme.secondaryColor : Colors.white,
+                        // ÜCRETSİZ DENEME VURGUSU
+                        if (hasFreeTrial && !widget.highlight)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: AppTheme.successColor.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: AppTheme.successColor.withOpacity(0.5))
+                              ),
+                              child: const Text(
+                                'İLK 7 GÜN ÜCRETSİZ DENE',
+                                style: TextStyle(
+                                  color: AppTheme.successColor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            widget.billingPeriod,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white70,
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (hasFreeTrial && !widget.highlight)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: AppTheme.successColor.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: AppTheme.successColor.withOpacity(0.5))
-                            ),
-                            child: const Text(
-                              '7 GÜN ÜCRETSİZ DENE',
+                          )
+                        else
+                          const SizedBox(height: 5), // Eğer deneme yoksa boşluk ekle
+
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic,
+                          children: [
+                            Text(
+                              widget.price,
                               style: TextStyle(
-                                color: AppTheme.successColor,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
+                                fontSize: 26,
+                                fontWeight: FontWeight.w900,
+                                color: widget.highlight ? AppTheme.secondaryColor : Colors.white,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              widget.billingPeriod,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white70,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: widget.highlight ? AppTheme.secondaryColor : Colors.white.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Center(
+                            child: Text(
+                              widget.highlight ? 'ŞİMDİ KATIL (En İyi Fırsat)' : 'AYLIK ABONE OL',
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w900,
+                                color: widget.highlight ? AppTheme.primaryColor : Colors.white,
                               ),
                             ),
                           ),
                         ),
-                      const SizedBox(height: 12),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        decoration: BoxDecoration(
-                          color: widget.highlight ? AppTheme.secondaryColor : Colors.white.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Center(
-                          child: Text(
-                            widget.highlight ? 'ŞİMDİ KATIL (En İyi Fırsat)' : 'AYLIK ABONE OL',
-                            style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w900,
-                              color: widget.highlight ? AppTheme.primaryColor : Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
+                  // TASARRUF ETiketinin Konumlandırılması
                   if (widget.tag != null)
                     Positioned(
-                      top: -14,
-                      right: 18,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: widget.highlight ? AppTheme.secondaryColor : AppTheme.goldColor,
-                          borderRadius: BorderRadius.circular(99),
-                          border: Border.all(color: Colors.white.withOpacity(0.8), width: 1.5),
-                        ),
-                        child: Text(
-                          widget.tag!,
-                          style: const TextStyle(
-                            color: AppTheme.primaryColor,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 12,
+                      top: -15, // Dikeyde hizalama
+                      right: -5, // Yatayda hizalama
+                      child: Transform.rotate(
+                        angle: 0.0, // Açı (istersen hafif bir açı verebilirsin)
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: widget.highlight ? AppTheme.secondaryColor : AppTheme.goldColor,
+                            borderRadius: BorderRadius.circular(99),
+                            border: Border.all(color: Colors.white.withOpacity(0.8), width: 1.5),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.3),
+                                blurRadius: 5,
+                                offset: const Offset(0, 2),
+                              )
+                            ],
+                          ),
+                          child: Text(
+                            widget.tag!,
+                            style: const TextStyle(
+                              color: AppTheme.primaryColor,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 12,
+                            ),
                           ),
                         ),
                       ),
