@@ -481,8 +481,11 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
 
   @override
   Widget build(BuildContext context) {
+    final introPrice = widget.package.storeProduct.introductoryPrice;
+    final hasFreeTrial = introPrice != null && introPrice.price == 0;
+
     final borderColor = widget.highlight ? widget.color : AppTheme.cardColor.withOpacity(0.5);
-    final backgroundColor = widget.highlight ? widget.color.withOpacity(0.1) : Colors.white.withOpacity(0.05);
+    final backgroundColor = widget.highlight ? widget.color.withOpacity(0.15) : Colors.white.withOpacity(0.05);
 
     return SlideTransition(
       position: _slideAnimation,
@@ -496,17 +499,16 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
             onTapCancel: _onTapCancel,
             onTap: _onTap,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
               decoration: BoxDecoration(
                 color: backgroundColor,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: borderColor, width: widget.highlight ? 2.0 : 1.5),
+                border: Border.all(color: borderColor, width: widget.highlight ? 2.5 : 1.5),
                 boxShadow: widget.highlight
                     ? [
                         BoxShadow(
-                          color: widget.color.withOpacity(0.2),
-                          blurRadius: 10,
-                          spreadRadius: 2,
+                          color: widget.color.withOpacity(0.3),
+                          blurRadius: 15,
+                          spreadRadius: 3,
                         ),
                       ]
                     : [],
@@ -514,71 +516,95 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.title,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                color: Colors.white,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.title,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 18,
+                                  color: Colors.white,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.baseline,
-                              textBaseline: TextBaseline.alphabetic,
-                              children: [
-                                Text(
-                                  widget.price,
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w800,
-                                    color: widget.highlight ? widget.color : Colors.white,
+                              const SizedBox(height: 5),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.baseline,
+                                textBaseline: TextBaseline.alphabetic,
+                                children: [
+                                  Text(
+                                    widget.price,
+                                    style: TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w900,
+                                      color: widget.highlight ? widget.color : Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    widget.billingPeriod,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.white70,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                               if (hasFreeTrial && !widget.highlight)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 6),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.successColor.withOpacity(0.15),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: AppTheme.successColor.withOpacity(0.5))
+                                    ),
+                                    child: const Text(
+                                      '7 GÜN ÜCRETSİZ DENE',
+                                      style: TextStyle(
+                                        color: AppTheme.successColor,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 11,
+                                      ),
+                                    ),
                                   ),
                                 ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  widget.billingPeriod,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.white70,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 16),
-                      Icon(
-                        widget.highlight ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
-                        color: widget.highlight ? widget.color : Colors.white38,
-                        size: 28,
-                      )
-                    ],
+                        const SizedBox(width: 16),
+                        Icon(
+                          widget.highlight ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+                          color: widget.highlight ? widget.color : Colors.white38,
+                          size: 32,
+                        )
+                      ],
+                    ),
                   ),
                   if (widget.tag != null)
                     Positioned(
-                      top: -12,
-                      right: 15,
+                      top: -14,
+                      right: 18,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: widget.color,
-                          borderRadius: BorderRadius.circular(15),
+                          color: widget.highlight ? widget.color : AppTheme.goldColor,
+                          borderRadius: BorderRadius.circular(99),
+                           border: Border.all(color: Colors.white.withOpacity(0.8), width: 1.5),
                         ),
                         child: Text(
                           widget.tag!,
                           style: TextStyle(
                             color: AppTheme.primaryColor,
                             fontWeight: FontWeight.bold,
-                            fontSize: 11,
+                            fontSize: 12,
                           ),
                         ),
                       ),
