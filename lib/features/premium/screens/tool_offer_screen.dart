@@ -33,6 +33,94 @@ class ToolOfferScreen extends ConsumerStatefulWidget {
   ConsumerState<ToolOfferScreen> createState() => _ToolOfferScreenState();
 }
 
+class _TrustBadges extends StatelessWidget {
+  const _TrustBadges();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: const [
+          _TrustRow(icon: Icons.lock_rounded, text: 'Google ile Güvenli Ödeme'),
+          SizedBox(width: 20),
+          _TrustRow(icon: Icons.cancel_schedule_send_rounded, text: 'Kolay İptal'),
+        ],
+      ),
+    );
+  }
+}
+
+class _TrustRow extends StatelessWidget {
+  const _TrustRow({required this.icon, required this.text});
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, color: Colors.white70, size: 16),
+        const SizedBox(width: 6),
+        Text(
+          text,
+          style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w500, fontSize: 13),
+        ),
+      ],
+    );
+  }
+}
+
+class _LegalFooter extends StatelessWidget {
+  const _LegalFooter();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 0.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _FooterLink(text: 'Kullanım Şartları', targetRoute: AppRoutes.settings),
+          const SizedBox(width: 10),
+          const Text('|', style: TextStyle(color: Colors.white38, fontSize: 11)),
+          const SizedBox(width: 10),
+          _FooterLink(text: 'Gizlilik Politikası', targetRoute: AppRoutes.settings),
+        ],
+      ),
+    );
+  }
+}
+
+class _FooterLink extends StatelessWidget {
+  final String text;
+  final String targetRoute;
+
+  const _FooterLink({required this.text, required this.targetRoute});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        context.push(targetRoute).catchError((_) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$text: Navigasyon başarısız oldu. Rota: $targetRoute')));
+        });
+      },
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: Colors.white70,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          decoration: TextDecoration.underline,
+          decorationColor: Colors.white70,
+        ),
+      ),
+    );
+  }
+}
+
 class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen> with TickerProviderStateMixin {
   late final AnimationController _fadeController;
   late final AnimationController _cardPopController;
@@ -79,41 +167,35 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen> with TickerPr
             child: Container(color: Colors.black.withOpacity(0.5)),
           ),
           SafeArea(
+            bottom: false, // Let the purchase section handle the bottom inset
             child: Column(
               children: [
                 _buildCustomHeader(context),
                 Expanded(
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
                     child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const SizedBox(height: 20),
-                              _ToolFeatureHeader(
-                                heroTag: widget.heroTag,
-                                icon: widget.icon,
-                                color: widget.color,
-                                title: widget.title,
-                              ),
-                              const SizedBox(height: 24),
-                              _MarketingInfo(
-                                fadeController: _fadeController,
-                                title: widget.marketingTitle,
-                                subtitle: widget.marketingSubtitle,
-                              ),
-                              const SizedBox(height: 32),
-                            ],
-                          ),
+                        const Spacer(flex: 2),
+                        _ToolFeatureHeader(
+                          heroTag: widget.heroTag,
+                          icon: widget.icon,
+                          color: widget.color,
+                          title: widget.title,
                         ),
-                        _buildPurchaseSection(offeringsAsyncValue, bottomInset),
+                        const SizedBox(height: 24),
+                        _MarketingInfo(
+                          fadeController: _fadeController,
+                          title: widget.marketingTitle,
+                          subtitle: widget.marketingSubtitle,
+                        ),
+                        const Spacer(flex: 3),
                       ],
                     ),
                   ),
                 ),
+                _buildPurchaseSection(offeringsAsyncValue, bottomInset),
               ],
             ),
           ),
@@ -179,10 +261,21 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen> with TickerPr
         ],
       ),
       child: offeringsAsyncValue.when(
-        data: (offerings) => Padding(
-          padding: EdgeInsets.only(bottom: bottomInset > 0 ? bottomInset : 16),
-          child: _buildPurchaseOptions(context, ref, offerings),
-        ),
+        data: (offerings) {
+          return Padding(
+            padding: EdgeInsets.only(bottom: bottomInset > 0 ? bottomInset : 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildPurchaseOptions(context, ref, offerings),
+                const SizedBox(height: 8),
+                const _TrustBadges(),
+                const SizedBox(height: 8),
+                const _LegalFooter(),
+              ],
+            ),
+          );
+        },
         loading: () => const Padding(
           padding: EdgeInsets.all(48.0),
           child: Center(child: CircularProgressIndicator(strokeWidth: 3, color: AppTheme.secondaryColor)),
@@ -251,6 +344,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen> with TickerPr
                 delay: const Duration(milliseconds: 0),
                 onTap: () => _purchasePackage(context, ref, yearly!),
                 color: widget.color,
+                trialSubtitle: 'Sonrasında ${yearly.storeProduct.priceString} / yıl',
               ),
             if (yearly != null && monthly != null) const SizedBox(height: 12),
             if (monthly != null)
@@ -264,6 +358,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen> with TickerPr
                 delay: const Duration(milliseconds: 100),
                 onTap: () => _purchasePackage(context, ref, monthly!),
                 color: widget.color,
+                trialSubtitle: 'İlk 7 gün ücretsiz',
               ),
           ],
         ),
@@ -425,6 +520,7 @@ class _MarketingInfo extends StatelessWidget {
   }
 }
 
+
 class _PurchaseOptionCard extends StatefulWidget {
   const _PurchaseOptionCard({
     required this.animationController,
@@ -437,6 +533,7 @@ class _PurchaseOptionCard extends StatefulWidget {
     required this.onTap,
     required this.delay,
     required this.color,
+    this.trialSubtitle,
   });
 
   final AnimationController animationController;
@@ -449,6 +546,7 @@ class _PurchaseOptionCard extends StatefulWidget {
   final VoidCallback onTap;
   final Duration delay;
   final Color color;
+  final String? trialSubtitle;
 
   @override
   State<_PurchaseOptionCard> createState() => _PurchaseOptionCardState();
@@ -574,8 +672,7 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                                   ),
                                 ],
                               ),
-                              // ÜCRETSİZ DENEME VURGUSU
-                              if (hasFreeTrial && !widget.highlight)
+                              if (hasFreeTrial)
                                 Padding(
                                   padding: const EdgeInsets.only(top: 8),
                                   child: Container(
@@ -585,13 +682,29 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                                         borderRadius: BorderRadius.circular(8),
                                         border: Border.all(color: AppTheme.successColor.withOpacity(0.5))
                                     ),
-                                    child: const Text(
-                                      'İLK 7 GÜN ÜCRETSİZ DENE',
-                                      style: TextStyle(
-                                        color: AppTheme.successColor,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 12,
-                                      ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'İLK 7 GÜN ÜCRETSİZ DENE',
+                                          style: TextStyle(
+                                            color: AppTheme.successColor,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                        if (widget.trialSubtitle != null) ...[
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            widget.trialSubtitle!,
+                                            style: TextStyle(
+                                              color: AppTheme.successColor.withOpacity(0.8),
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 11,
+                                            ),
+                                          ),
+                                        ]
+                                      ],
                                     ),
                                   ),
                                 ),
@@ -608,11 +721,10 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                     ),
                   ),
                   if (widget.tag != null)
-                    Positioned(
-                      top: -15, // Dikeyde hizalama
-                      right: -5, // Yatayda hizalama
-                      child: Transform.rotate(
-                        angle: 0.0,
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: Transform.translate(
+                        offset: const Offset(10, -15),
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
