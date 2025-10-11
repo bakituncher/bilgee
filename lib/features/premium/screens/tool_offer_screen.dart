@@ -85,29 +85,35 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen> with TickerPr
                 Expanded(
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const SizedBox(height: 20),
-                        _ToolFeatureHeader(
-                          heroTag: widget.heroTag,
-                          icon: widget.icon,
-                          color: widget.color,
-                          title: widget.title,
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const SizedBox(height: 20),
+                              _ToolFeatureHeader(
+                                heroTag: widget.heroTag,
+                                icon: widget.icon,
+                                color: widget.color,
+                                title: widget.title,
+                              ),
+                              const SizedBox(height: 24),
+                              _MarketingInfo(
+                                fadeController: _fadeController,
+                                title: widget.marketingTitle,
+                                subtitle: widget.marketingSubtitle,
+                              ),
+                              const SizedBox(height: 32),
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: 24),
-                        _MarketingInfo(
-                          fadeController: _fadeController,
-                          title: widget.marketingTitle,
-                          subtitle: widget.marketingSubtitle,
-                        ),
-                        const SizedBox(height: 32),
+                        _buildPurchaseSection(offeringsAsyncValue, bottomInset),
                       ],
                     ),
                   ),
                 ),
-                _buildPurchaseSection(offeringsAsyncValue, bottomInset),
               ],
             ),
           ),
@@ -222,7 +228,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen> with TickerPr
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-             Text(
+            Text(
               'Devrime Katıl',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900, color: Colors.white),
             ),
@@ -328,6 +334,18 @@ class _ToolFeatureHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Hero(
       tag: heroTag,
+      flightShuttleBuilder: (
+          BuildContext flightContext,
+          Animation<double> animation,
+          HeroFlightDirection flightDirection,
+          BuildContext fromHeroContext,
+          BuildContext toHeroContext,
+          ) {
+        return Material(
+          color: Colors.transparent,
+          child: toHeroContext.widget,
+        );
+      },
       child: Material(
         color: Colors.transparent,
         child: Column(
@@ -505,12 +523,12 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                 border: Border.all(color: borderColor, width: widget.highlight ? 2.5 : 1.5),
                 boxShadow: widget.highlight
                     ? [
-                        BoxShadow(
-                          color: widget.color.withOpacity(0.3),
-                          blurRadius: 15,
-                          spreadRadius: 3,
-                        ),
-                      ]
+                  BoxShadow(
+                    color: widget.color.withOpacity(0.3),
+                    blurRadius: 15,
+                    spreadRadius: 3,
+                  ),
+                ]
                     : [],
               ),
               child: Stack(
@@ -556,22 +574,23 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                                   ),
                                 ],
                               ),
-                               if (hasFreeTrial && !widget.highlight)
+                              // ÜCRETSİZ DENEME VURGUSU
+                              if (hasFreeTrial && !widget.highlight)
                                 Padding(
-                                  padding: const EdgeInsets.only(top: 6),
+                                  padding: const EdgeInsets.only(top: 8),
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                                     decoration: BoxDecoration(
-                                      color: AppTheme.successColor.withOpacity(0.15),
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(color: AppTheme.successColor.withOpacity(0.5))
+                                        color: AppTheme.successColor.withOpacity(0.15),
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(color: AppTheme.successColor.withOpacity(0.5))
                                     ),
                                     child: const Text(
-                                      '7 GÜN ÜCRETSİZ DENE',
+                                      'İLK 7 GÜN ÜCRETSİZ DENE',
                                       style: TextStyle(
                                         color: AppTheme.successColor,
                                         fontWeight: FontWeight.bold,
-                                        fontSize: 11,
+                                        fontSize: 12,
                                       ),
                                     ),
                                   ),
@@ -590,21 +609,31 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                   ),
                   if (widget.tag != null)
                     Positioned(
-                      top: -14,
-                      right: 18,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: widget.highlight ? widget.color : AppTheme.goldColor,
-                          borderRadius: BorderRadius.circular(99),
-                           border: Border.all(color: Colors.white.withOpacity(0.8), width: 1.5),
-                        ),
-                        child: Text(
-                          widget.tag!,
-                          style: TextStyle(
-                            color: AppTheme.primaryColor,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
+                      top: -15, // Dikeyde hizalama
+                      right: -5, // Yatayda hizalama
+                      child: Transform.rotate(
+                        angle: 0.0,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: widget.highlight ? widget.color : AppTheme.goldColor,
+                            borderRadius: BorderRadius.circular(99),
+                            border: Border.all(color: Colors.white.withOpacity(0.8), width: 1.5),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.3),
+                                blurRadius: 5,
+                                offset: const Offset(0, 2),
+                              )
+                            ],
+                          ),
+                          child: Text(
+                            widget.tag!,
+                            style: TextStyle(
+                              color: AppTheme.primaryColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
                           ),
                         ),
                       ),
