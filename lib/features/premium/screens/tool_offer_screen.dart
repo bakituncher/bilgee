@@ -87,6 +87,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen> with TickerPr
                     physics: const BouncingScrollPhysics(),
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const SizedBox(height: 20),
                         _ToolFeatureHeader(
@@ -565,7 +566,7 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                   if (widget.tag != null)
                     Positioned(
                       top: -12,
-                      left: 15,
+                      right: 15,
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
