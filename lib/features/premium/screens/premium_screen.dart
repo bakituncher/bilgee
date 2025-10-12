@@ -124,9 +124,12 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
   }
 
   Future<void> _restorePurchases() async {
-    await ref.read(premiumStatusProvider.notifier).restorePurchases();
+    await ref.read(revenueCatServiceProvider).restorePurchases();
     if (context.mounted) {
-      final isPremium = ref.read(premiumStatusProvider);
+      // It might take a moment for the webhook to update the status,
+      // so we read the local SDK status for immediate feedback.
+      final customerInfo = await Purchases.getCustomerInfo();
+      final isPremium = customerInfo.entitlements.active.isNotEmpty;
       final msg = isPremium ? 'Satın alımlar geri yüklendi. Premium aktif.' : 'Aktif satın alım bulunamadı.';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -410,7 +413,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     );
 
     try {
-      final outcome = await RevenueCatService.makePurchase(package);
+      final outcome = await ref.read(revenueCatServiceProvider).makePurchase(package);
       if (!context.mounted) return;
       Navigator.of(context, rootNavigator: true).pop();
 
@@ -424,11 +427,11 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
         return;
       }
 
-      if (outcome.success && outcome.info != null) {
-        ref.read(premiumStatusProvider.notifier).updateFromCustomerInfo(outcome.info!);
+      // The server will update the status via webhook. We just show a success message.
+      if (outcome.success) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Harika! Premium özellikler artık aktif.'),
+            content: Text('Harika! Premium özellikler kısa süre içinde aktif olacak.'),
             backgroundColor: AppTheme.successColor,
           ),
         );

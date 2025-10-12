@@ -64,6 +64,14 @@ class RevenueCatService {
       return PurchaseOutcome(info: null, error: e.toString());
     }
   }
+
+  Future<void> restorePurchases() async {
+    try {
+      await Purchases.restorePurchases();
+    } catch (e) {
+      // Handle error if necessary
+    }
+  }
 }
 
 // A simple way to check the platform without needing a BuildContext
