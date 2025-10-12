@@ -1,77 +1,46 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:taktik/core/services/revenuecat_service.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
 
 // Provider to fetch offerings from RevenueCat
 final offeringsProvider = FutureProvider<Offerings>((ref) async {
   return await RevenueCatService.getOfferings();
 });
 
-// Provider to manage the user's premium status
-final premiumStatusProvider = StateNotifierProvider<PremiumStatusNotifier, bool>((ref) {
-  return PremiumStatusNotifier();
+// Provider to manage the user's premium status.
+// REFACTORED: This provider now derives its state directly from the
+// server-authoritative userProfileProvider stream. This ensures a single
+// source of truth for the user's premium status across the app.
+final premiumStatusProvider = Provider<bool>((ref) {
+  // Watch the server-verified user profile stream.
+  final userProfile = ref.watch(userProfileProvider);
+  // Return the premium status from the user model, defaulting to false.
+  return userProfile.value?.isPremium ?? false;
 });
 
-class PremiumStatusNotifier extends StateNotifier<bool> {
-  PremiumStatusNotifier() : super(false) {
-    _init();
-  }
+// The old PremiumStatusNotifier has been removed as it represented a
+// client-side source of truth which could conflict with the server's authoritative state.
+// The app now relies solely on the Firestore stream for premium status.
+// We can still provide a way to trigger a refresh from RevenueCat if needed.
+final revenueCatServiceProvider = Provider((ref) {
+  return RevenueCatService();
+});
 
-  Future<void> _init() async {
-    // Listen to purchaser updates
-    Purchases.addCustomerInfoUpdateListener((customerInfo) {
-      _updatePremiumStatus(customerInfo);
-    });
-
-    // Check initial status
-    try {
-      final customerInfo = await Purchases.getCustomerInfo();
-      _updatePremiumStatus(customerInfo);
-    } catch (e) {
-      if (kDebugMode) debugPrint('[RC] getCustomerInfo failed: $e');
-    }
-  }
-
+class RevenueCatService {
   Future<void> refresh() async {
     try {
-      final customerInfo = await Purchases.getCustomerInfo();
-      _updatePremiumStatus(customerInfo);
-    } catch (e) {
-      if (kDebugMode) debugPrint('[RC] refresh getCustomerInfo failed: $e');
+      await Purchases.getCustomerInfo();
+    } catch (_) {
+      // Handle error if necessary
     }
   }
 
   Future<void> restorePurchases() async {
     try {
-      final customerInfo = await Purchases.restorePurchases();
-      _updatePremiumStatus(customerInfo);
-    } catch (e) {
-      if (kDebugMode) debugPrint('[RC] restorePurchases failed: $e');
-    }
-  }
-
-  void updateFromCustomerInfo(CustomerInfo customerInfo) {
-    _updatePremiumStatus(customerInfo);
-  }
-
-  void _updatePremiumStatus(CustomerInfo customerInfo) {
-    // Debug: aktif entitlement anahtarlarını ve aktif abonelik ürünlerini logla
-    if (kDebugMode) {
-      try {
-        final entKeys = customerInfo.entitlements.active.keys.toList();
-        final subs = customerInfo.activeSubscriptions.toList();
-        debugPrint('[RC] Active entitlements: $entKeys | Active subscriptions: $subs');
-      } catch (_) {}
-    }
-
-    // Premium durumu: aktif entitlement VARSA ya da aktif abonelik VARSA
-    final hasAnyActiveEntitlement = customerInfo.entitlements.active.isNotEmpty;
-    final hasAnyActiveSubscription = customerInfo.activeSubscriptions.isNotEmpty;
-    final isPremium = hasAnyActiveEntitlement || hasAnyActiveSubscription;
-
-    if (state != isPremium) {
-      state = isPremium;
+      await Purchases.restorePurchases();
+    } catch (_) {
+      // Handle error if necessary
     }
   }
 }
