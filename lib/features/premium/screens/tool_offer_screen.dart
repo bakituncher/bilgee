@@ -614,9 +614,18 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
       }
 
       if (outcome.success) {
+        // İyimser güncelleme için callable fonksiyonu tetikle
+        try {
+          final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
+          final callable = functions.httpsCallable('premium-syncRevenueCatPremiumCallable');
+          await callable.call();
+        } catch (e) {
+          print("Callable function for premium sync failed (safe to ignore): $e");
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Harika! Premium özellikler kısa süre içinde aktif olacak.'),
+            content: Text('Harika! Premium özellikler aktif ediliyor...'),
             backgroundColor: AppTheme.successColor,
             behavior: SnackBarBehavior.floating,
           ),
