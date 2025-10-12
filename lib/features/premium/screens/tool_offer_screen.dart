@@ -605,7 +605,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
     setState(() => _isPurchaseInProgress = true);
 
     try {
-      final outcome = await ref.read(revenueCatServiceProvider).makePurchase(_selectedPackage!);
+      final outcome = await RevenueCatService.makePurchase(_selectedPackage!);
       if (!context.mounted) return;
 
       if (outcome.cancelled) {

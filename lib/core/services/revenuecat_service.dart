@@ -65,7 +65,7 @@ class RevenueCatService {
     }
   }
 
-  Future<void> restorePurchases() async {
+  static Future<void> restorePurchases() async {
     try {
       await Purchases.restorePurchases();
     } catch (e) {

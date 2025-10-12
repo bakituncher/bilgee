@@ -124,7 +124,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
   }
 
   Future<void> _restorePurchases() async {
-    await ref.read(revenueCatServiceProvider).restorePurchases();
+    await RevenueCatService.restorePurchases();
     if (context.mounted) {
       // It might take a moment for the webhook to update the status,
       // so we read the local SDK status for immediate feedback.
@@ -413,7 +413,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     );
 
     try {
-      final outcome = await ref.read(revenueCatServiceProvider).makePurchase(package);
+      final outcome = await RevenueCatService.makePurchase(package);
       if (!context.mounted) return;
       Navigator.of(context, rootNavigator: true).pop();
 
