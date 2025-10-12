@@ -177,18 +177,20 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/ai-hub/offer',
         parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) {
-          final args = state.extra as Map<String, dynamic>;
+          final extra = state.extra;
+          final args = extra is Map<String, dynamic> ? extra : const <String, dynamic>{};
           return buildPageWithFadeTransition(
             context: context,
             state: state,
             child: ToolOfferScreen(
-              title: args['title'] as String,
-              subtitle: args['subtitle'] as String,
-              icon: args['icon'] as IconData,
-              color: args['color'] as Color,
-              heroTag: args['heroTag'] as String,
-              marketingTitle: args['marketingTitle'] as String,
-              marketingSubtitle: args['marketingSubtitle'] as String,
+              title: (args['title'] as String?) ?? 'Premium Teklif',
+              subtitle: (args['subtitle'] as String?) ?? 'Premium özelliklerin kilidini aç',
+              icon: (args['icon'] as IconData?) ?? Icons.auto_awesome,
+              color: (args['color'] as Color?) ?? Colors.blueAccent,
+              heroTag: (args['heroTag'] as String?) ?? 'offer-default',
+              marketingTitle: (args['marketingTitle'] as String?) ?? 'Sınavda her zaman önde olun',
+              marketingSubtitle: (args['marketingSubtitle'] as String?) ?? 'Akıllı planlama, zayıf noktaları kapatma ve daha fazlası.',
+              redirectRoute: args['redirectRoute'] as String?,
             ),
           );
         },

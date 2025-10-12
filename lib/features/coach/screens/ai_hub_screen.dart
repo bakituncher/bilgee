@@ -171,6 +171,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
                             'heroTag': tool.heroTag,
                             'marketingTitle': marketingMap[tool.title]!['title']!,
                             'marketingSubtitle': marketingMap[tool.title]!['subtitle']!,
+                            'redirectRoute': tool.route, // satın alma sonrası hedef
                           },
                         ),
                         child: _AiToolTile(

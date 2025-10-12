@@ -35,6 +35,9 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
   late final Animation<double> _gradientAnimation;
   Timer? _timer;
 
+  // State to prevent multiple purchase clicks
+  bool _isPurchasing = false;
+
   // Pazarlama Slaytları (İçerik değişmedi, sadece widget'lar güçlendirildi)
   final List<({String title, String subtitle, IconData icon, Color color})> marketingSlides = const [
     (
@@ -413,6 +416,12 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
   // --- PURCHASE LOGIC (KEPT AS IS) ---
 
   Future<void> _purchasePackage(BuildContext context, WidgetRef ref, Package package) async {
+    if (_isPurchasing) return;
+
+    setState(() {
+      _isPurchasing = true;
+    });
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -421,8 +430,9 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
 
     try {
       final outcome = await RevenueCatService.makePurchase(package);
+
+      // Dialog'u kapattıktan sonra context'in hala geçerli olup olmadığını kontrol et.
       if (!context.mounted) return;
-      Navigator.of(context, rootNavigator: true).pop();
 
       if (outcome.cancelled) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -435,12 +445,16 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
       }
 
       if (outcome.success) {
-        // Satın alma başarılı -> premium durumunu anında senkronize et
+        // Satın alma başarılı -> premium durumunu anında senkronize et (optimistic update)
         try {
           final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
           final callable = functions.httpsCallable('premium-syncRevenueCatPremiumCallable');
           await callable.call();
-        } catch (_) {}
+        } catch (e) {
+          // Bu hatayı loglayabiliriz ama kullanıcıya göstermek şart değil.
+          // Webhook zaten eninde sonunda durumu düzeltecektir.
+          print("Callable function for premium sync failed (safe to ignore): $e");
+        }
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -452,6 +466,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
         return;
       }
 
+      // Hata durumu
       final errMsg = outcome.error ?? 'Bilinmeyen bir hata oluştu.';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -461,13 +476,20 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
       );
     } catch (e) {
       if (!context.mounted) return;
-      Navigator.of(context, rootNavigator: true).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Satın alma sırasında bir hata oluştu: $e'),
           backgroundColor: AppTheme.accentColor,
         ),
       );
+    } finally {
+      // İşlem ne olursa olsun (başarı, hata, iptal) dialog'u kapat ve state'i sıfırla.
+      if (context.mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+      setState(() {
+        _isPurchasing = false;
+      });
     }
   }
 }

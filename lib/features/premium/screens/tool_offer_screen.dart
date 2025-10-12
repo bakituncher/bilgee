@@ -5,6 +5,7 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:taktik/core/services/revenuecat_service.dart';
 import 'package:taktik/core/theme/app_theme.dart';
 import 'package:collection/collection.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
 import 'dart:ui';
 import 'package:taktik/core/navigation/app_routes.dart';
@@ -17,6 +18,7 @@ class ToolOfferScreen extends ConsumerStatefulWidget {
   final String heroTag;
   final String marketingTitle;
   final String marketingSubtitle;
+  final String? redirectRoute;
 
   const ToolOfferScreen({
     super.key,
@@ -27,6 +29,7 @@ class ToolOfferScreen extends ConsumerStatefulWidget {
     required this.heroTag,
     required this.marketingTitle,
     required this.marketingSubtitle,
+    this.redirectRoute,
   });
 
   @override
@@ -614,14 +617,25 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
       }
 
       if (outcome.success) {
+        // İyimser güncelleme için callable fonksiyonu tetikle
+        try {
+          final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
+          final callable = functions.httpsCallable('premium-syncRevenueCatPremiumCallable');
+          await callable.call();
+        } catch (e) {
+          print("Callable function for premium sync failed (safe to ignore): $e");
+        }
+
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Harika! Premium özellikler kısa süre içinde aktif olacak.'),
+            content: Text('Harika! Premium özellikler aktif ediliyor...'),
             backgroundColor: AppTheme.successColor,
             behavior: SnackBarBehavior.floating,
           ),
         );
-        _handleBack();
+        // Başarılı satın alma sonrası AI Hub ekranına yönlendir
+        context.go(AppRoutes.aiHub);
         return;
       }
 

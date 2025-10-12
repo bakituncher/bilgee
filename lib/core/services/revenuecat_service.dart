@@ -57,6 +57,11 @@ class RevenueCatService {
       final errorCode = PurchasesErrorHelper.getErrorCode(e);
       if (errorCode == PurchasesErrorCode.purchaseCancelledError) {
         return const PurchaseOutcome(info: null, cancelled: true);
+      } else if (errorCode == PurchasesErrorCode.productAlreadyPurchasedError) {
+        // Zaten satın alınmışsa, bu bir başarı durumudur.
+        // Durumu senkronize etmek için restorePurchases çağır.
+        final customerInfo = await Purchases.restorePurchases();
+        return PurchaseOutcome(info: customerInfo);
       }
       print("Error making purchase: $e");
       return PurchaseOutcome(info: null, cancelled: false, error: e.message);
@@ -65,11 +70,12 @@ class RevenueCatService {
     }
   }
 
-  static Future<void> restorePurchases() async {
+  static Future<CustomerInfo?> restorePurchases() async {
     try {
-      await Purchases.restorePurchases();
-    } catch (e) {
-      // Handle error if necessary
+      return await Purchases.restorePurchases();
+    } on PlatformException catch (e) {
+      print("Error restoring purchases: $e");
+      return null;
     }
   }
 }

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:purchases_flutter/purchases_flutter.dart'; // RevenueCat SDK
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/auth/data/auth_repository.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
@@ -25,6 +26,9 @@ class AuthController extends StreamNotifier<User?> {
 
   void _onUserActivity(User? user) {
     if (user != null) {
+      // RevenueCat'e giriş yaparak app_user_id'yi Firebase uid ile senkronize et
+      _logInToRevenueCat(user.uid);
+
       // Oturum açan kullanıcının admin yetkisini kontrol et ve ayarla.
       // Bu işlem arka planda sessizce yapılır.
       _updateAdminClaim(user);
@@ -98,9 +102,26 @@ class AuthController extends StreamNotifier<User?> {
     );
   }
 
-  Future<void> signOut() {
+  Future<void> _logInToRevenueCat(String uid) async {
+    try {
+      await Purchases.logIn(uid);
+    } catch (e) {
+      print("RevenueCat login error (safe to ignore): $e");
+    }
+  }
+
+  Future<void> _logOutFromRevenueCat() async {
+    try {
+      await Purchases.logOut();
+    } catch (e) {
+      print("RevenueCat logout error (safe to ignore): $e");
+    }
+  }
+
+  Future<void> signOut() async {
+    await _logOutFromRevenueCat();
     final authRepository = ref.read(authRepositoryProvider);
-    return authRepository.signOut();
+    await authRepository.signOut();
   }
 
   Future<void> updatePassword({required String currentPassword, required String newPassword}) {
@@ -113,8 +134,10 @@ class AuthController extends StreamNotifier<User?> {
     return authRepository.resetPassword(email);
   }
 
-  Future<void> signInWithGoogle() {
+  Future<void> signInWithGoogle() async {
+    // Google sign-in'den önce mevcut RevenueCat kullanıcısını temizle
+    await _logOutFromRevenueCat();
     final authRepository = ref.read(authRepositoryProvider);
-    return authRepository.signInWithGoogle();
+    await authRepository.signInWithGoogle();
   }
 }
