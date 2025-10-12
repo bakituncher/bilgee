@@ -18,6 +18,7 @@ class ToolOfferScreen extends ConsumerStatefulWidget {
   final String heroTag;
   final String marketingTitle;
   final String marketingSubtitle;
+  final String? redirectRoute;
 
   const ToolOfferScreen({
     super.key,
@@ -28,6 +29,7 @@ class ToolOfferScreen extends ConsumerStatefulWidget {
     required this.heroTag,
     required this.marketingTitle,
     required this.marketingSubtitle,
+    this.redirectRoute,
   });
 
   @override
@@ -624,6 +626,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
           print("Callable function for premium sync failed (safe to ignore): $e");
         }
 
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Harika! Premium özellikler aktif ediliyor...'),
@@ -631,7 +634,8 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
             behavior: SnackBarBehavior.floating,
           ),
         );
-        _handleBack();
+        // Başarılı satın alma sonrası AI Hub ekranına yönlendir
+        context.go(AppRoutes.aiHub);
         return;
       }
 
