@@ -9,6 +9,7 @@ import 'package:taktik/data/providers/premium_provider.dart';
 import 'dart:ui';
 import 'dart:async';
 import 'package:taktik/core/navigation/app_routes.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 // --- THEME CONSTANTS ---
 const Color _cardBackgroundColor = AppTheme.cardColor; // 0xFF1E293B
@@ -126,8 +127,14 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
   Future<void> _restorePurchases() async {
     await RevenueCatService.restorePurchases();
     if (context.mounted) {
-      // It might take a moment for the webhook to update the status,
-      // so we read the local SDK status for immediate feedback.
+      try {
+        // Premium durumunu anında senkronize et (server-authoritative)
+        final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
+        final callable = functions.httpsCallable('premium-syncRevenueCatPremiumCallable');
+        await callable.call();
+      } catch (_) {}
+
+      // Lokal SDK durumunu göster (hemen geri bildirim için)
       final customerInfo = await Purchases.getCustomerInfo();
       final isPremium = customerInfo.entitlements.active.isNotEmpty;
       final msg = isPremium ? 'Satın alımlar geri yüklendi. Premium aktif.' : 'Aktif satın alım bulunamadı.';
@@ -427,11 +434,17 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
         return;
       }
 
-      // The server will update the status via webhook. We just show a success message.
       if (outcome.success) {
+        // Satın alma başarılı -> premium durumunu anında senkronize et
+        try {
+          final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
+          final callable = functions.httpsCallable('premium-syncRevenueCatPremiumCallable');
+          await callable.call();
+        } catch (_) {}
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Harika! Premium özellikler kısa süre içinde aktif olacak.'),
+            content: Text('Harika! Premium özellikler aktif ediliyor...'),
             backgroundColor: AppTheme.successColor,
           ),
         );
@@ -941,3 +954,4 @@ class _FooterLink extends StatelessWidget {
     );
   }
 }
+

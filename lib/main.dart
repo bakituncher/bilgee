@@ -20,6 +20,7 @@ import 'package:taktik/core/services/revenuecat_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -74,6 +75,8 @@ void main() async {
       await RevenueCatService.init();
       // Sync RevenueCat with Firebase Auth
       _setupAuthListener();
+      // Müşteri bilgisi değişimlerindeki premium senkronu etkinleştir
+      _setupRevenueCatListeners();
     } catch (e) {
         if (kDebugMode) {
             debugPrint('[RevenueCat] Initialization failed: $e');
@@ -166,6 +169,15 @@ void _setupAuthListener() {
         if (kDebugMode) {
           debugPrint('[RevenueCat] Login failed: $e');
         }
+      }).whenComplete(() async {
+        // Kullanıcı oturum açtıktan sonra premium durumunu anında sunucu ile eşitle
+        try {
+          final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
+          final callable = functions.httpsCallable('premium-syncRevenueCatPremiumCallable');
+          await callable.call();
+        } catch (e) {
+          if (kDebugMode) debugPrint('[PremiumSync] Callable sync after login failed: $e');
+        }
       });
     } else {
       // User is signed out, log out from RevenueCat
@@ -176,6 +188,23 @@ void _setupAuthListener() {
       });
     }
   });
+}
+
+// RevenueCat müşteri bilgisi değiştikçe premium senkronu tetikle (global dinleyici)
+void _setupRevenueCatListeners() {
+  try {
+    Purchases.addCustomerInfoUpdateListener((customerInfo) async {
+      try {
+        final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
+        final callable = functions.httpsCallable('premium-syncRevenueCatPremiumCallable');
+        await callable.call();
+      } catch (e) {
+        if (kDebugMode) debugPrint('[PremiumSync] Callable sync on CustomerInfo update failed: $e');
+      }
+    });
+  } catch (e) {
+    if (kDebugMode) debugPrint('[RevenueCat] addCustomerInfoUpdateListener failed: $e');
+  }
 }
 
 class BilgeAiApp extends ConsumerWidget {
