@@ -13,6 +13,7 @@ const quests = require("./src/quests");
 const reports = require("./src/reports");
 const tests = require("./src/tests");
 const users = require("./src/users");
+const premium = require("./src/premium");
 
 exports.admin = admin;
 exports.ai = ai;
@@ -24,3 +25,4 @@ exports.profile = profile;
 exports.quests = quests;
 exports.reports = reports;
 exports.tests = tests;
+exports.premium = premium;

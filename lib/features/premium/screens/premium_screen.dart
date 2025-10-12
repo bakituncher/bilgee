@@ -9,6 +9,7 @@ import 'package:taktik/data/providers/premium_provider.dart';
 import 'dart:ui';
 import 'dart:async';
 import 'package:taktik/core/navigation/app_routes.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 // --- THEME CONSTANTS ---
 const Color _cardBackgroundColor = AppTheme.cardColor; // 0xFF1E293B
@@ -124,9 +125,18 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
   }
 
   Future<void> _restorePurchases() async {
-    await ref.read(premiumStatusProvider.notifier).restorePurchases();
+    await RevenueCatService.restorePurchases();
     if (context.mounted) {
-      final isPremium = ref.read(premiumStatusProvider);
+      try {
+        // Premium durumunu anında senkronize et (server-authoritative)
+        final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
+        final callable = functions.httpsCallable('premium-syncRevenueCatPremiumCallable');
+        await callable.call();
+      } catch (_) {}
+
+      // Lokal SDK durumunu göster (hemen geri bildirim için)
+      final customerInfo = await Purchases.getCustomerInfo();
+      final isPremium = customerInfo.entitlements.active.isNotEmpty;
       final msg = isPremium ? 'Satın alımlar geri yüklendi. Premium aktif.' : 'Aktif satın alım bulunamadı.';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -424,11 +434,17 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
         return;
       }
 
-      if (outcome.success && outcome.info != null) {
-        ref.read(premiumStatusProvider.notifier).updateFromCustomerInfo(outcome.info!);
+      if (outcome.success) {
+        // Satın alma başarılı -> premium durumunu anında senkronize et
+        try {
+          final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
+          final callable = functions.httpsCallable('premium-syncRevenueCatPremiumCallable');
+          await callable.call();
+        } catch (_) {}
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Harika! Premium özellikler artık aktif.'),
+            content: Text('Harika! Premium özellikler aktif ediliyor...'),
             backgroundColor: AppTheme.successColor,
           ),
         );
@@ -938,3 +954,4 @@ class _FooterLink extends StatelessWidget {
     );
   }
 }
+

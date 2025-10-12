@@ -613,13 +613,10 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
         return;
       }
 
-      if (outcome.success && outcome.info != null) {
-        ref
-            .read(premiumStatusProvider.notifier)
-            .updateFromCustomerInfo(outcome.info!);
+      if (outcome.success) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Harika! Premium aktif.'),
+            content: Text('Harika! Premium özellikler kısa süre içinde aktif olacak.'),
             backgroundColor: AppTheme.successColor,
             behavior: SnackBarBehavior.floating,
           ),

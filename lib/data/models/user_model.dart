@@ -67,6 +67,9 @@ class UserModel {
   final int? followerCount;
   final int? followingCount;
 
+  // Premium Durumu
+  final bool isPremium;
+
   UserModel({
     required this.id,
     required this.email,
@@ -116,6 +119,7 @@ class UserModel {
     this.lastQuestCompletionDate,
     this.followerCount,
     this.followingCount,
+    this.isPremium = false,
   });
 
   UserModel copyWith({
@@ -165,6 +169,7 @@ class UserModel {
     Timestamp? lastQuestCompletionDate,
     int? followerCount,
     int? followingCount,
+    bool? isPremium,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -213,6 +218,7 @@ class UserModel {
       lastQuestCompletionDate: lastQuestCompletionDate ?? this.lastQuestCompletionDate,
       followerCount: followerCount ?? this.followerCount,
       followingCount: followingCount ?? this.followingCount,
+      isPremium: isPremium ?? this.isPremium,
     );
   }
 
@@ -304,6 +310,7 @@ class UserModel {
       lastQuestCompletionDate: data['lastQuestCompletionDate'] as Timestamp?,
       followerCount: data['followerCount'] as int?,
       followingCount: data['followingCount'] as int?,
+      isPremium: data['isPremium'] ?? false,
     );
   }
 
@@ -371,6 +378,7 @@ class UserModel {
       'lastQuestCompletionDate': lastQuestCompletionDate,
       'followerCount': followerCount,
       'followingCount': followingCount,
+      'isPremium': isPremium,
     };
   }
 
@@ -418,6 +426,7 @@ class UserModel {
       weeklyPlanCompletedAt: weeklyPlanCompletedAt,
       workshopStreak: workshopStreak,
       lastWorkshopDate: lastWorkshopDate,
+      isPremium: isPremium,
     );
   }
 }
