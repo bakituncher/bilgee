@@ -31,71 +31,49 @@ exports.handleRevenueCatWebhook = onRequest(
     logger.info(`Processing webhook for user ${userId}`, { type: eventType });
 
     try {
-      // RevenueCat entitlements alanı farklı şemalarla gelebiliyor. Esnek parse edelim.
+      // Gelen event'i logla - debug için çok yararlı
+      logger.info('Received RevenueCat event body:', { event: event.event });
+
       const entitlements = event?.event?.entitlements || {};
       let isPremium = false;
       let latestExpiration = 0;
-
-      const nowMs = Date.now();
+      const now = Date.now();
       const entitlementKeys = Object.keys(entitlements);
 
       for (const key of entitlementKeys) {
-        const entitlement = entitlements[key] || {};
-        // Olası alan adlarını normalize et
-        const activeFlag = (
-          entitlement.isActive ??
-          entitlement.is_active ??
-          entitlement.active ??
-          null
-        );
+        const e = entitlements[key] || {};
+        let expMs = 0;
 
-        // Expiration alan adları: farklı isimlerle gelebilir
-        let expiresMs = undefined;
-        if (typeof entitlement.expires_date_ms === 'number') {
-          expiresMs = entitlement.expires_date_ms;
-        } else if (typeof entitlement.expiration_at_ms === 'number') {
-          expiresMs = entitlement.expiration_at_ms;
-        } else if (typeof entitlement.expiration_ms === 'number') {
-          expiresMs = entitlement.expiration_ms;
-        } else if (typeof entitlement.expires_date === 'string') {
-          const p = Date.parse(entitlement.expires_date);
-          if (!Number.isNaN(p)) expiresMs = p;
-        } else if (typeof entitlement.expiration_at === 'string') {
-          const p = Date.parse(entitlement.expiration_at);
-          if (!Number.isNaN(p)) expiresMs = p;
+        // expires_date (string, ISO 8601) veya expires_date_ms (number) olabilir
+        if (typeof e.expires_date_ms === 'number') {
+          expMs = e.expires_date_ms;
+        } else if (typeof e.expires_date === 'string') {
+          const p = Date.parse(e.expires_date);
+          if (!Number.isNaN(p)) expMs = p;
         }
 
-        // Lifetime/sonsuz durumları için ipucu olabilecek alanlar
-        const periodType = entitlement.period_type || entitlement.periodType;
-        const duration = entitlement.duration;
+        const periodType = e.period_type || e.periodType;
 
-        let isActive = false;
-        if (activeFlag !== null) {
-          isActive = !!activeFlag;
-        }
-        if (!isActive && typeof expiresMs === 'number') {
-          isActive = expiresMs > nowMs;
-        }
-        // Lifetime gibi süresiz durumlar
-        if (!isActive && (periodType === 'lifetime' || duration === 'lifetime' || duration === 'forever')) {
-          isActive = true;
+        let active = false;
+        // Son kullanma tarihi gelecekteyse veya abonelik ömür boyu ise aktiftir.
+        if (expMs > now) {
+          active = true;
+        } else if (periodType === 'lifetime') {
+          active = true;
         }
 
-        if (isActive) {
+        if (active) {
           isPremium = true;
-          if (typeof expiresMs === 'number' && expiresMs > latestExpiration) {
-            latestExpiration = expiresMs;
+          if (expMs > latestExpiration) {
+            latestExpiration = expMs;
           }
         }
-
-        logger.debug('Entitlement evaluated', {
+         logger.debug('Entitlement evaluated', {
           userId,
           key,
-          activeFlag,
-          expiresMs,
+          expiresMs: expMs,
           periodType,
-          duration,
-          resolvedActive: isActive,
+          resolvedActive: active,
         });
       }
 
