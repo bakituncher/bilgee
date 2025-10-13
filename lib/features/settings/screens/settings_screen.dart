@@ -405,12 +405,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           SettingsTile(
             icon: Icons.info_outline_rounded,
             title: "Uygulama Hakkında",
-            subtitle: "Versiyon 1.0.1",
+            subtitle: "Versiyon 1.1.1",
             onTap: () {
               showAboutDialog(
                 context: context,
                 applicationName: 'Taktik',
-                applicationVersion: '1.0.1',
+                applicationVersion: '1.1.1',
                 applicationLegalese: '© 2025 Codenzi. Tüm hakları saklıdır.',
                 children: <Widget>[
                   const Padding(

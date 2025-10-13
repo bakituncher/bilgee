@@ -128,26 +128,52 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
   }
 
   Future<void> _restorePurchases() async {
-    await RevenueCatService.restorePurchases();
-    if (context.mounted) {
-      try {
-        // Premium durumunu anında senkronize et (server-authoritative)
-        final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
-        final callable = functions.httpsCallable('premium-syncRevenueCatPremiumCallable');
-        await callable.call();
-      } catch (_) {}
+    if (_isPurchasing) return; // Zaten bir işlem varsa tekrar tetikleme
+    setState(() => _isPurchasing = true);
 
-      // Lokal SDK durumunu göster (hemen geri bildirim için)
-      final customerInfo = await Purchases.getCustomerInfo();
-      final isPremium = customerInfo.entitlements.active.isNotEmpty;
-      final msg = isPremium ? 'Satın alımlar geri yüklendi. Premium aktif.' : 'Aktif satın alım bulunamadı.';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(msg),
-          backgroundColor: isPremium ? AppTheme.successColor : AppTheme.accentColor,
-        ),
-      );
-      if (isPremium) _handleBack();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Satın alımlar kontrol ediliyor ve sunucuyla eşitleniyor...'),
+        backgroundColor: Colors.blueGrey,
+      ),
+    );
+
+    try {
+      // Önce RevenueCat'in kendi restore'unu çağır, bu lokal SDK'yı günceller.
+      await RevenueCatService.restorePurchases();
+
+      // Ardından, GÜVENİLİR KAYNAK olan sunucumuzu senkronize etmesi için tetikle.
+      // UI kararları bu adıma göre değil, Firestore'dan gelen stream'e göre verilmeli.
+      final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
+      final callable = functions.httpsCallable('premium-syncRevenueCatPremiumCallable');
+      await callable.call();
+
+      // Başarılı senkronizasyon sonrası kullanıcıya genel bir bilgi ver.
+      // Ekranı kapatma kararı, `premiumStatusProvider` güncellendiğinde
+      // bu ekranı dinleyen bir üst widget tarafından verilebilir veya kullanıcı kendi kapatır.
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Kontrol tamamlandı. Premium durumunuz güncellendi.'),
+            backgroundColor: AppTheme.successColor,
+          ),
+        );
+        // NOT: `_handleBack()` çağrısını buradan kaldırdık. Arayüzün tepkisi
+        // artık tamamen `premiumStatusProvider`'a bağlı olmalıdır.
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Bir hata oluştu: ${e.toString()}'),
+            backgroundColor: AppTheme.accentColor,
+          ),
+        );
+      }
+    } finally {
+      setState(() => _isPurchasing = false);
     }
   }
 

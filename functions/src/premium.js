@@ -143,6 +143,15 @@ const _updatePremiumStatusFromRevenueCatAPI = async (uid, eventType = 'manual_sy
     }
   }
 
+  // VERİ GECİKMESİNE KARŞI KORUMA: Eğer 'RENEWAL' gibi olumlu bir webhook olayı gelirse,
+  // ancak API anlık olarak `isPremium: false` döndürürse, bunun veri gecikmesi olduğunu varsay
+  // ve Firestore'u GÜNCELLEME. Bu, kullanıcının premium üyeliğinin yanlışlıkla kaldırılmasını önler.
+  const positiveEventTypes = ['INITIAL_PURCHASE', 'RENEWAL', 'UNCANCELLATION', 'PRODUCT_CHANGE'];
+  if (!isPremium && eventType && positiveEventTypes.includes(eventType)) {
+    logger.warn(`Olumlu '${eventType}' olayı (kullanıcı ${uid}) için API'den 'isPremium: false' döndü. Veri gecikmesi varsayılarak güncelleme atlanıyor.`);
+    return { isPremium: undefined, status: 'skipped_due_to_data_lag' };
+  }
+
   const premiumUntil = isPremium && latestExpiration > 0 ? new Date(latestExpiration) : null;
 
   await db.collection('users').doc(uid).set({
