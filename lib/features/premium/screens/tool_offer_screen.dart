@@ -188,7 +188,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
 
         if (current != null) {
           final yearly = current.annual ??
-              current.getPackage('yillik-normal') ??
+              current.getPackage('yillik-normal-yeni') ??
               current.availablePackages.firstWhereOrNull(
                     (p) => p.packageType == PackageType.annual,
               );
@@ -433,7 +433,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
         );
 
     yearly = current.annual ??
-        current.getPackage('yillik-normal') ??
+        current.getPackage('yillik-normal-yeni') ??
         current.availablePackages.firstWhereOrNull(
               (p) => p.packageType == PackageType.annual,
         );

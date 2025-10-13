@@ -382,7 +382,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
       final current = offerings.current ?? offerings.all.values.firstWhereOrNull((o) => o.availablePackages.isNotEmpty);
       if (current != null) {
         monthly = current.monthly ?? current.getPackage('aylik-normal') ?? current.availablePackages.firstWhereOrNull((p) => p.packageType == PackageType.monthly);
-        yearly = current.annual ?? current.getPackage('yillik-normal') ?? current.availablePackages.firstWhereOrNull((p) => p.packageType == PackageType.annual);
+        yearly = current.annual ?? current.getPackage('yillik-normal-yeni') ?? current.availablePackages.firstWhereOrNull((p) => p.packageType == PackageType.annual);
 
         if (monthly == null || yearly == null) {
           final sortedPackages = List.from(current.availablePackages)..sort((a,b) => a.storeProduct.price.compareTo(b.storeProduct.price));

@@ -410,7 +410,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               showAboutDialog(
                 context: context,
                 applicationName: 'Taktik',
-                applicationVersion: '1.1.1',
+                applicationVersion: '1.1.2',
                 applicationLegalese: '© 2025 Codenzi. Tüm hakları saklıdır.',
                 children: <Widget>[
                   const Padding(
