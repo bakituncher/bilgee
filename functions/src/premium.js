@@ -169,20 +169,38 @@ const _updatePremiumStatusFromRevenueCatAPI = async (uid, eventType = 'manual_sy
 
 // Callable: Firebase Auth ile anında premium senkronizasyonu
 exports.syncRevenueCatPremiumCallable = onCall(
-  { region: 'us-central1', timeoutSeconds: 30, memory: '256MiB', secrets: [REVENUECAT_REST_API_KEY], enforceAppCheck: false },
+  { region: 'us-central1', timeoutSeconds: 30, memory: '256MiB', secrets: [REVENUECAT_REST_API_KEY], enforceAppCheck: true },
   async (request) => {
     if (!request.auth) {
       throw new HttpsError('unauthenticated', 'Oturum gerekli');
     }
     const uid = request.auth.uid;
+    const userRef = db.collection('users').doc(uid);
 
     try {
+       // --- RATE LIMITING BAŞLANGICI ---
+      const userDoc = await userRef.get();
+      const userData = userDoc.data();
+      const lastSync = userData?.lastSyncRequestAt?.toDate(); // Firestore Timestamp'ını Date objesine çevir
+      const now = new Date();
+
+      // 5 dakikadan daha kısa süre önce senkronizasyon yapılmışsa reddet
+      const COOLDOWN_MS = 5 * 60 * 1000;
+      if (lastSync && (now.getTime() - lastSync.getTime()) < COOLDOWN_MS) {
+        logger.warn(`Rate limit aşıldı: Kullanıcı ${uid} çok sık senkronizasyon denedi.`);
+        throw new HttpsError('resource-exhausted', `Lütfen tekrar denemeden önce birkaç dakika bekleyin.`);
+      }
+
+      // Yarış koşullarını (race conditions) önlemek için API çağrısından ÖNCE zaman damgasını güncelle
+      await userRef.set({ lastSyncRequestAt: now }, { merge: true });
+      // --- RATE LIMITING SONU ---
+
       return await _updatePremiumStatusFromRevenueCatAPI(uid, 'manual_sync_callable');
     } catch (e) {
       logger.error('Callable premium senkronizasyon hatası', { uid, error: String(e) });
-      // _updatePremiumStatusFromRevenueCatAPI zaten HttpsError fırlatıyor,
-      // bu yüzden tekrar sarmalamaya gerek yok. Fırlatılan hatayı yeniden fırlat.
+      // Hata zaten HttpsError ise, istemciye olduğu gibi gönder
       if (e instanceof HttpsError) throw e;
+      // Diğer hataları genel bir mesaja sar
       throw new HttpsError('internal', 'Sunucuda bir iç hata oluştu.');
     }
   }
