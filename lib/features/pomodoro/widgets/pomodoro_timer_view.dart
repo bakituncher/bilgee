@@ -17,102 +17,132 @@ class PomodoroTimerView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final pomodoro = ref.watch(pomodoroProvider);
     final notifier = ref.read(pomodoroProvider.notifier);
+    final theme = Theme.of(context);
 
-    final (title, progressColor, message) = switch (pomodoro.sessionState) {
-      PomodoroSessionState.work => ("Odaklanma Modu", AppTheme.secondaryColor, "Yaratım anındasın. Evren sessiz."),
-      PomodoroSessionState.shortBreak => ("Kısa Mola", AppTheme.successColor, "Nefes al. Zihnin berraklaşsın."),
-      PomodoroSessionState.longBreak => ("Uzun Mola", AppTheme.successColor, "Harika iş! Zihinsel bir yolculuğa çık."),
-      _ => ("Beklemede", AppTheme.lightSurfaceColor, "Mabet seni bekliyor."),
+    final (title, progressColor) = switch (pomodoro.sessionState) {
+      PomodoroSessionState.work => ("Odaklanma", AppTheme.secondaryColor),
+      PomodoroSessionState.shortBreak => ("Kısa Mola", AppTheme.successColor),
+      PomodoroSessionState.longBreak => ("Uzun Mola", AppTheme.successColor),
+      _ => ("Başlamaya Hazır", AppTheme.lightSurfaceColor),
     };
 
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const SizedBox(height: 50),
-          _buildHeader(context, title, message, pomodoro, ref),
-          Expanded(child: _TimerDial(pomodoro: pomodoro, color: progressColor)),
+          // HEADER: GÖREV SEÇİMİ
+          SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                ActionChip(
+                  avatar: const Icon(Icons.assignment_outlined, size: 18),
+                  label: Text(pomodoro.currentTask, overflow: TextOverflow.ellipsis),
+                  onPressed: () => _showTaskSelectionSheet(context, ref),
+                ),
+                Text("Tur: ${pomodoro.currentRound} / ${pomodoro.longBreakInterval}",
+                  style: theme.textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor),
+                ),
+              ],
+            ),
+          ),
+
+          // ZAMANLAYICI
+          Expanded(
+            child: _TimerDial(
+              pomodoro: pomodoro,
+              color: progressColor,
+              title: title,
+            ),
+          ),
+
+          // KONTROLLER
           _buildControls(context, pomodoro, notifier, ref),
         ],
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context, String title, String message, PomodoroModel pomodoro, WidgetRef ref) {
-    final endTime = DateTime.now().add(Duration(seconds: pomodoro.timeRemaining));
-    final endStr = DateFormat('HH:mm').format(endTime);
-    return Column(
-      children: [
-        Text(title, style: Theme.of(context).textTheme.headlineMedium),
-        const SizedBox(height: 4),
-        Text(message, style: const TextStyle(color: AppTheme.secondaryTextColor, fontStyle: FontStyle.italic)),
-        const SizedBox(height: 12),
-        ActionChip(
-          avatar: const Icon(Icons.assignment_outlined, size: 18),
-          label: Text(pomodoro.currentTask, overflow: TextOverflow.ellipsis),
-          onPressed: () => _showTaskSelectionSheet(context, ref),
-        ),
-        const SizedBox(height: 6),
-        Text("Bitiş: $endStr", style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor)),
-        const SizedBox(height: 8),
-        Text("Tur: ${pomodoro.currentRound} / ${pomodoro.longBreakInterval}",
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.secondaryTextColor)),
-      ],
-    ).animate().fadeIn(duration: 500.ms);
-  }
-
   Widget _buildControls(BuildContext context, PomodoroModel pomodoro, PomodoroNotifier notifier, WidgetRef ref) {
     final onBreak = pomodoro.sessionState == PomodoroSessionState.shortBreak || pomodoro.sessionState == PomodoroSessionState.longBreak;
+    final canCompleteTask = pomodoro.sessionState == PomodoroSessionState.work && pomodoro.currentTaskIdentifier != null;
+
+    Widget bottomButton;
+    if (onBreak) {
+      bottomButton = TextButton.icon(
+        key: const ValueKey('skip'),
+        onPressed: notifier.skipBreakAndStartWork,
+        icon: const Icon(Icons.skip_next_rounded),
+        label: const Text("Molayı Atla"),
+      );
+    } else if (canCompleteTask) {
+      bottomButton = TextButton.icon(
+        key: const ValueKey('complete'),
+        style: TextButton.styleFrom(foregroundColor: AppTheme.successColor),
+        onPressed: () {
+          notifier.markTaskAsCompleted();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("'${pomodoro.currentTask}' tamamlandı olarak işaretlendi!"),
+              backgroundColor: AppTheme.successColor,
+            ),
+          );
+        },
+        icon: const Icon(Icons.check_circle_outline),
+        label: Text("'${pomodoro.currentTask}' görevini tamamla"),
+      );
+    } else {
+      bottomButton = const SizedBox(key: ValueKey('placeholder'), height: 48);
+    }
+
     return Column(
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            IconButton.filled(
+            // AYARLAR
+            IconButton(
+              icon: const Icon(Icons.settings_outlined),
+              tooltip: "Ayarlar",
               onPressed: () => _showSettingsSheet(context, ref),
-              icon: const Icon(Icons.settings),
-              style: IconButton.styleFrom(backgroundColor: AppTheme.lightSurfaceColor.withOpacity(0.5)),
+              style: IconButton.styleFrom(
+                foregroundColor: AppTheme.secondaryTextColor,
+                side: BorderSide(color: AppTheme.lightSurfaceColor.withOpacity(0.2)),
+              ),
             ),
-            const SizedBox(width: 20),
+            const SizedBox(width: 16),
+            // OYNAT / DURDUR
             IconButton.filled(
-              iconSize: 56,
+              iconSize: 52,
               onPressed: pomodoro.isPaused ? notifier.start : notifier.pause,
               icon: Icon(pomodoro.isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded),
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: AppTheme.primaryColor,
+              ),
             ),
-            const SizedBox(width: 20),
-            IconButton.filled(
-              onPressed: notifier.reset,
+            const SizedBox(width: 16),
+            // YENİLE
+            IconButton(
               icon: const Icon(Icons.replay_rounded),
-              style: IconButton.styleFrom(backgroundColor: AppTheme.lightSurfaceColor.withOpacity(0.5)),
+              tooltip: "Sıfırla",
+              onPressed: notifier.reset,
+               style: IconButton.styleFrom(
+                foregroundColor: AppTheme.secondaryTextColor,
+                side: BorderSide(color: AppTheme.lightSurfaceColor.withOpacity(0.2)),
+              ),
             ),
           ],
         ),
-        if (onBreak)
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: TextButton.icon(
-              onPressed: notifier.skipBreakAndStartWork,
-              icon: const Icon(Icons.skip_next_rounded, color: AppTheme.secondaryColor),
-              label: const Text("Molayı atla ve çalışmaya başla", style: TextStyle(color: AppTheme.secondaryColor)),
-            ),
-          ),
-        if(pomodoro.sessionState == PomodoroSessionState.work && pomodoro.currentTaskIdentifier != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: TextButton.icon(
-                onPressed: (){
-                  notifier.markTaskAsCompleted();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("'${pomodoro.currentTask}' tamamlandı olarak işaretlendi!"), backgroundColor: AppTheme.successColor),
-                  );
-                },
-                icon: const Icon(Icons.check_circle, color: AppTheme.successColor),
-                label: Text("'${pomodoro.currentTask}' görevini tamamla", style: const TextStyle(color: AppTheme.successColor))
-            ),
-          )
+        const SizedBox(height: 16),
+        AnimatedSwitcher(
+          duration: 300.ms,
+          transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: SizeTransition(sizeFactor: animation, child: child)),
+          child: bottomButton,
+        ),
       ],
-    ).animate().fadeIn(duration: 500.ms);
+    );
   }
 
   Future<void> _showTaskSelectionSheet(BuildContext context, WidgetRef ref) async {
@@ -167,7 +197,6 @@ class PomodoroTimerView extends ConsumerWidget {
     );
 
     if (selectedTask != null) {
-      // Tarih anahtarını her durumda bugüne ayarla; weekly plan varsa yukarıda üretildi
       final dateKey = dateKeyForSelection ?? DateFormat('yyyy-MM-dd').format(DateTime.now());
       ref.read(pomodoroProvider.notifier).setTask(task: selectedTask.task, identifier: selectedTask.identifier, dateKey: dateKey);
     }
@@ -186,49 +215,43 @@ class PomodoroTimerView extends ConsumerWidget {
 class _TimerDial extends StatelessWidget {
   final PomodoroModel pomodoro;
   final Color color;
-  const _TimerDial({required this.pomodoro, required this.color});
+  final String title;
+  const _TimerDial({required this.pomodoro, required this.color, required this.title});
 
   @override
   Widget build(BuildContext context) {
-    final totalDuration = switch (pomodoro.sessionState) {
-      PomodoroSessionState.idle => pomodoro.workDuration,
-      _ => pomodoro.activeSessionTotalDuration,
-    };
+    final totalDuration = pomodoro.activeSessionTotalDuration;
     final time = Duration(seconds: pomodoro.timeRemaining);
     final minutes = time.inMinutes.remainder(60).toString().padLeft(2, '0');
     final seconds = time.inSeconds.remainder(60).toString().padLeft(2, '0');
     final progress = totalDuration > 0 ? pomodoro.timeRemaining / totalDuration : 1.0;
-    final endTime = DateTime.now().add(Duration(seconds: pomodoro.timeRemaining));
-    final endStr = DateFormat('HH:mm').format(endTime);
 
-    final interval = pomodoro.longBreakInterval.clamp(1, 12);
-    final completedInCycle = ((pomodoro.currentRound - 1) % interval).clamp(0, interval - 1);
-
-    return Animate(
-      target: pomodoro.isPaused ? 1 : 0,
-      effects: [ScaleEffect(duration: 400.ms, curve: Curves.easeOutBack, begin: const Offset(1,1), end: const Offset(0.9, 0.9))],
-      child: AspectRatio(
-        aspectRatio: 1,
-        child: CustomPaint(
-          painter: _DialPainter(
-            progress: 1 - progress,
-            color: color,
-            isPaused: pomodoro.isPaused,
-            interval: interval,
-            completedInCycle: completedInCycle,
-          ),
-          child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('$minutes:$seconds', style: Theme.of(context).textTheme.displayLarge?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 2)),
-                const SizedBox(height: 6),
-                Text('Bitiş: $endStr', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor)),
-              ],
-            ),
-          ),
+    return AspectRatio(
+      aspectRatio: 1,
+      child: CustomPaint(
+        painter: _DialPainter(
+          progress: 1 - progress,
+          color: color,
+        ),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(color: color)),
+              const SizedBox(height: 8),
+              Text('$minutes:$seconds', style: Theme.of(context).textTheme.displayLarge?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 2)),
+              const SizedBox(height: 6),
+              Text(
+                pomodoro.isPaused ? "Duraklatıldı" : "Bitiş: ${DateFormat('HH:mm').format(DateTime.now().add(time))}",
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor)
+              ),
+            ],
+          ).animate().fadeIn(duration: 400.ms),
         ),
       ),
+    ).animate(target: pomodoro.isPaused ? 1: 0).scale(
+      begin: const Offset(1,1), end: const Offset(0.95, 0.95),
+      duration: 400.ms, curve: Curves.easeOutCubic,
     );
   }
 }
@@ -236,60 +259,42 @@ class _TimerDial extends StatelessWidget {
 class _DialPainter extends CustomPainter {
   final double progress;
   final Color color;
-  final bool isPaused;
-  final int interval;
-  final int completedInCycle;
-  _DialPainter({required this.progress, required this.color, required this.isPaused, required this.interval, required this.completedInCycle});
+  _DialPainter({required this.progress, required this.color});
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2;
+    final radius = size.width / 2 * 0.9;
     final rect = Rect.fromCircle(center: center, radius: radius);
 
+    // Arka plan çizgisi
     final backgroundPaint = Paint()
-      ..color = AppTheme.lightSurfaceColor.withOpacity(0.2)
+      ..color = AppTheme.lightSurfaceColor.withOpacity(0.1)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 12;
+      ..strokeWidth = 10;
     canvas.drawCircle(center, radius, backgroundPaint);
 
+    // İlerleme çizgisi
     if (progress > 0.0) {
       final progressPaint = Paint()
         ..shader = SweepGradient(
           colors: [color.withOpacity(0.5), color],
           startAngle: -pi / 2,
+          endAngle: -pi/2 + 2*pi*progress,
           transform: const GradientRotation(-pi / 2),
         ).createShader(rect)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 14
+        ..strokeWidth = 10
         ..strokeCap = StrokeCap.round;
       canvas.drawArc(rect, -pi / 2, 2 * pi * progress, false, progressPaint);
     }
 
-    // Tur noktaları
-    const dotRadius = 6.0;
-    final dotDistance = radius - 8;
-    for (int i = 0; i < interval; i++) {
-      final angle = -pi / 2 + 2 * pi * (i / interval);
-      final dx = center.dx + cos(angle) * dotDistance;
-      final dy = center.dy + sin(angle) * dotDistance;
-      final paint = Paint()
-        ..color = i < completedInCycle ? color : AppTheme.lightSurfaceColor.withOpacity(0.4)
-        ..style = PaintingStyle.fill;
-      canvas.drawCircle(Offset(dx, dy), dotRadius, paint);
-      // Dış hat
-      final stroke = Paint()
-        ..color = Colors.black.withOpacity(0.1)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1;
-      canvas.drawCircle(Offset(dx, dy), dotRadius, stroke);
-    }
-
-    final breath = sin(DateTime.now().millisecondsSinceEpoch / (isPaused ? 2000 : 500)) * 5;
+    // Nefes efekti
+    final breath = sin(DateTime.now().millisecondsSinceEpoch / 800) * 8;
     final breathPaint = Paint()
-      ..color = color.withOpacity(isPaused ? 0.05 : 0.1)
+      ..color = color.withOpacity(0.05)
       ..style = PaintingStyle.fill
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 15);
     canvas.drawCircle(center, radius - 20 + breath, breathPaint);
   }
 
@@ -345,22 +350,20 @@ class _PomodoroSettingsSheetState extends ConsumerState<PomodoroSettingsSheet> {
               value: _autoStartBreaks,
               onChanged: (v) => setState(() => _autoStartBreaks = v),
               title: const Text('Çalışma bitince molayı otomatik başlat'),
-              subtitle: const Text('Seans bittiğinde mola sayacı otomatik başlar'),
             ),
             SwitchListTile.adaptive(
               value: _autoStartWork,
               onChanged: (v) => setState(() => _autoStartWork = v),
               title: const Text('Mola bitince çalışmayı otomatik başlat'),
-              subtitle: const Text('Mola tamamlanınca yeni tura otomatik geç'),
             ),
             SwitchListTile.adaptive(
               value: _keepScreenOn,
               onChanged: (v) => setState(() => _keepScreenOn = v),
               title: const Text('Zamanlayıcı sırasında ekranı açık tut'),
-              subtitle: const Text('Yanıp sönmeden, kapanmadan sürekli açık kalsın'),
             ),
             const SizedBox(height: 16),
             ElevatedButton(
+                style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
                 onPressed: (){
                   ref.read(pomodoroProvider.notifier).updateSettings(
                     work: _work.toInt(),
