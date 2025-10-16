@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:taktik/core/theme/app_theme.dart';
 import 'package:confetti/confetti.dart';
+import 'dart:ui' as ui;
 import '../logic/pomodoro_notifier.dart';
 
 class PomodoroCompletedView extends StatefulWidget {
@@ -49,53 +50,73 @@ class _PomodoroCompletedViewState extends State<PomodoroCompletedView> {
         return Stack(
           alignment: Alignment.topCenter,
           children: [
-            Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Spacer(),
-                  const Icon(Icons.check_circle_outline_rounded, size: 80, color: AppTheme.successColor)
-                      .animate().scale(duration: 600.ms, curve: Curves.elasticOut),
-                  const SizedBox(height: 24),
-                  Text(
-                    "Yaratım Tamamlandı!",
-                    style: Theme.of(context).textTheme.headlineMedium,
-                    textAlign: TextAlign.center,
-                  ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.5),
-                  Text(
-                    "'${widget.result.task}' görevine $earnedMinutes dakika odaklandın.",
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.secondaryTextColor),
-                    textAlign: TextAlign.center,
-                  ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.5),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.star_rounded, color: Colors.amber),
-                      const SizedBox(width: 8),
-                      Text("+$earnedMinutes Taktik Puanı", style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold)),
-                    ],
-                  ).animate().fadeIn(delay: 400.ms).shake(),
-                  const Spacer(),
-                  ElevatedButton.icon(
-                    icon: Icon(isLongBreakTime ? Icons.bedtime_rounded : Icons.coffee_rounded),
-                    label: Text("${(breakDuration/60).round()} Dakika Mola Ver"),
-                    onPressed: notifier.startNextSession,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.successColor,
-                      foregroundColor: AppTheme.primaryColor,
+            // Cam panel içinde içerik
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 640),
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: _GlassPanel(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const SizedBox(height: 12),
+                          const Icon(Icons.check_circle_outline_rounded, size: 80, color: AppTheme.successColor)
+                              .animate().scale(duration: 600.ms, curve: Curves.elasticOut),
+                          const SizedBox(height: 16),
+                          Text(
+                            "Yaratım Tamamlandı!",
+                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
+                            textAlign: TextAlign.center,
+                          ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.5),
+                          const SizedBox(height: 4),
+                          Text(
+                            "'${widget.result.task}' görevine $earnedMinutes dakika odaklandın.",
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.secondaryTextColor),
+                            textAlign: TextAlign.center,
+                          ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.5),
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.star_rounded, color: Colors.amber),
+                              const SizedBox(width: 8),
+                              Text("+$earnedMinutes Taktik Puanı", style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold)),
+                            ],
+                          ).animate().fadeIn(delay: 400.ms).shake(),
+                          const SizedBox(height: 24),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  icon: Icon(isLongBreakTime ? Icons.bedtime_rounded : Icons.coffee_rounded),
+                                  label: Text("${(breakDuration/60).round()} Dakika Mola Ver"),
+                                  onPressed: notifier.startNextSession,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppTheme.successColor,
+                                    foregroundColor: AppTheme.primaryColor,
+                                    padding: const EdgeInsets.symmetric(vertical: 14),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          TextButton(
+                            onPressed: notifier.reset,
+                            child: const Text("Mabedi Terk Et"),
+                          ),
+                          const SizedBox(height: 8),
+                        ],
+                      ),
                     ),
                   ),
-                  TextButton(
-                    onPressed: notifier.reset,
-                    child: const Text("Mabedi Terk Et"),
-                  ),
-                  const SizedBox(height: 20),
-                ],
+                ),
               ),
             ),
+            // Konfeti üstte
             ConfettiWidget(
               confettiController: _confettiController,
               blastDirectionality: BlastDirectionality.explosive,
@@ -105,6 +126,32 @@ class _PomodoroCompletedViewState extends State<PomodoroCompletedView> {
           ],
         );
       },
+    );
+  }
+}
+
+class _GlassPanel extends StatelessWidget {
+  final Widget child;
+  const _GlassPanel({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.06),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withOpacity(0.08)),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 20, spreadRadius: 2),
+            ],
+          ),
+          child: child,
+        ),
+      ),
     );
   }
 }

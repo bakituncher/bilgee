@@ -48,41 +48,40 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen> with TickerProv
 
     return WillPopScope(
       onWillPop: () async {
-        final shouldExit = await showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Çıkmak istiyor musun?'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Pomodoro ekranından ayrılırsan sayaç duraklatılacak.'),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(44)),
-                        onPressed: () => Navigator.of(ctx).pop(false),
-                        child: const Text('Vazgeç'),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(44)),
-                        onPressed: () => Navigator.of(ctx).pop(true),
-                        child: const Text('Çık ve Duraklat'),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ) ?? false;
-        if (shouldExit) {
-          ref.read(pomodoroProvider.notifier).pause();
+        final model = ref.read(pomodoroProvider);
+        // Yalnızca aktif ve çalışan bir seans varken uyar
+        final isActiveRunning =
+            (model.sessionState == PomodoroSessionState.work ||
+             model.sessionState == PomodoroSessionState.shortBreak ||
+             model.sessionState == PomodoroSessionState.longBreak) &&
+            !model.isPaused;
+
+        if (!isActiveRunning) {
+          // Ana ekran (idle), tamamlandı veya duraklatılmışken doğrudan çık
+          return true;
+        }
+
+        final shouldResetAndExit = await showDialog<bool>(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: const Text('İlerleme kaybolacak'),
+                content: const Text('Ekrandan ayrılırsan mevcut seans sıfırlanacak. Devam etmek istiyor musun?'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(ctx).pop(false),
+                    child: const Text('Vazgeç'),
+                  ),
+                  FilledButton(
+                    onPressed: () => Navigator.of(ctx).pop(true),
+                    child: const Text('Çık ve Sıfırla'),
+                  ),
+                ],
+              ),
+            ) ??
+            false;
+
+        if (shouldResetAndExit) {
+          ref.read(pomodoroProvider.notifier).reset();
           return true;
         }
         return false;
@@ -93,33 +92,62 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen> with TickerProv
           title: const Text('Zihinsel Gözlemevi'),
           backgroundColor: Colors.transparent,
           elevation: 0,
+          centerTitle: true,
         ),
         body: AnimatedContainer(
           duration: 1.seconds,
           curve: Curves.easeOutCubic,
           decoration: BoxDecoration(
-            color: AppTheme.primaryColor,
-            gradient: RadialGradient(
-              center: const Alignment(0, -1.2),
-              radius: 1.5,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
               colors: [
-                _getBackgroundColor(pomodoro.sessionState).withOpacity(0.4),
+                _getBackgroundColor(pomodoro.sessionState).withOpacity(0.9),
                 AppTheme.primaryColor,
               ],
-              stops: const [0.0, 0.7],
             ),
           ),
           child: Stack(
             children: [
+              // Yıldız alanı (mevcut animasyon korunur)
               _StarsBackground(controller: _bgController, state: pomodoro.sessionState),
-              Center(
-                child: AnimatedSwitcher(
-                  duration: 800.ms,
-                  transitionBuilder: (child, animation) => FadeTransition(
-                    opacity: animation,
-                    child: ScaleTransition(scale: animation, alignment: Alignment.center, child: child),
+              // Yumuşak hareket eden renkli blob katmanları (dinamik, enerjik arka plan)
+              Positioned.fill(
+                child: IgnorePointer(
+                  ignoring: true,
+                  child: AnimatedBuilder(
+                    animation: _bgController,
+                    builder: (context, _) {
+                      final t = _bgController.value;
+                      return Stack(children: [
+                        Align(
+                          alignment: Alignment(-0.9 + 0.2 * (t - 0.5), -1.1),
+                          child: _Blob(color: Colors.white.withOpacity(0.05), size: 280),
+                        ),
+                        Align(
+                          alignment: Alignment(1.1, -0.3 + 0.2 * (0.5 - t)),
+                          child: _Blob(color: AppTheme.secondaryColor.withOpacity(0.12), size: 220),
+                        ),
+                        Align(
+                          alignment: Alignment(0.8 * (0.5 - t), 1.1),
+                          child: _Blob(color: AppTheme.successColor.withOpacity(0.08), size: 260),
+                        ),
+                      ]);
+                    },
                   ),
-                  child: _buildCurrentView(pomodoro),
+                ),
+              ),
+              // İçerik
+              SafeArea(
+                child: Center(
+                  child: AnimatedSwitcher(
+                    duration: 800.ms,
+                    transitionBuilder: (child, animation) => FadeTransition(
+                      opacity: animation,
+                      child: ScaleTransition(scale: animation, alignment: Alignment.center, child: child),
+                    ),
+                    child: _buildCurrentView(pomodoro),
+                  ),
                 ),
               ),
             ],
@@ -202,5 +230,27 @@ class _StarsBackground extends ConsumerWidget {
       );
     });
     return Stack(children: stars);
+  }
+}
+
+// Enerjik arka plan için yumuşak, bulanık renkli blob
+class _Blob extends StatelessWidget {
+  final Color color;
+  final double size;
+  const _Blob({required this.color, required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: color,
+        boxShadow: [
+          BoxShadow(color: color, blurRadius: 60, spreadRadius: 10),
+        ],
+      ),
+    );
   }
 }

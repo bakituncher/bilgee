@@ -6,6 +6,7 @@ import 'package:taktik/core/theme/app_theme.dart';
 import 'package:intl/intl.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/pomodoro/logic/pomodoro_notifier.dart';
+import 'dart:ui' as ui;
 
 class PomodoroStatsView extends ConsumerStatefulWidget {
   const PomodoroStatsView({super.key});
@@ -122,97 +123,105 @@ class _PomodoroStatsViewState extends ConsumerState<PomodoroStatsView> {
 
     return Center(
       key: const ValueKey('stats'),
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.shield_moon_rounded, size: 36, color: AppTheme.successColor),
-                const SizedBox(width: 10),
-                Expanded(child: Text('Odak Merkezi', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)) ),
-                IconButton(
-                  tooltip: 'İstatistikler',
-                  onPressed: _openStatsSheet,
-                  icon: const Icon(Icons.bar_chart_rounded),
-                ),
-              ],
-            ).animate().fadeIn().slideY(begin: 0.1),
-            const SizedBox(height: 8),
-            userStatsAsync.when(
-              data: (stats) => (stats == null) ? const SizedBox.shrink() : Align(
-                alignment: Alignment.centerLeft,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: AppTheme.cardColor.withOpacity(0.7),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.amber.withOpacity(0.35)),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 720),
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: _GlassPanel(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.shield_moon_rounded, size: 36, color: AppTheme.successColor),
+                      const SizedBox(width: 10),
+                      Expanded(child: Text('Odak Merkezi', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)) ),
+                      IconButton(
+                        tooltip: 'İstatistikler',
+                        onPressed: _openStatsSheet,
+                        icon: const Icon(Icons.bar_chart_rounded),
+                      ),
+                    ],
+                  ).animate().fadeIn().slideY(begin: 0.1),
+                  const SizedBox(height: 8),
+                  userStatsAsync.when(
+                    data: (stats) => (stats == null) ? const SizedBox.shrink() : Align(
+                      alignment: Alignment.centerLeft,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: AppTheme.cardColor.withOpacity(0.7),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.amber.withOpacity(0.35)),
+                        ),
+                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                          const Icon(Icons.star_rounded, color: Colors.amber),
+                          const SizedBox(width: 8),
+                          Text('Pomodoro BP: ${stats.pomodoroBp}', style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.w700)),
+                        ]),
+                      ),
+                    ),
+                    loading: () => const SizedBox.shrink(),
+                    error: (e, s) => const SizedBox.shrink(),
                   ),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    const Icon(Icons.star_rounded, color: Colors.amber),
-                    const SizedBox(width: 8),
-                    Text('Pomodoro BP: ${stats.pomodoroBp}', style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.w700)),
-                  ]),
-                ),
+                  const SizedBox(height: 20),
+                  userStatsAsync.when(
+                    data: (stats) {
+                      if (stats == null) return const SizedBox();
+                      final totalSeconds = stats.totalFocusSeconds;
+                      final count = stats.pomodoroSessions;
+                      final avg = count > 0 ? totalSeconds / count : 0;
+                      final now = DateTime.now();
+                      final todayKey = DateFormat('yyyy-MM-dd').format(DateTime(now.year, now.month, now.day));
+                      final todayMinutes = stats.focusRollup30[todayKey] ?? 0;
+
+                      return Column(
+                        children: [
+                          IntrinsicHeight(
+                            child: Row(
+                              children: [
+                                Expanded(child: _KpiCard(icon: Icons.timer, label: 'Toplam', value: '${(totalSeconds / 3600).toStringAsFixed(1)} saat', delay: 200.ms)),
+                                const SizedBox(width: 12),
+                                Expanded(child: _KpiCard(icon: Icons.check_circle_outline, label: 'Seans', value: '$count', delay: 300.ms)),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          IntrinsicHeight(
+                            child: Row(
+                              children: [
+                                Expanded(child: _KpiCard(icon: Icons.speed, label: 'Ortalama', value: '${(avg / 60).round()} dk', delay: 400.ms)),
+                                const SizedBox(width: 12),
+                                Expanded(child: _KpiCard(icon: Icons.today_rounded, label: 'Bugün', value: '$todayMinutes dk', delay: 500.ms)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                    loading: () => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                    error: (e, s) => const Text('Veri yüklenemedi'),
+                  ),
+
+                  const SizedBox(height: 28),
+                  ElevatedButton.icon(
+                    onPressed: () => ref.read(pomodoroProvider.notifier).prepareForWork(),
+                    icon: const Icon(Icons.rocket_launch_rounded),
+                    label: const Text('Mabedi Harekete Geçir'),
+                    style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14)),
+                  ).animate().fadeIn(delay: 600.ms),
+                  const SizedBox(height: 6),
+                  const Align(
+                    alignment: Alignment.center,
+                    child: Text('Odaklanmaya başla.', style: TextStyle(color: AppTheme.secondaryTextColor, fontSize: 12)),
+                  ),
+                ],
               ),
-              loading: () => const SizedBox.shrink(),
-              error: (e, s) => const SizedBox.shrink(),
             ),
-            const SizedBox(height: 20),
-            userStatsAsync.when(
-              data: (stats) {
-                if (stats == null) return const SizedBox();
-                final totalSeconds = stats.totalFocusSeconds;
-                final count = stats.pomodoroSessions;
-                final avg = count > 0 ? totalSeconds / count : 0;
-                final now = DateTime.now();
-                final todayKey = DateFormat('yyyy-MM-dd').format(DateTime(now.year, now.month, now.day));
-                final todayMinutes = stats.focusRollup30[todayKey] ?? 0;
-
-                return Column(
-                  children: [
-                    IntrinsicHeight(
-                      child: Row(
-                        children: [
-                          Expanded(child: _KpiCard(icon: Icons.timer, label: 'Toplam', value: '${(totalSeconds / 3600).toStringAsFixed(1)} saat', delay: 200.ms)),
-                          const SizedBox(width: 12),
-                          Expanded(child: _KpiCard(icon: Icons.check_circle_outline, label: 'Seans', value: '$count', delay: 300.ms)),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    IntrinsicHeight(
-                      child: Row(
-                        children: [
-                          Expanded(child: _KpiCard(icon: Icons.speed, label: 'Ortalama', value: '${(avg / 60).round()} dk', delay: 400.ms)),
-                          const SizedBox(width: 12),
-                          Expanded(child: _KpiCard(icon: Icons.today_rounded, label: 'Bugün', value: '$todayMinutes dk', delay: 500.ms)),
-                        ],
-                      ),
-                    ),
-                  ],
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-              error: (e, s) => const Text('Veri yüklenemedi'),
-            ),
-
-            const SizedBox(height: 28),
-            ElevatedButton.icon(
-              onPressed: () => ref.read(pomodoroProvider.notifier).prepareForWork(),
-              icon: const Icon(Icons.rocket_launch_rounded),
-              label: const Text('Mabedi Harekete Geçir'),
-              style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14)),
-            ).animate().fadeIn(delay: 600.ms),
-            const SizedBox(height: 6),
-            const Align(
-              alignment: Alignment.center,
-              child: Text('Odaklanmaya başla.', style: TextStyle(color: AppTheme.secondaryTextColor, fontSize: 12)),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -259,6 +268,32 @@ class _MetricTile extends StatelessWidget {
       contentPadding: EdgeInsets.zero,
       title: Text(title),
       trailing: Text(value, style: const TextStyle(fontWeight: FontWeight.w700)),
+    );
+  }
+}
+
+class _GlassPanel extends StatelessWidget {
+  final Widget child;
+  const _GlassPanel({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.06),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withOpacity(0.08)),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 20, spreadRadius: 2),
+            ],
+          ),
+          child: child,
+        ),
+      ),
     );
   }
 }
