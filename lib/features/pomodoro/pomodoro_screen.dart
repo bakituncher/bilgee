@@ -15,31 +15,36 @@ class PomodoroScreen extends ConsumerStatefulWidget {
   ConsumerState<PomodoroScreen> createState() => _PomodoroScreenState();
 }
 
-
-class _PomodoroScreenState extends ConsumerState<PomodoroScreen> with TickerProviderStateMixin, WidgetsBindingObserver {
-  late final AnimationController _bgController;
-
+class _PomodoroScreenState extends ConsumerState<PomodoroScreen> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-    _bgController = AnimationController(vsync: this, duration: 20.seconds)..repeat();
     WidgetsBinding.instance.addObserver(this);
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _bgController.dispose();
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
+    // Pause the timer if the app goes into the background
     if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive || state == AppLifecycleState.detached) {
-      // Arka plana geçince sayaç otomatik duraklatılsın
       ref.read(pomodoroProvider.notifier).pause();
     }
+  }
+
+  String _getAppBarTitle(PomodoroSessionState state) {
+    return switch (state) {
+      PomodoroSessionState.idle => "Zihinsel Mabet",
+      PomodoroSessionState.work => "Odaklanma",
+      PomodoroSessionState.shortBreak => "Kısa Mola",
+      PomodoroSessionState.longBreak => "Uzun Mola",
+      PomodoroSessionState.completed => "Başardın!",
+    };
   }
 
   @override
@@ -48,49 +53,49 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen> with TickerProv
 
     return WillPopScope(
       onWillPop: () async {
-        final shouldExit = await showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Çıkmak istiyor musun?'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Pomodoro ekranından ayrılırsan sayaç duraklatılacak.'),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(44)),
-                        onPressed: () => Navigator.of(ctx).pop(false),
-                        child: const Text('Vazgeç'),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(44)),
-                        onPressed: () => Navigator.of(ctx).pop(true),
-                        child: const Text('Çık ve Duraklat'),
-                      ),
-                    ),
-                  ],
+        final pomodoroState = ref.read(pomodoroProvider);
+        // Only show dialog if a session is active
+        if (pomodoroState.sessionState == PomodoroSessionState.work ||
+            pomodoroState.sessionState == PomodoroSessionState.shortBreak ||
+            pomodoroState.sessionState == PomodoroSessionState.longBreak) {
+          final shouldExit = await showDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Seansı Duraklat ve Çık?'),
+              content: const Text('Ekrandan ayrılırsan mevcut seansın duraklatılacak. Devam etmek istiyor musun?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  child: const Text('Vazgeç'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(ctx).pop(true),
+                  child: const Text('Çık ve Duraklat'),
                 ),
               ],
             ),
-          ),
-        ) ?? false;
-        if (shouldExit) {
-          ref.read(pomodoroProvider.notifier).pause();
-          return true;
+          ) ?? false;
+          if (shouldExit) {
+            ref.read(pomodoroProvider.notifier).pause();
+            return true;
+          }
+          return false;
         }
-        return false;
+        // If no session is active, allow popping without a dialog
+        return true;
       },
       child: Scaffold(
         extendBodyBehindAppBar: true,
         appBar: AppBar(
-          title: const Text('Zihinsel Gözlemevi'),
+          title: AnimatedSwitcher(
+            duration: 500.ms,
+            transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
+            child: Text(
+              _getAppBarTitle(pomodoro.sessionState),
+              key: ValueKey(pomodoro.sessionState),
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
           backgroundColor: Colors.transparent,
           elevation: 0,
         ),
@@ -98,31 +103,18 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen> with TickerProv
           duration: 1.seconds,
           curve: Curves.easeOutCubic,
           decoration: BoxDecoration(
-            color: AppTheme.primaryColor,
-            gradient: RadialGradient(
-              center: const Alignment(0, -1.2),
-              radius: 1.5,
-              colors: [
-                _getBackgroundColor(pomodoro.sessionState).withOpacity(0.4),
-                AppTheme.primaryColor,
-              ],
-              stops: const [0.0, 0.7],
-            ),
+            gradient: _getBackgroundGradient(pomodoro.sessionState),
           ),
-          child: Stack(
-            children: [
-              _StarsBackground(controller: _bgController, state: pomodoro.sessionState),
-              Center(
-                child: AnimatedSwitcher(
-                  duration: 800.ms,
-                  transitionBuilder: (child, animation) => FadeTransition(
-                    opacity: animation,
-                    child: ScaleTransition(scale: animation, alignment: Alignment.center, child: child),
-                  ),
-                  child: _buildCurrentView(pomodoro),
-                ),
-              ),
-            ],
+          child: Center(
+            child: AnimatedSwitcher(
+              duration: 800.ms,
+              transitionBuilder: (child, animation) {
+                return child.animate()
+                    .fadeIn(duration: 600.ms, curve: Curves.easeOutCubic)
+                    .slideY(begin: 0.1, end: 0, duration: 600.ms, curve: Curves.easeOutCubic);
+              },
+              child: _buildCurrentView(pomodoro),
+            ),
           ),
         ),
       ),
@@ -134,10 +126,7 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen> with TickerProv
       case PomodoroSessionState.idle:
         return const PomodoroStatsView(key: ValueKey('stats'));
       case PomodoroSessionState.completed:
-        // DÜZELTME: lastResult'ın null olabileceği geçiş anı için kontrol eklendi.
-        // Bu durum, tamamlanma ekranından mola veya başa dönme sırasında yaşanır.
         if (pomodoro.lastResult == null) {
-          // Geçiş sırasında bir "boş" view göstermek çökmemeyi sağlar.
           return const SizedBox.shrink(key: ValueKey('empty_completed'));
         }
         return PomodoroCompletedView(
@@ -149,58 +138,17 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen> with TickerProv
     }
   }
 
-  Color _getBackgroundColor(PomodoroSessionState currentState) {
-    switch (currentState) {
-      case PomodoroSessionState.work: return AppTheme.secondaryColor;
-      case PomodoroSessionState.shortBreak:
-      case PomodoroSessionState.longBreak: return AppTheme.successColor;
-      case PomodoroSessionState.completed: return Colors.purple.shade300;
-      case PomodoroSessionState.idle: return AppTheme.lightSurfaceColor;
-    }
-  }
-}
-
-class _StarsBackground extends ConsumerWidget {
-  final AnimationController controller;
-  final PomodoroSessionState state;
-  const _StarsBackground({required this.controller, required this.state});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Animate(
-      controller: controller,
-      effects: [
-        CustomEffect(
-          duration: controller.duration,
-          builder: (context, value, child) {
-            final speedMultiplier = (state == PomodoroSessionState.work && !ref.watch(pomodoroProvider).isPaused) ? 2.5 : 1.0;
-            return _starfieldBuilder(context, value * speedMultiplier, child);
-          },
-        ),
-      ],
-      child: Container(),
+  LinearGradient _getBackgroundGradient(PomodoroSessionState currentState) {
+    final (begin, end) = switch (currentState) {
+      PomodoroSessionState.work => (AppTheme.secondaryColor.withOpacity(0.5), AppTheme.primaryColor),
+      PomodoroSessionState.shortBreak || PomodoroSessionState.longBreak => (AppTheme.successColor.withOpacity(0.5), AppTheme.primaryColor),
+      PomodoroSessionState.completed => (Colors.purple.shade300.withOpacity(0.6), AppTheme.primaryColor),
+      PomodoroSessionState.idle => (AppTheme.primaryColor, AppTheme.lightSurfaceColor.withOpacity(0.2)),
+    };
+    return LinearGradient(
+      colors: [begin, end],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
     );
-  }
-
-  static Widget _starfieldBuilder(BuildContext context, double value, Widget child) {
-    final stars = List.generate(100, (index) {
-      final size = 1.0 + ((index * 3) % 3);
-      final x = ((index * 31.41592) % 100) / 100;
-      final y = ((index * 52.5321) % 100) / 100;
-      final speed = 0.1 + ((index * 7) % 4) * 0.05;
-      return Positioned(
-        left: x * MediaQuery.of(context).size.width,
-        top: ((y + (value * speed)) % 1.0) * MediaQuery.of(context).size.height,
-        child: Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.3 + ((index * 5) % 7) / 10),
-            shape: BoxShape.circle,
-          ),
-        ),
-      );
-    });
-    return Stack(children: stars);
   }
 }
