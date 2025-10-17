@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:taktik/shared/notifications/notification_service.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:taktik/data/providers/shared_prefs_provider.dart';
+import 'package:flutter/services.dart'; // HapticFeedback için
 
 enum PomodoroSessionState { idle, work, shortBreak, longBreak, completed }
 
@@ -281,9 +282,18 @@ class PomodoroNotifier extends StateNotifier<PomodoroModel> {
     _applyWakelock();
     _persistRunStart(baselineRemaining: baseline);
 
+    // Başlatma geri bildirimi
+    try { HapticFeedback.selectionClick(); } catch (_) {}
+
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (state.timeRemaining > 0) {
-        state = state.copyWith(timeRemaining: state.timeRemaining - 1);
+        final nextRemaining = state.timeRemaining - 1;
+        // Bitime 10 sn kala uyarı (yalnızca bir kez tetiklenir)
+        if (nextRemaining == 10) {
+          _notify('Birazdan bitiyor', 'Hazırlan: 10 saniye kaldı.');
+          try { HapticFeedback.lightImpact(); } catch (_) {}
+        }
+        state = state.copyWith(timeRemaining: nextRemaining);
       } else {
         _timer?.cancel();
         _clearRunStart();
@@ -317,6 +327,7 @@ class PomodoroNotifier extends StateNotifier<PomodoroModel> {
       _persistState();
 
       _notify('Odak tamamlandı', '"${state.currentTask}" için mola zamanı.');
+      try { HapticFeedback.mediumImpact(); } catch (_) {}
 
       if (state.autoStartBreaks) {
         // Otomatik mola başlat
@@ -338,6 +349,7 @@ class PomodoroNotifier extends StateNotifier<PomodoroModel> {
       _applyWakelock();
       _persistState();
       _notify('Mola bitti', 'Yeni bir odak turu seni bekliyor.');
+      try { HapticFeedback.lightImpact(); } catch (_) {}
       if (state.autoStartWork) {
         _startTimer();
       }
@@ -413,6 +425,8 @@ class PomodoroNotifier extends StateNotifier<PomodoroModel> {
     _applyWakelock();
     _persistState();
     _clearRunStart();
+    // Duraklatma geri bildirimi
+    try { HapticFeedback.selectionClick(); } catch (_) {}
   }
 
   void reset() {

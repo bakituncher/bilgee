@@ -32,7 +32,14 @@ class PomodoroTimerView extends ConsumerWidget {
         children: [
           const SizedBox(height: 50),
           _buildHeader(context, title, message, pomodoro, ref),
-          Expanded(child: _TimerDial(pomodoro: pomodoro, color: progressColor)),
+          // Jest: çift dokunuş ile başlat/duraklat
+          Expanded(
+            child: GestureDetector(
+              onDoubleTap: pomodoro.isPaused ? notifier.start : notifier.pause,
+              onLongPress: () => _showSettingsSheet(context, ref),
+              child: _TimerDial(pomodoro: pomodoro, color: progressColor),
+            ),
+          ),
           _buildControls(context, pomodoro, notifier, ref),
         ],
       ),
@@ -64,6 +71,7 @@ class PomodoroTimerView extends ConsumerWidget {
 
   Widget _buildControls(BuildContext context, PomodoroModel pomodoro, PomodoroNotifier notifier, WidgetRef ref) {
     final onBreak = pomodoro.sessionState == PomodoroSessionState.shortBreak || pomodoro.sessionState == PomodoroSessionState.longBreak;
+    final canPromptReset = pomodoro.sessionState != PomodoroSessionState.idle;
     return Column(
       children: [
         Row(
@@ -82,7 +90,7 @@ class PomodoroTimerView extends ConsumerWidget {
             ),
             const SizedBox(width: 20),
             IconButton.filled(
-              onPressed: notifier.reset,
+              onPressed: () => _confirmAndReset(context, notifier, prompt: canPromptReset),
               icon: const Icon(Icons.replay_rounded),
               style: IconButton.styleFrom(backgroundColor: AppTheme.lightSurfaceColor.withOpacity(0.5)),
             ),
@@ -110,9 +118,30 @@ class PomodoroTimerView extends ConsumerWidget {
                 icon: const Icon(Icons.check_circle, color: AppTheme.successColor),
                 label: Text("'${pomodoro.currentTask}' görevini tamamla", style: const TextStyle(color: AppTheme.successColor))
             ),
-          )
+          ),
+        const SizedBox(height: 8),
+        const Text('İpucu: Zamanlayıcıya çift dokunarak başlat/duraklat, uzun basarak ayarlara aç.', style: TextStyle(fontSize: 12, color: AppTheme.secondaryTextColor)),
       ],
     ).animate().fadeIn(duration: 500.ms);
+  }
+
+  Future<void> _confirmAndReset(BuildContext context, PomodoroNotifier notifier, {bool prompt = false}) async {
+    if (!prompt) {
+      notifier.reset();
+      return;
+    }
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Sıfırla'),
+        content: const Text('Mevcut ilerleme sıfırlanacak. Devam edilsin mi?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Vazgeç')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Sıfırla')),
+        ],
+      ),
+    ) ?? false;
+    if (ok) notifier.reset();
   }
 
   Future<void> _showTaskSelectionSheet(BuildContext context, WidgetRef ref) async {
@@ -160,6 +189,12 @@ class PomodoroTimerView extends ConsumerWidget {
                 title: Text(task.task, maxLines: 2, overflow: TextOverflow.ellipsis),
                 onTap: () => Navigator.of(context).pop(task),
               )),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.add),
+                title: const Text('Yeni görev...'),
+                onTap: () => Navigator.of(context).pop((task: '__CUSTOM__', identifier: '__CUSTOM__')),
+              ),
             ],
           ),
         ),
@@ -167,10 +202,39 @@ class PomodoroTimerView extends ConsumerWidget {
     );
 
     if (selectedTask != null) {
+      // Özel görev akışı
+      if (selectedTask.task == '__CUSTOM__' && selectedTask.identifier == '__CUSTOM__') {
+        final text = await _promptForCustomTask(context);
+        if (text != null && text.trim().isNotEmpty) {
+          final dateKey = dateKeyForSelection ?? DateFormat('yyyy-MM-dd').format(DateTime.now());
+          ref.read(pomodoroProvider.notifier).setTask(task: text.trim(), identifier: null, dateKey: dateKey);
+        }
+        return;
+      }
       // Tarih anahtarını her durumda bugüne ayarla; weekly plan varsa yukarıda üretildi
       final dateKey = dateKeyForSelection ?? DateFormat('yyyy-MM-dd').format(DateTime.now());
       ref.read(pomodoroProvider.notifier).setTask(task: selectedTask.task, identifier: selectedTask.identifier, dateKey: dateKey);
     }
+  }
+
+  Future<String?> _promptForCustomTask(BuildContext context) async {
+    final controller = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Yeni görev'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLength: 60,
+          decoration: const InputDecoration(hintText: 'Görev adı'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('İptal')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, controller.text), child: const Text('Ekle')),
+        ],
+      ),
+    );
   }
 
   Future<void> _showSettingsSheet(BuildContext context, WidgetRef ref) async {
