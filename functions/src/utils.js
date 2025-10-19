@@ -23,34 +23,34 @@ function weekKeyIstanbul(d = nowIstanbul()) {
 
 function routeKeyFromPath(pathname) {
   switch (pathname) {
-    case "/home":
-      return "home";
-    case "/home/pomodoro":
-      return "pomodoro";
-    case "/coach":
-      return "coach";
-    case "/home/stats":
-      return "stats";
-    case "/home/add-test":
-      return "addTest";
-    case "/home/quests":
-      return "quests";
-    case "/ai-hub/strategic-planning":
-      return "strategy";
-    case "/ai-hub/weakness-workshop":
-      return "workshop";
-    case "/availability":
-      return "availability";
-    case "/profile/avatar-selection":
-      return "avatar";
-    case "/arena":
-      return "arena";
-    case "/library":
-      return "library";
-    case "/ai-hub/motivation-chat":
-      return "motivationChat";
-    default:
-      return "home";
+  case "/home":
+    return "home";
+  case "/home/pomodoro":
+    return "pomodoro";
+  case "/coach":
+    return "coach";
+  case "/home/stats":
+    return "stats";
+  case "/home/add-test":
+    return "addTest";
+  case "/home/quests":
+    return "quests";
+  case "/ai-hub/strategic-planning":
+    return "strategy";
+  case "/ai-hub/weakness-workshop":
+    return "workshop";
+  case "/availability":
+    return "availability";
+  case "/profile/avatar-selection":
+    return "avatar";
+  case "/arena":
+    return "arena";
+  case "/library":
+    return "library";
+  case "/ai-hub/motivation-chat":
+    return "motivationChat";
+  default:
+    return "home";
   }
 }
 
@@ -109,7 +109,7 @@ async function logAdminAction(adminUid, action, data = {}) {
 // Yeni: Genel amaçlı oran sınırlama yardımcıları (TTL içeren)
 async function enforceRateLimit(key, windowSeconds, maxCount) {
   if (!key) return;
-  const ref = db.collection('rate_limits').doc(String(key));
+  const ref = db.collection("rate_limits").doc(String(key));
   const now = Date.now();
   const windowMs = windowSeconds * 1000;
   await db.runTransaction(async (tx) => {
@@ -119,15 +119,15 @@ async function enforceRateLimit(key, windowSeconds, maxCount) {
       return;
     }
     const data = snap.data() || {};
-    let count = Number(data.count || 0);
-    let windowStart = typeof data.windowStart === 'number' ? data.windowStart : now;
+    const count = Number(data.count || 0);
+    const windowStart = typeof data.windowStart === "number" ? data.windowStart : now;
     if (now - windowStart > windowMs) {
       tx.set(ref, { count: 1, windowStart: now, expireAt: new Date(now + 3 * 24 * 60 * 60 * 1000) });
       return;
     }
     if (count >= maxCount) {
-      const { HttpsError } = require('firebase-functions/v2/https');
-      throw new HttpsError('resource-exhausted', 'Oran sınırı aşıldı. Lütfen sonra tekrar deneyin.');
+      const { HttpsError } = require("firebase-functions/v2/https");
+      throw new HttpsError("resource-exhausted", "Oran sınırı aşıldı. Lütfen sonra tekrar deneyin.");
     }
     tx.update(ref, { count: count + 1, expireAt: new Date(now + 3 * 24 * 60 * 60 * 1000) });
   });
@@ -136,7 +136,7 @@ async function enforceRateLimit(key, windowSeconds, maxCount) {
 // Yeni: Günlük kota (YYYY-MM-DD bazlı doc ile)
 async function enforceDailyQuota(key, limitPerDay) {
   const day = dayKeyIstanbul();
-  const ref = db.collection('quotas').doc(`${key}_${day}`);
+  const ref = db.collection("quotas").doc(`${key}_${day}`);
   let allowed = false;
   await db.runTransaction(async (tx) => {
     const snap = await tx.get(ref);
@@ -148,8 +148,8 @@ async function enforceDailyQuota(key, limitPerDay) {
     const data = snap.data() || {};
     const count = Number(data.count || 0);
     if (count >= limitPerDay) {
-      const { HttpsError } = require('firebase-functions/v2/https');
-      throw new HttpsError('resource-exhausted', 'Günlük kota aşıldı');
+      const { HttpsError } = require("firebase-functions/v2/https");
+      throw new HttpsError("resource-exhausted", "Günlük kota aşıldı");
     }
     tx.update(ref, { count: count + 1, expireAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000) });
     allowed = true;
@@ -161,13 +161,13 @@ function getClientIpFromRawRequest(rawRequest) {
   try {
     if (!rawRequest) return null;
     // Cloud Run/Functions arkasındaki tipik başlıklar
-    const xf = rawRequest.headers && (rawRequest.headers['x-forwarded-for'] || rawRequest.headers['X-Forwarded-For']);
-    if (typeof xf === 'string' && xf.length > 0) {
-      const first = xf.split(',')[0].trim();
+    const xf = rawRequest.headers && (rawRequest.headers["x-forwarded-for"] || rawRequest.headers["X-Forwarded-For"]);
+    if (typeof xf === "string" && xf.length > 0) {
+      const first = xf.split(",")[0].trim();
       return first || null;
     }
     if (rawRequest.ip) return rawRequest.ip;
-  } catch (_) { /* ignore */ }
+  } catch (_) {/* ignore */}
   return null;
 }
 

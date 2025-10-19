@@ -254,7 +254,7 @@ exports.regenerateDailyQuests = onCall({ region: "us-central1", timeoutSeconds: 
   const uid = request.auth.uid;
 
   // Rate limit + günlük kota
-  const ip = getClientIpFromRawRequest(request.rawRequest) || 'unknown';
+  const ip = getClientIpFromRawRequest(request.rawRequest) || "unknown";
   await Promise.all([
     enforceRateLimit(`quests_regen_uid_${uid}`, 60, 4),
     enforceRateLimit(`quests_regen_ip_${ip}`, 60, 40),
@@ -307,7 +307,7 @@ exports.completeQuest = onCall({ region: "us-central1", timeoutSeconds: 30, enfo
   const uid = request.auth.uid;
 
   // Rate limit + günlük kota (spam engelleme)
-  const ip = getClientIpFromRawRequest(request.rawRequest) || 'unknown';
+  const ip = getClientIpFromRawRequest(request.rawRequest) || "unknown";
   await Promise.all([
     enforceRateLimit(`quests_complete_uid_${uid}`, 60, 30),
     enforceRateLimit(`quests_complete_ip_${ip}`, 60, 200),
@@ -379,7 +379,7 @@ async function autoCompleteQuestIfNeeded(afterSnap) {
 
 exports.onDailyQuestProgress = onDocumentWritten({
   document: "users/{userId}/daily_quests/{questId}",
-  region: "us-central1"
+  region: "us-central1",
 }, async (event) => {
   if (!(event && event.data && event.data.after)) return;
   await autoCompleteQuestIfNeeded(event.data.after);
