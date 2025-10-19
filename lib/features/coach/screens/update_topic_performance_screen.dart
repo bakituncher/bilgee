@@ -42,107 +42,116 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(topic)),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          children: [
-            _buildModeSelector(context, ref),
-            const SizedBox(height: 32),
-            _buildMasteryGauge(context, mastery),
-            const SizedBox(height: 32),
-
-            Text(
-              isAddingMode ? "Çözdüğün Testi Ekle" : "Yeni Değerleri Gir",
-              style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+      body: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                children: [
+                  _buildModeSelector(context, ref),
+                  const SizedBox(height: 32),
+                  _buildMasteryGauge(context, mastery),
+                  const SizedBox(height: 32),
+                  Text(
+                    isAddingMode ? "Çözdüğün Testi Ekle" : "Yeni Değerleri Gir",
+                    style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 24),
+                  ScoreSlider(
+                    label: "Toplam Soru",
+                    value: sessionQuestions.toDouble(),
+                    max: 200,
+                    color: AppTheme.lightSurfaceColor,
+                    onChanged: (value) {
+                      final int newTotal = value.toInt();
+                      ref.read(_sessionQuestionCountProvider.notifier).state = newTotal;
+                      if (ref.read(_correctCountProvider) > newTotal) {
+                        ref.read(_correctCountProvider.notifier).state = newTotal;
+                      }
+                      if (ref.read(_wrongCountProvider) > newTotal - ref.read(_correctCountProvider)) {
+                        ref.read(_wrongCountProvider.notifier).state = newTotal - ref.read(_correctCountProvider);
+                      }
+                    },
+                  ),
+                  ScoreSlider(
+                    label: "Doğru",
+                    value: correct.toDouble(),
+                    max: sessionQuestions.toDouble(),
+                    color: AppTheme.successColor,
+                    onChanged: (value) {
+                      final newCorrect = value.toInt();
+                      ref.read(_correctCountProvider.notifier).state = newCorrect;
+                      if (newCorrect + ref.read(_wrongCountProvider) > sessionQuestions) {
+                        ref.read(_wrongCountProvider.notifier).state = sessionQuestions - newCorrect;
+                      }
+                    },
+                  ),
+                  ScoreSlider(
+                    label: "Yanlış",
+                    value: wrong.toDouble(),
+                    max: (sessionQuestions - correct).toDouble(),
+                    color: AppTheme.accentColor,
+                    onChanged: (value) {
+                      ref.read(_wrongCountProvider.notifier).state = value.toInt();
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  _StatDisplay(label: "Boş", value: blank.toString()),
+                  const SizedBox(height: 48),
+                ],
+              ),
             ),
-            const SizedBox(height: 24),
+          ),
+          // Sabit Buton Alanı
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                onPressed: () async {
+                  final userId = ref.read(authControllerProvider).value!.uid;
+                  TopicPerformanceModel newPerformance;
+                  if (isAddingMode) {
+                    newPerformance = TopicPerformanceModel(
+                      correctCount: initialPerformance.correctCount + correct,
+                      wrongCount: initialPerformance.wrongCount + wrong,
+                      blankCount: initialPerformance.blankCount + blank,
+                      questionCount: initialPerformance.questionCount + sessionQuestions,
+                    );
+                  } else {
+                    newPerformance = TopicPerformanceModel(
+                      correctCount: correct,
+                      wrongCount: wrong,
+                      blankCount: blank,
+                      questionCount: sessionQuestions,
+                    );
+                  }
 
-            ScoreSlider(
-              label: "Toplam Soru",
-              value: sessionQuestions.toDouble(),
-              max: 200,
-              color: AppTheme.lightSurfaceColor,
-              onChanged: (value) {
-                final int newTotal = value.toInt();
-                ref.read(_sessionQuestionCountProvider.notifier).state = newTotal;
-                if (ref.read(_correctCountProvider) > newTotal) {
-                  ref.read(_correctCountProvider.notifier).state = newTotal;
-                }
-                if (ref.read(_wrongCountProvider) > newTotal - ref.read(_correctCountProvider)) {
-                  ref.read(_wrongCountProvider.notifier).state = newTotal - ref.read(_correctCountProvider);
-                }
-              },
-            ),
-            ScoreSlider(
-              label: "Doğru",
-              value: correct.toDouble(),
-              max: sessionQuestions.toDouble(),
-              color: AppTheme.successColor,
-              onChanged: (value) {
-                final newCorrect = value.toInt();
-                ref.read(_correctCountProvider.notifier).state = newCorrect;
-                if (newCorrect + ref.read(_wrongCountProvider) > sessionQuestions) {
-                  ref.read(_wrongCountProvider.notifier).state = sessionQuestions - newCorrect;
-                }
-              },
-            ),
-            ScoreSlider(
-              label: "Yanlış",
-              value: wrong.toDouble(),
-              max: (sessionQuestions - correct).toDouble(),
-              color: AppTheme.accentColor,
-              onChanged: (value) {
-                ref.read(_wrongCountProvider.notifier).state = value.toInt();
-              },
-            ),
-
-            const SizedBox(height: 24),
-
-            _StatDisplay(label: "Boş", value: blank.toString()),
-
-            const SizedBox(height: 48),
-
-            ElevatedButton(
-              onPressed: () async {
-                final userId = ref.read(authControllerProvider).value!.uid;
-                TopicPerformanceModel newPerformance;
-                if (isAddingMode) {
-                  newPerformance = TopicPerformanceModel(
-                    correctCount: initialPerformance.correctCount + correct,
-                    wrongCount: initialPerformance.wrongCount + wrong,
-                    blankCount: initialPerformance.blankCount + blank,
-                    questionCount: initialPerformance.questionCount + sessionQuestions,
+                  await ref.read(firestoreServiceProvider).updateTopicPerformance(
+                    userId: userId,
+                    subject: subject,
+                    topic: topic,
+                    performance: newPerformance,
                   );
-                } else {
-                  newPerformance = TopicPerformanceModel(
-                    correctCount: correct,
-                    wrongCount: wrong,
-                    blankCount: blank,
-                    questionCount: sessionQuestions,
-                  );
-                }
 
-                await ref.read(firestoreServiceProvider).updateTopicPerformance(
-                  userId: userId,
-                  subject: subject,
-                  topic: topic,
-                  performance: newPerformance,
-                );
-
-                // Ders Netlerim verisini tazele
-                ref.invalidate(performanceProvider);
-                // Görev ilerlemesi (ders, konu, çözülen soru sayısı)
-                ref.read(questNotifierProvider.notifier).userUpdatedTopicPerformance(subject, topic, sessionQuestions);
-                if (context.mounted) {
-                  HapticFeedback.lightImpact();
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Konu istatistikleri güncellendi.')));
-                  context.pop();
-                }
-              },
-              child: const Text("Cevheri İşle ve Kaydet"),
-            )
-          ],
-        ),
+                  ref.invalidate(performanceProvider);
+                  ref.read(questNotifierProvider.notifier).userUpdatedTopicPerformance(subject, topic, sessionQuestions);
+                  if (context.mounted) {
+                    HapticFeedback.lightImpact();
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Konu istatistikleri güncellendi.')));
+                    context.pop();
+                  }
+                },
+                child: const Text("Kaydet"),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
