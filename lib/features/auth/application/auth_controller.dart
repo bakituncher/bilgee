@@ -29,6 +29,14 @@ class AuthController extends StreamNotifier<User?> {
       // RevenueCat'e giriş yaparak app_user_id'yi Firebase uid ile senkronize et
       _logInToRevenueCat(user.uid);
 
+      // KARARLILIK İYİLEŞTİRMESİ: Yarış koşullarını (race conditions) önlemek için,
+      // oturum açıldığında sunucu tarafında anında bir senkronizasyon tetikle.
+      // Bu, kullanıcının uygulama açılır açılmaz en güncel premium durumunu
+      // görmesini sağlar. Hatalar burada yakalanır ve loglanır, ancak akışı
+      // engellemez (ateşle ve unut).
+      _triggerServerSideSync();
+
+
       // Oturum açan kullanıcının admin yetkisini kontrol et ve ayarla.
       // Bu işlem arka planda sessizce yapılır.
       _updateAdminClaim(user);
@@ -72,6 +80,20 @@ class AuthController extends StreamNotifier<User?> {
     }
   }
 
+  // Sunucu tarafında anında premium senkronizasyonu tetikleyen yardımcı fonksiyon.
+  Future<void> _triggerServerSideSync() async {
+    try {
+      final callable = FirebaseFunctions.instanceFor(region: 'us-central1')
+          .httpsCallable('premium-syncRevenueCatPremiumCallable');
+      await callable.call();
+    } catch (e) {
+      // Bu hata, kullanıcının arayüzünü engellememelidir.
+      // Genellikle geçici bir ağ sorunu veya rate limiting'den kaynaklanır.
+      // Webhook zaten durumu eninde sonunda düzeltecektir.
+      print("Sunucu tarafı anında senkronizasyon hatası (güvenli): $e");
+    }
+  }
+
 
   Future<void> signIn({required String email, required String password}) {
     final authRepository = ref.read(authRepositoryProvider);
@@ -112,9 +134,13 @@ class AuthController extends StreamNotifier<User?> {
 
   Future<void> _logOutFromRevenueCat() async {
     try {
+      // DÜZELTME: Kullanıcı oturumunu sonlandırır ve yerel önbelleği temizler.
+      // Bu paketin eski sürümlerinde, bu işlem için `logOut` metodu kullanılır.
+      // Daha yeni sürümlerde bu metodun adı `reset` olarak değiştirilmiştir.
+      // Projedeki `purchases_flutter: ^9.7.1` sürümü için doğru kullanım budur.
       await Purchases.logOut();
     } catch (e) {
-      print("RevenueCat logout error (safe to ignore): $e");
+      print("RevenueCat logOut error (safe to ignore): $e");
     }
   }
 

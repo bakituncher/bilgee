@@ -10,7 +10,7 @@ exports.addEngagementPoints = onCall({ region: "us-central1", enforceAppCheck: t
   const uid = request.auth.uid;
 
   // Rate limit + günlük kota (istismar önleme)
-  const ip = getClientIpFromRawRequest(request.rawRequest) || 'unknown';
+  const ip = getClientIpFromRawRequest(request.rawRequest) || "unknown";
   await Promise.all([
     enforceRateLimit(`eng_points_uid_${uid}`, 60, 10),
     enforceRateLimit(`eng_points_ip_${ip}`, 60, 60),
@@ -67,7 +67,7 @@ exports.addTestResult = onCall({ region: "us-central1", timeoutSeconds: 30, enfo
   const input = request.data || {};
 
   // Rate limit + günlük kota
-  const ip = getClientIpFromRawRequest(request.rawRequest) || 'unknown';
+  const ip = getClientIpFromRawRequest(request.rawRequest) || "unknown";
   await Promise.all([
     enforceRateLimit(`add_test_uid_${uid}`, 60, 5),
     enforceRateLimit(`add_test_ip_${ip}`, 60, 30),
@@ -78,14 +78,14 @@ exports.addTestResult = onCall({ region: "us-central1", timeoutSeconds: 30, enfo
   try {
     const logSafe = {
       uid,
-      testName: String(input.testName || '').slice(0, 64),
-      examType: String(input.examType || '').slice(0, 32),
-      sectionName: String(input.sectionName || '').slice(0, 32),
+      testName: String(input.testName || "").slice(0, 64),
+      examType: String(input.examType || "").slice(0, 32),
+      sectionName: String(input.sectionName || "").slice(0, 32),
       dateMs: Number.isFinite(input.dateMs) ? Number(input.dateMs) : null,
       scoresKeys: input && input.scores ? Object.keys(input.scores).slice(0, 20) : [],
     };
-    logger.info('[addTestResult] incoming', logSafe);
-  } catch (_) { /* ignore logging errors */ }
+    logger.info("[addTestResult] incoming", logSafe);
+  } catch (_) {/* ignore logging errors */}
 
   try {
     const testName = String(input.testName || "").trim();
@@ -170,12 +170,12 @@ exports.addTestResult = onCall({ region: "us-central1", timeoutSeconds: 30, enfo
       if (!questsSnap.empty) {
         for (const doc of questsSnap.docs) {
           const quest = doc.data();
-          if (quest.category === 'practice' || quest.category === 'test_submission') {
+          if (quest.category === "practice" || quest.category === "test_submission") {
             tx.update(doc.ref, {
               currentProgress: admin.firestore.FieldValue.increment(totalQuestions),
             });
           }
-          if (quest.id === 'daily_tes_01_result_entry') {
+          if (quest.id === "daily_tes_01_result_entry") {
             tx.update(doc.ref, {
               currentProgress: admin.firestore.FieldValue.increment(1),
             });
@@ -205,7 +205,7 @@ exports.addTestResult = onCall({ region: "us-central1", timeoutSeconds: 30, enfo
     await updatePublicProfile(uid).catch(() => { });
     return { ok: true, testId: newTestId, awarded: pointsAward };
   } catch (error) {
-    logger.error(`[addTestResult] error`, {
+    logger.error("[addTestResult] error", {
       uid,
       message: error.message,
       code: error.code,

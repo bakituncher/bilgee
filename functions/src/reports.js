@@ -6,7 +6,7 @@ const { db, admin } = require("./init");
 // Yeni: Soru bildirimi oluşturulunca indeks güncelle
 exports.onQuestionReportCreated = onDocumentCreated({
   document: "questionReports/{reportId}",
-  region: "us-central1"
+  region: "us-central1",
 }, async (event) => {
   const snap = event.data;
   if (!snap) return;
@@ -95,7 +95,7 @@ async function recomputeQuestionReportIndex(qhash) {
 // Silme tetikleyicisi: bir rapor silindiğinde indeksi güncel tut
 exports.onQuestionReportDeleted = onDocumentDeleted({
   document: "questionReports/{reportId}",
-  region: "us-central1"
+  region: "us-central1",
 }, async (event) => {
   const snap = event.data; // DocumentSnapshot
   const d = snap && snap.data();

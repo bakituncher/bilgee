@@ -56,7 +56,7 @@ async function adjustUserFollowCounts(uid, { followersDelta = 0, followingDelta 
 
 exports.onFollowerCreated = onDocumentCreated({
   document: "users/{userId}/followers/{followerId}",
-  region: "us-central1"
+  region: "us-central1",
 }, async (event) => {
   const { userId, followerId } = event.params;
   try {
@@ -71,7 +71,7 @@ exports.onFollowerCreated = onDocumentCreated({
 
 exports.onFollowerDeleted = onDocumentDeleted({
   document: "users/{userId}/followers/{followerId}",
-  region: "us-central1"
+  region: "us-central1",
 }, async (event) => {
   const { userId, followerId } = event.params;
   try {
@@ -95,8 +95,8 @@ exports.onUserUpdate = onDocumentUpdated("users/{userId}", async (event) => {
   const uid = event.params.userId;
 
   // GÜVENLİK GÜNCELLEMESİ: Senkronize edilecek alanlara takipçi sayıları eklendi.
-  const fieldsToSync = ['name', 'username', 'avatarStyle', 'avatarSeed', 'selectedExam', 'followerCount', 'followingCount'];
-  const needsSync = fieldsToSync.some(field => before[field] !== after[field]);
+  const fieldsToSync = ["name", "username", "avatarStyle", "avatarSeed", "selectedExam", "followerCount", "followingCount"];
+  const needsSync = fieldsToSync.some((field) => before[field] !== after[field]);
 
   if (!needsSync) {
     // logger.log(`No relevant fields changed for user ${uid}. Skipping sync.`);
@@ -136,8 +136,8 @@ exports.onUserUpdate = onDocumentUpdated("users/{userId}", async (event) => {
 
   // 3. If exam type changed, delete old leaderboard entry
   if (before.selectedExam && before.selectedExam !== after.selectedExam) {
-      const oldLeaderboardRef = db.collection("leaderboards").doc(before.selectedExam).collection("users").doc(uid);
-      batch.delete(oldLeaderboardRef);
+    const oldLeaderboardRef = db.collection("leaderboards").doc(before.selectedExam).collection("users").doc(uid);
+    batch.delete(oldLeaderboardRef);
   }
 
   try {
