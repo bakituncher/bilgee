@@ -569,7 +569,7 @@ exports.adminSendPush = onCall({ region: "us-central1", timeoutSeconds: 540, enf
   return { ok: true, campaignId: campaignRef.id, totalUsers, totalSent, totalFail, totalInApp };
 });
 
-exports.processScheduledCampaigns = onSchedule({ schedule: "*/5 * * * *", timeZone: "Europe/Istanbul" }, async () => {
+exports.processScheduledCampaigns = onSchedule({ schedule: "0 * * * *", timeZone: "Europe/Istanbul" }, async () => {
   const now = Date.now();
   const snap = await db.collection("push_campaigns").where("status", "==", "scheduled").where("scheduledAt", "<=", now).limit(10).get();
   if (snap.empty) return;

@@ -261,8 +261,8 @@ exports.onUserProfileChanged = onDocumentWritten({
   }
 });
 
-// YENİ: Zamanlanmış: 15 dakikada bir anlık görüntüleri yayınla
-exports.publishLeaderboardSnapshots = onSchedule({ schedule: "*/15 * * * *", timeZone: "Europe/Istanbul" }, async () => {
+// YENİ: Zamanlanmış: 6 saatte bir anlık görüntüleri yayınla
+exports.publishLeaderboardSnapshots = onSchedule({ schedule: "0 */6 * * *", timeZone: "Europe/Istanbul" }, async () => {
   const examsSnap = await db.collection("leaderboard_exams").get();
   if (examsSnap.empty) {
     logger.info("publishLeaderboardSnapshots: No exams found to process.");
