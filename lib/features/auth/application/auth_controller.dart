@@ -134,12 +134,13 @@ class AuthController extends StreamNotifier<User?> {
 
   Future<void> _logOutFromRevenueCat() async {
     try {
-      // DÜZELTME: `logOut()` önbelleği tamamen temizlemez ve kullanıcılar arasında
-      // abonelik durumu sızıntısına neden olabilir. `reset()` çağırmak,
-      // SDK'yı anonim, önbelleksiz bir duruma sıfırlamanın en güvenli yoludur.
-      await Purchases.reset();
+      // DÜZELTME: Kullanıcı oturumunu sonlandırır ve yerel önbelleği temizler.
+      // Bu paketin eski sürümlerinde, bu işlem için `logOut` metodu kullanılır.
+      // Daha yeni sürümlerde bu metodun adı `reset` olarak değiştirilmiştir.
+      // Projedeki `purchases_flutter: ^9.7.1` sürümü için doğru kullanım budur.
+      await Purchases.logOut();
     } catch (e) {
-      print("RevenueCat reset error (safe to ignore): $e");
+      print("RevenueCat logOut error (safe to ignore): $e");
     }
   }
 
