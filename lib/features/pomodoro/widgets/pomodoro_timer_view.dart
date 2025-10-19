@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/models/plan_model.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
-import 'package:taktik/shared/widgets/score_slider.dart';
 import 'package:intl/intl.dart';
 import '../logic/pomodoro_notifier.dart';
 
@@ -477,113 +476,256 @@ class _PomodoroSettingsSheetState extends ConsumerState<PomodoroSettingsSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final totalCycle = '${_work.toInt()} / ${_short.toInt()} / ${_long.toInt()} dk';
+    final totalCycle = '${_work.toInt()} / ${_short.toInt()} / ${_long.toInt()} dk • Aralık: ${_interval.toInt()} tur';
     return Container(
-      padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(context).viewInsets.bottom + 24),
-      decoration: BoxDecoration(
-        color: AppTheme.cardColor.withOpacity(0.95),
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      decoration: const BoxDecoration(color: Colors.transparent),
+      child: ClipRRect(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text("Zaman Ayarları", style: Theme.of(context).textTheme.headlineSmall),
-            const SizedBox(height: 8),
-            Text('Presetler', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: AppTheme.secondaryTextColor)),
-            const SizedBox(height: 8),
-            _QuickPresets(
-              onPick: (w, s, l, i){
-                setState((){
-                  _work = w; _short = s; _long = l; _interval = i;
-                });
-              },
+        child: Material(
+          color: AppTheme.cardColor.withOpacity(0.98),
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+              child: SingleChildScrollView(
+                padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewPadding.bottom + 8),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Grabber
+                    Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(20))),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(child: Text("Zaman Ayarları", style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700))),
+                        IconButton(
+                          tooltip: 'Kapat',
+                          icon: const Icon(Icons.close_rounded),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(totalCycle, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor)),
+                    ),
+                    const SizedBox(height: 16),
+                    // Süreler kartı
+                    _SettingsCard(
+                      title: 'Süreler',
+                      child: Column(
+                        children: [
+                          _ValueRow(
+                            label: 'Odaklanma', unit: 'dk', value: _work, min: 10, max: 120, step: 5, color: AppTheme.secondaryColor,
+                            onChanged: (v)=> setState(()=> _work = v.roundToDouble()),
+                          ),
+                          const Divider(height: 12),
+                          _ValueRow(
+                            label: 'Kısa mola', unit: 'dk', value: _short, min: 3, max: 20, step: 1, color: AppTheme.successColor,
+                            onChanged: (v)=> setState(()=> _short = v.roundToDouble()),
+                          ),
+                          const Divider(height: 12),
+                          _ValueRow(
+                            label: 'Uzun mola', unit: 'dk', value: _long, min: 10, max: 45, step: 5, color: AppTheme.successColor,
+                            onChanged: (v)=> setState(()=> _long = v.roundToDouble()),
+                          ),
+                          const Divider(height: 12),
+                          _ValueRow(
+                            label: 'Uzun mola aralığı', unit: 'tur', value: _interval, min: 2, max: 8, step: 1, color: AppTheme.lightSurfaceColor,
+                            onChanged: (v)=> setState(()=> _interval = v.roundToDouble()),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    // Otomasyon kartı
+                    _SettingsCard(
+                      title: 'Otomasyon',
+                      child: Column(
+                        children: [
+                          SwitchListTile.adaptive(
+                            value: _autoStartBreaks,
+                            onChanged: (v) => setState(() => _autoStartBreaks = v),
+                            title: const Text('Çalışma bitince molayı otomatik başlat'),
+                            subtitle: const Text('Seans bittiğinde mola sayacı otomatik başlar'),
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                          const SizedBox(height: 4),
+                          SwitchListTile.adaptive(
+                            value: _autoStartWork,
+                            onChanged: (v) => setState(() => _autoStartWork = v),
+                            title: const Text('Mola bitince çalışmayı otomatik başlat'),
+                            subtitle: const Text('Mola tamamlanınca yeni tura otomatik geç'),
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                          const SizedBox(height: 4),
+                          SwitchListTile.adaptive(
+                            value: _keepScreenOn,
+                            onChanged: (v) => setState(() => _keepScreenOn = v),
+                            title: const Text('Zamanlayıcı sırasında ekranı açık tut'),
+                            subtitle: const Text('Yanıp sönmeden, kapanmadan sürekli açık kalsın'),
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Kaydet butonu
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        icon: const Icon(Icons.check_rounded),
+                        onPressed: (){
+                          ref.read(pomodoroProvider.notifier).updateSettings(
+                            work: _work.toInt(), short: _short.toInt(), long: _long.toInt(), interval: _interval.toInt(), applyToCurrent: true,
+                          );
+                          ref.read(pomodoroProvider.notifier).updatePreferences(
+                            autoStartBreaks: _autoStartBreaks, autoStartWork: _autoStartWork, keepScreenOn: _keepScreenOn,
+                          );
+                          Navigator.pop(context);
+                        },
+                        label: const Text('Kaydet'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            const SizedBox(height: 8),
-            Text('Mevcut: $totalCycle • Uzun mola aralığı: ${_interval.toInt()} tur', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor)),
-            const SizedBox(height: 24),
-            ScoreSlider(label: "Odaklanma (dk)", value: _work, max: 60, color: AppTheme.secondaryColor, onChanged: (v) => setState(() => _work = v.roundToDouble())),
-            ScoreSlider(label: "Kısa Mola (dk)", value: _short, max: 15, color: AppTheme.successColor, onChanged: (v) => setState(() => _short = v.roundToDouble())),
-            ScoreSlider(label: "Uzun Mola (dk)", value: _long, max: 30, color: AppTheme.successColor, onChanged: (v) => setState(() => _long = v.roundToDouble())),
-            ScoreSlider(label: "Uzun Mola Aralığı (Tur)", value: _interval, max: 8, color: AppTheme.lightSurfaceColor, onChanged: (v) => setState(() => _interval = v.roundToDouble())),
-            const SizedBox(height: 8),
-            SwitchListTile.adaptive(
-              value: _autoStartBreaks,
-              onChanged: (v) => setState(() => _autoStartBreaks = v),
-              title: const Text('Çalışma bitince molayı otomatik başlat'),
-              subtitle: const Text('Seans bittiğinde mola sayacı otomatik başlar'),
-            ),
-            SwitchListTile.adaptive(
-              value: _autoStartWork,
-              onChanged: (v) => setState(() => _autoStartWork = v),
-              title: const Text('Mola bitince çalışmayı otomatik başlat'),
-              subtitle: const Text('Mola tamamlanınca yeni tura otomatik geç'),
-            ),
-            SwitchListTile.adaptive(
-              value: _keepScreenOn,
-              onChanged: (v) => setState(() => _keepScreenOn = v),
-              title: const Text('Zamanlayıcı sırasında ekranı açık tut'),
-              subtitle: const Text('Yanıp sönmeden, kapanmadan sürekli açık kalsın'),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-                onPressed: (){
-                  ref.read(pomodoroProvider.notifier).updateSettings(
-                    work: _work.toInt(),
-                    short: _short.toInt(),
-                    long: _long.toInt(),
-                    interval: _interval.toInt(),
-                    applyToCurrent: true,
-                  );
-                  ref.read(pomodoroProvider.notifier).updatePreferences(
-                    autoStartBreaks: _autoStartBreaks,
-                    autoStartWork: _autoStartWork,
-                    keepScreenOn: _keepScreenOn,
-                  );
-                  Navigator.pop(context);
-                },
-                child: const Text("Kaydet")
-            )
-          ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _QuickPresets extends StatefulWidget {
-  final void Function(double work, double short, double long, double interval) onPick;
-  const _QuickPresets({required this.onPick});
+// Yeni: Bölüm kartı
+class _SettingsCard extends StatelessWidget {
+  final String title;
+  final Widget child;
+  const _SettingsCard({required this.title, required this.child});
 
-  @override
-  State<_QuickPresets> createState() => _QuickPresetsState();
-}
-
-class _QuickPresetsState extends State<_QuickPresets> {
-  int _selected = -1;
   @override
   Widget build(BuildContext context) {
-    final presets = <({String label, List<double> vals})>[
-      (label: '25/5/15 • Klasik', vals: [25, 5, 15, 4]),
-      (label: '50/10/20 • Derin', vals: [50, 10, 20, 3]),
-      (label: '90/15/30 • Sprint', vals: [90, 15, 30, 2]),
-    ];
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.lightSurfaceColor.withOpacity(0.25),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black.withOpacity(0.05)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 8),
+            child: Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+          ),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+// Yeni: Değer satırı + mini stepper
+class _ValueRow extends StatelessWidget {
+  final String label;
+  final String unit;
+  final double value;
+  final double min;
+  final double max;
+  final double step;
+  final Color color;
+  final ValueChanged<double> onChanged;
+  const _ValueRow({
+    required this.label,
+    required this.unit,
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.step,
+    required this.color,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
       children: [
-        for (int i = 0; i < presets.length; i++)
-          ChoiceChip(
-            selected: _selected == i,
-            label: Text(presets[i].label),
-            onSelected: (v){
-              setState(()=> _selected = v ? i : -1);
-              if (v) {
-                final p = presets[i].vals;
-                widget.onPick(p[0], p[1], p[2], p[3]);
-              }
-            },
-          )
+        Expanded(
+          child: Text(label, style: Theme.of(context).textTheme.titleSmall),
+        ),
+        _MiniStepper(
+          value: value,
+          min: min,
+          max: max,
+          step: step,
+          color: color,
+          unit: unit,
+          onChanged: onChanged,
+        ),
+      ],
+    );
+  }
+}
+
+class _MiniStepper extends StatelessWidget {
+  final double value;
+  final double min;
+  final double max;
+  final double step;
+  final String unit;
+  final Color color;
+  final ValueChanged<double> onChanged;
+  const _MiniStepper({
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.step,
+    required this.unit,
+    required this.color,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final canDec = value > min;
+    final canInc = value < max;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          onPressed: canDec ? ()=> onChanged((value - step).clamp(min, max)) : null,
+          icon: const Icon(Icons.remove_rounded),
+          style: IconButton.styleFrom(
+            visualDensity: VisualDensity.compact,
+            foregroundColor: Colors.white,
+            backgroundColor: AppTheme.lightSurfaceColor.withOpacity(canDec ? 0.5 : 0.2),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.15),
+            border: Border.all(color: color.withOpacity(0.25)),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text('${value.toInt()} $unit', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white)),
+        ),
+        const SizedBox(width: 8),
+        IconButton(
+          onPressed: canInc ? ()=> onChanged((value + step).clamp(min, max)) : null,
+          icon: const Icon(Icons.add_rounded),
+          style: IconButton.styleFrom(
+            visualDensity: VisualDensity.compact,
+            foregroundColor: Colors.white,
+            backgroundColor: AppTheme.lightSurfaceColor.withOpacity(canInc ? 0.5 : 0.2),
+          ),
+        ),
       ],
     );
   }
