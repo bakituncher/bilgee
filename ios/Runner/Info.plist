@@ -45,5 +45,17 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- Firebase Cloud Messaging için gerekli izinler -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+		<string>background-processing</string>
+	</array>
+	<!-- Bildirim izinleri -->
+	<key>NSUserNotificationUsageDescription</key>
+	<string>Bu uygulama size önemli güncellemeler ve hatırlatmalar göndermek için bildirim izni gerektirir.</string>
+	<!-- FCM için gerekli -->
+	<key>FirebaseAppDelegateProxyEnabled</key>
+	<false/>
 </dict>
 </plist>

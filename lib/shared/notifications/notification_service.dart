@@ -58,27 +58,54 @@ class NotificationService {
       final info = await PackageInfo.fromPlatform();
       _appVersion = info.version;
       _appBuild = int.tryParse(info.buildNumber);
-    } catch (_) {}
+    } catch (e) {
+      if (kDebugMode) debugPrint('Package info alınamadı: $e');
+    }
 
+    // Android initialization settings - sektör standartları
     const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const iOSInit = DarwinInitializationSettings();
+    
+    // iOS initialization settings - sektör standartları
+    const iOSInit = DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+      requestCriticalPermission: false,
+    );
+    
     const initSettings = InitializationSettings(android: androidInit, iOS: iOSInit);
-    await _fln.initialize(initSettings, onDidReceiveNotificationResponse: (resp) {
-      final route = resp.payload;
-      if (route != null && route.isNotEmpty) {
-        _navigate?.call(route);
-      }
-    });
+    
+    try {
+      await _fln.initialize(initSettings, onDidReceiveNotificationResponse: (resp) {
+        final route = resp.payload;
+        if (route != null && route.isNotEmpty) {
+          _navigate?.call(route);
+        }
+      });
+    } catch (e) {
+      if (kDebugMode) debugPrint('Local notifications initialize edilemedi: $e');
+      return; // Kritik hata, devam etme
+    }
 
+    // Android notification channel - sektör standartları
     _channel = const AndroidNotificationChannel(
       'bilge_general',
       'TaktikAI Genel',
-      description: 'Genel bildirimler',
+      description: 'Genel bildirimler ve hatırlatmalar',
       importance: Importance.high,
+      playSound: true,
+      enableVibration: true,
+      enableLights: true,
+      showBadge: true,
     );
-    await _fln
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(_channel!);
+    
+    try {
+      await _fln
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(_channel!);
+    } catch (e) {
+      if (kDebugMode) debugPrint('Notification channel oluşturulamadı: $e');
+    }
 
     // Android 13+ bildirim izni – areNotificationsEnabled ile kontrol ve gerekirse iste
     try {
@@ -92,8 +119,12 @@ class NotificationService {
       }
     } catch (_) {}
 
-    // iOS foreground sunum ayarları
-    await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(alert: false, badge: true, sound: false);
+    // iOS foreground sunum ayarları - sektör standartları
+    await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+      alert: true,  // iOS'ta foreground'da da göster
+      badge: true,
+      sound: true,
+    );
 
     await _requestPermission();
 
@@ -102,23 +133,38 @@ class NotificationService {
       _registerToken(t, _appVersion, _appBuild);
     });
 
+    // Foreground message handling
     FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
-      await _showLocal(message);
+      try {
+        await _showLocal(message);
+      } catch (e) {
+        if (kDebugMode) debugPrint('Foreground message işlenemedi: $e');
+      }
     });
 
+    // App opened from notification
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      final route = message.data['route'] as String?;
-      if (route != null && route.isNotEmpty) {
-        _navigate?.call(route);
+      try {
+        final route = message.data['route'] as String?;
+        if (route != null && route.isNotEmpty) {
+          _navigate?.call(route);
+        }
+      } catch (e) {
+        if (kDebugMode) debugPrint('Message opened app işlenemedi: $e');
       }
     });
 
-    final initial = await FirebaseMessaging.instance.getInitialMessage();
-    if (initial != null) {
-      final route = initial.data['route'] as String?;
-      if (route != null && route.isNotEmpty) {
-        WidgetsBinding.instance.addPostFrameCallback((_) => _navigate?.call(route));
+    // App terminated state message handling
+    try {
+      final initial = await FirebaseMessaging.instance.getInitialMessage();
+      if (initial != null) {
+        final route = initial.data['route'] as String?;
+        if (route != null && route.isNotEmpty) {
+          WidgetsBinding.instance.addPostFrameCallback((_) => _navigate?.call(route));
+        }
       }
+    } catch (e) {
+      if (kDebugMode) debugPrint('Initial message işlenemedi: $e');
     }
 
     _initialized = true;
@@ -130,7 +176,7 @@ class NotificationService {
 
   Future<void> _requestPermission() async {
     try {
-      await FirebaseMessaging.instance.requestPermission(
+      final settings = await FirebaseMessaging.instance.requestPermission(
         alert: true,
         announcement: false,
         badge: true,
@@ -139,13 +185,30 @@ class NotificationService {
         provisional: false,
         sound: true,
       );
-    } catch (_) {}
+      
+      if (kDebugMode) {
+        debugPrint('Bildirim izinleri: ${settings.authorizationStatus}');
+        debugPrint('Alert: ${settings.alert}, Badge: ${settings.badge}, Sound: ${settings.sound}');
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('Bildirim izni alınamadı: $e');
+    }
   }
 
   Future<void> _ensureAndRegisterToken() async {
     try {
       final token = await FirebaseMessaging.instance.getToken();
-      if (token != null) await _registerToken(token, _appVersion, _appBuild);
+      if (token != null) {
+        await _registerToken(token, _appVersion, _appBuild);
+      } else {
+        if (kDebugMode) debugPrint('FCM token null döndü');
+        // Retry after a delay
+        await Future.delayed(const Duration(seconds: 2));
+        final retryToken = await FirebaseMessaging.instance.getToken();
+        if (retryToken != null) {
+          await _registerToken(retryToken, _appVersion, _appBuild);
+        }
+      }
     } catch (e) {
       if (kDebugMode) debugPrint('FCM token alınamadı: $e');
     }
@@ -154,19 +217,30 @@ class NotificationService {
   Future<void> _registerToken(String token, String? appVersion, int? appBuild) async {
     try {
       _currentToken = token;
-      final HttpsCallable fn = FirebaseFunctions.instance.httpsCallable('notifications-registerFcmToken');
+      final HttpsCallable fn = FirebaseFunctions.instance.httpsCallable('registerFcmToken');
       final platform = Platform.isAndroid ? 'android' : (Platform.isIOS ? 'ios' : 'other');
       final lang = Intl.getCurrentLocale();
-      await fn.call({
+      
+      final result = await fn.call({
         'token': token,
         'platform': platform,
         'lang': lang,
         if (appVersion != null) 'appVersion': appVersion,
         if (appBuild != null) 'appBuild': appBuild,
       });
-      if (kDebugMode) debugPrint('FCM token başarıyla kaydedildi');
+      
+      if (kDebugMode) {
+        debugPrint('FCM token başarıyla kaydedildi: ${result.data}');
+      }
     } catch (e) {
       if (kDebugMode) debugPrint('Token kaydı başarısız: $e');
+      // Retry mechanism
+      await Future.delayed(const Duration(seconds: 5));
+      try {
+        await _registerToken(token, appVersion, appBuild);
+      } catch (retryError) {
+        if (kDebugMode) debugPrint('Token kaydı retry başarısız: $retryError');
+      }
     }
   }
 
@@ -174,7 +248,7 @@ class NotificationService {
   Future<void> clearTokenOnLogout() async {
     try {
       if (_currentToken != null) {
-        final HttpsCallable fn = FirebaseFunctions.instance.httpsCallable('notifications-unregisterFcmToken');
+        final HttpsCallable fn = FirebaseFunctions.instance.httpsCallable('unregisterFcmToken');
         await fn.call({
           'token': _currentToken,
         });
@@ -232,9 +306,19 @@ class NotificationService {
     final body = msg.notification?.body ?? msg.data['body'] as String? ?? '';
     final route = msg.data['route'] as String? ?? '';
 
+    // Boş mesajları gönderme
+    if (title.isEmpty && body.isEmpty) {
+      if (kDebugMode) debugPrint('Boş bildirim mesajı, gönderilmiyor');
+      return;
+    }
+
     // Dedup: kısa süre içinde aynı mesajı tekrar gösterme
     if (_isDuplicate(msg, title: title, body: body, route: route)) {
       return;
+    }
+
+    if (kDebugMode) {
+      debugPrint('Bildirim gösteriliyor: $title - $body');
     }
 
     // imageUrl hem data'da hem de platform spesifik alanlarda olabilir
@@ -292,7 +376,7 @@ class NotificationService {
       }
     } else {
       androidDetails = AndroidNotificationDetails(
-        _channel?.id ?? 'taktik_general',
+        _channel?.id ?? 'bilge_general',
         _channel?.name ?? 'TaktikAI Genel',
         channelDescription: _channel?.description,
         importance: Importance.high,
@@ -303,13 +387,18 @@ class NotificationService {
 
     final details = NotificationDetails(android: androidDetails, iOS: iosDetails);
 
-    await _fln.show(
-      DateTime.now().millisecondsSinceEpoch % 100000,
-      title,
-      body,
-      details,
-      payload: route,
-    );
+    try {
+      await _fln.show(
+        DateTime.now().millisecondsSinceEpoch % 100000,
+        title,
+        body,
+        details,
+        payload: route,
+      );
+      if (kDebugMode) debugPrint('Bildirim başarıyla gösterildi');
+    } catch (e) {
+      if (kDebugMode) debugPrint('Bildirim gösterilemedi: $e');
+    }
   }
 
   // Basit yerel bildirim (route opsiyonel). Pomodoro gibi dahili olaylarda kullanılır.
@@ -321,8 +410,16 @@ class NotificationService {
         channelDescription: _channel?.description,
         importance: Importance.high,
         priority: Priority.high,
+        playSound: true,
+        enableVibration: true,
+        enableLights: true,
+        showBadge: true,
       );
-      const iosDetails = DarwinNotificationDetails();
+      const iosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      );
       final details = NotificationDetails(android: androidDetails, iOS: iosDetails);
       await _fln.show(
         DateTime.now().millisecondsSinceEpoch % 100000,
@@ -333,6 +430,38 @@ class NotificationService {
       );
     } catch (e) {
       if (kDebugMode) debugPrint('Yerel bildirim gösterilemedi: $e');
+    }
+  }
+
+  /// Test bildirimi gönder - debug amaçlı
+  Future<void> sendTestNotification() async {
+    await showLocalSimple(
+      title: 'Test Bildirimi 🧪',
+      body: 'Bildirim sistemi çalışıyor! Bu bir test mesajıdır.',
+      route: '/home',
+    );
+  }
+
+  /// Bildirim durumunu kontrol et
+  Future<Map<String, dynamic>> getNotificationStatus() async {
+    try {
+      final token = await FirebaseMessaging.instance.getToken();
+      final settings = await FirebaseMessaging.instance.getNotificationSettings();
+      
+      return {
+        'hasToken': token != null,
+        'token': token,
+        'authorizationStatus': settings.authorizationStatus.toString(),
+        'alert': settings.alert,
+        'badge': settings.badge,
+        'sound': settings.sound,
+        'initialized': _initialized,
+      };
+    } catch (e) {
+      return {
+        'error': e.toString(),
+        'initialized': _initialized,
+      };
     }
   }
 }
