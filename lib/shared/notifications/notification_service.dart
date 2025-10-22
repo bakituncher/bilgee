@@ -93,7 +93,11 @@ class NotificationService {
     } catch (_) {}
 
     // iOS foreground sunum ayarları
-    await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(alert: false, badge: true, sound: false);
+    await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+      alert: true, 
+      badge: true, 
+      sound: true
+    );
 
     await _requestPermission();
 
@@ -154,7 +158,8 @@ class NotificationService {
   Future<void> _registerToken(String token, String? appVersion, int? appBuild) async {
     try {
       _currentToken = token;
-      final HttpsCallable fn = FirebaseFunctions.instance.httpsCallable('notifications-registerFcmToken');
+      final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
+      final HttpsCallable fn = functions.httpsCallable('notifications-registerFcmToken');
       final platform = Platform.isAndroid ? 'android' : (Platform.isIOS ? 'ios' : 'other');
       final lang = Intl.getCurrentLocale();
       await fn.call({
@@ -174,7 +179,8 @@ class NotificationService {
   Future<void> clearTokenOnLogout() async {
     try {
       if (_currentToken != null) {
-        final HttpsCallable fn = FirebaseFunctions.instance.httpsCallable('notifications-unregisterFcmToken');
+        final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
+        final HttpsCallable fn = functions.httpsCallable('notifications-unregisterFcmToken');
         await fn.call({
           'token': _currentToken,
         });
@@ -292,7 +298,7 @@ class NotificationService {
       }
     } else {
       androidDetails = AndroidNotificationDetails(
-        _channel?.id ?? 'taktik_general',
+        _channel?.id ?? 'bilge_general',
         _channel?.name ?? 'TaktikAI Genel',
         channelDescription: _channel?.description,
         importance: Importance.high,
