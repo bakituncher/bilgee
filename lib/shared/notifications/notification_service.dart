@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +8,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart' as ph;
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class NotificationService {
   NotificationService._();
@@ -14,35 +16,61 @@ class NotificationService {
 
   final FlutterLocalNotificationsPlugin _fln = FlutterLocalNotificationsPlugin();
   bool _initialized = false;
-  AndroidNotificationChannel? _channel;
+  List<AndroidNotificationChannel> _channels = [];
   void Function(String route)? _navigate;
 
-  // Son gösterilenleri daha uzun süre tut (10 dk) – çift bildirimi engelle
+  // Enhanced notification tracking
   final Map<String, DateTime> _recent = {};
+  final Map<String, int> _notificationCounts = {};
+  static const int _maxNotificationsPerHour = 10;
+  static const String _prefsKey = 'notification_settings';
+
+  // Notification categories with different channels
+  static const String _channelGeneral = 'bilge_general';
+  static const String _channelImportant = 'bilge_important';
+  static const String _channelReminders = 'bilge_reminders';
+  static const String _channelUpdates = 'bilge_updates';
+
   bool _isDuplicate(RemoteMessage msg, {required String title, required String body, required String route}) {
     try {
       final now = DateTime.now();
-      // Eski kayıtları temizle (10 dakika)
+      // Clean old entries (10 minutes)
       _recent.removeWhere((key, ts) => now.difference(ts).inMinutes > 10);
 
-      // Daha güvenilir bir anahtar oluştur
+      // Create more reliable key
       String key = msg.messageId ?? msg.data['messageId'] as String? ?? '';
       if (key.isEmpty) {
-        // Mesaj ID yoksa hash tabanlı anahtar oluştur
         final content = '$title|$body|$route|${msg.data.toString()}';
         key = content.hashCode.toString();
       }
 
       if (_recent.containsKey(key)) {
-        if (kDebugMode) debugPrint('Çift bildirim engellendi: $key');
+        if (kDebugMode) debugPrint('Duplicate notification blocked: $key');
         return true;
       }
       _recent[key] = now;
       return false;
     } catch (e) {
-      if (kDebugMode) debugPrint('Çift bildirim kontrolü hatası: $e');
+      if (kDebugMode) debugPrint('Duplicate check error: $e');
       return false;
     }
+  }
+
+  bool _isRateLimited() {
+    final now = DateTime.now();
+    final hourKey = '${now.year}-${now.month}-${now.day}-${now.hour}';
+    
+    // Clean old hour entries
+    _notificationCounts.removeWhere((key, value) => key != hourKey);
+    
+    final currentCount = _notificationCounts[hourKey] ?? 0;
+    if (currentCount >= _maxNotificationsPerHour) {
+      if (kDebugMode) debugPrint('Rate limit exceeded for hour: $hourKey');
+      return true;
+    }
+    
+    _notificationCounts[hourKey] = currentCount + 1;
+    return false;
   }
 
   String? _appVersion;

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Notification accent color -->
+    <color name="notification_color">#6366F1</color>
+    <!-- Primary brand colors -->
+    <color name="primary_color">#6366F1</color>
+    <color name="primary_dark">#4F46E5</color>
+    <!-- Background colors -->
+    <color name="background_color">#0F172A</color>
+    <color name="surface_color">#1E293B</color>
+</resources>
