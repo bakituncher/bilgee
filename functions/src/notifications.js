@@ -142,6 +142,47 @@ exports.unregisterFcmToken = onCall({region: 'us-central1', enforceAppCheck: tru
     return allowed;
   }
 
+  // Günlük limit kontrolü: sadece okuma, sayaç arttırmaz
+  async function hasRemainingToday(uid, maxPerDay = 3) {
+    try {
+      const countersRef = db.collection('users').doc(uid).collection('state').doc('notification_counters');
+      const snap = await countersRef.get();
+      const today = dayKeyIstanbul();
+      if (!snap.exists) return true;
+      const d = snap.data() || {};
+      const day = String(d.day || '');
+      const sent = Number(d.sent || 0);
+      if (day !== today) return true;
+      return sent < maxPerDay;
+    } catch (_) {
+      return true;
+    }
+  }
+
+  // Başarılı gönderim sonrası güvenli şekilde sayaç arttır (gün değişimini dikkate alır)
+  async function incrementSentCount(uid, maxPerDay = 3) {
+    const countersRef = db.collection('users').doc(uid).collection('state').doc('notification_counters');
+    let ok = false;
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(countersRef);
+      const today = dayKeyIstanbul();
+      if (!snap.exists) {
+        tx.set(countersRef, { day: today, sent: 1, updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+        ok = true;
+        return;
+      }
+      const d = snap.data() || {};
+      const prevDay = String(d.day || '');
+      const prevSent = Number(d.sent || 0);
+      const newDay = prevDay === today ? today : today;
+      const base = prevDay === today ? prevSent : 0;
+      if (base >= maxPerDay) { ok = false; return; }
+      tx.set(countersRef, { day: newDay, sent: base + 1, updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+      ok = true;
+    });
+    return ok;
+  }
+
   function buildInactivityTemplate(inactHours, examType) {
     // Basit örnek şablonlar
     if (inactHours >= 72) {
@@ -190,7 +231,7 @@ exports.unregisterFcmToken = onCall({region: 'us-central1', enforceAppCheck: tru
         payload: { aps: { sound: 'default', 'mutable-content': 1 } },
         fcmOptions: payload.imageUrl ? { imageUrl: payload.imageUrl } : undefined,
       },
-      tokens: uniq,
+      tokens: uniq.slice(0, 500), // güvenlik: tek çağrıda max 500
     };
     try {
       const resp = await messaging.sendEachForMulticast(message);
@@ -199,6 +240,20 @@ exports.unregisterFcmToken = onCall({region: 'us-central1', enforceAppCheck: tru
       logger.error('FCM send failed', { error: String(e) });
       return {successCount: 0, failureCount: uniq.length};
     }
+  }
+
+  // 500 limitini gözeterek büyük token listelerini parça parça gönder
+  async function sendPushToTokensBatched(tokens, payload, batchSize = 500) {
+    const uniq = Array.from(new Set((tokens || []).filter(Boolean)));
+    let successCount = 0, failureCount = 0;
+    for (let i = 0; i < uniq.length; i += batchSize) {
+      const chunk = uniq.slice(i, i + batchSize);
+      const r = await sendPushToTokens(chunk, payload);
+      successCount += r.successCount;
+      failureCount += r.failureCount;
+      if (i > 0 && i % (batchSize * 10) === 0) await new Promise((r)=> setTimeout(r, 50));
+    }
+    return { successCount, failureCount };
   }
 
   async function dispatchInactivityPushBatch(limitUsers = 500) {
@@ -212,12 +267,19 @@ exports.unregisterFcmToken = onCall({region: 'us-central1', enforceAppCheck: tru
       const examType = (doc.data()||{}).selectedExam || null;
       const tpl = buildInactivityTemplate(inact, examType);
       if (!tpl) { processed++; continue; }
-      const allowed = await canSendMoreToday(uid, 3);
-      if (!allowed) { processed++; continue; }
+
+      // Önce kalan hak var mı diye bak, sayaç arttırma yok
+      const remain = await hasRemainingToday(uid, 3);
+      if (!remain) { processed++; continue; }
+
       const tokens = await getActiveTokens(uid);
       if (tokens.length === 0) { processed++; continue; }
-      await sendPushToTokens(tokens, { ...tpl, type: 'inactivity' });
-      sent++;
+
+      const r = await sendPushToTokens(tokens, { ...tpl, type: 'inactivity' });
+      if (r.successCount > 0) {
+        const inc = await incrementSentCount(uid, 3);
+        if (inc) sent++;
+      }
       processed++;
     }
     logger.info('dispatchInactivityPushBatch done', {processed, sent});
@@ -355,7 +417,7 @@ exports.unregisterFcmToken = onCall({region: 'us-central1', enforceAppCheck: tru
 
       if (uniqueTokens.length > 0) {
         const pushPayload = { title, body, imageUrl, route, type: 'campaign', campaignId: campaignRef.id };
-        const result = await sendPushToTokens(uniqueTokens, pushPayload);
+        const result = await sendPushToTokensBatched(uniqueTokens, pushPayload, 500);
         totalSent = result.successCount;
         totalFail = result.failureCount;
       }
@@ -433,4 +495,3 @@ async function createInAppForUser(uid, payload) {
       return false;
     }
   }
-
