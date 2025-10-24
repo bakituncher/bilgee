@@ -88,7 +88,7 @@ exports.generateGemini = onCall(
       // İsteğe bağlı maxOutputTokens (güvenli aralıkta kırpılır)
       const reqMaxTokensRaw = request.data?.maxOutputTokens;
       let effectiveMaxTokens = expectJson ? DEFAULT_JSON_TOKENS : DEFAULT_TEXT_TOKENS;
-      if (typeof reqMaxTokensRaw === 'number' && isFinite(reqMaxTokensRaw)) {
+      if (typeof reqMaxTokensRaw === "number" && isFinite(reqMaxTokensRaw)) {
         const clamped = Math.max(256, Math.min(reqMaxTokensRaw, 8192));
         effectiveMaxTokens = clamped;
       }
@@ -113,7 +113,7 @@ exports.generateGemini = onCall(
 
       // Zaman aşımı kontrolü (55s):
       const ac = new AbortController();
-      const t = setTimeout(() => ac.abort(), 55_000);
+      const t = setTimeout(() => ac.abort(), 55000);
 
       const resp = await fetch(url, {
         method: "POST",
@@ -169,7 +169,7 @@ exports.generateGemini = onCall(
       logger.error("Gemini çağrısı hata", { error: String(e), modelId });
       if (e instanceof HttpsError) throw e;
       // Abort durumunda kullanıcı dostu mesaj
-      if ((e && typeof e === 'object' && 'name' in e && e.name === 'AbortError')) {
+      if ((e && typeof e === "object" && "name" in e && e.name === "AbortError")) {
         throw new HttpsError("deadline-exceeded", "Gemini isteği zaman aşımına uğradı");
       }
       throw new HttpsError("internal", "Gemini isteği sırasında hata oluştu");

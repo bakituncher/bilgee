@@ -1,186 +1,210 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const { admin, auth, db } = require("./init");
-const { logAdminAction, enforceRateLimit, getClientIpFromRawRequest } = require("./utils");
+const { onSchedule } = require("firebase-functions/v2/scheduler");
+const { logger } = require("firebase-functions");
+const { db, admin } = require("./init");
+const { selectAudienceUids, computeInactivityHours } = require("./users");
+const { getActiveTokensFiltered } = require("./tokenManager");
+const { sendPushToTokens, sendPushToTokensBatched } = require("./dispatcher");
 
-// ---- ADMIN CLAIM YÖNETİMİ ----
-async function getSuperAdmins() {
-  try {
-    const snap = await db.collection("config").doc("super_admins").get();
-    if (!snap.exists) return [];
-    const data = snap.data() || {};
-    const emails = Array.isArray(data.emails) ? data.emails : [];
-    return Array.from(new Set(emails.map((e) => String(e).trim().toLowerCase()).filter(Boolean)));
-  } catch (e) {
-    console.error("Error getting super admins", e);
-    return [];
+
+// ---- ADMIN KAMPANYA GÖNDERİMİ ----
+exports.adminEstimateAudience = onCall({ region: "us-central1", timeoutSeconds: 300, enforceAppCheck: true }, async (request) => {
+  if (!request.auth) throw new HttpsError("unauthenticated", "Oturum gerekli");
+  const isAdmin = request.auth.token && request.auth.token.admin === true;
+  if (!isAdmin) throw new HttpsError("permission-denied", "Admin gerekli");
+  const audience = request.data?.audience || { type: "all" };
+  let uids = await selectAudienceUids(audience);
+
+  // İnaktif filtresi (opsiyonel)
+  if (audience?.type === "inactive" && typeof audience.hours === "number") {
+    const filtered = [];
+    for (const uid of uids) {
+      const ref = db.collection("users").doc(uid);
+      const hrs = await computeInactivityHours(ref);
+      if (hrs >= audience.hours) filtered.push(uid);
+      if (filtered.length >= 20000) break;
+    }
+    uids = filtered;
   }
-}
 
-async function isSuperAdmin(uid) {
+  const baseUsers = uids.length;
+  const filters = { buildMin: audience.buildMin, buildMax: audience.buildMax, platforms: audience.platforms };
+
+  // Token sahibi kullanıcı sayısı – batched paralel
+  let tokenHolders = 0;
+  const batchSize = 50;
+  for (let i = 0; i < uids.length; i += batchSize) {
+    const batch = uids.slice(i, i + batchSize);
+    const results = await Promise.all(batch.map(async (uid) => {
+      const tokens = await getActiveTokensFiltered(uid, filters);
+      return tokens.length > 0 ? 1 : 0;
+    }));
+    tokenHolders += results.reduce((a, b)=> a+b, 0);
+    // Güvenli sınır – çok büyük kitelerde gereksiz uzun sürmesin
+    if (i > 0 && i % 5000 === 0) await new Promise((r)=> setTimeout(r, 50));
+  }
+
+  // Kullanıcı sayısı: platform/sürüm filtreleri varsa filtrelenmiş kullanıcı sayısı; aksi halde baz kitle
+  const hasDeviceFilters = (Array.isArray(filters.platforms) && filters.platforms.length > 0) || Number.isFinite(filters.buildMin) || Number.isFinite(filters.buildMax);
+  const users = hasDeviceFilters ? tokenHolders : baseUsers;
+
+  return { users, baseUsers, tokenHolders };
+});
+
+exports.adminSendPush = onCall({ region: "us-central1", timeoutSeconds: 540, enforceAppCheck: true }, async (request) => {
+  if (!request.auth) throw new HttpsError("unauthenticated", "Oturum gerekli");
+  const isAdmin = request.auth.token && request.auth.token.admin === true;
+  if (!isAdmin) throw new HttpsError("permission-denied", "Admin gerekli");
+
+  const title = String(request.data?.title || "").trim();
+  const body = String(request.data?.body || "").trim();
+  const imageUrl = request.data?.imageUrl ? String(request.data.imageUrl) : "";
+  const route = String(request.data?.route || "/home");
+  const audience = request.data?.audience || { type: "all" };
+  const scheduledAt = typeof request.data?.scheduledAt === "number" ? request.data.scheduledAt : null;
+  const sendTypeRaw = String(request.data?.sendType || "push").toLowerCase();
+  const sendType = ["push", "inapp", "both"].includes(sendTypeRaw) ? sendTypeRaw : "push";
+
+  if (!title || !body) throw new HttpsError("invalid-argument", "title ve body zorunludur");
+
+  const campaignRef = db.collection("push_campaigns").doc();
+  const baseDoc = {
+    title, body, imageUrl, route, audience,
+    createdBy: request.auth.uid,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    sendType,
+  };
+
+  if (scheduledAt && scheduledAt > Date.now() + 15000) {
+    await campaignRef.set({ ...baseDoc, status: "scheduled", scheduledAt });
+    return { ok: true, campaignId: campaignRef.id, scheduled: true };
+  }
+
+  await campaignRef.set({ ...baseDoc, status: "sending" });
+
+  let targetUids = await selectAudienceUids(audience);
+  logger.info("adminSendPush audience selected", { count: targetUids.length, type: audience?.type || "all" });
+  if (audience?.type === "inactive" && typeof audience.hours === "number") {
+    const filtered = [];
+    for (const uid of targetUids) {
+      const ref = db.collection("users").doc(uid);
+      const hrs = await computeInactivityHours(ref);
+      if (hrs >= audience.hours) filtered.push(uid);
+    }
+    targetUids = filtered;
+  }
+
+  const filters = { buildMin: audience.buildMin, buildMax: audience.buildMax, platforms: audience.platforms };
+  const totalUsers = targetUids.length;
+  let totalInApp = 0;
+  let totalSent = 0;
+  let totalFail = 0;
+
+  // Handle in-app messages first
+  if (sendType === "inapp" || sendType === "both") {
+    const inAppPromises = targetUids.map((uid) =>
+      createInAppForUser(uid, { title, body, imageUrl, route, type: "campaign", campaignId: campaignRef.id }),
+    );
+    const results = await Promise.all(inAppPromises);
+    totalInApp = results.filter(Boolean).length;
+  }
+
+  // Handle push notifications
+  if (sendType === "push" || sendType === "both") {
+    const allTokens = [];
+    const batchSize = 100;
+    for (let i = 0; i < targetUids.length; i += batchSize) {
+      const batchUids = targetUids.slice(i, i + batchSize);
+      const tokenPromises = batchUids.map((uid) => getActiveTokensFiltered(uid, filters));
+      const tokenBatches = await Promise.all(tokenPromises);
+      tokenBatches.forEach((tokens) => allTokens.push(...tokens));
+    }
+
+    const uniqueTokens = [...new Set(allTokens)];
+
+    if (uniqueTokens.length > 0) {
+      const pushPayload = { title, body, imageUrl, route, type: "campaign", campaignId: campaignRef.id };
+      const result = await sendPushToTokensBatched(uniqueTokens, pushPayload, 500);
+      totalSent = result.successCount;
+      totalFail = result.failureCount;
+    }
+  }
+
+  await campaignRef.set({ status: "completed", totalUsers, totalSent, totalFail, totalInApp, completedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+  return { ok: true, campaignId: campaignRef.id, totalUsers, totalSent, totalFail, totalInApp };
+});
+
+exports.processScheduledCampaigns = onSchedule({ schedule: "*/5 * * * *", timeZone: "Europe/Istanbul" }, async () => {
+  const now = Date.now();
+  const snap = await db.collection("push_campaigns").where("status", "==", "scheduled").where("scheduledAt", "<=", now).limit(10).get();
+  if (snap.empty) return;
+  for (const doc of snap.docs) {
+    const d = doc.data() || {};
+    try {
+      await doc.ref.set({ status: "sending" }, { merge: true });
+      const { title, body, imageUrl, route, audience } = d;
+      const sendTypeRaw = String(d.sendType || "push").toLowerCase();
+      const sendType = ["push", "inapp", "both"].includes(sendTypeRaw) ? sendTypeRaw : "push";
+
+      let targetUids = await selectAudienceUids(audience);
+      if (audience?.type === "inactive" && typeof audience.hours === "number") {
+        const filtered = [];
+        for (const uid of targetUids) {
+          const ref = db.collection("users").doc(uid);
+          const hrs = await computeInactivityHours(ref);
+          if (hrs >= audience.hours) filtered.push(uid);
+        }
+        targetUids = filtered;
+      }
+      const filters = { buildMin: audience?.buildMin, buildMax: audience?.buildMax, platforms: audience?.platforms };
+      let totalSent = 0; let totalFail = 0; let totalUsers = 0; let totalInApp = 0;
+      for (const uid of targetUids) {
+        totalUsers++;
+        if (sendType === "inapp" || sendType === "both") {
+          const ok = await createInAppForUser(uid, { title, body, imageUrl, route, type: "campaign", campaignId: doc.id });
+          if (ok) totalInApp++;
+        }
+        if (sendType === "push" || sendType === "both") {
+          const tokens = await getActiveTokensFiltered(uid, filters);
+          if (tokens.length === 0) continue;
+          const r = await sendPushToTokens(tokens, { title, body, imageUrl, route, type: "campaign", campaignId: doc.id });
+          totalSent += r.successCount; totalFail += r.failureCount;
+          await doc.ref.collection("logs").add({ uid, success: r.successCount, failed: r.failureCount, ts: admin.firestore.FieldValue.serverTimestamp() });
+        }
+      }
+      await doc.ref.set({ status: "completed", totalUsers, totalSent, totalFail, totalInApp, completedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+    } catch (e) {
+      logger.error("Scheduled campaign failed", { id: doc.id, error: String(e) });
+      await doc.ref.set({ status: "failed", error: String(e), failedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+    }
+  }
+});
+
+// Uygulama içi bildirim oluşturucu
+async function createInAppForUser(uid, payload) {
   try {
-    const user = await auth.getUser(uid);
-    const email = (user.email || "").toLowerCase();
-    if (!email) return false;
-    const allow = await getSuperAdmins();
-    return allow.includes(email);
-  } catch (_) {
+    const ref = db.collection("users").doc(uid).collection("in_app_notifications");
+    const doc = {
+      title: payload.title || "",
+      body: payload.body || "",
+      route: payload.route || "/home",
+      imageUrl: payload.imageUrl || "",
+      type: payload.type || "campaign",
+      campaignId: payload.campaignId || "",
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      read: false,
+      readAt: null,
+    };
+    await ref.add(doc);
+    return true;
+  } catch (e) {
+    logger.error("createInAppForUser failed", { uid, error: String(e) });
     return false;
   }
 }
 
-exports.setAdminClaim = onCall({
-  region: "us-central1",
-  enforceAppCheck: true,
-  maxInstances: 5,
-  rateLimits: { maxCalls: 10, timeFrameSeconds: 60 },
-}, async (request) => {
-  if (!request.auth) throw new HttpsError("unauthenticated", "Oturum gerekli");
-  const ip = getClientIpFromRawRequest(request.rawRequest) || "unknown";
-  await Promise.all([
-    enforceRateLimit(`admin_set_claim_uid_${request.auth.uid}`, 60, 2),
-    enforceRateLimit(`admin_set_claim_ip_${ip}`, 60, 10),
-  ]);
-
-  const isSuper = await isSuperAdmin(request.auth.uid);
-  if (!isSuper) throw new HttpsError("permission-denied", "Bu işlem için süper admin yetkisi gereklidir.");
-
-  const uid = request.data?.uid;
-  const makeAdmin = !!request.data?.makeAdmin;
-  if (typeof uid !== "string" || uid.length < 6) {
-    throw new HttpsError("invalid-argument", "Geçerli uid gerekli");
-  }
-  const target = await auth.getUser(uid);
-  const existing = target.customClaims || {};
-  const newClaims = { ...existing, admin: makeAdmin };
-  await auth.setCustomUserClaims(uid, newClaims);
-  if (makeAdmin === false) {
-    // Revoke tokens to force re-login and claim refresh
-    await auth.revokeRefreshTokens(uid);
-  }
-
-  await logAdminAction(request.auth.uid, "SET_ADMIN_CLAIM", {
-    targetUid: uid,
-    makeAdmin,
-  });
-
-  return { ok: true, uid, admin: makeAdmin };
-});
-
-exports.setSelfAdmin = onCall({
-  region: "us-central1",
-  enforceAppCheck: true,
-  maxInstances: 5,
-  rateLimits: { maxCalls: 5, timeFrameSeconds: 60 },
-}, async (request) => {
-  if (!request.auth) throw new HttpsError("unauthenticated", "Oturum gerekli");
-  const ip = getClientIpFromRawRequest(request.rawRequest) || "unknown";
-  await Promise.all([
-    enforceRateLimit(`admin_self_uid_${request.auth.uid}`, 60, 2),
-    enforceRateLimit(`admin_self_ip_${ip}`, 60, 10),
-  ]);
-  const allowed = await isSuperAdmin(request.auth.uid);
-  if (!allowed) throw new HttpsError("permission-denied", "Yetki yok");
-  const uid = request.auth.uid;
-  const me = await auth.getUser(uid);
-  const existing = me.customClaims || {};
-  await auth.setCustomUserClaims(uid, { ...existing, admin: true });
-
-  await logAdminAction(uid, "SET_SELF_ADMIN_CLAIM");
-
-  return { ok: true, uid, admin: true };
-});
-
-exports.getUsers = onCall({
-  region: "us-central1",
-  enforceAppCheck: true,
-  maxInstances: 10,
-  rateLimits: { maxCalls: 20, timeFrameSeconds: 60 },
-}, async (request) => {
-  if (!request.auth) throw new HttpsError("unauthenticated", "Oturum gerekli");
-  const ip = getClientIpFromRawRequest(request.rawRequest) || "unknown";
-  await Promise.all([
-    enforceRateLimit(`admin_get_users_uid_${request.auth.uid}`, 60, 30),
-    enforceRateLimit(`admin_get_users_ip_${ip}`, 60, 120),
-  ]);
-  const isSuper = await isSuperAdmin(request.auth.uid);
-  const isAdmin = request.auth.token && request.auth.token.admin === true;
-  if (!isSuper && !isAdmin) throw new HttpsError("permission-denied", "Admin yetkisi gerekli");
-
-  const superAdminEmails = await getSuperAdmins();
-  const pageSize = 100;
-  const pageToken = request.data?.pageToken;
-  const listUsersResult = await auth.listUsers(pageSize, pageToken);
-
-  const users = listUsersResult.users
-    .filter((user) => !superAdminEmails.includes((user.email || "").toLowerCase()))
-    .map((userRecord) => {
-      return {
-        uid: userRecord.uid,
-        email: userRecord.email,
-        displayName: userRecord.displayName,
-        admin: !!userRecord.customClaims?.admin,
-      };
-    });
-
-  return {
-    users,
-    nextPageToken: listUsersResult.pageToken,
-  };
-});
-
-exports.findUserByEmail = onCall({
-  region: "us-central1",
-  enforceAppCheck: true,
-  maxInstances: 10,
-  rateLimits: { maxCalls: 30, timeFrameSeconds: 60 },
-}, async (request) => {
-  if (!request.auth) throw new HttpsError("unauthenticated", "Oturum gerekli");
-  const ip = getClientIpFromRawRequest(request.rawRequest) || "unknown";
-  await Promise.all([
-    enforceRateLimit(`admin_find_user_uid_${request.auth.uid}`, 60, 60),
-    enforceRateLimit(`admin_find_user_ip_${ip}`, 60, 240),
-  ]);
-  const isSuper = await isSuperAdmin(request.auth.uid);
-  const isAdmin = request.auth.token && request.auth.token.admin === true;
-  if (!isSuper && !isAdmin) throw new HttpsError("permission-denied", "Admin yetkisi gerekli");
-
-  const email = request.data?.email;
-  if (!email) {
-    throw new HttpsError("invalid-argument", "Email adresi gerekli");
-  }
-
-  try {
-    const superAdminEmails = await getSuperAdmins();
-    if (superAdminEmails.includes(email.toLowerCase())) {
-      return null; // Hide super admin
-    }
-
-    const userRecord = await auth.getUserByEmail(email);
-    return {
-      uid: userRecord.uid,
-      email: userRecord.email,
-      displayName: userRecord.displayName,
-      admin: !!userRecord.customClaims?.admin,
-    };
-  } catch (error) {
-    if (error.code === "auth/user-not-found") {
-      return null;
-    }
-    throw new HttpsError("internal", "Kullanıcı aranırken bir hata oluştu.");
-  }
-});
-
-exports.isCurrentUserSuperAdmin = onCall({
-  region: "us-central1",
-  enforceAppCheck: true,
-  maxInstances: 20,
-  rateLimits: { maxCalls: 30, timeFrameSeconds: 60 },
-}, async (request) => {
-  if (!request.auth) throw new HttpsError("unauthenticated", "Oturum gerekli");
-  const ip = getClientIpFromRawRequest(request.rawRequest) || "unknown";
-  await Promise.all([
-    enforceRateLimit(`admin_is_super_uid_${request.auth.uid}`, 60, 60),
-    enforceRateLimit(`admin_is_super_ip_${ip}`, 60, 240),
-  ]);
-  return { isSuperAdmin: await isSuperAdmin(request.auth.uid) };
-});
+module.exports = {
+  adminEstimateAudience: exports.adminEstimateAudience,
+  adminSendPush: exports.adminSendPush,
+  processScheduledCampaigns: exports.processScheduledCampaigns,
+};
