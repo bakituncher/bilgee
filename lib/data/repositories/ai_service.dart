@@ -622,8 +622,8 @@ class AiService {
       prompt,
       expectJson: false,
       temperature: 0.4,
-      // SADECE sohbet için PRO modeli kullan
-      model: 'gemini-1.5-pro-latest',
+      // Model sunucu tarafında politika gereği gemini-2.0-flash-lite-001 olarak zorunlu kılınıyor.
+      // Bu nedenle burada model parametresi gönderilmiyor.
     );
 
     // Belleği güncelle (son tur)
