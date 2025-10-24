@@ -6,7 +6,7 @@ const { dayKeyIstanbul } = require("./utils");
 const { computeInactivityHours, selectAudienceUids } = require("./users");
 
 // ---- FCM TOKEN KAYDI ----
-exports.registerFcmToken = onCall({region: 'us-central1', enforceAppCheck: true}, async (request) => {
+exports.registerFcmToken = onCall({region: 'us-central1'}, async (request) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
     const uid = request.auth.uid;
     const token = String(request.data?.token || '');
@@ -31,7 +31,7 @@ exports.registerFcmToken = onCall({region: 'us-central1', enforceAppCheck: true}
   });
 
 // ---- FCM TOKEN TEMİZLEME ----
-exports.unregisterFcmToken = onCall({region: 'us-central1', enforceAppCheck: true}, async (request) => {
+exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
   const uid = request.auth.uid;
   const token = String(request.data?.token || '');
@@ -142,169 +142,31 @@ exports.unregisterFcmToken = onCall({region: 'us-central1', enforceAppCheck: tru
     return allowed;
   }
 
-  // Günlük limit kontrolü: sadece okuma, sayaç arttırmaz
-  async function hasRemainingToday(uid, maxPerDay = 3) {
-    try {
-      const countersRef = db.collection('users').doc(uid).collection('state').doc('notification_counters');
-      const snap = await countersRef.get();
-      const today = dayKeyIstanbul();
-      if (!snap.exists) return true;
-      const d = snap.data() || {};
-      const day = String(d.day || '');
-      const sent = Number(d.sent || 0);
-      if (day !== today) return true;
-      return sent < maxPerDay;
-    } catch (_) {
-      return true;
-    }
-  }
-
-  // Başarılı gönderim sonrası güvenli şekilde sayaç arttır (gün değişimini dikkate alır)
-  async function incrementSentCount(uid, maxPerDay = 3) {
-    const countersRef = db.collection('users').doc(uid).collection('state').doc('notification_counters');
-    let ok = false;
-    await db.runTransaction(async (tx) => {
-      const snap = await tx.get(countersRef);
-      const today = dayKeyIstanbul();
-      if (!snap.exists) {
-        tx.set(countersRef, { day: today, sent: 1, updatedAt: admin.firestore.FieldValue.serverTimestamp() });
-        ok = true;
-        return;
-      }
-      const d = snap.data() || {};
-      const prevDay = String(d.day || '');
-      const prevSent = Number(d.sent || 0);
-      const newDay = prevDay === today ? today : today;
-      const base = prevDay === today ? prevSent : 0;
-      if (base >= maxPerDay) { ok = false; return; }
-      tx.set(countersRef, { day: newDay, sent: base + 1, updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
-      ok = true;
-    });
-    return ok;
-  }
-
-function _selectRandom(arr) {
-  if (!arr || arr.length === 0) return '';
-  return arr[Math.floor(Math.random() * arr.length)];
-}
-
-/**
- * Kullanıcı verilerine dayanarak akıllı ve kişiselleştirilmiş bir bildirim şablonu oluşturur.
- * Öncelik sırası:
- * 1. En zayıf dersi hedefleme (en yüksek öncelik).
- * 2. Aktif seriyi koruma motivasyonu.
- * 3. Premium olmayanlar için premium tanıtımı.
- * 4. Kaybedilmiş seriyi yeniden başlatma teşviki.
- * 5. Genel hareketsizlik hatırlatmaları (en düşük öncelik).
- * @param {{isPremium: boolean, selectedExam?: string}} userProfile Kullanıcı profili.
- * @param {{weakestSubject?: string}} userPerformance Kullanıcı performansı.
- * @param {{streak?: number, lostStreak?: boolean}} userStats Kullanıcı istatistikleri.
- * @param {number} inactivityHours Son aktiviteden bu yana geçen saat.
- * @returns {{title: string, body: string, route: string}|null} Bildirim objesi veya null.
- */
-function buildPersonalizedTemplate(userProfile, userPerformance, userStats, inactivityHours) {
-  const { isPremium = false, selectedExam } = userProfile || {};
-  const { weakestSubject } = userPerformance || {};
-  const { streak = 0, lostStreak = false } = userStats || {};
-
-  const exam = selectedExam ? selectedExam.toUpperCase() : 'sınav';
-  const safeWeakestSubject = weakestSubject || 'zayıf bir konunu';
-
-  // --- Öncelik 1: En Zayıf Ders Üzerine Gitme ---
-  // Kullanıcı aktifse (son 3 gün içinde) ve zayıf bir dersi varsa, bu en değerli bildirimdir.
-  if (inactivityHours < 72 && weakestSubject) {
-    const titles = [
-      `Bu konuyu halletme zamanı: ${weakestSubject}! 💪`,
-      `${weakestSubject} konusuna bir şans daha ver! 🚀`,
-      `Zayıf halkanı güçlendir: ${weakestSubject} 🧠`,
-    ];
-    const bodies = [
-      `Hadi, ${exam} öncesi ${safeWeakestSubject} güçlendirelim. Sadece 15 dakikalık bir testle fark yarat!`,
-      `Bugün ${safeWeakestSubject} üzerine odaklanmaya ne dersin? Kısa bir tekrarla netlerini uçurabilirsin!`,
-      `Potansiyelini keşfet! ${safeWeakestSubject} bir sonraki başarın olabilir. Ufak bir adımla başla.`,
-    ];
-    return {
-      title: _selectRandom(titles),
-      body: _selectRandom(bodies),
-      route: '/home/add-test', // Kullanıcıyı direkt test çözmeye yönlendir
-    };
-  }
-
-  // --- Öncelik 2: Aktif Seriyi Koruma ---
-  // Serisi olan ve aktif olan kullanıcıları motive et
-  if (inactivityHours < 48 && streak > 1) {
-    const titles = [
-      `Serin harika gidiyor: ${streak}. gün! 🔥`,
-      `Alev alevsin! ${streak} günlük seri! ✨`,
-      `${streak} gündür durdurulamazsın!  devam et! 🏆`,
-    ];
-    const bodies = [
-      `Bugün de hedefine bir adım daha yaklaş. Serini bozma, ${exam} yolunda emin adımlarla ilerle!`,
-      `Bu seri bozulmaz! Bugün de küçük bir görevle serini koru ve motive kal.`,
-      `Disiplinin konuşuyor! Serini devam ettirerek ${exam} için ne kadar ciddi olduğunu göster.`,
-    ];
-    return {
-      title: _selectRandom(titles),
-      body: _selectRandom(bodies),
-      route: '/home/quests',
-    };
-  }
-
-  // --- Öncelik 3: Premium Olmayanlara Özel Teklifler ---
-  // Premium değilse ve bir süredir aktif değilse (ama tamamen kaybolmadıysa)
-  if (!isPremium && inactivityHours >= 24 && inactivityHours < 120) {
-    const titles = [
-      'Sınırsız potansiyelini keşfet! ✨',
-      'Çalışmalarını bir üst seviyeye taşı! 🚀',
-      'Daha akıllı çalış, daha hızlı ilerle! 🧠',
-    ];
-    const bodies = [
-      'Premium ile kişiselleştirilmiş çalışma planları ve sınırsız test çözme imkanı seni bekliyor. Hedefine giden yolda sana özel bir koç gibi!',
-      'Takıldığın konuları anında çözen yapay zeka koçuyla tanıştın mı? Premium ile tüm kilitleri aç.',
-      `${exam} hazırlığında fark yaratmak için Premium özelliklerine göz at. İlk adımı at, potansiyelini serbest bırak!`,
-    ];
-    return {
-      title: _selectRandom(titles),
-      body: _selectRandom(bodies),
-      route: '/premium', // Premium sayfasına yönlendir
-    };
-  }
-
-  // --- Öncelik 4: Kaybedilmiş Seriyi Geri Kazanma ---
-  if (lostStreak && inactivityHours < 72) {
+  function buildInactivityTemplate(inactHours, examType) {
+    // Basit örnek şablonlar
+    if (inactHours >= 72) {
       return {
-          title: 'Hey, serin bozuldu ama sorun değil!  yeniden başla! 💪',
-          body: `Herkes tökezleyebilir. Önemli olan yeniden başlamak! Bugün yeni bir seri başlatarak ${exam} hedefine bir adım daha at.`,
-          route: '/home/quests',
+        title: 'Geri dön ve hedefini yakala! 💪',
+        body: examType ? `${examType} için kaldığın yerden devam edelim. Şimdi 1 mini görevle açılış yap!` : 'Bugün bir adım atmak için harika bir an. 10 dakikalık bir görev seni bekliyor!',
+        route: '/home/quests',
       };
+    }
+    if (inactHours >= 24) {
+      return {
+        title: 'Bir gün ara verdin. Şimdi hızlanma zamanı! ⚡',
+        body: 'Hedefini 10’a çıkar: kısa bir pratikle ivme yakala! 🎯',
+        route: '/home/add-test',
+      };
+    }
+    if (inactHours >= 3) {
+      return {
+        title: 'Mini odak molası ister misin? ⏱️',
+        body: 'Sadece 15 dakikalık Pomodoro ile müthiş bir geri dönüş yap. 10’a çıkarma yolunda ilk adım!',
+        route: '/home/pomodoro',
+      };
+    }
+    return null;
   }
-
-
-  // --- Öncelik 5: Genel Hareketsizlik Hatırlatmaları (Fallback) ---
-  if (inactivityHours >= 72) { // 3+ gün
-    return {
-      title: 'Gözlerimiz seni arıyor! 👀',
-      body: `${exam} hedefin için küçük bir adım atmanın tam zamanı. 10 dakikalık bir görevle yeniden başla!`,
-      route: '/home/quests',
-    };
-  }
-  if (inactivityHours >= 24) { // 1+ gün
-    return {
-      title: 'Bir gündür yoksun, özlettin! 👋',
-      body: `Bugün ${exam} için ne yapıyoruz? Kısa bir testle ısınmaya ne dersin? Hadi ama!`,
-      route: '/home/add-test',
-    };
-  }
-  if (inactivityHours >= 4) { // 4+ saat (daha sık)
-    return {
-      title: 'Enerjini topladıysan, devam edelim mi? ⚡️',
-      body: 'Kısa bir mola harikalar yaratır. Şimdi 15 dakikalık bir pomodoro ile hedefine odaklan!',
-      route: '/home/pomodoro',
-    };
-  }
-
-  return null; // Eğer hiçbir koşul eşleşmezse bildirim gönderme
-}
 
   async function sendPushToTokens(tokens, payload) {
     if (!tokens || tokens.length === 0) return {successCount: 0, failureCount: 0};
@@ -328,7 +190,7 @@ function buildPersonalizedTemplate(userProfile, userPerformance, userStats, inac
         payload: { aps: { sound: 'default', 'mutable-content': 1 } },
         fcmOptions: payload.imageUrl ? { imageUrl: payload.imageUrl } : undefined,
       },
-      tokens: uniq.slice(0, 500), // güvenlik: tek çağrıda max 500
+      tokens: uniq,
     };
     try {
       const resp = await messaging.sendEachForMulticast(message);
@@ -339,86 +201,28 @@ function buildPersonalizedTemplate(userProfile, userPerformance, userStats, inac
     }
   }
 
-  // 500 limitini gözeterek büyük token listelerini parça parça gönder
-  async function sendPushToTokensBatched(tokens, payload, batchSize = 500) {
-    const uniq = Array.from(new Set((tokens || []).filter(Boolean)));
-    let successCount = 0, failureCount = 0;
-    for (let i = 0; i < uniq.length; i += batchSize) {
-      const chunk = uniq.slice(i, i + batchSize);
-      const r = await sendPushToTokens(chunk, payload);
-      successCount += r.successCount;
-      failureCount += r.failureCount;
-      if (i > 0 && i % (batchSize * 10) === 0) await new Promise((r)=> setTimeout(r, 50));
-    }
-    return { successCount, failureCount };
-  }
-
   async function dispatchInactivityPushBatch(limitUsers = 500) {
-  const randomId = db.collection('users').doc().id;
-  const usersSnap = await db.collection('users')
-      .orderBy(admin.firestore.FieldPath.documentId())
-      .startAt(randomId)
-      .limit(limitUsers * 2) // Daha geniş bir aralıktan çek
-      .get();
-
+    const usersSnap = await db.collection('users').limit(5000).get();
     let processed = 0, sent = 0;
-  for (const userDoc of usersSnap.docs) {
+    for (const doc of usersSnap.docs) {
       if (processed >= limitUsers) break;
-
-      const uid = userDoc.id;
-      const userRef = userDoc.ref;
-
-      try {
-          const inactivityHours = await computeInactivityHours(userRef);
-          // 4 saatten daha az inaktif olanları rahatsız etme
-          if (inactivityHours < 4) {
-              processed++;
-              continue;
-          }
-
-          // Gerekli tüm verileri paralel olarak çek
-          const [performanceSnap, statsSnap, tokens] = await Promise.all([
-              userRef.collection('performance').doc('summary').get(),
-              userRef.collection('state').doc('stats').get(),
-              getActiveTokens(uid),
-          ]);
-
-          if (tokens.length === 0) {
-              processed++;
-              continue;
-          }
-
-          const userProfile = userDoc.data() || {};
-          const userPerformance = performanceSnap.exists ? performanceSnap.data() : {};
-          const userStats = statsSnap.exists ? statsSnap.data() : {};
-
-          const tpl = buildPersonalizedTemplate(userProfile, userPerformance, userStats, inactivityHours);
-
-          if (!tpl) {
-              processed++;
-              continue;
-          }
-
-          const remain = await hasRemainingToday(uid, 3);
-          if (!remain) {
-              processed++;
-              continue;
-          }
-
-          const r = await sendPushToTokens(tokens, { ...tpl, type: 'personalized_inactivity' });
-          if (r.successCount > 0) {
-              const inc = await incrementSentCount(uid, 3);
-              if (inc) sent++;
-          }
-      } catch (error) {
-          logger.error(`Kullanıcı için bildirim işlenemedi: ${uid}`, { error: String(error) });
-      } finally {
-          processed++;
-      }
+      const uid = doc.id;
+      const userRef = doc.ref;
+      const inact = await computeInactivityHours(userRef);
+      const examType = (doc.data()||{}).selectedExam || null;
+      const tpl = buildInactivityTemplate(inact, examType);
+      if (!tpl) { processed++; continue; }
+      const allowed = await canSendMoreToday(uid, 3);
+      if (!allowed) { processed++; continue; }
+      const tokens = await getActiveTokens(uid);
+      if (tokens.length === 0) { processed++; continue; }
+      await sendPushToTokens(tokens, { ...tpl, type: 'inactivity' });
+      sent++;
+      processed++;
+    }
+    logger.info('dispatchInactivityPushBatch done', {processed, sent});
+    return {processed, sent};
   }
-  logger.info('dispatchInactivityPushBatch tamamlandı', { processed, sent });
-  return { processed, sent };
-}
 
   function scheduleSpecAt(hour, minute = 0) {
     return {schedule: `${minute} ${hour} * * *`, timeZone: 'Europe/Istanbul'};
@@ -435,7 +239,7 @@ function buildPersonalizedTemplate(userProfile, userPerformance, userStats, inac
   });
 
   // ---- ADMIN KAMPANYA GÖNDERİMİ ----
-  exports.adminEstimateAudience = onCall({region: 'us-central1', timeoutSeconds: 300, enforceAppCheck: true}, async (request) => {
+  exports.adminEstimateAudience = onCall({region: 'us-central1', timeoutSeconds: 300}, async (request) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
     const isAdmin = request.auth.token && request.auth.token.admin === true;
     if (!isAdmin) throw new HttpsError('permission-denied', 'Admin gerekli');
@@ -478,7 +282,7 @@ function buildPersonalizedTemplate(userProfile, userPerformance, userStats, inac
     return {users, baseUsers, tokenHolders};
   });
 
-  exports.adminSendPush = onCall({region: 'us-central1', timeoutSeconds: 540, enforceAppCheck: true}, async (request) => {
+  exports.adminSendPush = onCall({region: 'us-central1', timeoutSeconds: 540}, async (request) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
     const isAdmin = request.auth.token && request.auth.token.admin === true;
     if (!isAdmin) throw new HttpsError('permission-denied', 'Admin gerekli');
@@ -551,7 +355,7 @@ function buildPersonalizedTemplate(userProfile, userPerformance, userStats, inac
 
       if (uniqueTokens.length > 0) {
         const pushPayload = { title, body, imageUrl, route, type: 'campaign', campaignId: campaignRef.id };
-        const result = await sendPushToTokensBatched(uniqueTokens, pushPayload, 500);
+        const result = await sendPushToTokens(uniqueTokens, pushPayload);
         totalSent = result.successCount;
         totalFail = result.failureCount;
       }
