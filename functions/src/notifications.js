@@ -202,63 +202,46 @@ function _selectRandom(arr) {
  * @param {number} inactivityHours Son aktiviteden bu yana geçen saat.
  * @returns {{title: string, body: string, route: string}|null} Bildirim objesi veya null.
  */
-function buildPersonalizedTemplate(userProfile, userPerformance, userStats, inactivityHours, context = {}) {
+function buildPersonalizedTemplate(userProfile, userPerformance, userStats, inactivityHours) {
   const { isPremium = false, selectedExam } = userProfile || {};
   const { weakestSubject } = userPerformance || {};
   const { streak = 0, lostStreak = false } = userStats || {};
-  const { timeOfDay = 'day' } = context;
 
   const exam = selectedExam ? selectedExam.toUpperCase() : 'sınav';
   const safeWeakestSubject = weakestSubject || 'zayıf bir konunu';
 
-  // --- Öncelik 1: Seri Kilometre Taşları ---
-  const streakMilestones = [7, 14, 30, 50, 75, 100];
-  if (streak > 1 && streakMilestones.includes(streak) && inactivityHours < 24) {
-      return {
-          title: `${streak} günlük seri! Bu bir rekor! 🎉`,
-          body: `Muhteşem bir başarı! ${streak} gündür aralıksız çalışıyorsun. Bu azimle ${exam} hedefi çantada keklik! Bugün de devam et!`,
-          route: '/home/quests',
-      };
-  }
-
-  // --- Öncelik 2: En Zayıf Ders Üzerine Gitme ---
+  // --- Öncelik 1: En Zayıf Ders Üzerine Gitme ---
+  // Kullanıcı aktifse (son 3 gün içinde) ve zayıf bir dersi varsa, bu en değerli bildirimdir.
   if (inactivityHours < 72 && weakestSubject) {
     const titles = [
       `Bu konuyu halletme zamanı: ${weakestSubject}! 💪`,
       `${weakestSubject} konusuna bir şans daha ver! 🚀`,
       `Zayıf halkanı güçlendir: ${weakestSubject} 🧠`,
-      `Hey, ${weakestSubject} senin korkulu rüyan olmasın! 😉`,
-      `${exam} öncesi son viraj: ${weakestSubject} üzerine git! 🏎️`,
     ];
     const bodies = [
       `Hadi, ${exam} öncesi ${safeWeakestSubject} güçlendirelim. Sadece 15 dakikalık bir testle fark yarat!`,
       `Bugün ${safeWeakestSubject} üzerine odaklanmaya ne dersin? Kısa bir tekrarla netlerini uçurabilirsin!`,
       `Potansiyelini keşfet! ${safeWeakestSubject} bir sonraki başarın olabilir. Ufak bir adımla başla.`,
-      `O konu sandığın kadar zor değil! Gel, birlikte üstesinden gelelim. Birkaç soru çöz, ne kadar kolay olduğunu gör.`,
-      `En zorlandığın yerden başlamak, en büyük zaferdir. ${safeWeakestSubject} konusunu yenmeye hazır mısın?`,
     ];
     return {
       title: _selectRandom(titles),
       body: _selectRandom(bodies),
-      route: '/home/add-test',
+      route: '/home/add-test', // Kullanıcıyı direkt test çözmeye yönlendir
     };
   }
 
-  // --- Öncelik 3: Aktif Seriyi Koruma ---
+  // --- Öncelik 2: Aktif Seriyi Koruma ---
+  // Serisi olan ve aktif olan kullanıcıları motive et
   if (inactivityHours < 48 && streak > 1) {
     const titles = [
       `Serin harika gidiyor: ${streak}. gün! 🔥`,
       `Alev alevsin! ${streak} günlük seri! ✨`,
-      `${streak} gündür durdurulamazsın! Devam et! 🏆`,
-      `${streak} gün... Efsane yazıyorsun! ✍️`,
-      `Bu bir seri değil, bu bir zafer yürüyüşü: ${streak}. gün! 🚶‍♂️`,
+      `${streak} gündür durdurulamazsın!  devam et! 🏆`,
     ];
     const bodies = [
       `Bugün de hedefine bir adım daha yaklaş. Serini bozma, ${exam} yolunda emin adımlarla ilerle!`,
       `Bu seri bozulmaz! Bugün de küçük bir görevle serini koru ve motive kal.`,
       `Disiplinin konuşuyor! Serini devam ettirerek ${exam} için ne kadar ciddi olduğunu göster.`,
-      `Her gün bir adım, hedefe daha yakın demek. Bu müthiş seriyi bugün de devam ettir!`,
-      `Zinciri kırma! Bugün yapacağın küçücük bir çalışma bile bu harika seriyi devam ettirir.`,
     ];
     return {
       title: _selectRandom(titles),
@@ -267,74 +250,55 @@ function buildPersonalizedTemplate(userProfile, userPerformance, userStats, inac
     };
   }
 
-  // --- Öncelik 4: Premium Olmayanlara Özel, Çeşitlendirilmiş Teklifler ---
+  // --- Öncelik 3: Premium Olmayanlara Özel Teklifler ---
+  // Premium değilse ve bir süredir aktif değilse (ama tamamen kaybolmadıysa)
   if (!isPremium && inactivityHours >= 24 && inactivityHours < 120) {
-    const premiumFeatures = [
-        {
-            title: 'Yapay Zeka Koçunla tanış! 🤖',
-            body: `Takıldığın yerde anında yardım al! Premium'un yapay zeka koçu, ${exam} için sana özel stratejiler sunar.`,
-            route: '/premium/ai-coach',
-        },
-        {
-            title: 'Sınırsız Test = Sınırsız Başarı! ♾️',
-            body: `Pratik yapmak başarının anahtarıdır. Premium ile ${exam} için binlerce teste sınırsız erişimle kendini aş!`,
-            route: '/premium/unlimited-tests',
-        },
-        {
-            title: 'Sana özel çalışma planı! 🗓️',
-            body: `Ne çalışacağını düşünme, sadece başla! Premium, ${exam} hedefine en hızlı şekilde ulaşman için kişisel bir yol haritası çizer.`,
-            route: '/premium/custom-plan',
-        },
-    ];
-    return _selectRandom(premiumFeatures);
-  }
-
-  // --- Öncelik 5: Kaybedilmiş Seriyi Geri Kazanma ---
-  if (lostStreak && inactivityHours < 72) {
     const titles = [
-        'Hey, serin bozuldu ama sorun değil! Yeniden başla! 💪',
-        'Küçük bir mola... Şimdi daha güçlü dönme zamanı! Comeback! 👊',
-        'Efsaneler asla pes etmez, sadece mola verir. 😉',
+      'Sınırsız potansiyelini keşfet! ✨',
+      'Çalışmalarını bir üst seviyeye taşı! 🚀',
+      'Daha akıllı çalış, daha hızlı ilerle! 🧠',
     ];
     const bodies = [
-        `Herkes tökezleyebilir. Önemli olan yeniden başlamak! Bugün yeni bir seri başlatarak ${exam} hedefine bir adım daha at.`,
-        `Serinin bitmesi dünyanın sonu değil, yeni bir başlangıç için harika bir fırsat! Hadi, bugün ilk adımı at.`,
-        `Düştüysen kalkalım! Yeni bir rekor kırmak için daha iyi bir gün olabilir mi? Bugün o gün!`,
+      'Premium ile kişiselleştirilmiş çalışma planları ve sınırsız test çözme imkanı seni bekliyor. Hedefine giden yolda sana özel bir koç gibi!',
+      'Takıldığın konuları anında çözen yapay zeka koçuyla tanıştın mı? Premium ile tüm kilitleri aç.',
+      `${exam} hazırlığında fark yaratmak için Premium özelliklerine göz at. İlk adımı at, potansiyelini serbest bırak!`,
     ];
+    return {
+      title: _selectRandom(titles),
+      body: _selectRandom(bodies),
+      route: '/premium', // Premium sayfasına yönlendir
+    };
+  }
+
+  // --- Öncelik 4: Kaybedilmiş Seriyi Geri Kazanma ---
+  if (lostStreak && inactivityHours < 72) {
       return {
-          title: _selectRandom(titles),
-          body: _selectRandom(bodies),
+          title: 'Hey, serin bozuldu ama sorun değil!  yeniden başla! 💪',
+          body: `Herkes tökezleyebilir. Önemli olan yeniden başlamak! Bugün yeni bir seri başlatarak ${exam} hedefine bir adım daha at.`,
           route: '/home/quests',
       };
   }
 
 
-  // --- Öncelik 6: Genel Hareketsizlik ve Günün Saati Bağlamı ---
-  if (inactivityHours >= 72) {
+  // --- Öncelik 5: Genel Hareketsizlik Hatırlatmaları (Fallback) ---
+  if (inactivityHours >= 72) { // 3+ gün
     return {
-      title: `Uzun zaman oldu ${timeOfDay === 'evening' ? 'bu saatlerde' : ''}, nerelerdesin? 🤔`,
-      body: `Unutma, her büyük başarı küçük bir adımla başlar. ${exam} hedefin için o adımı bugün atmaya ne dersin?`,
+      title: 'Gözlerimiz seni arıyor! 👀',
+      body: `${exam} hedefin için küçük bir adım atmanın tam zamanı. 10 dakikalık bir görevle yeniden başla!`,
       route: '/home/quests',
     };
   }
-  if (inactivityHours >= 24) {
-    const morningTitles = ['Günaydın! Kahveni al, bir testle güne başla! ☕', 'Bu sabah ${exam} için bir şeyler yapalım mı?'];
-    const eveningTitles = ['Günü verimli kapat! 🌙', 'Yatmadan önce kısa bir tekrar?'];
-    const titles = {
-        morning: morningTitles,
-        afternoon: ['Enerjini topla, bir testle devam et! ⚡️', 'Öğleden sonra molası yerine, ${exam} molası?'],
-        evening: eveningTitles,
-    };
+  if (inactivityHours >= 24) { // 1+ gün
     return {
-      title: _selectRandom(titles[timeOfDay] || titles['day']),
-      body: `Hayallerine giden yolda bir gün bile önemli. Gel, bugünü boş geçmeyelim!`,
+      title: 'Bir gündür yoksun, özlettin! 👋',
+      body: `Bugün ${exam} için ne yapıyoruz? Kısa bir testle ısınmaya ne dersin? Hadi ama!`,
       route: '/home/add-test',
     };
   }
-  if (inactivityHours >= 4) {
+  if (inactivityHours >= 4) { // 4+ saat (daha sık)
     return {
-      title: 'Kısa bir ara mı verdin? Hadi devam edelim! 🚀',
-      body: 'Momentumu kaybetme! 15 dakikalık bir pomodoro ile odaklan, hedefine bir adım daha yaklaş.',
+      title: 'Enerjini topladıysan, devam edelim mi? ⚡️',
+      body: 'Kısa bir mola harikalar yaratır. Şimdi 15 dakikalık bir pomodoro ile hedefine odaklan!',
       route: '/home/pomodoro',
     };
   }
@@ -389,7 +353,7 @@ function buildPersonalizedTemplate(userProfile, userPerformance, userStats, inac
     return { successCount, failureCount };
   }
 
-  async function dispatchInactivityPushBatch(limitUsers = 500, context = {}) {
+  async function dispatchInactivityPushBatch(limitUsers = 500) {
   const randomId = db.collection('users').doc().id;
   const usersSnap = await db.collection('users')
       .orderBy(admin.firestore.FieldPath.documentId())
@@ -428,7 +392,7 @@ function buildPersonalizedTemplate(userProfile, userPerformance, userStats, inac
           const userPerformance = performanceSnap.exists ? performanceSnap.data() : {};
           const userStats = statsSnap.exists ? statsSnap.data() : {};
 
-          const tpl = buildPersonalizedTemplate(userProfile, userPerformance, userStats, inactivityHours, context);
+          const tpl = buildPersonalizedTemplate(userProfile, userPerformance, userStats, inactivityHours);
 
           if (!tpl) {
               processed++;
@@ -452,7 +416,7 @@ function buildPersonalizedTemplate(userProfile, userPerformance, userStats, inac
           processed++;
       }
   }
-  logger.info('dispatchInactivityPushBatch tamamlandı', { processed, sent, context: context || {} });
+  logger.info('dispatchInactivityPushBatch tamamlandı', { processed, sent });
   return { processed, sent };
 }
 
@@ -461,13 +425,13 @@ function buildPersonalizedTemplate(userProfile, userPerformance, userStats, inac
   }
 
   exports.dispatchInactivityMorning = onSchedule(scheduleSpecAt(9, 0), async () => {
-    await dispatchInactivityPushBatch(1500, { timeOfDay: 'morning' });
+    await dispatchInactivityPushBatch(1500);
   });
   exports.dispatchInactivityAfternoon = onSchedule(scheduleSpecAt(15, 0), async () => {
-    await dispatchInactivityPushBatch(1500, { timeOfDay: 'afternoon' });
+    await dispatchInactivityPushBatch(1500);
   });
   exports.dispatchInactivityEvening = onSchedule(scheduleSpecAt(20, 30), async () => {
-    await dispatchInactivityPushBatch(1500, { timeOfDay: 'evening' });
+    await dispatchInactivityPushBatch(1500);
   });
 
   // ---- ADMIN KAMPANYA GÖNDERİMİ ----
