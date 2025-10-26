@@ -48,12 +48,19 @@ SEN, LGS'DE %0.01'LİK DİLİME GİRMEK İÇİN YARATILMIŞ, KİŞİYE ÖZEL Bİ
           {"time": "19:00-20:00", "activity": "Matematik: Çarpanlar ve Katlar Konu Tekrarı", "type": "review"},
           {"time": "20:15-21:15", "activity": "Çarpanlar ve Katlar - 40 Yeni Nesil Soru", "type": "practice"}
        ]},
-      {"day": "Salı", "schedule": []},
-      {"day": "Çarşamba", "schedule": []},
-      {"day": "Perşembe", "schedule": []},
-      {"day": "Cuma", "schedule": []},
-      {"day": "Cumartesi", "schedule": []},
-      {"day": "Pazar", "schedule": []}
+      {"day": "Salı", "schedule": [
+          {"time": "...", "activity": "...", "type": "..."}
+       ]},
+      {"day": "Çarşamba", "schedule": [...]},
+      {"day": "Perşembe", "schedule": [...]},
+      {"day": "Cuma", "schedule": [...]},
+      {"day": "Cumartesi", "schedule": [...]},
+      {"day": "Pazar", "schedule": [
+          {"time": "10:00-13:00", "activity": "LGS Deneme Sınavı", "type": "test"}
+       ]}
     ]
   }
 }
+
+**UYARI:** HER GÜN için müsaitlik takvimindeki saatlere göre schedule DOLU olmalı!
+

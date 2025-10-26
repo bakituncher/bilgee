@@ -61,9 +61,9 @@ class AiService {
 
       String updatedHistory = previous.trim().isEmpty ? newTurn : '${previous.trim()} | $newTurn';
 
-      const int maxChars = 800; // MALİYET OPTİMİZASYONU: 1200'den 800'e düşürüldü
+      const int maxChars = 400; // MALİYET OPTİMİZASYONU: 800'den 400'e düşürüldü - %50 tasarruf
       if (updatedHistory.length > maxChars) {
-        const int preserveStart = 200;
+        const int preserveStart = 100;
         const int preserveEnd = maxChars - preserveStart - 5; // " ... " için 5 karakter
         if (preserveEnd > 0) {
           final start = updatedHistory.substring(0, preserveStart);

@@ -106,6 +106,15 @@ class BlogDetailScreen extends ConsumerWidget {
                               child: CachedNetworkImage(
                                 imageUrl: post.coverImageUrl!,
                                 fit: BoxFit.cover,
+                                maxHeightDiskCache: 1080,
+                                maxWidthDiskCache: 1920,
+                                memCacheHeight: 720,
+                                memCacheWidth: 1280,
+                                placeholder: (c, _) => Container(color: AppTheme.lightSurfaceColor.withValues(alpha: .25)),
+                                errorWidget: (c, _, __) => Container(
+                                  color: AppTheme.lightSurfaceColor.withValues(alpha: .2),
+                                  child: const Icon(Icons.image_not_supported_rounded),
+                                ),
                               ),
                             ),
                             Container(

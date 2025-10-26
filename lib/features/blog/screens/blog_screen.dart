@@ -278,6 +278,10 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                                               child: CachedNetworkImage(
                                                 imageUrl: p.coverImageUrl!,
                                                 fit: BoxFit.cover,
+                                                maxHeightDiskCache: 720,
+                                                maxWidthDiskCache: 1280,
+                                                memCacheHeight: 480,
+                                                memCacheWidth: 854,
                                                 placeholder: (c, _) => Container(color: AppTheme.lightSurfaceColor.withValues(alpha: .25)),
                                                 errorWidget: (c, _, __) => Container(color: AppTheme.lightSurfaceColor.withValues(alpha: .2), child: const Icon(Icons.image_not_supported_rounded)),
                                               ),

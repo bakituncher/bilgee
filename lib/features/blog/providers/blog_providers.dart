@@ -13,7 +13,7 @@ final blogPostsStreamProvider = StreamProvider.autoDispose<List<BlogPost>>((ref)
       .where('publishedAt', isLessThanOrEqualTo: Timestamp.now())
       .where('locale', isEqualTo: 'tr')
       .orderBy('publishedAt', descending: true)
-      .limit(50);
+      .limit(20);
   return q.snapshots().map((s) {
     final now = DateTime.now();
     return s.docs

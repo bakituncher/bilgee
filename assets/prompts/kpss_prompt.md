@@ -46,12 +46,19 @@ SEN, {{EXAM_NAME}}'DE YÜKSEK PUAN ALARAK ATANMAYI GARANTİLEMEK ÜZERE TASARLAN
           {"time": "20:00-21:00", "activity": "Tarih: İslamiyet Öncesi Türk Tarihi Tekrarı", "type": "review"},
           {"time": "21:00-22:00", "activity": "Coğrafya: Türkiye'nin İklimi Soru Çözümü", "type": "practice"}
        ]},
-      {"day": "Salı", "schedule": []},
-      {"day": "Çarşamba", "schedule": []},
-      {"day": "Perşembe", "schedule": []},
-      {"day": "Cuma", "schedule": []},
-      {"day": "Cumartesi", "schedule": []},
-      {"day": "Pazar", "schedule": []}
+      {"day": "Salı", "schedule": [
+          {"time": "...", "activity": "...", "type": "..."}
+       ]},
+      {"day": "Çarşamba", "schedule": [...]},
+      {"day": "Perşembe", "schedule": [...]},
+      {"day": "Cuma", "schedule": [...]},
+      {"day": "Cumartesi", "schedule": [...]},
+      {"day": "Pazar", "schedule": [
+          {"time": "09:00-12:00", "activity": "KPSS Deneme Sınavı", "type": "test"}
+       ]}
     ]
   }
 }
+
+**UYARI:** HER GÜN için müsaitlik takvimindeki saatlere göre schedule DOLU olmalı!
+

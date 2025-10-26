@@ -44,37 +44,19 @@ class StrategyPrompts {
     required String pacing,
     required String guardrailsJson,
   }) {
-    final urgency = daysUntilExam <= 14
-        ? 'kritik-son-2-hafta'
-        : daysUntilExam <= 30
-            ? 'yüksek-önem'
-            : daysUntilExam <= 90
-                ? 'orta-önem'
-                : 'uzun-vade';
+    final urgency = daysUntilExam <= 14 ? 'kritik' : daysUntilExam <= 30 ? 'yüksek' : daysUntilExam <= 90 ? 'orta' : 'uzun-vade';
 
     return '''
-// PLAN KISITLARI — MUTLAKA UY:
-// 0) GUARDRAILS: $guardrailsJson
-//    - backlog doluysa YENİ KONU AÇMA. Önce backlog'daki konuları bitir.
-//    - konuStatus kırmızı/sarı olanları önceliklendir; kırmızıya daha fazla pratik (soru) ve tekrar koy.
-//    - unknown (veri az) konularda önce tanılayıcı kısa setler uygula, sonra yoğunluğu artır.
-// KURALLAR VE STANDARTLAR — MUTLAKA UY:
-// 1) MÜFREDAT SIRASI: Aşağıdaki konu sırasını temel al ve mümkün oldukça bu sırayı koru.
-//    curriculum_order_json: $curriculumJson
-// 2) TEKRAR ÖNLEME: Geçmiş hafta planı, tamamlanan görevler ve konu performanslarını analiz et. 
-//    Aynı konuyu gereksiz yere tekrarlama; gerekirse "hafif pekiştirme" olarak kısalt.
-// 3) ÇIKTI FORMAT STANDARDI: Haftalık plan JSON olmalı ve alanlar şu şekilde:
-//    weeklyPlan: { planTitle, strategyFocus, creationDate, plan: [ {day, schedule: [ {time, activity, type} ]} ] }
-//    - schedule.activity içinde, konu adını yaz ve ardından pratik/soru sayısını açıkça belirt (örn: "Denklemler - 40 soru" ).
-//    - type study/practice/test/review/break değerlerinden biri olmalı.
-// 4) YOĞUNLUK (pacing=$pacing):
-//    - relaxed: konu sayısı ve soru adetleri düşük (gün başı 1-2 konu, 20-30 soru)
-//    - moderate: dengeli (gün başı 2-3 konu, 30-50 soru)
-//    - intense: yüksek tempo (gün başı 3-4 konu, 50-80 soru)
-//    Duruma göre süre/slotları dağıt.
-// 5) SINAV ACİLİYETİ (days=$daysUntilExam, level=$urgency): Gün azaldıkça genel tekrar ve deneme ağırlığını artır, yeni konu sayısını kademeli azalt.
-// 6) MÜFREDAT UYUMU: Yeni konu açmadan önce gerekli ön koşul konular tamamlanmış olmalı.
-// 7) Tüm metinler Türkçe, net ve emir kipinde; gereksiz açıklama yazma.
+// KISITLAR:
+// Guardrails: $guardrailsJson
+// - Backlog doluysa yeni konu yok
+// - Kırmızı/sarı konuları öncelikle
+// - Unknown konularda kısa tanılayıcı set
+// Müfredat sırası: $curriculumJson
+// Tempo (pacing=$pacing): relaxed=düşük, moderate=dengeli, intense=yüksek
+// Aciliyet (days=$daysUntilExam, level=$urgency)
+// JSON format: weeklyPlan {planTitle, strategyFocus, creationDate, plan[{day, schedule[{time, activity, type}]}]}
+// Activity örnekleri: "Türev - 40 soru", type: study/practice/test/review/break
 ''';
   }
 
