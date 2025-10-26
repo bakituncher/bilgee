@@ -1,6 +1,6 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions");
-const { db } = require("./init");
+const { admin, db } = require("./init");
 const { defineSecret } = require("firebase-functions/params");
 const { enforceRateLimit, getClientIpFromRawRequest, dayKeyIstanbul } = require("./utils");
 const GEMINI_API_KEY = defineSecret("GEMINI_API_KEY");
@@ -65,22 +65,22 @@ exports.generateGemini = onCall(
       enforceRateLimit(ipKey, GEMINI_RATE_LIMIT_WINDOW_SEC, GEMINI_RATE_LIMIT_IP_MAX),
     ]);
 
-    // Günlük "yıldız" kotası (ilk çağrıda düşülür)
-    const today = dayKeyIstanbul();
-    const starRef = db.collection("users").doc(request.auth.uid).collection("stars").doc(today);
+    // AYLIK "yıldız" kotası (günlük yerine aylık yenilenir - MALİYET OPTİMİZASYONU)
+    const currentMonth = new Date().toLocaleString('sv-SE', { timeZone: 'Europe/Istanbul' }).substring(0, 7); // Örn: '2025-10'
+    const starRef = db.collection("users").doc(request.auth.uid).collection("stars").doc(currentMonth);
     await db.runTransaction(async (tx) => {
       const starDoc = await tx.get(starRef);
       if (!starDoc.exists) {
-        // Belge yoksa, varsayılan 100 yıldızla oluştur ve bu çağrı için 1 düş
-        tx.set(starRef, { balance: 99 });
-        logger.info(`Star quota initialized for user ${request.auth.uid}`, { day: today, balance: 99 });
+        // Belge yoksa, varsayılan 1500 aylık yıldızla oluştur ve bu çağrı için 1 düş
+        tx.set(starRef, { balance: 1499, createdAt: new Date() });
+        logger.info(`Monthly star quota initialized for user ${request.auth.uid}`, { month: currentMonth, balance: 1499 });
       } else {
         const currentBalance = starDoc.data().balance || 0;
         if (currentBalance <= 0) {
-          throw new HttpsError("resource-exhausted", "Günlük AI kullanım limitine ulaştınız.");
+          throw new HttpsError("resource-exhausted", "Aylık AI kullanım limitine ulaştınız.");
         }
         tx.update(starRef, { balance: currentBalance - 1 });
-        logger.info(`Star deducted for user ${request.auth.uid}`, { day: today, newBalance: currentBalance - 1 });
+        logger.info(`Star deducted for user ${request.auth.uid}`, { month: currentMonth, newBalance: currentBalance - 1 });
       }
     });
 
@@ -133,34 +133,28 @@ exports.generateGemini = onCall(
       const tokensUsed = Number(usage.totalTokenCount || 0);
       logger.info("Gemini call ok", { modelId, tokensUsed, uid: request.auth.uid.substring(0, 6) + "***" });
 
-      // Günlük kullanım logu (maliyet görünürlüğü için). Başarısız olursa çağrıyı etkilemez.
+      // Günlük kullanım logu (maliyet görünürlüğü için) - NON-BLOCKING FIRE-AND-FORGET
       try {
         const day = dayKeyIstanbul();
         const usageRef = db.collection("ai_usage").doc(`${request.auth.uid}_${day}`);
-        await db.runTransaction(async (tx) => {
-          const snap = await tx.get(usageRef);
-          if (!snap.exists) {
-            tx.set(usageRef, {
-              uid: request.auth.uid,
-              day,
-              calls: 1,
-              tokensUsedTotal: tokensUsed,
-              models: { [modelId]: { calls: 1, tokens: tokensUsed } },
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            });
-          } else {
-            const d = snap.data() || {};
-            const calls = Number(d.calls || 0) + 1;
-            const tokensTotal = Number(d.tokensUsedTotal || 0) + tokensUsed;
-            const models = d.models || {};
-            const m = models[modelId] || { calls: 0, tokens: 0 };
-            models[modelId] = { calls: Number(m.calls || 0) + 1, tokens: Number(m.tokens || 0) + tokensUsed };
-            tx.update(usageRef, { calls, tokensUsedTotal: tokensTotal, models, updatedAt: new Date() });
-          }
+        const modelKey = `models.${modelId}`; // Dinamik alan adı için
+
+        // 'await' kullanma - arka planda çalışsın, fonksiyon hemen yanıt dönsün
+        usageRef.set({
+          uid: request.auth.uid,
+          day,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(), // Sadece ilk oluşturmada set eder
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(), // Her zaman günceller
+          calls: admin.firestore.FieldValue.increment(1),
+          tokensUsedTotal: admin.firestore.FieldValue.increment(tokensUsed),
+          [`${modelKey}.calls`]: admin.firestore.FieldValue.increment(1),
+          [`${modelKey}.tokens`]: admin.firestore.FieldValue.increment(tokensUsed),
+        }, { merge: true }).catch((logErr) => {
+          // Başarısız olursa ana çağrıyı engelleme, sadece logla
+          logger.warn("ai_usage log failed (non-blocking)", { error: String(logErr) });
         });
       } catch (logErr) {
-        logger.warn("ai_usage log failed", { error: String(logErr) });
+        logger.warn("ai_usage log setup failed", { error: String(logErr) });
       }
 
       // Geriye dönük uyumlu alanlar: raw, tokensLimit, modelId

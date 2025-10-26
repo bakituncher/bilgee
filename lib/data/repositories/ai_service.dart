@@ -61,9 +61,9 @@ class AiService {
 
       String updatedHistory = previous.trim().isEmpty ? newTurn : '${previous.trim()} | $newTurn';
 
-      const int maxChars = 1200;
+      const int maxChars = 800; // MALİYET OPTİMİZASYONU: 1200'den 800'e düşürüldü
       if (updatedHistory.length > maxChars) {
-        const int preserveStart = 300;
+        const int preserveStart = 200;
         const int preserveEnd = maxChars - preserveStart - 5; // " ... " için 5 karakter
         if (preserveEnd > 0) {
           final start = updatedHistory.substring(0, preserveStart);
@@ -490,8 +490,19 @@ class AiService {
     // Önbellekli analiz (varsa)
     final analysis = _ref.read(overallStatsAnalysisProvider).value;
 
-    // Kalıcı bellek: mod bazlı kısa özet yükle ve mevcut geçmişle birleştir
-    final mem = await _getChatMemory(user.id, promptType);
+    // HAFIZA OPTİMİZASYONU: Sadece derinlemesine sohbet gerektiren modlar hafıza kullanır
+    final bool shouldUseMemory =
+        promptType == 'strategy_consult' ||
+        promptType == 'psych_support' ||
+        promptType == 'user_chat' ||
+        promptType == 'trial_review';
+
+    // Kalıcı bellek: Sadece gerekli modlar için yükle
+    String mem = '';
+    if (shouldUseMemory) {
+      mem = await _getChatMemory(user.id, promptType);
+    }
+
     final combinedHistory = [
       if (mem.trim().isNotEmpty) mem.trim(),
       if (conversationHistory.trim().isNotEmpty) conversationHistory.trim(),
@@ -626,8 +637,10 @@ class AiService {
       // Bu nedenle burada model parametresi gönderilmiyor.
     );
 
-    // Belleği güncelle (son tur)
-    unawaited(_updateChatMemory(user.id, promptType, lastUserMessage: lastUserMessage, aiResponse: raw, previous: mem));
+    // HAFIZA OPTİMİZASYONU: Belleği sadece hafıza kullanan modlarda güncelle
+    if (shouldUseMemory) {
+      unawaited(_updateChatMemory(user.id, promptType, lastUserMessage: lastUserMessage, aiResponse: raw, previous: mem));
+    }
 
     return raw;
   }
