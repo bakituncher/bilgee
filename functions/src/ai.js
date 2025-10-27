@@ -14,6 +14,10 @@ const GEMINI_RATE_LIMIT_WINDOW_SEC = parseInt(process.env.GEMINI_RATE_LIMIT_WIND
 const GEMINI_RATE_LIMIT_MAX = parseInt(process.env.GEMINI_RATE_LIMIT_MAX || "5", 10);
 const GEMINI_RATE_LIMIT_IP_MAX = parseInt(process.env.GEMINI_RATE_LIMIT_IP_MAX || "20", 10);
 
+// Premium kullanıcılar için ek rate limit ayarları (Cüzdan DoS koruması)
+const PREMIUM_RATE_LIMIT_PER_MINUTE = parseInt(process.env.PREMIUM_RATE_LIMIT_PER_MINUTE || "10", 10);
+const PREMIUM_RATE_LIMIT_PER_HOUR = parseInt(process.env.PREMIUM_RATE_LIMIT_PER_HOUR || "100", 10);
+
 exports.generateGemini = onCall(
   { region: "us-central1", timeoutSeconds: 60, memory: "256MiB", secrets: [GEMINI_API_KEY], enforceAppCheck: true, maxInstances: 20, concurrency: 10 },
   async (request) => {
@@ -60,10 +64,30 @@ exports.generateGemini = onCall(
     const uidKey = `gemini_uid_${request.auth.uid}`;
     const ip = getClientIpFromRawRequest(request.rawRequest) || "unknown";
     const ipKey = `gemini_ip_${ip}`;
-    await Promise.all([
-      enforceRateLimit(uidKey, GEMINI_RATE_LIMIT_WINDOW_SEC, GEMINI_RATE_LIMIT_MAX),
-      enforceRateLimit(ipKey, GEMINI_RATE_LIMIT_WINDOW_SEC, GEMINI_RATE_LIMIT_IP_MAX),
-    ]);
+
+    // Premium kullanıcılar için ek "Cüzdan DoS" koruması
+    const premiumMinuteKey = `gemini_premium_minute_${request.auth.uid}`;
+    const premiumHourKey = `gemini_premium_hour_${request.auth.uid}`;
+
+    try {
+      await Promise.all([
+        enforceRateLimit(uidKey, GEMINI_RATE_LIMIT_WINDOW_SEC, GEMINI_RATE_LIMIT_MAX),
+        enforceRateLimit(ipKey, GEMINI_RATE_LIMIT_WINDOW_SEC, GEMINI_RATE_LIMIT_IP_MAX),
+        // Premium kullanıcı için dakikalık limit (60 saniye, 10 istek)
+        enforceRateLimit(premiumMinuteKey, 60, PREMIUM_RATE_LIMIT_PER_MINUTE),
+        // Premium kullanıcı için saatlik limit (3600 saniye, 100 istek)
+        enforceRateLimit(premiumHourKey, 3600, PREMIUM_RATE_LIMIT_PER_HOUR),
+      ]);
+    } catch (rateLimitError) {
+      logger.warn("Rate limit exceeded for premium user", {
+        uid: request.auth.uid.substring(0, 6) + "***",
+        error: String(rateLimitError)
+      });
+      throw new HttpsError(
+        "resource-exhausted",
+        "Çok fazla istek gönderdiniz. Lütfen bir süre bekleyip tekrar deneyin. (Dakikada maksimum 10, saatte maksimum 100 istek)"
+      );
+    }
 
     // AYLIK "yıldız" kotası (günlük yerine aylık yenilenir - MALİYET OPTİMİZASYONU)
     const currentMonth = new Date().toLocaleString('sv-SE', { timeZone: 'Europe/Istanbul' }).substring(0, 7); // Örn: '2025-10'
