@@ -243,6 +243,7 @@ class _SubjectGalaxyViewState extends ConsumerState<_SubjectGalaxyView> {
           onTap: ()=> context.go('/coach/update-topic-performance', extra:{'subject': subjectName,'topic': e.topic.name,'performance': e.performance}),
           onLongPress: ()=> _showTopicStats(e),
           compact: true,
+          index: i, // Staggered animasyon için index
         );},
       );
     });
