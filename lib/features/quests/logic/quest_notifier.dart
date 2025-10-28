@@ -208,8 +208,8 @@ class QuestNotifier extends StateNotifier<bool> {
   }
 
   /// Kullanıcı arena'da yarışmaya katıldığında
-  void userParticipatedInArena() {
-    _reportAction(
+  Future<void> userParticipatedInArena() async {
+    await _reportAction(
       QuestCategory.engagement,
       amount: 1,
       route: QuestRoute.arena,
@@ -219,8 +219,8 @@ class QuestNotifier extends StateNotifier<bool> {
   }
 
   /// Kullanıcı kütüphaneyi ziyaret ettiğinde
-  void userVisitedLibrary() {
-    _reportAction(
+  Future<void> userVisitedLibrary() async {
+    await _reportAction(
       QuestCategory.engagement,
       amount: 1,
       route: QuestRoute.library,

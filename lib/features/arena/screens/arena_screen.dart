@@ -27,9 +27,14 @@ class _ArenaScreenState extends ConsumerState<ArenaScreen> {
   void initState() {
     super.initState();
     // Quest entegrasyonu: Arena ziyareti
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (mounted) {
-        ref.read(questNotifierProvider.notifier).userParticipatedInArena();
+        try {
+          await ref.read(questNotifierProvider.notifier).userParticipatedInArena();
+        } catch (e) {
+          // Quest hatası uygulamayı etkilemesin
+          debugPrint('Arena quest error: $e');
+        }
       }
     });
   }
