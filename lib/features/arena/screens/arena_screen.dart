@@ -67,7 +67,6 @@ class _LeaderboardView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final currentUserId = ref.watch(authControllerProvider).value?.uid;
     final currentUserExam = ref.watch(userProfileProvider).value?.selectedExam;
-    final currentUserProfile = ref.watch(userProfileProvider).value; // Kullanıcı profilini çek
 
     if (currentUserExam == null) return const SizedBox.shrink();
     final leaderboardAsync = period == 'weekly'
@@ -126,7 +125,7 @@ class _LeaderboardView extends ConsumerWidget {
                   if (showCurrentUserAtBottom && index == itemCount - 1) {
                     return Padding(
                       padding: const EdgeInsets.only(top: 20.0),
-                      child: _CurrentUserCard(entry: currentUserEntry, userProfile: currentUserProfile),
+                      child: _CurrentUserCard(entry: currentUserEntry),
                     );
                   }
 
@@ -143,7 +142,6 @@ class _LeaderboardView extends ConsumerWidget {
                         rank: entry.rank,
                         isCurrentUser: entry.userId == currentUserId,
                         topScore: topScore,
-                        currentUserProfile: currentUserProfile,
                       )
                           .animate()
                           .fadeIn(
@@ -195,18 +193,17 @@ class _LeaderboardView extends ConsumerWidget {
 
 class _CurrentUserCard extends StatelessWidget {
   final LeaderboardEntry entry;
-  final UserModel? userProfile;
 
-  const _CurrentUserCard({required this.entry, this.userProfile});
+  const _CurrentUserCard({required this.entry});
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    // Gerçek kullanıcı adını profil verilerinden çek
+    // Kullanıcı adını snapshot verisinden çek (tutarlılık için)
     String getUsernameDisplay() {
-      if (userProfile != null && userProfile!.username.trim().isNotEmpty) {
-        return '@${userProfile!.username.trim()}';
+      if (entry.username != null && entry.username!.trim().isNotEmpty) {
+        return '@${entry.username!.trim()}';
       }
       return '@user${entry.userId.substring(entry.userId.length - 6)}';
     }
@@ -371,14 +368,12 @@ class _RankCard extends ConsumerWidget {
   final int rank;
   final bool isCurrentUser;
   final int topScore;
-  final UserModel? currentUserProfile;
 
   const _RankCard({
     required this.entry,
     required this.rank,
     required this.isCurrentUser,
     required this.topScore,
-    this.currentUserProfile,
   });
 
   @override
@@ -406,18 +401,10 @@ class _RankCard extends ConsumerWidget {
       }
     }
 
-    // Gerçek kullanıcı adını çek
+    // Kullanıcı adını snapshot verisinden çek (tutarlılık için)
     String getUsernameDisplay() {
-      if (isCurrentUser && currentUserProfile != null) {
-        // Kendi kartımızsa profil verilerinden çek
-        if (currentUserProfile!.username.trim().isNotEmpty) {
-          return '@${currentUserProfile!.username.trim()}';
-        }
-      } else {
-        // Diğer kullanıcılar için LeaderboardEntry'den çek
-        if (entry.username != null && entry.username!.trim().isNotEmpty) {
-          return '@${entry.username!.trim()}';
-        }
+      if (entry.username != null && entry.username!.trim().isNotEmpty) {
+        return '@${entry.username!.trim()}';
       }
       return '@user${entry.userId.substring(entry.userId.length - 6)}';
     }

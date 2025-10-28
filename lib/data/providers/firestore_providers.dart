@@ -40,12 +40,6 @@ final testsProvider = FutureProvider<List<TestModel>>((ref) async {
   return <TestModel>[];
 });
 
-// Artık 'FutureProvider.family' doğru şekilde tanınıyor.
-final leaderboardProvider = FutureProvider.family.autoDispose<List<LeaderboardEntry>, String>((ref, examType) async {
-  final firestoreService = ref.watch(firestoreServiceProvider);
-  final entries = await firestoreService.getLeaderboardUsers(examType);
-  return entries;
-});
 
 // YENİ: Günlük ve Haftalık tam sıralama anlık görüntü sağlayıcıları (optimize edilmiş)
 final leaderboardDailyProvider = FutureProvider.family.autoDispose<List<LeaderboardEntry>, String>((ref, examType) async {

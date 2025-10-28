@@ -211,20 +211,19 @@ service cloud.firestore {
     }
 
     // =====================================================================
-    // LİDERLİK TABLOSU KOLEKSİYONU (/leaderboards)
+    // ESKİ LİDERLİK TABLOSU KOLEKSİYONU (/leaderboards) - KALDIRILDI
     // =====================================================================
+    // Bu koleksiyon artık kullanılmıyor. Optimize edilmiş snapshot sistemi kullanılıyor.
     match /leaderboards/{examType}/users/{userId} {
-      allow read: if request.auth != null;
-      allow write: if false;
-      allow delete: if false;
+      allow read, write: if false;
     }
 
     // =====================================================================
     // YENİ LİDERLİK TABLOSU YAPISI
     // =====================================================================
+    // ESKİ: /leaderboard_top - Artık kullanılmıyor
     match /leaderboard_top/{examType}/{period}/{docId} {
-      allow read, list: if request.auth != null;
-      allow write: if false;
+      allow read, write: if false;
     }
 
     match /leaderboard_scores/{examType}/{kind}/{periodId} {

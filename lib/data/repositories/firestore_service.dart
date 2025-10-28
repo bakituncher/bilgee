@@ -743,27 +743,6 @@ class FirestoreService {
   }
 
 
-  Future<List<LeaderboardEntry>> getLeaderboardUsers(String examType) async {
-    final snapshot = await _leaderboardsCollection
-        .doc(examType)
-        .collection('users')
-        .orderBy('score', descending: true)
-        .limit(100)
-        .get();
-
-    return snapshot.docs.map((doc) {
-      final data = doc.data();
-      return LeaderboardEntry(
-        userId: data['userId'] ?? doc.id,
-        userName: (data['userName'] ?? '') as String,
-        username: data['username'] as String?,
-        score: (data['score'] ?? 0) as int,
-        testCount: (data['testCount'] ?? 0) as int,
-        avatarStyle: data['avatarStyle'] as String?,
-        avatarSeed: data['avatarSeed'] as String?,
-      );
-    }).where((e) => e.userName.isNotEmpty).toList();
-  }
 
   // YENİ: Optimize edilmiş anlık görüntüden tüm listeyi oku
   Future<List<LeaderboardEntry>> getLeaderboardSnapshot(String examType, {required String period}) async {

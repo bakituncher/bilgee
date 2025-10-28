@@ -104,9 +104,9 @@ exports.onUserUpdate = onDocumentUpdated("users/{userId}", async (event) => {
   }
 
   logger.log(`Syncing profile for user ${uid} due to field changes.`);
-  const batch = db.batch();
 
-  // 1. Update public_profiles
+  // GÜVENLİK GÜNCELLEMESİ: Sadece public_profiles senkronize edilir.
+  // Eski /leaderboards koleksiyonu artık kullanılmıyor (optimize edilmiş snapshot sistemi kullanılıyor).
   const publicProfileRef = db.collection("public_profiles").doc(uid);
   const publicData = {
     name: after.name || "",
@@ -114,34 +114,13 @@ exports.onUserUpdate = onDocumentUpdated("users/{userId}", async (event) => {
     avatarStyle: after.avatarStyle || null,
     avatarSeed: after.avatarSeed || null,
     selectedExam: after.selectedExam || null,
-    // GÜVENLİK GÜNCELLEMESİ: Takipçi sayıları da senkronize edilir
     followerCount: typeof after.followerCount === "number" ? after.followerCount : 0,
     followingCount: typeof after.followingCount === "number" ? after.followingCount : 0,
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   };
-  batch.set(publicProfileRef, publicData, { merge: true });
-
-  // 2. Update leaderboards if exam type is selected
-  if (after.selectedExam) {
-    const leaderboardRef = db.collection("leaderboards").doc(after.selectedExam).collection("users").doc(uid);
-    const leaderboardData = {
-      userName: after.name || "",
-      username: after.username || "",
-      avatarStyle: after.avatarStyle || null,
-      avatarSeed: after.avatarSeed || null,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    };
-    batch.set(leaderboardRef, leaderboardData, { merge: true });
-  }
-
-  // 3. If exam type changed, delete old leaderboard entry
-  if (before.selectedExam && before.selectedExam !== after.selectedExam) {
-    const oldLeaderboardRef = db.collection("leaderboards").doc(before.selectedExam).collection("users").doc(uid);
-    batch.delete(oldLeaderboardRef);
-  }
 
   try {
-    await batch.commit();
+    await publicProfileRef.set(publicData, { merge: true });
     logger.log(`Successfully synced profile for user ${uid}.`);
   } catch (e) {
     logger.error("onUserUpdate failed", { uid, error: String(e) });

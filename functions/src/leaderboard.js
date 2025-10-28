@@ -22,11 +22,13 @@ async function upsertLeaderboardScore({ examType, uid, delta, userDocData }) {
   const dailyRef = base.collection("daily").doc(dayKey).collection("users").doc(uid);
   const weeklyRef = base.collection("weekly").doc(weekKey).collection("users").doc(uid);
   const safeName = userDocData?.name || "";
+  const username = userDocData?.username || "";
   const avatarStyle = userDocData?.avatarStyle || null;
   const avatarSeed = userDocData?.avatarSeed || null;
   const payload = {
     userId: uid,
     userName: safeName,
+    username: username,
     avatarStyle,
     avatarSeed,
     score: admin.firestore.FieldValue.increment(delta),
@@ -47,11 +49,13 @@ async function setLeaderboardScoreAbsolute({ examType, uid, score, userDocData, 
   const weekKey = weekKeyIstanbul();
   const base = db.collection("leaderboard_scores").doc(String(examType));
   const dailyRef = base.collection("daily").doc(dayKey).collection("users").doc(uid);
+  const username = userDocData?.username || "";
   const weeklyRef = base.collection("weekly").doc(weekKey).collection("users").doc(uid);
   const safeName = userDocData?.name || "";
   const avatarStyle = userDocData?.avatarStyle || null;
   const avatarSeed = userDocData?.avatarSeed || null;
   const payload = {
+    username: username,
     userId: uid,
     userName: safeName,
     avatarStyle,
@@ -86,6 +90,7 @@ async function publishLeaderboardSnapshot(examType, kind, limit = 200) {
     return {
       userId: x.userId || d.id,
       userName: x.userName || "",
+      username: x.username || "",
       score: typeof x.score === "number" ? x.score : 0,
       rank: index + 1, // Sıralamayı doğrudan ekle
       avatarStyle: x.avatarStyle || null,
