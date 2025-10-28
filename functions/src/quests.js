@@ -1,5 +1,6 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { onDocumentWritten } = require("firebase-functions/v2/firestore");
+const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions");
 const { db, admin } = require("./init");
 const { nowIstanbul, routeKeyFromPath } = require("./utils");
@@ -559,4 +560,101 @@ exports.claimQuestReward = onCall({
   }
 });
 
+/**
+ * Kullanıcı uygulamayı açtığında görevlerini kontrol eder ve gerekiyorsa yeniler.
+ * Bu yaklaşım sadece AKTİF kullanıcılar için işlem yapar (Lazy Loading).
+ *
+ * Avantajları:
+ * - Hiç giriş yapmayan kullanıcılar için gereksiz işlem yapılmaz
+ * - Firestore okuma/yazma maliyeti minimuma iner
+ * - Zaman aşımı riski olmaz
+ * - Ölçeklenebilir ve sürdürülebilir
+ */
+exports.checkAndRefreshQuests = onCall({
+  region: "us-central1",
+  enforceAppCheck: true,
+  timeoutSeconds: 60,
+  maxInstances: 50, // Yüksek trafikte birden fazla instance
+}, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Oturum gerekli");
+  }
+  const uid = request.auth.uid;
+
+  // Rate limit: Aynı kullanıcı sürekli çağıramasın
+  await enforceRateLimit(`check_quests_uid_${uid}`, 60, 10); // Dakikada 10 kontrol yeterli
+
+  try {
+    const userRef = db.collection("users").doc(uid);
+    const userSnap = await userRef.get();
+
+    if (!userSnap.exists) {
+      throw new HttpsError("failed-precondition", "Kullanıcı bulunamadı");
+    }
+
+    const userData = userSnap.data() || {};
+    const lastRefresh = userData.lastQuestRefreshDate;
+
+    // Bugünün başlangıcını hesapla (İstanbul saati)
+    const now = nowIstanbul();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    // Son yenileme bugün mü yapılmış?
+    let needsRefresh = true;
+    if (lastRefresh && lastRefresh.toDate) {
+      const lastRefreshDate = lastRefresh.toDate();
+      needsRefresh = lastRefreshDate < todayStart;
+    }
+
+    if (!needsRefresh) {
+      // Görevler zaten güncel, sadece mevcut görevleri döndür
+      const existingQuests = await userRef.collection("daily_quests").get();
+      return {
+        ok: true,
+        refreshed: false,
+        message: "Görevler zaten güncel",
+        questCount: existingQuests.size
+      };
+    }
+
+    // Görevlerin yenilenmesi gerekiyor
+    let analysis = null;
+    try {
+      const a = await userRef.collection("performance").doc("analysis_summary").get();
+      analysis = a.exists ? a.data() : null;
+    } catch (_) {
+      analysis = null;
+    }
+
+    const ctx = await getUserContext(userRef);
+    const dailyList = pickDailyQuestsForUser(userData, analysis, ctx);
+
+    // Eski görevleri temizle, yenilerini ekle
+    const dailyCol = userRef.collection("daily_quests");
+    const existing = await dailyCol.get();
+    const batch = db.batch();
+
+    existing.docs.forEach((d) => batch.delete(d.ref));
+    dailyList.forEach((q) => batch.set(dailyCol.doc(q.qid), q, { merge: true }));
+    batch.update(userRef, {
+      lastQuestRefreshDate: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    await batch.commit();
+
+    logger.info(`Görevler yenilendi - uid: ${uid}, questCount: ${dailyList.length}`);
+
+    return {
+      ok: true,
+      refreshed: true,
+      message: "Görevler başarıyla yenilendi",
+      questCount: dailyList.length
+    };
+
+  } catch (e) {
+    logger.error("checkAndRefreshQuests hatası", { uid, error: String(e) });
+    if (e instanceof HttpsError) throw e;
+    throw new HttpsError("internal", `Görev kontrolü başarısız: ${String(e)}`);
+  }
+});
 

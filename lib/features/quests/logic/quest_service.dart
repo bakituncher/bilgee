@@ -22,6 +22,52 @@ class QuestService {
 
   bool _inProgress = false;
 
+  /// LAZY LOADING: Kullanıcı uygulamayı açtığında görevlerini kontrol eder.
+  /// Eğer bugün için güncel değilse, backend'de otomatik yeniler.
+  /// Bu yaklaşım sürdürülebilir ve maliyet-efektiftir.
+  Future<List<Quest>> checkAndRefreshQuests(String userId) async {
+    if (_inProgress) {
+      return await _ref.read(firestoreServiceProvider).getDailyQuestsOnce(userId);
+    }
+    _inProgress = true;
+    try {
+      await ensureAppCheckTokenReady();
+      final functions = _ref.read(functionsProvider);
+      final callable = functions.httpsCallable('quests-checkAndRefreshQuests');
+
+      final result = await callable.call();
+      final data = result.data as Map<String, dynamic>;
+
+      if (data['refreshed'] == true) {
+        // Görevler yenilendi, session state'i temizle
+        _ref.read(sessionCompletedQuestsProvider.notifier).state = <String>{};
+        if (kDebugMode) {
+          debugPrint('[QuestService] Görevler yenilendi: ${data['questCount']} görev');
+        }
+      }
+
+      // Her iki durumda da (yenilendi ya da zaten güncel) güncel görevleri döndür
+      final quests = await _ref.read(firestoreServiceProvider).getDailyQuestsOnce(userId);
+      _ref.read(questGenerationIssueProvider.notifier).state = false;
+      return quests;
+
+    } catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('[QuestService] checkAndRefreshQuests failed: $e');
+        debugPrint(st.toString());
+      }
+      _ref.read(questGenerationIssueProvider.notifier).state = true;
+      // Hata durumunda mevcut görevleri döndür
+      try {
+        return await _ref.read(firestoreServiceProvider).getDailyQuestsOnce(userId);
+      } catch (_) {
+        return [];
+      }
+    } finally {
+      _inProgress = false;
+    }
+  }
+
   Future<List<Quest>> refreshDailyQuestsForUser(UserModel user, {bool force = false}) async {
     if (_inProgress) {
       return await _ref.read(firestoreServiceProvider).getDailyQuestsOnce(user.id);
@@ -109,7 +155,9 @@ final dailyQuestsProvider = FutureProvider.autoDispose<List<Quest>>((ref) async 
   final user = ref.watch(userProfileProvider).value;
   if (user == null) return [];
   final questService = ref.read(questServiceProvider);
-  final result = await questService.refreshDailyQuestsForUser(user).catchError((e) async {
+
+  // LAZY LOADING: Kullanıcı uygulamayı açtığında görevleri kontrol et
+  final result = await questService.checkAndRefreshQuests(user.id).catchError((e) async {
     if (kDebugMode) debugPrint('[dailyQuestsProvider] hata: $e');
     return <Quest>[];
   });
