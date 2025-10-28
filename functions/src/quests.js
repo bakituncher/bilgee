@@ -1,5 +1,6 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { onDocumentWritten } = require("firebase-functions/v2/firestore");
+const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions");
 const { db, admin } = require("./init");
 const { nowIstanbul, routeKeyFromPath } = require("./utils");
@@ -384,3 +385,276 @@ exports.onDailyQuestProgress = onDocumentWritten({
   if (!(event && event.data && event.data.after)) return;
   await autoCompleteQuestIfNeeded(event.data.after);
 });
+
+/**
+ * İstemciden gelen eylemleri alır ve ilgili görevleri GÜVENLİ bir şekilde günceller.
+ * Bu, istemci tarafındaki 'quest_tracking_service'in yerini alır.
+ */
+exports.reportAction = onCall({
+  region: "us-central1",
+  enforceAppCheck: true,
+  timeoutSeconds: 30,
+}, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Oturum gerekli.");
+  }
+  const uid = request.auth.uid;
+  const categoryName = request.data?.category;
+  const amount = request.data?.amount || 1;
+  const routeKey = request.data?.routeKey; // YENİ: Route bazlı filtreleme
+  const tags = request.data?.tags; // YENİ: Tag bazlı filtreleme
+
+  if (!categoryName) {
+    throw new HttpsError("invalid-argument", "Kategori gerekli.");
+  }
+
+  // Finansal/Spam koruması: Kullanıcı bu fonksiyonu çok hızlı çağıramasın
+  await enforceRateLimit(`report_action_uid_${uid}`, 60, 20); // Dakikada 20 istek limiti
+
+  const questColRef = db.collection("users").doc(uid).collection("daily_quests");
+
+  // İlgili, tamamlanmamış ve bu eylemle tetiklenebilecek görevleri bul
+  let query = questColRef
+    .where("category", "==", categoryName)
+    .where("isCompleted", "==", false);
+
+  const querySnap = await query.get();
+
+  if (querySnap.empty) {
+    return { success: true, message: "İlgili aktif görev yok." };
+  }
+
+  // İstemci tarafı filtreleme: route ve tags'e göre
+  let relevantDocs = querySnap.docs;
+
+  if (routeKey) {
+    relevantDocs = relevantDocs.filter(doc => {
+      const questData = doc.data();
+      return questData.routeKey === routeKey || questData.actionRoute?.includes(routeKey);
+    });
+  }
+
+  if (tags && Array.isArray(tags) && tags.length > 0) {
+    relevantDocs = relevantDocs.filter(doc => {
+      const questData = doc.data();
+      const questTags = questData.tags || [];
+      // En az bir tag eşleşmesi varsa uygun
+      return tags.some(tag => questTags.includes(tag));
+    });
+  }
+
+  if (relevantDocs.length === 0) {
+    return { success: true, message: "İlgili spesifik görev yok." };
+  }
+
+  const batch = db.batch();
+  let completedQuest = null; // Sadece ilk tamamlanan görevi UI'a bildir
+  let updateCount = 0;
+
+  for (const doc of relevantDocs) {
+    const quest = doc.data();
+    const newProgress = (quest.currentProgress || 0) + amount;
+    const isCompleted = newProgress >= quest.goalValue;
+
+    const updateData = {
+      currentProgress: newProgress,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      isCompleted: isCompleted,
+    };
+
+    if (isCompleted) {
+      updateData.completionDate = admin.firestore.FieldValue.serverTimestamp();
+    }
+
+    batch.update(doc.ref, updateData);
+    updateCount++;
+
+    if (isCompleted && !completedQuest) {
+      completedQuest = { ...quest, id: doc.id, qid: doc.id, ...updateData };
+    }
+  }
+
+  if (updateCount > 0) {
+    await batch.commit();
+  }
+
+  // Eğer bir görev tamamlandıysa, istemciye bildirim göstermesi için
+  // bu görevin verisini döndür.
+  if (completedQuest) {
+    return { success: true, completedQuest: completedQuest, updatedCount };
+  }
+
+  return { success: true, message: "İlerleme kaydedildi.", updatedCount };
+});
+
+/**
+ * Bir görevin ödülünü GÜVENLİ bir şekilde alır.
+ * Puanı artırır ve görevi 'ödendi' olarak işaretler.
+ */
+exports.claimQuestReward = onCall({
+  region: "us-central1",
+  enforceAppCheck: true,
+  timeoutSeconds: 30,
+}, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Oturum gerekli.");
+  }
+  const uid = request.auth.uid;
+  const questId = request.data?.questId;
+
+  if (!questId) {
+    throw new HttpsError("invalid-argument", "questId gerekli.");
+  }
+
+  // Hız limiti: Çift tıklama veya spam'i engelle
+  await enforceRateLimit(`claim_reward_uid_${uid}`, 10, 5); // 10 saniyede 5 istek
+
+  const questRef = db.collection("users").doc(uid).collection("daily_quests").doc(questId);
+  const statsRef = db.collection("users").doc(uid).collection("state").doc("stats");
+
+  let reward = 0;
+  let questTitle = "Görev";
+
+  try {
+    await db.runTransaction(async (transaction) => {
+      const questDoc = await transaction.get(questRef);
+      if (!questDoc.exists) {
+        throw new HttpsError("not-found", "Görev bulunamadı.");
+      }
+
+      const questData = questDoc.data();
+      questTitle = questData.title || "Görev";
+
+      if (questData.rewardClaimed === true) {
+        throw new HttpsError("already-exists", "Bu ödül zaten alınmış.");
+      }
+
+      if (questData.isCompleted !== true) {
+        throw new HttpsError("failed-precondition", "Görev henüz tamamlanmamış.");
+      }
+
+      reward = questData.reward || 10; // Dinamik ödül hesaplaması da buraya eklenebilir.
+
+      // 1. Görevi "ödendi" olarak işaretle
+      transaction.update(questRef, {
+        rewardClaimed: true,
+        rewardClaimedAt: admin.firestore.FieldValue.serverTimestamp(),
+        actualReward: reward,
+      });
+
+      // 2. Puanı (engagementScore) GÜVENLİ olarak artır
+      transaction.set(statsRef, {
+        engagementScore: admin.firestore.FieldValue.increment(reward),
+        totalEarnedBP: admin.firestore.FieldValue.increment(reward),
+        lastRewardClaimedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
+    });
+
+    return { success: true, reward: reward, questTitle: questTitle };
+
+  } catch (e) {
+    logger.error("claimQuestReward Transaction hatası", { uid, questId, error: e });
+    if (e instanceof HttpsError) throw e;
+    throw new HttpsError("internal", "Ödül alınırken bir hata oluştu.");
+  }
+});
+
+/**
+ * Kullanıcı uygulamayı açtığında görevlerini kontrol eder ve gerekiyorsa yeniler.
+ * Bu yaklaşım sadece AKTİF kullanıcılar için işlem yapar (Lazy Loading).
+ *
+ * Avantajları:
+ * - Hiç giriş yapmayan kullanıcılar için gereksiz işlem yapılmaz
+ * - Firestore okuma/yazma maliyeti minimuma iner
+ * - Zaman aşımı riski olmaz
+ * - Ölçeklenebilir ve sürdürülebilir
+ */
+exports.checkAndRefreshQuests = onCall({
+  region: "us-central1",
+  enforceAppCheck: true,
+  timeoutSeconds: 60,
+  maxInstances: 50, // Yüksek trafikte birden fazla instance
+}, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Oturum gerekli");
+  }
+  const uid = request.auth.uid;
+
+  // Rate limit: Aynı kullanıcı sürekli çağıramasın
+  await enforceRateLimit(`check_quests_uid_${uid}`, 60, 10); // Dakikada 10 kontrol yeterli
+
+  try {
+    const userRef = db.collection("users").doc(uid);
+    const userSnap = await userRef.get();
+
+    if (!userSnap.exists) {
+      throw new HttpsError("failed-precondition", "Kullanıcı bulunamadı");
+    }
+
+    const userData = userSnap.data() || {};
+    const lastRefresh = userData.lastQuestRefreshDate;
+
+    // Bugünün başlangıcını hesapla (İstanbul saati)
+    const now = nowIstanbul();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    // Son yenileme bugün mü yapılmış?
+    let needsRefresh = true;
+    if (lastRefresh && lastRefresh.toDate) {
+      const lastRefreshDate = lastRefresh.toDate();
+      needsRefresh = lastRefreshDate < todayStart;
+    }
+
+    if (!needsRefresh) {
+      // Görevler zaten güncel, sadece mevcut görevleri döndür
+      const existingQuests = await userRef.collection("daily_quests").get();
+      return {
+        ok: true,
+        refreshed: false,
+        message: "Görevler zaten güncel",
+        questCount: existingQuests.size
+      };
+    }
+
+    // Görevlerin yenilenmesi gerekiyor
+    let analysis = null;
+    try {
+      const a = await userRef.collection("performance").doc("analysis_summary").get();
+      analysis = a.exists ? a.data() : null;
+    } catch (_) {
+      analysis = null;
+    }
+
+    const ctx = await getUserContext(userRef);
+    const dailyList = pickDailyQuestsForUser(userData, analysis, ctx);
+
+    // Eski görevleri temizle, yenilerini ekle
+    const dailyCol = userRef.collection("daily_quests");
+    const existing = await dailyCol.get();
+    const batch = db.batch();
+
+    existing.docs.forEach((d) => batch.delete(d.ref));
+    dailyList.forEach((q) => batch.set(dailyCol.doc(q.qid), q, { merge: true }));
+    batch.update(userRef, {
+      lastQuestRefreshDate: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    await batch.commit();
+
+    logger.info(`Görevler yenilendi - uid: ${uid}, questCount: ${dailyList.length}`);
+
+    return {
+      ok: true,
+      refreshed: true,
+      message: "Görevler başarıyla yenilendi",
+      questCount: dailyList.length
+    };
+
+  } catch (e) {
+    logger.error("checkAndRefreshQuests hatası", { uid, error: String(e) });
+    if (e instanceof HttpsError) throw e;
+    throw new HttpsError("internal", `Görev kontrolü başarısız: ${String(e)}`);
+  }
+});
+

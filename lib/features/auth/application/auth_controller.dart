@@ -7,6 +7,7 @@ import 'package:purchases_flutter/purchases_flutter.dart'; // RevenueCat SDK
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/auth/data/auth_repository.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
+import 'package:flutter/foundation.dart'; // kDebugMode ve debugPrint için
 import '../../../shared/notifications/notification_service.dart';
 
 final authControllerProvider = StreamNotifierProvider<AuthController, User?>(() {
@@ -68,6 +69,8 @@ class AuthController extends StreamNotifier<User?> {
   }
 
   Future<void> _updateAdminClaim(User user) async {
+    // Admin claim güncellemesi sadece geliştirme ortamında veya özel durumlarda gereklidir
+    // Normal kullanıcılar için atlanır
     try {
       // DÜZELTME: Fonksiyon adı yanlıştı ('setSelfAdmin').
       // index.js içinde exports.admin = admin; olduğu için gerçek callable adı 'admin-setSelfAdmin'.
@@ -76,16 +79,32 @@ class AuthController extends StreamNotifier<User?> {
       await user.getIdTokenResult(true); // claimleri yenile
       print('Admin claim updated successfully.');
     } catch (e) {
-      print('Failed to update admin claim: $e');
+      // Bu hata normal kullanıcılar için beklenen bir durumdur
+      // Sadece debug modda log'la
+      if (kDebugMode) {
+        debugPrint('Admin claim update (normal users will fail): $e');
+      }
     }
   }
 
   // Sunucu tarafında anında premium senkronizasyonu tetikleyen yardımcı fonksiyon.
+  // THROTTLE KORUMASLI: Son çağrıdan 30 saniye geçmediyse çağrılmaz
+  DateTime? _lastSyncAttempt;
   Future<void> _triggerServerSideSync() async {
+    // Throttle kontrolü: Son 30 saniyede zaten çağrıldıysa atla
+    final now = DateTime.now();
+    if (_lastSyncAttempt != null && now.difference(_lastSyncAttempt!) < const Duration(seconds: 30)) {
+      print("Premium sync throttled - son çağrıdan 30 saniye geçmedi, atlanıyor.");
+      return;
+    }
+
+    _lastSyncAttempt = now;
+
     try {
       final callable = FirebaseFunctions.instanceFor(region: 'us-central1')
           .httpsCallable('premium-syncRevenueCatPremiumCallable');
       await callable.call();
+      print("Premium sync başarılı.");
     } catch (e) {
       // Bu hata, kullanıcının arayüzünü engellememelidir.
       // Genellikle geçici bir ağ sorunu veya rate limiting'den kaynaklanır.

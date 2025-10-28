@@ -13,12 +13,34 @@ import 'package:flutter/services.dart';
 import 'dart:ui';
 import 'package:taktik/shared/widgets/logo_loader.dart';
 import 'package:taktik/data/models/user_model.dart';
+import 'package:taktik/features/quests/logic/quest_notifier.dart';
 
-class ArenaScreen extends ConsumerWidget {
+class ArenaScreen extends ConsumerStatefulWidget {
   const ArenaScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ArenaScreen> createState() => _ArenaScreenState();
+}
+
+class _ArenaScreenState extends ConsumerState<ArenaScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Quest entegrasyonu: Arena ziyareti
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (mounted) {
+        try {
+          await ref.read(questNotifierProvider.notifier).userParticipatedInArena();
+        } catch (e) {
+          // Quest hatası uygulamayı etkilemesin
+          debugPrint('Arena quest error: $e');
+        }
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final currentUser = ref.watch(userProfileProvider).value;
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;

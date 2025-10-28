@@ -1,11 +1,14 @@
 // lib/features/quests/logic/quest_notifier.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:taktik/features/quests/logic/quest_progress_controller.dart';
 import 'package:taktik/features/quests/models/quest_model.dart';
 import 'package:taktik/features/pomodoro/logic/pomodoro_notifier.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/quests/logic/quest_session_state.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // FieldValue, SetOptions
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:taktik/features/quests/logic/quest_completion_notifier.dart';
+import 'package:taktik/features/quests/logic/optimized_quests_provider.dart';
+import 'package:flutter/foundation.dart';
 
 // Bu provider'ın varlığı devam etmeli, arayüzden çağrılar bunun üzerinden yapılacak.
 final questNotifierProvider = StateNotifierProvider.autoDispose<QuestNotifier, bool>((ref) {
@@ -13,12 +16,10 @@ final questNotifierProvider = StateNotifierProvider.autoDispose<QuestNotifier, b
 });
 
 /// Uygulamadaki görev ilerlemesiyle ilgili tüm eylemler için TEK MERKEZİ NOKTA.
-/// Arayüzden gelen "Kullanıcı X eylemini yaptı" bilgisini alıp, hangi görevlerin
-/// güncelleneceğine karar verir.
+/// Arayüzden gelen "Kullanıcı X eylemini yaptı" bilgisini alıp,
+/// sunucu fonksiyonu üzerinden görevleri günceller.
 class QuestNotifier extends StateNotifier<bool> {
   final Ref _ref;
-  // QuestProgressController, tüm ağır işi yapan merkezi mantık birimidir.
-  final QuestProgressController _controller = const QuestProgressController();
 
   QuestNotifier(this._ref) : super(false) {
     // Pomodoro gibi arkaplan state'lerini dinlemeye devam et.
@@ -46,154 +47,243 @@ class QuestNotifier extends StateNotifier<bool> {
       final int nextCount = next.maybeWhen(data: (List<String> l) => l.length, orElse: () => 0);
       final int diff = nextCount - prevCount;
       if (diff > 0) {
-        _controller.updateQuestProgress(_ref, QuestCategory.study, amount: diff);
+        userCompletedWeeklyPlanTask();
       }
     });
   }
 
-  // --- YENİ EYLEM BAZLI METOTLAR ---
+  /// Merkezi Eylem Raporlama Fonksiyonu - Sunucu tarafında görev günceller
+  Future<void> _reportAction(
+    QuestCategory category, {
+    int amount = 1,
+    QuestRoute? route,
+    List<String>? tags,
+  }) async {
+    try {
+      final functions = _ref.read(functionsProvider);
+      final callable = functions.httpsCallable('quests-reportAction');
+
+      final params = <String, dynamic>{
+        'category': category.name,
+        'amount': amount,
+      };
+
+      // Route bazlı filtreleme
+      if (route != null) {
+        params['routeKey'] = route.name;
+      }
+
+      // Tag bazlı filtreleme
+      if (tags != null && tags.isNotEmpty) {
+        params['tags'] = tags;
+      }
+
+      final result = await callable.call(params);
+
+      // Fonksiyon bir görev tamamlandığını bildirirse, UI'ı tetikle
+      final data = result.data as Map<String, dynamic>?;
+      if (data?['completedQuest'] != null) {
+        final questData = data!['completedQuest'] as Map<String, dynamic>;
+        final questId = questData['id'] ?? questData['qid'] ?? '';
+        if (questId.isNotEmpty) {
+          final quest = Quest.fromMap(questData, questId);
+          _ref.read(questCompletionProvider.notifier).show(quest);
+        }
+      }
+
+      // Provider'ları yenile
+      _ref.invalidate(optimizedQuestsProvider);
+
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[QuestNotifier] reportAction hatası: $e');
+      }
+    }
+  }
+
+  // --- EYLEM BAZLI METOTLAR ---
 
   /// Kullanıcı bir Pomodoro seansını tamamladığında bu metot çağrılır.
   void userCompletedPomodoroSession(int focusSeconds) {
-    // YENİ: Pomodoro için spesifik route güncellemesi
-    _controller.updateEngagementForRoute(_ref, QuestRoute.pomodoro, amount: 1);
-
     final int minutes = focusSeconds ~/ 60;
     if (minutes > 0) {
-      _controller.updateQuestProgress(_ref, QuestCategory.focus, amount: minutes);
+      _reportAction(
+        QuestCategory.focus,
+        amount: minutes,
+        route: QuestRoute.pomodoro,
+        tags: ['pomodoro', 'deep_work'],
+      );
     }
-
-    // Kullanıcının pomodoro kullandığını işaretle
     _updateUserFeatureUsage('pomodoro');
   }
 
   /// Haftalık planından bir görev tamamlandığında çağrılır (Planlı Harekât vb.).
   void userCompletedWeeklyPlanTask() {
-    _controller.updateQuestProgress(_ref, QuestCategory.study, amount: 1);
+    _reportAction(
+      QuestCategory.study,
+      amount: 1,
+      route: QuestRoute.weeklyPlan,
+      tags: ['plan', 'schedule'],
+    );
     _updateUserFeatureUsage('weeklyPlan');
   }
 
   /// Kullanıcı "Cevher Atölyesi"nde bir quiz bitirdiğinde bu metot çağrılır.
   void userCompletedWorkshopQuiz(String subject, String topic) {
-    // YENİ: Route bazlı engagement ve context bazlı practice güncellemesi
-    _controller.updateEngagementForRoute(_ref, QuestRoute.workshop, amount: 1);
-    _controller.updatePracticeWithContext(_ref,
+    _reportAction(
+      QuestCategory.practice,
       amount: 1,
-      subject: subject,
-      topic: topic,
-      source: PracticeSource.workshop
+      route: QuestRoute.workshop,
+      tags: ['workshop', subject.toLowerCase()],
     );
-
     _updateUserFeatureUsage('workshop');
-    print('[QuestNotifier] Atölye quizi tamamlandı - $subject/$topic');
+    if (kDebugMode) {
+      debugPrint('[QuestNotifier] Atölye quizi tamamlandı - $subject/$topic');
+    }
   }
 
   /// Kullanıcı yeni bir deneme sonucu eklediğinde bu metot çağrılır.
   void userSubmittedTest() {
-    _controller.updateQuestProgress(_ref, QuestCategory.test_submission);
+    _reportAction(
+      QuestCategory.test_submission,
+      amount: 1,
+      route: QuestRoute.addTest,
+      tags: ['test', 'analysis'],
+    );
     _updateUserFeatureUsage('testSubmission');
   }
 
   /// Kullanıcı bir konunun performansını manuel olarak güncellediğinde bu metot çağrılır.
   void userUpdatedTopicPerformance(String subject, String topic, int questionCount) {
-    _controller.updatePracticeWithContext(_ref,
+    _reportAction(
+      QuestCategory.practice,
       amount: questionCount,
-      subject: subject,
-      topic: topic,
-      source: PracticeSource.general
+      route: QuestRoute.coach,
+      tags: ['topic_update', subject.toLowerCase()],
     );
-    _controller.updateQuestProgress(_ref, QuestCategory.study, amount: 1);
+    _reportAction(
+      QuestCategory.study,
+      amount: 1,
+      tags: ['mastery'],
+    );
   }
 
   /// Kullanıcı yeni bir stratejik planı onayladığında bu metot çağrılır.
   void userApprovedStrategy() {
-    // YENİ: Haftalık Planlama için spesifik route güncellemesi
-    _controller.updateEngagementForRoute(_ref, QuestRoute.strategy, amount: 1);
-
-    // Kullanıcının strateji özelliğini kullandığını işaretle
+    _reportAction(
+      QuestCategory.engagement,
+      amount: 1,
+      route: QuestRoute.strategy,
+      tags: ['strategy', 'planning'],
+    );
     _updateUserFeatureUsage('strategy');
     _markUserCreatedStrategicPlan();
-
-    print('[QuestNotifier] Stratejik plan onaylandı - görevler güncellendi');
+    if (kDebugMode) {
+      debugPrint('[QuestNotifier] Stratejik plan onaylandı - görevler güncellendi');
+    }
   }
 
   /// Kullanıcı giriş yaptığında veya uygulamayı açtığında tutarlılık görevlerini tetikler.
   void userLoggedInOrOpenedApp() {
     // Session state'i temizle - günlük görevler yenilendiğinde eski tamamlanmışları temizlemek için
     _ref.read(sessionCompletedQuestsProvider.notifier).state = <String>{};
-    _controller.updateQuestProgress(_ref, QuestCategory.consistency);
-  }
-
-  /// YENİ: Kullanıcı bir soru çözdüğünde (coach'ta)
-  void userSolvedQuestions(int questionCount, {String? subject, String? topic}) {
-    _controller.updatePracticeWithContext(_ref,
-      amount: questionCount,
-      subject: subject,
-      topic: topic,
-      source: PracticeSource.general,
+    _reportAction(
+      QuestCategory.consistency,
+      amount: 1,
+      tags: ['login', 'daily'],
     );
   }
 
-  /// YENİ: Kullanıcı arena'da yarışmaya katıldığında
-  void userParticipatedInArena() {
-    _controller.updateEngagementForRoute(_ref, QuestRoute.arena, amount: 1);
+  /// Kullanıcı bir soru çözdüğünde (coach'ta)
+  void userSolvedQuestions(int questionCount, {String? subject, String? topic}) {
+    final tags = <String>['practice'];
+    if (subject != null) tags.add(subject.toLowerCase());
+
+    _reportAction(
+      QuestCategory.practice,
+      amount: questionCount,
+      route: QuestRoute.coach,
+      tags: tags,
+    );
+  }
+
+  /// Kullanıcı arena'da yarışmaya katıldığında
+  Future<void> userParticipatedInArena() async {
+    await _reportAction(
+      QuestCategory.engagement,
+      amount: 1,
+      route: QuestRoute.arena,
+      tags: ['arena', 'competition'],
+    );
     _updateUserFeatureUsage('arena');
   }
 
-  /// YENİ: Kullanıcı kütüphaneyi ziyaret ettiğinde
-  void userVisitedLibrary() {
-    _controller.updateEngagementForRoute(_ref, QuestRoute.library, amount: 1);
+  /// Kullanıcı kütüphaneyi ziyaret ettiğinde
+  Future<void> userVisitedLibrary() async {
+    await _reportAction(
+      QuestCategory.engagement,
+      amount: 1,
+      route: QuestRoute.library,
+      tags: ['library', 'review'],
+    );
   }
 
-  /// ESKI UYUMLULUK: Legacy metod - ID ile görev ilerletme
-  void updateQuestProgressById(String questId, {int amount = 1}) {
-    // Bu metod artık genel kategori güncellemesi yapıyor
-    // Spesifik ID güncellemesi için backend'e yönlendirme yapılabilir
-    _controller.updateQuestProgress(_ref, QuestCategory.study, amount: amount);
-  }
-
-  /// YENİ: Kullanıcı stats raporunu görüntülediğinde
+  /// Kullanıcı stats raporunu görüntülediğinde
   void userViewedStatsReport() {
-    _controller.updateEngagementForRoute(_ref, QuestRoute.stats, amount: 1);
+    _reportAction(
+      QuestCategory.engagement,
+      amount: 1,
+      route: QuestRoute.stats,
+      tags: ['stats', 'analysis'],
+    );
     _updateUserFeatureUsage('stats');
   }
 
-  /// YENİ: Kullanıcı özellik kullanımını işaretle (kişiselleştirme için)
-  void _updateUserFeatureUsage(String feature) {
+  /// Legacy metod - geriye dönük uyumluluk için
+  void updateQuestProgressById(String questId, {int amount = 1}) {
+    // Artık kullanılmıyor - kategori bazlı güncelleme kullanın
+    if (kDebugMode) {
+      debugPrint('[QuestNotifier] updateQuestProgressById deprecated - use category-based methods instead');
+    }
+  }
+
+  // --- YARDIMCI METOTLAR ---
+
+  /// Kullanıcının bir özelliği kullandığını Firestore'da işaretler
+  void _updateUserFeatureUsage(String featureName) {
     final user = _ref.read(userProfileProvider).value;
     if (user == null) return;
 
-    final fs = _ref.read(firestoreProvider);
-    final docRef = fs.collection('users').doc(user.id);
-
-    fs.runTransaction((transaction) async {
-      final snap = await transaction.get(docRef);
-      final data = snap.data();
-      final current = Map<String, dynamic>.from((data?['usedFeatures'] as Map<String, dynamic>?) ?? {});
-      if (current[feature] == true) {
-        return; // zaten işaretlenmiş
+    try {
+      final firestore = _ref.read(firestoreProvider);
+      firestore.collection('users').doc(user.id).update({
+        'usedFeatures.$featureName': true,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[QuestNotifier] Feature usage update hatası: $e');
       }
-      current[feature] = true;
-      transaction.set(docRef, {'usedFeatures': current}, SetOptions(merge: true));
-    }).catchError((e) {
-      print('[QuestNotifier] Feature usage update failed: $e');
-    });
+    }
   }
 
-  /// YENİ: Kullanıcının stratejik plan oluşturduğunu işaretle
+  /// Kullanıcının stratejik plan oluşturduğunu işaretler
   void _markUserCreatedStrategicPlan() {
     final user = _ref.read(userProfileProvider).value;
     if (user == null) return;
 
-    final fs = _ref.read(firestoreProvider);
-    fs.collection('users').doc(user.id).set(
-      {
+    try {
+      final firestore = _ref.read(firestoreProvider);
+      firestore.collection('users').doc(user.id).update({
         'hasCreatedStrategicPlan': true,
         'lastStrategyCreationDate': FieldValue.serverTimestamp(),
-      },
-      SetOptions(merge: true),
-    ).catchError((e) {
-      print('[QuestNotifier] Strategic plan marking failed: $e');
-    });
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[QuestNotifier] Strategy plan mark hatası: $e');
+      }
+    }
   }
 }
+

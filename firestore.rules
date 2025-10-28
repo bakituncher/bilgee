@@ -41,98 +41,17 @@ service cloud.firestore {
       match /daily_quests/{questId} {
         // Yalnızca sahibi okuyabilir
         allow read: if request.auth.uid == userId;
-        // İstemci yeni görev oluşturamaz ve silemez (sunucu üretir)
-        allow create, delete: if false;
-        // İstemci güncellemeleri: yalnızca güvenli alt kümeler izinli
-        allow update: if request.auth.uid == userId && (
-          // (1) Sadece ilerleme artışı (+ isteğe bağlı birkaç alan)
-          (
-            request.resource.data.diff(resource.data).changedKeys().hasOnly(['currentProgress','updatedAt','examType','correctAnswers','totalQuestions']) &&
-            request.resource.data.currentProgress is number &&
-            resource.data.currentProgress is number &&
-            request.resource.data.currentProgress >= resource.data.currentProgress
-          ) ||
-          // (2) Tamamlamayı aynı yazımda işaretleme
-          (
-            request.resource.data.diff(resource.data).changedKeys().hasOnly(['currentProgress','updatedAt','isCompleted','completionDate','examType','correctAnswers','totalQuestions']) &&
-            request.resource.data.isCompleted == true &&
-            request.resource.data.currentProgress is number &&
-            resource.data.goalValue is number &&
-            request.resource.data.currentProgress >= resource.data.currentProgress &&
-            request.resource.data.currentProgress >= resource.data.goalValue
-          ) ||
-          // (3) Ödül talebi (tamamlandıktan sonra tek seferlik)
-          (
-            request.resource.data.diff(resource.data).changedKeys().hasOnly(['rewardClaimed','rewardClaimedAt','claimedAt','actualReward','updatedAt']) &&
-            resource.data.currentProgress is number &&
-            resource.data.goalValue is number &&
-            resource.data.currentProgress >= resource.data.goalValue &&
-            (resource.data.rewardClaimed == false || !(resource.data.rewardClaimed == true)) &&
-            request.resource.data.rewardClaimed == true
-          )
-        );
+
+        // İstemci GÖREVLERİ ASLA YAZAMAZ.
+        // Tüm ilerleme ve ödül alımı sunucu fonksiyonları üzerinden yapılır.
+        allow write: if false;
       }
 
-      match /weekly_quests/{questId} {
-        allow read: if request.auth.uid == userId;
-        allow create, delete: if false;
-        allow update: if request.auth.uid == userId && (
-          (
-            request.resource.data.diff(resource.data).changedKeys().hasOnly(['currentProgress','updatedAt','examType','correctAnswers','totalQuestions']) &&
-            request.resource.data.currentProgress is number &&
-            resource.data.currentProgress is number &&
-            request.resource.data.currentProgress >= resource.data.currentProgress
-          ) ||
-          (
-            request.resource.data.diff(resource.data).changedKeys().hasOnly(['currentProgress','updatedAt','isCompleted','completionDate','examType','correctAnswers','totalQuestions']) &&
-            request.resource.data.isCompleted == true &&
-            request.resource.data.currentProgress is number &&
-            resource.data.goalValue is number &&
-            request.resource.data.currentProgress >= resource.data.currentProgress &&
-            request.resource.data.currentProgress >= resource.data.goalValue
-          ) ||
-          (
-            request.resource.data.diff(resource.data).changedKeys().hasOnly(['rewardClaimed','rewardClaimedAt','claimedAt','actualReward','updatedAt']) &&
-            resource.data.currentProgress is number &&
-            resource.data.goalValue is number &&
-            resource.data.currentProgress >= resource.data.goalValue &&
-            (resource.data.rewardClaimed == false || !(resource.data.rewardClaimed == true)) &&
-            request.resource.data.rewardClaimed == true
-          )
-        );
-      }
-
-      match /monthly_quests/{questId} {
-        allow read: if request.auth.uid == userId;
-        allow create, delete: if false;
-        allow update: if request.auth.uid == userId && (
-          (
-            request.resource.data.diff(resource.data).changedKeys().hasOnly(['currentProgress','updatedAt','examType','correctAnswers','totalQuestions']) &&
-            request.resource.data.currentProgress is number &&
-            resource.data.currentProgress is number &&
-            request.resource.data.currentProgress >= resource.data.currentProgress
-          ) ||
-          (
-            request.resource.data.diff(resource.data).changedKeys().hasOnly(['currentProgress','updatedAt','isCompleted','completionDate','examType','correctAnswers','totalQuestions']) &&
-            request.resource.data.isCompleted == true &&
-            request.resource.data.currentProgress is number &&
-            resource.data.goalValue is number &&
-            request.resource.data.currentProgress >= resource.data.currentProgress &&
-            request.resource.data.currentProgress >= resource.data.goalValue
-          ) ||
-          (
-            request.resource.data.diff(resource.data).changedKeys().hasOnly(['rewardClaimed','rewardClaimedAt','claimedAt','actualReward','updatedAt']) &&
-            resource.data.currentProgress is number &&
-            resource.data.goalValue is number &&
-            resource.data.currentProgress >= resource.data.goalValue &&
-            (resource.data.rewardClaimed == false || !(resource.data.rewardClaimed == true)) &&
-            request.resource.data.rewardClaimed == true
-          )
-        );
-      }
 
       match /state/{docId} {
-        allow read, write: if request.auth.uid == userId;
+        allow read: if request.auth.uid == userId;
+        // Puanlar SADECE sunucu tarafından güncellenebilir
+        allow write: if false;
       }
 
       match /plans/{docId} {

@@ -120,6 +120,7 @@ const resetUserDataForNewExam = onCall({ region: "us-central1", timeoutSeconds: 
       `users/${userId}/user_activity`,
       `users/${userId}/topic_performance`,
       `users/${userId}/savedWorkshops`,
+      `users/${userId}/daily_quests`, // Görevler sınav değiştiğinde silinir
     ];
 
     for (const sub of subcollections) {
