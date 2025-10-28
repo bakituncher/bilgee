@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taktik/features/quests/models/quest_model.dart';
-import 'package:taktik/features/quests/logic/quest_progress_controller.dart';
+import 'package:flutter/foundation.dart';
 
 /// Görev yönlendirmelerini merkezi olarak yöneten servis
 /// Tüm görev tiplerini (günlük, başarım) destekler
@@ -55,13 +55,12 @@ class QuestNavigationManager {
     }
   }
 
-  /// Navigation engagement güncellemesi - Ref tipini düzelt
+  /// Navigation engagement güncellemesi - Artık kullanılmıyor
   Future<void> _updateEngagementForNavigation(Ref ref, Quest quest) async {
-    const controller = QuestProgressController();
-
-    // Sadece engagement kategorisindeki görevler için otomatik güncelleme
-    if (quest.category == QuestCategory.engagement && !quest.isCompleted) {
-      await controller.updateEngagementForRoute(ref, quest.route);
+    // NOT: Engagement güncellemesi artık quest_notifier.dart üzerinden
+    // sunucu fonksiyonlarıyla yapılıyor, bu metod sadece geriye dönük uyumluluk için
+    if (kDebugMode) {
+      debugPrint('[QuestNavigation] Navigation engagement tracking deprecated');
     }
   }
 

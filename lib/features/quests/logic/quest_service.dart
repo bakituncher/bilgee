@@ -8,6 +8,8 @@ import 'package:taktik/features/quests/models/quest_model.dart';
 import 'package:flutter/foundation.dart';
 import 'package:taktik/core/app_check/app_check_helper.dart';
 import 'package:taktik/features/quests/logic/quest_session_state.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:taktik/features/quests/logic/optimized_quests_provider.dart';
 
 final questServiceProvider = Provider<QuestService>((ref) {
   return QuestService(ref);
@@ -77,47 +79,27 @@ class QuestService {
   }
 
   Future<bool> claimReward(String userId, String questId) async {
-    final firestore = _ref.read(firestoreProvider);
-    // DÜZELTME: Doğru stats doküman yolu kullanıldı.
-    final userStatsRef = firestore.collection('users').doc(userId).collection('state').doc('stats');
-    final questRef = firestore.collection('users').doc(userId).collection('daily_quests').doc(questId);
-
     try {
-      await firestore.runTransaction((transaction) async {
-        final questDoc = await transaction.get(questRef);
+      final functions = _ref.read(functionsProvider);
+      final callable = functions.httpsCallable('quests-claimQuestReward');
 
-        if (!questDoc.exists) {
-          throw Exception("Görev bulunamadı: $questId");
-        }
-        final quest = Quest.fromMap(questDoc.data()!, questDoc.id);
+      await ensureAppCheckTokenReady(); // App Check
 
-        if (!quest.isCompleted) {
-          throw Exception("Görev tamamlanmamış.");
-        }
-        if (quest.rewardClaimed) {
-          // Zaten alınmışsa işlem yapma, başarılı say.
-          return;
-        }
+      await callable.call({'questId': questId});
 
-        // DÜZELTME: 'bp' yerine 'engagementScore' kullanıldı ve FieldValue.increment ile atomik artış sağlandı.
-        // Bu sayede userStats dokümanını okumaya gerek kalmadı, bu da işlemi basitleştirir.
-        transaction.update(userStatsRef, {
-          'engagementScore': FieldValue.increment(quest.reward),
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
+      // Başarılı olduğunda, puanın ve görev durumunun
+      // UI'a yansıması için provider'ları yenile.
+      _ref.invalidate(userProfileProvider);
+      _ref.invalidate(optimizedQuestsProvider);
 
-        // DÜZELTME: Ödülün alındığını ve ne kadar alındığını kaydet.
-        transaction.update(questRef, {
-          'rewardClaimed': true,
-          'rewardClaimedAt': FieldValue.serverTimestamp(),
-          'actualReward': quest.reward,
-        });
-      });
       return true;
+
     } catch (e) {
       if (kDebugMode) {
         debugPrint('Ödül alınırken hata: $e');
       }
+      // Hata durumunda bile UI'ın güncel veriyi çekmesi için yenile
+      _ref.invalidate(optimizedQuestsProvider);
       return false;
     }
   }

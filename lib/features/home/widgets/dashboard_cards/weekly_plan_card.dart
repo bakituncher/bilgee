@@ -337,8 +337,7 @@ class _TaskTile extends ConsumerWidget {
                 // İsteğe bağlı: günlük provider kullanan diğer yerler için
                 ref.invalidate(completedTasksForDateProvider(dateForTile));
                 if(!isCompleted){
-                  final questId='schedule_${dateKey}_${taskIdentifier.hashCode}';
-                  ref.read(questNotifierProvider.notifier).updateQuestProgressById(questId);
+                  // Görev güncellemesi quest_notifier.dart'taki listener tarafından otomatik yapılıyor
                   if(context.mounted){
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Plan görevi fethedildi: ${item.activity}')));
                   }

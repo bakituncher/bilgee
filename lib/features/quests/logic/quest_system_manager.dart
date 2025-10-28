@@ -2,22 +2,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taktik/features/quests/models/quest_model.dart';
-import 'package:taktik/features/quests/logic/quest_tracking_service.dart';
 import 'package:taktik/features/quests/logic/quest_navigation_manager.dart';
-import 'package:taktik/features/quests/logic/quest_progress_controller.dart';
 import 'package:taktik/features/quests/logic/optimized_quests_provider.dart';
 
 /// Merkezi Quest System Manager
 /// Tüm görev işlemlerini tek noktadan yöneten ana servis
+/// NOT: Görev ilerlemesi artık quest_notifier.dart üzerinden sunucu fonksiyonlarıyla yapılıyor
 class QuestSystemManager {
   final Ref _ref;
 
   QuestSystemManager(this._ref);
 
   // Lazy loaded services
-  QuestTrackingService get _trackingService => _ref.read(questTrackingServiceProvider);
   QuestNavigationManager get _navigationManager => _ref.read(questNavigationManagerProvider);
-  QuestProgressController get _progressController => const QuestProgressController();
 
   /// =====================
   /// Günlük Görevler İŞLEMLERİ
@@ -45,98 +42,8 @@ class QuestSystemManager {
   }
 
   /// =====================
-  /// GÖREV TAKİP İŞLEMLERİ
-  /// =====================
-
-  /// Pomodoro oturumu tamamlandığında
-  Future<void> onPomodoroSessionCompleted({
-    required int minutes,
-    String? subject,
-  }) async {
-    await _progressController.updateStudySession(
-      _ref,
-      minutes: minutes,
-      subject: subject,
-      isPomodoroSession: true,
-    );
-  }
-
-  /// Test çözme tamamlandığında
-  Future<void> onTestCompleted({
-    required int testCount,
-    String? examType,
-    int? correctAnswers,
-    int? totalQuestions,
-  }) async {
-    await _progressController.updateTestSubmission(
-      _ref,
-      testCount: testCount,
-      examType: examType,
-      correctAnswers: correctAnswers,
-      totalQuestions: totalQuestions,
-    );
-  }
-
-  /// Sayfa ziyareti (engagement)
-  Future<void> onPageVisit(QuestRoute route) async {
-    await _progressController.updateEngagementForRoute(_ref, route);
-  }
-
-  /// Workshop aktivitesi
-  Future<void> onWorkshopActivity({
-    required int amount,
-    String? subject,
-  }) async {
-    await _progressController.updatePracticeWithContext(
-      _ref,
-      amount: amount,
-      subject: subject,
-      source: PracticeSource.workshop,
-    );
-  }
-
-  /// Focus session tamamlandığında
-  Future<void> onFocusSessionCompleted({
-    required int minutes,
-    bool isDeepWork = false,
-    String? technique,
-  }) async {
-    await _progressController.updateFocusSession(
-      _ref,
-      minutes: minutes,
-      isDeepWork: isDeepWork,
-      technique: technique,
-    );
-  }
-
-  /// Günlük streak güncellemesi
-  Future<void> onDailyStreakUpdate({
-    int streakDays = 1,
-    String? activityType,
-  }) async {
-    await _progressController.updateConsistency(
-      _ref,
-      streakDays: streakDays,
-      activityType: activityType,
-    );
-  }
-
-  /// =====================
   /// GENEL GÖREV İŞLEMLERİ
   /// =====================
-
-  /// Spesifik görev güncelleme
-  Future<QuestUpdateResult> updateQuest({
-    required String questId,
-    required int amount,
-    Map<String, dynamic>? additionalData,
-  }) async {
-    return await _trackingService.updateQuestProgress(
-      questId: questId,
-      amount: amount,
-      additionalData: additionalData,
-    );
-  }
 
   /// Kategori bazlı görev filtreleme
   List<Quest> getQuestsByCategory(QuestCategory category) {

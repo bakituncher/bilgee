@@ -3,8 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/quests/models/quest_model.dart';
 import 'dart:async';
-// YENİ: Gelişmiş sistemler
-import 'package:taktik/features/quests/logic/quest_tracking_service.dart';
 import 'package:taktik/features/quests/logic/quest_service.dart';
 
 /// Geliştirilmiş Quest Notifier - Günlük görevleri destekler
@@ -68,14 +66,9 @@ class OptimizedQuestsNotifier extends StateNotifier<QuestsState> {
   /// Tüm görevler yüklendiğinde state'i güncelle
   void _checkAllQuestsLoaded() {
     if (state.dailyQuests != null) {
-
-      final allQuests = [
-        ...state.dailyQuests!,
-      ];
-
       state = state.copyWith(
-        allQuests: allQuests,
-        questsMap: {for (final q in allQuests) q.id: q},
+        allQuests: state.dailyQuests,
+        questsMap: {for (final q in state.dailyQuests!) q.id: q},
         isLoaded: true,
       );
     }
@@ -120,44 +113,6 @@ class OptimizedQuestsNotifier extends StateNotifier<QuestsState> {
     }
   }
 
-  /// Görev tamamlama takibi
-  Future<void> completeQuest(String questId, {int amount = 1}) async {
-    final trackingService = _ref.read(questTrackingServiceProvider);
-
-    try {
-      final result = await trackingService.updateQuestProgress(
-        questId: questId,
-        amount: amount,
-      );
-
-      if (result.isSuccess) {
-        print('[OptimizedQuests] Quest updated: ${result.quest?.title}');
-      }
-
-    } catch (e) {
-      print('[OptimizedQuests] Quest completion error: $e');
-    }
-  }
-
-  /// Kategori bazlı görev güncellemesi
-  Future<void> updateQuestsByCategory(QuestCategory category, {int amount = 1}) async {
-    final trackingService = _ref.read(questTrackingServiceProvider);
-
-    try {
-      final results = await trackingService.updateQuestsByCategory(
-        category: category,
-        amount: amount,
-      );
-
-      final completedCount = results.where((r) => r.isCompleted).length;
-      if (completedCount > 0) {
-        print('[OptimizedQuests] $completedCount quest(s) completed in category: ${category.name}');
-      }
-
-    } catch (e) {
-      print('[OptimizedQuests] Category update error: $e');
-    }
-  }
 
   /// Stream'leri temizle
   void _clearStreams() {
