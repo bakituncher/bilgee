@@ -485,12 +485,6 @@ exports.reportAction = onCall({
 
   return { success: true, message: "İlerleme kaydedildi.", updatedCount };
 });
-  if (completedQuest) {
-    return { success: true, completedQuest: completedQuest };
-  }
-
-  return { success: true, message: "İlerleme kaydedildi." };
-});
 
 /**
  * Bir görevin ödülünü GÜVENLİ bir şekilde alır.
