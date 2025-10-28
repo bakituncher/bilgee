@@ -34,6 +34,14 @@
       ]
     },
     {
+      "collectionGroup": "questionReports",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "reporterId", "order": "ASCENDING" },
+        { "fieldPath": "qhash", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "focusSessions",
       "queryScope": "COLLECTION",
       "fields": [

@@ -346,21 +346,50 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
         onSubmit: (reason) async {
           final userId = ref.read(authControllerProvider).value?.uid;
           if (userId == null) return;
-          await ref.read(firestoreServiceProvider).reportQuestionIssue(
-                userId: userId,
-                subject: material.subject,
-                topic: material.topic,
-                question: q.question,
-                options: q.options,
-                correctIndex: q.correctOptionIndex,
-                selectedIndex: selected,
-                reason: reason,
+
+          try {
+            final result = await ref.read(firestoreServiceProvider).reportQuestionIssue(
+                  userId: userId,
+                  subject: material.subject,
+                  topic: material.topic,
+                  question: q.question,
+                  options: q.options,
+                  correctIndex: q.correctOptionIndex,
+                  selectedIndex: selected,
+                  reason: reason,
+                );
+
+            if (mounted) {
+              Navigator.pop(context);
+
+              if (result['success'] == true) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Teşekkürler! İnceleme için iletildi.'),
+                    backgroundColor: AppTheme.successColor,
+                  ),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(result['message'] ?? 'Bir hata oluştu'),
+                    backgroundColor: AppTheme.accentColor,
+                    duration: const Duration(seconds: 4),
+                  ),
+                );
+              }
+            }
+          } catch (e) {
+            if (mounted) {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Beklenmeyen bir hata oluştu: ${e.toString()}'),
+                  backgroundColor: AppTheme.accentColor,
+                  duration: const Duration(seconds: 4),
+                ),
               );
-          if (mounted) {
-            Navigator.pop(context);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Teşekkürler! İnceleme için iletildi.'), backgroundColor: AppTheme.successColor),
-            );
+            }
           }
         },
       ),

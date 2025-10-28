@@ -281,7 +281,14 @@ service cloud.firestore {
     // SORU BİLDİRİMLERİ
     // ======================
     match /questionReports/{reportId} {
-      allow create: if request.auth != null;
+      // FİNANSAL GÜVENLİK GÜNCELLEMESİ:
+      // İstemcilerin doğrudan yazma (create) yetkisi kaldırıldı.
+      // Raporlar artık YALNIZCA 'reports-submitQuestionReport'
+      // isimli, hız limiti olan (rate-limited) callable function
+      // üzerinden oluşturulabilir.
+      allow create: if false; // ESKİ: if request.auth != null;
+
+      // Admin okuma/silme kuralları değişmedi
       allow read, update, delete: if request.auth != null && request.auth.token.admin == true;
     }
 

@@ -21,6 +21,7 @@ import 'package:crypto/crypto.dart' as crypto;
 import 'dart:convert' show utf8;
 import 'package:taktik/shared/notifications/in_app_notification_model.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:taktik/core/app_check/app_check_helper.dart';
 
 class FirestoreService {
   final FirebaseFirestore _firestore;
@@ -1031,7 +1032,9 @@ class FirestoreService {
   }
 
   /// Report question issue (creates report and updates index)
-  Future<void> reportQuestionIssue({
+  /// Soru raporu gönderir. Başarı/hata durumunu Map olarak döndürür.
+  /// { 'success': true } veya { 'success': false, 'message': 'Hata mesajı' }
+  Future<Map<String, dynamic>> reportQuestionIssue({
     required String userId,
     required String subject,
     required String topic,
@@ -1042,9 +1045,10 @@ class FirestoreService {
     required String reason,
   }) async {
     try {
-      final qhash = _computeQuestionHash(question, options);
+      // ESKİ: qhash hesaplaması ve payload oluşturma istemcideydi.
+      // YENİ: Payload'ı sunucuya gönderiyoruz, qhash orada hesaplanacak.
       final payload = {
-        'reporterId': userId,
+        // 'reporterId' GEREKMEZ, sunucu auth context'ten alır
         'subject': subject,
         'topic': topic,
         'question': question,
@@ -1052,21 +1056,57 @@ class FirestoreService {
         'correctIndex': correctIndex,
         'selectedIndex': selectedIndex,
         'reason': reason,
-        'qhash': qhash,
-        'createdAt': FieldValue.serverTimestamp(),
+        // 'qhash' GEREKMEZ, sunucu hesaplar
+        // 'createdAt' GEREKMEZ, sunucu ekler
       };
 
-      await _questionReportsCollection.add(payload);
+      // ESKİ: _questionReportsCollection.add(payload);
+      // ESKİ: idxRef.set(...);
 
-      // Index increment (reportCount)
-      final idxRef = _questionReportsIndexCollection.doc(qhash);
-      await idxRef.set({
-        'qhash': qhash,
-        'lastReportedAt': FieldValue.serverTimestamp(),
-        'reportCount': FieldValue.increment(1),
-      }, SetOptions(merge: true));
-    } catch (_) {
-      // ignore errors to avoid blocking UI
+      // YENİ: Güvenli ve hız limitli callable function'ı çağır
+      final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
+      final callable = functions.httpsCallable('reports-submitQuestionReport');
+
+      // App Check token'ının hazır olduğundan emin ol (çok önemli)
+      await ensureAppCheckTokenReady();
+
+      // Fonksiyonu çağır
+      await callable.call(payload);
+
+      return {'success': true};
+
+    } catch (e) {
+      print('Soru raporlama hatası: $e');
+
+      if (e is FirebaseFunctionsException) {
+        if (e.code == 'resource-exhausted') {
+          return {
+            'success': false,
+            'message': 'Çok fazla rapor gönderdiniz. Lütfen 5 dakika bekleyip tekrar deneyin.'
+          };
+        } else if (e.code == 'already-exists') {
+          return {
+            'success': false,
+            'message': 'Bu soruyu daha önce rapor ettiniz.'
+          };
+        } else if (e.code == 'unauthenticated') {
+          return {
+            'success': false,
+            'message': 'Oturum gerekli. Lütfen giriş yapın.'
+          };
+        } else if (e.code == 'invalid-argument') {
+          return {
+            'success': false,
+            'message': 'Geçersiz rapor verisi. Lütfen tüm alanları doldurun.'
+          };
+        }
+      }
+
+      // Diğer hatalar için genel mesaj
+      return {
+        'success': false,
+        'message': 'Rapor gönderilirken bir hata oluştu. Lütfen tekrar deneyin.'
+      };
     }
   }
 

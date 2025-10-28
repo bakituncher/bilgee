@@ -2,6 +2,8 @@ const { onDocumentCreated, onDocumentDeleted } = require("firebase-functions/v2/
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions");
 const { db, admin } = require("./init");
+const { enforceRateLimit, getClientIpFromRawRequest } = require("./utils");
+const crypto = require("crypto");
 
 // Yeni: Soru bildirimi oluşturulunca indeks güncelle
 exports.onQuestionReportCreated = onDocumentCreated({
@@ -158,3 +160,88 @@ exports.adminDeleteQuestionReports = onCall({ region: "us-central1", timeoutSeco
 
   throw new HttpsError("invalid-argument", "Geçersiz mode");
 });
+
+// YARDIMCI: qhash'ı sunucuda da hesaplamak için
+// (Flutter'daki lib/data/repositories/firestore_service.dart ile aynı mantık)
+function _computeQuestionHash(question, options) {
+  const normalized = (
+    `${String(question).trim().toLowerCase()}|` +
+    `${(Array.isArray(options) ? options : []).map((o) => String(o).trim().toLowerCase()).join("||")}`
+  );
+  return crypto.createHash("sha256").update(normalized, "utf8").digest("hex");
+}
+
+/**
+ * YENİ GÜVENLİ FONKSİYON:
+ * İstemciden gelen bir soru raporunu alır, hız limitine tabi tutar
+ * ve veritabanına ekler. Bu, onQuestionReportCreated'ı tetikler.
+ */
+exports.submitQuestionReport = onCall({
+  region: "us-central1",
+  enforceAppCheck: true, // App Check zorunlu
+  rateLimits: { maxCalls: 10, timeFrameSeconds: 300 }, // 5 dakikada 10 istek
+}, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Oturum gerekli.");
+  }
+
+  const uid = request.auth.uid;
+  const ip = getClientIpFromRawRequest(request.rawRequest) || "unknown";
+
+  try {
+    // KULLANICI VE IP BAZLI HIZ LİMİTİ (FİNANSAL KORUMA)
+    // Bir kullanıcı 5 dakikada en fazla 5 rapor, bir IP en fazla 20 rapor gönderebilir
+    await Promise.all([
+      enforceRateLimit(`report_spam_uid_${uid}`, 300, 5),
+      enforceRateLimit(`report_spam_ip_${ip}`, 300, 20),
+    ]);
+  } catch (rateLimitError) {
+    throw new HttpsError("resource-exhausted", "Çok fazla rapor gönderdiniz. Lütfen 5 dakika bekleyip tekrar deneyin.");
+  }
+
+  const data = request.data;
+
+  // Temel doğrulama
+  if (!data || typeof data.question !== "string" || !Array.isArray(data.options) || typeof data.reason !== "string" || data.reason.trim().length < 5) {
+    throw new HttpsError("invalid-argument", "Geçersiz rapor verisi.");
+  }
+
+  // qhash'ı istemciden almak yerine sunucuda HESAPLAYIN.
+  // Bu, istemcinin sahte qhash göndererek indeksi spamlemesini engeller.
+  const qhash = _computeQuestionHash(data.question, data.options);
+
+  // YENİ: Aynı kullanıcının aynı soruyu tekrar raporlamasını engelle
+  const existingReport = await db.collection("questionReports")
+    .where("reporterId", "==", uid)
+    .where("qhash", "==", qhash)
+    .limit(1)
+    .get();
+
+  if (!existingReport.empty) {
+    throw new HttpsError("already-exists", "Bu soruyu daha önce rapor ettiniz.");
+  }
+
+  const payload = {
+    reporterId: uid,
+    subject: data.subject || "unknown",
+    topic: data.topic || "unknown",
+    question: data.question,
+    options: data.options,
+    correctIndex: data.correctIndex || 0,
+    selectedIndex: data.selectedIndex,
+    reason: data.reason,
+    qhash: qhash, // Sunucuda hesaplanan güvenli qhash
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  };
+
+  try {
+    // Raporu oluştur.
+    // Bu, mevcut 'onQuestionReportCreated' tetikleyicisini çalıştıracaktır.
+    const docRef = await db.collection("questionReports").add(payload);
+    return { success: true, reportId: docRef.id };
+  } catch (error) {
+    logger.error("submitQuestionReport başarısız oldu", { uid, error: String(error) });
+    throw new HttpsError("internal", "Rapor oluşturulurken bir sunucu hatası oluştu.");
+  }
+});
+
