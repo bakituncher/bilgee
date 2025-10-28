@@ -28,7 +28,8 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
   @override
   void initState() {
     super.initState();
-    _pulse = AnimationController(vsync: this, duration: const Duration(seconds: 5))..repeat(reverse: true);
+    // Pil tasarrufu için: repeat() yerine sadece bir kez çalıştır
+    _pulse = AnimationController(vsync: this, duration: const Duration(seconds: 5))..forward();
     _glow = CurvedAnimation(parent: _pulse, curve: Curves.easeInOut);
   }
 

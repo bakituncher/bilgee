@@ -24,7 +24,8 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> with SingleTickerPr
   @override
   void initState() {
     super.initState();
-    _bgController = AnimationController(vsync: this, duration: const Duration(seconds: 20))..repeat();
+    // Pil tasarrufu için: repeat() yerine sadece bir kez çalıştır
+    _bgController = AnimationController(vsync: this, duration: const Duration(seconds: 20))..forward();
     // İlk frame sonrası gün kontrolü ve gerekirse yenileme
     WidgetsBinding.instance.addPostFrameCallback((_) => _refreshQuestsIfNeeded());
   }

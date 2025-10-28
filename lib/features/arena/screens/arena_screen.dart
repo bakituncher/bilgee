@@ -220,7 +220,7 @@ class _CurrentUserCard extends StatelessWidget {
           FadeEffect(duration: 500.ms)
         ],
         child: Animate(
-          onPlay: (c) => c.repeat(reverse: true),
+          // Pil tasarrufu için: repeat() kaldırıldı, sadece bir kez scale yapılıyor
           effects: [
             ScaleEffect(
                 delay: 600.ms,

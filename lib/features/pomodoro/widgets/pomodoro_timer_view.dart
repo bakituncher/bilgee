@@ -329,16 +329,21 @@ class _TimerDialState extends State<_TimerDial> with SingleTickerProviderStateMi
               curve: Curves.easeInOutCubic,
               onEnd: () => _lastProgress = targetProgress,
               builder: (context, animatedProgress, _) {
-                return CustomPaint(
-                  painter: _DialPainter(
-                    progress: animatedProgress,
-                    color: widget.color,
-                    isPaused: pomodoro.isPaused,
-                    interval: pomodoro.longBreakInterval.clamp(1, 12),
-                    completedInCycle: ((pomodoro.currentRound - 1) % pomodoro.longBreakInterval.clamp(1, 12)).clamp(0, pomodoro.longBreakInterval.clamp(1, 12) - 1),
-                    rotationAngle: (_rotCtrl.value * 2 * pi),
-                    finalPulse: isFinalCountdown ? (1 + (sin(DateTime.now().millisecondsSinceEpoch / 120) * 0.04)) : 1.0,
-                  ),
+                return AnimatedBuilder(
+                  animation: _rotCtrl,
+                  builder: (context, child) {
+                    return CustomPaint(
+                      painter: _DialPainter(
+                        progress: animatedProgress,
+                        color: widget.color,
+                        isPaused: pomodoro.isPaused,
+                        interval: pomodoro.longBreakInterval.clamp(1, 12),
+                        completedInCycle: ((pomodoro.currentRound - 1) % pomodoro.longBreakInterval.clamp(1, 12)).clamp(0, pomodoro.longBreakInterval.clamp(1, 12) - 1),
+                        rotationAngle: (_rotCtrl.value * 2 * pi),
+                        finalPulse: isFinalCountdown ? (1 + (sin(_rotCtrl.value * 2 * pi * 10) * 0.04)) : 1.0,
+                      ),
+                    );
+                  },
                 );
               },
             ),
@@ -436,8 +441,8 @@ class _DialPainter extends CustomPainter {
       canvas.drawCircle(Offset(dx, dy), dotRadius, stroke);
     }
 
-    // Nefes/pulse arka katman
-    final breath = sin(DateTime.now().millisecondsSinceEpoch / (isPaused ? 2000 : 700)) * 5;
+    // Nefes/pulse arka katman - rotationAngle kullanarak sürekli çizimi önle
+    final breath = sin(rotationAngle * (isPaused ? 0.5 : 1.5)) * 5;
     final breathPaint = Paint()
       ..color = color.withOpacity(isPaused ? 0.05 : 0.1)
       ..style = PaintingStyle.fill
@@ -446,7 +451,15 @@ class _DialPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _DialPainter oldDelegate) => true;
+  bool shouldRepaint(covariant _DialPainter oldDelegate) {
+    return oldDelegate.progress != progress ||
+        oldDelegate.color != color ||
+        oldDelegate.isPaused != isPaused ||
+        oldDelegate.interval != interval ||
+        oldDelegate.completedInCycle != completedInCycle ||
+        oldDelegate.rotationAngle != rotationAngle ||
+        oldDelegate.finalPulse != finalPulse;
+  }
 }
 
 

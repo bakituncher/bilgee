@@ -22,7 +22,8 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen> with TickerProv
   @override
   void initState() {
     super.initState();
-    _bgController = AnimationController(vsync: this, duration: 20.seconds)..repeat();
+    // Pil tasarrufu için: repeat() yerine sadece bir kez çalıştır
+    _bgController = AnimationController(vsync: this, duration: 20.seconds)..forward();
     WidgetsBinding.instance.addObserver(this);
   }
 

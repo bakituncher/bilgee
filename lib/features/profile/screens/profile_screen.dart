@@ -450,136 +450,183 @@ class _FollowCount extends StatelessWidget {
 }
 
 // === Diğer widget'lar değişmediği için kısaltıldı ===
-class _ProfileAvatarHalo extends StatelessWidget {
+class _ProfileAvatarHalo extends StatefulWidget {
   final UserModel user; final Color color; final int rankIndex;
   const _ProfileAvatarHalo({required this.user, required this.color, required this.rankIndex});
+
+  @override
+  State<_ProfileAvatarHalo> createState() => _ProfileAvatarHaloState();
+}
+
+class _ProfileAvatarHaloState extends State<_ProfileAvatarHalo> with SingleTickerProviderStateMixin {
+  late AnimationController _glowController;
+  bool _isGlowing = false;
+
   String _avatarUrl(String style, String seed) => 'https://api.dicebear.com/9.x/'
       '$style/svg?seed=$seed&backgroundColor=transparent&margin=0&scale=110&size=256';
 
-  bool get _midTier => rankIndex >= 3;
-  bool get _highTier => rankIndex >= 6;
-  bool get _legendTier => rankIndex >= 8;
-  bool get _apexTier => rankIndex >= 9;
+  bool get _midTier => widget.rankIndex >= 3;
+  bool get _highTier => widget.rankIndex >= 6;
+  bool get _legendTier => widget.rankIndex >= 8;
+  bool get _apexTier => widget.rankIndex >= 9;
+
+  @override
+  void initState() {
+    super.initState();
+    _glowController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    );
+  }
+
+  @override
+  void dispose() {
+    _glowController.dispose();
+    super.dispose();
+  }
+
+  void _triggerGlow() {
+    if (!_isGlowing) {
+      setState(() => _isGlowing = true);
+      HapticFeedback.lightImpact();
+      _glowController.forward(from: 0).then((_) {
+        if (mounted) {
+          setState(() => _isGlowing = false);
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     const double outerSize = 170;
     const double avatarDiameter = 126;
-    final primaryGlow = color.o(0.30);
+    final primaryGlow = widget.color.o(0.30);
     final secondaryGlow = _highTier ? _accentProfile1.o(0.25) : _accentProfile2.o(0.18);
 
-    return SizedBox(
-      width: outerSize,
-      height: outerSize,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          _HaloRing(color: _accentProfile1.o(0.20), size: 150, begin: 0.90, end: 1.05, delay: 0.ms),
-          if (_midTier)
-            _HaloRing(color: _accentProfile2.o(0.16), size: 132, begin: 0.92, end: 1.07, delay: 250.ms),
-          if (_highTier)
-            _HaloRing(color: primaryGlow, size: 164, begin: 0.95, end: 1.03, delay: 600.ms),
-          if (_legendTier)
-            _PulsingCore(size: 60, color: _accentProfile2.o(0.20)),
+    return GestureDetector(
+      onTap: _triggerGlow,
+      child: SizedBox(
+        width: outerSize,
+        height: outerSize,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // Statik halo efekti - animasyon yok
+            if (_isGlowing) ...[
+              _HaloRing(controller: _glowController, color: _accentProfile1.o(0.20), size: 150, begin: 0.90, end: 1.05, delay: 0.ms),
+              if (_midTier)
+                _HaloRing(controller: _glowController, color: _accentProfile2.o(0.16), size: 132, begin: 0.92, end: 1.07, delay: 250.ms),
+              if (_highTier)
+                _HaloRing(controller: _glowController, color: primaryGlow, size: 164, begin: 0.95, end: 1.03, delay: 600.ms),
+              if (_legendTier)
+                _PulsingCore(controller: _glowController, size: 60, color: _accentProfile2.o(0.20)),
+              if (_highTier)
+                _RotatingRing(
+                  controller: _glowController,
+                  size: 158,
+                  stroke: 3,
+                  gradient: SweepGradient(colors: [
+                    _accentProfile2.o(0.0),
+                    _accentProfile2.o(0.7),
+                    _accentProfile1.o(0.8),
+                    _accentProfile2.o(0.0),
+                  ]),
+                  duration: _apexTier ? const Duration(seconds: 10) : const Duration(seconds: 18),
+                ),
+              if (_legendTier)
+                ...List.generate(10 + (widget.rankIndex * 2).clamp(0, 12), (i) => _SparkParticle(controller: _glowController, index: i, radius: 78, apex: _apexTier)),
+            ],
 
-          if (_highTier)
-            _RotatingRing(
-              size: 158,
-              stroke: 3,
-              gradient: SweepGradient(colors: [
-                _accentProfile2.o(0.0),
-                _accentProfile2.o(0.7),
-                _accentProfile1.o(0.8),
-                _accentProfile2.o(0.0),
-              ]),
-              duration: _apexTier ? const Duration(seconds: 10) : const Duration(seconds: 18),
-            ),
+            // Rütbe ikonu - sadece glow sırasında animasyon
+            if (widget.rankIndex >= 4)
+              Positioned(
+                top: 4.0 + (10 - widget.rankIndex).clamp(0,6).toDouble(),
+                child: Opacity(
+                  opacity: (0.35 + (widget.rankIndex * 0.07)).clamp(0.4, 1.0),
+                  child: AnimatedBuilder(
+                    animation: _glowController,
+                    builder: (context, child) {
+                      final scale = _isGlowing
+                        ? 1.0 + (_glowController.value * 0.1)
+                        : 1.0;
+                      return Transform.scale(
+                        scale: scale,
+                        child: child,
+                      );
+                    },
+                    child: Icon(
+                      Icons.workspace_premium_rounded,
+                      color: widget.rankIndex >= 8 ? _accentProfile2 : _accentProfile1.o(0.9),
+                      size: 26 + (widget.rankIndex * 1.8),
+                    ),
+                  ),
+                ),
+              ),
 
-          if (_legendTier)
-            ...List.generate(10 + (rankIndex * 2).clamp(0, 12), (i) => _SparkParticle(index: i, radius: 78, apex: _apexTier)),
-
-          if (rankIndex >= 4)
-            Positioned(
-              top: 4.0 + (10 - rankIndex).clamp(0,6).toDouble(),
-              child: Opacity(
-                opacity: (0.35 + (rankIndex * 0.07)).clamp(0.4, 1.0),
-                child: Icon(
-                  Icons.workspace_premium_rounded,
-                  color: rankIndex >= 8 ? _accentProfile2 : _accentProfile1.o(0.9),
-                  size: 26 + (rankIndex * 1.8),
-                )
-                    .animate(onPlay: (c) => c.repeat(reverse: true))
-                    .scale(
-                  begin: const Offset(0.95, 0.95),
-                  end: const Offset(1.05, 1.05),
-                  duration: (1600 - (rankIndex * 40)).clamp(900, 1600).ms,
-                  curve: Curves.easeInOut,
+            Positioned.fill(
+              child: IgnorePointer(
+                ignoring: true,
+                child: CustomPaint(
+                  painter: _RankFramePainter(
+                    rankIndex: widget.rankIndex,
+                    color: widget.color,
+                    intensity: 0.35 + (widget.rankIndex * 0.04).clamp(0, 0.4),
+                  ),
                 ),
               ),
             ),
 
-          Positioned.fill(
-            child: IgnorePointer(
-              ignoring: true,
-              child: CustomPaint(
-                painter: _RankFramePainter(
-                  rankIndex: rankIndex,
-                  color: color,
-                  intensity: 0.35 + (rankIndex * 0.04).clamp(0, 0.4),
-                ),
+            Container(
+              width: avatarDiameter + 12,
+              height: avatarDiameter + 12,
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(colors: [
+                  _apexTier ? _accentProfile2 : _accentProfile2.o(0.9),
+                  _apexTier ? _accentProfile1 : _accentProfile1.o(0.9),
+                ]),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(color: secondaryGlow, blurRadius: 28, spreadRadius: 2),
+                  if (_highTier) BoxShadow(color: _accentProfile2.o(0.25), blurRadius: 40, spreadRadius: 6),
+                ],
               ),
-            ),
-          ),
-
-          Container(
-            width: avatarDiameter + 12,
-            height: avatarDiameter + 12,
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(colors: [
-                _apexTier ? _accentProfile2 : _accentProfile2.o(0.9),
-                _apexTier ? _accentProfile1 : _accentProfile1.o(0.9),
-              ]),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(color: secondaryGlow, blurRadius: 28, spreadRadius: 2),
-                if (_highTier) BoxShadow(color: _accentProfile2.o(0.25), blurRadius: 40, spreadRadius: 6),
-              ],
-            ),
-            child: Container(
-              decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.black),
-              child: ClipOval(
-                child: user.avatarStyle != null && user.avatarSeed != null
-                    ? SvgPicture.network(
-                  _avatarUrl(user.avatarStyle!, user.avatarSeed!),
-                  fit: BoxFit.cover,
-                  width: avatarDiameter,
-                  height: avatarDiameter,
-                  placeholderBuilder: (_) => const Center(
-                    child: SizedBox(
-                      width: 30,
-                      height: 30,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.6,
-                        valueColor: AlwaysStoppedAnimation(_accentProfile2),
+              child: Container(
+                decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.black),
+                child: ClipOval(
+                  child: widget.user.avatarStyle != null && widget.user.avatarSeed != null
+                      ? SvgPicture.network(
+                    _avatarUrl(widget.user.avatarStyle!, widget.user.avatarSeed!),
+                    fit: BoxFit.cover,
+                    width: avatarDiameter,
+                    height: avatarDiameter,
+                    placeholderBuilder: (_) => const Center(
+                      child: SizedBox(
+                        width: 30,
+                        height: 30,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.6,
+                          valueColor: AlwaysStoppedAnimation(_accentProfile2),
+                        ),
+                      ),
+                    ),
+                    semanticsLabel: 'Kullanıcı avatarı',
+                  )
+                      : Center(
+                    child: Text(
+                      widget.user.name?.substring(0, 1).toUpperCase() ?? 'T',
+                      style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                        color: _accentProfile2,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
-                  semanticsLabel: 'Kullanıcı avatarı',
-                )
-                    : Center(
-                  child: Text(
-                    user.name?.substring(0, 1).toUpperCase() ?? 'T',
-                    style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                      color: _accentProfile2,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
                 ),
               ),
-            ),
-          ).animate().fadeIn(duration: 480.ms).scale(curve: Curves.easeOutBack),
-        ],
+            ).animate().fadeIn(duration: 480.ms).scale(curve: Curves.easeOutBack),
+          ],
+        ),
       ),
     );
   }
@@ -627,27 +674,26 @@ class _RankFramePainter extends CustomPainter {
 }
 
 class _RotatingRing extends StatelessWidget {
+  final AnimationController controller;
   final double size; final double stroke; final Gradient gradient; final Duration duration;
-  const _RotatingRing({required this.size, required this.stroke, required this.gradient, required this.duration});
+  const _RotatingRing({required this.controller, required this.size, required this.stroke, required this.gradient, required this.duration});
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-        width: size,
-        height: size,
-        child: TweenAnimationBuilder<double>(
-          tween: Tween(begin: 0, end: 1),
-          duration: duration,
-          onEnd: () {},
-          curve: Curves.linear,
-          builder: (context, value, child) {
-            return Transform.rotate(
-              angle: value * 6.28318,
-              child: CustomPaint(
-                painter: _RingPainter(gradient: gradient, stroke: stroke),
-              ),
-            );
-          },
-        ).animate(onPlay: (c) => c.repeat()));
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, child) {
+        return Transform.rotate(
+          angle: controller.value * 6.28318,
+          child: SizedBox(
+            width: size,
+            height: size,
+            child: CustomPaint(
+              painter: _RingPainter(gradient: gradient, stroke: stroke),
+            ),
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -670,26 +716,35 @@ class _RingPainter extends CustomPainter {
 }
 
 class _PulsingCore extends StatelessWidget {
+  final AnimationController controller;
   final double size; final Color color;
-  const _PulsingCore({required this.size, required this.color});
+  const _PulsingCore({required this.controller, required this.size, required this.color});
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: RadialGradient(colors: [color, Colors.transparent]),
-      ),
-    ).animate(onPlay: (c)=> c.repeat(reverse: true))
-        .scale(begin: const Offset(0.85,0.85), end: const Offset(1.1,1.1), duration: 2400.ms, curve: Curves.easeInOut)
-        .fadeIn(duration: 800.ms);
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, child) {
+        final scale = 0.85 + (controller.value * 0.25);
+        return Transform.scale(
+          scale: scale,
+          child: Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(colors: [color, Colors.transparent]),
+            ),
+          ),
+        );
+      },
+    );
   }
 }
 
 class _SparkParticle extends StatelessWidget {
+  final AnimationController controller;
   final int index; final double radius; final bool apex;
-  const _SparkParticle({required this.index, required this.radius, required this.apex});
+  const _SparkParticle({required this.controller, required this.index, required this.radius, required this.apex});
   @override
   Widget build(BuildContext context) {
     final angle = (index / 12) * 2 * math.pi;
@@ -697,38 +752,61 @@ class _SparkParticle extends StatelessWidget {
     final dx = dist * math.cos(angle);
     final dy = dist * math.sin(angle);
     final baseColor = apex ? _accentProfile2 : _accentProfile1;
-    return Positioned(
-        left: (radius + 10) + dx,
-        top: (radius + 10) + dy,
-        child: Container(
-          width: 6,
-          height: 6,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: baseColor.o(0.9),
-            boxShadow: [BoxShadow(color: baseColor.o(0.6), blurRadius: 8, spreadRadius: 1)],
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, child) {
+        final opacity = 0.1 + (controller.value * 0.9);
+        final scale = 0.6 + (controller.value * 0.7);
+        return Positioned(
+          left: (radius + 10) + dx,
+          top: (radius + 10) + dy,
+          child: Opacity(
+            opacity: opacity,
+            child: Transform.scale(
+              scale: scale,
+              child: Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: baseColor.o(0.9),
+                  boxShadow: [BoxShadow(color: baseColor.o(0.6), blurRadius: 8, spreadRadius: 1)],
+                ),
+              ),
+            ),
           ),
-        ).animate(onPlay: (c)=> c.repeat())
-            .fade(begin: 0.1, end: 1, duration: (1500 + (index*120)).ms)
-            .scale(begin: const Offset(0.6,0.6), end: const Offset(1.3,1.3), duration: (1600 + (index*90)).ms, curve: Curves.easeInOut));
+        );
+      },
+    );
   }
 }
 
 class _HaloRing extends StatelessWidget {
+  final AnimationController controller;
   final Color color; final double size; final double begin; final double end; final Duration delay;
-  const _HaloRing({required this.color, required this.size, required this.begin, required this.end, required this.delay});
+  const _HaloRing({required this.controller, required this.color, required this.size, required this.begin, required this.end, required this.delay});
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: RadialGradient(colors: [color, Colors.transparent]),
-      ),
-    ).animate(onPlay: (c) => c.repeat(reverse: true))
-        .scale(begin: Offset(begin, begin), end: Offset(end, end), duration: 3000.ms, curve: Curves.easeInOut, delay: delay)
-        .fadeIn(duration: 1100.ms, delay: delay);
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, child) {
+        final scale = begin + (controller.value * (end - begin));
+        return Opacity(
+          opacity: controller.value,
+          child: Transform.scale(
+            scale: scale,
+            child: Container(
+              width: size,
+              height: size,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(colors: [color, Colors.transparent]),
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 }
 
