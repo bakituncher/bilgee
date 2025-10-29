@@ -10,6 +10,7 @@ import 'package:taktik/core/theme/app_theme.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:taktik/shared/widgets/score_slider.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
+import 'package:lottie/lottie.dart';
 
 final _updateModeProvider = StateProvider.autoDispose<bool>((ref) => true);
 final _sessionQuestionCountProvider = StateProvider.autoDispose<int>((ref) => 20);
@@ -334,21 +335,9 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
                 ref.read(questNotifierProvider.notifier).userUpdatedTopicPerformance(subject, topic, sessionQuestions);
                 if (context.mounted) {
                   HapticFeedback.mediumImpact();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Row(
-                        children: [
-                          Icon(Icons.check_circle_rounded, color: Colors.white),
-                          SizedBox(width: 12),
-                          Text('İstatistikler güncellendi'),
-                        ],
-                      ),
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      backgroundColor: AppTheme.successColor,
-                    ),
-                  );
-                  context.pop();
+                  // Başarı Lottie diyaloğunu göster, ardından sayfadan geri dön
+                  await _showSuccessDialog(context);
+                  if (context.mounted) context.pop();
                 }
               },
               child: Text(
@@ -377,6 +366,60 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
       final netCorrect = correct - (wrong * penalty);
       return total == 0 ? 0.0 : (netCorrect / total).clamp(0.0, 1.0);
     }
+  }
+}
+
+// Başarı animasyonu için küçük ve şık bir dialog (Ders Netlerim akışına özel)
+Future<void> _showSuccessDialog(BuildContext context) async {
+  await showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (ctx) => const _SuccessDialog(),
+  );
+}
+
+class _SuccessDialog extends StatefulWidget {
+  const _SuccessDialog();
+
+  @override
+  State<_SuccessDialog> createState() => _SuccessDialogState();
+}
+
+class _SuccessDialogState extends State<_SuccessDialog> {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          color: theme.colorScheme.surface,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Lottie.asset(
+              'assets/lotties/Check blue.json',
+              repeat: false,
+              onLoaded: (composition) {
+                Future.delayed(composition.duration + const Duration(milliseconds: 200), () {
+                  if (mounted) Navigator.of(context).pop();
+                });
+              },
+              width: 160,
+              height: 160,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(height: 8),
+            Text('Kaydedildi!', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            Text('Ders netlerin başarıyla güncellendi.', style: theme.textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor), textAlign: TextAlign.center),
+          ],
+        ),
+      ),
+    );
   }
 }
 

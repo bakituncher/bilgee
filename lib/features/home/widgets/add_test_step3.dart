@@ -10,6 +10,7 @@ import 'package:taktik/features/home/logic/add_test_notifier.dart';
 import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:taktik/features/stats/logic/stats_analysis.dart';
+import 'package:lottie/lottie.dart';
 
 class Step3Summary extends ConsumerWidget {
   const Step3Summary({super.key});
@@ -99,7 +100,10 @@ class Step3Summary extends ConsumerWidget {
                 // --- GÜNCELLENDİ: Sadece 'test gönderimi' eylemini bildir ---
                 ref.read(questNotifierProvider.notifier).userSubmittedTest();
 
-                // ------------------------------------
+                // Başarılı kaydın ardından şık bir Lottie onayı göster
+                if (context.mounted) {
+                  await _showSuccessDialog(context);
+                }
 
                 if (context.mounted) {
                   context.push('/home/test-result-summary', extra: newTest);
@@ -159,6 +163,61 @@ class _SummaryRow extends StatelessWidget {
           Text(label, style: isTotal ? textTheme.titleLarge : textTheme.bodyLarge),
           Text(value, style: textTheme.titleLarge?.copyWith(color: color, fontWeight: FontWeight.bold)),
         ],
+      ),
+    );
+  }
+}
+
+// Başarı animasyonu için küçük ve şık bir dialog
+Future<void> _showSuccessDialog(BuildContext context) async {
+  await showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (ctx) => const _SuccessDialog(),
+  );
+}
+
+class _SuccessDialog extends StatefulWidget {
+  const _SuccessDialog();
+
+  @override
+  State<_SuccessDialog> createState() => _SuccessDialogState();
+}
+
+class _SuccessDialogState extends State<_SuccessDialog> {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          color: theme.colorScheme.surface,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Lottie.asset(
+              'assets/lotties/Check blue.json',
+              repeat: false,
+              onLoaded: (composition) {
+                // Animasyon tamamlandıktan kısa bir süre sonra dialog'u kapat
+                Future.delayed(composition.duration + const Duration(milliseconds: 200), () {
+                  if (mounted) Navigator.of(context).pop();
+                });
+              },
+              width: 160,
+              height: 160,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(height: 8),
+            Text('Kaydedildi!', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            Text('Deneme sonuçların başarıyla kaydedildi.', style: theme.textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor), textAlign: TextAlign.center),
+          ],
+        ),
       ),
     );
   }

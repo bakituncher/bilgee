@@ -89,6 +89,7 @@ flutter:
     - assets/data/
     - assets/prompts/
     - assets/images/
+    - assets/lotties/
     - .env
 
 flutter_native_splash:
