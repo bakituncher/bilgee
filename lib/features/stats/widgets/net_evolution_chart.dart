@@ -28,14 +28,35 @@ class NetEvolutionChart extends StatelessWidget {
       }
     }
 
-    return SizedBox(
-      height: 260,
-      child: Card(
-        clipBehavior: Clip.antiAlias,
-        elevation: 2,
+    return Container(
+      height: 280,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.cardColor,
+            AppTheme.cardColor.withOpacity(0.95),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppTheme.secondaryColor.withOpacity(0.2),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryColor.withOpacity(0.1),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
         child: RepaintBoundary(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 16, 12, 12),
+            padding: const EdgeInsets.fromLTRB(12, 20, 16, 16),
             child: hasData
                 ? LineChart(
                     LineChartData(
@@ -166,11 +187,30 @@ class _EmptyChartPlaceholder extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(Icons.show_chart_rounded, color: AppTheme.secondaryTextColor.withOpacity(0.6)),
-        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppTheme.secondaryColor.withOpacity(0.15),
+                AppTheme.secondaryColor.withOpacity(0.05),
+              ],
+            ),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            Icons.show_chart_rounded,
+            color: AppTheme.secondaryColor,
+            size: 48,
+          ),
+        ),
+        const SizedBox(height: 16),
         Text(
           'Grafik için yeterli veri yok',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor),
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            color: AppTheme.secondaryTextColor,
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ],
     );

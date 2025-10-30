@@ -7,15 +7,60 @@ class TitleWidget extends StatelessWidget {
   final String subtitle;
   const TitleWidget({required this.title, required this.subtitle, super.key});
 
+  IconData _getIconForTitle(String title) {
+    if (title.contains('Kader')) return Icons.show_chart_rounded;
+    if (title.contains('Zafer')) return Icons.emoji_events_rounded;
+    if (title.contains('Taktik')) return Icons.auto_awesome_rounded;
+    if (title.contains('Ders')) return Icons.map_rounded;
+    return Icons.star_rounded;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 16.0, bottom: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 4),
+      child: Row(
         children: [
-          Text(title, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
-          Text(subtitle, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor)),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppTheme.secondaryColor.withOpacity(0.2),
+                  AppTheme.secondaryColor.withOpacity(0.1),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              _getIconForTitle(title),
+              color: AppTheme.secondaryColor,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.3,
+                      ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppTheme.secondaryTextColor,
+                        height: 1.3,
+                      ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
