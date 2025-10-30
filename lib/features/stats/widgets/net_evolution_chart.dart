@@ -5,13 +5,20 @@ import 'package:intl/intl.dart';
 import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/stats/logic/stats_analysis.dart';
 
-class NetEvolutionChart extends StatelessWidget {
+class NetEvolutionChart extends StatefulWidget {
   final StatsAnalysis analysis;
   const NetEvolutionChart({required this.analysis, super.key});
 
   @override
+  State<NetEvolutionChart> createState() => _NetEvolutionChartState();
+}
+
+class _NetEvolutionChartState extends State<NetEvolutionChart> {
+  int? _touchedIndex;
+
+  @override
   Widget build(BuildContext context) {
-    final spots = analysis.netSpots;
+    final spots = widget.analysis.netSpots;
     final hasData = spots.isNotEmpty;
 
     double minY = 0, maxY = 1;
@@ -19,8 +26,8 @@ class NetEvolutionChart extends StatelessWidget {
       minY = spots.map((e) => e.y).reduce((a, b) => a < b ? a : b);
       maxY = spots.map((e) => e.y).reduce((a, b) => a > b ? a : b);
       // Y eksenini biraz pad edelim ki çizgi kenarlara yapışmasın
-      final padding = ((maxY - minY).abs() * 0.15) + 1;
-      minY = (minY - padding);
+      final padding = ((maxY - minY).abs() * 0.20) + 1;
+      minY = (minY - padding).clamp(0, double.infinity);
       maxY = (maxY + padding);
       if (minY == maxY) {
         minY -= 1;
@@ -29,7 +36,7 @@ class NetEvolutionChart extends StatelessWidget {
     }
 
     return Container(
-      height: 220,
+      height: 280,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -92,22 +99,40 @@ class NetEvolutionChart extends StatelessWidget {
                         bottomTitles: AxisTitles(
                           sideTitles: SideTitles(
                             showTitles: true,
-                            reservedSize: 28,
+                            reservedSize: 32,
                             interval: 1,
                             getTitlesWidget: (value, meta) {
                               final i = value.toInt();
-                              if (i < 0 || i >= analysis.sortedTests.length) return const SizedBox.shrink();
-                              // İlk, orta ve son için etiket gösterelim
-                              final isEdge = i == 0 || i == analysis.sortedTests.length - 1;
-                              final isMiddle = i == (analysis.sortedTests.length / 2).floor();
-                              if (!(isEdge || isMiddle)) return const SizedBox.shrink();
-                              final date = analysis.sortedTests[i].date;
+                              if (i < 0 || i >= widget.analysis.sortedTests.length) return const SizedBox.shrink();
+
+                              // Veri sayısına göre etiket stratejisi
+                              final totalTests = widget.analysis.sortedTests.length;
+                              bool shouldShow = false;
+
+                              if (totalTests <= 5) {
+                                // Az veri varsa hepsini göster
+                                shouldShow = true;
+                              } else if (totalTests <= 10) {
+                                // Orta seviye: ilk, orta ve son
+                                final isEdge = i == 0 || i == totalTests - 1;
+                                final isMiddle = i == (totalTests / 2).floor();
+                                shouldShow = isEdge || isMiddle;
+                              } else {
+                                // Çok veri: sadece ilk ve son
+                                shouldShow = i == 0 || i == totalTests - 1;
+                              }
+
+                              if (!shouldShow) return const SizedBox.shrink();
+
+                              final date = widget.analysis.sortedTests[i].date;
                               return Padding(
-                                padding: const EdgeInsets.only(top: 6),
+                                padding: const EdgeInsets.only(top: 8),
                                 child: Text(
-                                  DateFormat.Md('tr').format(date),
+                                  DateFormat.MMMd('tr').format(date),
                                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                         color: AppTheme.secondaryTextColor,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w500,
                                       ),
                                 ),
                               );
@@ -117,16 +142,36 @@ class NetEvolutionChart extends StatelessWidget {
                       ),
                       lineTouchData: LineTouchData(
                         handleBuiltInTouches: true,
+                        touchCallback: (FlTouchEvent event, LineTouchResponse? touchResponse) {
+                          setState(() {
+                            if (touchResponse?.lineBarSpots != null && touchResponse!.lineBarSpots!.isNotEmpty) {
+                              _touchedIndex = touchResponse.lineBarSpots!.first.spotIndex;
+                            } else {
+                              _touchedIndex = null;
+                            }
+                          });
+                        },
                         touchTooltipData: LineTouchTooltipData(
-                          getTooltipColor: (spot) => AppTheme.primaryColor.withOpacity(0.95),
+                          maxContentWidth: 200,
+                          fitInsideHorizontally: true,
+                          fitInsideVertically: true,
+                          tooltipRoundedRadius: 12,
+                          tooltipPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          tooltipMargin: 8,
+                          getTooltipColor: (spot) => AppTheme.primaryColor.withOpacity(0.96),
                           getTooltipItems: (touchedSpots) => touchedSpots.map((spot) {
-                            final test = analysis.sortedTests[spot.spotIndex];
+                            final test = widget.analysis.sortedTests[spot.spotIndex];
                             final total = (test.totalCorrect + test.totalWrong);
                             final accuracy = total == 0 ? 0.0 : (test.totalCorrect / total);
-                            final text = '${test.testName}\n${DateFormat.yMd('tr').format(test.date)}\nNet: ${test.totalNet.toStringAsFixed(2)}  |  İsabet: %${(accuracy * 100).toStringAsFixed(0)}';
+                            final text = '${test.testName}\n${DateFormat.yMd('tr').format(test.date)}\n\nNet: ${test.totalNet.toStringAsFixed(2)}\nİsabet: %${(accuracy * 100).toStringAsFixed(0)}';
                             return LineTooltipItem(
                               text,
-                              const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                              const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12,
+                                height: 1.4,
+                              ),
                             );
                           }).toList(),
                         ),
@@ -147,14 +192,15 @@ class NetEvolutionChart extends StatelessWidget {
                           dotData: FlDotData(
                             show: true,
                             getDotPainter: (spot, percent, barData, index) {
-                              final test = analysis.sortedTests[index];
+                              final test = widget.analysis.sortedTests[index];
                               final total = (test.totalCorrect + test.totalWrong);
                               final accuracy = total == 0 ? 0.0 : (test.totalCorrect / total);
+                              final isTouched = _touchedIndex == index;
                               return FlDotCirclePainter(
-                                radius: 4.2,
+                                radius: isTouched ? 6.5 : 4.5,
                                 color: Color.lerp(AppTheme.accentColor, AppTheme.successColor, accuracy)!,
-                                strokeColor: AppTheme.cardColor,
-                                strokeWidth: 1.8,
+                                strokeColor: isTouched ? Colors.white : AppTheme.cardColor,
+                                strokeWidth: isTouched ? 3 : 2,
                               );
                             },
                           ),

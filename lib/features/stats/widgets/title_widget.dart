@@ -18,27 +18,34 @@ class TitleWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 4),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(6),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppTheme.secondaryColor.withOpacity(0.2),
-                  AppTheme.secondaryColor.withOpacity(0.1),
+                  AppTheme.secondaryColor.withOpacity(0.25),
+                  AppTheme.secondaryColor.withOpacity(0.12),
                 ],
               ),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.secondaryColor.withOpacity(0.15),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Icon(
               _getIconForTitle(title),
               color: AppTheme.secondaryColor,
-              size: 18,
+              size: 20,
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -47,14 +54,17 @@ class TitleWidget extends StatelessWidget {
                   title,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        letterSpacing: 0.2,
+                        letterSpacing: 0.3,
+                        fontSize: 16,
                       ),
                 ),
+                const SizedBox(height: 2),
                 Text(
                   subtitle,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppTheme.secondaryTextColor,
-                        height: 1.2,
+                        height: 1.3,
+                        fontSize: 12.5,
                       ),
                 ),
               ],

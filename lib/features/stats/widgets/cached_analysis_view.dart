@@ -69,14 +69,21 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
       children: [
         // Modern Tab Bar
         Container(
-          margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
           decoration: BoxDecoration(
-            color: AppTheme.lightSurfaceColor.withOpacity(0.3),
-            borderRadius: BorderRadius.circular(12),
+            color: AppTheme.lightSurfaceColor.withOpacity(0.35),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: AppTheme.secondaryColor.withOpacity(0.1),
-              width: 1,
+              color: AppTheme.secondaryColor.withOpacity(0.15),
+              width: 1.5,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.primaryColor.withOpacity(0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: TabBar(
             controller: _tabController,
@@ -84,15 +91,15 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
               gradient: LinearGradient(
                 colors: [
                   AppTheme.secondaryColor,
-                  AppTheme.secondaryColor.withOpacity(0.85),
+                  AppTheme.secondaryColor.withOpacity(0.88),
                 ],
               ),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(11),
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.secondaryColor.withOpacity(0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+                  color: AppTheme.secondaryColor.withOpacity(0.35),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
                 ),
               ],
             ),
@@ -103,39 +110,42 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
             labelStyle: const TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 13,
-              letterSpacing: 0.2,
+              letterSpacing: 0.3,
             ),
             unselectedLabelStyle: const TextStyle(
               fontWeight: FontWeight.w600,
-              fontSize: 12,
+              fontSize: 12.5,
             ),
-            padding: const EdgeInsets.all(4),
+            padding: const EdgeInsets.all(5),
             tabs: [
               Tab(
+                height: 44,
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.analytics_rounded, size: 16),
+                    Icon(Icons.analytics_rounded, size: 18),
                     const SizedBox(width: 6),
                     const Text('Özet'),
                   ],
                 ),
               ),
               Tab(
+                height: 44,
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.auto_awesome_rounded, size: 16),
+                    Icon(Icons.auto_awesome_rounded, size: 18),
                     const SizedBox(width: 6),
                     const Text('Taktik'),
                   ],
                 ),
               ),
               Tab(
+                height: 44,
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.menu_book_rounded, size: 16),
+                    Icon(Icons.menu_book_rounded, size: 18),
                     const SizedBox(width: 6),
                     const Text('Dersler'),
                   ],
@@ -164,23 +174,23 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
   Widget _buildOverviewTab(BuildContext context, StatsAnalysis analysis) {
     return ListView(
       key: const PageStorageKey('overview-tab'),
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
       children: [
         const TitleWidget(
           title: 'Kader Çizgin',
           subtitle: 'Netlerinin ve doğruluğunun zamansal analizi',
         ).animate().fadeIn(duration: 300.ms),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         NetEvolutionChart(analysis: analysis)
             .animate()
             .fadeIn(delay: 100.ms, duration: 400.ms)
             .slideY(begin: 0.05, end: 0),
-        const SizedBox(height: 20),
+        const SizedBox(height: 24),
         const TitleWidget(
           title: 'Zafer Anıtları',
           subtitle: 'Genel performans metriklerin',
         ).animate().fadeIn(delay: 150.ms, duration: 300.ms),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         KeyStatsGrid(analysis: analysis)
             .animate()
             .fadeIn(delay: 200.ms, duration: 400.ms)
@@ -193,13 +203,13 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
   Widget _buildTacticsTab(BuildContext context, StatsAnalysis analysis) {
     return ListView(
       key: const PageStorageKey('tactics-tab'),
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
       children: [
         const TitleWidget(
           title: 'Taktik Raporun',
           subtitle: 'Sana özel Taktik\'sel rapor ve öneriler',
         ).animate().fadeIn(duration: 300.ms),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         AiInsightCard(analysis: analysis)
             .animate()
             .fadeIn(delay: 100.ms, duration: 400.ms)
@@ -207,8 +217,6 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
       ],
     );
   }
-
-  // Tab 3: Dersler (Ders Kartları)
   Widget _buildSubjectsTab(BuildContext context, StatsAnalysis analysis) {
     return ListView(
       key: const PageStorageKey('subjects-tab'),

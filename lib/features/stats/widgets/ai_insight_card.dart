@@ -15,20 +15,20 @@ class AiInsightCard extends StatelessWidget {
         gradient: LinearGradient(
           colors: [
             AppTheme.cardColor,
-            AppTheme.cardColor.withOpacity(0.95),
+            AppTheme.cardColor.withOpacity(0.96),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: AppTheme.secondaryColor.withOpacity(0.25),
+          color: AppTheme.secondaryColor.withOpacity(0.28),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryColor.withOpacity(0.08),
-            blurRadius: 12,
+            color: AppTheme.primaryColor.withOpacity(0.1),
+            blurRadius: 14,
             offset: const Offset(0, 4),
           ),
         ],
@@ -37,17 +37,17 @@ class AiInsightCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppTheme.secondaryColor.withOpacity(0.15),
-                  AppTheme.secondaryColor.withOpacity(0.05),
+                  AppTheme.secondaryColor.withOpacity(0.18),
+                  AppTheme.secondaryColor.withOpacity(0.06),
                 ],
               ),
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(20),
-                topRight: Radius.circular(20),
+                topLeft: Radius.circular(18),
+                topRight: Radius.circular(18),
               ),
             ),
             child: Row(
@@ -81,22 +81,22 @@ class AiInsightCard extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(14.0),
+            padding: const EdgeInsets.all(16.0),
             child: Column(
               children: analysis.tacticalAdvice.asMap().entries.map((entry) {
                 final index = entry.key;
                 final advice = entry.value;
                 final isLast = index == analysis.tacticalAdvice.length - 1;
                 return Padding(
-                  padding: EdgeInsets.only(bottom: isLast ? 0 : 12.0),
+                  padding: EdgeInsets.only(bottom: isLast ? 0 : 14.0),
                   child: Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: advice.color.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(12),
+                      color: advice.color.withOpacity(0.09),
+                      borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: advice.color.withOpacity(0.2),
-                        width: 1,
+                        color: advice.color.withOpacity(0.22),
+                        width: 1.2,
                       ),
                     ),
                     child: Row(

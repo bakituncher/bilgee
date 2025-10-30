@@ -26,46 +26,47 @@ class _SubjectStatCardState extends State<SubjectStatCard> {
     final Color progressColor = Color.lerp(AppTheme.accentColor, AppTheme.successColor, progress.clamp(0.0, 1.0))!;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 12),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: widget.onTap,
           onHover: (hover) => setState(() => _isHovered = hover),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOutCubic,
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  progressColor.withOpacity(_isHovered ? 0.12 : 0.08),
-                  progressColor.withOpacity(_isHovered ? 0.08 : 0.04),
+                  progressColor.withOpacity(_isHovered ? 0.14 : 0.09),
+                  progressColor.withOpacity(_isHovered ? 0.09 : 0.05),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: progressColor.withOpacity(_isHovered ? 0.4 : 0.25),
+                color: progressColor.withOpacity(_isHovered ? 0.45 : 0.28),
                 width: 1.5,
               ),
               boxShadow: _isHovered
                   ? [
                       BoxShadow(
-                        color: progressColor.withOpacity(0.2),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
+                        color: progressColor.withOpacity(0.25),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
                       ),
                     ]
                   : [
                       BoxShadow(
-                        color: AppTheme.primaryColor.withOpacity(0.04),
+                        color: AppTheme.primaryColor.withOpacity(0.05),
                         blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),
                     ],
             ),
-            padding: const EdgeInsets.all(14.0),
+            padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

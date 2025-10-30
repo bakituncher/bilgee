@@ -14,9 +14,9 @@ class KeyStatsGrid extends StatelessWidget {
         final width = constraints.maxWidth;
         final isNarrow = width < 360;
         final crossAxisCount = isNarrow ? 1 : 2;
-        const crossAxisSpacing = 10.0;
+        const crossAxisSpacing = 12.0;
         final cellWidth = (width - (crossAxisCount - 1) * crossAxisSpacing) / crossAxisCount;
-        final desiredHeight = isNarrow ? 110.0 : 100.0;
+        final desiredHeight = isNarrow ? 115.0 : 105.0;
         final aspect = cellWidth / desiredHeight;
         return GridView.builder(
           itemCount: 4,
@@ -24,7 +24,7 @@ class KeyStatsGrid extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,
-            mainAxisSpacing: 10,
+            mainAxisSpacing: 12,
             crossAxisSpacing: crossAxisSpacing,
             childAspectRatio: aspect,
           ),
@@ -108,29 +108,29 @@ class _StatCardState extends State<_StatCard> with SingleTickerProviderStateMixi
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                widget.color.withOpacity(0.15),
-                widget.color.withOpacity(0.05),
+                widget.color.withOpacity(0.16),
+                widget.color.withOpacity(0.06),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: widget.color.withOpacity(0.3),
+              color: widget.color.withOpacity(0.32),
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: widget.color.withOpacity(0.15),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
+                color: widget.color.withOpacity(0.18),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
               ),
             ],
           ),
           child: Material(
             color: Colors.transparent,
             child: Padding(
-              padding: const EdgeInsets.all(12.0),
+              padding: const EdgeInsets.all(14.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

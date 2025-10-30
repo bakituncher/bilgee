@@ -13,26 +13,26 @@ class FortressTabSelector extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedIndex = ref.watch(selectedTabIndexProvider);
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(4),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppTheme.lightSurfaceColor.withOpacity(0.6),
-            AppTheme.lightSurfaceColor.withOpacity(0.3),
+            AppTheme.lightSurfaceColor.withOpacity(0.5),
+            AppTheme.lightSurfaceColor.withOpacity(0.25),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: AppTheme.secondaryColor.withOpacity(0.1),
-          width: 1,
+          color: AppTheme.secondaryColor.withOpacity(0.15),
+          width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryColor.withOpacity(0.04),
-            blurRadius: 8,
+            color: AppTheme.primaryColor.withOpacity(0.06),
+            blurRadius: 10,
             offset: const Offset(0, 2),
           ),
         ],
@@ -41,24 +41,24 @@ class FortressTabSelector extends ConsumerWidget {
         children: List.generate(tabs.length, (index) {
           final isSelected = selectedIndex == index;
           return Expanded(
-            child: GestureDetector(
+              child: GestureDetector(
               onTap: () => ref.read(selectedTabIndexProvider.notifier).state = index,
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 350),
+                duration: const Duration(milliseconds: 300),
                 curve: Curves.easeOutCubic,
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                 decoration: BoxDecoration(
                   gradient: isSelected
                       ? LinearGradient(
                           colors: [
                             AppTheme.secondaryColor,
-                            AppTheme.secondaryColor.withOpacity(0.85),
+                            AppTheme.secondaryColor.withOpacity(0.88),
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         )
                       : null,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
