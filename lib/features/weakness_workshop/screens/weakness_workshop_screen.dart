@@ -21,6 +21,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:taktik/features/weakness_workshop/logic/quiz_quality_guard.dart';
 import 'package:confetti/confetti.dart';
+import 'package:lottie/lottie.dart';
 
 
 enum WorkshopStep { briefing, study, quiz, results }
@@ -472,39 +473,65 @@ class _LoadingCevherView extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Değiştirildi: Görsel yerine parlayan elmas simgesi
+          // Cevher animasyonu
           Container(
-            width: 120,
-            height: 120,
+            width: 280,
+            height: 200,
             decoration: BoxDecoration(
-              shape: BoxShape.circle,
+              borderRadius: BorderRadius.circular(20),
               boxShadow: [
-                BoxShadow(color: AppTheme.secondaryColor.withValues(alpha: 0.25), blurRadius: 40, spreadRadius: 10),
+                BoxShadow(
+                  color: AppTheme.secondaryColor.withValues(alpha: 0.2),
+                  blurRadius: 30,
+                  spreadRadius: 5,
+                ),
               ],
-              gradient: RadialGradient(colors: [
-                AppTheme.secondaryColor.withValues(alpha: 0.35),
-                Colors.transparent,
-              ], stops: const [0.5, 1.0]),
             ),
-            child: const Center(child: Icon(Icons.diamond_rounded, size: 56, color: Colors.white)),
-          ).animate(onPlay: (c) => c.repeat(reverse: true)).scale(begin: const Offset(0.95, 0.95), end: const Offset(1.05, 1.05), duration: 1200.ms),
+            child: Lottie.asset(
+              'assets/lotties/cevher.json',
+              fit: BoxFit.contain,
+              repeat: true,
+            ),
+          ).animate(onPlay: (c) => c.repeat(reverse: true))
+           .scale(begin: const Offset(0.98, 0.98), end: const Offset(1.02, 1.02), duration: 2000.ms)
+           .then()
+           .shimmer(duration: 1500.ms, color: AppTheme.secondaryColor.withValues(alpha: 0.3)),
+          const SizedBox(height: 32),
+          Text(
+            "İçerik hazırlanıyor...",
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ).animate(onPlay: (c) => c.repeat())
+           .fadeIn(duration: 800.ms)
+           .then()
+           .fadeOut(duration: 800.ms),
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32.0),
+            child: Text(
+              "Senin için özel çalışma materyali oluşturuluyor",
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: AppTheme.secondaryTextColor,
+              ),
+            ),
+          ),
           const SizedBox(height: 24),
-          Text(
-            "Atölye ocağı kızdırılıyor...",
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppTheme.secondaryTextColor),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            "Konuya özel çalışma setin hazırlanıyor",
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor),
-          ),
-          const SizedBox(height: 20),
-          const SizedBox(
-            width: 180,
-            child: LinearProgressIndicator(color: AppTheme.secondaryColor),
-          ),
+          SizedBox(
+            width: 220,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: const LinearProgressIndicator(
+                color: AppTheme.secondaryColor,
+                backgroundColor: Colors.white10,
+                minHeight: 6,
+              ),
+            ),
+          ).animate(onPlay: (c) => c.repeat())
+           .shimmer(duration: 1800.ms, color: AppTheme.secondaryColor.withValues(alpha: 0.5)),
         ],
       ),
     );
