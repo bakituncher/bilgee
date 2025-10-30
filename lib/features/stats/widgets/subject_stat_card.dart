@@ -26,13 +26,13 @@ class _SubjectStatCardState extends State<SubjectStatCard> {
     final Color progressColor = Color.lerp(AppTheme.accentColor, AppTheme.successColor, progress.clamp(0.0, 1.0))!;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
+      margin: const EdgeInsets.only(bottom: 10),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: widget.onTap,
           onHover: (hover) => setState(() => _isHovered = hover),
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(14),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             decoration: BoxDecoration(
@@ -44,7 +44,7 @@ class _SubjectStatCardState extends State<SubjectStatCard> {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: progressColor.withOpacity(_isHovered ? 0.4 : 0.25),
                 width: 1.5,
@@ -53,19 +53,19 @@ class _SubjectStatCardState extends State<SubjectStatCard> {
                   ? [
                       BoxShadow(
                         color: progressColor.withOpacity(0.2),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
                       ),
                     ]
                   : [
                       BoxShadow(
-                        color: AppTheme.primaryColor.withOpacity(0.05),
-                        blurRadius: 8,
+                        color: AppTheme.primaryColor.withOpacity(0.04),
+                        blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),
                     ],
             ),
-            padding: const EdgeInsets.all(18.0),
+            padding: const EdgeInsets.all(14.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -76,22 +76,22 @@ class _SubjectStatCardState extends State<SubjectStatCard> {
                       child: Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(8),
+                            padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
                               color: progressColor.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(8),
                             ),
                             child: Icon(
                               Icons.menu_book_rounded,
                               color: progressColor,
-                              size: 20,
+                              size: 16,
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: Text(
                               widget.subjectName,
-                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.bold,
                                     letterSpacing: 0.2,
                                   ),
@@ -102,7 +102,7 @@ class _SubjectStatCardState extends State<SubjectStatCard> {
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
@@ -110,14 +110,14 @@ class _SubjectStatCardState extends State<SubjectStatCard> {
                             progressColor.withOpacity(0.15),
                           ],
                         ),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
                             widget.analysis.averageNet.toStringAsFixed(2),
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: progressColor,
                                 ),
@@ -126,14 +126,14 @@ class _SubjectStatCardState extends State<SubjectStatCard> {
                           Icon(
                             Icons.chevron_right_rounded,
                             color: progressColor,
-                            size: 20,
+                            size: 18,
                           ),
                         ],
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 Row(
                   children: [
                     Expanded(
@@ -144,11 +144,12 @@ class _SubjectStatCardState extends State<SubjectStatCard> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'Hakimiyet Seviyesi',
+                                'Hakimiyet',
                                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                       color: AppTheme.secondaryTextColor,
                                       fontWeight: FontWeight.w600,
-                                      letterSpacing: 0.5,
+                                      letterSpacing: 0.3,
+                                      fontSize: 11,
                                     ),
                               ),
                               Text(
@@ -156,13 +157,14 @@ class _SubjectStatCardState extends State<SubjectStatCard> {
                                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                       color: progressColor,
                                       fontWeight: FontWeight.bold,
+                                      fontSize: 11,
                                     ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 6),
                           Container(
-                            height: 10,
+                            height: 8,
                             decoration: BoxDecoration(
                               color: AppTheme.lightSurfaceColor.withOpacity(0.3),
                               borderRadius: BorderRadius.circular(6),

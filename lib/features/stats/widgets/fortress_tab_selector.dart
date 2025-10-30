@@ -13,8 +13,8 @@ class FortressTabSelector extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedIndex = ref.watch(selectedTabIndexProvider);
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      padding: const EdgeInsets.all(6),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -24,16 +24,16 @@ class FortressTabSelector extends ConsumerWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: AppTheme.secondaryColor.withOpacity(0.1),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryColor.withOpacity(0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: AppTheme.primaryColor.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -46,7 +46,7 @@ class FortressTabSelector extends ConsumerWidget {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 350),
                 curve: Curves.easeOutCubic,
-                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
                 decoration: BoxDecoration(
                   gradient: isSelected
                       ? LinearGradient(
@@ -75,7 +75,7 @@ class FortressTabSelector extends ConsumerWidget {
                     if (isSelected) ...[
                       Icon(
                         Icons.auto_graph_rounded,
-                        size: 18,
+                        size: 14,
                         color: AppTheme.primaryColor,
                       ).animate(
                         onPlay: (controller) => controller.repeat(),
@@ -83,7 +83,7 @@ class FortressTabSelector extends ConsumerWidget {
                         delay: 1000.ms,
                         duration: 1500.ms,
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 4),
                     ],
                     Flexible(
                       child: Text(
@@ -93,9 +93,9 @@ class FortressTabSelector extends ConsumerWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: isSelected ? 15 : 14,
+                          fontSize: isSelected ? 14 : 13,
                           color: isSelected ? AppTheme.primaryColor : AppTheme.secondaryTextColor,
-                          letterSpacing: 0.3,
+                          letterSpacing: 0.2,
                         ),
                       ),
                     ),

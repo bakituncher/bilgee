@@ -29,7 +29,7 @@ class NetEvolutionChart extends StatelessWidget {
     }
 
     return Container(
-      height: 280,
+      height: 220,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -39,24 +39,24 @@ class NetEvolutionChart extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: AppTheme.secondaryColor.withOpacity(0.2),
-          width: 1.5,
+          width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryColor.withOpacity(0.1),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: AppTheme.primaryColor.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         child: RepaintBoundary(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 20, 16, 16),
+            padding: const EdgeInsets.fromLTRB(8, 16, 12, 12),
             child: hasData
                 ? LineChart(
                     LineChartData(
@@ -188,7 +188,7 @@ class _EmptyChartPlaceholder extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Container(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
@@ -201,13 +201,13 @@ class _EmptyChartPlaceholder extends StatelessWidget {
           child: Icon(
             Icons.show_chart_rounded,
             color: AppTheme.secondaryColor,
-            size: 48,
+            size: 32,
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         Text(
           'Grafik için yeterli veri yok',
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: AppTheme.secondaryTextColor,
             fontWeight: FontWeight.w500,
           ),

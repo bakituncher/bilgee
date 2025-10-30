@@ -53,12 +53,12 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
   Widget _buildEmptyState(BuildContext context, {bool isCompletelyEmpty = false, String sectionName = ''}) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32.0),
+        padding: const EdgeInsets.symmetric(horizontal: 28.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(32),
+              padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
@@ -72,35 +72,35 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
               ),
               child: Icon(
                 Icons.insights_rounded,
-                size: 80,
+                size: 60,
                 color: AppTheme.secondaryColor,
               ),
             ).animate().scale(duration: 600.ms, curve: Curves.elasticOut),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             Text(
               'Kale Henüz İnşa Edilmedi',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
               textAlign: TextAlign.center,
             ).animate().fadeIn(delay: 200.ms, duration: 400.ms),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Text(
               isCompletelyEmpty
                   ? 'Stratejik analizleri ve fetih haritalarını görmek için deneme sonuçları ekleyerek kalenin temellerini atmalısın.'
                   : 'Bu cephede anlamlı bir strateji oluşturmak için en az 2 adet "$sectionName" denemesi eklemelisin.',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: AppTheme.secondaryTextColor,
-                height: 1.6,
+                height: 1.5,
               ),
             ).animate().fadeIn(delay: 300.ms, duration: 400.ms),
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               decoration: BoxDecoration(
                 color: AppTheme.lightSurfaceColor.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: AppTheme.secondaryColor.withOpacity(0.3),
                   width: 1.5,
@@ -110,13 +110,14 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.tips_and_updates_rounded,
-                    color: AppTheme.secondaryColor, size: 20),
-                  const SizedBox(width: 12),
+                    color: AppTheme.secondaryColor, size: 18),
+                  const SizedBox(width: 10),
                   Text(
                     'İlk denemeyi ekle ve yükselişini izle',
                     style: TextStyle(
                       color: AppTheme.secondaryColor,
                       fontWeight: FontWeight.w600,
+                      fontSize: 13,
                     ),
                   ),
                 ],
@@ -252,7 +253,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
@@ -260,11 +261,11 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                         AppTheme.secondaryColor.withOpacity(0.7),
                       ],
                     ),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                     boxShadow: [
                       BoxShadow(
-                        color: AppTheme.secondaryColor.withOpacity(0.3),
-                        blurRadius: 8,
+                        color: AppTheme.secondaryColor.withOpacity(0.25),
+                        blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),
                     ],
@@ -272,15 +273,15 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                   child: const Icon(
                     Icons.insights_rounded,
                     color: AppTheme.primaryColor,
-                    size: 22,
+                    size: 20,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 const Text(
                   'Deneme Gelişimi',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    fontSize: 20,
+                    fontSize: 18,
                   ),
                 ),
               ],

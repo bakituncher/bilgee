@@ -39,44 +39,43 @@ class CachedAnalysisView extends ConsumerWidget {
     return RepaintBoundary(
       child: ListView(
         key: PageStorageKey('analysis-$sectionName'),
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
         children: [
-          const SizedBox(height: 8),
           const TitleWidget(
             title: 'Kader Çizgin',
             subtitle: 'Netlerinin ve doğruluğunun zamansal analizi',
           ).animate().fadeIn(duration: 300.ms).slideX(begin: -0.1, end: 0),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           NetEvolutionChart(analysis: analysis)
               .animate()
               .fadeIn(delay: 100.ms, duration: 400.ms)
               .slideY(begin: 0.1, end: 0),
-          const SizedBox(height: 32),
+          const SizedBox(height: 20),
           const TitleWidget(
             title: 'Zafer Anıtları',
             subtitle: 'Genel performans metriklerin',
           ).animate().fadeIn(delay: 150.ms, duration: 300.ms).slideX(begin: -0.1, end: 0),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           KeyStatsGrid(analysis: analysis)
               .animate()
               .fadeIn(delay: 200.ms, duration: 400.ms)
               .slideY(begin: 0.1, end: 0),
-          const SizedBox(height: 32),
+          const SizedBox(height: 20),
           const TitleWidget(
             title: 'Taktik Raporun',
             subtitle: 'Sana özel Taktik\'sel rapor',
           ).animate().fadeIn(delay: 250.ms, duration: 300.ms).slideX(begin: -0.1, end: 0),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           AiInsightCard(analysis: analysis)
               .animate()
               .fadeIn(delay: 300.ms, duration: 400.ms)
               .slideY(begin: 0.1, end: 0),
-          const SizedBox(height: 32),
+          const SizedBox(height: 20),
           const TitleWidget(
             title: 'Ders Haritası',
             subtitle: 'Ders kalelerine tıklayarak detaylı istihbarat al',
           ).animate().fadeIn(delay: 350.ms, duration: 300.ms).slideX(begin: -0.1, end: 0),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           ...analysis.sortedSubjects.asMap().entries.map((entry) {
             final index = entry.key;
             final subjectEntry = entry.value;

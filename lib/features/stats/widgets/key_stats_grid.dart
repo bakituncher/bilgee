@@ -12,21 +12,19 @@ class KeyStatsGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final isNarrow = width < 360; // çok küçük cihaz
+        final isNarrow = width < 360;
         final crossAxisCount = isNarrow ? 1 : 2;
-        const crossAxisSpacing = 12.0;
-        // Hücre genişliği (GridView iç hesaplama mantığına paralel)
+        const crossAxisSpacing = 10.0;
         final cellWidth = (width - (crossAxisCount - 1) * crossAxisSpacing) / crossAxisCount;
-        // İçerik yüksekliğini yeterli olacak şekilde hedefle (etiket + boşluk + değer satırı)
-        final desiredHeight = isNarrow ? 132.0 : 118.0; // önceki oranlara göre daha yüksek
-        final aspect = cellWidth / desiredHeight; // childAspectRatio = width/height
+        final desiredHeight = isNarrow ? 110.0 : 100.0;
+        final aspect = cellWidth / desiredHeight;
         return GridView.builder(
           itemCount: 4,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,
-            mainAxisSpacing: 12,
+            mainAxisSpacing: 10,
             crossAxisSpacing: crossAxisSpacing,
             childAspectRatio: aspect,
           ),
@@ -116,23 +114,23 @@ class _StatCardState extends State<_StatCard> with SingleTickerProviderStateMixi
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: widget.color.withOpacity(0.3),
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: widget.color.withOpacity(0.2),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
+                color: widget.color.withOpacity(0.15),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
           child: Material(
             color: Colors.transparent,
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(12.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -147,8 +145,8 @@ class _StatCardState extends State<_StatCard> with SingleTickerProviderStateMixi
                           style: const TextStyle(
                             color: AppTheme.secondaryTextColor,
                             fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                            letterSpacing: 0.3,
+                            fontSize: 11.5,
+                            letterSpacing: 0.2,
                           ),
                         ),
                       ),
@@ -156,12 +154,12 @@ class _StatCardState extends State<_StatCard> with SingleTickerProviderStateMixi
                         onTap: () => _showInfoDialog(context),
                         borderRadius: BorderRadius.circular(20),
                         child: Container(
-                          padding: const EdgeInsets.all(4),
+                          padding: const EdgeInsets.all(3),
                           decoration: BoxDecoration(
                             color: widget.color.withOpacity(0.15),
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(Icons.info_outline, color: widget.color, size: 16),
+                          child: Icon(Icons.info_outline, color: widget.color, size: 14),
                         ),
                       ),
                     ],
@@ -176,7 +174,7 @@ class _StatCardState extends State<_StatCard> with SingleTickerProviderStateMixi
                           fit: BoxFit.scaleDown,
                           child: Text(
                             widget.value,
-                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                               letterSpacing: -0.5,
@@ -184,14 +182,14 @@ class _StatCardState extends State<_StatCard> with SingleTickerProviderStateMixi
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
                           color: widget.color.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Icon(widget.icon, color: widget.color, size: 22),
+                        child: Icon(widget.icon, color: widget.color, size: 18),
                       ),
                     ],
                   ),

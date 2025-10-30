@@ -37,7 +37,7 @@ class AiInsightCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
@@ -53,7 +53,7 @@ class AiInsightCard extends StatelessWidget {
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
@@ -61,18 +61,18 @@ class AiInsightCard extends StatelessWidget {
                         AppTheme.secondaryColor.withOpacity(0.8),
                       ],
                     ),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Icon(
                     Icons.auto_awesome_rounded,
                     color: AppTheme.primaryColor,
-                    size: 20,
+                    size: 16,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Text(
                   'AI Taktik Önerileri',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: AppTheme.secondaryColor,
                   ),
@@ -81,19 +81,19 @@ class AiInsightCard extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(20.0),
+            padding: const EdgeInsets.all(14.0),
             child: Column(
               children: analysis.tacticalAdvice.asMap().entries.map((entry) {
                 final index = entry.key;
                 final advice = entry.value;
                 final isLast = index == analysis.tacticalAdvice.length - 1;
                 return Padding(
-                  padding: EdgeInsets.only(bottom: isLast ? 0 : 20.0),
+                  padding: EdgeInsets.only(bottom: isLast ? 0 : 12.0),
                   child: Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: advice.color.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: advice.color.withOpacity(0.2),
                         width: 1,
@@ -103,21 +103,21 @@ class AiInsightCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(8),
+                          padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
                             color: advice.color.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Icon(advice.icon, color: advice.color, size: 20),
+                          child: Icon(advice.icon, color: advice.color, size: 16),
                         ),
-                        const SizedBox(width: 14),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: Text(
                             advice.text,
-                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: AppTheme.textColor,
-                              height: 1.6,
-                              fontSize: 15,
+                              height: 1.5,
+                              fontSize: 14,
                             ),
                           ),
                         ),
