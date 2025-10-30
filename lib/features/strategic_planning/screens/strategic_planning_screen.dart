@@ -12,6 +12,7 @@ import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:intl/intl.dart';
 import 'package:taktik/data/models/plan_model.dart';
 import 'package:taktik/data/models/plan_document.dart';
+import 'package:lottie/lottie.dart';
 
 
 enum Pacing { relaxed, moderate, intense }
@@ -175,18 +176,95 @@ class StrategicPlanningScreen extends ConsumerWidget {
       case PlanningStep.pacing:
         return _buildPacingView(context, ref);
       case PlanningStep.loading:
-        return const Center(
-            key: ValueKey('loading'),
-            child: Column(
+        return Center(
+            key: const ValueKey('loading'),
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 400),
+              padding: const EdgeInsets.symmetric(horizontal: 32.0),
+              child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  CircularProgressIndicator(color: AppTheme.secondaryColor),
-                  SizedBox(height: 24),
-                  Text("Strateji güncelleniyor,\nbekleyin komutanım...",
+                  // Lottie animasyonu
+                  Animate(
+                    effects: const [
+                      FadeEffect(duration: Duration(milliseconds: 600)),
+                      ScaleEffect(
+                        begin: Offset(0.8, 0.8),
+                        end: Offset(1.0, 1.0),
+                        curve: Curves.easeOutBack,
+                        duration: Duration(milliseconds: 600),
+                      ),
+                    ],
+                    child: Lottie.asset(
+                      'assets/lotties/Data Analysis.json',
+                      width: 280,
+                      height: 280,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  // Başlık
+                  Animate(
+                    effects: const [
+                      FadeEffect(
+                        delay: Duration(milliseconds: 300),
+                        duration: Duration(milliseconds: 400),
+                      ),
+                    ],
+                    child: Text(
+                      "Strateji Oluşturuluyor",
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: AppTheme.secondaryTextColor, fontSize: 16)
-                  )
-                ]
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // Alt metin
+                  Animate(
+                    effects: const [
+                      FadeEffect(
+                        delay: Duration(milliseconds: 500),
+                        duration: Duration(milliseconds: 400),
+                      ),
+                    ],
+                    child: const Text(
+                      "Verileriniz analiz ediliyor ve size özel haftalık plan hazırlanıyor...",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: AppTheme.secondaryTextColor,
+                        fontSize: 15,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  // İlerleme çubuğu
+                  Animate(
+                    onPlay: (controller) => controller.repeat(),
+                    effects: [
+                      const FadeEffect(
+                        delay: Duration(milliseconds: 700),
+                        duration: Duration(milliseconds: 400),
+                      ),
+                      ShimmerEffect(
+                        duration: const Duration(milliseconds: 2000),
+                        color: AppTheme.secondaryColor.withValues(alpha: AppTheme.secondaryColor.a * 0.3),
+                      ),
+                    ],
+                    child: SizedBox(
+                      width: 200,
+                      child: LinearProgressIndicator(
+                        backgroundColor: AppTheme.lightSurfaceColor.withValues(alpha: AppTheme.lightSurfaceColor.a * 0.3),
+                        valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.secondaryColor),
+                        borderRadius: BorderRadius.circular(8),
+                        minHeight: 6,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             )
         );
       default:
