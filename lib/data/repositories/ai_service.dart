@@ -457,7 +457,21 @@ class AiService {
         // Gerekirse eski yol: tek seferlik hesapla (daha ağır ama nadir)
         final examType = ExamType.values.byName(user.selectedExam!);
         final examData = await ExamData.getExamByType(examType);
-        final analysis = StatsAnalysis(tests, performance, examData, _ref.read(firestoreServiceProvider), user: user);
+        // YENİ: StatsAnalysis için sectionName sağlanmalı.
+        // Kullanıcının seçtiği bölümü veya varsayılan olarak ilk bölümü kullan.
+        final sectionName = user.selectedExamSection ?? (examData.sections.isNotEmpty ? examData.sections.first.name : null);
+
+        if (sectionName == null) {
+          return '{"error":"Analiz için geçerli bir sınav bölümü bulunamadı."}';
+        }
+        final analysis = StatsAnalysis(
+          tests,
+          performance,
+          examData,
+          _ref.read(firestoreServiceProvider),
+          user: user,
+          sectionName: sectionName,
+        );
         final weakestTopicInfo = analysis.getWeakestTopicWithDetails();
 
         if (weakestTopicInfo == null) {

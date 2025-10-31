@@ -30,7 +30,19 @@ class StatsAnalysisController extends AutoDisposeAsyncNotifier<Map<String, Stats
     final Map<String, StatsAnalysis> result = {};
 
     // Genel analiz (tüm testler)
-    result[kAllSectionsKey] = StatsAnalysis(tests, performance, exam, firestoreService, user: user);
+    // YENİ: `sectionName` parametresi eklendi.
+    // Genel analiz için varsayılan olarak ilk bölümü kullanırız,
+    // çünkü bu analiz belirli bir bölüme odaklanmaz, genel metrikler sunar.
+    if (exam.sections.isNotEmpty) {
+      result[kAllSectionsKey] = StatsAnalysis(
+        tests,
+        performance,
+        exam,
+        firestoreService,
+        user: user,
+        sectionName: exam.sections.first.name,
+      );
+    }
 
     // Bölüm bazlı analizler
     final Map<String, List<TestModel>> grouped = <String, List<TestModel>>{};
@@ -38,7 +50,15 @@ class StatsAnalysisController extends AutoDisposeAsyncNotifier<Map<String, Stats
       (grouped[t.sectionName] ??= <TestModel>[]).add(t);
     }
     for (final entry in grouped.entries) {
-      result[entry.key] = StatsAnalysis(entry.value, performance, exam, firestoreService, user: user);
+      // YENİ: `sectionName` parametresi eklendi.
+      result[entry.key] = StatsAnalysis(
+        entry.value,
+        performance,
+        exam,
+        firestoreService,
+        user: user,
+        sectionName: entry.key,
+      );
     }
 
     return result;

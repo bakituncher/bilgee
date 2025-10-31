@@ -47,7 +47,9 @@ class StatsAnalysis {
   final Exam examData;
   final FirestoreService firestoreService;
   final UserModel? user;
+  final String sectionName; // YENİ: Hangi bölüm için analiz yapıldığını belirtir.
 
+  late ExamSection examSection; // YENİ: Analiz yapılan bölüme ait sınav verisi.
   late List<TestModel> sortedTests;
   late List<FlSpot> netSpots;
   late double warriorScore;
@@ -61,7 +63,20 @@ class StatsAnalysis {
   late String weakestSubjectByNet;
   late String strongestSubjectByNet;
 
-  StatsAnalysis(this.tests, this.performanceSummary, this.examData, this.firestoreService, {this.user}) {
+  StatsAnalysis(
+    this.tests,
+    this.performanceSummary,
+    this.examData,
+    this.firestoreService, {
+    this.user,
+    required this.sectionName,
+  }) {
+    // YENİ: Doğru sınav bölümünü sectionName'e göre bul.
+    examSection = examData.sections.firstWhere(
+      (s) => s.name == sectionName,
+      orElse: () => examData.sections.first, // Fallback
+    );
+
     if (tests.isEmpty && performanceSummary.topicPerformances.isEmpty) {
       _initializeEmpty();
       return;
@@ -118,6 +133,7 @@ class StatsAnalysis {
     Exam examData,
     FirestoreService firestoreService, {
     UserModel? user,
+    required String sectionName,
   }) {
     final analysis = StatsAnalysis(
       const <TestModel>[],
@@ -125,6 +141,7 @@ class StatsAnalysis {
       examData,
       firestoreService,
       user: user,
+      sectionName: sectionName,
     );
     // Varsayılan boşları oluşturduktan sonra özet alanları üzerine yaz
     analysis.averageNet = (data['averageNet'] as num?)?.toDouble() ?? 0.0;
@@ -328,9 +345,7 @@ class StatsAnalysis {
   }
 
   int getQuestionCountForSubject(String subjectName) {
-    if (tests.isEmpty) return 40;
-    final sectionName = tests.first.sectionName;
-    final section = examData.sections.firstWhere((s) => s.name == sectionName, orElse: () => examData.sections.first);
-    return section.subjects[subjectName]?.questionCount ?? 40;
+    // YENİ: Önceden belirlenmiş `examSection`'ı kullan.
+    return examSection.subjects[subjectName]?.questionCount ?? 40;
   }
 }

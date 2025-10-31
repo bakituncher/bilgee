@@ -87,7 +87,15 @@ class Step3Summary extends ConsumerWidget {
                   final updatedTests = await ref.read(firestoreServiceProvider).getTestResultsPaginated(user.id, limit: 1000);
                   final performance = await ref.read(firestoreServiceProvider).getPerformanceSummaryOnce(user.id);
                   final examData = await ExamData.getExamByType(ExamType.values.byName(user.selectedExam!));
-                  final analysis = StatsAnalysis(updatedTests, performance, examData, ref.read(firestoreServiceProvider), user: user);
+                  // YENİ: section.name kullanılarak sectionName parametresi eklendi.
+                  final analysis = StatsAnalysis(
+                    updatedTests,
+                    performance,
+                    examData,
+                    ref.read(firestoreServiceProvider),
+                    user: user,
+                    sectionName: section.name,
+                  );
                   await ref.read(firestoreServiceProvider).updateAnalysisSummary(user.id, analysis);
                 } catch (e, st) {
                   // Hata günlüğe kaydedilir ancak kullanıcı akışı engellenmez.
