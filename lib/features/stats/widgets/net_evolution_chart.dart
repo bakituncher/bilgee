@@ -16,22 +16,44 @@ class NetEvolutionChart extends StatefulWidget {
 class _NetEvolutionChartState extends State<NetEvolutionChart> {
   int? _touchedIndex;
 
+  // Büyük veri setleri için akıllı örnekleme
+  List<FlSpot> _getSampledSpots(List<FlSpot> originalSpots) {
+    if (originalSpots.length <= 50) return originalSpots;
+
+    // 100+ test varsa, akıllı örnekleme yap
+    final sampledSpots = <FlSpot>[];
+    final step = originalSpots.length / 50;
+
+    for (int i = 0; i < originalSpots.length; i++) {
+      // İlk, son ve her step'te bir nokta ekle
+      if (i == 0 || i == originalSpots.length - 1 || i % step.ceil() == 0) {
+        sampledSpots.add(FlSpot(i.toDouble(), originalSpots[i].y));
+      }
+    }
+
+    return sampledSpots;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final spots = widget.analysis.netSpots;
+    final originalSpots = widget.analysis.netSpots;
+    final spots = _getSampledSpots(originalSpots);
     final hasData = spots.isNotEmpty;
 
     double minY = 0, maxY = 1;
     if (hasData) {
-      minY = spots.map((e) => e.y).reduce((a, b) => a < b ? a : b);
-      maxY = spots.map((e) => e.y).reduce((a, b) => a > b ? a : b);
-      // Y eksenini biraz pad edelim ki çizgi kenarlara yapışmasın
-      final padding = ((maxY - minY).abs() * 0.20) + 1;
+      minY = originalSpots.map((e) => e.y).reduce((a, b) => a < b ? a : b);
+      maxY = originalSpots.map((e) => e.y).reduce((a, b) => a > b ? a : b);
+
+      // Dinamik padding - veri aralığına göre ayarla
+      final range = maxY - minY;
+      final padding = range == 0 ? 5.0 : (range * 0.15);
       minY = (minY - padding).clamp(0, double.infinity);
-      maxY = (maxY + padding);
+      maxY = maxY + padding;
+
       if (minY == maxY) {
-        minY -= 1;
-        maxY += 1;
+        minY = (minY - 5).clamp(0, double.infinity);
+        maxY = maxY + 5;
       }
     }
 
@@ -105,35 +127,42 @@ class _NetEvolutionChartState extends State<NetEvolutionChart> {
                               final i = value.toInt();
                               if (i < 0 || i >= widget.analysis.sortedTests.length) return const SizedBox.shrink();
 
-                              // Veri sayısına göre etiket stratejisi
                               final totalTests = widget.analysis.sortedTests.length;
                               bool shouldShow = false;
 
-                              if (totalTests <= 5) {
-                                // Az veri varsa hepsini göster
+                              if (totalTests <= 6) {
+                                // 6 ve altı: hepsini göster
                                 shouldShow = true;
-                              } else if (totalTests <= 10) {
-                                // Orta seviye: ilk, orta ve son
-                                final isEdge = i == 0 || i == totalTests - 1;
-                                final isMiddle = i == (totalTests / 2).floor();
-                                shouldShow = isEdge || isMiddle;
+                              } else if (totalTests <= 15) {
+                                // 7-15: ilk, son ve 2 ara nokta
+                                final interval = (totalTests / 4).floor();
+                                shouldShow = i == 0 || i == totalTests - 1 || i % interval == 0;
+                              } else if (totalTests <= 30) {
+                                // 16-30: ilk, son ve 1 orta nokta
+                                final middle = (totalTests / 2).floor();
+                                shouldShow = i == 0 || i == totalTests - 1 || i == middle;
                               } else {
-                                // Çok veri: sadece ilk ve son
+                                // 31+: sadece ilk ve son
                                 shouldShow = i == 0 || i == totalTests - 1;
                               }
 
                               if (!shouldShow) return const SizedBox.shrink();
 
                               final date = widget.analysis.sortedTests[i].date;
+                              // 50+ test varsa sadece ay/yıl göster
+                              final format = totalTests > 50 ? DateFormat.yM('tr') : DateFormat.MMMd('tr');
+
                               return Padding(
                                 padding: const EdgeInsets.only(top: 8),
                                 child: Text(
-                                  DateFormat.MMMd('tr').format(date),
+                                  format.format(date),
                                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                         color: AppTheme.secondaryTextColor,
-                                        fontSize: 11,
+                                        fontSize: totalTests > 50 ? 10 : 11,
                                         fontWeight: FontWeight.w500,
                                       ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               );
                             },
@@ -179,9 +208,9 @@ class _NetEvolutionChartState extends State<NetEvolutionChart> {
                       lineBarsData: [
                         LineChartBarData(
                           spots: spots,
-                          isCurved: true,
-                          // Daha ince, daha modern çizgi
-                          barWidth: 3,
+                          isCurved: originalSpots.length <= 20, // 20+ testte düz çizgi daha okunabilir
+                          curveSmoothness: 0.35,
+                          barWidth: originalSpots.length > 50 ? 2.5 : 3,
                           isStrokeCapRound: true,
                           gradient: LinearGradient(
                             colors: [
@@ -190,14 +219,31 @@ class _NetEvolutionChartState extends State<NetEvolutionChart> {
                             ],
                           ),
                           dotData: FlDotData(
-                            show: true,
+                            show: originalSpots.length <= 30, // 30+ testte noktaları gizle
                             getDotPainter: (spot, percent, barData, index) {
+                              if (index >= widget.analysis.sortedTests.length) {
+                                return FlDotCirclePainter(
+                                  radius: 0,
+                                  color: Colors.transparent,
+                                );
+                              }
+
                               final test = widget.analysis.sortedTests[index];
                               final total = (test.totalCorrect + test.totalWrong);
                               final accuracy = total == 0 ? 0.0 : (test.totalCorrect / total);
                               final isTouched = _touchedIndex == index;
+
+                              // Büyük veri setlerinde sadece dokunulan noktayı vurgula
+                              if (originalSpots.length > 15 && !isTouched) {
+                                return FlDotCirclePainter(
+                                  radius: 2.5,
+                                  color: Color.lerp(AppTheme.accentColor, AppTheme.successColor, accuracy)!,
+                                  strokeWidth: 0,
+                                );
+                              }
+
                               return FlDotCirclePainter(
-                                radius: isTouched ? 6.5 : 4.5,
+                                radius: isTouched ? 6.5 : 4,
                                 color: Color.lerp(AppTheme.accentColor, AppTheme.successColor, accuracy)!,
                                 strokeColor: isTouched ? Colors.white : AppTheme.cardColor,
                                 strokeWidth: isTouched ? 3 : 2,
@@ -250,15 +296,22 @@ class _EmptyChartPlaceholder extends StatelessWidget {
             size: 32,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         Text(
-          'Grafik için yeterli veri yok',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: AppTheme.secondaryTextColor,
-            fontWeight: FontWeight.w500,
-          ),
+          'Henüz Veri Yok',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Deneme ekledikçe grafiğin oluşacak',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppTheme.secondaryTextColor,
+              ),
         ),
       ],
     );
   }
 }
+

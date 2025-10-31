@@ -51,50 +51,183 @@ class SubjectStatsScreen extends StatelessWidget {
   }
 
   Widget _buildSubjectNetChart(BuildContext context) {
-    return SizedBox(
-      height: 250,
-      child: Card(
-        clipBehavior: Clip.antiAlias,
+    final spots = analysis.netSpots;
+    final testCount = analysis.subjectTests.length;
+
+    // Y ekseni için min/max hesapla
+    double minY = 0, maxY = 1;
+    if (spots.isNotEmpty) {
+      minY = spots.map((e) => e.y).reduce((a, b) => a < b ? a : b);
+      maxY = spots.map((e) => e.y).reduce((a, b) => a > b ? a : b);
+      final range = maxY - minY;
+      final padding = range == 0 ? 5.0 : (range * 0.15);
+      minY = (minY - padding).clamp(0, double.infinity);
+      maxY = maxY + padding;
+    }
+
+    return Container(
+      height: 280,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.cardColor,
+            AppTheme.cardColor.withOpacity(0.95),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppTheme.secondaryColor.withOpacity(0.2),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryColor.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
+          padding: const EdgeInsets.fromLTRB(8, 16, 12, 12),
           child: LineChart(
             LineChartData(
+              minY: minY,
+              maxY: maxY,
               gridData: FlGridData(
                 show: true,
                 drawVerticalLine: false,
-                getDrawingHorizontalLine: (value) => FlLine(color: AppTheme.lightSurfaceColor.withOpacity(0.3), strokeWidth: 1),
+                getDrawingHorizontalLine: (value) => FlLine(
+                  color: AppTheme.lightSurfaceColor.withOpacity(0.25),
+                  strokeWidth: 1,
+                ),
               ),
               borderData: FlBorderData(show: false),
-              titlesData: const FlTitlesData(
-                leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 40)),
-                topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 30)),
+              titlesData: FlTitlesData(
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 44,
+                    interval: ((maxY - minY) / 4).abs(),
+                    getTitlesWidget: (value, meta) {
+                      return Text(
+                        value.toStringAsFixed(0),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppTheme.secondaryTextColor,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 32,
+                    interval: 1,
+                    getTitlesWidget: (value, meta) {
+                      final i = value.toInt();
+                      if (i < 0 || i >= testCount) return const SizedBox.shrink();
+
+                      bool shouldShow = false;
+                      if (testCount <= 6) {
+                        shouldShow = true;
+                      } else if (testCount <= 15) {
+                        final interval = (testCount / 4).floor();
+                        shouldShow = i == 0 || i == testCount - 1 || i % interval == 0;
+                      } else if (testCount <= 30) {
+                        final middle = (testCount / 2).floor();
+                        shouldShow = i == 0 || i == testCount - 1 || i == middle;
+                      } else {
+                        shouldShow = i == 0 || i == testCount - 1;
+                      }
+
+                      if (!shouldShow) return const SizedBox.shrink();
+
+                      final date = analysis.subjectTests[i].date;
+                      final format = testCount > 50 ? DateFormat.yM('tr') : DateFormat.MMMd('tr');
+
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          format.format(date),
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppTheme.secondaryTextColor,
+                            fontSize: testCount > 50 ? 10 : 11,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                        ),
+                      );
+                    },
+                  ),
+                ),
               ),
               lineTouchData: LineTouchData(
+                handleBuiltInTouches: true,
                 touchTooltipData: LineTouchTooltipData(
-                  getTooltipColor: (spot) => AppTheme.primaryColor.withOpacity(0.9),
+                  maxContentWidth: 200,
+                  fitInsideHorizontally: true,
+                  fitInsideVertically: true,
+                  tooltipRoundedRadius: 12,
+                  tooltipPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  getTooltipColor: (spot) => AppTheme.primaryColor.withOpacity(0.96),
                   getTooltipItems: (spots) => spots.map((spot) {
                     final test = analysis.subjectTests[spot.spotIndex];
                     final scores = test.scores[subjectName]!;
-                    final net = (scores['dogru'] ?? 0) - ((scores['yanlis'] ?? 0) * test.penaltyCoefficient);
-                    final text = '${test.testName}\n${DateFormat.yMd('tr').format(test.date)}\n${net.toStringAsFixed(2)} Net';
-                    return LineTooltipItem(text, const TextStyle(color: Colors.white, fontWeight: FontWeight.bold));
+                    final correct = scores['dogru'] ?? 0;
+                    final wrong = scores['yanlis'] ?? 0;
+                    final net = correct - (wrong * test.penaltyCoefficient);
+                    final total = correct + wrong;
+                    final accuracy = total > 0 ? (correct / total * 100) : 0.0;
+                    final text = '${test.testName}\n${DateFormat.yMd('tr').format(test.date)}\n\nNet: ${net.toStringAsFixed(2)}\nDoğru: $correct | Yanlış: $wrong\nİsabet: %${accuracy.toStringAsFixed(0)}';
+                    return LineTooltipItem(
+                      text,
+                      const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                        height: 1.4,
+                      ),
+                    );
                   }).toList(),
                 ),
               ),
               lineBarsData: [
                 LineChartBarData(
-                  spots: analysis.netSpots,
-                  isCurved: true,
-                  color: AppTheme.successColor,
-                  barWidth: 4,
+                  spots: spots,
+                  isCurved: testCount <= 20,
+                  curveSmoothness: 0.35,
+                  gradient: LinearGradient(
+                    colors: [
+                      AppTheme.successColor,
+                      AppTheme.secondaryColor.withOpacity(0.95),
+                    ],
+                  ),
+                  barWidth: testCount > 50 ? 2.5 : 3,
                   isStrokeCapRound: true,
-                  dotData: const FlDotData(show: true),
+                  dotData: FlDotData(
+                    show: testCount <= 30,
+                    getDotPainter: (spot, percent, barData, index) {
+                      return FlDotCirclePainter(
+                        radius: testCount > 15 ? 3 : 4,
+                        color: AppTheme.successColor,
+                        strokeColor: AppTheme.cardColor,
+                        strokeWidth: 2,
+                      );
+                    },
+                  ),
                   belowBarData: BarAreaData(
                     show: true,
                     gradient: LinearGradient(
-                      colors: [AppTheme.successColor.withOpacity(0.3), AppTheme.successColor.withOpacity(0)],
+                      colors: [
+                        AppTheme.secondaryColor.withOpacity(0.20),
+                        AppTheme.secondaryColor.withOpacity(0.04),
+                      ],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                     ),
