@@ -202,17 +202,15 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                     tabs: sortedGroups.map((e) => e.key).toList(),
                   ),
                   Expanded(
-                    child: PageView(
-                      controller: _pageController,
-                      onPageChanged: (index) {
-                        ref.read(selectedTabIndexProvider.notifier).state = index;
-                      },
+                    child: IndexedStack(
+                      key: ValueKey('stack-${sortedGroups.map((e) => e.key).join('-')}'),
+                      index: selectedIndex.clamp(0, sortedGroups.length - 1),
                       children: sortedGroups.map((entry) {
                         if (entry.value.length < 2) {
                           return _buildEmptyState(context, sectionName: entry.key);
                         }
                         return CachedAnalysisView(
-                          key: ValueKey(entry.key),
+                          key: ValueKey('analysis-${entry.key}'),
                           sectionName: entry.key,
                         );
                       }).toList(),

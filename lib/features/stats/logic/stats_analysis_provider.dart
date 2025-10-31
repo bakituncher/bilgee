@@ -30,15 +30,16 @@ class StatsAnalysisController extends AutoDisposeAsyncNotifier<Map<String, Stats
     final Map<String, StatsAnalysis> result = {};
 
     // Genel analiz (tüm testler)
-    result[kAllSectionsKey] = StatsAnalysis(tests, performance, exam, firestoreService, user: user);
+    result[kAllSectionsKey] = StatsAnalysis(tests, exam, firestoreService, user: user);
 
     // Bölüm bazlı analizler
     final Map<String, List<TestModel>> grouped = <String, List<TestModel>>{};
     for (final t in tests) {
       (grouped[t.sectionName] ??= <TestModel>[]).add(t);
     }
+
     for (final entry in grouped.entries) {
-      result[entry.key] = StatsAnalysis(entry.value, performance, exam, firestoreService, user: user);
+      result[entry.key] = StatsAnalysis(entry.value, exam, firestoreService, user: user);
     }
 
     return result;

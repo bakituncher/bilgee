@@ -457,7 +457,7 @@ class AiService {
         // Gerekirse eski yol: tek seferlik hesapla (daha ağır ama nadir)
         final examType = ExamType.values.byName(user.selectedExam!);
         final examData = await ExamData.getExamByType(examType);
-        final analysis = StatsAnalysis(tests, performance, examData, _ref.read(firestoreServiceProvider), user: user);
+        final analysis = StatsAnalysis(tests, examData, _ref.read(firestoreServiceProvider), user: user);
         final weakestTopicInfo = analysis.getWeakestTopicWithDetails();
 
         if (weakestTopicInfo == null) {

@@ -23,8 +23,11 @@ class CachedAnalysisView extends ConsumerStatefulWidget {
   ConsumerState<CachedAnalysisView> createState() => _CachedAnalysisViewState();
 }
 
-class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with SingleTickerProviderStateMixin {
+class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   late TabController _tabController;
+
+  @override
+  bool get wantKeepAlive => false; // PageView cache'ini devre dışı bırak
 
   @override
   void initState() {
@@ -45,6 +48,7 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // AutomaticKeepAliveClientMixin için gerekli
     final analysisAsync = ref.watch(statsAnalysisForSectionProvider(widget.sectionName));
     final previous = analysisAsync.asData?.value;
 
@@ -181,7 +185,10 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
           subtitle: 'Netlerinin ve doğruluğunun zamansal analizi',
         ).animate().fadeIn(duration: 300.ms),
         const SizedBox(height: 12),
-        NetEvolutionChart(analysis: analysis)
+        NetEvolutionChart(
+          key: ValueKey('chart-${widget.sectionName}-${analysis.tests.length}-${analysis.averageNet}'),
+          analysis: analysis,
+        )
             .animate()
             .fadeIn(delay: 100.ms, duration: 400.ms)
             .slideY(begin: 0.05, end: 0),
