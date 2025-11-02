@@ -129,7 +129,7 @@ class AppTheme {
       textTheme: textTheme,
       elevatedButtonTheme: ElevatedButtonThemeData(style: buttonStyle),
       inputDecorationTheme: inputDecorationTheme,
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: isDark ? 0 : 2,
         color: cardColor,
         shadowColor: isDark ? Colors.transparent : Colors.black.withOpacity(0.1),
@@ -157,7 +157,7 @@ class AppTheme {
         ),
         textStyle: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
       ),
-      bottomAppBarTheme: BottomAppBarTheme(
+      bottomAppBarTheme: BottomAppBarThemeData(
         color: cardColor,
         elevation: 0,
       ),
