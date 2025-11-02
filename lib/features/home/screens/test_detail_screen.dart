@@ -7,13 +7,18 @@ class TestDetailScreen extends StatelessWidget {
   final TestModel test;
   const TestDetailScreen({super.key, required this.test});
 
+  // Helper method to calculate net score
+  double _calculateNet(Map<String, int> scores) {
+    return scores['dogru']! - (scores['yanlis']! * test.penaltyCoefficient);
+  }
+
   // En düşük netli dersi bulan fonksiyon
   MapEntry<String, double> _findWeakestSubject() {
     double minNet = double.maxFinite;
     String weakestSubject = '';
 
     test.scores.forEach((subject, scores) {
-      final net = scores['dogru']! - (scores['yanlis']! * test.penaltyCoefficient);
+      final net = _calculateNet(scores);
       if (net < minNet) {
         minNet = net;
         weakestSubject = subject;
@@ -401,23 +406,15 @@ class TestDetailScreen extends StatelessWidget {
 
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
-    final isDark = theme.brightness == Brightness.dark;
 
     // Pozitif net değeri olan dersleri al ve sırala
     final validEntries = test.scores.entries
-      .where((entry) {
-        final net = entry.value['dogru']! - (entry.value['yanlis']! * test.penaltyCoefficient);
-        return net > 0;
-      })
+      .where((entry) => _calculateNet(entry.value) > 0)
       .toList()
-      ..sort((a, b) {
-        final netA = a.value['dogru']! - (a.value['yanlis']! * test.penaltyCoefficient);
-        final netB = b.value['dogru']! - (b.value['yanlis']! * test.penaltyCoefficient);
-        return netB.compareTo(netA);
-      });
+      ..sort((a, b) => _calculateNet(b.value).compareTo(_calculateNet(a.value)));
 
     return validEntries.map((entry) {
-      final subjectNet = entry.value['dogru']! - (entry.value['yanlis']! * test.penaltyCoefficient);
+      final subjectNet = _calculateNet(entry.value);
       final color = colors[colorIndex % colors.length];
       
       // Sadece net değerini göster, ders adını gösterme (çakışmayı önlemek için)
