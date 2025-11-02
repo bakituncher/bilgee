@@ -741,6 +741,7 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
     final introPrice = widget.package.storeProduct.introductoryPrice;
     final hasFreeTrial = introPrice != null && introPrice.price == 0;
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final borderColor = widget.highlight ? colorScheme.secondary : colorScheme.surfaceContainerHighest;
     final backgroundColor = widget.highlight ? colorScheme.secondary.withOpacity(0.2) : colorScheme.surface;

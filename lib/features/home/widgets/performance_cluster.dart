@@ -218,7 +218,7 @@ class _SparklinePainter extends CustomPainter {
           text: v.toStringAsFixed(1),
           style: TextStyle(
             fontSize: 11,
-            color: colorScheme.onSurface.withOpacity(0.7),
+            color: accent.withOpacity(0.7),
           ),
         ),
         textDirection: TextDirection.ltr,
