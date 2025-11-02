@@ -93,6 +93,13 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen> with TickerProv
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
+          // Fix back button visibility - use white color for better contrast on blue gradient
+          iconTheme: const IconThemeData(color: Colors.white),
+          titleTextStyle: const TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         body: AnimatedContainer(
           duration: 1.seconds,
