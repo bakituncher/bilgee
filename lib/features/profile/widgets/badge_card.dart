@@ -37,7 +37,7 @@ class BadgeCard extends StatelessWidget {
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 color: badge.isUnlocked
-                    ? Colors.white
+                    ? Theme.of(context).colorScheme.onSurface
                     : Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),

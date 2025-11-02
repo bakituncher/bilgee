@@ -214,7 +214,13 @@ class _SparklinePainter extends CustomPainter {
       canvas.drawCircle(Offset(x, y), 10 * t, glowPaint);
       canvas.drawCircle(Offset(x, y), 4 + 2 * t, pointPaint);
       final textPainter = TextPainter(
-        text: TextSpan(text: v.toStringAsFixed(1), style: const TextStyle(fontSize: 11, color: Colors.white70)),
+        text: TextSpan(
+          text: v.toStringAsFixed(1),
+          style: TextStyle(
+            fontSize: 11,
+            color: colorScheme.onSurface.withOpacity(0.7),
+          ),
+        ),
         textDirection: TextDirection.ltr,
       )..layout();
       textPainter.paint(canvas, Offset(x + 6, y - 6));

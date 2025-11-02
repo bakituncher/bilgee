@@ -63,7 +63,7 @@ class StrategicActions extends ConsumerWidget {
                 backgroundColor: Theme.of(context).colorScheme.error,
                 action: SnackBarAction(
                   label: 'DÜZENLE',
-                  textColor: Colors.white,
+                  textColor: Theme.of(context).colorScheme.onError,
                   onPressed: () => context.push(AppRoutes.availability),
                 ),
               ),
