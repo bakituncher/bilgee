@@ -8,34 +8,53 @@ class AnalysisStrategyScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Analiz & Strateji'),
-        backgroundColor: Theme.of(context).primaryColor,
+        backgroundColor: colorScheme.surface,
         elevation: 0,
       ),
-      backgroundColor: Theme.of(context).primaryColor,
+      backgroundColor: colorScheme.surface,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              CircleAvatar(
-                backgroundColor: Theme.of(context).colorScheme.secondary,
-                radius: 42,
-                child: Icon(Icons.auto_awesome, size: 42, color: Theme.of(context).primaryColor),
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [
+                      colorScheme.primary.withOpacity(0.15),
+                      colorScheme.secondary.withOpacity(0.15),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: Icon(Icons.auto_awesome, size: 42, color: colorScheme.primary),
               ).animate().fadeIn(duration: 220.ms).scale(),
               const SizedBox(height: 20),
               Text(
                 'Analiz & Strateji Süiti',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: colorScheme.onSurface,
+                ),
                 textAlign: TextAlign.center,
               ).animate().fadeIn(delay: 120.ms),
               const SizedBox(height: 8),
               Text(
                 'Deneme değerlendirme ve strateji danışmayı tek yerden başlat. Görüşme, kişisel verilerinle özelleştirilir.',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.3),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  height: 1.3,
+                ),
                 textAlign: TextAlign.center,
               ).animate().fadeIn(delay: 180.ms),
               const SizedBox(height: 24),
@@ -57,14 +76,20 @@ class AnalysisStrategyScreen extends StatelessWidget {
               ).animate().fadeIn(delay: 320.ms).slideY(begin: 0.25, curve: Curves.easeOutCubic),
 
               const SizedBox(height: 8),
-              Divider(color: Colors.white.withOpacity(0.06), height: 36),
+              Divider(
+                color: colorScheme.onSurfaceVariant.withOpacity(0.2),
+                height: 36,
+              ),
               const SizedBox(height: 4),
 
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
                   'İpucu',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ).animate().fadeIn(delay: 380.ms),
               const SizedBox(height: 8),
@@ -72,7 +97,9 @@ class AnalysisStrategyScreen extends StatelessWidget {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   'Danışma ekranında yazışmalar, durumuna göre kişiselleşir. Deneme ekleyerek analiz doğruluğunu artır.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ).animate().fadeIn(delay: 420.ms),
             ],
@@ -100,6 +127,9 @@ class _SuiteButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(24),
@@ -109,14 +139,29 @@ class _SuiteButton extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
-          gradient: const LinearGradient(
+          gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0x18222C2C), Color(0x10222C2C)],
+            colors: isDark
+                ? [const Color(0x18222C2C), const Color(0x10222C2C)]
+                : [
+                    colorScheme.surfaceContainerHighest.withOpacity(0.4),
+                    colorScheme.surfaceContainerHighest.withOpacity(0.2),
+                  ],
           ),
-          border: Border.all(color: Colors.white.withOpacity(0.08)),
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withOpacity(0.08)
+                : colorScheme.outline.withOpacity(0.3),
+          ),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.25), blurRadius: 14, offset: const Offset(0, 4)),
+            BoxShadow(
+              color: isDark
+                  ? Colors.black.withOpacity(0.25)
+                  : Colors.black.withOpacity(0.08),
+              blurRadius: 14,
+              offset: const Offset(0, 4),
+            ),
           ],
         ),
         child: Row(
@@ -129,7 +174,7 @@ class _SuiteButton extends StatelessWidget {
                 shape: BoxShape.circle,
                 gradient: gradient,
               ),
-              child: Icon(icon, size: 30, color: theme.primaryColor),
+              child: Icon(icon, size: 30, color: isDark ? theme.primaryColor : Colors.black87),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -138,14 +183,20 @@ class _SuiteButton extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: colorScheme.onSurface,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 6),
                   Text(
                     subtitle,
-                    style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant, height: 1.25),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      height: 1.25,
+                    ),
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -153,7 +204,11 @@ class _SuiteButton extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            Icon(Icons.arrow_forward_ios_rounded, size: 18, color: theme.colorScheme.onSurfaceVariant.withOpacity(0.8)),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 18,
+              color: colorScheme.onSurfaceVariant.withOpacity(0.8),
+            ),
           ],
         ),
       ),
