@@ -65,9 +65,9 @@ class ExamSelectionScreen extends ConsumerWidget {
     if (context.canPop()) {
       context.pop();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Sınav tercihin başarıyla güncellendi!"),
-          backgroundColor: AppTheme.successColor,
+        SnackBar(
+          content: const Text("Sınav tercihin başarıyla güncellendi!"),
+          backgroundColor: Theme.of(context).colorScheme.secondary,
         ),
       );
     } else {

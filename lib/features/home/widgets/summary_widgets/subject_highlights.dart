@@ -15,7 +15,7 @@ class SubjectHighlights extends StatelessWidget {
             Expanded(
               child: _HighlightCard(
                 icon: Icons.shield_rounded,
-                iconColor: AppTheme.successColor,
+                iconColor: Colors.green,
                 title: "Kal'en (En Güçlü Alan)",
                 subject: keySubjects['strongest']!.key,
                 net: keySubjects['strongest']!.value,
@@ -25,7 +25,7 @@ class SubjectHighlights extends StatelessWidget {
             Expanded(
               child: _HighlightCard(
                 icon: Icons.construction_rounded,
-                iconColor: AppTheme.secondaryColor,
+                iconColor: Theme.of(context).colorScheme.primary,
                 title: "Cevher (Gelişim Fırsatı)",
                 subject: keySubjects['weakest']!.key,
                 net: keySubjects['weakest']!.value,
@@ -37,7 +37,7 @@ class SubjectHighlights extends StatelessWidget {
         Text(
           "En zayıf alanına odaklanmak, netlerini en hızlı artıracak stratejidir.",
           textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
         )
       ],
     );
@@ -68,7 +68,7 @@ class _HighlightCard extends StatelessWidget {
           children: [
             Icon(icon, color: iconColor, size: 32),
             const SizedBox(height: 8),
-            Text(title, textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor)),
+            Text(title, textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
             const SizedBox(height: 8),
             Text(subject, textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),

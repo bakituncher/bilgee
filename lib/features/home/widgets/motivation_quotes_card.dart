@@ -58,7 +58,7 @@ class _MotivationQuotesCardState extends State<MotivationQuotesCard> {
     const height = 168.0;
     return Card(
       elevation: 10,
-      shadowColor: AppTheme.lightSurfaceColor.withValues(alpha: .45),
+      shadowColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.45),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
@@ -72,8 +72,8 @@ class _MotivationQuotesCardState extends State<MotivationQuotesCard> {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      AppTheme.cardColor,
-                      AppTheme.lightSurfaceColor.withValues(alpha: .35),
+                      Theme.of(context).cardColor,
+                      Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.35),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -82,10 +82,10 @@ class _MotivationQuotesCardState extends State<MotivationQuotesCard> {
               ),
               // Dekoratif parlama daireleri
               Positioned(
-                left: -30, top: -20, child: _glowCircle(color: AppTheme.secondaryColor.withValues(alpha: .18), size: 140),
+                left: -30, top: -20, child: _glowCircle(color: Theme.of(context).colorScheme.primary.withOpacity(0.18), size: 140),
               ),
               Positioned(
-                right: -24, bottom: -18, child: _glowCircle(color: AppTheme.successColor.withValues(alpha: .16), size: 120),
+                right: -24, bottom: -18, child: _glowCircle(color: Colors.green.withOpacity(0.16), size: 120),
               ),
               // İç blur ile yumuşatma
               BackdropFilter(
@@ -113,12 +113,12 @@ class _MotivationQuotesCardState extends State<MotivationQuotesCard> {
                           children: [
                             Container(
                               decoration: BoxDecoration(
-                                color: AppTheme.secondaryColor.withValues(alpha: .15),
+                                color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: AppTheme.secondaryColor.withValues(alpha: .6)),
+                                border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.6)),
                               ),
                               padding: const EdgeInsets.all(10),
-                              child: const Icon(Icons.format_quote_rounded, color: AppTheme.secondaryColor),
+                              child: Icon(Icons.format_quote_rounded, color: Theme.of(context).colorScheme.primary),
                             ),
                             const SizedBox(width: 10),
                             Expanded(
@@ -138,10 +138,10 @@ class _MotivationQuotesCardState extends State<MotivationQuotesCard> {
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(20),
-                                color: AppTheme.lightSurfaceColor.withValues(alpha: .25),
-                                border: Border.all(color: AppTheme.lightSurfaceColor.withValues(alpha: .45)),
+                                color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.25),
+                                border: Border.all(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.45)),
                               ),
-                              child: Text('— $author', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: AppTheme.secondaryTextColor)),
+                              child: Text('— $author', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                             ),
                             const Spacer(),
                             _Dots(count: _quotes.length, index: i),
@@ -186,7 +186,7 @@ class _Dots extends StatelessWidget {
           width: active ? 18 : 8,
           height: 8,
           decoration: BoxDecoration(
-            color: active ? AppTheme.secondaryColor : AppTheme.secondaryTextColor.withValues(alpha: .5),
+            color: active ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.5),
             borderRadius: BorderRadius.circular(6),
           ),
         );

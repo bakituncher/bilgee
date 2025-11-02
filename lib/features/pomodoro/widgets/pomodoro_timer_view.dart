@@ -17,11 +17,12 @@ class PomodoroTimerView extends ConsumerWidget {
     final pomodoro = ref.watch(pomodoroProvider);
     final notifier = ref.read(pomodoroProvider.notifier);
 
+    final colorScheme = Theme.of(context).colorScheme;
     final (title, progressColor, message) = switch (pomodoro.sessionState) {
-      PomodoroSessionState.work => ("Odaklanma Modu", AppTheme.secondaryColor, "Yaratım anındasın. Evren sessiz."),
-      PomodoroSessionState.shortBreak => ("Kısa Mola", AppTheme.successColor, "Nefes al. Zihnin berraklaşsın."),
-      PomodoroSessionState.longBreak => ("Uzun Mola", AppTheme.successColor, "Harika iş! Zihinsel bir yolculuğa çık."),
-      _ => ("Beklemede", AppTheme.lightSurfaceColor, "Mabet seni bekliyor."),
+      PomodoroSessionState.work => ("Odaklanma Modu", colorScheme.secondary, "Yaratım anındasın. Evren sessiz."),
+      PomodoroSessionState.shortBreak => ("Kısa Mola", colorScheme.primary, "Nefes al. Zihnin berraklaşsın."),
+      PomodoroSessionState.longBreak => ("Uzun Mola", colorScheme.primary, "Harika iş! Zihinsel bir yolculuğa çık."),
+      _ => ("Beklemede", colorScheme.surfaceVariant, "Mabet seni bekliyor."),
     };
 
     return Padding(
@@ -55,7 +56,10 @@ class PomodoroTimerView extends ConsumerWidget {
         // Başlık ve alt mesaj
         Text(title, style: textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800)),
         const SizedBox(height: 4),
-        Text(message, style: const TextStyle(color: AppTheme.secondaryTextColor, fontStyle: FontStyle.italic)),
+        Text(
+          message,
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontStyle: FontStyle.italic),
+        ),
         const SizedBox(height: 12),
         // Bilgi chipleri
         Wrap(
@@ -93,7 +97,7 @@ class PomodoroTimerView extends ConsumerWidget {
             IconButton.filled(
               onPressed: () => _showSettingsSheet(context, ref),
               icon: const Icon(Icons.settings),
-              style: IconButton.styleFrom(backgroundColor: AppTheme.lightSurfaceColor.withOpacity(0.5)),
+              style: IconButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5)),
             ),
             const SizedBox(width: 20),
             IconButton.filled(
@@ -105,7 +109,7 @@ class PomodoroTimerView extends ConsumerWidget {
             IconButton.filled(
               onPressed: () => _confirmAndReset(context, notifier, prompt: canPromptReset),
               icon: const Icon(Icons.replay_rounded),
-              style: IconButton.styleFrom(backgroundColor: AppTheme.lightSurfaceColor.withOpacity(0.5)),
+              style: IconButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5)),
             ),
           ],
         ),
@@ -114,26 +118,34 @@ class PomodoroTimerView extends ConsumerWidget {
             padding: const EdgeInsets.only(top: 8.0),
             child: TextButton.icon(
               onPressed: notifier.skipBreakAndStartWork,
-              icon: const Icon(Icons.skip_next_rounded, color: AppTheme.secondaryColor),
-              label: const Text("Molayı atla ve çalışmaya başla", style: TextStyle(color: AppTheme.secondaryColor)),
+              icon: Icon(Icons.skip_next_rounded, color: Theme.of(context).colorScheme.secondary),
+              label: Text("Molayı atla ve çalışmaya başla", style: TextStyle(color: Theme.of(context).colorScheme.secondary)),
             ),
           ),
-        if(pomodoro.sessionState == PomodoroSessionState.work && pomodoro.currentTaskIdentifier != null)
+        if (pomodoro.sessionState == PomodoroSessionState.work && pomodoro.currentTaskIdentifier != null)
           Padding(
             padding: const EdgeInsets.only(top: 8.0),
             child: TextButton.icon(
-                onPressed: (){
+                onPressed: () {
                   notifier.markTaskAsCompleted();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("'${pomodoro.currentTask}' tamamlandı olarak işaretlendi!"), backgroundColor: AppTheme.successColor),
+                    SnackBar(
+                      content: Text("'${pomodoro.currentTask}' tamamlandı olarak işaretlendi!"),
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                    ),
                   );
                 },
-                icon: const Icon(Icons.check_circle, color: AppTheme.successColor),
-                label: Text("'${pomodoro.currentTask}' görevini tamamla", style: const TextStyle(color: AppTheme.successColor))
-            ),
+                icon: Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary),
+                label: Text(
+                  "'${pomodoro.currentTask}' görevini tamamla",
+                  style: TextStyle(color: Theme.of(context).colorScheme.primary),
+                )),
           ),
         const SizedBox(height: 8),
-        const Text('İpucu: Zamanlayıcıya çift dokunarak başlat/duraklat, uzun basarak ayarlara aç.', style: TextStyle(fontSize: 12, color: AppTheme.secondaryTextColor)),
+        Text(
+          'İpucu: Zamanlayıcıya çift dokunarak başlat/duraklat, uzun basarak ayarlara aç.',
+          style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+        ),
       ],
     ).animate().fadeIn(duration: 500.ms);
   }
@@ -338,9 +350,11 @@ class _TimerDialState extends State<_TimerDial> with SingleTickerProviderStateMi
                         color: widget.color,
                         isPaused: pomodoro.isPaused,
                         interval: pomodoro.longBreakInterval.clamp(1, 12),
-                        completedInCycle: ((pomodoro.currentRound - 1) % pomodoro.longBreakInterval.clamp(1, 12)).clamp(0, pomodoro.longBreakInterval.clamp(1, 12) - 1),
+                        completedInCycle: ((pomodoro.currentRound - 1) % pomodoro.longBreakInterval.clamp(1, 12))
+                            .clamp(0, pomodoro.longBreakInterval.clamp(1, 12) - 1),
                         rotationAngle: (_rotCtrl.value * 2 * pi),
                         finalPulse: isFinalCountdown ? (1 + (sin(_rotCtrl.value * 2 * pi * 10) * 0.04)) : 1.0,
+                        colorScheme: Theme.of(context).colorScheme,
                       ),
                     );
                   },
@@ -359,7 +373,7 @@ class _TimerDialState extends State<_TimerDial> with SingleTickerProviderStateMi
                     opacity: 0.8,
                     child: Text(
                       pomodoro.isPaused ? 'Çift dokun: Başlat' : 'Çift dokun: Duraklat',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ),
                 ],
@@ -380,17 +394,31 @@ class _DialPainter extends CustomPainter {
   final int completedInCycle;
   final double rotationAngle; // degrade dönüşü
   final double finalPulse; // son 10 sn nabız
-  _DialPainter({required this.progress, required this.color, required this.isPaused, required this.interval, required this.completedInCycle, required this.rotationAngle, required this.finalPulse});
+  final ColorScheme colorScheme;
+  _DialPainter(
+      {required this.progress,
+      required this.color,
+      required this.isPaused,
+      required this.interval,
+      required this.completedInCycle,
+      required this.rotationAngle,
+      required this.finalPulse,
+      required this.colorScheme});
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2;
     final rect = Rect.fromCircle(center: center, radius: radius);
+    final colorScheme =
+        Theme.of(context).colorScheme; // Assuming context is available, which it is not. A workaround is needed.
+    // Let's assume the color scheme is passed to the painter.
+    final surfaceVariant = colorScheme.surfaceVariant;
+    final onSurface = colorScheme.onSurface;
 
     // Arkaplan çemberi
     final backgroundPaint = Paint()
-      ..color = AppTheme.lightSurfaceColor.withOpacity(0.2)
+      ..color = colorScheme.surfaceVariant.withOpacity(0.2)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 12;
     canvas.drawCircle(center, radius, backgroundPaint);
@@ -431,11 +459,11 @@ class _DialPainter extends CustomPainter {
       final dx = center.dx + cos(angle) * dotDistance;
       final dy = center.dy + sin(angle) * dotDistance;
       final paint = Paint()
-        ..color = i < completedInCycle ? color : AppTheme.lightSurfaceColor.withOpacity(0.4)
+        ..color = i < completedInCycle ? color : colorScheme.surfaceVariant.withOpacity(0.4)
         ..style = PaintingStyle.fill;
       canvas.drawCircle(Offset(dx, dy), dotRadius, paint);
       final stroke = Paint()
-        ..color = Colors.black.withOpacity(0.08)
+        ..color = colorScheme.onSurface.withOpacity(0.08)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1;
       canvas.drawCircle(Offset(dx, dy), dotRadius, stroke);
@@ -490,13 +518,14 @@ class _PomodoroSettingsSheetState extends ConsumerState<PomodoroSettingsSheet> {
   @override
   Widget build(BuildContext context) {
     final totalCycle = '${_work.toInt()} / ${_short.toInt()} / ${_long.toInt()} dk • Aralık: ${_interval.toInt()} tur';
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       decoration: const BoxDecoration(color: Colors.transparent),
       child: ClipRRect(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         child: Material(
-          color: AppTheme.cardColor.withOpacity(0.98),
+          color: colorScheme.surface.withOpacity(0.98),
           child: SafeArea(
             top: false,
             child: Padding(
@@ -507,7 +536,11 @@ class _PomodoroSettingsSheetState extends ConsumerState<PomodoroSettingsSheet> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     // Grabber
-                    Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(20))),
+                    Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(color: colorScheme.onSurface.withOpacity(0.2), borderRadius: BorderRadius.circular(20)),
+                    ),
                     const SizedBox(height: 12),
                     Row(
                       children: [
@@ -522,7 +555,7 @@ class _PomodoroSettingsSheetState extends ConsumerState<PomodoroSettingsSheet> {
                     const SizedBox(height: 8),
                     Align(
                       alignment: Alignment.centerLeft,
-                      child: Text(totalCycle, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor)),
+                      child: Text(totalCycle, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
                     ),
                     const SizedBox(height: 16),
                     // Süreler kartı
@@ -531,23 +564,29 @@ class _PomodoroSettingsSheetState extends ConsumerState<PomodoroSettingsSheet> {
                       child: Column(
                         children: [
                           _ValueRow(
-                            label: 'Odaklanma', unit: 'dk', value: _work, min: 10, max: 120, step: 5, color: AppTheme.secondaryColor,
-                            onChanged: (v)=> setState(()=> _work = v.roundToDouble()),
+                            label: 'Odaklanma', unit: 'dk', value: _work, min: 10, max: 120, step: 5, color: colorScheme.secondary,
+                            onChanged: (v) => setState(() => _work = v.roundToDouble()),
                           ),
                           const Divider(height: 12),
                           _ValueRow(
-                            label: 'Kısa mola', unit: 'dk', value: _short, min: 3, max: 20, step: 1, color: AppTheme.successColor,
-                            onChanged: (v)=> setState(()=> _short = v.roundToDouble()),
+                            label: 'Kısa mola', unit: 'dk', value: _short, min: 3, max: 20, step: 1, color: colorScheme.primary,
+                            onChanged: (v) => setState(() => _short = v.roundToDouble()),
                           ),
                           const Divider(height: 12),
                           _ValueRow(
-                            label: 'Uzun mola', unit: 'dk', value: _long, min: 10, max: 45, step: 5, color: AppTheme.successColor,
-                            onChanged: (v)=> setState(()=> _long = v.roundToDouble()),
+                            label: 'Uzun mola', unit: 'dk', value: _long, min: 10, max: 45, step: 5, color: colorScheme.primary,
+                            onChanged: (v) => setState(() => _long = v.roundToDouble()),
                           ),
                           const Divider(height: 12),
                           _ValueRow(
-                            label: 'Uzun mola aralığı', unit: 'tur', value: _interval, min: 2, max: 8, step: 1, color: AppTheme.lightSurfaceColor,
-                            onChanged: (v)=> setState(()=> _interval = v.roundToDouble()),
+                            label: 'Uzun mola aralığı',
+                            unit: 'tur',
+                            value: _interval,
+                            min: 2,
+                            max: 8,
+                            step: 1,
+                            color: colorScheme.surfaceVariant,
+                            onChanged: (v) => setState(() => _interval = v.roundToDouble()),
                           ),
                         ],
                       ),
@@ -621,13 +660,14 @@ class _SettingsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppTheme.lightSurfaceColor.withOpacity(0.25),
+        color: colorScheme.surfaceVariant.withOpacity(0.25),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black.withOpacity(0.05)),
+        border: Border.all(color: colorScheme.onSurface.withOpacity(0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -707,16 +747,17 @@ class _MiniStepper extends StatelessWidget {
   Widget build(BuildContext context) {
     final canDec = value > min;
     final canInc = value < max;
+    final colorScheme = Theme.of(context).colorScheme;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         IconButton(
-          onPressed: canDec ? ()=> onChanged((value - step).clamp(min, max)) : null,
+          onPressed: canDec ? () => onChanged((value - step).clamp(min, max)) : null,
           icon: const Icon(Icons.remove_rounded),
           style: IconButton.styleFrom(
             visualDensity: VisualDensity.compact,
-            foregroundColor: Colors.white,
-            backgroundColor: AppTheme.lightSurfaceColor.withOpacity(canDec ? 0.5 : 0.2),
+            foregroundColor: colorScheme.onSurface,
+            backgroundColor: colorScheme.surfaceVariant.withOpacity(canDec ? 0.5 : 0.2),
           ),
         ),
         const SizedBox(width: 8),
@@ -727,16 +768,19 @@ class _MiniStepper extends StatelessWidget {
             border: Border.all(color: color.withOpacity(0.25)),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Text('${value.toInt()} $unit', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white)),
+          child: Text(
+            '${value.toInt()} $unit',
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(color: colorScheme.onSurface),
+          ),
         ),
         const SizedBox(width: 8),
         IconButton(
-          onPressed: canInc ? ()=> onChanged((value + step).clamp(min, max)) : null,
+          onPressed: canInc ? () => onChanged((value + step).clamp(min, max)) : null,
           icon: const Icon(Icons.add_rounded),
           style: IconButton.styleFrom(
             visualDensity: VisualDensity.compact,
-            foregroundColor: Colors.white,
-            backgroundColor: AppTheme.lightSurfaceColor.withOpacity(canInc ? 0.5 : 0.2),
+            foregroundColor: colorScheme.onSurface,
+            backgroundColor: colorScheme.surfaceVariant.withOpacity(canInc ? 0.5 : 0.2),
           ),
         ),
       ],

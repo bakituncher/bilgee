@@ -11,11 +11,6 @@ import 'dart:async';
 import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 
-// --- THEME CONSTANTS ---
-const Color _cardBackgroundColor = AppTheme.cardColor; // 0xFF1E293B
-const Color _cardBorderColor = Color(0xFF3A445C); // Temayla uyumlu, belirgin bir sınır rengi
-const Color _fixedBottomBarColor = Color(0xFF141D34); // Sabit alt bar rengi
-
 // --- PREMIUM SCREEN (Mükemmeliyetçi Son Versiyon) ---
 
 class PremiumScreen extends ConsumerStatefulWidget {
@@ -183,16 +178,17 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
   Widget build(BuildContext context) {
     final offeringsAsyncValue = ref.watch(offeringsProvider);
     final bottomInset = MediaQuery.of(context).padding.bottom;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: AppTheme.primaryColor,
+      backgroundColor: colorScheme.background,
       body: Stack(
         children: [
           // Arka Plan (Gradient + Blur)
           _buildAnimatedGradientBackground(),
           BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-            child: Container(color: Colors.black.withOpacity(0.3)),
+            child: Container(color: colorScheme.background.withOpacity(0.3)),
           ),
 
           SingleChildScrollView(
@@ -279,7 +275,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: const Icon(Icons.close_rounded, size: 30, color: Colors.white70),
+            icon: Icon(Icons.close_rounded, size: 30, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
             tooltip: 'Kapat',
             onPressed: _handleBack,
           ),
@@ -288,9 +284,9 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
             child: Text(
               'Geri Yükle',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Colors.white70,
-                fontWeight: FontWeight.w600,
-              ),
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    fontWeight: FontWeight.w600,
+                  ),
             ),
           )
         ],
@@ -302,15 +298,16 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     return AnimatedBuilder(
       animation: _gradientAnimation,
       builder: (context, child) {
+        final colorScheme = Theme.of(context).colorScheme;
         return Container(
           decoration: BoxDecoration(
             gradient: RadialGradient(
               center: Alignment(0.5 + 0.5 * (1 - _gradientAnimation.value), 0.5 - 0.5 * _gradientAnimation.value),
               radius: 1.5,
-              colors: const [
-                Color(0xFF282f42),
-                Color(0xFF1a202c),
-                Color(0xFF0e1218),
+              colors: [
+                colorScheme.surface,
+                colorScheme.background,
+                Color.lerp(colorScheme.background, Colors.black, 0.5)!,
               ],
               stops: const [0.0, 0.4, 1.0],
             ),
@@ -361,8 +358,8 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                 height: 8.0 * scale.clamp(0.6, 1.0),
                 decoration: BoxDecoration(
                   color: index == currentPage.round()
-                      ? AppTheme.secondaryColor
-                      : Colors.white.withOpacity(0.4),
+                      ? Theme.of(context).colorScheme.secondary
+                      : Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -541,7 +538,7 @@ class _AnimatedHeader extends StatelessWidget {
               .animate(CurvedAnimation(parent: slideController, curve: Curves.easeOutCubic)),
           child: FadeTransition(
             opacity: fadeController,
-            child: const Icon(Icons.workspace_premium_rounded, size: 55, color: AppTheme.goldColor),
+            child: Icon(Icons.workspace_premium_rounded, size: 55, color: Theme.of(context).colorScheme.tertiary),
           ),
         ),
         const SizedBox(height: 10),
@@ -554,10 +551,10 @@ class _AnimatedHeader extends StatelessWidget {
               'TaktikAI Premium',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
-                letterSpacing: 1.5,
-              ),
+                    fontWeight: FontWeight.w900,
+                    color: Theme.of(context).colorScheme.onSurface,
+                    letterSpacing: 1.5,
+                  ),
             ),
           ),
         ),
@@ -571,10 +568,10 @@ class _AnimatedHeader extends StatelessWidget {
               'Sınırları kaldır, rekabette öne geç.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: Colors.white70,
-                fontWeight: FontWeight.w500,
-                height: 1.4,
-              ),
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    fontWeight: FontWeight.w500,
+                    height: 1.4,
+                  ),
             ),
           ),
         ),
@@ -600,13 +597,14 @@ class _MarketingSlideCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(25),
       margin: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
-          color: _cardBackgroundColor,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(25),
-          border: Border.all(color: AppTheme.lightSurfaceColor.withOpacity(0.5), width: 1.5),
+          border: Border.all(color: colorScheme.surfaceVariant.withOpacity(0.5), width: 1.5),
           // Pazarlamayı kuvvetlendirmek için hafif bir iç gölge efekti (Inner Glow Simulation)
           boxShadow: [
             BoxShadow(
@@ -614,8 +612,7 @@ class _MarketingSlideCard extends StatelessWidget {
               blurRadius: 10,
               spreadRadius: 1,
             )
-          ]
-      ),
+          ]),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -636,10 +633,10 @@ class _MarketingSlideCard extends StatelessWidget {
                 child: Text(
                   title,
                   style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                    letterSpacing: 0.5,
-                  ),
+                        fontWeight: FontWeight.w900,
+                        color: colorScheme.onSurface,
+                        letterSpacing: 0.5,
+                      ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -650,9 +647,9 @@ class _MarketingSlideCard extends StatelessWidget {
           Text(
             subtitle,
             style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-              color: Colors.white70,
-              height: 1.3,
-            ),
+                  color: colorScheme.onSurface.withOpacity(0.7),
+                  height: 1.3,
+                ),
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
           ),
@@ -737,9 +734,10 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
   Widget build(BuildContext context) {
     final introPrice = widget.package.storeProduct.introductoryPrice;
     final hasFreeTrial = introPrice != null && introPrice.price == 0;
+    final colorScheme = Theme.of(context).colorScheme;
 
-    final borderColor = widget.highlight ? AppTheme.secondaryColor : _cardBorderColor;
-    final backgroundColor = widget.highlight ? AppTheme.secondaryColor.withOpacity(0.2) : _cardBackgroundColor;
+    final borderColor = widget.highlight ? colorScheme.secondary : colorScheme.surfaceVariant;
+    final backgroundColor = widget.highlight ? colorScheme.secondary.withOpacity(0.2) : colorScheme.surface;
 
     // --- SEKTÖR STANDARDI TASARIM İYİLEŞTİRMELERİ ---
     return SlideTransition(
@@ -760,24 +758,24 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                 border: Border.all(color: borderColor, width: widget.highlight ? 3.0 : 1.5),
                 boxShadow: widget.highlight
                     ? [
-                  BoxShadow(
-                    color: AppTheme.secondaryColor.withOpacity(0.3),
-                    blurRadius: 10,
-                    spreadRadius: 2,
-                  ),
-                  BoxShadow(
-                    color: AppTheme.goldColor.withOpacity(0.15),
-                    blurRadius: 15,
-                    spreadRadius: 2,
-                  )
-                ]
+                        BoxShadow(
+                          color: colorScheme.secondary.withOpacity(0.3),
+                          blurRadius: 10,
+                          spreadRadius: 2,
+                        ),
+                        BoxShadow(
+                          color: colorScheme.tertiary.withOpacity(0.15),
+                          blurRadius: 15,
+                          spreadRadius: 2,
+                        )
+                      ]
                     : [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 5,
-                    offset: const Offset(0, 3),
-                  )
-                ],
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 5,
+                          offset: const Offset(0, 3),
+                        )
+                      ],
               ),
               child: Stack(
                 clipBehavior: Clip.none,
@@ -789,10 +787,10 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                       children: [
                         Text(
                           widget.title,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.w900,
                             fontSize: 20,
-                            color: Colors.white,
+                            color: colorScheme.onSurface,
                           ),
                         ),
                         // ÜCRETSİZ DENEME VURGUSU
@@ -802,14 +800,13 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                               decoration: BoxDecoration(
-                                  color: AppTheme.successColor.withOpacity(0.15),
+                                  color: colorScheme.primary.withOpacity(0.15),
                                   borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: AppTheme.successColor.withOpacity(0.5))
-                              ),
-                              child: const Text(
+                                  border: Border.all(color: colorScheme.primary.withOpacity(0.5))),
+                              child: Text(
                                 'İLK 7 GÜN ÜCRETSİZ DENE',
                                 style: TextStyle(
-                                  color: AppTheme.successColor,
+                                  color: colorScheme.primary,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 12,
                                 ),
@@ -828,16 +825,16 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                               style: TextStyle(
                                 fontSize: 26,
                                 fontWeight: FontWeight.w900,
-                                color: widget.highlight ? AppTheme.secondaryColor : Colors.white,
+                                color: widget.highlight ? colorScheme.secondary : colorScheme.onSurface,
                               ),
                             ),
                             const SizedBox(width: 4),
                             Text(
                               widget.billingPeriod,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.white70,
+                                color: colorScheme.onSurface.withOpacity(0.7),
                               ),
                             ),
                           ],
@@ -847,7 +844,8 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           decoration: BoxDecoration(
-                            color: widget.highlight ? AppTheme.secondaryColor : Colors.white.withOpacity(0.15),
+                            color:
+                                widget.highlight ? colorScheme.secondary : colorScheme.onSurface.withOpacity(0.15),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Center(
@@ -856,7 +854,7 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                               style: TextStyle(
                                 fontSize: 17,
                                 fontWeight: FontWeight.w900,
-                                color: widget.highlight ? AppTheme.primaryColor : Colors.white,
+                                color: widget.highlight ? colorScheme.onSecondary : colorScheme.onSurface,
                               ),
                             ),
                           ),
@@ -874,9 +872,9 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: widget.highlight ? AppTheme.secondaryColor : AppTheme.goldColor,
+                            color: widget.highlight ? colorScheme.secondary : colorScheme.tertiary,
                             borderRadius: BorderRadius.circular(99),
-                            border: Border.all(color: Colors.white.withOpacity(0.8), width: 1.5),
+                            border: Border.all(color: colorScheme.onSurface.withOpacity(0.8), width: 1.5),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withOpacity(0.3),
@@ -887,8 +885,8 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                           ),
                           child: Text(
                             widget.tag!,
-                            style: const TextStyle(
-                              color: AppTheme.primaryColor,
+                            style: TextStyle(
+                              color: widget.highlight ? colorScheme.onSecondary : colorScheme.onTertiary,
                               fontWeight: FontWeight.w900,
                               fontSize: 12,
                             ),
@@ -935,13 +933,14 @@ class _TrustRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.onSurface.withOpacity(0.7);
     return Row(
       children: [
-        Icon(icon, color: Colors.white70, size: 16),
+        Icon(icon, color: color, size: 16),
         const SizedBox(width: 6),
         Text(
           text,
-          style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w500, fontSize: 13),
+          style: TextStyle(color: color, fontWeight: FontWeight.w500, fontSize: 13),
         ),
       ],
     );
@@ -963,7 +962,7 @@ class _LegalFooter extends StatelessWidget {
             children: [
               _FooterLink(text: 'Kullanım Şartları', targetRoute: AppRoutes.settings),
               const SizedBox(width: 10),
-              const Text('|', style: TextStyle(color: Colors.white38, fontSize: 11)),
+              Text('|', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.38), fontSize: 11)),
               const SizedBox(width: 10),
               _FooterLink(text: 'Gizlilik Politikası', targetRoute: AppRoutes.settings),
             ],
@@ -982,6 +981,7 @@ class _FooterLink extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.onSurface.withOpacity(0.7);
     return GestureDetector(
       onTap: () {
         // Gerçekte URL Launcher veya Webview kullanılmalıdır.
@@ -991,12 +991,12 @@ class _FooterLink extends StatelessWidget {
       },
       child: Text(
         text,
-        style: const TextStyle(
-          color: Colors.white70,
+        style: TextStyle(
+          color: color,
           fontSize: 11,
           fontWeight: FontWeight.w600,
           decoration: TextDecoration.underline,
-          decorationColor: Colors.white70,
+          decorationColor: color,
         ),
       ),
     );

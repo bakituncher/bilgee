@@ -213,7 +213,7 @@ class _SubjectGalaxyViewState extends ConsumerState<_SubjectGalaxyView> {
     performances.forEach((_, v){ totalQuestions += v.questionCount; totalCorrect += v.correctCount; totalWrong += v.wrongCount; });
     final overallNet = totalCorrect - (totalWrong * penaltyCoefficient);
     final double overallMastery = totalQuestions==0 ? 0.0 : ((overallNet/totalQuestions).clamp(0.0,1.0));
-    final auraColor = Color.lerp(AppTheme.accentColor, AppTheme.successColor, overallMastery)!.withOpacity(0.12);
+    final auraColor = Color.lerp(Theme.of(context).colorScheme.error, Colors.green, overallMastery)!.withOpacity(0.12);
     final viewMode = ref.watch(subjectViewModeProvider(subjectName));
     final filter = ref.watch(subjectFilterProvider(subjectName));
     final processed = widget.topics.map((t){
@@ -261,10 +261,10 @@ class _SubjectGalaxyViewState extends ConsumerState<_SubjectGalaxyView> {
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            color: AppTheme.lightSurfaceColor.withOpacity(0.35),
-            border: Border.all(color: AppTheme.lightSurfaceColor.withOpacity(0.55), width: 1),
+            color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.35),
+            border: Border.all(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.55), width: 1),
           ),
-          child: Row(children:[ Expanded(child: Text(e.topic.name, style: const TextStyle(fontWeight: FontWeight.w600))), _MasteryPill(mastery: e.mastery), const SizedBox(width:12), Text(masteryPercent, style: const TextStyle(color: AppTheme.secondaryTextColor)) ]),
+          child: Row(children:[ Expanded(child: const Text(e.topic.name, style: TextStyle(fontWeight: FontWeight.w600))), _MasteryPill(mastery: e.mastery), const SizedBox(width:12), Text(masteryPercent, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)) ]),
         ),
       );},
     );
@@ -305,8 +305,8 @@ class _SubjectStatsCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        color: AppTheme.lightSurfaceColor.withOpacity(0.5),
-        border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
+        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+        border: Border.all(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1), width: 1),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -326,10 +326,10 @@ class _SubjectStatsCard extends StatelessWidget {
                   subjectName,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.white),
+                  style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
                 ),
                 const SizedBox(height: 4),
-                Text('Genel Hakimiyet: %$masteryPercent', style: theme.textTheme.titleMedium?.copyWith(color: AppTheme.secondaryTextColor)),
+                Text('Genel Hakimiyet: %$masteryPercent', style: theme.textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
               ],
             ),
           ),
@@ -342,12 +342,12 @@ class _SubjectStatsCard extends StatelessWidget {
           child: SizedBox(
             height: 12,
             child: Stack(children: [
-              Container(color: AppTheme.lightSurfaceColor),
+              Container(color: Theme.of(context).colorScheme.surfaceVariant),
               FractionallySizedBox(
                 widthFactor: overallMastery,
                 child: Container(
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: [AppTheme.accentColor, AppTheme.successColor]),
+                    gradient: LinearGradient(colors: [Theme.of(context).colorScheme.error, Colors.green]),
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
@@ -359,9 +359,9 @@ class _SubjectStatsCard extends StatelessWidget {
         Row(children:[
           Expanded(child: _StatChip(label:'Soru', value: totalQuestions.toString())),
           const SizedBox(width:10),
-          Expanded(child: _StatChip(label:'Doğru', value: totalCorrect.toString(), color: AppTheme.successColor)),
+          Expanded(child: _StatChip(label:'Doğru', value: totalCorrect.toString(), color: Colors.green)),
           const SizedBox(width:10),
-          Expanded(child: _StatChip(label:'Yanlış', value: totalWrong.toString(), color: AppTheme.accentColor))
+          Expanded(child: _StatChip(label:'Yanlış', value: totalWrong.toString(), color: Theme.of(context).colorScheme.error))
         ])
       ]),
     );
@@ -376,17 +376,17 @@ class _StatChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = color ?? AppTheme.secondaryTextColor;
+    final c = color ?? Theme.of(context).colorScheme.onSurfaceVariant;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        color: (color ?? AppTheme.lightSurfaceColor).withOpacity(0.15),
-        border: Border.all(color: (color ?? AppTheme.lightSurfaceColor).withOpacity(0.4), width: 1),
+        color: (color ?? Theme.of(context).colorScheme.surfaceVariant).withOpacity(0.15),
+        border: Border.all(color: (color ?? Theme.of(context).colorScheme.surfaceVariant).withOpacity(0.4), width: 1),
       ),
       child: Column(
         children: [
-          Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color ?? Colors.white)),
+          Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color ?? Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 2),
           Text(label, style: TextStyle(fontSize: 12, color: c.withOpacity(0.8))),
         ],
@@ -401,7 +401,7 @@ class _GalaxyToolbar extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget modeChip(GalaxyViewMode m, IconData icon, String label){
       final active = currentMode==m;
-      final color = active ? AppTheme.primaryColor : AppTheme.secondaryTextColor;
+      final color = active ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).colorScheme.onSurfaceVariant;
       return InkWell(
         onTap: ()=> onModeChanged(m),
         borderRadius: BorderRadius.circular(12),
@@ -410,8 +410,8 @@ class _GalaxyToolbar extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal:16, vertical:10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            color: active ? AppTheme.secondaryColor : AppTheme.lightSurfaceColor.withOpacity(0.5),
-            border: Border.all(color: active ? AppTheme.secondaryColor : Colors.white.withOpacity(0.1), width: 1),
+            color: active ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+            border: Border.all(color: active ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withOpacity(0.1), width: 1),
           ),
           child: Row(mainAxisSize: MainAxisSize.min, children:[
             Icon(icon, size:18, color: color),
@@ -430,13 +430,13 @@ class _GalaxyToolbar extends StatelessWidget {
             isDense:true,
             hintText:'Konu Ara...',
             filled:true,
-            fillColor: AppTheme.lightSurfaceColor.withOpacity(0.5),
-            prefixIcon: const Icon(Icons.search, size: 20, color: AppTheme.secondaryTextColor),
-            hintStyle: const TextStyle(color: AppTheme.secondaryTextColor),
+            fillColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+            prefixIcon: Icon(Icons.search, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.white.withOpacity(0.1))),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.white.withOpacity(0.1))),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppTheme.secondaryColor, width: 1.5)),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1))),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1))),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.5)),
           ),
         ),
       ),
@@ -461,19 +461,19 @@ class _MasteryPill extends StatelessWidget {
     if (mastery < 0) {
       txt = 'N/A';
       level = 'Veri Yok';
-      c = AppTheme.lightSurfaceColor;
+      c = Theme.of(context).colorScheme.surfaceVariant;
     } else if (mastery < 0.4) {
       txt = '%${(mastery * 100).toStringAsFixed(0)}';
       level = 'Zayıf';
-      c = AppTheme.accentColor;
+      c = Theme.of(context).colorScheme.error;
     } else if (mastery < 0.7) {
       txt = '%${(mastery * 100).toStringAsFixed(0)}';
       level = 'Gelişiyor';
-      c = AppTheme.secondaryColor;
+      c = Theme.of(context).colorScheme.primary;
     } else {
       txt = '%${(mastery * 100).toStringAsFixed(0)}';
       level = 'Güçlü';
-      c = AppTheme.successColor;
+      c = Colors.green;
     }
 
     return Container(

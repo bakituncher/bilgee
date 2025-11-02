@@ -105,7 +105,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
       if (state.hasError && !state.isLoading) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            backgroundColor: AppTheme.accentColor,
+            backgroundColor: Theme.of(context).colorScheme.error,
             content: Text('Strateji oluşturulurken bir hata oluştu: ${state.error}'),
           ),
         );
@@ -153,7 +153,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
           ),
         );
       },
-      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator(color: AppTheme.secondaryColor))),
+      loading: () => Scaffold(body: Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary))),
       error: (e, s) => Scaffold(body: Center(child: Text("Hata: $e"))),
     );
   }
@@ -216,7 +216,6 @@ class StrategicPlanningScreen extends ConsumerWidget {
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
                       ),
                     ),
                   ),
@@ -229,11 +228,11 @@ class StrategicPlanningScreen extends ConsumerWidget {
                         duration: Duration(milliseconds: 400),
                       ),
                     ],
-                    child: const Text(
+                    child: Text(
                       "Verileriniz analiz ediliyor ve size özel haftalık plan hazırlanıyor...",
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: AppTheme.secondaryTextColor,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontSize: 15,
                         height: 1.5,
                       ),
@@ -256,8 +255,8 @@ class StrategicPlanningScreen extends ConsumerWidget {
                     child: SizedBox(
                       width: 200,
                       child: LinearProgressIndicator(
-                        backgroundColor: AppTheme.lightSurfaceColor.withValues(alpha: AppTheme.lightSurfaceColor.a * 0.3),
-                        valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.secondaryColor),
+                        backgroundColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                        valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
                         borderRadius: BorderRadius.circular(8),
                         minHeight: 6,
                       ),
@@ -286,7 +285,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
           gradient: RadialGradient(
             center: const Alignment(0, -1.2),
             radius: 1.5,
-            colors: [AppTheme.secondaryColor.withValues(alpha: AppTheme.secondaryColor.a * 0.1), AppTheme.primaryColor],
+            colors: [Theme.of(context).colorScheme.primary.withOpacity(0.1), Theme.of(context).colorScheme.background],
             stops: const [0.0, 0.7],
           ),
         ),
@@ -310,10 +309,10 @@ class StrategicPlanningScreen extends ConsumerWidget {
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: AppTheme.secondaryColor.withValues(alpha: AppTheme.secondaryColor.a * 0.12),
+                              color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.calendar_month_rounded, size: 40, color: AppTheme.secondaryColor),
+                            child: Icon(Icons.calendar_month_rounded, size: 40, color: Theme.of(context).colorScheme.primary),
                           ),
                           const SizedBox(height: 16),
                           Text(
@@ -324,15 +323,15 @@ class StrategicPlanningScreen extends ConsumerWidget {
                           const SizedBox(height: 8),
                           Text(
                             "Bu haftanın odağı",
-                            style: Theme.of(context).textTheme.labelLarge?.copyWith(color: AppTheme.secondaryTextColor),
+                            style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                           ),
                           const SizedBox(height: 6),
                           Container(
                             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                             decoration: BoxDecoration(
-                              color: AppTheme.lightSurfaceColor.withValues(alpha: AppTheme.lightSurfaceColor.a * 0.35),
+                              color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.35),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: AppTheme.lightSurfaceColor.withValues(alpha: AppTheme.lightSurfaceColor.a * 0.5)),
+                              border: Border.all(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5)),
                             ),
                             child: Text(
                               weeklyPlan.strategyFocus,
@@ -343,7 +342,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
                           const SizedBox(height: 16),
                           Text(
                             "Oluşturulma: ${DateFormat.yMMMMd('tr').format(weeklyPlan.creationDate)}",
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor),
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                           ),
                         ],
                       ),
@@ -388,19 +387,19 @@ class StrategicPlanningScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(20.0),
           child: Row(
             children: [
-              Icon(icon, size: 32, color: AppTheme.secondaryColor),
+              Icon(icon, size: 32, color: Theme.of(context).colorScheme.primary),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                    Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                     const SizedBox(height: 4),
-                    Text(subtitle, style: const TextStyle(color: AppTheme.secondaryTextColor)),
+                    Text(subtitle, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                   ],
                 ),
               ),
-              const Icon(Icons.arrow_forward_ios_rounded, color: AppTheme.secondaryTextColor),
+              Icon(Icons.arrow_forward_ios_rounded, color: Theme.of(context).colorScheme.onSurfaceVariant),
             ],
           ),
         ),
@@ -414,7 +413,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
       effects: [
         ShimmerEffect(
           duration: 4000.ms,
-          color: AppTheme.secondaryColor.withValues(alpha: AppTheme.secondaryColor.a * 0.1),
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
         ),
         ScaleEffect(
           curve: Curves.easeInOut,
@@ -426,12 +425,12 @@ class StrategicPlanningScreen extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: AppTheme.cardColor.withValues(alpha: AppTheme.cardColor.a * 0.7),
+          color: Theme.of(context).cardColor.withOpacity(0.7),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppTheme.secondaryColor.withValues(alpha: AppTheme.secondaryColor.a * 0.4)),
+          border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.4)),
           boxShadow: [
             BoxShadow(
-              color: AppTheme.secondaryColor.withValues(alpha: AppTheme.secondaryColor.a * 0.15),
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
               blurRadius: 40,
               spreadRadius: 2,
             ),
@@ -439,7 +438,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
         ),
         child: Column(
           children: [
-            const Icon(Icons.shield_moon_rounded, size: 56, color: AppTheme.successColor),
+            const Icon(Icons.shield_moon_rounded, size: 56, color: Colors.green),
             const SizedBox(height: 16),
             Text(
               "Aktif Harekât Planı",
@@ -449,7 +448,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
             const SizedBox(height: 4),
             Text(
               "Oluşturulma: ${DateFormat.yMMMMd('tr').format(weeklyPlan.creationDate)}",
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const Divider(height: 32, indent: 20, endIndent: 20),
             Text(
@@ -461,7 +460,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
               weeklyPlan.strategyFocus,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: AppTheme.secondaryTextColor,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontStyle: FontStyle.italic,
               ),
             ),
@@ -478,7 +477,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.report_problem_outlined, color: Colors.amber, size: 64),
+            Icon(Icons.report_problem_outlined, color: Theme.of(context).colorScheme.primary, size: 64),
             const SizedBox(height: 24),
             Text(
               "Strateji İçin Veri Gerekli",
@@ -488,7 +487,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
             const SizedBox(height: 16),
             Text(
               "Sana özel bir strateji oluşturabilmem için önce düşmanı tanımam gerek. Lütfen en az bir deneme sonucu ekle.",
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.secondaryTextColor),
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
@@ -709,7 +708,7 @@ class _ChecklistItemCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(icon, color: AppTheme.secondaryTextColor, size: 28),
+                Icon(icon, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 28),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
@@ -719,7 +718,7 @@ class _ChecklistItemCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         description,
-                        style: textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor, height: 1.4),
+                        style: textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.4),
                       ),
                     ],
                   ),
@@ -730,7 +729,7 @@ class _ChecklistItemCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16.0),
               decoration: BoxDecoration(
-                color: AppTheme.lightSurfaceColor.withValues(alpha: AppTheme.lightSurfaceColor.a * 0.3),
+                color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -750,7 +749,7 @@ class _ChecklistItemCard extends StatelessWidget {
                         ),
                         Text(
                           statusDescription,
-                          style: textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor),
+                          style: textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ],
@@ -803,7 +802,7 @@ class _PacingCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: isSelected ? AppTheme.secondaryColor : AppTheme.lightSurfaceColor.withValues(alpha: AppTheme.lightSurfaceColor.a * 0.5),
+          color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
           width: 2,
         ),
       ),
@@ -813,7 +812,7 @@ class _PacingCard extends StatelessWidget {
           padding: const EdgeInsets.all(20.0),
           child: Row(
             children: [
-              Icon(icon, size: 32, color: isSelected ? AppTheme.secondaryColor : AppTheme.secondaryTextColor),
+              Icon(icon, size: 32, color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
@@ -823,13 +822,13 @@ class _PacingCard extends StatelessWidget {
                       title,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: isSelected ? AppTheme.secondaryColor : Colors.white,
+                        color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       subtitle,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -838,7 +837,7 @@ class _PacingCard extends StatelessWidget {
               AnimatedOpacity(
                 opacity: isSelected ? 1.0 : 0.0,
                 duration: 200.ms,
-                child: const Icon(Icons.check_circle_rounded, color: AppTheme.secondaryColor),
+                child: Icon(Icons.check_circle_rounded, color: Theme.of(context).colorScheme.primary),
               ),
             ],
           ),

@@ -256,7 +256,7 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
                                 child: ElevatedButton(
                                   onPressed: _isLoading ? null : _submit,
                                   child: _isLoading
-                                      ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
+                                      ? SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: theme.colorScheme.onPrimary, strokeWidth: 2.5))
                                       : const Text('Profili Tamamla'),
                                 ),
                               ),

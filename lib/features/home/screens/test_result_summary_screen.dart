@@ -61,16 +61,16 @@ class TestResultSummaryScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Row(children: [
-                    const Icon(Icons.category_rounded, size: 18, color: AppTheme.secondaryTextColor),
+                    Icon(Icons.category_rounded, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
                     const SizedBox(width: 6),
-                    Text(test.sectionName, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor)),
+                    Text(test.sectionName, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                     const SizedBox(width: 12),
-                    const Icon(Icons.event_rounded, size: 18, color: AppTheme.secondaryTextColor),
+                    Icon(Icons.event_rounded, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
                     const SizedBox(width: 6),
-                    Text(DateFormat.yMd('tr').format(test.date), style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor)),
+                    Text(DateFormat.yMd('tr').format(test.date), style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                   ]),
                   const SizedBox(height: 6),
-                  Text('Ceza katsayısı: ${test.penaltyCoefficient}', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: AppTheme.secondaryTextColor)),
+                  Text('Ceza katsayısı: ${test.penaltyCoefficient}', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                 ],
               ),
             ),
@@ -101,8 +101,8 @@ class TestResultSummaryScreen extends StatelessWidget {
                   icon: const Icon(Icons.forum_rounded),
                   label: Text(isGoodResult ? "Zaferi Kutla!" : "Durumu Değerlendir"),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: isGoodResult ? AppTheme.successColor : AppTheme.secondaryColor,
-                    side: BorderSide(color: isGoodResult ? AppTheme.successColor : AppTheme.secondaryColor),
+                    foregroundColor: isGoodResult ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.primary,
+                    side: BorderSide(color: isGoodResult ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.primary),
                   ),
                   onPressed: () {
                     final prompt = isGoodResult ? 'new_test_good' : 'new_test_bad';
@@ -178,7 +178,7 @@ class _SubjectBreakdown extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.insights_rounded, color: AppTheme.secondaryColor),
+                Icon(Icons.insights_rounded, color: Theme.of(context).colorScheme.primary),
                 const SizedBox(width: 8),
                 Text('Ders Bazlı Sonuçlar', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
               ],
@@ -195,22 +195,22 @@ class _SubjectBreakdown extends StatelessWidget {
                       Expanded(
                         child: Text(e.key, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
                       ),
-                      Text('Net: ', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: AppTheme.secondaryTextColor)),
-                      Text(net.toStringAsFixed(2), style: Theme.of(context).textTheme.labelLarge?.copyWith(color: net >= 0 ? AppTheme.successColor : AppTheme.accentColor, fontWeight: FontWeight.w700)),
+                      Text('Net: ', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                      Text(net.toStringAsFixed(2), style: Theme.of(context).textTheme.labelLarge?.copyWith(color: net >= 0 ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.error, fontWeight: FontWeight.w700)),
                     ],
                   ),
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      _chip(context, 'D: ${s['dogru'] ?? 0}', AppTheme.successColor.withValues(alpha: AppTheme.successColor.a * 0.2), AppTheme.successColor),
+                      _chip(context, 'D: ${s['dogru'] ?? 0}', Theme.of(context).colorScheme.secondary.withOpacity(0.2), Theme.of(context).colorScheme.secondary),
                       const SizedBox(width: 6),
-                      _chip(context, 'Y: ${s['yanlis'] ?? 0}', AppTheme.accentColor.withValues(alpha: AppTheme.accentColor.a * 0.15), AppTheme.accentColor),
+                      _chip(context, 'Y: ${s['yanlis'] ?? 0}', Theme.of(context).colorScheme.error.withOpacity(0.15), Theme.of(context).colorScheme.error),
                       const SizedBox(width: 6),
-                      _chip(context, 'B: ${s['bos'] ?? 0}', Colors.white10, AppTheme.secondaryTextColor),
+                      _chip(context, 'B: ${s['bos'] ?? 0}', Theme.of(context).colorScheme.onSurface.withOpacity(0.1), Theme.of(context).colorScheme.onSurfaceVariant),
                       const Spacer(),
-                      const Icon(Icons.check_circle_outline_rounded, size: 16, color: AppTheme.secondaryColor),
+                      Icon(Icons.check_circle_outline_rounded, size: 16, color: Theme.of(context).colorScheme.primary),
                       const SizedBox(width: 4),
-                      Text('%${acc.toStringAsFixed(1)}', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: AppTheme.secondaryColor, fontWeight: FontWeight.w700)),
+                      Text('%${acc.toStringAsFixed(1)}', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w700)),
                     ],
                   ),
                   const SizedBox(height: 10),

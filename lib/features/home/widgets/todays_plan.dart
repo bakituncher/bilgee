@@ -126,7 +126,7 @@ class _TodaysPlanState extends ConsumerState<TodaysPlan> {
           height: 8,
           width: _currentPage == index ? 24 : 8,
           decoration: BoxDecoration(
-            color: _currentPage == index ? AppTheme.secondaryColor : AppTheme.lightSurfaceColor,
+            color: _currentPage == index ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surfaceVariant,
             borderRadius: BorderRadius.circular(4),
           ),
         );
@@ -145,7 +145,7 @@ class _NewPlanPromptCard extends StatelessWidget {
       child: Card(
         margin: const EdgeInsets.symmetric(horizontal: 8),
         elevation: 4,
-        shadowColor: AppTheme.secondaryColor.withValues(alpha: 0.3),
+        shadowColor: Theme.of(context).colorScheme.primary.withOpacity(0.3),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         child: Container(
           height: 400,
@@ -154,7 +154,7 @@ class _NewPlanPromptCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Icon(Icons.auto_awesome, color: AppTheme.secondaryColor, size: 48),
+              Icon(Icons.auto_awesome, color: Theme.of(context).colorScheme.primary, size: 48),
               const SizedBox(height: 16),
               Text(
                 'Yeni Bir Hafta, Yeni Bir Strateji!',
@@ -165,7 +165,7 @@ class _NewPlanPromptCard extends StatelessWidget {
               Text(
                 'Geçen haftanın planı tamamlandı. Performansını güncelleyerek bu hafta için yeni bir zafer yolu çizelim.',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor, height: 1.5),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.5),
               ),
               const Spacer(),
               ElevatedButton.icon(

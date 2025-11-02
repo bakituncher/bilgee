@@ -70,20 +70,20 @@ class SubjectStatsScreen extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppTheme.cardColor,
-            AppTheme.cardColor.withOpacity(0.95),
+            Theme.of(context).cardColor,
+            Theme.of(context).cardColor.withOpacity(0.95),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppTheme.secondaryColor.withOpacity(0.2),
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryColor.withOpacity(0.08),
+            color: Theme.of(context).colorScheme.background.withOpacity(0.08),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -101,7 +101,7 @@ class SubjectStatsScreen extends StatelessWidget {
                 show: true,
                 drawVerticalLine: false,
                 getDrawingHorizontalLine: (value) => FlLine(
-                  color: AppTheme.lightSurfaceColor.withOpacity(0.25),
+                  color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.25),
                   strokeWidth: 1,
                 ),
               ),
@@ -116,7 +116,7 @@ class SubjectStatsScreen extends StatelessWidget {
                       return Text(
                         value.toStringAsFixed(0),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppTheme.secondaryTextColor,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       );
                     },
@@ -156,7 +156,7 @@ class SubjectStatsScreen extends StatelessWidget {
                         child: Text(
                           format.format(date),
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppTheme.secondaryTextColor,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                             fontSize: testCount > 50 ? 10 : 11,
                             fontWeight: FontWeight.w500,
                           ),
@@ -175,7 +175,7 @@ class SubjectStatsScreen extends StatelessWidget {
                   fitInsideVertically: true,
                   tooltipRoundedRadius: 12,
                   tooltipPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  getTooltipColor: (spot) => AppTheme.primaryColor.withOpacity(0.96),
+                  getTooltipColor: (spot) => Theme.of(context).colorScheme.background.withOpacity(0.96),
                   getTooltipItems: (spots) => spots.map((spot) {
                     final test = analysis.subjectTests[spot.spotIndex];
                     final scores = test.scores[subjectName]!;
@@ -187,8 +187,8 @@ class SubjectStatsScreen extends StatelessWidget {
                     final text = '${test.testName}\n${DateFormat.yMd('tr').format(test.date)}\n\nNet: ${net.toStringAsFixed(2)}\nDoğru: $correct | Yanlış: $wrong\nİsabet: %${accuracy.toStringAsFixed(0)}';
                     return LineTooltipItem(
                       text,
-                      const TextStyle(
-                        color: Colors.white,
+                      TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontWeight: FontWeight.w600,
                         fontSize: 12,
                         height: 1.4,
@@ -204,8 +204,8 @@ class SubjectStatsScreen extends StatelessWidget {
                   curveSmoothness: 0.35,
                   gradient: LinearGradient(
                     colors: [
-                      AppTheme.successColor,
-                      AppTheme.secondaryColor.withOpacity(0.95),
+                      Colors.green,
+                      Theme.of(context).colorScheme.primary.withOpacity(0.95),
                     ],
                   ),
                   barWidth: testCount > 50 ? 2.5 : 3,
@@ -215,8 +215,8 @@ class SubjectStatsScreen extends StatelessWidget {
                     getDotPainter: (spot, percent, barData, index) {
                       return FlDotCirclePainter(
                         radius: testCount > 15 ? 3 : 4,
-                        color: AppTheme.successColor,
-                        strokeColor: AppTheme.cardColor,
+                        color: Colors.green,
+                        strokeColor: Theme.of(context).cardColor,
                         strokeWidth: 2,
                       );
                     },
@@ -225,8 +225,8 @@ class SubjectStatsScreen extends StatelessWidget {
                     show: true,
                     gradient: LinearGradient(
                       colors: [
-                        AppTheme.secondaryColor.withOpacity(0.20),
-                        AppTheme.secondaryColor.withOpacity(0.04),
+                        Theme.of(context).colorScheme.primary.withOpacity(0.20),
+                        Theme.of(context).colorScheme.primary.withOpacity(0.04),
                       ],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
@@ -250,7 +250,7 @@ class _StatTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: AppTheme.lightSurfaceColor,
+      color: Theme.of(context).colorScheme.surfaceVariant,
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
@@ -258,12 +258,12 @@ class _StatTile extends StatelessWidget {
           children: [
             Text(
               value,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: Colors.white),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
             ),
             const SizedBox(height: 4),
             Text(
               label,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
           ],

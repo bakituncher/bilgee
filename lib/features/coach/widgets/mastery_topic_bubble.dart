@@ -98,10 +98,10 @@ class _MasteryTopicBubbleState extends State<MasteryTopicBubble>
             : (netCorrect / widget.performance.questionCount).clamp(0.0, 1.0);
 
     final Color color = switch (mastery) {
-      < 0 => AppTheme.lightSurfaceColor,
-      >= 0 && < 0.4 => AppTheme.accentColor,
-      >= 0.4 && < 0.7 => AppTheme.secondaryColor,
-      _ => AppTheme.successColor,
+      < 0 => Theme.of(context).colorScheme.surfaceVariant,
+      >= 0 && < 0.4 => Theme.of(context).colorScheme.error,
+      >= 0.4 && < 0.7 => Theme.of(context).colorScheme.primary,
+      _ => Colors.green,
     };
 
     final String tooltipMessage = mastery < 0
@@ -191,7 +191,7 @@ class _MasteryTopicBubbleState extends State<MasteryTopicBubble>
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: fontSize,
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontWeight: _isHovered ? FontWeight.w700 : FontWeight.w600,
                         letterSpacing: 0.3,
                         height: 1.2,

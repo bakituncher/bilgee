@@ -106,8 +106,8 @@ class QuestionReportsScreen extends ConsumerWidget {
                           background: Container(
                             alignment: Alignment.centerRight,
                             padding: const EdgeInsets.symmetric(horizontal: 16),
-                            color: Colors.orange,
-                            child: const Icon(Icons.layers_clear_rounded, color: Colors.white),
+                            color: Theme.of(context).colorScheme.tertiary,
+                            child: Icon(Icons.layers_clear_rounded, color: Theme.of(context).colorScheme.onTertiary),
                           ),
                           confirmDismiss: (_) async {
                             final ok = await showDialog<bool>(
@@ -138,7 +138,10 @@ class QuestionReportsScreen extends ConsumerWidget {
                                   Text('Rapor sayısı: $reportCount'),
                                   if (subjects.isNotEmpty && topics.isNotEmpty)
                                     Text('${subjects.toSet().join(', ')} | ${topics.toSet().join(', ')}',
-                                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor)),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                                   if (reasons.isNotEmpty)
                                     Padding(
                                       padding: const EdgeInsets.only(top: 6),

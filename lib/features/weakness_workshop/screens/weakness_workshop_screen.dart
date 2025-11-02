@@ -365,16 +365,16 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
 
               if (result['success'] == true) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Teşekkürler! İnceleme için iletildi.'),
-                    backgroundColor: AppTheme.successColor,
+                  SnackBar(
+                    content: const Text('Teşekkürler! İnceleme için iletildi.'),
+                    backgroundColor: Theme.of(context).colorScheme.secondary,
                   ),
                 );
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(result['message'] ?? 'Bir hata oluştu'),
-                    backgroundColor: AppTheme.accentColor,
+                    backgroundColor: Theme.of(context).colorScheme.error,
                     duration: const Duration(seconds: 4),
                   ),
                 );
@@ -386,7 +386,7 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text('Beklenmeyen bir hata oluştu: ${e.toString()}'),
-                  backgroundColor: AppTheme.accentColor,
+                  backgroundColor: Theme.of(context).colorScheme.error,
                   duration: const Duration(seconds: 4),
                 ),
               );
@@ -416,6 +416,7 @@ class _FancyBackgroundState extends State<_FancyBackground> with SingleTickerPro
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return AnimatedBuilder(
       animation: _c,
       builder: (_, __) {
@@ -426,16 +427,22 @@ class _FancyBackgroundState extends State<_FancyBackground> with SingleTickerPro
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Color.lerp(const Color(0xFF0F172A), const Color(0xFF0B1020), t)!,
-                Color.lerp(const Color(0xFF1E293B), const Color(0xFF0F172A), 1 - t)!,
+                Color.lerp(colorScheme.background, colorScheme.surface, t)!,
+                Color.lerp(colorScheme.surface, colorScheme.background, 1 - t)!,
               ],
             ),
           ),
           child: Stack(
             children: [
-              _GlowBlob(top: -40, left: -20, color: const Color(0xFF22D3EE).withValues(alpha: 0.25), size: 200 + 40 * t),
-              _GlowBlob(bottom: -60, right: -30, color: const Color(0xFFA78BFA).withValues(alpha: 0.22), size: 240 - 20 * t),
-              _GlowBlob(top: 160, right: -40, color: const Color(0xFF34D399).withValues(alpha: 0.18), size: 180 + 20 * (1 - t)),
+              _GlowBlob(
+                  top: -40, left: -20, color: colorScheme.secondary.withOpacity(0.25), size: 200 + 40 * t),
+              _GlowBlob(
+                  bottom: -60, right: -30, color: colorScheme.primary.withOpacity(0.22), size: 240 - 20 * t),
+              _GlowBlob(
+                  top: 160,
+                  right: -40,
+                  color: colorScheme.tertiary.withOpacity(0.18),
+                  size: 180 + 20 * (1 - t)),
             ],
           ),
         );
@@ -481,7 +488,7 @@ class _LoadingCevherView extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.secondaryColor.withValues(alpha: 0.2),
+                  color: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
                   blurRadius: 30,
                   spreadRadius: 5,
                 ),
@@ -495,13 +502,13 @@ class _LoadingCevherView extends StatelessWidget {
           ).animate(onPlay: (c) => c.repeat(reverse: true))
            .scale(begin: const Offset(0.98, 0.98), end: const Offset(1.02, 1.02), duration: 2000.ms)
            .then()
-           .shimmer(duration: 1500.ms, color: AppTheme.secondaryColor.withValues(alpha: 0.3)),
+           .shimmer(duration: 1500.ms, color: Theme.of(context).colorScheme.secondary.withOpacity(0.3)),
           const SizedBox(height: 32),
           Text(
             "İçerik hazırlanıyor...",
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.onSurface,
               fontWeight: FontWeight.bold,
             ),
           ).animate(onPlay: (c) => c.repeat())
@@ -515,7 +522,7 @@ class _LoadingCevherView extends StatelessWidget {
               "Senin için özel çalışma materyali oluşturuluyor",
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: AppTheme.secondaryTextColor,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           ),
@@ -524,14 +531,14 @@ class _LoadingCevherView extends StatelessWidget {
             width: 220,
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: const LinearProgressIndicator(
-                color: AppTheme.secondaryColor,
-                backgroundColor: Colors.white10,
+              child: LinearProgressIndicator(
+                color: Theme.of(context).colorScheme.secondary,
+                backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
                 minHeight: 6,
               ),
             ),
           ).animate(onPlay: (c) => c.repeat())
-           .shimmer(duration: 1800.ms, color: AppTheme.secondaryColor.withValues(alpha: 0.5)),
+           .shimmer(duration: 1800.ms, color: Theme.of(context).colorScheme.secondary.withOpacity(0.5)),
         ],
       ),
     );
@@ -569,7 +576,7 @@ class _BriefingView extends ConsumerWidget {
               suggestions.any((s) => s['isSuggestion'] == true)
                   ? "Henüz yeterli verin olmadığı için TaktikAI, yolculuğa başlaman için bazı kilit konuları belirledi. Bunlar 'Keşif Noktaları'dır."
                   : "TaktikAI, performansını analiz etti ve gelişim için en parlak fırsatları belirledi. Aşağıdaki cevherlerden birini seçerek işlemeye başla.",
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.secondaryTextColor),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 24),
             if(suggestions.isEmpty)
@@ -602,20 +609,23 @@ class _TopicCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final masteryValue = topic['mastery'] as double?;
 
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
         gradient: isRecommended
-            ? LinearGradient(colors: [AppTheme.secondaryColor.withValues(alpha: 0.25), Colors.transparent])
+            ? LinearGradient(colors: [colorScheme.secondary.withOpacity(0.25), Colors.transparent])
             : null,
       ),
       child: Card(
         elevation: 6,
-        color: AppTheme.cardColor.withValues(alpha: 0.85),
+        color: colorScheme.surface.withOpacity(0.85),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: isRecommended ? AppTheme.secondaryColor : AppTheme.lightSurfaceColor, width: 1.5),
+          side: BorderSide(
+              color: isRecommended ? colorScheme.secondary : colorScheme.surfaceVariant,
+              width: 1.5),
         ),
         child: InkWell(
           onTap: onTap,
@@ -630,33 +640,41 @@ class _TopicCard extends StatelessWidget {
                     if (isRecommended)
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(color: AppTheme.secondaryColor, borderRadius: BorderRadius.circular(8)),
-                        child: Text("TAKTİKAI ÖNERİSİ", style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.primaryColor, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                        decoration: BoxDecoration(color: colorScheme.secondary, borderRadius: BorderRadius.circular(8)),
+                        child: Text(
+                          "TAKTİKAI ÖNERİSİ",
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: colorScheme.onSecondary, fontWeight: FontWeight.bold, letterSpacing: 1),
+                        ),
                       ),
                     const Spacer(),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.06),
+                        color: colorScheme.onSurface.withOpacity(0.06),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: AppTheme.lightSurfaceColor),
+                        border: Border.all(color: colorScheme.surfaceVariant),
                       ),
                       child: Row(children: [
-                        const Icon(Icons.bolt_rounded, size: 16, color: AppTheme.secondaryColor),
+                        Icon(Icons.bolt_rounded, size: 16, color: colorScheme.secondary),
                         const SizedBox(width: 6),
-                        Text(masteryValue == null || masteryValue < 0 ? 'Keşif' : '%${(masteryValue * 100).toStringAsFixed(0)}', style: Theme.of(context).textTheme.labelSmall),
+                        Text(masteryValue == null || masteryValue < 0 ? 'Keşif' : '%${(masteryValue * 100).toStringAsFixed(0)}',
+                            style: Theme.of(context).textTheme.labelSmall),
                       ]),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
                 Text(topic['topic']!, style: Theme.of(context).textTheme.titleLarge),
-                Text(topic['subject']!, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor)),
+                Text(topic['subject']!,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant)),
                 const SizedBox(height: 12),
                 LinearProgressIndicator(
                   value: masteryValue == null || masteryValue < 0 ? null : masteryValue,
-                  backgroundColor: AppTheme.lightSurfaceColor.withValues(alpha: AppTheme.lightSurfaceColor.a * 0.3),
-                  color: masteryValue == null || masteryValue < 0 ? AppTheme.secondaryTextColor : Color.lerp(AppTheme.accentColor, AppTheme.successColor, masteryValue),
+                  backgroundColor: colorScheme.surfaceVariant.withOpacity(0.3),
+                  color: masteryValue == null || masteryValue < 0
+                      ? colorScheme.onSurfaceVariant
+                      : Color.lerp(colorScheme.error, colorScheme.secondary, masteryValue),
                   borderRadius: BorderRadius.circular(4),
                 ),
               ],
@@ -685,9 +703,9 @@ class _StudyView extends StatelessWidget {
             child: MarkdownWithMath(
               data: material.studyGuide,
               styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
-                p: const TextStyle(fontSize: 16, height: 1.5, color: AppTheme.textColor),
-                h1: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppTheme.secondaryColor),
-                h3: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                p: TextStyle(fontSize: 16, height: 1.5, color: Theme.of(context).colorScheme.onSurface),
+                h1: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.secondary),
+                h3: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
               ),
             ),
           ),
@@ -753,8 +771,8 @@ class _QuizViewState extends State<_QuizView> {
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
           child: LinearProgressIndicator(
             value: (_currentPage + 1) / quizLength,
-            backgroundColor: AppTheme.lightSurfaceColor.withValues(alpha: AppTheme.lightSurfaceColor.a * 0.3),
-            color: AppTheme.secondaryColor,
+            backgroundColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+            color: Theme.of(context).colorScheme.secondary,
             borderRadius: BorderRadius.circular(8),
           ),
         ),
@@ -831,12 +849,13 @@ class _QuestionCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text("Soru $questionNumber / $totalQuestions", style: const TextStyle(color: AppTheme.secondaryTextColor)),
+              Text("Soru $questionNumber / $totalQuestions",
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
               const Spacer(),
               TextButton.icon(
                 onPressed: onReportIssue,
-                icon: const Icon(Icons.flag_outlined, size: 18, color: AppTheme.secondaryTextColor),
-                label: const Text('Sorunu Bildir', style: TextStyle(color: AppTheme.secondaryTextColor)),
+                icon: Icon(Icons.flag_outlined, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                label: Text('Sorunu Bildir', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
               ),
             ],
           ),
@@ -855,23 +874,25 @@ class _QuestionCard extends StatelessWidget {
             Color? borderColor;
             IconData? trailingIcon;
 
+            final colorScheme = Theme.of(context).colorScheme;
+
             if (selectedOptionIndex != null) {
               if (isSelected) {
-                tileColor = isCorrect ? AppTheme.successColor.withValues(alpha: AppTheme.successColor.a * 0.2) : AppTheme.accentColor.withValues(alpha: AppTheme.accentColor.a * 0.2);
-                borderColor = isCorrect ? AppTheme.successColor : AppTheme.accentColor;
+                tileColor = isCorrect ? colorScheme.secondary.withOpacity(0.2) : colorScheme.error.withOpacity(0.2);
+                borderColor = isCorrect ? colorScheme.secondary : colorScheme.error;
                 trailingIcon = isCorrect ? Icons.check_circle_rounded : Icons.cancel_rounded;
               } else if (isCorrect) {
-                tileColor = AppTheme.successColor.withValues(alpha: AppTheme.successColor.a * 0.2);
-                borderColor = AppTheme.successColor;
+                tileColor = colorScheme.secondary.withOpacity(0.2);
+                borderColor = colorScheme.secondary;
                 trailingIcon = Icons.check_circle_outline_rounded;
               }
             }
 
             return Card(
-              color: tileColor ?? AppTheme.cardColor,
+              color: tileColor ?? colorScheme.surface,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: borderColor ?? AppTheme.lightSurfaceColor, width: 1.5)),
+                  side: BorderSide(color: borderColor ?? colorScheme.surfaceVariant, width: 1.5)),
               margin: const EdgeInsets.only(bottom: 12),
               child: ListTile(
                 onTap: selectedOptionIndex == null ? () => onOptionSelected(index) : null,
@@ -900,25 +921,27 @@ class _ExplanationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Card(
-      color: AppTheme.primaryColor.withValues(alpha: AppTheme.primaryColor.a * 0.7),
+      color: colorScheme.surfaceVariant,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.school_rounded, color: AppTheme.secondaryColor),
+            Icon(Icons.school_rounded, color: colorScheme.primary),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Usta'nın Açıklaması", style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.secondaryColor)),
+                  Text("Usta'nın Açıklaması",
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: colorScheme.primary)),
                   const SizedBox(height: 8),
                   MarkdownWithMath(
                     data: explanation,
                     styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
-                      p: const TextStyle(color: AppTheme.textColor, height: 1.5),
+                      p: TextStyle(color: colorScheme.onSurface, height: 1.5),
                     ),
                   ),
                 ],
@@ -981,7 +1004,7 @@ class _ResultsViewState extends State<_ResultsView> with SingleTickerProviderSta
           children: [
             TabBar(
               controller: _tabController,
-              indicatorColor: AppTheme.secondaryColor,
+              indicatorColor: Theme.of(context).colorScheme.secondary,
               tabs: const [
                 Tab(text: "Özet"),
                 Tab(text: "Sınav Karnesi"),
@@ -1015,7 +1038,11 @@ class _ResultsViewState extends State<_ResultsView> with SingleTickerProviderSta
             blastDirectionality: BlastDirectionality.explosive,
             numberOfParticles: 24,
             shouldLoop: false,
-            colors: const [AppTheme.successColor, AppTheme.secondaryColor, AppTheme.accentColor],
+            colors: [
+              Theme.of(context).colorScheme.secondary, // Green
+              Theme.of(context).colorScheme.primary,   // Cyan
+              Theme.of(context).colorScheme.tertiary   // Gold
+            ],
           ),
         ),
       ],
@@ -1062,22 +1089,30 @@ class _SummaryViewState extends ConsumerState<_SummaryView> {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
                 gradient: LinearGradient(colors: [
-                  AppTheme.successColor.withValues(alpha: AppTheme.successColor.a * 0.3),
-                  AppTheme.successColor.withValues(alpha: AppTheme.successColor.a * 0.15)
+                  Theme.of(context).colorScheme.secondary.withOpacity(0.3),
+                  Theme.of(context).colorScheme.secondary.withOpacity(0.15)
                 ]),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.successColor.withValues(alpha: AppTheme.successColor.a * 0.8), width: 1.5),
+                border: Border.all(color: Theme.of(context).colorScheme.secondary.withOpacity(0.8), width: 1.5),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.verified_rounded, color: AppTheme.successColor, size: 32),
+                  Icon(Icons.verified_rounded, color: Theme.of(context).colorScheme.secondary, size: 32),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Konu Ustalıkla Öğrenildi', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.successColor, fontWeight: FontWeight.bold)),
-                        Text('Tebrikler! Bu konuda hedeflenen yeterlilik seviyesine ulaştın.', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor)),
+                        Text('Konu Ustalıkla Öğrenildi',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(color: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.bold)),
+                        Text('Tebrikler! Bu konuda hedeflenen yeterlilik seviyesine ulaştın.',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                       ],
                     ),
                   )
@@ -1091,22 +1126,30 @@ class _SummaryViewState extends ConsumerState<_SummaryView> {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
                 gradient: LinearGradient(colors: [
-                  AppTheme.successColor.withValues(alpha: AppTheme.successColor.a * 0.25),
-                  AppTheme.secondaryColor.withValues(alpha: AppTheme.secondaryColor.a * 0.15)
+                  Theme.of(context).colorScheme.secondary.withOpacity(0.25),
+                  Theme.of(context).colorScheme.primary.withOpacity(0.15)
                 ]),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.successColor.withValues(alpha: AppTheme.successColor.a * 0.6), width: 1.5),
+                border: Border.all(color: Theme.of(context).colorScheme.secondary.withOpacity(0.6), width: 1.5),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.workspace_premium_rounded, color: AppTheme.successColor, size: 32),
+                  Icon(Icons.workspace_premium_rounded, color: Theme.of(context).colorScheme.secondary, size: 32),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment.start,
                       children: [
-                        Text('Ustalık Parlıyor!', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.successColor, fontWeight: FontWeight.bold)),
-                        Text('Bu Cevher sınavında %80+ başarıyla ekstra bir yükseliş yakaladın.', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor)),
+                        Text('Ustalık Parlıyor!',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(color: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.bold)),
+                        Text('Bu Cevher sınavında %80+ başarıyla ekstra bir yükseliş yakaladın.',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                       ],
                     ),
                   )
@@ -1115,10 +1158,25 @@ class _SummaryViewState extends ConsumerState<_SummaryView> {
             ).animate().fadeIn(duration: 500.ms).slideY(begin: -0.2),
             const SizedBox(height: 20),
           ],
-          Text("Ustalık Sınavı Tamamlandı!", style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center,),
+          Text(
+            "Ustalık Sınavı Tamamlandı!",
+            style: Theme.of(context).textTheme.headlineMedium,
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: 16),
-          Text("%${widget.score.toStringAsFixed(0)}", style: Theme.of(context).textTheme.displayLarge?.copyWith(color: AppTheme.successColor, fontWeight: FontWeight.bold), textAlign: TextAlign.center,),
-          Text("Başarı Oranı", style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.secondaryTextColor), textAlign: TextAlign.center,),
+          Text(
+            "%${widget.score.toStringAsFixed(0)}",
+            style: Theme.of(context)
+                .textTheme
+                .displayLarge
+                ?.copyWith(color: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          Text(
+            "Başarı Oranı",
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: 24),
           _ResultActionCard(
               title: "Sonuçları Değerlendir",
@@ -1152,11 +1210,13 @@ class _SummaryViewState extends ConsumerState<_SummaryView> {
                   _isSaved = true;
                 });
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Cevher başarıyla kasana eklendi!"), backgroundColor: AppTheme.successColor),
+                  SnackBar(
+                      content: const Text("Cevher başarıyla kasana eklendi!"),
+                      backgroundColor: Theme.of(context).colorScheme.secondary),
                 );
               }
             },
-            overrideColor: _isSaved ? AppTheme.successColor : null,
+            overrideColor: _isSaved ? Theme.of(context).colorScheme.secondary : null,
             child: (_isSaving) ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator()) : null,
           ),
           const SizedBox(height: 16),
@@ -1209,16 +1269,23 @@ class _QuizReviewView extends StatelessWidget {
                       data: question.options[optIndex],
                       styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
                         p: TextStyle(
-                          color: optIndex == question.correctOptionIndex ? AppTheme.successColor :
-                          (optIndex == userAnswer && !isCorrect ? AppTheme.accentColor : AppTheme.textColor),
+                      color: optIndex == question.correctOptionIndex
+                          ? Theme.of(context).colorScheme.secondary
+                          : (optIndex == userAnswer && !isCorrect
+                              ? Theme.of(context).colorScheme.error
+                              : Theme.of(context).colorScheme.onSurface),
                         ),
                       ),
                     ),
                     leading: Icon(
-                      optIndex == question.correctOptionIndex ? Icons.check_circle_rounded :
-                      (optIndex == userAnswer && !isCorrect ? Icons.cancel_rounded : Icons.radio_button_unchecked_rounded),
-                      color: optIndex == question.correctOptionIndex ? AppTheme.successColor :
-                      (optIndex == userAnswer && !isCorrect ? AppTheme.accentColor : AppTheme.secondaryTextColor),
+                  optIndex == question.correctOptionIndex
+                      ? Icons.check_circle_rounded
+                      : (optIndex == userAnswer && !isCorrect ? Icons.cancel_rounded : Icons.radio_button_unchecked_rounded),
+                  color: optIndex == question.correctOptionIndex
+                      ? Theme.of(context).colorScheme.secondary
+                      : (optIndex == userAnswer && !isCorrect
+                          ? Theme.of(context).colorScheme.error
+                          : Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   );
                 }),
@@ -1254,11 +1321,14 @@ class _ResultActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Card(
-      color: isPrimary ? AppTheme.secondaryColor.withValues(alpha: AppTheme.secondaryColor.a * 0.2) : AppTheme.cardColor,
+      color: isPrimary ? colorScheme.secondary.withOpacity(0.2) : colorScheme.surface,
       shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: overrideColor ?? (isPrimary ? AppTheme.secondaryColor : AppTheme.lightSurfaceColor), width: 1.5)
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+            color: overrideColor ?? (isPrimary ? colorScheme.secondary : colorScheme.surfaceVariant),
+            width: 1.5),
       ),
       child: InkWell(
         onTap: onTap,
@@ -1267,16 +1337,20 @@ class _ResultActionCard extends StatelessWidget {
           padding: const EdgeInsets.all(20.0),
           child: Row(
             children: [
-              Icon(icon, color: overrideColor ?? (isPrimary ? AppTheme.secondaryColor : AppTheme.secondaryTextColor), size: 28),
+              Icon(icon,
+                  color: overrideColor ?? (isPrimary ? colorScheme.secondary : colorScheme.onSurfaceVariant),
+                  size: 28),
               const SizedBox(width: 16),
-              Expanded(child: Column(
+              Expanded(
+                  child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title, style: Theme.of(context).textTheme.titleLarge),
-                  Text(subtitle, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor)),
+                  Text(subtitle,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
                 ],
               )),
-              if(child != null) Padding(padding: const EdgeInsets.only(left: 16), child: child),
+              if (child != null) Padding(padding: const EdgeInsets.only(left: 16), child: child),
             ],
           ),
         ),
@@ -1292,12 +1366,13 @@ class _ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.all(32.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline_rounded, color: AppTheme.accentColor, size: 64),
+          Icon(Icons.error_outline_rounded, color: colorScheme.error, size: 64),
           const SizedBox(height: 24),
           Text(
             "Bir Sorun Oluştu",
@@ -1307,7 +1382,7 @@ class _ErrorView extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             "Cevher işlenirken beklenmedik bir sorunla karşılaşıldı. Lütfen tekrar dene.\n\nHata: $error",
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.secondaryTextColor),
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: colorScheme.onSurfaceVariant),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32),
@@ -1330,9 +1405,9 @@ class _DeepenWorkshopSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
-      decoration: const BoxDecoration(
-        color: AppTheme.cardColor,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1345,7 +1420,7 @@ class _DeepenWorkshopSheet extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             "Ustalığını bir sonraki seviyeye taşı.",
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.secondaryTextColor),
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
@@ -1380,9 +1455,9 @@ class _ResultsBottomBar extends StatelessWidget {
       top: false,
       child: Container(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-        decoration: const BoxDecoration(
-          color: AppTheme.cardColor,
-          border: Border(top: BorderSide(color: AppTheme.lightSurfaceColor, width: 1)),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          border: Border(top: BorderSide(color: Theme.of(context).colorScheme.surfaceVariant, width: 1)),
         ),
         child: Row(
           children: [
@@ -1428,9 +1503,9 @@ class _ReportIssueSheetState extends State<_ReportIssueSheet> {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-      decoration: const BoxDecoration(
-        color: AppTheme.cardColor,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: SafeArea(
         top: false,
@@ -1440,7 +1515,7 @@ class _ReportIssueSheetState extends State<_ReportIssueSheet> {
           children: [
             Row(
               children: [
-                const Icon(Icons.flag_outlined, color: AppTheme.secondaryColor),
+                Icon(Icons.flag_outlined, color: Theme.of(context).colorScheme.secondary),
                 const SizedBox(width: 8),
                 Text('Sorun Bildir', style: Theme.of(context).textTheme.titleLarge),
               ],
@@ -1511,20 +1586,22 @@ class _WSHeader extends StatelessWidget {
           if (showBack)
             IconButton(
               onPressed: onBack,
-              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-              style: IconButton.styleFrom(backgroundColor: Colors.white.withValues(alpha: 0.08), shape: const CircleBorder()),
+              icon: Icon(Icons.arrow_back_ios_new_rounded, color: Theme.of(context).colorScheme.onSurface),
+              style: IconButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.08),
+                  shape: const CircleBorder()),
             )
           else
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.06),
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.06),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.lightSurfaceColor),
+                border: Border.all(color: Theme.of(context).colorScheme.surfaceVariant),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.diamond_rounded, color: AppTheme.secondaryColor),
+                  Icon(Icons.diamond_rounded, color: Theme.of(context).colorScheme.secondary),
                   const SizedBox(width: 8),
                   Text(title, style: Theme.of(context).textTheme.titleMedium),
                 ],
@@ -1535,15 +1612,19 @@ class _WSHeader extends StatelessWidget {
             IconButton(
               tooltip: 'Atölye Raporu',
               onPressed: onStats,
-              icon: const Icon(Icons.bar_chart_rounded, color: Colors.white),
-              style: IconButton.styleFrom(backgroundColor: Colors.white.withValues(alpha: 0.08), shape: const CircleBorder()),
+              icon: Icon(Icons.bar_chart_rounded, color: Theme.of(context).colorScheme.onSurface),
+              style: IconButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.08),
+                  shape: const CircleBorder()),
             ),
           const SizedBox(width: 8),
           IconButton(
             tooltip: 'Cevher Kasası',
             onPressed: onSaved,
-            icon: const Icon(Icons.inventory_2_outlined, color: Colors.white),
-            style: IconButton.styleFrom(backgroundColor: Colors.white.withValues(alpha: 0.08), shape: const CircleBorder()),
+            icon: Icon(Icons.inventory_2_outlined, color: Theme.of(context).colorScheme.onSurface),
+            style: IconButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.08),
+                shape: const CircleBorder()),
           ),
         ],
       ),

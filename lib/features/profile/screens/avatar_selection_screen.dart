@@ -64,7 +64,7 @@ class AvatarSelectionScreen extends ConsumerWidget {
           const SizedBox(height: 20),
           CircleAvatar(
             radius: 80,
-            backgroundColor: AppTheme.lightSurfaceColor,
+            backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
             child: ClipOval(
               child: SvgPicture.network(
                 _getAvatarUri(selectedStyle, avatarSeed).toString(),
@@ -83,9 +83,9 @@ class AvatarSelectionScreen extends ConsumerWidget {
             icon: const Icon(Icons.casino_rounded),
             label: const Text("Rastgele"),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.cardColor,
-              foregroundColor: AppTheme.secondaryColor,
-              side: const BorderSide(color: AppTheme.lightSurfaceColor),
+              backgroundColor: Theme.of(context).cardColor,
+              foregroundColor: Theme.of(context).colorScheme.primary,
+              side: BorderSide(color: Theme.of(context).colorScheme.surfaceVariant),
             ),
           ),
           const SizedBox(height: 20),
@@ -109,7 +109,7 @@ class AvatarSelectionScreen extends ConsumerWidget {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: isSelected ? AppTheme.secondaryColor : AppTheme.lightSurfaceColor,
+                        color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surfaceVariant,
                         width: 3,
                       ),
                     ),

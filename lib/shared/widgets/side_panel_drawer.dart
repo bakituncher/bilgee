@@ -44,9 +44,11 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
     final isPremium = ref.watch(premiumStatusProvider);
     final rankInfo = RankService.getRankInfo(user?.engagementScore ?? 0);
     final location = GoRouter.of(context).routeInformationProvider.value.location ?? '';
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Drawer(
-      backgroundColor: AppTheme.cardColor,
+      backgroundColor: theme.cardColor,
       child: SafeArea(
         child: SlideTransition(
           position: _slide,
@@ -63,8 +65,8 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
-                      color: AppTheme.lightSurfaceColor.withOpacity(.18),
-                      border: Border.all(color: AppTheme.lightSurfaceColor.withOpacity(.28)),
+                      color: colorScheme.surfaceVariant.withOpacity(.18),
+                      border: Border.all(color: colorScheme.surfaceVariant.withOpacity(.28)),
                     ),
                     child: Row(
                       children: [
@@ -76,18 +78,18 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                             children: [
                               Text(
                                 user?.name ?? 'Gezgin',
-                                style: Theme.of(context).textTheme.titleLarge,
+                                style: theme.textTheme.titleLarge,
                                 overflow: TextOverflow.ellipsis,
                               ),
                               const SizedBox(height: 4),
                               Row(
                                 children: [
-                                  const Icon(Icons.workspace_premium_rounded, size: 16, color: AppTheme.secondaryColor),
+                                  Icon(Icons.workspace_premium_rounded, size: 16, color: colorScheme.primary),
                                   const SizedBox(width: 6),
                                   Expanded(
                                     child: Text(
                                       rankInfo.current.name,
-                                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.secondaryColor, fontWeight: FontWeight.w700),
+                                      style: theme.textTheme.titleMedium?.copyWith(color: colorScheme.primary, fontWeight: FontWeight.w700),
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
@@ -99,17 +101,17 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                                 child: LinearProgressIndicator(
                                   value: rankInfo.progress,
                                   minHeight: 6,
-                                  backgroundColor: AppTheme.lightSurfaceColor.withOpacity(.25),
-                                  valueColor: const AlwaysStoppedAnimation(AppTheme.secondaryColor),
+                                  backgroundColor: colorScheme.surfaceVariant.withOpacity(.25),
+                                  valueColor: AlwaysStoppedAnimation(colorScheme.primary),
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              Text('BP ${user?.engagementScore ?? 0}', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.secondaryTextColor)),
+                              Text('BP ${user?.engagementScore ?? 0}', style: theme.textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant)),
                             ],
                           ),
                         ),
                         const SizedBox(width: 8),
-                        const Icon(Icons.chevron_right_rounded, color: AppTheme.secondaryTextColor),
+                        Icon(Icons.chevron_right_rounded, color: colorScheme.onSurfaceVariant),
                       ],
                     ),
                   ),
@@ -148,7 +150,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                             Text(
                               'Premium avantajlarını keşfet',
                               textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.secondaryTextColor),
+                              style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                             ),
                           ],
                         ),
@@ -175,7 +177,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                     ],
                   ),
                 ),
-                const Divider(height: 1, color: Colors.white12),
+                const Divider(height: 1),
                 // Footer actions
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -191,7 +193,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                         context,
                         icon: Icons.logout_rounded,
                         title: 'Çıkış Yap',
-                        iconColor: AppTheme.accentColor,
+                        iconColor: Theme.of(context).colorScheme.error,
                         onTap: () async {
                           Navigator.of(context).pop();
                           await fb.FirebaseAuth.instance.signOut();
@@ -218,6 +220,8 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
         required String route,
       }) {
     final bool selected = currentLocation == route || (route != '/home' && currentLocation.startsWith(route));
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -230,9 +234,9 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            color: selected ? AppTheme.lightSurfaceColor.withOpacity(.30) : Colors.transparent,
+            color: selected ? colorScheme.surfaceVariant.withOpacity(.30) : Colors.transparent,
             border: Border.all(
-              color: AppTheme.lightSurfaceColor.withOpacity(selected ? .45 : .20),
+              color: colorScheme.surfaceVariant.withOpacity(selected ? .45 : .20),
             ),
           ),
           child: Row(
@@ -244,14 +248,14 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                   title,
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
-                    color: selected ? Colors.white : AppTheme.secondaryTextColor,
+                    color: selected ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
                   ),
                 ),
               ),
               AnimatedOpacity(
                 opacity: selected ? 1 : 0,
                 duration: const Duration(milliseconds: 180),
-                child: const Icon(Icons.chevron_right_rounded, color: Colors.white70),
+                child: Icon(Icons.chevron_right_rounded, color: colorScheme.onSurfaceVariant.withOpacity(0.7)),
               ),
             ],
           ),
@@ -264,12 +268,12 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
       BuildContext context, {
         required IconData icon,
         required String title,
-        Color iconColor = AppTheme.secondaryTextColor,
+        Color? iconColor,
         required VoidCallback onTap,
       }) {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-      leading: Icon(icon, color: iconColor),
+      leading: Icon(icon, color: iconColor ?? Theme.of(context).colorScheme.onSurfaceVariant),
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
       onTap: onTap,
     );
@@ -290,20 +294,20 @@ class _Avatar extends StatelessWidget {
       final initials = (userName ?? 'G').trim();
       return CircleAvatar(
         radius: radius,
-        backgroundColor: AppTheme.lightSurfaceColor,
+        backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
         child: Text(initials.isEmpty ? 'G' : initials.characters.first.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold)),
       );
     }
     return CircleAvatar(
       radius: radius,
-      backgroundColor: AppTheme.lightSurfaceColor,
+      backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
       child: ClipOval(
         child: SvgPicture.network(
           url,
           width: radius * 2,
           height: radius * 2,
           fit: BoxFit.cover,
-          placeholderBuilder: (_) => const Icon(Icons.person, color: AppTheme.secondaryTextColor),
+          placeholderBuilder: (_) => Icon(Icons.person, color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
       ),
     );
@@ -323,9 +327,12 @@ class _PremiumButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return DecoratedBox(
       decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [AppTheme.secondaryColor, Colors.amber]),
+        gradient: LinearGradient(colors: [colorScheme.primary, Colors.amber]),
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(color: Colors.amber.withOpacity(.25), blurRadius: 18, offset: const Offset(0, 8)),
@@ -333,8 +340,8 @@ class _PremiumButton extends StatelessWidget {
       ),
       child: ElevatedButton.icon(
         onPressed: onTap,
-        icon: const Icon(Icons.workspace_premium_rounded, color: AppTheme.primaryColor, size: 26),
-        label: const Text('Premium Ol', style: TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.w800)),
+        icon: Icon(Icons.workspace_premium_rounded, color: colorScheme.onPrimary, size: 26),
+        label: Text('Premium Ol', style: TextStyle(color: colorScheme.onPrimary, fontWeight: FontWeight.w800)),
         style: ElevatedButton.styleFrom(
           elevation: 0,
           backgroundColor: Colors.transparent,
@@ -354,24 +361,26 @@ class _IconCapsule extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         color: selected
-            ? AppTheme.secondaryColor.withOpacity(.20)
-            : AppTheme.lightSurfaceColor.withOpacity(.25),
+            ? colorScheme.primary.withOpacity(.20)
+            : colorScheme.surfaceVariant.withOpacity(.25),
         border: Border.all(
           color: selected
-              ? AppTheme.secondaryColor.withOpacity(.35)
-              : AppTheme.lightSurfaceColor.withOpacity(.25),
+              ? colorScheme.primary.withOpacity(.35)
+              : colorScheme.surfaceVariant.withOpacity(.25),
         ),
       ),
       child: Icon(
         icon,
         size: 20,
-        color: selected ? AppTheme.secondaryColor : AppTheme.secondaryTextColor,
+        color: selected ? colorScheme.primary : colorScheme.onSurfaceVariant,
       ),
     );
   }
@@ -389,7 +398,7 @@ class _SectionLabel extends StatelessWidget {
         text.toUpperCase(),
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
           letterSpacing: 1.1,
-          color: AppTheme.secondaryTextColor.withOpacity(.8),
+          color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(.8),
           fontWeight: FontWeight.w700,
         ),
       ),

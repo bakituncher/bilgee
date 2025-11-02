@@ -140,15 +140,15 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           ),
         ],
       ),
-      backgroundColor: AppTheme.primaryColor,
+      backgroundColor: Theme.of(context).colorScheme.background,
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              AppTheme.primaryColor,
-              AppTheme.cardColor.withValues(alpha: 0.8),
+              Theme.of(context).colorScheme.background,
+              Theme.of(context).cardColor.withOpacity(0.8),
             ],
           ),
         ),
@@ -215,7 +215,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     showModalBottomSheet(
       context: context,
       showDragHandle: true,
-      backgroundColor: AppTheme.cardColor,
+      backgroundColor: Theme.of(context).cardColor,
       builder: (ctx) {
         return SafeArea(
           child: Column(
@@ -256,7 +256,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   }
 
   Widget _sortIcon() {
-    return Icon(_sortOption.descending ? Icons.south_rounded : Icons.north_rounded, color: AppTheme.secondaryColor);
+    return Icon(_sortOption.descending ? Icons.south_rounded : Icons.north_rounded, color: Theme.of(context).colorScheme.primary);
   }
 
   Widget _buildBody(TextTheme textTheme) {
@@ -268,7 +268,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.inventory_2_outlined, size: 80, color: AppTheme.secondaryTextColor),
+            Icon(Icons.inventory_2_outlined, size: 80, color: Theme.of(context).colorScheme.onSurfaceVariant),
             const SizedBox(height: 16),
             Text('Arşivin Henüz Boş', style: textTheme.headlineSmall),
             const SizedBox(height: 8),
@@ -277,7 +277,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
               child: Text(
                 'Her deneme, gelecekteki başarın için bir kanıtıdır. İlk kanıtı arşive ekle.',
                 textAlign: TextAlign.center,
-                style: textTheme.bodyLarge?.copyWith(color: AppTheme.secondaryTextColor),
+                style: textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ),
             const SizedBox(height: 24),
@@ -305,7 +305,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                   prefixIcon: const Icon(Icons.search_rounded),
                   hintText: 'Deneme adı ara...',
                   filled: true,
-                  fillColor: AppTheme.cardColor,
+                  fillColor: Theme.of(context).cardColor,
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
                 ),
                 onChanged: (v) => setState(() => _searchQuery = v),
@@ -322,9 +322,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                         label: Text(s),
                         selected: selected,
                         onSelected: (_) => setState(() => _selectedSection = s),
-                        selectedColor: AppTheme.secondaryColor.withValues(alpha: AppTheme.secondaryColor.a * 0.2),
-                        labelStyle: TextStyle(color: selected ? AppTheme.secondaryColor : Colors.white),
-                        backgroundColor: AppTheme.cardColor,
+                        selectedColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                        labelStyle: TextStyle(color: selected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface),
+                        backgroundColor: Theme.of(context).cardColor,
                       ),
                     );
                   }).toList(),
@@ -347,9 +347,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
               separatorBuilder: (_, __) => const SizedBox(height: 8),
               itemBuilder: (context, index) {
                 if (index >= filtered.length) {
-                  return const Padding(
-                    padding: EdgeInsets.all(12.0),
-                    child: Center(child: CircularProgressIndicator(color: AppTheme.secondaryColor)),
+                  return Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary)),
                   );
                 }
                 final test = filtered[index];
@@ -385,11 +385,13 @@ class _ArchiveListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
     final acc = _accuracy(test);
 
     return Material(
-      color: AppTheme.cardColor,
+      color: theme.cardColor,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
@@ -405,12 +407,12 @@ class _ArchiveListTile extends StatelessWidget {
                 height: 54,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
-                  color: AppTheme.lightSurfaceColor.withValues(alpha: AppTheme.lightSurfaceColor.a * 0.2),
+                  color: colorScheme.surfaceVariant.withOpacity(0.2),
                 ),
                 alignment: Alignment.center,
                 child: Text(
                   test.totalNet.toStringAsFixed(1),
-                  style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, color: Colors.white),
+                  style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, color: colorScheme.onSurface),
                 ),
               ),
               const SizedBox(width: 12),
@@ -435,7 +437,7 @@ class _ArchiveListTile extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       '${test.sectionName} • ${DateFormat.yMd('tr').format(test.date)}',
-                      style: textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor),
+                      style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -446,12 +448,12 @@ class _ArchiveListTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Row(children: [
-                    const Icon(Icons.check_rounded, size: 16, color: AppTheme.successColor),
+                    Icon(Icons.check_rounded, size: 16, color: colorScheme.secondary),
                     const SizedBox(width: 4),
-                    Text('%${acc.toStringAsFixed(1)}', style: textTheme.bodyMedium?.copyWith(color: AppTheme.successColor, fontWeight: FontWeight.w700)),
+                    Text('%${acc.toStringAsFixed(1)}', style: textTheme.bodyMedium?.copyWith(color: colorScheme.secondary, fontWeight: FontWeight.w700)),
                   ]),
                   const SizedBox(height: 4),
-                  Text('${test.totalCorrect}/${test.totalWrong}/${test.totalBlank}', style: textTheme.labelSmall?.copyWith(color: AppTheme.secondaryTextColor)),
+                  Text('${test.totalCorrect}/${test.totalWrong}/${test.totalBlank}', style: textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant)),
                 ],
               ),
             ],

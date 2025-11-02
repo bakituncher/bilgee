@@ -308,7 +308,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 borderRadius: BorderRadius.circular(6),
                 child: LinearProgressIndicator(
                   value: strength <= 0.05 ? 0.05 : strength,
-                  backgroundColor: Colors.white12,
+                  backgroundColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
                   valueColor: AlwaysStoppedAnimation(
                     strength < .34 ? Colors.redAccent : (strength < .67 ? Colors.amber : Colors.green),
                   ),
@@ -410,7 +410,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 onPressed: _isLoading ? null : _submit,
                 style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
                 child: _isLoading
-                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    ? SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Theme.of(context).colorScheme.onPrimary, strokeWidth: 2))
                     : const Text('Kayıt Ol'),
               ),
               TextButton(

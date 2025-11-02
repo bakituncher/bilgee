@@ -139,6 +139,10 @@ class TestDetailScreen extends StatelessWidget {
     ];
     int colorIndex = 0;
 
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return test.scores.entries.map((entry) {
       final subjectNet = entry.value['dogru']! - (entry.value['yanlis']! * test.penaltyCoefficient);
       if (subjectNet <= 0) return null; // Net'i 0 veya daha düşükse grafikte gösterme
@@ -148,9 +152,9 @@ class TestDetailScreen extends StatelessWidget {
           title: '${subjectNet.toStringAsFixed(1)}\n${entry.key}',
           radius: 80,
           color: colors[colorIndex % colors.length],
-          titleStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
+          titleStyle: textTheme.bodySmall?.copyWith(
               fontWeight: FontWeight.bold,
-              color: Colors.white
+              color: colorScheme.onPrimary
           )
       );
       colorIndex++;

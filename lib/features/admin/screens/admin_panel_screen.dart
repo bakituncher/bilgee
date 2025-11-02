@@ -23,9 +23,9 @@ class AdminPanelScreen extends ConsumerWidget {
           Text(
             'Yönetim Araçları',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: AppTheme.primaryColor,
-            ),
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
           ),
           const SizedBox(height: 16),
           // Conditionally show User Management for Super Admins

@@ -102,16 +102,16 @@ class GeneralOverviewScreen extends ConsumerWidget {
   Widget _tile(BuildContext context, {required IconData icon, required String title, required String value}) {
     return Card(
       elevation: 6,
-      shadowColor: AppTheme.lightSurfaceColor.withValues(alpha: AppTheme.lightSurfaceColor.a * .4),
+      shadowColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.4),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: ListTile(
         leading: Container(
           decoration: BoxDecoration(
-            color: AppTheme.secondaryColor.withValues(alpha: AppTheme.secondaryColor.a * .15),
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
             borderRadius: BorderRadius.circular(12),
           ),
           padding: const EdgeInsets.all(10),
-          child: Icon(icon, color: AppTheme.secondaryColor),
+          child: Icon(icon, color: Theme.of(context).colorScheme.primary),
         ),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
         trailing: Text(value, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
@@ -146,7 +146,7 @@ class _RecentNetSparkline extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Row(children:[
-              const Icon(Icons.trending_up_rounded, color: AppTheme.secondaryColor),
+              Icon(Icons.trending_up_rounded, color: Theme.of(context).colorScheme.primary),
               const SizedBox(width: 8),
               Text('Son Deneme Net Trendi', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
             ]),
@@ -164,10 +164,10 @@ class _RecentNetSparkline extends StatelessWidget {
                     LineChartBarData(
                       spots: [for (int i=0;i<nets.length;i++) FlSpot(i.toDouble(), nets[i])],
                       isCurved: true,
-                      color: AppTheme.secondaryColor,
+                      color: Theme.of(context).colorScheme.primary,
                       barWidth: 3,
                       dotData: const FlDotData(show: false),
-                      belowBarData: BarAreaData(show: true, color: AppTheme.secondaryColor.withValues(alpha: AppTheme.secondaryColor.a * .12)),
+                      belowBarData: BarAreaData(show: true, color: Theme.of(context).colorScheme.primary.withOpacity(0.12)),
                     ),
                   ],
                 ),
@@ -202,7 +202,7 @@ class _WeeklyTasksCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Row(children:[
-              const Icon(Icons.task_alt_rounded, color: AppTheme.secondaryColor),
+              Icon(Icons.task_alt_rounded, color: Theme.of(context).colorScheme.primary),
               const SizedBox(width: 8),
               Text('Bu Hafta Görev Aktivitesi', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
             ]),
@@ -227,7 +227,7 @@ class _WeeklyTasksCard extends StatelessWidget {
                   barGroups: [
                     for (int i=0;i<counts.length;i++)
                       BarChartGroupData(x: i, barRods: [
-                        BarChartRodData(toY: counts[i], width: 14, borderRadius: BorderRadius.circular(6), color: AppTheme.secondaryColor)
+                        BarChartRodData(toY: counts[i], width: 14, borderRadius: BorderRadius.circular(6), color: Theme.of(context).colorScheme.primary)
                       ])
                   ],
                   maxY: maxY.toDouble(),
@@ -259,16 +259,16 @@ class _VisitsThisMonthTile extends ConsumerWidget {
         final visits = (snap.data ?? const <Timestamp>[]) as List;
         return Card(
           elevation: 6,
-          shadowColor: AppTheme.lightSurfaceColor.withValues(alpha: AppTheme.lightSurfaceColor.a * .4),
+          shadowColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.4),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
           child: ListTile(
             leading: Container(
               decoration: BoxDecoration(
-                color: AppTheme.secondaryColor.withValues(alpha: AppTheme.secondaryColor.a * .15),
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(12),
               ),
               padding: const EdgeInsets.all(10),
-              child: const Icon(Icons.calendar_month_rounded, color: AppTheme.secondaryColor),
+              child: Icon(Icons.calendar_month_rounded, color: Theme.of(context).colorScheme.primary),
             ),
             title: const Text('Bu Ay Ziyaret'),
             trailing: Text('${visits.length}', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),

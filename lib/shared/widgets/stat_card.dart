@@ -20,9 +20,12 @@ class StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Card(
-      color: AppTheme.lightSurfaceColor.withValues(alpha: 0.5),
+      color: colorScheme.surfaceVariant.withOpacity(0.5),
       clipBehavior: Clip.hardEdge,
       child: InkWell(
         onTap: onTap,
@@ -36,19 +39,19 @@ class StatCard extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 18,
-                  backgroundColor: color ?? AppTheme.secondaryColor,
-                  child: Icon(icon, color: Colors.white, size: 20),
+                  backgroundColor: color ?? colorScheme.primary,
+                  child: Icon(icon, color: colorScheme.onPrimary, size: 20),
                 ),
                 const Spacer(),
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
-                  child: Text(value, style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.white)),
+                  child: Text(value, style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: colorScheme.onSurface)),
                 ),
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
-                  child: Text(label, style: textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  child: Text(label, style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant), maxLines: 1, overflow: TextOverflow.ellipsis),
                 ),
               ],
             ),
@@ -75,7 +78,10 @@ class ProfileStatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -87,7 +93,7 @@ class ProfileStatCard extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: 28, color: AppTheme.secondaryTextColor),
+                Icon(icon, size: 28, color: colorScheme.onSurfaceVariant),
                 const SizedBox(height: 8),
                 FittedBox(
                   fit: BoxFit.scaleDown,
@@ -96,7 +102,7 @@ class ProfileStatCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 FittedBox(
                   fit: BoxFit.scaleDown,
-                  child: Text(label, style: textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
+                  child: Text(label, style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
                 ),
               ],
             ),

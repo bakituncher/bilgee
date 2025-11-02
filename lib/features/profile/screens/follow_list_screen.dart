@@ -31,11 +31,15 @@ class FollowListScreen extends ConsumerWidget {
         title: Text(_isFollowers ? 'Takipçiler' : 'Takip Edilenler'),
       ),
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF0B0F14), Color(0xFF2A155A), Color(0xFF061F38)],
+            colors: [
+              Theme.of(context).scaffoldBackgroundColor,
+              Theme.of(context).cardColor,
+              Theme.of(context).scaffoldBackgroundColor,
+            ],
           ),
         ),
         child: SafeArea(
@@ -46,7 +50,7 @@ class FollowListScreen extends ConsumerWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.group_outlined, size: 56, color: AppTheme.secondaryTextColor),
+                      Icon(Icons.group_outlined, size: 56, color: Theme.of(context).colorScheme.onSurfaceVariant),
                       const SizedBox(height: 12),
                       Text(
                         _isFollowers ? 'Henüz takipçin yok.' : 'Henüz kimseyi takip etmiyorsun.',
@@ -67,7 +71,7 @@ class FollowListScreen extends ConsumerWidget {
                 },
               );
             },
-            loading: () => const Center(child: CircularProgressIndicator(color: AppTheme.secondaryColor)),
+            loading: () => Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary)),
             error: (e, s) => Center(child: Text('Liste yüklenemedi: $e')),
           ),
         ),
@@ -115,7 +119,7 @@ class _FollowListTileState extends ConsumerState<_FollowListTile> {
         final isFollowing = _optimistic ?? (isFollowingAsync.valueOrNull ?? false);
 
         return Material(
-          color: Colors.white.withValues(alpha: 0.03),
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.03),
           borderRadius: BorderRadius.circular(16),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
@@ -126,7 +130,7 @@ class _FollowListTileState extends ConsumerState<_FollowListTile> {
                 children: [
                   CircleAvatar(
                     radius: 22,
-                    backgroundColor: Colors.white.withValues(alpha: 0.06),
+                    backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.06),
                     child: ClipOval(
                       child: (avatarStyle != null && avatarSeed != null)
                           ? SvgPicture.network(
@@ -158,7 +162,7 @@ class _FollowListTileState extends ConsumerState<_FollowListTile> {
                         countsAsync.when(
                           data: (c) => Text(
                             'Takipçi ${c.$1} • Takip ${c.$2}',
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white70),
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -187,8 +191,8 @@ class _FollowListTileState extends ConsumerState<_FollowListTile> {
                               }
                             },
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.redAccent,
-                              side: const BorderSide(color: Colors.redAccent),
+                              foregroundColor: Theme.of(context).colorScheme.error,
+                              side: BorderSide(color: Theme.of(context).colorScheme.error),
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                               minimumSize: const Size(0, 40),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
@@ -210,8 +214,8 @@ class _FollowListTileState extends ConsumerState<_FollowListTile> {
                               }
                             },
                             style: FilledButton.styleFrom(
-                              backgroundColor: AppTheme.secondaryColor.withValues(alpha: 0.18),
-                              foregroundColor: AppTheme.secondaryColor,
+                              backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.18),
+                              foregroundColor: Theme.of(context).colorScheme.primary,
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                               minimumSize: const Size(0, 40),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
@@ -230,13 +234,13 @@ class _FollowListTileState extends ConsumerState<_FollowListTile> {
       loading: () => Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(18),
-          color: Colors.white.withValues(alpha: 0.04),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.04),
+          border: Border.all(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.08)),
         ),
         padding: const EdgeInsets.all(12),
-        child: const Row(
+        child: Row(
           children: [
-            CircleAvatar(radius: 24, backgroundColor: Colors.white12),
+            CircleAvatar(radius: 24, backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.12)),
             SizedBox(width: 12),
             Expanded(child: LinearProgressIndicator(minHeight: 8)),
           ],
@@ -246,10 +250,10 @@ class _FollowListTileState extends ConsumerState<_FollowListTile> {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          color: Colors.red.withValues(alpha: 0.06),
-          border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
+          color: Theme.of(context).colorScheme.error.withOpacity(0.06),
+          border: Border.all(color: Theme.of(context).colorScheme.error.withOpacity(0.2)),
         ),
-        child: Text('Kullanıcı yüklenemedi: $e', style: const TextStyle(color: Colors.redAccent)),
+        child: Text('Kullanıcı yüklenemedi: $e', style: TextStyle(color: Theme.of(context).colorScheme.error)),
       ),
     );
   }

@@ -104,7 +104,7 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen> with TickerProv
               end: Alignment.bottomRight,
               colors: [
                 _getBackgroundColor(pomodoro.sessionState).withOpacity(0.9),
-                AppTheme.primaryColor,
+                Theme.of(context).colorScheme.background,
               ],
             ),
           ),
@@ -123,15 +123,15 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen> with TickerProv
                       return Stack(children: [
                         Align(
                           alignment: Alignment(-0.9 + 0.2 * (t - 0.5), -1.1),
-                          child: _Blob(color: Colors.white.withOpacity(0.05), size: 280),
+                          child: _Blob(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05), size: 280),
                         ),
                         Align(
                           alignment: Alignment(1.1, -0.3 + 0.2 * (0.5 - t)),
-                          child: _Blob(color: AppTheme.secondaryColor.withOpacity(0.12), size: 220),
+                          child: _Blob(color: Theme.of(context).colorScheme.primary.withOpacity(0.12), size: 220),
                         ),
                         Align(
                           alignment: Alignment(0.8 * (0.5 - t), 1.1),
-                          child: _Blob(color: AppTheme.successColor.withOpacity(0.08), size: 260),
+                          child: _Blob(color: Colors.green.withOpacity(0.08), size: 260),
                         ),
                       ]);
                     },
@@ -180,11 +180,11 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen> with TickerProv
 
   Color _getBackgroundColor(PomodoroSessionState currentState) {
     switch (currentState) {
-      case PomodoroSessionState.work: return AppTheme.secondaryColor;
+      case PomodoroSessionState.work: return Theme.of(context).colorScheme.primary;
       case PomodoroSessionState.shortBreak:
-      case PomodoroSessionState.longBreak: return AppTheme.successColor;
+      case PomodoroSessionState.longBreak: return Colors.green;
       case PomodoroSessionState.completed: return Colors.purple.shade300;
-      case PomodoroSessionState.idle: return AppTheme.lightSurfaceColor;
+      case PomodoroSessionState.idle: return Theme.of(context).colorScheme.surfaceVariant;
     }
   }
 }

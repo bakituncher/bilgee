@@ -120,7 +120,7 @@ class _StrategyReviewScreenState extends ConsumerState<StrategyReviewScreen> {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: AppTheme.primaryColor,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         children: [
           SafeArea(
@@ -139,7 +139,7 @@ class _StrategyReviewScreenState extends ConsumerState<StrategyReviewScreen> {
                       Text(
                           "İşte sana özel hazırlanan haftalık harekat planın. İncele ve onayla.",
                           style: textTheme.titleMedium
-                              ?.copyWith(color: AppTheme.secondaryTextColor)),
+                              ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                     ],
                   ),
                 ).animate().fadeIn(duration: 500.ms).slideY(begin: 0.2),
@@ -169,7 +169,7 @@ class _StrategyReviewScreenState extends ConsumerState<StrategyReviewScreen> {
                           onPressed: _openRevisionWorkshop,
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16),
-                            side: const BorderSide(color: AppTheme.secondaryColor),
+                            side: BorderSide(color: Theme.of(context).colorScheme.primary),
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16)),
                           ),
@@ -194,17 +194,17 @@ class _StrategyReviewScreenState extends ConsumerState<StrategyReviewScreen> {
           ),
           if (_isRevising)
             Container(
-              color: Colors.black.withValues(alpha: Colors.black.a * 0.7),
+              color: Colors.black.withOpacity(0.7),
               child: Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const CircularProgressIndicator(color: AppTheme.secondaryColor),
+                    CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
                     const SizedBox(height: 20),
                     Text(
                       "Strateji güncelleniyor...\nEmirlerin işleniyor komutanım!",
                       textAlign: TextAlign.center,
-                      style: textTheme.titleLarge?.copyWith(color: AppTheme.secondaryTextColor),
+                      style: textTheme.titleLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -246,7 +246,7 @@ class _DailyPlanCard extends StatelessWidget {
               style: Theme.of(context)
                   .textTheme
                   .headlineSmall
-                  ?.copyWith(color: AppTheme.secondaryColor),
+                  ?.copyWith(color: Theme.of(context).colorScheme.primary),
             ),
             const Divider(height: 24),
             Expanded(
@@ -258,7 +258,7 @@ class _DailyPlanCard extends StatelessWidget {
                   style: Theme.of(context)
                       .textTheme
                       .bodyLarge
-                      ?.copyWith(color: AppTheme.secondaryTextColor),
+                      ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               )
                   : ListView.builder(
@@ -273,7 +273,7 @@ class _DailyPlanCard extends StatelessWidget {
                         Padding(
                           padding: const EdgeInsets.only(top: 2.0),
                           child: Icon(_getIconForTaskType(item.type),
-                              size: 20, color: AppTheme.secondaryTextColor),
+                              size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -281,7 +281,7 @@ class _DailyPlanCard extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(item.activity, style: Theme.of(context).textTheme.bodyLarge),
-                              Text(item.time, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor)),
+                              Text(item.time, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                             ],
                           ),
                         ),
@@ -323,9 +323,9 @@ class _RevisionWorkshopState extends State<RevisionWorkshop> {
         .where((f) => f.isNotEmpty)
         .join("\n- ");
     if (allFeedbacks.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text("Lütfen bir geri bildirim belirtin."),
-        backgroundColor: AppTheme.accentColor,
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: const Text("Lütfen bir geri bildirim belirtin."),
+        backgroundColor: Theme.of(context).colorScheme.error,
       ));
       return;
     }
@@ -337,9 +337,9 @@ class _RevisionWorkshopState extends State<RevisionWorkshop> {
     return SingleChildScrollView(
       child: Container(
         padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
-          color: AppTheme.cardColor,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -353,7 +353,7 @@ class _RevisionWorkshopState extends State<RevisionWorkshop> {
             const SizedBox(height: 8),
             Text(
               "Stratejide neleri değiştirmemi istersin?",
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.secondaryTextColor),
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),

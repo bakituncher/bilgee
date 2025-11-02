@@ -121,7 +121,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       }
                           : null, // Butonu pasif yap
                       child: isLoading
-                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Theme.of(context).colorScheme.onPrimary))
                           : const Text("Tüm Verileri Sil ve Değiştir"),
                     );
                   },
@@ -211,7 +211,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: const Text('Şifre başarıyla güncellendi.'),
-                      backgroundColor: Theme.of(context).colorScheme.secondary,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
                     ),
                   );
                 }
@@ -319,9 +319,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     ref.listen<SettingsState>(settingsNotifierProvider, (previous, next) {
       if (next.resetStatus == ResetStatus.failure) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Veriler sıfırlanırken bir hata oluştu. Lütfen tekrar deneyin."),
-            backgroundColor: AppTheme.accentColor,
+          SnackBar(
+            content: const Text("Veriler sıfırlanırken bir hata oluştu. Lütfen tekrar deneyin."),
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
         ref.read(settingsNotifierProvider.notifier).resetOperationStatus();

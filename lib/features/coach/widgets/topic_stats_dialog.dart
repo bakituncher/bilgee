@@ -45,12 +45,12 @@ class TopicStatsDialog extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-                color: AppTheme.cardColor.withOpacity(0.95),
+                color: Theme.of(context).cardColor.withOpacity(0.95),
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: AppTheme.secondaryColor, width: 2),
+                border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2),
                 boxShadow: [
                   BoxShadow(
-                      color: AppTheme.secondaryColor.withOpacity(0.3),
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
                       blurRadius: 20)
                 ]),
             child: Column(
@@ -89,14 +89,14 @@ class TopicStatsDialog extends StatelessWidget {
         curve: Curves.easeInOut,
         builder: (context, value, child) {
           final color =
-          Color.lerp(AppTheme.accentColor, AppTheme.successColor, value)!;
+          Color.lerp(Theme.of(context).colorScheme.error, Colors.green, value)!;
           return Stack(
             fit: StackFit.expand,
             children: [
               CircularProgressIndicator(
                 value: value,
                 strokeWidth: 10,
-                backgroundColor: AppTheme.lightSurfaceColor.withOpacity(0.5),
+                backgroundColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
                 valueColor: AlwaysStoppedAnimation<Color>(color),
                 strokeCap: StrokeCap.round,
               ),
@@ -118,7 +118,7 @@ class TopicStatsDialog extends StatelessWidget {
                       style: Theme.of(context)
                           .textTheme
                           .bodyLarge
-                          ?.copyWith(color: AppTheme.secondaryTextColor),
+                          ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -137,16 +137,16 @@ class TopicStatsDialog extends StatelessWidget {
         children: [
           _StatItem(
               label: "Toplam", value: performance.questionCount.toString()),
-          const VerticalDivider(color: AppTheme.lightSurfaceColor),
+          VerticalDivider(color: Theme.of(context).colorScheme.surfaceVariant),
           _StatItem(
               label: "Doğru",
               value: performance.correctCount.toString(),
-              color: AppTheme.successColor),
-          const VerticalDivider(color: AppTheme.lightSurfaceColor),
+              color: Colors.green),
+          VerticalDivider(color: Theme.of(context).colorScheme.surfaceVariant),
           _StatItem(
               label: "Yanlış",
               value: performance.wrongCount.toString(),
-              color: AppTheme.accentColor),
+              color: Theme.of(context).colorScheme.error),
         ],
       ),
     );
@@ -156,13 +156,13 @@ class TopicStatsDialog extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.primaryColor.withOpacity(0.5),
+        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.auto_awesome, color: AppTheme.secondaryColor),
+          Icon(Icons.auto_awesome, color: Theme.of(context).colorScheme.primary),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -172,11 +172,11 @@ class TopicStatsDialog extends StatelessWidget {
                     style: Theme.of(context)
                         .textTheme
                         .titleMedium
-                        ?.copyWith(color: AppTheme.secondaryColor)),
+                        ?.copyWith(color: Theme.of(context).colorScheme.primary)),
                 const SizedBox(height: 8),
                 Text(getAiVerdict(),
-                    style: const TextStyle(
-                        color: AppTheme.secondaryTextColor, height: 1.5)),
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.5)),
               ],
             ),
           ),
@@ -202,12 +202,12 @@ class _StatItem extends StatelessWidget {
             style: Theme.of(context)
                 .textTheme
                 .headlineSmall
-                ?.copyWith(color: color ?? Colors.white)),
+                ?.copyWith(color: color ?? Theme.of(context).colorScheme.onSurface)),
         Text(label,
             style: Theme.of(context)
                 .textTheme
                 .bodyMedium
-                ?.copyWith(color: AppTheme.secondaryTextColor)),
+                ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
       ],
     );
   }

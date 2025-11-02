@@ -16,9 +16,9 @@ class KeyStatsRow extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _StatColumn(label: "Toplam Net", value: test.totalNet.toStringAsFixed(2)),
-            _StatColumn(label: "Doğru", value: test.totalCorrect.toString(), color: AppTheme.successColor),
-            _StatColumn(label: "Yanlış", value: test.totalWrong.toString(), color: AppTheme.accentColor),
-            _StatColumn(label: "Boş", value: test.totalBlank.toString(), color: AppTheme.secondaryTextColor),
+            _StatColumn(label: "Doğru", value: test.totalCorrect.toString(), color: Colors.green),
+            _StatColumn(label: "Yanlış", value: test.totalWrong.toString(), color: Colors.red),
+            _StatColumn(label: "Boş", value: test.totalBlank.toString(), color: Theme.of(context).colorScheme.onSurfaceVariant),
           ],
         ),
       ),
@@ -37,9 +37,9 @@ class _StatColumn extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(value, style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: color ?? Colors.white, fontWeight: FontWeight.bold)),
+        Text(value, style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: color ?? Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
-        Text(label, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor)),
+        Text(label, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
       ],
     );
   }

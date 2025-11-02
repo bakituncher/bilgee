@@ -91,8 +91,8 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
         onPressed: () => context.go('/blog/admin/new'),
         icon: const Icon(Icons.add_rounded),
         label: const Text('Yeni Yazı'),
-        backgroundColor: AppTheme.secondaryColor,
-        foregroundColor: AppTheme.primaryColor,
+        backgroundColor: Theme.of(context).colorScheme.secondary,
+        foregroundColor: Theme.of(context).colorScheme.onSecondary,
       );
     }
 
@@ -147,7 +147,7 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                             hintText: 'Yazı ara, etiket veya başlık...',
                             prefixIcon: const Icon(Icons.search_rounded),
                             filled: true,
-                            fillColor: AppTheme.lightSurfaceColor.withValues(alpha: .18),
+                            fillColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.18),
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
                             contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
                           ),
@@ -191,11 +191,12 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.menu_book_rounded, size: 64, color: Colors.grey),
+                            Icon(Icons.menu_book_rounded, size: 64, color: Theme.of(context).colorScheme.surfaceVariant),
                             const SizedBox(height: 12),
                             Text(
                               _query.isEmpty ? 'Henüz yayınlanmış yazı yok.' : 'Aramanızla eşleşen yazı bulunamadı.',
-                              style: GoogleFonts.montserrat(fontSize: 16, color: AppTheme.secondaryTextColor),
+                              style: GoogleFonts.montserrat(
+                                  fontSize: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
                               textAlign: TextAlign.center,
                             ),
                           ],
@@ -244,8 +245,10 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                                       label: Text(tag, style: GoogleFonts.montserrat(fontSize: 11, fontWeight: FontWeight.w600)),
                                       visualDensity: VisualDensity.compact,
                                       padding: const EdgeInsets.symmetric(horizontal: 6),
-                                      backgroundColor: AppTheme.lightSurfaceColor.withValues(alpha: .25),
-                                      shape: StadiumBorder(side: BorderSide(color: AppTheme.lightSurfaceColor.withValues(alpha: .4))),
+                                      backgroundColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.25),
+                                      shape: StadiumBorder(
+                                          side: BorderSide(
+                                              color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.4))),
                                     ),
                                   ))
                               .toList(growable: false);
@@ -256,10 +259,11 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                           child: RepaintBoundary(
                             child: Card(
                               elevation: 0, // AppTheme.cardTheme ile uyumlu: gölgeyi kaldır
-                              shadowColor: AppTheme.lightSurfaceColor.withValues(alpha: .18),
+                              shadowColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.18),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(18),
-                                side: BorderSide(color: AppTheme.lightSurfaceColor.withValues(alpha: .45)),
+                                side: BorderSide(
+                                    color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.45)),
                               ),
                               clipBehavior: Clip.antiAlias,
                               child: InkWell(
@@ -282,17 +286,29 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                                                 maxWidthDiskCache: 1280,
                                                 memCacheHeight: 480,
                                                 memCacheWidth: 854,
-                                                placeholder: (c, _) => Container(color: AppTheme.lightSurfaceColor.withValues(alpha: .25)),
-                                                errorWidget: (c, _, __) => Container(color: AppTheme.lightSurfaceColor.withValues(alpha: .2), child: const Icon(Icons.image_not_supported_rounded)),
+                                                placeholder: (c, _) => Container(
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .surfaceVariant
+                                                        .withOpacity(0.25)),
+                                                errorWidget: (c, _, __) => Container(
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .surfaceVariant
+                                                        .withOpacity(0.2),
+                                                    child: const Icon(Icons.image_not_supported_rounded)),
                                               ),
                                             ),
                                             // Alt kısımda okunabilirlik için yumuşak degrade
                                             Container(
-                                              decoration: const BoxDecoration(
+                                              decoration: BoxDecoration(
                                                 gradient: LinearGradient(
                                                   begin: Alignment.bottomCenter,
                                                   end: Alignment.topCenter,
-                                                  colors: [Color(0x990D1B2A), Colors.transparent],
+                                                  colors: [
+                                                    Theme.of(context).colorScheme.background.withOpacity(0.6),
+                                                    Colors.transparent
+                                                  ],
                                                 ),
                                               ),
                                             ),
@@ -302,14 +318,19 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                                               child: Container(
                                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                                 decoration: BoxDecoration(
-                                                  color: const Color(0xFF000000).withValues(alpha: .35),
+                                                  color: Theme.of(context).colorScheme.background.withOpacity(0.35),
                                                   borderRadius: BorderRadius.circular(10),
                                                 ),
                                                 child: Row(
                                                   children: [
-                                                    const Icon(Icons.schedule_rounded, size: 14, color: Colors.white),
+                                                    Icon(Icons.schedule_rounded,
+                                                        size: 14, color: Theme.of(context).colorScheme.onBackground),
                                                     const SizedBox(width: 4),
-                                                    Text('${p.readTime ?? 1} dk', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
+                                                    Text('${p.readTime ?? 1} dk',
+                                                        style: TextStyle(
+                                                            color: Theme.of(context).colorScheme.onBackground,
+                                                            fontSize: 12,
+                                                            fontWeight: FontWeight.w600)),
                                                   ],
                                                 ),
                                               ),
@@ -329,7 +350,7 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                                               fontWeight: FontWeight.w800,
                                               height: 1.25,
                                               letterSpacing: .1,
-                                              color: AppTheme.textColor,
+                                              color: Theme.of(context).colorScheme.onSurface,
                                             ),
                                           ),
                                           const SizedBox(height: 6),
@@ -342,25 +363,29 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                                                 fontSize: 13.5,
                                                 height: 1.65,
                                                 letterSpacing: .05,
-                                                color: AppTheme.secondaryTextColor,
+                                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                                               ),
                                             ),
                                           const SizedBox(height: 10),
-                                          if (p.tags.isNotEmpty)
-                                            Wrap(children: buildTagChips()),
+                                          if (p.tags.isNotEmpty) Wrap(children: buildTagChips()),
                                           const SizedBox(height: 10),
                                           Row(
                                             children: [
-                                              const Icon(Icons.calendar_month_rounded, size: 16, color: AppTheme.secondaryTextColor),
+                                              Icon(Icons.calendar_month_rounded,
+                                                  size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
                                               const SizedBox(width: 6),
                                               Text(
                                                 p.publishedAt != null ? dateFmt.format(p.publishedAt!) : '-',
-                                                style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.secondaryTextColor),
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .labelSmall
+                                                    ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                                               ),
                                               const Spacer(),
                                               if (isAdmin)
                                                 PopupMenuButton<String>(
-                                                  icon: const Icon(Icons.more_vert_rounded, color: AppTheme.secondaryTextColor),
+                                                  icon: Icon(Icons.more_vert_rounded,
+                                                      color: Theme.of(context).colorScheme.onSurfaceVariant),
                                                   onSelected: (v) {
                                                     switch (v) {
                                                       case 'edit':
@@ -377,7 +402,8 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                                                   ],
                                                 )
                                               else
-                                                const Icon(Icons.chevron_right_rounded, color: AppTheme.secondaryTextColor),
+                                                Icon(Icons.chevron_right_rounded,
+                                                    color: Theme.of(context).colorScheme.onSurfaceVariant),
                                             ],
                                           ),
                                         ],

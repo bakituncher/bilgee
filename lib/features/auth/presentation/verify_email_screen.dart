@@ -153,7 +153,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
               const SizedBox(height: 32),
               ElevatedButton.icon(
                 icon: _isChecking
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: theme.colorScheme.onPrimary))
                     : const Icon(Icons.refresh_rounded),
                 label: Text(_isChecking ? 'Kontrol Ediliyor...' : 'Doğruladım, Kontrol Et'),
                 onPressed: _isChecking ? null : _handleManualCheck,
@@ -164,7 +164,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
               const SizedBox(height: 16),
               ElevatedButton.icon(
                 icon: _isResending
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: theme.colorScheme.onPrimary))
                     : const Icon(Icons.send_rounded),
                 label: Text(_cooldownActive ? 'Tekrar Gönder (${_cooldownSeconds}s)' : 'E-postayı Tekrar Gönder'),
                 onPressed: _isResending || _cooldownActive ? null : _handleResendEmail,

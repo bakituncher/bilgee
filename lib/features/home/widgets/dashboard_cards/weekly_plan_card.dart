@@ -40,14 +40,14 @@ class WeeklyPlanCard extends ConsumerWidget {
         borderRadius: BorderRadius.circular(28),
         gradient: LinearGradient(
           colors: [
-            AppTheme.primaryColor.withValues(alpha: .85),
-            AppTheme.primaryColor.withValues(alpha: .55),
-            AppTheme.cardColor.withValues(alpha: .40),
+            Theme.of(context).colorScheme.primary.withOpacity(0.85),
+            Theme.of(context).colorScheme.primary.withOpacity(0.55),
+            Theme.of(context).cardColor.withOpacity(0.40),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        border: Border.all(color: AppTheme.lightSurfaceColor.withValues(alpha: .35), width: 1),
+        border: Border.all(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.35), width: 1),
         boxShadow: [
           BoxShadow(color: Colors.black.withOpacity(.35), blurRadius: 18, offset: const Offset(0, 8))
         ],
@@ -149,28 +149,28 @@ class _HeaderBar extends ConsumerWidget {
       padding: const EdgeInsets.fromLTRB(20,18,20,16),
       decoration: BoxDecoration(
         borderRadius: const BorderRadius.only(topLeft: Radius.circular(28), topRight: Radius.circular(28)),
-        gradient: LinearGradient(colors:[AppTheme.secondaryColor.withOpacity(.18), AppTheme.secondaryColor.withOpacity(.04)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+        gradient: LinearGradient(colors:[Theme.of(context).colorScheme.primary.withOpacity(.18), Theme.of(context).colorScheme.primary.withOpacity(.04)], begin: Alignment.topLeft, end: Alignment.bottomRight),
       ),
       child: Row(crossAxisAlignment: CrossAxisAlignment.center, children:[
         Stack(alignment: Alignment.center, children:[
-          SizedBox(height:58,width:58,child:CircularProgressIndicator(strokeWidth:6,value:_clamp01(ratio),backgroundColor:AppTheme.lightSurfaceColor.withOpacity(.35),valueColor:AlwaysStoppedAnimation(ratio>=.75?AppTheme.successColor:AppTheme.secondaryColor)) ),
-          Column(mainAxisSize: MainAxisSize.min,children:[Text('${(ratio*100).round()}%',style: const TextStyle(fontWeight: FontWeight.bold,fontSize:14)), const Text('Hafta',style: TextStyle(fontSize:10,color:AppTheme.secondaryTextColor))])
+          SizedBox(height:58,width:58,child:CircularProgressIndicator(strokeWidth:6,value:_clamp01(ratio),backgroundColor:Theme.of(context).colorScheme.surfaceVariant.withOpacity(.35),valueColor:AlwaysStoppedAnimation(ratio>=.75?Colors.green:Theme.of(context).colorScheme.primary)) ),
+          Column(mainAxisSize: MainAxisSize.min,children:[Text('${(ratio*100).round()}%',style: const TextStyle(fontWeight: FontWeight.bold,fontSize:14)), Text('Hafta',style: TextStyle(fontSize:10,color:Theme.of(context).colorScheme.onSurfaceVariant))])
         ]),
         const SizedBox(width:16),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children:[
           Text('Haftalık Plan', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
           const SizedBox(height:4),
-          Text(DateFormat.yMMMMd('tr').format(dateForTab), style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.secondaryTextColor)),
+          Text(DateFormat.yMMMMd('tr').format(dateForTab), style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
           const SizedBox(height:6),
-          ClipRRect(borderRadius: BorderRadius.circular(6), child: LinearProgressIndicator(minHeight:6,value:_clamp01(ratio),backgroundColor:AppTheme.lightSurfaceColor.withOpacity(.25), valueColor:AlwaysStoppedAnimation(ratio>=.75?AppTheme.successColor:AppTheme.secondaryColor)))
+          ClipRRect(borderRadius: BorderRadius.circular(6), child: LinearProgressIndicator(minHeight:6,value:_clamp01(ratio),backgroundColor:Theme.of(context).colorScheme.surfaceVariant.withOpacity(.25), valueColor:AlwaysStoppedAnimation(ratio>=.75?Colors.green:Theme.of(context).colorScheme.primary)))
         ])),
-        IconButton(tooltip:'Planı Aç', onPressed: ()=> context.go('/home/weekly-plan'), icon: const Icon(Icons.open_in_new_rounded,color:AppTheme.secondaryColor))
+        IconButton(tooltip:'Planı Aç', onPressed: ()=> context.go('/home/weekly-plan'), icon: Icon(Icons.open_in_new_rounded,color:Theme.of(context).colorScheme.primary))
       ]),
     );
   }
 }
 
-class _RestDay extends StatelessWidget { const _RestDay(); @override Widget build(BuildContext context){ return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children:[ const Icon(Icons.self_improvement_rounded,size:48,color:AppTheme.secondaryColor), const SizedBox(height:12), Text('Dinlenme Günü', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)), const SizedBox(height:6), Text('Zihinsel depoları doldur – yarın yeniden hücum.', textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor)) ]).animate().fadeIn(duration: 400.ms)); } }
+class _RestDay extends StatelessWidget { const _RestDay(); @override Widget build(BuildContext context){ return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children:[ Icon(Icons.self_improvement_rounded,size:48,color:Theme.of(context).colorScheme.primary), const SizedBox(height:12), Text('Dinlenme Günü', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)), const SizedBox(height:6), Text('Zihinsel depoları doldur – yarın yeniden hücum.', textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)) ]).animate().fadeIn(duration: 400.ms)); } }
 
 class _DaySelector extends ConsumerWidget {
   final List<String> days;
@@ -195,14 +195,14 @@ class _DaySelector extends ConsumerWidget {
                 margin: const EdgeInsets.symmetric(horizontal: 4),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppTheme.secondaryColor : Colors.transparent,
+                  color: isSelected ? Theme.of(context).colorScheme.primary : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   days[index],
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: isSelected ? AppTheme.primaryColor : AppTheme.secondaryTextColor,
+                    color: isSelected ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
               ),
@@ -243,7 +243,7 @@ class _TaskTile extends ConsumerWidget {
     Future<_DashTaskAction?> askAction() async {
       return showModalBottomSheet<_DashTaskAction>(
         context: context,
-        backgroundColor: AppTheme.cardColor.withValues(alpha: .95),
+        backgroundColor: Theme.of(context).cardColor.withOpacity(0.95),
         shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
         builder: (_) => SafeArea(
           child: Padding(
@@ -253,12 +253,12 @@ class _TaskTile extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Row(children:[
-                  const Icon(Icons.play_circle_fill_rounded, color: AppTheme.secondaryColor),
+                  Icon(Icons.play_circle_fill_rounded, color: Theme.of(context).colorScheme.primary),
                   const SizedBox(width: 8),
                   Expanded(child: Text('Ne yapalım?', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)))
                 ]),
                 const SizedBox(height: 8),
-                Text("'${item.activity}' için bir aksiyon seç.", style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor)),
+                Text("'${item.activity}' için bir aksiyon seç.", style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
                   onPressed: ()=> Navigator.of(context).pop(_DashTaskAction.startPomodoro),
@@ -291,20 +291,20 @@ class _TaskTile extends ConsumerWidget {
         child: Ink(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: (isCompleted? AppTheme.successColor: AppTheme.lightSurfaceColor).withOpacity(.35), width: 1),
-            gradient: LinearGradient(colors:[ (isCompleted? AppTheme.successColor: AppTheme.secondaryColor).withOpacity(.08), AppTheme.cardColor.withOpacity(.35)], begin: Alignment.topLeft,end: Alignment.bottomRight),
+            border: Border.all(color: (isCompleted? Colors.green: Theme.of(context).colorScheme.surfaceVariant).withOpacity(.35), width: 1),
+            gradient: LinearGradient(colors:[ (isCompleted? Colors.green: Theme.of(context).colorScheme.primary).withOpacity(.08), Theme.of(context).cardColor.withOpacity(.35)], begin: Alignment.topLeft,end: Alignment.bottomRight),
           ),
           padding: const EdgeInsets.fromLTRB(14,12,6,12),
           child: Row(children:[
-            Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(shape: BoxShape.circle, color: (isCompleted? AppTheme.successColor: AppTheme.secondaryColor).withOpacity(.18)), child: Animate(target: isCompleted?1:0, effects:[ScaleEffect(duration:300.ms, curve: Curves.easeOutBack)], child: Icon(_getIconForTaskType(item.type), color: isCompleted? AppTheme.successColor: AppTheme.secondaryColor))),
+            Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(shape: BoxShape.circle, color: (isCompleted? Colors.green: Theme.of(context).colorScheme.primary).withOpacity(.18)), child: Animate(target: isCompleted?1:0, effects:[ScaleEffect(duration:300.ms, curve: Curves.easeOutBack)], child: Icon(_getIconForTaskType(item.type), color: isCompleted? Colors.green: Theme.of(context).colorScheme.primary))),
             const SizedBox(width:14),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children:[
-              Text(item.activity, maxLines:2, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize:15,fontWeight:FontWeight.w600,letterSpacing:.3,color: isCompleted? AppTheme.secondaryTextColor: Colors.white, decoration: isCompleted? TextDecoration.lineThrough: TextDecoration.none, decorationColor: AppTheme.secondaryTextColor)),
+              Text(item.activity, maxLines:2, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize:15,fontWeight:FontWeight.w600,letterSpacing:.3,color: isCompleted? Theme.of(context).colorScheme.onSurfaceVariant: Theme.of(context).colorScheme.onSurface, decoration: isCompleted? TextDecoration.lineThrough: TextDecoration.none, decorationColor: Theme.of(context).colorScheme.onSurfaceVariant)),
               const SizedBox(height:4),
-              Row(children:[ Icon(Icons.schedule,size:13,color:AppTheme.secondaryTextColor.withOpacity(.9)), const SizedBox(width:4), Text(item.time, style: const TextStyle(color: AppTheme.secondaryTextColor,fontSize:11)) ])
+              Row(children:[ Icon(Icons.schedule,size:13,color:Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(.9)), const SizedBox(width:4), Text(item.time, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant,fontSize:11)) ])
             ])),
             IconButton(
-              icon: AnimatedSwitcher(duration:250.ms, switchInCurve: Curves.elasticOut, child: Icon(isCompleted? Icons.check_circle_rounded: Icons.radio_button_unchecked_rounded, key: ValueKey<bool>(isCompleted), color: isCompleted? AppTheme.successColor: AppTheme.lightSurfaceColor, size:30)),
+              icon: AnimatedSwitcher(duration:250.ms, switchInCurve: Curves.elasticOut, child: Icon(isCompleted? Icons.check_circle_rounded: Icons.radio_button_unchecked_rounded, key: ValueKey<bool>(isCompleted), color: isCompleted? Colors.green: Theme.of(context).colorScheme.surfaceVariant, size:30)),
               onPressed: () async {
                 // Eğer görev tamamlanmamışsa önce aksiyon sor
                 if (!isCompleted) {
@@ -363,14 +363,14 @@ class _EmptyStateCard extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.auto_awesome, color: AppTheme.secondaryColor, size: 40),
+          Icon(Icons.auto_awesome, color: Theme.of(context).colorScheme.primary, size: 40),
           const SizedBox(height: 16),
           Text('Kader parşömenin mühürlenmeyi bekliyor.',
               textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
           Text('Stratejik planını oluşturarak görevlerini buraya yazdır.',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor)),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: () => context.go('${AppRoutes.aiHub}/${AppRoutes.strategicPlanning}'),
