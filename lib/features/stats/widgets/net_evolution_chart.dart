@@ -2,7 +2,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/stats/logic/stats_analysis.dart';
 
 class NetEvolutionChart extends StatefulWidget {
@@ -95,7 +94,7 @@ class _NetEvolutionChartState extends State<NetEvolutionChart> {
                   show: true,
                   drawVerticalLine: false,
                   getDrawingHorizontalLine: (value) => FlLine(
-                    color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.25),
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25),
                     strokeWidth: 1,
                   ),
                 ),

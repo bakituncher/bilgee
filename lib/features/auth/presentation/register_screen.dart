@@ -308,7 +308,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 borderRadius: BorderRadius.circular(6),
                 child: LinearProgressIndicator(
                   value: strength <= 0.05 ? 0.05 : strength,
-                  backgroundColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
                   valueColor: AlwaysStoppedAnimation(
                     strength < .34 ? Colors.redAccent : (strength < .67 ? Colors.amber : Colors.green),
                   ),

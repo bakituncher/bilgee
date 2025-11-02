@@ -1,6 +1,5 @@
 // lib/shared/widgets/edge_to_edge_wrapper.dart
 import 'package:flutter/material.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 
 /// Android 15+ SDK 35 için edge-to-edge layout desteği sağlayan wrapper widget
 class EdgeToEdgeWrapper extends StatelessWidget {

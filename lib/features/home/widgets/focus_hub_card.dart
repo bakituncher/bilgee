@@ -1,5 +1,4 @@
 // lib/features/home/widgets/focus_hub_card.dart
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/home/providers/home_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -57,10 +56,10 @@ class FocusHubCard extends ConsumerWidget {
 
     return Card(
       elevation: 10,
-      shadowColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.45),
+      shadowColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.45),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24),
-        side: BorderSide(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.35)),
+        side: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35)),
       ),
       child: InkWell(
         onTap: primary,
@@ -99,7 +98,7 @@ class FocusHubCard extends ConsumerWidget {
 
               const SizedBox(height: 14),
               // Ayrıştırıcı çizgi
-              Divider(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.35), height: 1),
+              Divider(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35), height: 1),
               const SizedBox(height: 12),
 
               // Hızlı İşlemler
@@ -136,7 +135,7 @@ class _QuickAction extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
           color: Theme.of(context).cardColor,
-          border: Border.all(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.45)),
+          border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.45)),
         ),
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: Column(

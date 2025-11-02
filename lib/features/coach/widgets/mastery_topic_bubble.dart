@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/models/topic_performance_model.dart';
 import 'package:taktik/data/models/exam_model.dart';
 
@@ -98,7 +97,7 @@ class _MasteryTopicBubbleState extends State<MasteryTopicBubble>
             : (netCorrect / widget.performance.questionCount).clamp(0.0, 1.0);
 
     final Color color = switch (mastery) {
-      < 0 => Theme.of(context).colorScheme.surfaceVariant,
+      < 0 => Theme.of(context).colorScheme.surfaceContainerHighest,
       >= 0 && < 0.4 => Theme.of(context).colorScheme.error,
       >= 0.4 && < 0.7 => Theme.of(context).colorScheme.primary,
       _ => Colors.green,

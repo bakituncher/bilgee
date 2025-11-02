@@ -1,6 +1,5 @@
 // lib/features/profile/widgets/badge_card.dart
 import 'package:flutter/material.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/profile/models/badge_model.dart' as app_badge;
 
 class BadgeCard extends StatelessWidget {
@@ -21,7 +20,7 @@ class BadgeCard extends StatelessWidget {
           border: Border.all(
               color: badge.isUnlocked
                   ? badge.color
-                  : Theme.of(context).colorScheme.surfaceVariant,
+                  : Theme.of(context).colorScheme.surfaceContainerHighest,
               width: 2),
         ),
         child: Column(

@@ -1,5 +1,4 @@
 // lib/shared/widgets/side_panel_drawer.dart
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/data/providers/admin_providers.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
@@ -65,8 +64,8 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
-                      color: colorScheme.surfaceVariant.withOpacity(.18),
-                      border: Border.all(color: colorScheme.surfaceVariant.withOpacity(.28)),
+                      color: colorScheme.surfaceContainerHighest.withOpacity(.18),
+                      border: Border.all(color: colorScheme.surfaceContainerHighest.withOpacity(.28)),
                     ),
                     child: Row(
                       children: [
@@ -101,7 +100,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                                 child: LinearProgressIndicator(
                                   value: rankInfo.progress,
                                   minHeight: 6,
-                                  backgroundColor: colorScheme.surfaceVariant.withOpacity(.25),
+                                  backgroundColor: colorScheme.surfaceContainerHighest.withOpacity(.25),
                                   valueColor: AlwaysStoppedAnimation(colorScheme.primary),
                                 ),
                               ),
@@ -234,9 +233,9 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            color: selected ? colorScheme.surfaceVariant.withOpacity(.30) : Colors.transparent,
+            color: selected ? colorScheme.surfaceContainerHighest.withOpacity(.30) : Colors.transparent,
             border: Border.all(
-              color: colorScheme.surfaceVariant.withOpacity(selected ? .45 : .20),
+              color: colorScheme.surfaceContainerHighest.withOpacity(selected ? .45 : .20),
             ),
           ),
           child: Row(
@@ -294,13 +293,13 @@ class _Avatar extends StatelessWidget {
       final initials = (userName ?? 'G').trim();
       return CircleAvatar(
         radius: radius,
-        backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
         child: Text(initials.isEmpty ? 'G' : initials.characters.first.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold)),
       );
     }
     return CircleAvatar(
       radius: radius,
-      backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
       child: ClipOval(
         child: SvgPicture.network(
           url,
@@ -370,11 +369,11 @@ class _IconCapsule extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         color: selected
             ? colorScheme.primary.withOpacity(.20)
-            : colorScheme.surfaceVariant.withOpacity(.25),
+            : colorScheme.surfaceContainerHighest.withOpacity(.25),
         border: Border.all(
           color: selected
               ? colorScheme.primary.withOpacity(.35)
-              : colorScheme.surfaceVariant.withOpacity(.25),
+              : colorScheme.surfaceContainerHighest.withOpacity(.25),
         ),
       ),
       child: Icon(

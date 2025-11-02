@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:taktik/core/services/revenuecat_service.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:collection/collection.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
@@ -41,11 +40,11 @@ class _TrustBadges extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 6.0),
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 6.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
+        children: [
           _TrustRow(icon: Icons.lock_rounded, text: 'Güvenli Ödeme'),
           SizedBox(width: 16),
           _TrustRow(icon: Icons.cancel_schedule_send_rounded, text: 'Kolay İptal'),
@@ -84,15 +83,15 @@ class _LegalFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 4.0),
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 4.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           _FooterLink(text: 'Kullanım Şartları', targetRoute: AppRoutes.settings),
-          const SizedBox(width: 8),
-          const Text('|', style: TextStyle(color: Colors.white38, fontSize: 10)),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
+          Text('|', style: TextStyle(color: Colors.white38, fontSize: 10)),
+          SizedBox(width: 8),
           _FooterLink(text: 'Gizlilik Politikası', targetRoute: AppRoutes.settings),
         ],
       ),
@@ -181,8 +180,8 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
       offeringsAsyncValue.whenData((offerings) {
         if (!mounted || _hasInitializedPackage || _selectedPackage != null) return;
 
-        final current = offerings?.current ??
-            offerings?.all.values.firstWhereOrNull(
+        final current = offerings.current ??
+            offerings.all.values.firstWhereOrNull(
                   (o) => o.availablePackages.isNotEmpty,
             );
 
@@ -563,9 +562,9 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
               ),
               child: Center(
                 child: _isPurchaseInProgress
-                    ? Row(
+                    ? const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
+                  children: [
                     SizedBox(
                       width: 20,
                       height: 20,

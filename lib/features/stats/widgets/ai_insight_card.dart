@@ -1,7 +1,6 @@
 // lib/features/stats/widgets/ai_insight_card.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/stats/logic/stats_analysis.dart';
 
 class AiInsightCard extends StatelessWidget {

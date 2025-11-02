@@ -11,7 +11,6 @@ import 'package:taktik/features/stats/widgets/key_stats_grid.dart';
 import 'package:taktik/features/stats/widgets/ai_insight_card.dart';
 import 'package:taktik/features/stats/widgets/subject_stat_card.dart';
 import 'package:taktik/features/stats/logic/stats_analysis.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 
 final _selectedAnalysisTabProvider = StateProvider.autoDispose<int>((ref) => 0);
 
@@ -75,7 +74,7 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
         Container(
           margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.35),
+            color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: Theme.of(context).colorScheme.secondary.withOpacity(0.15),
@@ -121,15 +120,15 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
               fontSize: 12.5,
             ),
             padding: const EdgeInsets.all(5),
-            tabs: [
+            tabs: const [
               Tab(
                 height: 44,
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.analytics_rounded, size: 18),
-                    const SizedBox(width: 6),
-                    const Text('Özet'),
+                    SizedBox(width: 6),
+                    Text('Özet'),
                   ],
                 ),
               ),
@@ -139,8 +138,8 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.auto_awesome_rounded, size: 18),
-                    const SizedBox(width: 6),
-                    const Text('Taktik'),
+                    SizedBox(width: 6),
+                    Text('Taktik'),
                   ],
                 ),
               ),
@@ -150,8 +149,8 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.menu_book_rounded, size: 18),
-                    const SizedBox(width: 6),
-                    const Text('Dersler'),
+                    SizedBox(width: 6),
+                    Text('Dersler'),
                   ],
                 ),
               ),

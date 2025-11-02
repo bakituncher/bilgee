@@ -1,6 +1,5 @@
 // lib/features/stats/widgets/subject_stat_card.dart
 import 'package:flutter/material.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/stats/logic/stats_analysis.dart';
 
 class SubjectStatCard extends StatefulWidget {
@@ -167,7 +166,7 @@ class _SubjectStatCardState extends State<SubjectStatCard> {
                           Container(
                             height: 8,
                             decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                              color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: ClipRRect(

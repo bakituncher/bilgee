@@ -7,7 +7,6 @@ import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/data/models/user_model.dart';
 import 'package:taktik/data/models/topic_performance_model.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/coach/widgets/mastery_topic_bubble.dart';
 import 'package:taktik/features/coach/widgets/topic_stats_dialog.dart';
 import 'package:taktik/core/utils/exam_utils.dart';
@@ -261,8 +260,8 @@ class _SubjectGalaxyViewState extends ConsumerState<_SubjectGalaxyView> {
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.35),
-            border: Border.all(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.55), width: 1),
+            color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35),
+            border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.55), width: 1),
           ),
           child: Row(children:[ Expanded(child: Text(e.topic.name, style: const TextStyle(fontWeight: FontWeight.w600))), _MasteryPill(mastery: e.mastery), const SizedBox(width:12), Text(masteryPercent, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)) ]),
         ),
@@ -305,7 +304,7 @@ class _SubjectStatsCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
         border: Border.all(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1), width: 1),
         boxShadow: [
           BoxShadow(
@@ -342,7 +341,7 @@ class _SubjectStatsCard extends StatelessWidget {
           child: SizedBox(
             height: 12,
             child: Stack(children: [
-              Container(color: Theme.of(context).colorScheme.surfaceVariant),
+              Container(color: Theme.of(context).colorScheme.surfaceContainerHighest),
               FractionallySizedBox(
                 widthFactor: overallMastery,
                 child: Container(
@@ -381,8 +380,8 @@ class _StatChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        color: (color ?? Theme.of(context).colorScheme.surfaceVariant).withOpacity(0.15),
-        border: Border.all(color: (color ?? Theme.of(context).colorScheme.surfaceVariant).withOpacity(0.4), width: 1),
+        color: (color ?? Theme.of(context).colorScheme.surfaceContainerHighest).withOpacity(0.15),
+        border: Border.all(color: (color ?? Theme.of(context).colorScheme.surfaceContainerHighest).withOpacity(0.4), width: 1),
       ),
       child: Column(
         children: [
@@ -410,7 +409,7 @@ class _GalaxyToolbar extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal:16, vertical:10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            color: active ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+            color: active ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
             border: Border.all(color: active ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withOpacity(0.1), width: 1),
           ),
           child: Row(mainAxisSize: MainAxisSize.min, children:[
@@ -430,7 +429,7 @@ class _GalaxyToolbar extends StatelessWidget {
             isDense:true,
             hintText:'Konu Ara...',
             filled:true,
-            fillColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+            fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
             prefixIcon: Icon(Icons.search, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
             hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -461,7 +460,7 @@ class _MasteryPill extends StatelessWidget {
     if (mastery < 0) {
       txt = 'N/A';
       level = 'Veri Yok';
-      c = Theme.of(context).colorScheme.surfaceVariant;
+      c = Theme.of(context).colorScheme.surfaceContainerHighest;
     } else if (mastery < 0.4) {
       txt = '%${(mastery * 100).toStringAsFixed(0)}';
       level = 'Zayıf';

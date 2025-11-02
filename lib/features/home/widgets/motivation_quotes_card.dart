@@ -1,7 +1,6 @@
 // lib/features/home/widgets/motivation_quotes_card.dart
 import 'dart:async';
 import 'dart:ui';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
@@ -58,7 +57,7 @@ class _MotivationQuotesCardState extends State<MotivationQuotesCard> {
     const height = 168.0;
     return Card(
       elevation: 10,
-      shadowColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.45),
+      shadowColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.45),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
@@ -73,7 +72,7 @@ class _MotivationQuotesCardState extends State<MotivationQuotesCard> {
                   gradient: LinearGradient(
                     colors: [
                       Theme.of(context).cardColor,
-                      Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.35),
+                      Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -138,8 +137,8 @@ class _MotivationQuotesCardState extends State<MotivationQuotesCard> {
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(20),
-                                color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.25),
-                                border: Border.all(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.45)),
+                                color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25),
+                                border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.45)),
                               ),
                               child: Text('— $author', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                             ),

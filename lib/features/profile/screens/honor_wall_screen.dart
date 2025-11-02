@@ -2,7 +2,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/profile/models/badge_model.dart' as app_badge;
 import 'package:confetti/confetti.dart'; // YENİ: Partikül efekti için
 
@@ -42,7 +41,7 @@ class HonorWallScreen extends StatelessWidget {
                       child: LinearProgressIndicator(
                         value: progress,
                         minHeight: 8,
-                        backgroundColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+                        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
                         valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
                       ),
                     ),
@@ -148,7 +147,7 @@ class BadgeCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: badge.isUnlocked ? rarityColor.withOpacity(0.1) : Theme.of(context).cardColor.withOpacity(0.5),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: badge.isUnlocked ? rarityColor : Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5), width: 2),
+        border: Border.all(color: badge.isUnlocked ? rarityColor : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5), width: 2),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/profile/logic/rank_service.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taktik/features/home/providers/home_providers.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
@@ -64,11 +63,11 @@ class HeroHeader extends ConsumerWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
             gradient: LinearGradient(
-              colors: [Theme.of(context).cardColor, Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.25)],
+              colors: [Theme.of(context).cardColor, Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            border: Border.all(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.35)),
+            border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -110,9 +109,9 @@ class HeroHeader extends ConsumerWidget {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.25),
+                                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25),
                                   borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.4)),
+                                  border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.4)),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -138,7 +137,7 @@ class HeroHeader extends ConsumerWidget {
                 child: LinearProgressIndicator(
                   value: progress,
                   minHeight: 8,
-                  backgroundColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.25),
+                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25),
                   valueColor: AlwaysStoppedAnimation(Theme.of(context).colorScheme.primary),
                 ),
               ),

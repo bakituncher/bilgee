@@ -7,7 +7,6 @@ import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 
 class ExamSelectionScreen extends ConsumerWidget {
   const ExamSelectionScreen({super.key});

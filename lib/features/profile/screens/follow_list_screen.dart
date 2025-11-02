@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
 
@@ -241,8 +240,8 @@ class _FollowListTileState extends ConsumerState<_FollowListTile> {
         child: Row(
           children: [
             CircleAvatar(radius: 24, backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.12)),
-            SizedBox(width: 12),
-            Expanded(child: LinearProgressIndicator(minHeight: 8)),
+            const SizedBox(width: 12),
+            const Expanded(child: LinearProgressIndicator(minHeight: 8)),
           ],
         ),
       ),

@@ -1,7 +1,6 @@
 // lib/features/quests/screens/quests_screen.dart
 import 'dart:async';
 import 'package:taktik/core/analytics/analytics_logger.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/quests/logic/quest_service.dart';
 import 'package:taktik/features/quests/logic/optimized_quests_provider.dart';
@@ -268,7 +267,7 @@ class GamifiedQuestCard extends ConsumerWidget {
           color: isClaimable ? const Color(0xFF17294D) : Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isClaimable ? Colors.amber : Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+            color: isClaimable ? Colors.amber : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
             width: isClaimable ? 2 : 1,
           ),
           boxShadow: [
@@ -407,7 +406,7 @@ class GamifiedQuestCard extends ConsumerWidget {
           child: Container(
             height: 8,
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceVariant,
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(4),
             ),
             child: ClipRRect(
@@ -442,7 +441,7 @@ class AnimatedGridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = colorScheme.surfaceVariant.withOpacity(0.1)
+      ..color = colorScheme.surfaceContainerHighest.withOpacity(0.1)
       ..strokeWidth = 1.0;
 
     final path = Path();

@@ -1,7 +1,6 @@
 // lib/features/weakness_workshop/screens/workshop_stats_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:collection/collection.dart';
@@ -91,7 +90,7 @@ class WorkshopStatsScreen extends ConsumerWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor.withOpacity(0.5),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3)),
+        border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3)),
       ),
       child: Column(
         children: [
@@ -256,7 +255,7 @@ class _SubjectCrystalBar extends StatelessWidget {
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3)),
+        border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3)),
       ),
       child: Row(
         children: [

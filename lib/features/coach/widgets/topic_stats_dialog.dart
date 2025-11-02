@@ -2,7 +2,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/models/topic_performance_model.dart';
 
 class TopicStatsDialog extends StatelessWidget {
@@ -96,7 +95,7 @@ class TopicStatsDialog extends StatelessWidget {
               CircularProgressIndicator(
                 value: value,
                 strokeWidth: 10,
-                backgroundColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+                backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
                 valueColor: AlwaysStoppedAnimation<Color>(color),
                 strokeCap: StrokeCap.round,
               ),
@@ -137,12 +136,12 @@ class TopicStatsDialog extends StatelessWidget {
         children: [
           _StatItem(
               label: "Toplam", value: performance.questionCount.toString()),
-          VerticalDivider(color: Theme.of(context).colorScheme.surfaceVariant),
+          VerticalDivider(color: Theme.of(context).colorScheme.surfaceContainerHighest),
           _StatItem(
               label: "Doğru",
               value: performance.correctCount.toString(),
               color: Colors.green),
-          VerticalDivider(color: Theme.of(context).colorScheme.surfaceVariant),
+          VerticalDivider(color: Theme.of(context).colorScheme.surfaceContainerHighest),
           _StatItem(
               label: "Yanlış",
               value: performance.wrongCount.toString(),

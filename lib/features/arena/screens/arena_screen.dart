@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/arena/models/leaderboard_entry_model.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
@@ -12,7 +11,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
 import 'package:taktik/shared/widgets/logo_loader.dart';
-import 'package:taktik/data/models/user_model.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
 
 class ArenaScreen extends ConsumerStatefulWidget {
@@ -58,7 +56,7 @@ class _ArenaScreenState extends ConsumerState<ArenaScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Zafer Panteonu'),
-          backgroundColor: Theme.of(context).colorScheme.background.withOpacity(0.5),
+          backgroundColor: Theme.of(context).colorScheme.surface.withOpacity(0.5),
           bottom: TabBar(
             indicatorColor: Theme.of(context).colorScheme.secondary,
             indicatorWeight: 3,
@@ -114,7 +112,7 @@ class _LeaderboardView extends ConsumerWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              colorScheme.background,
+              colorScheme.surface,
               colorScheme.surface,
             ],
             stops: const [0.0, 0.7],
@@ -268,7 +266,7 @@ class _CurrentUserCard extends StatelessWidget {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      Theme.of(context).colorScheme.surfaceVariant,
+                      Theme.of(context).colorScheme.surfaceContainerHighest,
                       Theme.of(context).colorScheme.surface,
                     ]),
               ),
@@ -435,7 +433,7 @@ class _RankCard extends ConsumerWidget {
 
     // Modern kart renkleri - İlk 3'e özel
     final cardColor = isCurrentUser
-        ? colorScheme.background.withOpacity(0.15)
+        ? colorScheme.surface.withOpacity(0.15)
         : isTopThree
         ? getSpecialColor().withOpacity(0.15)
         : colorScheme.surface.withOpacity(0.8);
@@ -699,7 +697,7 @@ class _RankCard extends ConsumerWidget {
                           ]
                               : [
                             colorScheme.secondary.withOpacity(0.9),
-                            colorScheme.background.withOpacity(0.9),
+                            colorScheme.surface.withOpacity(0.9),
                           ],
                         ),
                         boxShadow: [

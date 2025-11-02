@@ -1,6 +1,5 @@
 // lib/features/blog/screens/blog_screen.dart
 import 'dart:async';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/blog/providers/blog_providers.dart';
 import 'package:taktik/data/providers/admin_providers.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
@@ -147,7 +146,7 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                             hintText: 'Yazı ara, etiket veya başlık...',
                             prefixIcon: const Icon(Icons.search_rounded),
                             filled: true,
-                            fillColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.18),
+                            fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.18),
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
                             contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
                           ),
@@ -191,7 +190,7 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.menu_book_rounded, size: 64, color: Theme.of(context).colorScheme.surfaceVariant),
+                            Icon(Icons.menu_book_rounded, size: 64, color: Theme.of(context).colorScheme.surfaceContainerHighest),
                             const SizedBox(height: 12),
                             Text(
                               _query.isEmpty ? 'Henüz yayınlanmış yazı yok.' : 'Aramanızla eşleşen yazı bulunamadı.',
@@ -245,10 +244,10 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                                       label: Text(tag, style: GoogleFonts.montserrat(fontSize: 11, fontWeight: FontWeight.w600)),
                                       visualDensity: VisualDensity.compact,
                                       padding: const EdgeInsets.symmetric(horizontal: 6),
-                                      backgroundColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.25),
+                                      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25),
                                       shape: StadiumBorder(
                                           side: BorderSide(
-                                              color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.4))),
+                                              color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.4))),
                                     ),
                                   ))
                               .toList(growable: false);
@@ -259,11 +258,11 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                           child: RepaintBoundary(
                             child: Card(
                               elevation: 0, // AppTheme.cardTheme ile uyumlu: gölgeyi kaldır
-                              shadowColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.18),
+                              shadowColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.18),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(18),
                                 side: BorderSide(
-                                    color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.45)),
+                                    color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.45)),
                               ),
                               clipBehavior: Clip.antiAlias,
                               child: InkWell(
@@ -289,12 +288,12 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                                                 placeholder: (c, _) => Container(
                                                     color: Theme.of(context)
                                                         .colorScheme
-                                                        .surfaceVariant
+                                                        .surfaceContainerHighest
                                                         .withOpacity(0.25)),
                                                 errorWidget: (c, _, __) => Container(
                                                     color: Theme.of(context)
                                                         .colorScheme
-                                                        .surfaceVariant
+                                                        .surfaceContainerHighest
                                                         .withOpacity(0.2),
                                                     child: const Icon(Icons.image_not_supported_rounded)),
                                               ),
@@ -306,7 +305,7 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                                                   begin: Alignment.bottomCenter,
                                                   end: Alignment.topCenter,
                                                   colors: [
-                                                    Theme.of(context).colorScheme.background.withOpacity(0.6),
+                                                    Theme.of(context).colorScheme.surface.withOpacity(0.6),
                                                     Colors.transparent
                                                   ],
                                                 ),
@@ -318,17 +317,17 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                                               child: Container(
                                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                                 decoration: BoxDecoration(
-                                                  color: Theme.of(context).colorScheme.background.withOpacity(0.35),
+                                                  color: Theme.of(context).colorScheme.surface.withOpacity(0.35),
                                                   borderRadius: BorderRadius.circular(10),
                                                 ),
                                                 child: Row(
                                                   children: [
                                                     Icon(Icons.schedule_rounded,
-                                                        size: 14, color: Theme.of(context).colorScheme.onBackground),
+                                                        size: 14, color: Theme.of(context).colorScheme.onSurface),
                                                     const SizedBox(width: 4),
                                                     Text('${p.readTime ?? 1} dk',
                                                         style: TextStyle(
-                                                            color: Theme.of(context).colorScheme.onBackground,
+                                                            color: Theme.of(context).colorScheme.onSurface,
                                                             fontSize: 12,
                                                             fontWeight: FontWeight.w600)),
                                                   ],

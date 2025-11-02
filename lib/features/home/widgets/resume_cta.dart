@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/home/providers/home_providers.dart';
 
@@ -27,11 +26,11 @@ class ResumeCta extends ConsumerWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
           gradient: LinearGradient(
-            colors: [Theme.of(context).cardColor, Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.35)],
+            colors: [Theme.of(context).cardColor, Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          border: Border.all(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.45)),
+          border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.45)),
         ),
         padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
         child: Row(

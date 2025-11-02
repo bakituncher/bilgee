@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:taktik/data/models/test_model.dart';
 import 'package:taktik/data/models/user_model.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:go_router/go_router.dart';
 
 class PerformanceCluster extends StatefulWidget {
@@ -78,7 +77,7 @@ class _PerformanceClusterState extends State<PerformanceCluster> with SingleTick
     return Card(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24),
-        side: BorderSide(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.4)),
+        side: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.4)),
       ),
       child: InkWell(
         onTap: () => context.push('/home/stats'),
@@ -285,7 +284,7 @@ class _MiniStat extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
           color: Theme.of(context).cardColor,
-          border: Border.all(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.45)),
+          border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.45)),
         ),
         padding: EdgeInsets.symmetric(horizontal: 12, vertical: compact?8:10),
         child: Center(

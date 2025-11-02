@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taktik/data/repositories/ai_service.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:taktik/data/models/user_model.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
@@ -255,7 +254,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
                     child: SizedBox(
                       width: 200,
                       child: LinearProgressIndicator(
-                        backgroundColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
                         valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
                         borderRadius: BorderRadius.circular(8),
                         minHeight: 6,
@@ -285,7 +284,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
           gradient: RadialGradient(
             center: const Alignment(0, -1.2),
             radius: 1.5,
-            colors: [Theme.of(context).colorScheme.primary.withOpacity(0.1), Theme.of(context).colorScheme.background],
+            colors: [Theme.of(context).colorScheme.primary.withOpacity(0.1), Theme.of(context).colorScheme.surface],
             stops: const [0.0, 0.7],
           ),
         ),
@@ -329,9 +328,9 @@ class StrategicPlanningScreen extends ConsumerWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                             decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.35),
+                              color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5)),
+                              border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)),
                             ),
                             child: Text(
                               weeklyPlan.strategyFocus,
@@ -730,7 +729,7 @@ class _ChecklistItemCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16.0),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -803,7 +802,7 @@ class _PacingCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+          color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
           width: 2,
         ),
       ),

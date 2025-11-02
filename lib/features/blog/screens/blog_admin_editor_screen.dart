@@ -1,6 +1,5 @@
 // lib/features/blog/screens/blog_admin_editor_screen.dart
 import 'dart:convert';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/providers/admin_providers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -57,7 +56,7 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
       builder: (c) {
         Widget option({required IconData icon, required String title, required String desc, required VoidCallback onTap}) {
           return Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: BorderSide(color: Theme.of(c).colorScheme.surfaceVariant.withOpacity(0.35))),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: BorderSide(color: Theme.of(c).colorScheme.surfaceContainerHighest.withOpacity(0.35))),
             child: ListTile(
               leading: Icon(icon, color: Theme.of(c).colorScheme.secondary),
               title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
@@ -73,7 +72,7 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Center(child: Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 12), decoration: BoxDecoration(color: Theme.of(c).colorScheme.surfaceVariant.withOpacity(0.6), borderRadius: BorderRadius.circular(2)))),
+                Center(child: Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 12), decoration: BoxDecoration(color: Theme.of(c).colorScheme.surfaceContainerHighest.withOpacity(0.6), borderRadius: BorderRadius.circular(2)))),
                 Text('İçe Aktar', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
                 const SizedBox(height: 8),
                 option(
@@ -530,8 +529,8 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
                 Widget option(String value, String label, IconData icon) {
                   final selected = temp == value;
                   return Card(
-                    color: selected ? Theme.of(c).colorScheme.surfaceVariant.withOpacity(0.18) : null,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: BorderSide(color: selected ? Theme.of(c).colorScheme.secondary : Theme.of(c).colorScheme.surfaceVariant.withOpacity(0.4))),
+                    color: selected ? Theme.of(c).colorScheme.surfaceContainerHighest.withOpacity(0.18) : null,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: BorderSide(color: selected ? Theme.of(c).colorScheme.secondary : Theme.of(c).colorScheme.surfaceContainerHighest.withOpacity(0.4))),
                     child: ListTile(
                       leading: Icon(icon, color: selected ? Theme.of(c).colorScheme.secondary : Theme.of(c).colorScheme.onSurfaceVariant),
                       title: Text(label),
@@ -545,7 +544,7 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Center(child: Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 12), decoration: BoxDecoration(color: Theme.of(c).colorScheme.surfaceVariant.withOpacity(0.6), borderRadius: BorderRadius.circular(2)))),
+                    Center(child: Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 12), decoration: BoxDecoration(color: Theme.of(c).colorScheme.surfaceContainerHighest.withOpacity(0.6), borderRadius: BorderRadius.circular(2)))),
                     Text('Hangi gruba göndermek istersiniz?', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
                     const SizedBox(height: 8),
                     Text('Seçiminize göre yazı ilgili öğrencilerin akışına düşer.', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(c).colorScheme.onSurfaceVariant)),
@@ -639,7 +638,7 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
                   aspectRatio: 16/9,
                   child: ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: Image.network(cover, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.2), child: const Center(child: Icon(Icons.image_not_supported_rounded))))
+                      child: Image.network(cover, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.2), child: const Center(child: Icon(Icons.image_not_supported_rounded))))
                   ),
                 ),
               const SizedBox(height: 12),
@@ -656,7 +655,7 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
               ]),
               const SizedBox(height: 10),
               if (tags.isNotEmpty)
-                Wrap(spacing: 8, runSpacing: -6, children: tags.map((t) => Chip(label: Text(t), backgroundColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.25))).toList()),
+                Wrap(spacing: 8, runSpacing: -6, children: tags.map((t) => Chip(label: Text(t), backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25))).toList()),
               const SizedBox(height: 12),
             ],
           ),
@@ -679,21 +678,21 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
                 code: GoogleFonts.robotoMono(fontSize: 13.5, height: 1.5, color: Theme.of(context).colorScheme.onSurface),
                 codeblockPadding: const EdgeInsets.all(12),
                 codeblockDecoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.12),
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3)),
+                  border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3)),
                 ),
                 blockquote: GoogleFonts.montserrat(fontStyle: FontStyle.italic, color: Theme.of(context).colorScheme.onSurfaceVariant),
                 blockquotePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 blockquoteDecoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.08),
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.08),
                   border: Border(left: BorderSide(color: Theme.of(context).colorScheme.secondary, width: 3)),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 listBullet: TextStyle(color: Theme.of(context).colorScheme.secondary),
                 a: const TextStyle(color: Color(0xFF55C1FF), fontWeight: FontWeight.w600),
                 horizontalRuleDecoration: BoxDecoration(
-                  border: Border(top: BorderSide(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.6), width: 1)),
+                  border: Border(top: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.6), width: 1)),
                 ),
               ),
             ),
@@ -741,7 +740,7 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
-              border: Border(top: BorderSide(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.4))),
+              border: Border(top: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.4))),
             ),
             child: Row(
               children: [

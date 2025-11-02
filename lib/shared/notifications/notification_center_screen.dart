@@ -1,4 +1,3 @@
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/shared/notifications/in_app_notification_model.dart';
 import 'package:flutter/material.dart';

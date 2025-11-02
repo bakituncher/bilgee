@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taktik/data/repositories/ai_service.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/weakness_workshop/models/saved_workshop_model.dart';
 import 'package:taktik/features/weakness_workshop/models/study_guide_model.dart';
 import 'package:taktik/shared/widgets/markdown_with_math.dart';
@@ -427,8 +426,8 @@ class _FancyBackgroundState extends State<_FancyBackground> with SingleTickerPro
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Color.lerp(colorScheme.background, colorScheme.surface, t)!,
-                Color.lerp(colorScheme.surface, colorScheme.background, 1 - t)!,
+                Color.lerp(colorScheme.surface, colorScheme.surface, t)!,
+                Color.lerp(colorScheme.surface, colorScheme.surface, 1 - t)!,
               ],
             ),
           ),
@@ -624,7 +623,7 @@ class _TopicCard extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(
-              color: isRecommended ? colorScheme.secondary : colorScheme.surfaceVariant,
+              color: isRecommended ? colorScheme.secondary : colorScheme.surfaceContainerHighest,
               width: 1.5),
         ),
         child: InkWell(
@@ -653,7 +652,7 @@ class _TopicCard extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: colorScheme.onSurface.withOpacity(0.06),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: colorScheme.surfaceVariant),
+                        border: Border.all(color: colorScheme.surfaceContainerHighest),
                       ),
                       child: Row(children: [
                         Icon(Icons.bolt_rounded, size: 16, color: colorScheme.secondary),
@@ -671,7 +670,7 @@ class _TopicCard extends StatelessWidget {
                 const SizedBox(height: 12),
                 LinearProgressIndicator(
                   value: masteryValue == null || masteryValue < 0 ? null : masteryValue,
-                  backgroundColor: colorScheme.surfaceVariant.withOpacity(0.3),
+                  backgroundColor: colorScheme.surfaceContainerHighest.withOpacity(0.3),
                   color: masteryValue == null || masteryValue < 0
                       ? colorScheme.onSurfaceVariant
                       : Color.lerp(colorScheme.error, colorScheme.secondary, masteryValue),
@@ -771,7 +770,7 @@ class _QuizViewState extends State<_QuizView> {
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
           child: LinearProgressIndicator(
             value: (_currentPage + 1) / quizLength,
-            backgroundColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
             color: Theme.of(context).colorScheme.secondary,
             borderRadius: BorderRadius.circular(8),
           ),
@@ -892,7 +891,7 @@ class _QuestionCard extends StatelessWidget {
               color: tileColor ?? colorScheme.surface,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: borderColor ?? colorScheme.surfaceVariant, width: 1.5)),
+                  side: BorderSide(color: borderColor ?? colorScheme.surfaceContainerHighest, width: 1.5)),
               margin: const EdgeInsets.only(bottom: 12),
               child: ListTile(
                 onTap: selectedOptionIndex == null ? () => onOptionSelected(index) : null,
@@ -923,7 +922,7 @@ class _ExplanationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return Card(
-      color: colorScheme.surfaceVariant,
+      color: colorScheme.surfaceContainerHighest,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Row(
@@ -1327,7 +1326,7 @@ class _ResultActionCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-            color: overrideColor ?? (isPrimary ? colorScheme.secondary : colorScheme.surfaceVariant),
+            color: overrideColor ?? (isPrimary ? colorScheme.secondary : colorScheme.surfaceContainerHighest),
             width: 1.5),
       ),
       child: InkWell(
@@ -1457,7 +1456,7 @@ class _ResultsBottomBar extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          border: Border(top: BorderSide(color: Theme.of(context).colorScheme.surfaceVariant, width: 1)),
+          border: Border(top: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHighest, width: 1)),
         ),
         child: Row(
           children: [
@@ -1597,7 +1596,7 @@ class _WSHeader extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.06),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Theme.of(context).colorScheme.surfaceVariant),
+                border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
               ),
               child: Row(
                 children: [

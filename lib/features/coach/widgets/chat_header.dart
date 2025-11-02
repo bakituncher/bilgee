@@ -1,6 +1,5 @@
 // lib/features/coach/widgets/chat_header.dart
 import 'package:flutter/material.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 
 class ChatHeader extends StatelessWidget {
   final void Function(String text) onQuickTap;

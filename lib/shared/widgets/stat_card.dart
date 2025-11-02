@@ -1,6 +1,5 @@
 // lib/shared/widgets/stat_card.dart
 import 'package:flutter/material.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 
 class StatCard extends StatelessWidget {
   final String value;
@@ -25,7 +24,7 @@ class StatCard extends StatelessWidget {
     final textTheme = theme.textTheme;
 
     return Card(
-      color: colorScheme.surfaceVariant.withOpacity(0.5),
+      color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
       clipBehavior: Clip.hardEdge,
       child: InkWell(
         onTap: onTap,

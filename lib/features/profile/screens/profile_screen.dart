@@ -7,7 +7,6 @@ import 'package:taktik/features/auth/application/auth_controller.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/data/providers/admin_providers.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:taktik/data/models/user_model.dart';
 import 'package:taktik/data/models/focus_session_model.dart';
@@ -523,13 +522,13 @@ class _ProfileAvatarHaloState extends State<_ProfileAvatarHalo> with SingleTicke
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final _accentProfile1 = colorScheme.primary;
-    final _accentProfile2 = colorScheme.secondary;
+    final accentProfile1 = colorScheme.primary;
+    final accentProfile2 = colorScheme.secondary;
 
     const double outerSize = 170;
     const double avatarDiameter = 126;
     final primaryGlow = widget.color.o(0.30);
-    final secondaryGlow = _highTier ? _accentProfile1.o(0.25) : _accentProfile2.o(0.18);
+    final secondaryGlow = _highTier ? accentProfile1.o(0.25) : accentProfile2.o(0.18);
 
     return GestureDetector(
       onTap: _triggerGlow,
@@ -541,23 +540,23 @@ class _ProfileAvatarHaloState extends State<_ProfileAvatarHalo> with SingleTicke
           children: [
             // Statik halo efekti - animasyon yok
             if (_isGlowing) ...[
-              _HaloRing(controller: _glowController, color: _accentProfile1.o(0.20), size: 150, begin: 0.90, end: 1.05, delay: 0.ms),
+              _HaloRing(controller: _glowController, color: accentProfile1.o(0.20), size: 150, begin: 0.90, end: 1.05, delay: 0.ms),
               if (_midTier)
-                _HaloRing(controller: _glowController, color: _accentProfile2.o(0.16), size: 132, begin: 0.92, end: 1.07, delay: 250.ms),
+                _HaloRing(controller: _glowController, color: accentProfile2.o(0.16), size: 132, begin: 0.92, end: 1.07, delay: 250.ms),
               if (_highTier)
                 _HaloRing(controller: _glowController, color: primaryGlow, size: 164, begin: 0.95, end: 1.03, delay: 600.ms),
               if (_legendTier)
-                _PulsingCore(controller: _glowController, size: 60, color: _accentProfile2.o(0.20)),
+                _PulsingCore(controller: _glowController, size: 60, color: accentProfile2.o(0.20)),
               if (_highTier)
                 _RotatingRing(
                   controller: _glowController,
                   size: 158,
                   stroke: 3,
                   gradient: SweepGradient(colors: [
-                    _accentProfile2.o(0.0),
-                    _accentProfile2.o(0.7),
-                    _accentProfile1.o(0.8),
-                    _accentProfile2.o(0.0),
+                    accentProfile2.o(0.0),
+                    accentProfile2.o(0.7),
+                    accentProfile1.o(0.8),
+                    accentProfile2.o(0.0),
                   ]),
                   duration: _apexTier ? const Duration(seconds: 10) : const Duration(seconds: 18),
                 ),
@@ -584,7 +583,7 @@ class _ProfileAvatarHaloState extends State<_ProfileAvatarHalo> with SingleTicke
                     },
                     child: Icon(
                       Icons.workspace_premium_rounded,
-                      color: widget.rankIndex >= 8 ? _accentProfile2 : _accentProfile1.o(0.9),
+                      color: widget.rankIndex >= 8 ? accentProfile2 : accentProfile1.o(0.9),
                       size: 26 + (widget.rankIndex * 1.8),
                     ),
                   ),
@@ -599,8 +598,8 @@ class _ProfileAvatarHaloState extends State<_ProfileAvatarHalo> with SingleTicke
                     rankIndex: widget.rankIndex,
                     color: widget.color,
                     intensity: 0.35 + (widget.rankIndex * 0.04).clamp(0, 0.4),
-                    accent: _accentProfile2, // Pass theme-aware color
-                    base: _accentProfile1,   // Pass theme-aware color
+                    accent: accentProfile2, // Pass theme-aware color
+                    base: accentProfile1,   // Pass theme-aware color
                   ),
                 ),
               ),
@@ -612,13 +611,13 @@ class _ProfileAvatarHaloState extends State<_ProfileAvatarHalo> with SingleTicke
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
                 gradient: LinearGradient(colors: [
-                  _apexTier ? _accentProfile2 : _accentProfile2.o(0.9),
-                  _apexTier ? _accentProfile1 : _accentProfile1.o(0.9),
+                  _apexTier ? accentProfile2 : accentProfile2.o(0.9),
+                  _apexTier ? accentProfile1 : accentProfile1.o(0.9),
                 ]),
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(color: secondaryGlow, blurRadius: 28, spreadRadius: 2),
-                  if (_highTier) BoxShadow(color: _accentProfile2.o(0.25), blurRadius: 40, spreadRadius: 6),
+                  if (_highTier) BoxShadow(color: accentProfile2.o(0.25), blurRadius: 40, spreadRadius: 6),
                 ],
               ),
               child: Container(
@@ -636,7 +635,7 @@ class _ProfileAvatarHaloState extends State<_ProfileAvatarHalo> with SingleTicke
                         height: 30,
                         child: CircularProgressIndicator(
                           strokeWidth: 2.6,
-                          valueColor: AlwaysStoppedAnimation(_accentProfile2),
+                          valueColor: AlwaysStoppedAnimation(accentProfile2),
                         ),
                       ),
                     ),
@@ -646,7 +645,7 @@ class _ProfileAvatarHaloState extends State<_ProfileAvatarHalo> with SingleTicke
                     child: Text(
                       widget.user.name?.substring(0, 1).toUpperCase() ?? 'T',
                       style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                        color: _accentProfile2,
+                        color: accentProfile2,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -869,15 +868,15 @@ class _NeoXpBar extends StatelessWidget {
     final capped = progress.clamp(0.0, 1.0);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final _accentProfile1 = colorScheme.primary;
-    final _accentProfile2 = colorScheme.secondary;
+    final accentProfile1 = colorScheme.primary;
+    final accentProfile2 = colorScheme.secondary;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Icon(Icons.flash_on_rounded, size: 18, color: _accentProfile2),
+            Icon(Icons.flash_on_rounded, size: 18, color: accentProfile2),
             const SizedBox(width: 6),
             Text('Rütbe Puanı', style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold)),
             const Spacer(),
@@ -889,7 +888,7 @@ class _NeoXpBar extends StatelessWidget {
           padding: const EdgeInsets.all(2),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
-            gradient: LinearGradient(colors: [_accentProfile1, _accentProfile2]),
+            gradient: LinearGradient(colors: [accentProfile1, accentProfile2]),
           ),
           child: LayoutBuilder(
             builder: (context, constraints) {
@@ -900,7 +899,7 @@ class _NeoXpBar extends StatelessWidget {
                     height: 22,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
-                      color: colorScheme.background.withOpacity(0.55),
+                      color: colorScheme.surface.withOpacity(0.55),
                     ),
                   ),
                   AnimatedContainer(
@@ -910,9 +909,9 @@ class _NeoXpBar extends StatelessWidget {
                     height: 22,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
-                      gradient: LinearGradient(begin: Alignment.centerLeft, end: Alignment.centerRight, colors: [_accentProfile2, _accentProfile1]),
+                      gradient: LinearGradient(begin: Alignment.centerLeft, end: Alignment.centerRight, colors: [accentProfile2, accentProfile1]),
                       boxShadow: [
-                        BoxShadow(color: _accentProfile2.o(0.4), blurRadius: 18, spreadRadius: 1),
+                        BoxShadow(color: accentProfile2.o(0.4), blurRadius: 18, spreadRadius: 1),
                       ],
                     ),
                   ),

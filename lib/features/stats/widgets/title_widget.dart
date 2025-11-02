@@ -1,6 +1,5 @@
 // lib/features/stats/widgets/title_widget.dart
 import 'package:flutter/material.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 
 class TitleWidget extends StatelessWidget {
   final String title;

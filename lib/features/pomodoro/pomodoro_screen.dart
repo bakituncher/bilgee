@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'logic/pomodoro_notifier.dart';
 import 'widgets/pomodoro_stats_view.dart';
 import 'widgets/pomodoro_timer_view.dart';
@@ -104,7 +103,7 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen> with TickerProv
               end: Alignment.bottomRight,
               colors: [
                 _getBackgroundColor(pomodoro.sessionState).withOpacity(0.9),
-                Theme.of(context).colorScheme.background,
+                Theme.of(context).colorScheme.surface,
               ],
             ),
           ),
@@ -184,7 +183,7 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen> with TickerProv
       case PomodoroSessionState.shortBreak:
       case PomodoroSessionState.longBreak: return Colors.green;
       case PomodoroSessionState.completed: return Colors.purple.shade300;
-      case PomodoroSessionState.idle: return Theme.of(context).colorScheme.surfaceVariant;
+      case PomodoroSessionState.idle: return Theme.of(context).colorScheme.surfaceContainerHighest;
     }
   }
 }

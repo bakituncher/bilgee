@@ -120,10 +120,7 @@ class AppTheme {
         onError: Colors.white,
         surface: cardColor,
         onSurface: textColor,
-        // New semantic colors
-        background: scaffoldBackgroundColor,
-        onBackground: textColor,
-        surfaceVariant: lightSurfaceColor, // For slightly different surfaces
+        surfaceContainerHighest: lightSurfaceColor, // For slightly different surfaces
         onSurfaceVariant: secondaryTextColor, // For secondary text on surfaces
       ),
       textTheme: textTheme,

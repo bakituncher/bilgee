@@ -2,7 +2,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/stats/logic/stats_analysis.dart'; // HATA DÜZELTİLDİ: EKSİK IMPORT EKLENDİ
 
 class SubjectStatsScreen extends StatelessWidget {
@@ -83,7 +82,7 @@ class SubjectStatsScreen extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).colorScheme.background.withOpacity(0.08),
+            color: Theme.of(context).colorScheme.surface.withOpacity(0.08),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -101,7 +100,7 @@ class SubjectStatsScreen extends StatelessWidget {
                 show: true,
                 drawVerticalLine: false,
                 getDrawingHorizontalLine: (value) => FlLine(
-                  color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.25),
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25),
                   strokeWidth: 1,
                 ),
               ),
@@ -175,7 +174,7 @@ class SubjectStatsScreen extends StatelessWidget {
                   fitInsideVertically: true,
                   tooltipRoundedRadius: 12,
                   tooltipPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  getTooltipColor: (spot) => Theme.of(context).colorScheme.background.withOpacity(0.96),
+                  getTooltipColor: (spot) => Theme.of(context).colorScheme.surface.withOpacity(0.96),
                   getTooltipItems: (spots) => spots.map((spot) {
                     final test = analysis.subjectTests[spot.spotIndex];
                     final scores = test.scores[subjectName]!;
@@ -250,7 +249,7 @@ class _StatTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: Theme.of(context).colorScheme.surfaceVariant,
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(

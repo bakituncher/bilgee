@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taktik/data/repositories/ai_service.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:flutter/services.dart';
 
@@ -277,7 +276,7 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
                 bottom: (selectedMood != null) ? 88 : 24,
                 child: FloatingActionButton.small(
                   heroTag: 'toBottom',
-                  backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                   foregroundColor: Colors.white,
                   onPressed: () => _scrollToBottom(isNewMessage: false),
                   child: const Icon(Icons.arrow_downward_rounded),
@@ -299,7 +298,7 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceVariant,
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(22),
                   border: Border.all(color: Colors.white.withOpacity(0.06)),
                 ),
@@ -473,7 +472,7 @@ class _MessageBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final isUser = message.isUser;
 
-    final Color bg = isUser ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.surfaceVariant;
+    final Color bg = isUser ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.surfaceContainerHighest;
     final Color fg = isUser ? Theme.of(context).primaryColor : Colors.white;
 
     final content = GestureDetector(
@@ -548,7 +547,7 @@ class _TypingBubble extends StatelessWidget {
             const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceVariant,
+              decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   borderRadius: const BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20),
                       bottomRight: Radius.circular(20), bottomLeft: Radius.circular(4))),
               child: Row(

@@ -1,6 +1,5 @@
 // lib/features/home/widgets/summary_widgets/verdict_card.dart
 import 'package:flutter/material.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 
 class VerdictCard extends StatelessWidget {
   final Map<String, String> verdict;
@@ -41,7 +40,7 @@ class VerdictCard extends StatelessWidget {
                 value: wisdomScore / 100,
                 minHeight: 8,
                 borderRadius: BorderRadius.circular(4),
-                backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+                backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                 color: Colors.green,
               ),
             ),

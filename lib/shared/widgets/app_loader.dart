@@ -1,6 +1,5 @@
 // lib/shared/widgets/app_loader.dart
 import 'package:flutter/material.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 
 class AppLoader extends StatelessWidget {
   const AppLoader({super.key});

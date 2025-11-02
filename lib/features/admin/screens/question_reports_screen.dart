@@ -1,5 +1,4 @@
 // lib/features/admin/screens/question_reports_screen.dart
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/providers/admin_providers.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:cloud_functions/cloud_functions.dart';

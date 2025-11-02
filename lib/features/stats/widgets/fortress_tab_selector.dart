@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/stats/screens/stats_screen.dart'; // State provider'a erişim için
 
 class FortressTabSelector extends ConsumerWidget {
@@ -18,8 +17,8 @@ class FortressTabSelector extends ConsumerWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
-            Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.25),
+            Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+            Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,

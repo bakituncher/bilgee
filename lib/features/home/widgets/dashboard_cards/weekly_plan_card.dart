@@ -5,11 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taktik/features/pomodoro/logic/pomodoro_notifier.dart';
 import 'package:intl/intl.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/models/plan_model.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
-import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'dart:ui';
 
 double _clamp01(num v) {
@@ -47,7 +45,7 @@ class WeeklyPlanCard extends ConsumerWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        border: Border.all(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.35), width: 1),
+        border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35), width: 1),
         boxShadow: [
           BoxShadow(color: Colors.black.withOpacity(.35), blurRadius: 18, offset: const Offset(0, 8))
         ],
@@ -153,7 +151,7 @@ class _HeaderBar extends ConsumerWidget {
       ),
       child: Row(crossAxisAlignment: CrossAxisAlignment.center, children:[
         Stack(alignment: Alignment.center, children:[
-          SizedBox(height:58,width:58,child:CircularProgressIndicator(strokeWidth:6,value:_clamp01(ratio),backgroundColor:Theme.of(context).colorScheme.surfaceVariant.withOpacity(.35),valueColor:AlwaysStoppedAnimation(ratio>=.75?Colors.green:Theme.of(context).colorScheme.primary)) ),
+          SizedBox(height:58,width:58,child:CircularProgressIndicator(strokeWidth:6,value:_clamp01(ratio),backgroundColor:Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(.35),valueColor:AlwaysStoppedAnimation(ratio>=.75?Colors.green:Theme.of(context).colorScheme.primary)) ),
           Column(mainAxisSize: MainAxisSize.min,children:[Text('${(ratio*100).round()}%',style: const TextStyle(fontWeight: FontWeight.bold,fontSize:14)), Text('Hafta',style: TextStyle(fontSize:10,color:Theme.of(context).colorScheme.onSurfaceVariant))])
         ]),
         const SizedBox(width:16),
@@ -162,7 +160,7 @@ class _HeaderBar extends ConsumerWidget {
           const SizedBox(height:4),
           Text(DateFormat.yMMMMd('tr').format(dateForTab), style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
           const SizedBox(height:6),
-          ClipRRect(borderRadius: BorderRadius.circular(6), child: LinearProgressIndicator(minHeight:6,value:_clamp01(ratio),backgroundColor:Theme.of(context).colorScheme.surfaceVariant.withOpacity(.25), valueColor:AlwaysStoppedAnimation(ratio>=.75?Colors.green:Theme.of(context).colorScheme.primary)))
+          ClipRRect(borderRadius: BorderRadius.circular(6), child: LinearProgressIndicator(minHeight:6,value:_clamp01(ratio),backgroundColor:Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(.25), valueColor:AlwaysStoppedAnimation(ratio>=.75?Colors.green:Theme.of(context).colorScheme.primary)))
         ])),
         IconButton(tooltip:'Planı Aç', onPressed: ()=> context.go('/home/weekly-plan'), icon: Icon(Icons.open_in_new_rounded,color:Theme.of(context).colorScheme.primary))
       ]),
@@ -291,7 +289,7 @@ class _TaskTile extends ConsumerWidget {
         child: Ink(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: (isCompleted? Colors.green: Theme.of(context).colorScheme.surfaceVariant).withOpacity(.35), width: 1),
+            border: Border.all(color: (isCompleted? Colors.green: Theme.of(context).colorScheme.surfaceContainerHighest).withOpacity(.35), width: 1),
             gradient: LinearGradient(colors:[ (isCompleted? Colors.green: Theme.of(context).colorScheme.primary).withOpacity(.08), Theme.of(context).cardColor.withOpacity(.35)], begin: Alignment.topLeft,end: Alignment.bottomRight),
           ),
           padding: const EdgeInsets.fromLTRB(14,12,6,12),
@@ -304,7 +302,7 @@ class _TaskTile extends ConsumerWidget {
               Row(children:[ Icon(Icons.schedule,size:13,color:Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(.9)), const SizedBox(width:4), Text(item.time, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant,fontSize:11)) ])
             ])),
             IconButton(
-              icon: AnimatedSwitcher(duration:250.ms, switchInCurve: Curves.elasticOut, child: Icon(isCompleted? Icons.check_circle_rounded: Icons.radio_button_unchecked_rounded, key: ValueKey<bool>(isCompleted), color: isCompleted? Colors.green: Theme.of(context).colorScheme.surfaceVariant, size:30)),
+              icon: AnimatedSwitcher(duration:250.ms, switchInCurve: Curves.elasticOut, child: Icon(isCompleted? Icons.check_circle_rounded: Icons.radio_button_unchecked_rounded, key: ValueKey<bool>(isCompleted), color: isCompleted? Colors.green: Theme.of(context).colorScheme.surfaceContainerHighest, size:30)),
               onPressed: () async {
                 // Eğer görev tamamlanmamışsa önce aksiyon sor
                 if (!isCompleted) {

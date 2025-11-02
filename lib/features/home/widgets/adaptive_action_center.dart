@@ -1,7 +1,6 @@
 // lib/features/home/widgets/adaptive_action_center.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter/services.dart';
 
@@ -62,7 +61,7 @@ class _ActionButton extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
             color: Theme.of(context).cardColor,
-            border: Border.all(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5)),
+            border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,

@@ -1,7 +1,6 @@
 // lib/features/onboarding/screens/availability_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
@@ -271,10 +270,10 @@ class _TimeSlotGroup extends ConsumerWidget {
                   duration: 200.ms,
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
-                    color: isSelected ? Theme.of(context).colorScheme.secondary.withOpacity(0.3) : Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.4),
+                    color: isSelected ? Theme.of(context).colorScheme.secondary.withOpacity(0.3) : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.4),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isSelected ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.surfaceVariant,
+                      color: isSelected ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.surfaceContainerHighest,
                       width: 1.5,
                     ),
                   ),

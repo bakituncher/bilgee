@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:taktik/core/services/revenuecat_service.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:collection/collection.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
 import 'dart:ui';
@@ -179,14 +178,14 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     ];
 
     return Scaffold(
-      backgroundColor: colorScheme.background,
+      backgroundColor: colorScheme.surface,
       body: Stack(
         children: [
           // Arka Plan (Gradient + Blur)
           _buildAnimatedGradientBackground(),
           BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-            child: Container(color: colorScheme.background.withOpacity(0.3)),
+            child: Container(color: colorScheme.surface.withOpacity(0.3)),
           ),
 
           SingleChildScrollView(
@@ -304,8 +303,8 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
               radius: 1.5,
               colors: [
                 colorScheme.surface,
-                colorScheme.background,
-                Color.lerp(colorScheme.background, Colors.black, 0.5)!,
+                colorScheme.surface,
+                Color.lerp(colorScheme.surface, Colors.black, 0.5)!,
               ],
               stops: const [0.0, 0.4, 1.0],
             ),
@@ -602,7 +601,7 @@ class _MarketingSlideCard extends StatelessWidget {
       decoration: BoxDecoration(
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(25),
-          border: Border.all(color: colorScheme.surfaceVariant.withOpacity(0.5), width: 1.5),
+          border: Border.all(color: colorScheme.surfaceContainerHighest.withOpacity(0.5), width: 1.5),
           // Pazarlamayı kuvvetlendirmek için hafif bir iç gölge efekti (Inner Glow Simulation)
           boxShadow: [
             BoxShadow(
@@ -734,7 +733,7 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
     final hasFreeTrial = introPrice != null && introPrice.price == 0;
     final colorScheme = Theme.of(context).colorScheme;
 
-    final borderColor = widget.highlight ? colorScheme.secondary : colorScheme.surfaceVariant;
+    final borderColor = widget.highlight ? colorScheme.secondary : colorScheme.surfaceContainerHighest;
     final backgroundColor = widget.highlight ? colorScheme.secondary.withOpacity(0.2) : colorScheme.surface;
 
     // --- SEKTÖR STANDARDI TASARIM İYİLEŞTİRMELERİ ---
@@ -910,11 +909,11 @@ class _TrustBadges extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
+        children: [
           _TrustRow(icon: Icons.lock_rounded, text: 'Google ile Güvenli Ödeme'),
           SizedBox(width: 20),
           _TrustRow(icon: Icons.cancel_schedule_send_rounded, text: 'Kolay İptal'),
@@ -958,11 +957,11 @@ class _LegalFooter extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _FooterLink(text: 'Kullanım Şartları', targetRoute: AppRoutes.settings),
+              const _FooterLink(text: 'Kullanım Şartları', targetRoute: AppRoutes.settings),
               const SizedBox(width: 10),
               Text('|', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.38), fontSize: 11)),
               const SizedBox(width: 10),
-              _FooterLink(text: 'Gizlilik Politikası', targetRoute: AppRoutes.settings),
+              const _FooterLink(text: 'Gizlilik Politikası', targetRoute: AppRoutes.settings),
             ],
           ),
         ],

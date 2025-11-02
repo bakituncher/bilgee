@@ -3,7 +3,6 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/services.dart';
@@ -99,7 +98,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                             Theme.of(context).colorScheme.surface.withOpacity(0.5),
                             Theme.of(context).colorScheme.surface.withOpacity(0.2)
                           ]),
-                      border: Border.all(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5)),
+                      border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)),
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     child: Row(children: [
@@ -346,7 +345,7 @@ class _ShareableProfileCard extends StatelessWidget {
               Theme.of(context).colorScheme.surface.withOpacity(0.5),
               Theme.of(context).colorScheme.surface.withOpacity(0.2)
             ]),
-        border: Border.all(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5), width: 1),
+        border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5), width: 1),
       ),
       child: Column(
         children: [
@@ -452,11 +451,12 @@ class _FollowButtonState extends ConsumerState<_FollowButton> {
             });
           }
         } finally {
-          if (mounted)
+          if (mounted) {
             setState(() {
               _busy = false;
               _optimistic = null;
             });
+          }
         }
       },
       style: ElevatedButton.styleFrom(
@@ -651,7 +651,7 @@ class _ActionTileState extends State<_ActionTile> {
                   Theme.of(context).colorScheme.surface.withOpacity(0.5),
                   Theme.of(context).colorScheme.surface.withOpacity(0.2)
                 ]),
-            border: Border.all(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5)),
+            border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           child: Row(

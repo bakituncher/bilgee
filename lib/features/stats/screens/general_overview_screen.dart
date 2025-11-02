@@ -1,5 +1,4 @@
 // lib/features/stats/screens/general_overview_screen.dart
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/models/test_model.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:flutter/material.dart';
@@ -102,7 +101,7 @@ class GeneralOverviewScreen extends ConsumerWidget {
   Widget _tile(BuildContext context, {required IconData icon, required String title, required String value}) {
     return Card(
       elevation: 6,
-      shadowColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.4),
+      shadowColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.4),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: ListTile(
         leading: Container(
@@ -259,7 +258,7 @@ class _VisitsThisMonthTile extends ConsumerWidget {
         final visits = (snap.data ?? const <Timestamp>[]) as List;
         return Card(
           elevation: 6,
-          shadowColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.4),
+          shadowColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.4),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
           child: ListTile(
             leading: Container(

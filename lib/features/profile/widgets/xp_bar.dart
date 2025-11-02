@@ -1,6 +1,5 @@
 // lib/features/profile/widgets/xp_bar.dart
 import 'package:flutter/material.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 
 class XpBar extends StatelessWidget {
   final int currentXp;
@@ -34,7 +33,7 @@ class XpBar extends StatelessWidget {
             Container(
               height: 12,
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+                color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
                 borderRadius: BorderRadius.circular(6),
               ),
             ),

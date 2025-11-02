@@ -146,9 +146,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     borderRadius: BorderRadius.circular(14),
                     gradient: LinearGradient(colors: [
                       colorScheme.primary.withOpacity(.12),
-                      colorScheme.surfaceVariant.withOpacity(.10)
+                      colorScheme.surfaceContainerHighest.withOpacity(.10)
                     ], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                    border: Border.all(color: colorScheme.surfaceVariant.withOpacity(.35)),
+                    border: Border.all(color: colorScheme.surfaceContainerHighest.withOpacity(.35)),
                   ),
                   child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     _NudgeBullet(icon: Icons.route_rounded, text: 'Müfredat sırasına sadık, tekrar etmeyen konu akışı'),
@@ -316,7 +316,7 @@ class _DailyQuestsCard extends ConsumerWidget {
     if (p >= .999) return Colors.greenAccent;
     if (p >= .85) return Colors.greenAccent.withOpacity(.9);
     if (p >= .5) return colorScheme.primary;
-    return colorScheme.surfaceVariant.withOpacity(.9);
+    return colorScheme.surfaceContainerHighest.withOpacity(.9);
   }
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -342,7 +342,7 @@ class _DailyQuestsCard extends ConsumerWidget {
     final card = Card(
       clipBehavior: Clip.antiAlias,
       elevation: progress >= 1.0 ? 10 : 6,
-      shadowColor: hasClaimable ? AppTheme.goldBrandColor.withOpacity(0.7) : (progress >= 1.0 ? AppTheme.successBrandColor.withOpacity(.6) : colorScheme.surfaceVariant.withOpacity(.35)),
+      shadowColor: hasClaimable ? AppTheme.goldBrandColor.withOpacity(0.7) : (progress >= 1.0 ? AppTheme.successBrandColor.withOpacity(.6) : colorScheme.surfaceContainerHighest.withOpacity(.35)),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24), side: BorderSide(color: hasClaimable ? AppTheme.goldBrandColor : _progressColor(context, progress), width: 2)),
       child: InkWell(
         onTap: () => context.go('/home/quests'),
@@ -356,7 +356,7 @@ class _DailyQuestsCard extends ConsumerWidget {
           ),
           child: Row(children: [
             Stack(alignment: Alignment.center, children: [
-              SizedBox(height: 56, width: 56, child: CircularProgressIndicator(value: progress == 0 ? null : progress, strokeWidth: 6, backgroundColor: colorScheme.surfaceVariant.withOpacity(.25), valueColor: AlwaysStoppedAnimation(hasClaimable ? AppTheme.goldBrandColor : _progressColor(context, progress)),)),
+              SizedBox(height: 56, width: 56, child: CircularProgressIndicator(value: progress == 0 ? null : progress, strokeWidth: 6, backgroundColor: colorScheme.surfaceContainerHighest.withOpacity(.25), valueColor: AlwaysStoppedAnimation(hasClaimable ? AppTheme.goldBrandColor : _progressColor(context, progress)),)),
               Icon(hasClaimable ? Icons.military_tech_rounded : (progress >=1 ? Icons.emoji_events_rounded : Icons.shield_moon_rounded), size: 28, color: hasClaimable ? AppTheme.goldBrandColor : _progressColor(context, progress)),
             ]),
             const SizedBox(width: 16),
@@ -365,7 +365,7 @@ class _DailyQuestsCard extends ConsumerWidget {
               const SizedBox(height: 4),
               Text(total == 0 ? 'Bugün görev yok' : '$completed / $total tamamlandı • Kalan ${_formatRemaining(remaining)}', style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
               const SizedBox(height: 6),
-              ClipRRect(borderRadius: BorderRadius.circular(6), child: LinearProgressIndicator(value: progress.clamp(0,1), minHeight: 6, backgroundColor: colorScheme.surfaceVariant.withOpacity(.25), valueColor: AlwaysStoppedAnimation(hasClaimable ? AppTheme.goldBrandColor : _progressColor(context, progress)),)),
+              ClipRRect(borderRadius: BorderRadius.circular(6), child: LinearProgressIndicator(value: progress.clamp(0,1), minHeight: 6, backgroundColor: colorScheme.surfaceContainerHighest.withOpacity(.25), valueColor: AlwaysStoppedAnimation(hasClaimable ? AppTheme.goldBrandColor : _progressColor(context, progress)),)),
             ])),
             const SizedBox(width: 8),
             Icon(Icons.arrow_forward_ios_rounded, color: colorScheme.onSurfaceVariant, size: 18),

@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:taktik/data/models/topic_performance_model.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:taktik/shared/widgets/score_slider.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
@@ -84,7 +83,7 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3)),
+        border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3)),
       ),
       child: Row(
         children: [
@@ -96,7 +95,7 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
               onTap: () => ref.read(_updateModeProvider.notifier).state = true,
             ),
           ),
-          Container(width: 1, height: 48, color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3)),
+          Container(width: 1, height: 48, color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3)),
           Expanded(
             child: _CompactModeOption(
               title: "Değiştir",
@@ -123,7 +122,7 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.2)),
+        border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.2)),
       ),
       child: Row(
         children: [
@@ -142,7 +141,7 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
                     CircularProgressIndicator(
                       value: value,
                       strokeWidth: 10,
-                      backgroundColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
                       valueColor: AlwaysStoppedAnimation<Color>(
                         Color.lerp(Theme.of(context).colorScheme.error, Theme.of(context).colorScheme.secondary, value)!,
                       ),
@@ -215,7 +214,7 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.2)),
+        border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -237,7 +236,7 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
             label: "Toplam Soru",
             value: sessionQuestions.toDouble(),
             max: 200,
-            color: Theme.of(context).colorScheme.surfaceVariant,
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
             onChanged: (value) {
               final int newTotal = value.toInt();
               ref.read(_sessionQuestionCountProvider.notifier).state = newTotal;

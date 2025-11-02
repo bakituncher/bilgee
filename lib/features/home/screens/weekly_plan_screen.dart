@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/models/plan_model.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
@@ -41,7 +40,7 @@ class WeeklyPlanScreen extends ConsumerWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Theme.of(context).colorScheme.background, Theme.of(context).cardColor.withOpacity(0.8)],
+            colors: [Theme.of(context).colorScheme.surface, Theme.of(context).cardColor.withOpacity(0.8)],
           ),
         ),
         child: SafeArea(
@@ -123,7 +122,7 @@ class _DaySelector extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).cardColor.withOpacity(0.5),
                 borderRadius: BorderRadius.circular(20),
-                border: isSelected ? null : Border.all(color: Theme.of(context).colorScheme.surfaceVariant),
+                border: isSelected ? null : Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
               ),
               child: Center(
                 child: Text(
@@ -323,7 +322,7 @@ class _DaySummaryHeader extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         color: Theme.of(context).cardColor.withOpacity(0.55),
-        border: Border.all(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.2)),
+        border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -344,7 +343,7 @@ class _DaySummaryHeader extends StatelessWidget {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 5,
-              backgroundColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.18),
+              backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.18),
               valueColor: AlwaysStoppedAnimation(progress >= 1 ? Colors.green : Theme.of(context).colorScheme.primary),
             ),
           ),
@@ -401,7 +400,7 @@ class WeeklyOverviewCard extends ConsumerWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           color: Theme.of(context).cardColor.withOpacity(0.5),
-          border: Border.all(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.2)),
+          border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.2)),
         ),
         child: Row(
           children: [
@@ -411,7 +410,7 @@ class WeeklyOverviewCard extends ConsumerWidget {
                 CircularProgressIndicator(
                   value: progress,
                   strokeWidth: 5,
-                  backgroundColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.18),
+                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.18),
                   valueColor: AlwaysStoppedAnimation(progress>=1? Colors.green : Theme.of(context).colorScheme.primary),
                 ),
                 Text('${(progress*100).toStringAsFixed(0)}%', style: Theme.of(context).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w600)),
@@ -503,7 +502,7 @@ class WeeklyOverviewCard extends ConsumerWidget {
                           child: LinearProgressIndicator(
                             value: ratio,
                             minHeight: 6,
-                            backgroundColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.2),
+                            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.2),
                             valueColor: AlwaysStoppedAnimation(ratio>=1? Colors.green : Theme.of(context).colorScheme.primary),
                           ),
                         ),
@@ -551,7 +550,7 @@ class _TaskTimelineTile extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(12, 12, 6, 12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: (isCompleted? Colors.green : Theme.of(context).colorScheme.surfaceVariant).withOpacity(0.35)),
+        border: Border.all(color: (isCompleted? Colors.green : Theme.of(context).colorScheme.surfaceContainerHighest).withOpacity(0.35)),
         gradient: LinearGradient(colors:[ (isCompleted? Colors.green : Theme.of(context).colorScheme.primary).withOpacity(0.08), Theme.of(context).cardColor.withOpacity(0.35)], begin: Alignment.topLeft, end: Alignment.bottomRight),
       ),
       child: Row(
@@ -564,7 +563,7 @@ class _TaskTimelineTile extends StatelessWidget {
                 decoration: BoxDecoration(shape: BoxShape.circle, color: (isCompleted? Colors.green : Theme.of(context).colorScheme.primary).withOpacity(0.18)),
                 child: Icon(Icons.schedule_rounded, color: isCompleted? Colors.green : Theme.of(context).colorScheme.primary),
               ),
-              if (!isLast) Container(width: 2, height: 24, color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3))
+              if (!isLast) Container(width: 2, height: 24, color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3))
             ],
           ),
           const SizedBox(width: 12),
@@ -588,7 +587,7 @@ class _TaskTimelineTile extends StatelessWidget {
               switchInCurve: Curves.elasticOut,
               child: Icon(isCompleted? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
                 key: ValueKey<bool>(isCompleted),
-                color: isCompleted? Colors.green : Theme.of(context).colorScheme.surfaceVariant,
+                color: isCompleted? Colors.green : Theme.of(context).colorScheme.surfaceContainerHighest,
                 size: 28,
               ),
             ),

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:taktik/data/models/exam_model.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/home/logic/add_test_notifier.dart';
 
 class Step1TestInfo extends ConsumerWidget {
@@ -80,7 +79,7 @@ class Step1TestInfo extends ConsumerWidget {
             // Buton pasifken farklı bir görünüm
             backgroundColor: isButtonEnabled
                 ? Theme.of(context).colorScheme.secondary
-                : Theme.of(context).colorScheme.surfaceVariant,
+                : Theme.of(context).colorScheme.surfaceContainerHighest,
             foregroundColor:
             isButtonEnabled ? Theme.of(context).primaryColor : Theme.of(context).colorScheme.onSurfaceVariant,
           ),
@@ -121,7 +120,7 @@ class _SectionSelectionCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: isSelected ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.surfaceVariant,
+          color: isSelected ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.surfaceContainerHighest,
           width: 2,
         ),
       ),

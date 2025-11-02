@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/models/plan_model.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:intl/intl.dart';
@@ -22,7 +21,7 @@ class PomodoroTimerView extends ConsumerWidget {
       PomodoroSessionState.work => ("Odaklanma Modu", colorScheme.secondary, "Yaratım anındasın. Evren sessiz."),
       PomodoroSessionState.shortBreak => ("Kısa Mola", colorScheme.primary, "Nefes al. Zihnin berraklaşsın."),
       PomodoroSessionState.longBreak => ("Uzun Mola", colorScheme.primary, "Harika iş! Zihinsel bir yolculuğa çık."),
-      _ => ("Beklemede", colorScheme.surfaceVariant, "Mabet seni bekliyor."),
+      _ => ("Beklemede", colorScheme.surfaceContainerHighest, "Mabet seni bekliyor."),
     };
 
     return Padding(
@@ -97,7 +96,7 @@ class PomodoroTimerView extends ConsumerWidget {
             IconButton.filled(
               onPressed: () => _showSettingsSheet(context, ref),
               icon: const Icon(Icons.settings),
-              style: IconButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5)),
+              style: IconButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)),
             ),
             const SizedBox(width: 20),
             IconButton.filled(
@@ -109,7 +108,7 @@ class PomodoroTimerView extends ConsumerWidget {
             IconButton.filled(
               onPressed: () => _confirmAndReset(context, notifier, prompt: canPromptReset),
               icon: const Icon(Icons.replay_rounded),
-              style: IconButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5)),
+              style: IconButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)),
             ),
           ],
         ),
@@ -412,12 +411,12 @@ class _DialPainter extends CustomPainter {
     final rect = Rect.fromCircle(center: center, radius: radius);
 
     // Let's assume the color scheme is passed to the painter.
-    final surfaceVariant = colorScheme.surfaceVariant;
+    final surfaceVariant = colorScheme.surfaceContainerHighest;
     final onSurface = colorScheme.onSurface;
 
     // Arkaplan çemberi
     final backgroundPaint = Paint()
-      ..color = colorScheme.surfaceVariant.withOpacity(0.2)
+      ..color = colorScheme.surfaceContainerHighest.withOpacity(0.2)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 12;
     canvas.drawCircle(center, radius, backgroundPaint);
@@ -458,7 +457,7 @@ class _DialPainter extends CustomPainter {
       final dx = center.dx + cos(angle) * dotDistance;
       final dy = center.dy + sin(angle) * dotDistance;
       final paint = Paint()
-        ..color = i < completedInCycle ? color : colorScheme.surfaceVariant.withOpacity(0.4)
+        ..color = i < completedInCycle ? color : colorScheme.surfaceContainerHighest.withOpacity(0.4)
         ..style = PaintingStyle.fill;
       canvas.drawCircle(Offset(dx, dy), dotRadius, paint);
       final stroke = Paint()
@@ -584,7 +583,7 @@ class _PomodoroSettingsSheetState extends ConsumerState<PomodoroSettingsSheet> {
                             min: 2,
                             max: 8,
                             step: 1,
-                            color: colorScheme.surfaceVariant,
+                            color: colorScheme.surfaceContainerHighest,
                             onChanged: (v) => setState(() => _interval = v.roundToDouble()),
                           ),
                         ],
@@ -664,7 +663,7 @@ class _SettingsCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceVariant.withOpacity(0.25),
+        color: colorScheme.surfaceContainerHighest.withOpacity(0.25),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: colorScheme.onSurface.withOpacity(0.05)),
       ),
@@ -756,7 +755,7 @@ class _MiniStepper extends StatelessWidget {
           style: IconButton.styleFrom(
             visualDensity: VisualDensity.compact,
             foregroundColor: colorScheme.onSurface,
-            backgroundColor: colorScheme.surfaceVariant.withOpacity(canDec ? 0.5 : 0.2),
+            backgroundColor: colorScheme.surfaceContainerHighest.withOpacity(canDec ? 0.5 : 0.2),
           ),
         ),
         const SizedBox(width: 8),
@@ -779,7 +778,7 @@ class _MiniStepper extends StatelessWidget {
           style: IconButton.styleFrom(
             visualDensity: VisualDensity.compact,
             foregroundColor: colorScheme.onSurface,
-            backgroundColor: colorScheme.surfaceVariant.withOpacity(canInc ? 0.5 : 0.2),
+            backgroundColor: colorScheme.surfaceContainerHighest.withOpacity(canInc ? 0.5 : 0.2),
           ),
         ),
       ],

@@ -1,5 +1,4 @@
 // lib/shared/widgets/scaffold_with_nav_bar.dart
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -130,7 +129,7 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                   ),
                   extendBody: true,
                   drawer: const SidePanelDrawer(),
-                  drawerScrimColor: Theme.of(context).colorScheme.background.withOpacity(0.6),
+                  drawerScrimColor: Theme.of(context).colorScheme.surface.withOpacity(0.6),
                   drawerEdgeDragWidth: 48,
                   floatingActionButton: FloatingActionButton(
                     key: aiHubFabKey,

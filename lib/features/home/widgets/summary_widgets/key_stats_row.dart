@@ -1,6 +1,5 @@
 // lib/features/home/widgets/summary_widgets/key_stats_row.dart
 import 'package:flutter/material.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/models/test_model.dart';
 
 class KeyStatsRow extends StatelessWidget {

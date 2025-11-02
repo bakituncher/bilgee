@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 
 class PremiumBadge extends StatelessWidget {
   const PremiumBadge({super.key});

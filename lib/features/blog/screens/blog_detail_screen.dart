@@ -1,5 +1,4 @@
 // lib/features/blog/screens/blog_detail_screen.dart
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/providers/admin_providers.dart';
 import 'package:taktik/features/blog/providers/blog_providers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -85,8 +84,8 @@ class BlogDetailScreen extends ConsumerWidget {
 
           final chips = post.tags.map((t) => Chip(
             label: Text(t, style: GoogleFonts.montserrat(fontWeight: FontWeight.w600)),
-            backgroundColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.25),
-            shape: StadiumBorder(side: BorderSide(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.4))),
+            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25),
+            shape: StadiumBorder(side: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.4))),
           ));
 
           return CustomScrollView(
@@ -110,9 +109,9 @@ class BlogDetailScreen extends ConsumerWidget {
                                 maxWidthDiskCache: 1920,
                                 memCacheHeight: 720,
                                 memCacheWidth: 1280,
-                                placeholder: (c, _) => Container(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.25)),
+                                placeholder: (c, _) => Container(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25)),
                                 errorWidget: (c, _, __) => Container(
-                                  color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.2),
+                                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.2),
                                   child: const Icon(Icons.image_not_supported_rounded),
                                 ),
                               ),
@@ -192,21 +191,21 @@ class BlogDetailScreen extends ConsumerWidget {
                       code: GoogleFonts.robotoMono(fontSize: 13.5, height: 1.5, color: Theme.of(context).colorScheme.onSurface),
                       codeblockPadding: const EdgeInsets.all(12),
                       codeblockDecoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.12),
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3)),
+                        border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3)),
                       ),
                       blockquote: GoogleFonts.montserrat(fontStyle: FontStyle.italic, color: Theme.of(context).colorScheme.onSurfaceVariant),
                       blockquotePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       blockquoteDecoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.08),
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.08),
                         border: Border(left: BorderSide(color: Theme.of(context).colorScheme.secondary, width: 3)),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       listBullet: TextStyle(color: Theme.of(context).colorScheme.secondary),
                       a: const TextStyle(color: Color(0xFF55C1FF), fontWeight: FontWeight.w600),
                       horizontalRuleDecoration: BoxDecoration(
-                        border: Border(top: BorderSide(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.6), width: 1)),
+                        border: Border(top: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.6), width: 1)),
                       ),
                       img: GoogleFonts.montserrat(),
                       tableHead: GoogleFonts.montserrat(fontWeight: FontWeight.w700),
@@ -224,11 +223,11 @@ class BlogDetailScreen extends ConsumerWidget {
                             imageUrl: uri.toString(),
                             fit: BoxFit.cover,
                             placeholder: (c, _) => Container(
-                              color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.25),
+                              color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25),
                             ),
                             errorWidget: (c, _, __) => Container(
                               alignment: Alignment.center,
-                              color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.2),
+                              color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.2),
                               child: const Icon(Icons.image_not_supported_rounded),
                             ),
                           ),

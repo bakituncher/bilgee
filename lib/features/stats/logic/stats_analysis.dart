@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/data/models/test_model.dart';
 import 'package:taktik/data/models/user_model.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/models/performance_summary.dart';
 import 'package:taktik/data/models/topic_performance_model.dart';
 import 'package:taktik/data/repositories/firestore_service.dart';

@@ -5,12 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/data/models/test_model.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/stats/widgets/fortress_tab_selector.dart';
 import 'package:taktik/features/stats/widgets/cached_analysis_view.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
-import 'dart:ui';
 
 final selectedTabIndexProvider = StateProvider<int>((ref) => 0);
 
@@ -64,7 +62,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                 gradient: LinearGradient(
                   colors: [
                     Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                    Theme.of(context).colorScheme.background.withOpacity(0.1),
+                    Theme.of(context).colorScheme.surface.withOpacity(0.1),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -99,7 +97,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
@@ -236,7 +234,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                Theme.of(context).colorScheme.background.withOpacity(0.05),
+                Theme.of(context).colorScheme.surface.withOpacity(0.05),
                 Theme.of(context).colorScheme.primary.withOpacity(0.05),
               ],
               begin: Alignment.topLeft,
