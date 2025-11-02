@@ -125,6 +125,8 @@ class _MasteryTopicBubbleState extends State<MasteryTopicBubble>
           child: AnimatedBuilder(
             animation: _hoverController,
             builder: (context, child) {
+              final isDark = Theme.of(context).brightness == Brightness.dark;
+              
               return Transform.scale(
                 scale: _isPressed ? 0.95 : _scaleAnimation.value,
                 child: AnimatedContainer(
@@ -138,7 +140,7 @@ class _MasteryTopicBubbleState extends State<MasteryTopicBubble>
                       : null,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: Theme.of(context).brightness == Brightness.dark
+                      colors: isDark
                         ? [color.withOpacity(0.2), color.withOpacity(0.12)]
                         : [color.withOpacity(0.15), color.withOpacity(0.08)],
                       begin: Alignment.topLeft,
@@ -146,8 +148,8 @@ class _MasteryTopicBubbleState extends State<MasteryTopicBubble>
                     ),
                     borderRadius: BorderRadius.circular(widget.compact ? 20 : 32),
                     border: Border.all(
-                      color: color.withOpacity(_isHovered ? 0.9 : (Theme.of(context).brightness == Brightness.dark ? 0.6 : 0.7)),
-                      width: _isHovered ? 2.0 : (Theme.of(context).brightness == Brightness.dark ? 1.5 : 2.0),
+                      color: color.withOpacity(_isHovered ? 0.9 : (isDark ? 0.6 : 0.7)),
+                      width: _isHovered ? 2.0 : (isDark ? 1.5 : 2.0),
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -162,7 +164,7 @@ class _MasteryTopicBubbleState extends State<MasteryTopicBubble>
                           spreadRadius: 5.0,
                         ),
                       // Add subtle shadow in light mode for better elevation
-                      if (Theme.of(context).brightness == Brightness.light && !_isHovered)
+                      if (!isDark && !_isHovered)
                         BoxShadow(
                           color: Colors.black.withOpacity(0.08),
                           blurRadius: 8.0,
