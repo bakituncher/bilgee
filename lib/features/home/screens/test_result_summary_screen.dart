@@ -33,18 +33,58 @@ class TestResultSummaryScreen extends StatelessWidget {
     final verdict = test.expertVerdict;
     final keySubjects = test.findKeySubjects();
     final isGoodResult = wisdomScore > 60;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text("Savaş Raporu"),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(20.0),
-        children: [
-          // Başlık özeti
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: isDark
+                ? [
+                    theme.scaffoldBackgroundColor,
+                    theme.cardColor.withOpacity(0.3),
+                  ]
+                : [
+                    theme.scaffoldBackgroundColor,
+                    colorScheme.surfaceContainerHighest.withOpacity(0.2),
+                  ],
+          ),
+        ),
+        child: ListView(
+          padding: const EdgeInsets.all(16.0),
+          children: [
+            // Compact header card
+            Container(
+              decoration: BoxDecoration(
+                color: theme.cardColor,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isDark
+                      ? colorScheme.surfaceContainerHighest.withOpacity(0.3)
+                      : colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                  width: 1,
+                ),
+                boxShadow: isDark
+                    ? []
+                    : [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+              ),
+              padding: const EdgeInsets.all(14.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -54,70 +94,122 @@ class TestResultSummaryScreen extends StatelessWidget {
                       color: Colors.transparent,
                       child: Text(
                         test.testName,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 20,
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  Row(children: [
-                    Icon(Icons.category_rounded, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                    const SizedBox(width: 6),
-                    Text(test.sectionName, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-                    const SizedBox(width: 12),
-                    Icon(Icons.event_rounded, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                    const SizedBox(width: 6),
-                    Text(DateFormat.yMd('tr').format(test.date), style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-                  ]),
-                  const SizedBox(height: 6),
-                  Text('Ceza katsayısı: ${test.penaltyCoefficient}', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: colorScheme.primary.withOpacity(0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.category_rounded, size: 14, color: colorScheme.primary),
+                            const SizedBox(width: 4),
+                            Text(
+                              test.sectionName,
+                              style: theme.textTheme.labelMedium?.copyWith(
+                                color: colorScheme.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.event_rounded, size: 14, color: colorScheme.onSurfaceVariant),
+                            const SizedBox(width: 4),
+                            Text(
+                              DateFormat.yMd('tr').format(test.date),
+                              style: theme.textTheme.labelMedium?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
-          ),
-          const SizedBox(height: 16),
-          VerdictCard(verdict: verdict, wisdomScore: wisdomScore),
-          const SizedBox(height: 24),
-          KeyStatsRow(test: test),
-          const SizedBox(height: 24),
-          if (test.scores.isNotEmpty) _SubjectBreakdown(test: test, subjectNet: _subjectNet, subjectAcc: _subjectAcc),
-          const SizedBox(height: 24),
-          if (keySubjects.isNotEmpty)
-            SubjectHighlights(keySubjects: keySubjects),
-          const SizedBox(height: 24),
-          // Hızlı eylemler
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  icon: const Icon(Icons.analytics_rounded),
-                  label: const Text('Detaylı Görünüm'),
-                  onPressed: () => context.push('/home/test-detail', extra: test),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: OutlinedButton.icon(
-                  icon: const Icon(Icons.forum_rounded),
-                  label: Text(isGoodResult ? "Zaferi Kutla!" : "Durumu Değerlendir"),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: isGoodResult ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.primary,
-                    side: BorderSide(color: isGoodResult ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.primary),
+            const SizedBox(height: 12),
+            VerdictCard(verdict: verdict, wisdomScore: wisdomScore),
+            const SizedBox(height: 12),
+            KeyStatsRow(test: test),
+            const SizedBox(height: 12),
+            if (test.scores.isNotEmpty) _SubjectBreakdown(test: test, subjectNet: _subjectNet, subjectAcc: _subjectAcc),
+            const SizedBox(height: 12),
+            if (keySubjects.isNotEmpty) SubjectHighlights(keySubjects: keySubjects),
+            const SizedBox(height: 12),
+            // Compact action buttons
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.analytics_rounded, size: 18),
+                    label: const Text('Detaylı Görünüm', style: TextStyle(fontSize: 13)),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      side: BorderSide(color: colorScheme.primary),
+                    ),
+                    onPressed: () => context.push('/home/test-detail', extra: test),
                   ),
-                  onPressed: () {
-                    final prompt = isGoodResult ? 'new_test_good' : 'new_test_bad';
-                    context.push('${AppRoutes.aiHub}/${AppRoutes.motivationChat}', extra: prompt);
-                  },
                 ),
-              ),
-            ],
-          ).animate().fadeIn(duration: 300.ms, delay: 80.ms).slideY(begin: 0.1),
-        ].animate(interval: 100.ms).fadeIn(duration: 400.ms).slideY(begin: 0.2),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    icon: Icon(Icons.forum_rounded, size: 18),
+                    label: Text(
+                      isGoodResult ? "Zaferi Kutla!" : "Değerlendir",
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      foregroundColor: isGoodResult ? colorScheme.secondary : colorScheme.primary,
+                      side: BorderSide(color: isGoodResult ? colorScheme.secondary : colorScheme.primary),
+                    ),
+                    onPressed: () {
+                      final prompt = isGoodResult ? 'new_test_good' : 'new_test_bad';
+                      context.push('${AppRoutes.aiHub}/${AppRoutes.motivationChat}', extra: prompt);
+                    },
+                  ),
+                ),
+              ],
+            ).animate().fadeIn(duration: 300.ms, delay: 80.ms).slideY(begin: 0.1),
+          ].animate(interval: 80.ms).fadeIn(duration: 400.ms).slideY(begin: 0.15),
+        ),
       ),
       bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(16.0),
         child: ElevatedButton.icon(
           icon: const Icon(Icons.dashboard_customize_rounded),
           label: const Text("Ana Panele Dön"),
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+          ),
           onPressed: () => context.go('/home'),
         ),
       ),
