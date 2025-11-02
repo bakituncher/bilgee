@@ -252,20 +252,45 @@ class _SubjectGalaxyViewState extends ConsumerState<_SubjectGalaxyView> {
       shrinkWrap: true,
       itemCount: processed.length,
       separatorBuilder: (_,__)=> const SizedBox(height:12),
-      itemBuilder: (c,i){ final e=processed[i]; final masteryPercent = e.mastery<0 ? '—' : '%${(e.mastery*100).toStringAsFixed(0)}'; return InkWell(
-        onTap: ()=> context.go('/coach/update-topic-performance', extra:{'subject': subjectName,'topic': e.topic.name,'performance': e.performance}),
-        onLongPress: ()=> _showTopicStats(e),
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35),
-            border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.55), width: 1),
+      itemBuilder: (c,i){ 
+        final e=processed[i]; 
+        final masteryPercent = e.mastery<0 ? '—' : '%${(e.mastery*100).toStringAsFixed(0)}';
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        
+        return InkWell(
+          onTap: ()=> context.go('/coach/update-topic-performance', extra:{'subject': subjectName,'topic': e.topic.name,'performance': e.performance}),
+          onLongPress: ()=> _showTopicStats(e),
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              color: isDark 
+                ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35)
+                : Colors.white,
+              border: Border.all(
+                color: isDark 
+                  ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.55)
+                  : Theme.of(context).colorScheme.onSurface.withOpacity(0.15), 
+                width: isDark ? 1 : 1.5
+              ),
+              boxShadow: isDark ? null : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(children:[ 
+              Expanded(child: Text(e.topic.name, style: const TextStyle(fontWeight: FontWeight.w600))), 
+              _MasteryPill(mastery: e.mastery), 
+              const SizedBox(width:12), 
+              Text(masteryPercent, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)) 
+            ]),
           ),
-          child: Row(children:[ Expanded(child: Text(e.topic.name, style: const TextStyle(fontWeight: FontWeight.w600))), _MasteryPill(mastery: e.mastery), const SizedBox(width:12), Text(masteryPercent, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)) ]),
-        ),
-      );},
+        );
+      },
     );
 
     final content = switch(viewMode){ GalaxyViewMode.grid=>buildGrid(), GalaxyViewMode.list=>buildList() };
@@ -300,20 +325,29 @@ class _SubjectStatsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final masteryPercent = (overallMastery*100).toStringAsFixed(0);
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
-        border: Border.all(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1), width: 1),
+        color: isDark 
+          ? theme.colorScheme.surfaceContainerHighest.withOpacity(0.5)
+          : Colors.white,
+        border: Border.all(
+          color: isDark 
+            ? theme.colorScheme.onSurface.withOpacity(0.1)
+            : theme.colorScheme.onSurface.withOpacity(0.15), 
+          width: isDark ? 1 : 1.5
+        ),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).brightness == Brightness.dark
+            color: isDark
                 ? Colors.black.withOpacity(0.1)
-                : Colors.black.withOpacity(0.05),
-            blurRadius: 20,
-            spreadRadius: -10,
-            offset: const Offset(0, 10),
+                : Colors.black.withOpacity(0.1),
+            blurRadius: isDark ? 20 : 12,
+            spreadRadius: isDark ? -10 : 0,
+            offset: isDark ? const Offset(0, 10) : const Offset(0, 4),
           ),
         ],
       ),
@@ -378,12 +412,18 @@ class _StatChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = color ?? Theme.of(context).colorScheme.onSurfaceVariant;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = color ?? Theme.of(context).colorScheme.surfaceContainerHighest;
+    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        color: (color ?? Theme.of(context).colorScheme.surfaceContainerHighest).withOpacity(0.15),
-        border: Border.all(color: (color ?? Theme.of(context).colorScheme.surfaceContainerHighest).withOpacity(0.4), width: 1),
+        color: bgColor.withOpacity(isDark ? 0.15 : 0.12),
+        border: Border.all(
+          color: bgColor.withOpacity(isDark ? 0.4 : 0.5), 
+          width: isDark ? 1 : 1.5
+        ),
       ),
       child: Column(
         children: [
@@ -400,6 +440,8 @@ class _GalaxyToolbar extends StatelessWidget {
   final TextEditingController controller; final ValueChanged<String> onChanged; final GalaxyViewMode currentMode; final ValueChanged<GalaxyViewMode> onModeChanged; const _GalaxyToolbar({required this.controller, required this.onChanged, required this.currentMode, required this.onModeChanged});
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     Widget modeChip(GalaxyViewMode m, IconData icon, String label){
       final active = currentMode==m;
       final color = active ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).colorScheme.onSurfaceVariant;
@@ -411,8 +453,24 @@ class _GalaxyToolbar extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal:16, vertical:10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            color: active ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
-            border: Border.all(color: active ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withOpacity(0.1), width: 1),
+            color: active 
+              ? Theme.of(context).colorScheme.primary 
+              : (isDark 
+                  ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)
+                  : Colors.white),
+            border: Border.all(
+              color: active 
+                ? Theme.of(context).colorScheme.primary 
+                : Theme.of(context).colorScheme.onSurface.withOpacity(isDark ? 0.1 : 0.2), 
+              width: isDark ? 1 : 1.5
+            ),
+            boxShadow: (!active && !isDark) ? [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ] : null,
           ),
           child: Row(mainAxisSize: MainAxisSize.min, children:[
             Icon(icon, size:18, color: color),
@@ -431,13 +489,30 @@ class _GalaxyToolbar extends StatelessWidget {
             isDense:true,
             hintText:'Konu Ara...',
             filled:true,
-            fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+            fillColor: isDark 
+              ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)
+              : Colors.white,
             prefixIcon: Icon(Icons.search, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
             hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1))),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1))),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.5)),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16), 
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(isDark ? 0.1 : 0.2),
+                width: isDark ? 1 : 1.5
+              )
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16), 
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(isDark ? 0.1 : 0.2),
+                width: isDark ? 1 : 1.5
+              )
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16), 
+              borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2)
+            ),
           ),
         ),
       ),
@@ -458,6 +533,7 @@ class _MasteryPill extends StatelessWidget {
     String txt;
     Color c;
     String level;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (mastery < 0) {
       txt = 'N/A';
@@ -481,8 +557,11 @@ class _MasteryPill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(30),
-        color: c.withOpacity(0.15),
-        border: Border.all(color: c.withOpacity(0.7), width: 1),
+        color: c.withOpacity(isDark ? 0.15 : 0.12),
+        border: Border.all(
+          color: c.withOpacity(isDark ? 0.7 : 0.8), 
+          width: isDark ? 1 : 1.5
+        ),
       ),
       child: Column(
         children: [

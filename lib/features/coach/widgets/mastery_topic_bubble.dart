@@ -138,17 +138,16 @@ class _MasteryTopicBubbleState extends State<MasteryTopicBubble>
                       : null,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [
-                        color.withOpacity(0.2),
-                        color.withOpacity(0.12),
-                      ],
+                      colors: Theme.of(context).brightness == Brightness.dark
+                        ? [color.withOpacity(0.2), color.withOpacity(0.12)]
+                        : [color.withOpacity(0.15), color.withOpacity(0.08)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.circular(widget.compact ? 20 : 32),
                     border: Border.all(
-                      color: color.withOpacity(_isHovered ? 0.9 : 0.6),
-                      width: _isHovered ? 2.0 : 1.5,
+                      color: color.withOpacity(_isHovered ? 0.9 : (Theme.of(context).brightness == Brightness.dark ? 0.6 : 0.7)),
+                      width: _isHovered ? 2.0 : (Theme.of(context).brightness == Brightness.dark ? 1.5 : 2.0),
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -161,6 +160,13 @@ class _MasteryTopicBubbleState extends State<MasteryTopicBubble>
                           color: color.withOpacity(0.3),
                           blurRadius: 30.0,
                           spreadRadius: 5.0,
+                        ),
+                      // Add subtle shadow in light mode for better elevation
+                      if (Theme.of(context).brightness == Brightness.light && !_isHovered)
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 8.0,
+                          offset: const Offset(0, 2),
                         ),
                     ],
                   ),
