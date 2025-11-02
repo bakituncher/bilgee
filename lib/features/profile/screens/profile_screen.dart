@@ -28,13 +28,16 @@ import 'dart:ui' as ui;
 import 'package:taktik/shared/widgets/logo_loader.dart';
 
 // ===== NovaPulse / Arena ile tutarlı premium accent renkleri =====
-const _accentProfile1 = AppTheme.secondaryColor; // camgöbeği
-const _accentProfile2 = AppTheme.successColor;   // zümrüt
-const List<Color> _profileBgGradient = [
-  AppTheme.scaffoldBackgroundColor,
-  AppTheme.cardColor,
-  AppTheme.scaffoldBackgroundColor,
-];
+// Bu sabitler artık tema renklerine bağlanacak.
+// const _accentProfile1 = AppTheme.secondaryColor; // camgöbeği
+// const _accentProfile2 = AppTheme.successColor;   // zümrüt
+
+// ARKA PLAN GRADYANI ARTIK TEMADAN DİNAMİK OLARAK ALINACAK
+// const List<Color> _profileBgGradient = [
+//   AppTheme.scaffoldBackgroundColor,
+//   AppTheme.cardColor,
+//   AppTheme.scaffoldBackgroundColor,
+// ];
 
 final focusSessionsProvider = StreamProvider.autoDispose<List<FocusSessionModel>>((ref) {
   final user = ref.watch(authControllerProvider).value;
@@ -73,21 +76,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   void _showLogoutDialog(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: AppTheme.cardColor,
+          backgroundColor: theme.cardColor,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: const Text("Çıkış Yap"),
           content: const Text("Oturumu sonlandırmak istediğinizden emin misiniz?"),
           actions: <Widget>[
             TextButton(
-              child: const Text("İptal", style: TextStyle(color: AppTheme.secondaryTextColor)),
+              child: Text("İptal", style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
               onPressed: () => Navigator.of(context).pop(),
             ),
             TextButton(
-              child: const Text("Çıkış Yap", style: TextStyle(color: AppTheme.accentColor)),
+              child: Text("Çıkış Yap", style: TextStyle(color: theme.colorScheme.error)),
               onPressed: () {
                 Navigator.of(context).pop();
                 ref.read(authControllerProvider.notifier).signOut();
@@ -165,8 +169,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ],
       ),
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: _profileBgGradient),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Theme.of(context).scaffoldBackgroundColor,
+              Theme.of(context).cardColor,
+              Theme.of(context).scaffoldBackgroundColor,
+            ],
+          ),
         ),
         child: userAsync.when(
           data: (user) {
@@ -192,12 +204,13 @@ class _ProfileView extends ConsumerWidget {
     required this.confettiController,
   });
 
-  List<app_badge.Badge> _generateBadges(UserModel user, PerformanceSummary performance, PlanDocument? planDoc, int testCount, double avgNet, List<FocusSessionModel> focusSessions) {
+  List<app_badge.Badge> _generateBadges(BuildContext context, UserModel user, PerformanceSummary performance, PlanDocument? planDoc, int testCount, double avgNet, List<FocusSessionModel> focusSessions) {
+    final theme = Theme.of(context);
     return [
-      app_badge.Badge(name: 'İlk Adım', description: 'İlk denemeni başarıyla ekledin ve zafere giden yola çıktın.', icon: Icons.flag, color: AppTheme.successColor, isUnlocked: testCount >= 1, hint: "İlk denemeni ekleyerek başla."),
-      app_badge.Badge(name: 'Acemi Savaşçı', description: '5 farklı denemede savaş meydanının tozunu attın.', icon: Icons.shield_outlined, color: AppTheme.successColor, isUnlocked: testCount >= 5, rarity: app_badge.BadgeRarity.common, hint: "Toplam 5 deneme ekle."),
-      app_badge.Badge(name: 'Kıdemli Savaşçı', description: '15 deneme! Artık bu işin kurdu olmaya başladın.', icon: Icons.shield, color: AppTheme.successColor, isUnlocked: testCount >= 15, rarity: app_badge.BadgeRarity.rare, hint: "Toplam 15 deneme ekle."),
-      app_badge.Badge(name: 'Deneme Fatihi', description: 'Tam 50 denemeyi arşivine ekledin. Önünde kimse duramaz!', icon: Icons.military_tech, color: AppTheme.successColor, isUnlocked: testCount >= 50, rarity: app_badge.BadgeRarity.epic, hint: "Toplam 50 deneme ekle."),
+      app_badge.Badge(name: 'İlk Adım', description: 'İlk denemeni başarıyla ekledin ve zafere giden yola çıktın.', icon: Icons.flag, color: theme.colorScheme.secondary, isUnlocked: testCount >= 1, hint: "İlk denemeni ekleyerek başla."),
+      app_badge.Badge(name: 'Acemi Savaşçı', description: '5 farklı denemede savaş meydanının tozunu attın.', icon: Icons.shield_outlined, color: theme.colorScheme.secondary, isUnlocked: testCount >= 5, rarity: app_badge.BadgeRarity.common, hint: "Toplam 5 deneme ekle."),
+      app_badge.Badge(name: 'Kıdemli Savaşçı', description: '15 deneme! Artık bu işin kurdu olmaya başladın.', icon: Icons.shield, color: theme.colorScheme.secondary, isUnlocked: testCount >= 15, rarity: app_badge.BadgeRarity.rare, hint: "Toplam 15 deneme ekle."),
+      app_badge.Badge(name: 'Deneme Fatihi', description: 'Tam 50 denemeyi arşivine ekledin. Önünde kimse duramaz!', icon: Icons.military_tech, color: theme.colorScheme.secondary, isUnlocked: testCount >= 50, rarity: app_badge.BadgeRarity.epic, hint: "Toplam 50 deneme ekle."),
       app_badge.Badge(name: 'Kıvılcım', description: 'Ateşi yaktın! 3 günlük çalışma serisine ulaştın.', icon: Icons.whatshot_outlined, color: Colors.orange, isUnlocked: user.streak >= 3, hint: "3 gün ara vermeden çalış."),
       app_badge.Badge(name: 'Alev Ustası', description: 'Tam 14 gün boyunca disiplini elden bırakmadın. Bu bir irade zaferidir!', icon: Icons.local_fire_department, color: Colors.orange, isUnlocked: user.streak >= 14, rarity: app_badge.BadgeRarity.rare, hint: "14 günlük seriye ulaş."),
       app_badge.Badge(name: 'Durdurulamaz', description: '30 gün! Sen artık bir alışkanlık abidesisin.', icon: Icons.wb_sunny, color: Colors.orange, isUnlocked: user.streak >= 30, rarity: app_badge.BadgeRarity.epic, hint: "Tam 30 gün ara verme."),
@@ -206,8 +219,8 @@ class _ProfileView extends ConsumerWidget {
       app_badge.Badge(name: 'Taktik Nişancı', description: 'Ortalama 100 net barajını yıktın. Sen bir efsanesin!', icon: Icons.workspace_premium, color: Colors.blueAccent, isUnlocked: avgNet > 100, rarity: app_badge.BadgeRarity.epic, hint: "Net ortalamanı 100'ün üzerine çıkar."),
       app_badge.Badge(name: 'Günlük Görev Ustası', description: 'Günlük görevlerini düzenli olarak tamamladın.', icon: Icons.checklist, color: Colors.purpleAccent, isUnlocked: (user.completedDailyTasks.values.expand((e) => e).length) >= 15, rarity: app_badge.BadgeRarity.rare, hint: "Günlük görevlerini düzenli olarak tamamla."),
       app_badge.Badge(name: 'Odaklanma Ninjası', description: 'Toplam 10 saat Pomodoro tekniği ile odaklandın.', icon: Icons.timer, color: Colors.purpleAccent, isUnlocked: focusSessions.fold(0, (p, c) => p + c.durationInSeconds) >= 36000, rarity: app_badge.BadgeRarity.rare, hint: "Toplam 10 saat odaklan."),
-      app_badge.Badge(name: 'Cevher Avcısı', description: 'Cevher Atölyesi\'nde ilk zayıf konunu işledin.', icon: Icons.construction, color: AppTheme.secondaryColor, isUnlocked: performance.topicPerformances.isNotEmpty, hint: "Cevher Atöylyesi'ni kullan."),
-      app_badge.Badge(name: 'Arena Gladyatörü', description: 'Liderlik tablosuna girerek adını duyurdun.', icon: Icons.leaderboard, color: AppTheme.secondaryColor, isUnlocked: user.engagementScore > 0, rarity: app_badge.BadgeRarity.common, hint: "Etkileşim puanı kazan."),
+      app_badge.Badge(name: 'Cevher Avcısı', description: 'Cevher Atölyesi\'nde ilk zayıf konunu işledin.', icon: Icons.construction, color: theme.colorScheme.primary, isUnlocked: performance.topicPerformances.isNotEmpty, hint: "Cevher Atöylyesi'ni kullan."),
+      app_badge.Badge(name: 'Arena Gladyatörü', description: 'Liderlik tablosuna girerek adını duyurdun.', icon: Icons.leaderboard, color: theme.colorScheme.primary, isUnlocked: user.engagementScore > 0, rarity: app_badge.BadgeRarity.common, hint: "Etkileşim puanı kazan."),
       app_badge.Badge(name: 'Efsane', description: 'Tüm madalyaları toplayarak ölümsüzleştin!', icon: Icons.auto_stories, color: Colors.amber, isUnlocked: false, rarity: app_badge.BadgeRarity.legendary, hint: "Tüm diğer madalyaları kazan."),
     ];
   }
@@ -248,8 +261,11 @@ class _ProfileView extends ConsumerWidget {
 
     final testCount = tests.length;
     final avgNet = testCount > 0 ? user.totalNetSum / testCount : 0.0;
-    final allBadges = _generateBadges(user, performance, planDoc, testCount, avgNet, focusSessions);
+    final allBadges = _generateBadges(context, user, performance, planDoc, testCount, avgNet, focusSessions);
     final unlockedCount = allBadges.where((b) => b.isUnlocked).length;
+
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Stack(
       alignment: Alignment.topCenter,
@@ -270,8 +286,14 @@ class _ProfileView extends ConsumerWidget {
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(28),
-                            gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0x221F1F1F), Color(0x111F1F1F)]),
-                            border: Border.all(color: Colors.white54.withValues(alpha: (Colors.white54.a * 0.22).toDouble())),
+                            gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  colorScheme.surface.withOpacity(0.5),
+                                  colorScheme.surface.withOpacity(0.2)
+                                ]),
+                            border: Border.all(color: colorScheme.onSurface.withOpacity(0.12)),
                           ),
                           child: Column(
                             children: [
@@ -284,7 +306,7 @@ class _ProfileView extends ConsumerWidget {
                                   Flexible(
                                     child: Text(
                                       user.name ?? 'İsimsiz Savaşçı',
-                                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 0.5),
+                                      style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 0.5),
                                       textAlign: TextAlign.center,
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -313,7 +335,7 @@ class _ProfileView extends ConsumerWidget {
                                 children: [
                                   Image.asset('assets/images/logo.png', width: 28, height: 28),
                                   const SizedBox(width: 8),
-                                  Text('Taktik App', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: _accentProfile2, fontWeight: FontWeight.bold)),
+                                  Text('Taktik App', style: theme.textTheme.titleMedium?.copyWith(color: colorScheme.secondary, fontWeight: FontWeight.bold)),
                                 ],
                               ),
                             ],
@@ -337,7 +359,7 @@ class _ProfileView extends ConsumerWidget {
                           alignment: Alignment.centerRight,
                           child: Text(
                             'Son güncelleme: ${DateFormat('dd MMM yyyy HH:mm', 'tr_TR').format(statsUpdatedAt)}',
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white70),
+                            style: theme.textTheme.labelSmall?.copyWith(color: colorScheme.onSurface.withOpacity(0.7)),
                           ),
                         ),
                       const SizedBox(height: 14),
@@ -397,7 +419,7 @@ class _ProfileView extends ConsumerWidget {
           shouldLoop: false,
           numberOfParticles: 30,
           gravity: 0.2,
-          colors: const [AppTheme.secondaryColor, AppTheme.successColor, Colors.white, Colors.amber],
+          colors: [colorScheme.primary, colorScheme.secondary, colorScheme.onSurface, Colors.amber],
         ),
       ],
     );
@@ -418,8 +440,8 @@ class _FollowCount extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          color: Colors.white.withValues(alpha: (Colors.white.a * 0.06).toDouble()),
-          border: Border.all(color: Colors.white.withValues(alpha: (Colors.white.a * 0.12).toDouble())),
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.06),
+          border: Border.all(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.12)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -437,7 +459,7 @@ class _FollowCount extends StatelessWidget {
                 child: FittedBox(
                   child: Text(
                     label,
-                    style: textTheme.labelMedium?.copyWith(color: Colors.white70),
+                    style: textTheme.labelMedium?.copyWith(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
                     maxLines: 1,
                   ),
                 ),
@@ -499,6 +521,10 @@ class _ProfileAvatarHaloState extends State<_ProfileAvatarHalo> with SingleTicke
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final _accentProfile1 = colorScheme.primary;
+    final _accentProfile2 = colorScheme.secondary;
+
     const double outerSize = 170;
     const double avatarDiameter = 126;
     final primaryGlow = widget.color.o(0.30);
@@ -572,6 +598,8 @@ class _ProfileAvatarHaloState extends State<_ProfileAvatarHalo> with SingleTicke
                     rankIndex: widget.rankIndex,
                     color: widget.color,
                     intensity: 0.35 + (widget.rankIndex * 0.04).clamp(0, 0.4),
+                    accent: _accentProfile2, // Pass theme-aware color
+                    base: _accentProfile1,   // Pass theme-aware color
                   ),
                 ),
               ),
@@ -593,7 +621,7 @@ class _ProfileAvatarHaloState extends State<_ProfileAvatarHalo> with SingleTicke
                 ],
               ),
               child: Container(
-                decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.black),
+                decoration: BoxDecoration(shape: BoxShape.circle, color: Theme.of(context).scaffoldBackgroundColor),
                 child: ClipOval(
                   child: widget.user.avatarStyle != null && widget.user.avatarSeed != null
                       ? SvgPicture.network(
@@ -601,7 +629,7 @@ class _ProfileAvatarHaloState extends State<_ProfileAvatarHalo> with SingleTicke
                     fit: BoxFit.cover,
                     width: avatarDiameter,
                     height: avatarDiameter,
-                    placeholderBuilder: (_) => const Center(
+                    placeholderBuilder: (_) => Center(
                       child: SizedBox(
                         width: 30,
                         height: 30,
@@ -633,15 +661,13 @@ class _ProfileAvatarHaloState extends State<_ProfileAvatarHalo> with SingleTicke
 }
 
 class _RankFramePainter extends CustomPainter {
-  final int rankIndex; final Color color; final double intensity;
-  _RankFramePainter({required this.rankIndex, required this.color, required this.intensity});
+  final int rankIndex; final Color color; final double intensity; final Color accent; final Color base;
+  _RankFramePainter({required this.rankIndex, required this.color, required this.intensity, required this.accent, required this.base});
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width/2, size.height/2);
     final radius = size.width/2 - 12;
     final tier = rankIndex;
-    final base = color;
-    final accent = rankIndex >= 6 ? _accentProfile2 : _accentProfile1;
     final gradient = SweepGradient(
       colors: [
         base.o(intensity * 0.2),
@@ -732,7 +758,7 @@ class _PulsingCore extends StatelessWidget {
             height: size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: RadialGradient(colors: [color, Colors.transparent]),
+              gradient: RadialGradient(colors: [color, color.withOpacity(0)]),
             ),
           ),
         );
@@ -751,7 +777,7 @@ class _SparkParticle extends StatelessWidget {
     final dist = radius + (index % 3) * 4;
     final dx = dist * math.cos(angle);
     final dy = dist * math.sin(angle);
-    final baseColor = apex ? _accentProfile2 : _accentProfile1;
+    final baseColor = apex ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.primary;
     return AnimatedBuilder(
       animation: controller,
       builder: (context, child) {
@@ -800,7 +826,7 @@ class _HaloRing extends StatelessWidget {
               height: size,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: RadialGradient(colors: [color, Colors.transparent]),
+                gradient: RadialGradient(colors: [color, color.withOpacity(0)]),
               ),
             ),
           ),
@@ -840,16 +866,21 @@ class _NeoXpBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final capped = progress.clamp(0.0, 1.0);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final _accentProfile1 = colorScheme.primary;
+    final _accentProfile2 = colorScheme.secondary;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            const Icon(Icons.flash_on_rounded, size: 18, color: _accentProfile2),
+            Icon(Icons.flash_on_rounded, size: 18, color: _accentProfile2),
             const SizedBox(width: 6),
-            Text('Rütbe Puanı', style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold)),
+            Text('Rütbe Puanı', style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold)),
             const Spacer(),
-            Text('$currentXp / $nextLevelXp', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white70)),
+            Text('$currentXp / $nextLevelXp', style: theme.textTheme.labelSmall?.copyWith(color: colorScheme.onSurface.withOpacity(0.7))),
           ],
         ),
         const SizedBox(height: 10),
@@ -857,7 +888,7 @@ class _NeoXpBar extends StatelessWidget {
           padding: const EdgeInsets.all(2),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
-            gradient: const LinearGradient(colors: [_accentProfile1, _accentProfile2]),
+            gradient: LinearGradient(colors: [_accentProfile1, _accentProfile2]),
           ),
           child: LayoutBuilder(
             builder: (context, constraints) {
@@ -868,7 +899,7 @@ class _NeoXpBar extends StatelessWidget {
                     height: 22,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
-                      color: Colors.black.o(0.55),
+                      color: colorScheme.background.withOpacity(0.55),
                     ),
                   ),
                   AnimatedContainer(
@@ -878,7 +909,7 @@ class _NeoXpBar extends StatelessWidget {
                     height: 22,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
-                      gradient: const LinearGradient(begin: Alignment.centerLeft, end: Alignment.centerRight, colors: [_accentProfile2, _accentProfile1]),
+                      gradient: LinearGradient(begin: Alignment.centerLeft, end: Alignment.centerRight, colors: [_accentProfile2, _accentProfile1]),
                       boxShadow: [
                         BoxShadow(color: _accentProfile2.o(0.4), blurRadius: 18, spreadRadius: 1),
                       ],
@@ -899,7 +930,10 @@ class _ProfileStatCard extends StatelessWidget {
   const _ProfileStatCard({required this.label, required this.value, required this.icon, required this.delay});
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Semantics(
       label: '$label istatistiği: $value',
       child: Container(
@@ -907,8 +941,14 @@ class _ProfileStatCard extends StatelessWidget {
         constraints: const BoxConstraints(minHeight: 104),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
-          gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0x1FFFFFFF), Color(0x0DFFFFFF)]),
-          border: Border.all(color: Colors.white.o(0.12), width: 1),
+          gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                colorScheme.onSurface.withOpacity(0.1),
+                colorScheme.onSurface.withOpacity(0.05)
+              ]),
+          border: Border.all(color: colorScheme.onSurface.withOpacity(0.12), width: 1),
         ),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
@@ -916,7 +956,7 @@ class _ProfileStatCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, size: 22, color: _accentProfile2),
+              Icon(icon, size: 22, color: colorScheme.secondary),
               const SizedBox(height: 10),
               FittedBox(
                 child: Text(
@@ -928,7 +968,7 @@ class _ProfileStatCard extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 label,
-                style: textTheme.labelMedium?.copyWith(color: Colors.white70),
+                style: textTheme.labelMedium?.copyWith(color: colorScheme.onSurface.withOpacity(0.7)),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -996,13 +1036,19 @@ class _ActionNeoState extends State<_ActionNeo> {
           height: 64,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(22),
-            gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0x221F1F1F), Color(0x111F1F1F)]),
-            border: Border.all(color: Colors.white.o(0.12), width: 1),
+            gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Theme.of(context).colorScheme.surface.withOpacity(0.5),
+                  Theme.of(context).colorScheme.surface.withOpacity(0.2)
+                ]),
+            border: Border.all(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.12), width: 1),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(widget.icon, color: _accentProfile1, size: 22),
+              Icon(widget.icon, color: Theme.of(context).colorScheme.primary, size: 22),
               const SizedBox(width: 8),
               Text(widget.label, style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600)),
             ],

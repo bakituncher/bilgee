@@ -113,9 +113,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   Future<void> _showExpiredPlanNudge(BuildContext context) async {
     if (!mounted) return;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     await showModalBottomSheet(
       context: context,
-      backgroundColor: AppTheme.cardColor.withValues(alpha: .98),
+      backgroundColor: theme.cardColor.withOpacity(.98),
       isScrollControlled: false,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) {
@@ -126,15 +129,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Row(children: [
-                  Icon(Icons.auto_awesome_rounded, color: AppTheme.secondaryColor, size: 28),
-                  SizedBox(width: 8),
-                  Expanded(child: Text('Yeni Haftayı Mühürleyelim', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)))
+                Row(children: [
+                  Icon(Icons.auto_awesome_rounded, color: colorScheme.primary, size: 28),
+                  const SizedBox(width: 8),
+                  const Expanded(child: Text('Yeni Haftayı Mühürleyelim', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)))
                 ]),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Haftalık planının süresi doldu. Güncel hedeflerin, müfredat sırası ve son performansına göre taptaze bir harekât planı çıkaralım.',
-                  style: TextStyle(color: AppTheme.secondaryTextColor),
+                  style: TextStyle(color: colorScheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: 14),
                 Container(
@@ -142,10 +145,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(14),
                     gradient: LinearGradient(colors: [
-                      AppTheme.secondaryColor.withOpacity(.12),
-                      AppTheme.lightSurfaceColor.withOpacity(.10)
+                      colorScheme.primary.withOpacity(.12),
+                      colorScheme.surfaceVariant.withOpacity(.10)
                     ], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                    border: Border.all(color: AppTheme.lightSurfaceColor.withOpacity(.35)),
+                    border: Border.all(color: colorScheme.surfaceVariant.withOpacity(.35)),
                   ),
                   child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     _NudgeBullet(icon: Icons.route_rounded, text: 'Müfredat sırasına sadık, tekrar etmeyen konu akışı'),
@@ -239,12 +242,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 floating: false,
                 snap: false,
                 elevation: _appBarOpacity > 0.95 ? 2 : 0,
-                backgroundColor: AppTheme.cardColor.withValues(alpha: _appBarOpacity * 0.92),
+                backgroundColor: Theme.of(context).cardColor.withOpacity(_appBarOpacity * 0.92),
                 surfaceTintColor: Colors.transparent,
                 toolbarHeight: 56,
                 leading: Builder(
                   builder: (ctx) => IconButton(
-                    icon: const Icon(Icons.menu_rounded, color: AppTheme.secondaryColor),
+                    icon: Icon(Icons.menu_rounded, color: Theme.of(context).colorScheme.primary),
                     onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
                     tooltip: 'Menü',
                   ),
@@ -267,8 +270,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          AppTheme.cardColor.withValues(alpha: (_appBarOpacity * 0.95).clamp(0, .95)),
-                          AppTheme.cardColor.withValues(alpha: (_appBarOpacity * 0.70).clamp(0, .70)),
+                          Theme.of(context).cardColor.withOpacity((_appBarOpacity * 0.95).clamp(0, .95)),
+                          Theme.of(context).cardColor.withOpacity((_appBarOpacity * 0.70).clamp(0, .70)),
                         ],
                       ),
                     ),
@@ -308,14 +311,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 class _DailyQuestsCard extends ConsumerWidget {
   const _DailyQuestsCard();
   String _formatRemaining(Duration d) { final h = d.inHours; final m = d.inMinutes.remainder(60); if (h == 0) return '${m}dk'; return '${h}sa ${m}dk'; }
-  Color _progressColor(double p) {
+  Color _progressColor(BuildContext context, double p) {
+    final colorScheme = Theme.of(context).colorScheme;
     if (p >= .999) return Colors.greenAccent;
-    if (p >= .85) return Colors.greenAccent.withValues(alpha: .9);
-    if (p >= .5) return AppTheme.secondaryColor;
-    return AppTheme.lightSurfaceColor.withValues(alpha: .9);
+    if (p >= .85) return Colors.greenAccent.withOpacity(.9);
+    if (p >= .5) return colorScheme.primary;
+    return colorScheme.surfaceVariant.withOpacity(.9);
   }
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final user = ref.watch(userProfileProvider).value; if (user == null) return const SizedBox.shrink();
     final questProg = ref.watch(dailyQuestsProgressProvider);
     final hasClaimable = ref.watch(hasClaimableQuestsProvider);
@@ -336,33 +342,33 @@ class _DailyQuestsCard extends ConsumerWidget {
     final card = Card(
       clipBehavior: Clip.antiAlias,
       elevation: progress >= 1.0 ? 10 : 6,
-      shadowColor: hasClaimable ? AppTheme.goldColor.withOpacity(0.7) : (progress >= 1.0 ? AppTheme.successColor.withValues(alpha: .6) : AppTheme.lightSurfaceColor.withValues(alpha: .35)),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24), side: BorderSide(color: hasClaimable ? AppTheme.goldColor : _progressColor(progress), width: 2)),
+      shadowColor: hasClaimable ? AppTheme.goldColor.withOpacity(0.7) : (progress >= 1.0 ? AppTheme.successColor.withOpacity(.6) : colorScheme.surfaceVariant.withOpacity(.35)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24), side: BorderSide(color: hasClaimable ? AppTheme.goldColor : _progressColor(context, progress), width: 2)),
       child: InkWell(
         onTap: () => context.go('/home/quests'),
         child: Container(
           padding: const EdgeInsets.all(20.0),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [ (hasClaimable ? AppTheme.goldColor : _progressColor(progress)).withValues(alpha: 0.18), AppTheme.cardColor.withValues(alpha: 0.55), ],
+              colors: [ (hasClaimable ? AppTheme.goldColor : _progressColor(context, progress)).withOpacity(0.18), theme.cardColor.withOpacity(0.55), ],
               begin: Alignment.topLeft, end: Alignment.bottomRight,
             ),
           ),
           child: Row(children: [
             Stack(alignment: Alignment.center, children: [
-              SizedBox(height: 56, width: 56, child: CircularProgressIndicator(value: progress == 0 ? null : progress, strokeWidth: 6, backgroundColor: AppTheme.lightSurfaceColor.withValues(alpha: .25), valueColor: AlwaysStoppedAnimation(hasClaimable ? AppTheme.goldColor : _progressColor(progress)),)),
-              Icon(hasClaimable ? Icons.military_tech_rounded : (progress >=1 ? Icons.emoji_events_rounded : Icons.shield_moon_rounded), size: 28, color: hasClaimable ? AppTheme.goldColor : _progressColor(progress)),
+              SizedBox(height: 56, width: 56, child: CircularProgressIndicator(value: progress == 0 ? null : progress, strokeWidth: 6, backgroundColor: colorScheme.surfaceVariant.withOpacity(.25), valueColor: AlwaysStoppedAnimation(hasClaimable ? AppTheme.goldColor : _progressColor(context, progress)),)),
+              Icon(hasClaimable ? Icons.military_tech_rounded : (progress >=1 ? Icons.emoji_events_rounded : Icons.shield_moon_rounded), size: 28, color: hasClaimable ? AppTheme.goldColor : _progressColor(context, progress)),
             ]),
             const SizedBox(width: 16),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-              Text(hasClaimable ? "Ödül Zamanı!" : (progress >=1 ? "Zafer!" : "Günlük Görevler"), style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.white)),
+              Text(hasClaimable ? "Ödül Zamanı!" : (progress >=1 ? "Zafer!" : "Günlük Görevler"), style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: colorScheme.onSurface)),
               const SizedBox(height: 4),
-              Text(total == 0 ? 'Bugün görev yok' : '$completed / $total tamamlandı • Kalan ${_formatRemaining(remaining)}', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor)),
+              Text(total == 0 ? 'Bugün görev yok' : '$completed / $total tamamlandı • Kalan ${_formatRemaining(remaining)}', style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
               const SizedBox(height: 6),
-              ClipRRect(borderRadius: BorderRadius.circular(6), child: LinearProgressIndicator(value: progress.clamp(0,1), minHeight: 6, backgroundColor: AppTheme.lightSurfaceColor.withValues(alpha: .25), valueColor: AlwaysStoppedAnimation(hasClaimable ? AppTheme.goldColor : _progressColor(progress)),)),
+              ClipRRect(borderRadius: BorderRadius.circular(6), child: LinearProgressIndicator(value: progress.clamp(0,1), minHeight: 6, backgroundColor: colorScheme.surfaceVariant.withOpacity(.25), valueColor: AlwaysStoppedAnimation(hasClaimable ? AppTheme.goldColor : _progressColor(context, progress)),)),
             ])),
             const SizedBox(width: 8),
-            const Icon(Icons.arrow_forward_ios_rounded, color: AppTheme.secondaryTextColor, size: 18),
+            Icon(Icons.arrow_forward_ios_rounded, color: colorScheme.onSurfaceVariant, size: 18),
           ]),
         ),
       ),
@@ -384,7 +390,7 @@ class _NotificationBell extends ConsumerWidget {
         IconButton(
           tooltip: 'Bildirimler',
           onPressed: () => context.go('/notifications'),
-          icon: const Icon(Icons.notifications_none_rounded, color: AppTheme.secondaryColor),
+          icon: Icon(Icons.notifications_none_rounded, color: Theme.of(context).colorScheme.primary),
         ),
         if (count > 0)
           Positioned(
@@ -393,13 +399,13 @@ class _NotificationBell extends ConsumerWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: Colors.redAccent,
+                color: Theme.of(context).colorScheme.error,
                 borderRadius: BorderRadius.circular(10),
               ),
               constraints: const BoxConstraints(minWidth: 18),
               child: Text(
                 count > 99 ? '99+' : '$count',
-                style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                style: TextStyle(color: Theme.of(context).colorScheme.onError, fontSize: 11, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -414,13 +420,15 @@ class _NudgeBullet extends StatelessWidget {
   const _NudgeBullet({required this.icon, required this.text});
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return Row(children: [
       Container(
-        decoration: BoxDecoration(shape: BoxShape.circle, color: AppTheme.secondaryColor.withOpacity(.18)),
-        padding: const EdgeInsets.all(6), child: Icon(icon, size: 16, color: AppTheme.secondaryColor),
+        decoration: BoxDecoration(shape: BoxShape.circle, color: colorScheme.primary.withOpacity(.18)),
+        padding: const EdgeInsets.all(6), child: Icon(icon, size: 16, color: colorScheme.primary),
       ),
       const SizedBox(width: 10),
-      Expanded(child: Text(text, style: const TextStyle(color: Colors.white)))
+      Expanded(child: Text(text, style: TextStyle(color: colorScheme.onSurface)))
     ]);
   }
 }
