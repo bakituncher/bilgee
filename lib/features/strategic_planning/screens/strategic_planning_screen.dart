@@ -373,7 +373,8 @@ class StrategicPlanningScreen extends ConsumerWidget {
     );
   }
 
-  Widget _ActionCard({
+  Widget _ActionCard(
+    BuildContext context, {
     required String title,
     required String subtitle,
     required IconData icon,

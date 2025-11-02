@@ -482,11 +482,11 @@ class _WSHeader extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.06),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppTheme.lightSurfaceColor),
+              border: Border.all(color: Theme.of(context).colorScheme.surface),
             ),
             child: Row(
               children: [
-                const Icon(Icons.bar_chart_rounded, color: AppTheme.secondaryColor),
+                Icon(Icons.bar_chart_rounded, color: Theme.of(context).colorScheme.secondary),
                 const SizedBox(width: 8),
                 Text(title, style: Theme.of(context).textTheme.titleMedium),
               ],

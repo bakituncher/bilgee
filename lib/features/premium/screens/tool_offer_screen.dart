@@ -1055,7 +1055,7 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
                         ),
                         child: Text(
                           widget.tag!,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Theme.of(context).primaryColor,
                             fontWeight: FontWeight.bold,
                             fontSize: 10,

@@ -1138,7 +1138,7 @@ class _SummaryViewState extends ConsumerState<_SummaryView> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
-                      crossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('Ustalık Parlıyor!',
                             style: Theme.of(context)

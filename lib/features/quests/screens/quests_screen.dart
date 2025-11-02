@@ -311,7 +311,7 @@ class GamifiedQuestCard extends ConsumerWidget {
               if (isClaimable)
                 _buildClaimRewardPrompt()
               else
-                _buildProgressBar(progress),
+                _buildProgressBar(context, progress),
             ],
           ],
         ),
@@ -400,7 +400,7 @@ class GamifiedQuestCard extends ConsumerWidget {
         .shimmer(delay: 400.ms, duration: 1800.ms, color: Colors.amber.withOpacity(0.3));
   }
 
-  Widget _buildProgressBar(double progress) {
+  Widget _buildProgressBar(BuildContext context, double progress) {
     return Row(
       children: [
         Expanded(
