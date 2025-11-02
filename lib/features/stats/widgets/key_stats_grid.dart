@@ -96,6 +96,8 @@ class _StatCardState extends State<_StatCard> with SingleTickerProviderStateMixi
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return GestureDetector(
       onTapDown: (_) => setState(() => _isPressed = true),
       onTapUp: (_) => setState(() => _isPressed = false),
@@ -106,21 +108,30 @@ class _StatCardState extends State<_StatCard> with SingleTickerProviderStateMixi
         child: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                widget.color.withOpacity(0.16),
-                widget.color.withOpacity(0.06),
-              ],
+              colors: isDark
+                  ? [
+                      widget.color.withOpacity(0.16),
+                      widget.color.withOpacity(0.06),
+                    ]
+                  : [
+                      widget.color.withOpacity(0.22),
+                      widget.color.withOpacity(0.12),
+                    ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: widget.color.withOpacity(0.32),
+              color: isDark
+                  ? widget.color.withOpacity(0.32)
+                  : widget.color.withOpacity(0.45),
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: widget.color.withOpacity(0.18),
+                color: isDark
+                    ? widget.color.withOpacity(0.18)
+                    : Colors.black.withOpacity(0.12),
                 blurRadius: 8,
                 offset: const Offset(0, 3),
               ),

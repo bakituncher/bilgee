@@ -404,14 +404,15 @@ class _AiToolTile extends StatelessWidget {
                                 Colors.white.withOpacity(.03),
                               ]
                             : [
-                                Theme.of(context).cardColor.withOpacity(.95),
-                                Theme.of(context).cardColor.withOpacity(.85),
+                                Theme.of(context).cardColor.withOpacity(.98),
+                                Theme.of(context).cardColor.withOpacity(.92),
                               ],
                       ),
                       border: Border.all(
                         color: isDark 
                             ? Colors.white.withOpacity(.12)
-                            : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(.3),
+                            : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(.5),
+                        width: 1.5,
                       ),
                     ),
                   ),

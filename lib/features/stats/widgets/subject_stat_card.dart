@@ -21,6 +21,7 @@ class _SubjectStatCardState extends State<SubjectStatCard> {
     final double minNet = -(widget.analysis.questionCount * widget.analysis.penaltyCoefficient);
     final double maxNet = widget.analysis.questionCount.toDouble();
     final double progress = (maxNet - minNet) == 0 ? 0.0 : (widget.analysis.averageNet - minNet) / (maxNet - minNet);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final Color progressColor = Color.lerp(Theme.of(context).colorScheme.error, Theme.of(context).colorScheme.secondary, progress.clamp(0.0, 1.0))!;
 
@@ -37,29 +38,38 @@ class _SubjectStatCardState extends State<SubjectStatCard> {
             curve: Curves.easeOutCubic,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  progressColor.withOpacity(_isHovered ? 0.14 : 0.09),
-                  progressColor.withOpacity(_isHovered ? 0.09 : 0.05),
-                ],
+                colors: isDark
+                    ? [
+                        progressColor.withOpacity(_isHovered ? 0.14 : 0.09),
+                        progressColor.withOpacity(_isHovered ? 0.09 : 0.05),
+                      ]
+                    : [
+                        progressColor.withOpacity(_isHovered ? 0.20 : 0.15),
+                        progressColor.withOpacity(_isHovered ? 0.15 : 0.10),
+                      ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: progressColor.withOpacity(_isHovered ? 0.45 : 0.28),
+                color: isDark
+                    ? progressColor.withOpacity(_isHovered ? 0.45 : 0.28)
+                    : progressColor.withOpacity(_isHovered ? 0.60 : 0.45),
                 width: 1.5,
               ),
               boxShadow: _isHovered
                   ? [
                 BoxShadow(
-                  color: progressColor.withOpacity(0.25),
+                  color: progressColor.withOpacity(isDark ? 0.25 : 0.30),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
               ]
                   : [
                 BoxShadow(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
+                  color: isDark
+                      ? Theme.of(context).colorScheme.primary.withOpacity(0.05)
+                      : Colors.black.withOpacity(0.10),
                   blurRadius: 6,
                   offset: const Offset(0, 2),
                 ),
