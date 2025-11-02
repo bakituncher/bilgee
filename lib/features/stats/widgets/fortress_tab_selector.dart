@@ -11,26 +11,36 @@ class FortressTabSelector extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedIndex = ref.watch(selectedTabIndexProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
-            Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25),
-          ],
+          colors: isDark
+              ? [
+                  Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                  Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25),
+                ]
+              : [
+                  Theme.of(context).cardColor.withOpacity(0.95),
+                  Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: Theme.of(context).colorScheme.secondary.withOpacity(0.15),
+          color: isDark
+              ? Theme.of(context).colorScheme.primary.withOpacity(0.15)
+              : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.06),
+            color: isDark 
+                ? Theme.of(context).colorScheme.primary.withOpacity(0.06)
+                : Colors.black.withOpacity(0.08),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -50,8 +60,8 @@ class FortressTabSelector extends ConsumerWidget {
                   gradient: isSelected
                       ? LinearGradient(
                     colors: [
-                      Theme.of(context).colorScheme.secondary,
-                      Theme.of(context).colorScheme.secondary.withOpacity(0.88),
+                      Theme.of(context).colorScheme.primary,
+                      Theme.of(context).colorScheme.primary.withOpacity(0.88),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -61,7 +71,7 @@ class FortressTabSelector extends ConsumerWidget {
                   boxShadow: isSelected
                       ? [
                     BoxShadow(
-                      color: Theme.of(context).colorScheme.secondary.withOpacity(0.4),
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.4),
                       blurRadius: 8,
                       offset: const Offset(0, 3),
                     ),
@@ -75,7 +85,7 @@ class FortressTabSelector extends ConsumerWidget {
                       Icon(
                         Icons.auto_graph_rounded,
                         size: 14,
-                        color: Theme.of(context).colorScheme.primary,
+                        color: Theme.of(context).colorScheme.onPrimary,
                       ).animate(
                         onPlay: (controller) => controller.repeat(),
                       ).shimmer(
@@ -93,7 +103,9 @@ class FortressTabSelector extends ConsumerWidget {
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: isSelected ? 14 : 13,
-                          color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant,
+                          color: isSelected 
+                              ? Theme.of(context).colorScheme.onPrimary
+                              : Theme.of(context).colorScheme.onSurfaceVariant,
                           letterSpacing: 0.2,
                         ),
                       ),

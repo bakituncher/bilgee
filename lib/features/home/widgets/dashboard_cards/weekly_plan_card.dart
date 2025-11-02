@@ -29,6 +29,7 @@ class WeeklyPlanCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final planDoc = ref.watch(planProvider).value;
     final userId = ref.watch(userProfileProvider).value?.id;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (userId == null) return const SizedBox.shrink();
 
@@ -37,20 +38,31 @@ class WeeklyPlanCard extends ConsumerWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
         gradient: LinearGradient(
-          colors: [
-            Theme.of(context).colorScheme.primary.withOpacity(0.85),
-            Theme.of(context).colorScheme.primary.withOpacity(0.55),
-            Theme.of(context).cardColor.withOpacity(0.40),
-          ],
+          colors: isDark
+              ? [
+                  Theme.of(context).colorScheme.primary.withOpacity(0.85),
+                  Theme.of(context).colorScheme.primary.withOpacity(0.55),
+                  Theme.of(context).cardColor.withOpacity(0.40),
+                ]
+              : [
+                  Theme.of(context).cardColor.withOpacity(0.98),
+                  Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                  Theme.of(context).cardColor.withOpacity(0.95),
+                ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35), width: 1),
+        border: Border.all(
+          color: isDark
+              ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35)
+              : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).brightness == Brightness.dark
+            color: isDark
                 ? Colors.black.withOpacity(.35)
-                : Colors.black.withOpacity(.15),
+                : Colors.black.withOpacity(.12),
             blurRadius: 18,
             offset: const Offset(0, 8),
           )
@@ -134,6 +146,7 @@ class _HeaderBar extends ConsumerWidget {
   const _HeaderBar({required this.dateForTab, required this.weeklyPlan, required this.userId, required this.completedByDate});
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     int total=0; int done=0;
     final now=DateTime.now();
     final sow=now.subtract(Duration(days: now.weekday-1));
@@ -153,12 +166,27 @@ class _HeaderBar extends ConsumerWidget {
       padding: const EdgeInsets.fromLTRB(20,18,20,16),
       decoration: BoxDecoration(
         borderRadius: const BorderRadius.only(topLeft: Radius.circular(28), topRight: Radius.circular(28)),
-        gradient: LinearGradient(colors:[Theme.of(context).colorScheme.primary.withOpacity(.18), Theme.of(context).colorScheme.primary.withOpacity(.04)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+        gradient: LinearGradient(
+          colors: isDark
+              ? [
+                  Theme.of(context).colorScheme.primary.withOpacity(.18), 
+                  Theme.of(context).colorScheme.primary.withOpacity(.04),
+                ]
+              : [
+                  Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(.25),
+                  Theme.of(context).cardColor.withOpacity(.95),
+                ],
+          begin: Alignment.topLeft, 
+          end: Alignment.bottomRight,
+        ),
       ),
       child: Row(crossAxisAlignment: CrossAxisAlignment.center, children:[
         Stack(alignment: Alignment.center, children:[
           SizedBox(height:58,width:58,child:CircularProgressIndicator(strokeWidth:6,value:_clamp01(ratio),backgroundColor:Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(.35),valueColor:AlwaysStoppedAnimation(ratio>=.75?Colors.green:Theme.of(context).colorScheme.primary)) ),
-          Column(mainAxisSize: MainAxisSize.min,children:[Text('${(ratio*100).round()}%',style: const TextStyle(fontWeight: FontWeight.bold,fontSize:14)), Text('Hafta',style: TextStyle(fontSize:10,color:Theme.of(context).colorScheme.onSurfaceVariant))])
+          Column(mainAxisSize: MainAxisSize.min,children:[
+            Text('${(ratio*100).round()}%',style: TextStyle(fontWeight: FontWeight.bold,fontSize:14,color:Theme.of(context).colorScheme.onSurface)), 
+            Text('Hafta',style: TextStyle(fontSize:10,color:Theme.of(context).colorScheme.onSurfaceVariant))
+          ])
         ]),
         const SizedBox(width:16),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children:[
@@ -199,14 +227,20 @@ class _DaySelector extends ConsumerWidget {
                 margin: const EdgeInsets.symmetric(horizontal: 4),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: isSelected ? Theme.of(context).colorScheme.primary : Colors.transparent,
+                  color: isSelected 
+                      ? Theme.of(context).colorScheme.primary 
+                      : (Theme.of(context).brightness == Brightness.dark
+                          ? Colors.transparent
+                          : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3)),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   days[index],
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: isSelected ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).colorScheme.onSurfaceVariant,
+                    color: isSelected 
+                        ? Theme.of(context).colorScheme.onPrimary 
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
               ),
@@ -295,8 +329,20 @@ class _TaskTile extends ConsumerWidget {
         child: Ink(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: (isCompleted? Colors.green: Theme.of(context).colorScheme.surfaceContainerHighest).withOpacity(.35), width: 1),
-            gradient: LinearGradient(colors:[ (isCompleted? Colors.green: Theme.of(context).colorScheme.primary).withOpacity(.08), Theme.of(context).cardColor.withOpacity(.35)], begin: Alignment.topLeft,end: Alignment.bottomRight),
+            border: Border.all(
+              color: (isCompleted? Colors.green: Theme.of(context).colorScheme.primary).withOpacity(.35), 
+              width: 1,
+            ),
+            gradient: LinearGradient(
+              colors: [
+                (isCompleted? Colors.green: Theme.of(context).colorScheme.primary).withOpacity(.08), 
+                (Theme.of(context).brightness == Brightness.dark
+                    ? Theme.of(context).cardColor.withOpacity(.35)
+                    : Theme.of(context).cardColor.withOpacity(.85)),
+              ], 
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
           ),
           padding: const EdgeInsets.fromLTRB(14,12,6,12),
           child: Row(children:[

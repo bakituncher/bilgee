@@ -28,10 +28,17 @@ class SplashScreen extends ConsumerWidget {
         });
 
         // While the navigation is happening, show a loader.
-        return const Scaffold(body: LogoLoader());
+        return Scaffold(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          body: const LogoLoader(),
+        );
       },
-      loading: () => const Scaffold(body: LogoLoader()),
+      loading: () => Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: const LogoLoader(),
+      ),
       error: (err, stack) => Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: Center(
           child: Text('Hata: $err'),
         ),
