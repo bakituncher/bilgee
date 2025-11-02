@@ -437,14 +437,14 @@ class _RankCard extends ConsumerWidget {
     final cardColor = isCurrentUser
         ? colorScheme.background.withOpacity(0.15)
         : isTopThree
-            ? getSpecialColor().withOpacity(0.15)
-            : colorScheme.surface.withOpacity(0.8);
+        ? getSpecialColor().withOpacity(0.15)
+        : colorScheme.surface.withOpacity(0.8);
 
     final borderColor = isCurrentUser
         ? colorScheme.secondary.withOpacity(0.6)
         : isTopThree
-            ? getSpecialColor().withOpacity(0.8)
-            : colorScheme.onSurface.withOpacity(0.1);
+        ? getSpecialColor().withOpacity(0.8)
+        : colorScheme.onSurface.withOpacity(0.1);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
@@ -464,8 +464,8 @@ class _RankCard extends ConsumerWidget {
             color: isCurrentUser
                 ? colorScheme.secondary.withOpacity(0.2)
                 : isTopThree
-                    ? getSpecialColor().withOpacity(0.25)
-                    : Colors.black.withOpacity(0.08),
+                ? getSpecialColor().withOpacity(0.25)
+                : Colors.black.withOpacity(0.08),
             blurRadius: isTopThree ? 14 : 10,
             spreadRadius: isTopThree ? 1 : 0,
             offset: const Offset(0, 3),
@@ -487,15 +487,15 @@ class _RankCard extends ConsumerWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
-                      colors: _getRankColors(rank, isCurrentUser),
+                      colors: _getRankColors(context, rank, isCurrentUser),
                     ),
                     border: Border.all(
-                      color: _getRankBorderColor(rank, isCurrentUser),
-                      width: rank <= 3 ? 2.0 : 1.0
+                        color: _getRankBorderColor(context, rank, isCurrentUser),
+                        width: rank <= 3 ? 2.0 : 1.0
                     ),
                     boxShadow: rank <= 3 ? [
                       BoxShadow(
-                        color: _getRankColors(rank, isCurrentUser)[0].withValues(alpha: 0.4),
+                        color: _getRankColors(context, rank, isCurrentUser)[0].withOpacity(0.4),
                         blurRadius: 8,
                         spreadRadius: 1,
                       )
@@ -510,12 +510,12 @@ class _RankCard extends ConsumerWidget {
                         fontSize: rank <= 3 ? 14 : 12,
                         shadows: rank <= 3
                             ? [
-                                Shadow(
-                                  color: Colors.black.withOpacity(0.5),
-                                  offset: const Offset(0, 1),
-                                  blurRadius: 2,
-                                )
-                              ]
+                          Shadow(
+                            color: Colors.black.withOpacity(0.5),
+                            offset: const Offset(0, 1),
+                            blurRadius: 2,
+                          )
+                        ]
                             : null,
                       ),
                     ),
@@ -531,18 +531,18 @@ class _RankCard extends ConsumerWidget {
                       color: isCurrentUser
                           ? colorScheme.secondary.withOpacity(0.6)
                           : isTopThree
-                              ? getSpecialColor().withOpacity(0.8)
-                              : colorScheme.onSurface.withOpacity(0.3),
+                          ? getSpecialColor().withOpacity(0.8)
+                          : colorScheme.onSurface.withOpacity(0.3),
                       width: isTopThree ? 2.5 : 1.5,
                     ),
                     boxShadow: isTopThree
                         ? [
-                            BoxShadow(
-                              color: getSpecialColor().withOpacity(0.3),
-                              blurRadius: 6,
-                              spreadRadius: 0.5,
-                            )
-                          ]
+                      BoxShadow(
+                        color: getSpecialColor().withOpacity(0.3),
+                        blurRadius: 6,
+                        spreadRadius: 0.5,
+                      )
+                    ]
                         : null,
                   ),
                   child: CircleAvatar(
@@ -551,37 +551,37 @@ class _RankCard extends ConsumerWidget {
                     child: ClipOval(
                       child: (entry.avatarStyle != null && entry.avatarSeed != null)
                           ? SvgPicture.network(
-                              'https://api.dicebear.com/9.x/${entry.avatarStyle}/svg?seed=${entry.avatarSeed}',
-                              fit: BoxFit.cover,
-                            )
+                        'https://api.dicebear.com/9.x/${entry.avatarStyle}/svg?seed=${entry.avatarSeed}',
+                        fit: BoxFit.cover,
+                      )
                           : Container(
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: LinearGradient(
-                                  colors: isTopThree
-                                      ? [
-                                          getSpecialColor().withOpacity(0.8),
-                                          getSpecialColor().withOpacity(0.6),
-                                        ]
-                                      : [
-                                          colorScheme.primary.withOpacity(0.8),
-                                          colorScheme.secondary.withOpacity(0.8),
-                                        ],
-                                ),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  entry.userName.isNotEmpty
-                                      ? entry.userName.substring(0, 1).toUpperCase()
-                                      : '?',
-                                  style: textTheme.titleMedium?.copyWith(
-                                    color: colorScheme.onSurface,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            colors: isTopThree
+                                ? [
+                              getSpecialColor().withOpacity(0.8),
+                              getSpecialColor().withOpacity(0.6),
+                            ]
+                                : [
+                              colorScheme.primary.withOpacity(0.8),
+                              colorScheme.secondary.withOpacity(0.8),
+                            ],
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            entry.userName.isNotEmpty
+                                ? entry.userName.substring(0, 1).toUpperCase()
+                                : '?',
+                            style: textTheme.titleMedium?.copyWith(
+                              color: colorScheme.onSurface,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
                             ),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -632,13 +632,13 @@ class _RankCard extends ConsumerWidget {
                               gradient: LinearGradient(
                                 colors: isTopThree
                                     ? [
-                                        getSpecialColor().withOpacity(0.9),
-                                        getSpecialColor().withOpacity(0.7),
-                                      ]
+                                  getSpecialColor().withOpacity(0.9),
+                                  getSpecialColor().withOpacity(0.7),
+                                ]
                                     : [
-                                        colorScheme.tertiary.withOpacity(0.8),
-                                        colorScheme.tertiary.withOpacity(0.6),
-                                      ],
+                                  colorScheme.tertiary.withOpacity(0.8),
+                                  colorScheme.tertiary.withOpacity(0.6),
+                                ],
                               ),
                             ),
                             child: Text(
@@ -669,8 +669,8 @@ class _RankCard extends ConsumerWidget {
                                       colors: isCurrentUser
                                           ? [colorScheme.primary, colorScheme.secondary]
                                           : isTopThree
-                                              ? [getSpecialColor(), getSpecialColor().withOpacity(0.7)]
-                                              : [colorScheme.tertiary, colorScheme.secondary],
+                                          ? [getSpecialColor(), getSpecialColor().withOpacity(0.7)]
+                                          : [colorScheme.tertiary, colorScheme.secondary],
                                     ),
                                   ),
                                 ),
@@ -688,139 +688,139 @@ class _RankCard extends ConsumerWidget {
                 // Takip et butonu - EN SAĞDA ve çalışır halde
                 if (!isCurrentUser)
                   isFollowingAsync?.when(
-                        data: (isFollowing) => Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
-                            gradient: LinearGradient(
-                              colors: isFollowing
-                                  ? [
-                                      colorScheme.primary.withOpacity(0.9),
-                                      colorScheme.primary.withOpacity(0.7),
-                                    ]
-                                  : [
-                                      colorScheme.secondary.withOpacity(0.9),
-                                      colorScheme.background.withOpacity(0.9),
-                                    ],
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: (isFollowing ? colorScheme.primary : colorScheme.secondary)
-                                    .withOpacity(0.25),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
+                    data: (isFollowing) => Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        gradient: LinearGradient(
+                          colors: isFollowing
+                              ? [
+                            colorScheme.primary.withOpacity(0.9),
+                            colorScheme.primary.withOpacity(0.7),
+                          ]
+                              : [
+                            colorScheme.secondary.withOpacity(0.9),
+                            colorScheme.background.withOpacity(0.9),
+                          ],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: (isFollowing ? colorScheme.primary : colorScheme.secondary)
+                                .withOpacity(0.25),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
                           ),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(16),
-                              onTap: () async {
-                                if (currentUserId == null) return;
+                        ],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: () async {
+                            if (currentUserId == null) return;
 
-                                HapticFeedback.lightImpact();
+                            HapticFeedback.lightImpact();
 
-                                try {
-                                  final firestore = ref.read(firestoreServiceProvider);
+                            try {
+                              final firestore = ref.read(firestoreServiceProvider);
 
-                                  if (isFollowing) {
-                                    // Takipten çıkar
-                                    await firestore.unfollowUser(
-                                      currentUserId: currentUserId,
-                                      targetUserId: entry.userId,
-                                    );
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text('${entry.userName} takipten çıkarıldı!'),
-                                        behavior: SnackBarBehavior.floating,
-                                        backgroundColor: colorScheme.error,
-                                        duration: const Duration(seconds: 2),
-                                      ),
-                                    );
-                                  } else {
-                                    // Takip et
-                                    await firestore.followUser(
-                                      currentUserId: currentUserId,
-                                      targetUserId: entry.userId,
-                                    );
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text('${entry.userName} takip edildi!'),
-                                        behavior: SnackBarBehavior.floating,
-                                        backgroundColor: colorScheme.primary,
-                                        duration: const Duration(seconds: 2),
-                                      ),
-                                    );
-                                  }
-                                } catch (e) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Bir hata oluştu: $e'),
-                                      behavior: SnackBarBehavior.floating,
-                                      backgroundColor: colorScheme.error,
-                                    ),
-                                  );
-                                }
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      isFollowing ? Icons.check : Icons.person_add_rounded,
-                                      size: 14,
-                                      color: colorScheme.onSecondary,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      isFollowing ? 'Takipte' : 'Takip Et',
-                                      style: textTheme.labelSmall?.copyWith(
-                                        color: colorScheme.onSecondary,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 10,
-                                      ),
-                                    ),
-                                  ],
+                              if (isFollowing) {
+                                // Takipten çıkar
+                                await firestore.unfollowUser(
+                                  currentUserId: currentUserId,
+                                  targetUserId: entry.userId,
+                                );
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('${entry.userName} takipten çıkarıldı!'),
+                                    behavior: SnackBarBehavior.floating,
+                                    backgroundColor: colorScheme.error,
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              } else {
+                                // Takip et
+                                await firestore.followUser(
+                                  currentUserId: currentUserId,
+                                  targetUserId: entry.userId,
+                                );
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('${entry.userName} takip edildi!'),
+                                    behavior: SnackBarBehavior.floating,
+                                    backgroundColor: colorScheme.primary,
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Bir hata oluştu: $e'),
+                                  behavior: SnackBarBehavior.floating,
+                                  backgroundColor: colorScheme.error,
                                 ),
-                              ),
+                              );
+                            }
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  isFollowing ? Icons.check : Icons.person_add_rounded,
+                                  size: 14,
+                                  color: colorScheme.onSecondary,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  isFollowing ? 'Takipte' : 'Takip Et',
+                                  style: textTheme.labelSmall?.copyWith(
+                                    color: colorScheme.onSecondary,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
-                        loading: () => Container(
-                          width: 80,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
-                            color: colorScheme.onSurface.withOpacity(0.1),
-                          ),
-                          child: Center(
-                            child: SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation(colorScheme.onSurface),
-                              ),
-                            ),
-                          ),
-                        ),
-                        error: (error, stack) => Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
-                            color: colorScheme.onSurface.withOpacity(0.1),
-                          ),
-                          child: Text(
-                            'Takip Et',
-                            style: textTheme.labelSmall?.copyWith(
-                              color: colorScheme.onSurface,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 10,
-                            ),
+                      ),
+                    ),
+                    loading: () => Container(
+                      width: 80,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        color: colorScheme.onSurface.withOpacity(0.1),
+                      ),
+                      child: Center(
+                        child: SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation(colorScheme.onSurface),
                           ),
                         ),
-                      ) ??
+                      ),
+                    ),
+                    error: (error, stack) => Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        color: colorScheme.onSurface.withOpacity(0.1),
+                      ),
+                      child: Text(
+                        'Takip Et',
+                        style: textTheme.labelSmall?.copyWith(
+                          color: colorScheme.onSurface,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ),
+                  ) ??
                       const SizedBox.shrink(),
               ],
             ),
@@ -830,7 +830,7 @@ class _RankCard extends ConsumerWidget {
     );
   }
 
-  List<Color> _getRankColors(int rank, bool isCurrentUser) {
+  List<Color> _getRankColors(BuildContext context, int rank, bool isCurrentUser) {
     final colorScheme = Theme.of(context).colorScheme;
     if (isCurrentUser) {
       return [
@@ -860,7 +860,7 @@ class _RankCard extends ConsumerWidget {
     }
   }
 
-  Color _getRankBorderColor(int rank, bool isCurrentUser) {
+  Color _getRankBorderColor(BuildContext context, int rank, bool isCurrentUser) {
     final colorScheme = Theme.of(context).colorScheme;
     if (isCurrentUser) {
       return colorScheme.primary.withOpacity(0.8);

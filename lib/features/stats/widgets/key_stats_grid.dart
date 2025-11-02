@@ -31,7 +31,7 @@ class KeyStatsGrid extends StatelessWidget {
           itemBuilder: (context, index) {
             switch (index) {
               case 0:
-                return _StatCard(label: 'Savaşçı Skoru', value: analysis.warriorScore.toStringAsFixed(1), icon: Icons.shield_rounded, color: AppTheme.secondaryColor, tooltip: "Genel net, doğruluk ve istikrarı birleştiren özel puanın.");
+                return _StatCard(label: 'Savaşçı Skoru', value: analysis.warriorScore.toStringAsFixed(1), icon: Icons.shield_rounded, color: Theme.of(context).colorScheme.secondary, tooltip: "Genel net, doğruluk ve istikrarı birleştiren özel puanın.");
               case 1:
                 return _StatCard(label: 'İsabet Oranı', value: '%${analysis.accuracy.toStringAsFixed(1)}', icon: Icons.gps_fixed_rounded, color: Colors.green, tooltip: "Cevapladığın soruların yüzde kaçı doğru?");
               case 2:
@@ -63,7 +63,7 @@ class _StatCardState extends State<_StatCard> with SingleTickerProviderStateMixi
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.cardColor,
+        backgroundColor: Theme.of(context).cardColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
@@ -79,12 +79,12 @@ class _StatCardState extends State<_StatCard> with SingleTickerProviderStateMixi
             Expanded(child: Text(widget.label, maxLines: 2, overflow: TextOverflow.ellipsis)),
           ],
         ),
-        content: Text(widget.tooltip, style: const TextStyle(color: AppTheme.secondaryTextColor, height: 1.6, fontSize: 15)),
+        content: Text(widget.tooltip, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.6, fontSize: 15)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             style: TextButton.styleFrom(
-              backgroundColor: AppTheme.secondaryColor.withOpacity(0.2),
+              backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
@@ -142,8 +142,8 @@ class _StatCardState extends State<_StatCard> with SingleTickerProviderStateMixi
                           widget.label,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: AppTheme.secondaryTextColor,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.bold,
                             fontSize: 11.5,
                             letterSpacing: 0.2,

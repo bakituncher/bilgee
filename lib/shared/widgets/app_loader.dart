@@ -9,7 +9,7 @@ class AppLoader extends StatelessWidget {
   Widget build(BuildContext context) {
     // Sade, hızlı açılan loader: sadece logo ve hafif opak geçiş
     return Scaffold(
-      backgroundColor: AppTheme.primaryColor,
+      backgroundColor: Theme.of(context).primaryColor,
       body: Center(
         child: TweenAnimationBuilder<double>(
           tween: Tween(begin: 0, end: 1),

@@ -249,7 +249,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
                       ),
                       ShimmerEffect(
                         duration: const Duration(milliseconds: 2000),
-                        color: AppTheme.secondaryColor.withValues(alpha: AppTheme.secondaryColor.a * 0.3),
+                        color: Theme.of(context).colorScheme.secondary.withOpacity(0.3),
                       ),
                     ],
                     child: SizedBox(
@@ -548,7 +548,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
                 const SizedBox(height: 8),
                 Text(
                   "En isabetli strateji için tüm verilerinin güncel olduğundan emin olalım.",
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.secondaryTextColor),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: 32),
 
@@ -558,7 +558,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
                   description: "Stratejin, haftalık olarak ayırdığın zamana göre şekillenecek.",
                   statusText: "$totalHours Saat",
                   statusDescription: "Haftalık Plan",
-                  statusColor: isTimeMapOk ? AppTheme.successColor : Colors.amber,
+                  statusColor: isTimeMapOk ? Theme.of(context).colorScheme.secondary : Colors.amber,
                   buttonText: "Güncelle",
                   onTap: () => context.push(AppRoutes.availability),
                 ).animate().fadeIn(delay: 200.ms).slideX(begin: -0.2),
@@ -569,7 +569,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
                   description: "Konu hakimiyetin, bu hafta hangi konulara odaklanacağımızı belirleyecek.",
                   statusText: "$analyzedTopicsCount",
                   statusDescription: "Konu Analiz Edildi",
-                  statusColor: isGalaxyOk ? AppTheme.successColor : Colors.amber,
+                  statusColor: isGalaxyOk ? Theme.of(context).colorScheme.secondary : Colors.amber,
                   buttonText: "Ziyaret Et",
                   onTap: () => context.push('/ai-hub/${AppRoutes.coachPushed}'),
                 ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.2),
@@ -580,7 +580,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
                   description: "Güncel deneme sonuçların, planın isabet oranını doğrudan etkiler.",
                   statusText: "Son Deneme",
                   statusDescription: testStatusText,
-                  statusColor: isTestsOk ? AppTheme.successColor : Colors.amber,
+                  statusColor: isTestsOk ? Theme.of(context).colorScheme.secondary : Colors.amber,
                   buttonText: "Yeni Ekle",
                   onTap: () => context.push('/home/add-test'),
                 ).animate().fadeIn(delay: 400.ms).slideX(begin: -0.2),
@@ -619,7 +619,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
                 const SizedBox(height: 12),
                 Text(
                   "Planın yoğunluğu, seçtiğin tempoya göre ayarlanacak.",
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.secondaryTextColor),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),

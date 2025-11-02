@@ -26,7 +26,7 @@ class EdgeToEdgeWrapper extends StatelessWidget {
     );
 
     return Container(
-      color: backgroundColor ?? AppTheme.scaffoldBackgroundColor,
+      color: backgroundColor ?? Theme.of(context).scaffoldBackgroundColor,
       child: Padding(
         padding: padding,
         child: child,
@@ -59,7 +59,7 @@ class EdgeToEdgeScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor ?? AppTheme.scaffoldBackgroundColor,
+      backgroundColor: backgroundColor ?? Theme.of(context).scaffoldBackgroundColor,
       drawer: drawer,
       endDrawer: endDrawer,
       floatingActionButton: floatingActionButton,

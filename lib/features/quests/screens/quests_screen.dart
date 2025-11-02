@@ -265,7 +265,7 @@ class GamifiedQuestCard extends ConsumerWidget {
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         decoration: BoxDecoration(
-          color: isClaimable ? Theme.of(context).cardColor.withBlue(170) : Theme.of(context).cardColor,
+          color: isClaimable ? const Color(0xFF17294D) : Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isClaimable ? Colors.amber : Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),

@@ -48,7 +48,7 @@ class WorkshopStatsScreen extends ConsumerWidget {
                       ].animate(interval: 150.ms).fadeIn(duration: 600.ms).slideY(begin: 0.3),
                     );
                   },
-                  loading: () => const Center(child: CircularProgressIndicator(color: AppTheme.secondaryColor)),
+                  loading: () => Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.secondary)),
                   error: (e, s) => Center(child: Text('Hata: $e')),
                 ),
               ),
@@ -73,7 +73,7 @@ class WorkshopStatsScreen extends ConsumerWidget {
             Text(
               'Atölyede bir konuyu işlediğinde ocak alevlenecek. İlk ham cevherini dövmeye başla!',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.secondaryTextColor, height: 1.5),
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.5),
             ),
           ],
         ).animate().fadeIn(duration: 600.ms).scale(begin: const Offset(0.9, 0.9)),
@@ -84,21 +84,21 @@ class WorkshopStatsScreen extends ConsumerWidget {
   // YENİ WIDGET: Simya Prizması
   Widget _buildAlchemistPrism(BuildContext context, WorkshopAnalysis analysis) {
     final masteryPercent = analysis.overallAccuracy;
-    final masteryColor = Color.lerp(AppTheme.accentColor, AppTheme.successColor, masteryPercent / 100)!;
+    final masteryColor = Color.lerp(Theme.of(context).colorScheme.error, Theme.of(context).colorScheme.secondary, masteryPercent / 100)!;
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppTheme.cardColor.withValues(alpha: 0.5),
+        color: Theme.of(context).cardColor.withOpacity(0.5),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppTheme.lightSurfaceColor.withValues(alpha: 0.3)),
+        border: Border.all(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3)),
       ),
       child: Column(
         children: [
           Animate(
             onPlay: (c) => c.repeat(reverse: true),
             effects: [
-              ShimmerEffect(duration: 3000.ms, color: masteryColor.withValues(alpha: 0.5)),
+              ShimmerEffect(duration: 3000.ms, color: masteryColor.withOpacity(0.5)),
             ],
             child: Container(
               width: 120,
@@ -106,7 +106,7 @@ class WorkshopStatsScreen extends ConsumerWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
-                  colors: [masteryColor.withValues(alpha: 0.5), Colors.transparent],
+                  colors: [masteryColor.withOpacity(0.5), Colors.transparent],
                   stops: const [0.4, 1.0],
                 ),
               ),
@@ -166,7 +166,7 @@ class WorkshopStatsScreen extends ConsumerWidget {
               context,
               title: "Cilalanmış Cevherler",
               icon: Icons.shield_rounded,
-              iconColor: AppTheme.successColor,
+              iconColor: Theme.of(context).colorScheme.secondary,
               topics: strongest,
               isPolished: true
           ),
@@ -178,7 +178,7 @@ class WorkshopStatsScreen extends ConsumerWidget {
               title: "Dövülecek Ham Cevherler",
               subtitle: "En Yüksek Gelişim Potansiyeli",
               icon: Icons.local_fire_department_rounded,
-              iconColor: AppTheme.accentColor,
+              iconColor: Theme.of(context).colorScheme.error,
               topics: weakest,
               isPolished: false
           )
@@ -206,7 +206,7 @@ class WorkshopStatsScreen extends ConsumerWidget {
           ],
         ),
         if (subtitle != null)
-          Text(subtitle, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor)),
+          Text(subtitle, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
         const SizedBox(height: 12),
         ...topics.map((topic) => _TopicCard(topic: topic, isPolished: isPolished))
       ],
@@ -234,7 +234,7 @@ class _StatItem extends StatelessWidget {
         ),
         Text(
           label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
           textAlign: TextAlign.center,
         ),
       ],
@@ -249,14 +249,14 @@ class _SubjectCrystalBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final progress = data.accuracy / 100;
-    final color = Color.lerp(AppTheme.accentColor, AppTheme.successColor, progress)!;
+    final color = Color.lerp(Theme.of(context).colorScheme.error, Theme.of(context).colorScheme.secondary, progress)!;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.lightSurfaceColor.withValues(alpha: 0.3)),
+        border: Border.all(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3)),
       ),
       child: Row(
         children: [
@@ -285,7 +285,7 @@ class _SubjectCrystalBar extends StatelessWidget {
                       height: 25,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(8),
-                        color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                        color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
                       ),
                     ),
                     Animate(
@@ -304,7 +304,7 @@ class _SubjectCrystalBar extends StatelessWidget {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(8),
                           gradient: LinearGradient(
-                            colors: [color.withValues(alpha: 0.7), color],
+                            colors: [color.withOpacity(0.7), color],
                             begin: Alignment.centerLeft,
                             end: Alignment.centerRight,
                           ),
@@ -347,13 +347,13 @@ class _TopicCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isPolished ? AppTheme.successColor : AppTheme.secondaryColor;
+    final color = isPolished ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.secondary;
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      color: AppTheme.cardColor.withValues(alpha: 0.8),
+      color: Theme.of(context).cardColor.withOpacity(0.8),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: color.withValues(alpha: 0.5)),
+        side: BorderSide(color: color.withOpacity(0.5)),
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -367,13 +367,13 @@ class _TopicCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(topic['topic'] as String, style: Theme.of(context).textTheme.titleMedium),
-                    Text(topic['subject'] as String, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor)),
+                    Text(topic['subject'] as String, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                   ],
                 ),
               ),
               if (!isPolished) ...[
                 const SizedBox(width: 12),
-                const Icon(Icons.chevron_right_rounded, color: AppTheme.secondaryColor),
+                Icon(Icons.chevron_right_rounded, color: Theme.of(context).colorScheme.secondary),
               ]
             ],
           ),

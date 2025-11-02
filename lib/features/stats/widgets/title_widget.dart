@@ -26,14 +26,14 @@ class TitleWidget extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppTheme.secondaryColor.withOpacity(0.25),
-                  AppTheme.secondaryColor.withOpacity(0.12),
+                  Theme.of(context).colorScheme.secondary.withOpacity(0.25),
+                  Theme.of(context).colorScheme.secondary.withOpacity(0.12),
                 ],
               ),
               borderRadius: BorderRadius.circular(10),
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.secondaryColor.withOpacity(0.15),
+                  color: Theme.of(context).colorScheme.secondary.withOpacity(0.15),
                   blurRadius: 6,
                   offset: const Offset(0, 2),
                 ),
@@ -41,7 +41,7 @@ class TitleWidget extends StatelessWidget {
             ),
             child: Icon(
               _getIconForTitle(title),
-              color: AppTheme.secondaryColor,
+              color: Theme.of(context).colorScheme.secondary,
               size: 20,
             ),
           ),
@@ -53,19 +53,19 @@ class TitleWidget extends StatelessWidget {
                 Text(
                   title,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.3,
-                        fontSize: 16,
-                      ),
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.3,
+                    fontSize: 16,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppTheme.secondaryTextColor,
-                        height: 1.3,
-                        fontSize: 12.5,
-                      ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    height: 1.3,
+                    fontSize: 12.5,
+                  ),
                 ),
               ],
             ),

@@ -914,7 +914,7 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(Icons.schedule_rounded, size: 16, color: AppTheme.secondaryTextColor),
+                          Icon(Icons.schedule_rounded, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
                           const SizedBox(width: 6),
                           Text('Tahmini okuma süresi: ${_estimateReadTime(_contentCtrl.text)} dk'),
                         ],

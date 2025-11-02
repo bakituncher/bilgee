@@ -62,7 +62,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
       if (!_pageController.hasClients) return;
 
       int nextPage = _pageController.page!.round() + 1;
-      if (nextPage >= marketingSlides.length) {
+      if (nextPage >= 4) {
         nextPage = 0;
       }
       _pageController.animateToPage(
@@ -168,7 +168,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
       title: 'Cevher Atölyesi Full Erişim',
       subtitle: 'Derinlemesine hata analizi, zayıf konulara özel ders notları ve testler. Her yanlış cevabınızı bir öğrenme zaferine dönüştürün.',
       icon: Icons.diamond_outlined,
-      color: AppTheme.goldBrandColor
+      color: const Color(0xFFFFB020)
       ),
       (
       title: 'Kapsamlı Test Analizi Raporları',

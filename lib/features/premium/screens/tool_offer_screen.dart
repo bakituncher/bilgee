@@ -1039,7 +1039,7 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
                         decoration: BoxDecoration(
                           color: widget.isSelected
                               ? widget.color
-                              : AppTheme.goldBrandColor,
+                              : const Color(0xFFFFB020),
                           borderRadius: BorderRadius.circular(99),
                           border: Border.all(
                             color: Colors.white.withOpacity(0.8),
