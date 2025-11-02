@@ -61,14 +61,16 @@ class _TrustRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white70 : Theme.of(context).colorScheme.onSurfaceVariant;
     return Row(
       children: [
-        Icon(icon, color: Colors.white70, size: 14),
+        Icon(icon, color: textColor, size: 14),
         const SizedBox(width: 5),
         Text(
           text,
-          style: const TextStyle(
-            color: Colors.white70,
+          style: TextStyle(
+            color: textColor,
             fontWeight: FontWeight.w500,
             fontSize: 11,
           ),
@@ -83,16 +85,18 @@ class _LegalFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 4.0),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final dividerColor = isDark ? Colors.white38 : Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.4);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 4.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _FooterLink(text: 'Kullanım Şartları', targetRoute: AppRoutes.settings),
-          SizedBox(width: 8),
-          Text('|', style: TextStyle(color: Colors.white38, fontSize: 10)),
-          SizedBox(width: 8),
-          _FooterLink(text: 'Gizlilik Politikası', targetRoute: AppRoutes.settings),
+          const _FooterLink(text: 'Kullanım Şartları', targetRoute: AppRoutes.settings),
+          const SizedBox(width: 8),
+          Text('|', style: TextStyle(color: dividerColor, fontSize: 10)),
+          const SizedBox(width: 8),
+          const _FooterLink(text: 'Gizlilik Politikası', targetRoute: AppRoutes.settings),
         ],
       ),
     );
@@ -107,6 +111,8 @@ class _FooterLink extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final linkColor = isDark ? Colors.white70 : Theme.of(context).colorScheme.onSurfaceVariant;
     return GestureDetector(
       onTap: () {
         context.push(targetRoute).catchError((error) {
@@ -126,12 +132,12 @@ class _FooterLink extends StatelessWidget {
       },
       child: Text(
         text,
-        style: const TextStyle(
-          color: Colors.white70,
+        style: TextStyle(
+          color: linkColor,
           fontSize: 10,
           fontWeight: FontWeight.w600,
           decoration: TextDecoration.underline,
-          decorationColor: Colors.white70,
+          decorationColor: linkColor,
         ),
       ),
     );
@@ -222,15 +228,16 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
   Widget build(BuildContext context) {
     final offeringsAsyncValue = ref.watch(offeringsProvider);
     final bottomInset = MediaQuery.of(context).padding.bottom;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).primaryColor,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         children: [
           _buildAnimatedGradientBackground(),
           BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0),
-            child: Container(color: Colors.black.withOpacity(0.5)),
+            child: Container(color: isDark ? Colors.black.withOpacity(0.5) : Colors.white.withOpacity(0.5)),
           ),
           SafeArea(
             bottom: false,
@@ -271,16 +278,17 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
   }
 
   Widget _buildCustomHeader(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: const Icon(
+            icon: Icon(
               Icons.close_rounded,
               size: 28,
-              color: Colors.white70,
+              color: isDark ? Colors.white70 : Theme.of(context).colorScheme.onSurface,
             ),
             tooltip: 'Kapat',
             onPressed: _handleBack,
@@ -289,6 +297,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
             'Özel Teklif',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           const SizedBox(width: 48),
@@ -298,16 +307,23 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
   }
 
   Widget _buildAnimatedGradientBackground() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
         gradient: RadialGradient(
           center: Alignment.topCenter,
           radius: 1.5,
-          colors: [
-            widget.color.withOpacity(0.3),
-            Theme.of(context).primaryColor.withOpacity(0.2),
-            Theme.of(context).primaryColor,
-          ],
+          colors: isDark
+              ? [
+                  widget.color.withOpacity(0.3),
+                  Theme.of(context).scaffoldBackgroundColor.withOpacity(0.2),
+                  Theme.of(context).scaffoldBackgroundColor,
+                ]
+              : [
+                  widget.color.withOpacity(0.15),
+                  Theme.of(context).scaffoldBackgroundColor.withOpacity(0.5),
+                  Theme.of(context).scaffoldBackgroundColor,
+                ],
           stops: const [0.0, 0.4, 1.0],
         ),
       ),
@@ -318,20 +334,27 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
       AsyncValue<Offerings?> offeringsAsyncValue,
       double bottomInset,
       ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Theme.of(context).primaryColor.withOpacity(0.8),
+        color: isDark
+            ? Theme.of(context).scaffoldBackgroundColor.withOpacity(0.8)
+            : Theme.of(context).cardColor.withOpacity(0.95),
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(30),
           topRight: Radius.circular(30),
         ),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        border: Border.all(
+          color: isDark 
+              ? Colors.white.withOpacity(0.1) 
+              : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.5),
-            spreadRadius: 5,
-            blurRadius: 25,
+            color: isDark ? Colors.black.withOpacity(0.5) : Colors.black.withOpacity(0.15),
+            spreadRadius: isDark ? 5 : 2,
+            blurRadius: isDark ? 25 : 15,
           ),
         ],
       ),
@@ -361,7 +384,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
           child: Center(
             child: CircularProgressIndicator(
               strokeWidth: 3,
-              color: Theme.of(context).colorScheme.secondary,
+              color: Theme.of(context).colorScheme.primary,
             ),
           ),
         ),
@@ -376,19 +399,19 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
                 size: 40,
               ),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 'Paketler yüklenemedi',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 6),
-              const Text(
+              Text(
                 'İnternet bağlantınızı kontrol edin',
                 style: TextStyle(
-                  color: Colors.white70,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   fontSize: 12,
                 ),
                 textAlign: TextAlign.center,
@@ -411,12 +434,12 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
         );
 
     if (current == null) {
-      return const Padding(
-        padding: EdgeInsets.all(20.0),
+      return Padding(
+        padding: const EdgeInsets.all(20.0),
         child: Center(
           child: Text(
             'Şu anda müsait paket bulunmuyor',
-            style: TextStyle(color: Colors.white70, fontSize: 12),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12),
           ),
         ),
       );
@@ -463,7 +486,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
               'Devrime Katıl',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w900,
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onSurface,
                 fontSize: 22,
               ),
             ),
@@ -584,10 +607,10 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
                     ),
                   ],
                 )
-                    : const Text(
+                    : Text(
                   'Abone Ol ve Başla',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onPrimary,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 0.5,
@@ -708,7 +731,7 @@ class _ToolFeatureHeader extends StatelessWidget {
               height: 85,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Theme.of(context).primaryColor.withOpacity(0.8),
+                color: Theme.of(context).cardColor.withOpacity(0.8),
                 border: Border.all(color: color, width: 2.5),
                 boxShadow: [
                   BoxShadow(
@@ -725,7 +748,7 @@ class _ToolFeatureHeader extends StatelessWidget {
               title,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onSurface,
                 fontSize: 20,
               ),
             ),
@@ -749,14 +772,21 @@ class _MarketingInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return FadeTransition(
       opacity: fadeController,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.05),
+          color: isDark 
+              ? Colors.white.withOpacity(0.05)
+              : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: Colors.white.withOpacity(0.1)),
+          border: Border.all(
+            color: isDark 
+                ? Colors.white.withOpacity(0.1)
+                : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -765,7 +795,7 @@ class _MarketingInfo extends StatelessWidget {
               title,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onSurface,
                 fontSize: 15,
               ),
             ),
@@ -874,15 +904,20 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final introPrice = widget.package.storeProduct.introductoryPrice;
     final hasFreeTrial = introPrice != null && introPrice.price == 0;
 
     final borderColor = widget.isSelected
         ? widget.color
-        : Theme.of(context).cardColor.withOpacity(0.5);
+        : (isDark 
+            ? Theme.of(context).cardColor.withOpacity(0.5)
+            : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5));
     final backgroundColor = widget.isSelected
         ? widget.color.withOpacity(0.15)
-        : Colors.white.withOpacity(0.05);
+        : (isDark 
+            ? Colors.white.withOpacity(0.05)
+            : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.1));
 
     return SlideTransition(
       position: _slideAnimation,
@@ -927,10 +962,10 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
                             children: [
                               Text(
                                 widget.title,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.w800,
                                   fontSize: 16,
-                                  color: Colors.white,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -945,16 +980,16 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
                                       fontWeight: FontWeight.w900,
                                       color: widget.isSelected
                                           ? widget.color
-                                          : Colors.white,
+                                          : Theme.of(context).colorScheme.onSurface,
                                     ),
                                   ),
                                   const SizedBox(width: 3),
                                   Text(
                                     widget.billingPeriod,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w500,
-                                      color: Colors.white70,
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                                     ),
                                   ),
                                 ],
@@ -1019,7 +1054,7 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
                             key: ValueKey(widget.isSelected),
                             color: widget.isSelected
                                 ? widget.color
-                                : Colors.white38,
+                                : Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.4),
                             size: 28,
                           ),
                         ),
@@ -1055,7 +1090,11 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
                         child: Text(
                           widget.tag!,
                           style: TextStyle(
-                            color: Theme.of(context).primaryColor,
+                            color: widget.isSelected
+                                ? Colors.white
+                                : (Theme.of(context).brightness == Brightness.dark 
+                                    ? Theme.of(context).scaffoldBackgroundColor
+                                    : Colors.white),
                             fontWeight: FontWeight.bold,
                             fontSize: 10,
                           ),
