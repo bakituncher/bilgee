@@ -16,25 +16,35 @@ class AiInsightCard extends StatelessWidget {
     // En önemli 3 öneriyi al
     final prioritizedAdvice = _prioritizeAdvice(analysis.tacticalAdvice);
     final topAdvice = prioritizedAdvice.take(3).toList();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Theme.of(context).cardColor,
-            Theme.of(context).cardColor.withOpacity(0.96),
-          ],
+          colors: isDark
+              ? [
+                  Theme.of(context).cardColor,
+                  Theme.of(context).cardColor.withOpacity(0.96),
+                ]
+              : [
+                  Theme.of(context).cardColor.withOpacity(0.98),
+                  Theme.of(context).cardColor,
+                ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: Theme.of(context).colorScheme.secondary.withOpacity(0.28),
+          color: isDark
+              ? Theme.of(context).colorScheme.secondary.withOpacity(0.28)
+              : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+            color: isDark
+                ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                : Colors.black.withOpacity(0.12),
             blurRadius: 14,
             offset: const Offset(0, 4),
           ),
@@ -80,7 +90,9 @@ class AiInsightCard extends StatelessWidget {
                   ),
                   child: Icon(
                     Icons.psychology_rounded,
-                    color: Theme.of(context).colorScheme.primary,
+                    color: isDark 
+                        ? Theme.of(context).colorScheme.primary
+                        : Colors.black,
                     size: 18,
                   ),
                 ),

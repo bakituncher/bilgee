@@ -211,6 +211,8 @@ class _DaySelector extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedDayIndex = ref.watch(_selectedDayProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: FittedBox(
@@ -229,17 +231,24 @@ class _DaySelector extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: isSelected 
                       ? Theme.of(context).colorScheme.primary 
-                      : (Theme.of(context).brightness == Brightness.dark
+                      : (isDark
                           ? Colors.transparent
-                          : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3)),
+                          : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.4)),
                   borderRadius: BorderRadius.circular(12),
+                  border: !isSelected && !isDark
+                      ? Border.all(
+                          color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                          width: 1,
+                        )
+                      : null,
                 ),
                 child: Text(
                   days[index],
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
+                    fontSize: isSelected ? 13 : 12.5,
                     color: isSelected 
-                        ? Theme.of(context).colorScheme.onPrimary 
+                        ? (isDark ? Theme.of(context).colorScheme.onPrimary : Colors.black)
                         : Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
@@ -321,6 +330,8 @@ class _TaskTile extends ConsumerWidget {
       );
     }
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -330,19 +341,33 @@ class _TaskTile extends ConsumerWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: (isCompleted? Colors.green: Theme.of(context).colorScheme.primary).withOpacity(.35), 
-              width: 1,
+              color: isDark
+                  ? (isCompleted? Colors.green: Theme.of(context).colorScheme.primary).withOpacity(.35)
+                  : (isCompleted? Colors.green: Theme.of(context).colorScheme.primary).withOpacity(.50), 
+              width: 1.5,
             ),
             gradient: LinearGradient(
-              colors: [
-                (isCompleted? Colors.green: Theme.of(context).colorScheme.primary).withOpacity(.08), 
-                (Theme.of(context).brightness == Brightness.dark
-                    ? Theme.of(context).cardColor.withOpacity(.35)
-                    : Theme.of(context).cardColor.withOpacity(.85)),
-              ], 
+              colors: isDark
+                  ? [
+                      (isCompleted? Colors.green: Theme.of(context).colorScheme.primary).withOpacity(.08), 
+                      Theme.of(context).cardColor.withOpacity(.35),
+                    ]
+                  : [
+                      (isCompleted? Colors.green: Theme.of(context).colorScheme.primary).withOpacity(.12),
+                      Theme.of(context).cardColor.withOpacity(.95),
+                    ], 
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
+            boxShadow: isDark
+                ? null
+                : [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
           ),
           padding: const EdgeInsets.fromLTRB(14,12,6,12),
           child: Row(children:[

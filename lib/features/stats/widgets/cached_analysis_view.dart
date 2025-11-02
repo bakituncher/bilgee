@@ -67,23 +67,40 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
 
   Widget _buildBody(BuildContext context, StatsAnalysis analysis) {
     final selectedTab = ref.watch(_selectedAnalysisTabProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Column(
       children: [
-        // Modern Tab Bar
+        // Modern Tab Bar - Enhanced for Light Mode
         Container(
           margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35),
+            gradient: LinearGradient(
+              colors: isDark
+                  ? [
+                      Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                      Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25),
+                    ]
+                  : [
+                      Theme.of(context).cardColor.withOpacity(0.95),
+                      Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                    ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: Theme.of(context).colorScheme.secondary.withOpacity(0.15),
+              color: isDark
+                  ? Theme.of(context).colorScheme.secondary.withOpacity(0.15)
+                  : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
-                blurRadius: 8,
+                color: isDark 
+                    ? Theme.of(context).colorScheme.primary.withOpacity(0.06)
+                    : Colors.black.withOpacity(0.08),
+                blurRadius: 10,
                 offset: const Offset(0, 2),
               ),
             ],
@@ -108,7 +125,9 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
             ),
             indicatorSize: TabBarIndicatorSize.tab,
             dividerColor: Colors.transparent,
-            labelColor: Theme.of(context).colorScheme.primary,
+            labelColor: isDark 
+                ? Theme.of(context).colorScheme.primary
+                : Colors.black,
             unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
             labelStyle: const TextStyle(
               fontWeight: FontWeight.bold,

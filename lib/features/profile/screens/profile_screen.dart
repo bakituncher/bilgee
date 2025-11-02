@@ -289,11 +289,21 @@ class _ProfileView extends ConsumerWidget {
                             gradient: LinearGradient(
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
-                                colors: [
-                                  colorScheme.surface.withOpacity(0.5),
-                                  colorScheme.surface.withOpacity(0.2)
-                                ]),
-                            border: Border.all(color: colorScheme.onSurface.withOpacity(0.12)),
+                                colors: theme.brightness == Brightness.dark
+                                    ? [
+                                        colorScheme.surface.withOpacity(0.5),
+                                        colorScheme.surface.withOpacity(0.2)
+                                      ]
+                                    : [
+                                        colorScheme.surface.withOpacity(0.98),
+                                        colorScheme.surface.withOpacity(0.92)
+                                      ]),
+                            border: Border.all(
+                              color: theme.brightness == Brightness.dark
+                                  ? colorScheme.onSurface.withOpacity(0.12)
+                                  : colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                              width: 1.5,
+                            ),
                           ),
                           child: Column(
                             children: [
@@ -933,6 +943,7 @@ class _ProfileStatCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final isDark = theme.brightness == Brightness.dark;
 
     return Semantics(
       label: '$label istatistiği: $value',
@@ -944,11 +955,21 @@ class _ProfileStatCard extends StatelessWidget {
           gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [
-                colorScheme.onSurface.withOpacity(0.1),
-                colorScheme.onSurface.withOpacity(0.05)
-              ]),
-          border: Border.all(color: colorScheme.onSurface.withOpacity(0.12), width: 1),
+              colors: isDark
+                  ? [
+                      colorScheme.onSurface.withOpacity(0.1),
+                      colorScheme.onSurface.withOpacity(0.05)
+                    ]
+                  : [
+                      colorScheme.surfaceContainerHighest.withOpacity(0.35),
+                      colorScheme.surfaceContainerHighest.withOpacity(0.20)
+                    ]),
+          border: Border.all(
+            color: isDark
+                ? colorScheme.onSurface.withOpacity(0.12)
+                : colorScheme.surfaceContainerHighest.withOpacity(0.5),
+            width: 1.5,
+          ),
         ),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
