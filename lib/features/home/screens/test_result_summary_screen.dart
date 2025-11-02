@@ -33,17 +33,52 @@ class TestResultSummaryScreen extends StatelessWidget {
     final verdict = test.expertVerdict;
     final keySubjects = test.findKeySubjects();
     final isGoodResult = wisdomScore > 60;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text("Savaş Raporu"),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(20.0),
-        children: [
-          // Başlık özeti
-          Card(
-            child: Padding(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              theme.scaffoldBackgroundColor,
+              theme.cardColor.withOpacity(0.3),
+              theme.scaffoldBackgroundColor,
+            ],
+          ),
+        ),
+        child: ListView(
+          padding: const EdgeInsets.all(16.0),
+          children: [
+            // Başlık özeti - kompakt ve şık
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                color: theme.cardColor,
+                border: Border.all(
+                  color: isDark 
+                    ? colorScheme.surfaceContainerHighest.withOpacity(0.3)
+                    : colorScheme.onSurface.withOpacity(0.08),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: isDark 
+                      ? Colors.black.withOpacity(0.2)
+                      : colorScheme.primary.withOpacity(0.08),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -54,72 +89,154 @@ class TestResultSummaryScreen extends StatelessWidget {
                       color: Colors.transparent,
                       child: Text(
                         test.testName,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w900,
+                          color: colorScheme.onSurface,
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  Row(children: [
-                    Icon(Icons.category_rounded, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                    const SizedBox(width: 6),
-                    Text(test.sectionName, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-                    const SizedBox(width: 12),
-                    Icon(Icons.event_rounded, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                    const SizedBox(width: 6),
-                    Text(DateFormat.yMd('tr').format(test.date), style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-                  ]),
-                  const SizedBox(height: 6),
-                  Text('Ceza katsayısı: ${test.penaltyCoefficient}', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 8,
+                    children: [
+                      _InfoChip(
+                        icon: Icons.category_outlined,
+                        label: test.sectionName,
+                        colorScheme: colorScheme,
+                      ),
+                      _InfoChip(
+                        icon: Icons.calendar_today_outlined,
+                        label: DateFormat.yMd('tr').format(test.date),
+                        colorScheme: colorScheme,
+                      ),
+                      _InfoChip(
+                        icon: Icons.percent_outlined,
+                        label: 'Ceza: ${test.penaltyCoefficient}',
+                        colorScheme: colorScheme,
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
-          ),
-          const SizedBox(height: 16),
-          VerdictCard(verdict: verdict, wisdomScore: wisdomScore),
-          const SizedBox(height: 24),
-          KeyStatsRow(test: test),
-          const SizedBox(height: 24),
-          if (test.scores.isNotEmpty) _SubjectBreakdown(test: test, subjectNet: _subjectNet, subjectAcc: _subjectAcc),
-          const SizedBox(height: 24),
-          if (keySubjects.isNotEmpty)
-            SubjectHighlights(keySubjects: keySubjects),
-          const SizedBox(height: 24),
-          // Hızlı eylemler
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  icon: const Icon(Icons.analytics_rounded),
-                  label: const Text('Detaylı Görünüm'),
-                  onPressed: () => context.push('/home/test-detail', extra: test),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: OutlinedButton.icon(
-                  icon: const Icon(Icons.forum_rounded),
-                  label: Text(isGoodResult ? "Zaferi Kutla!" : "Durumu Değerlendir"),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: isGoodResult ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.primary,
-                    side: BorderSide(color: isGoodResult ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.primary),
+            const SizedBox(height: 12),
+            VerdictCard(verdict: verdict, wisdomScore: wisdomScore),
+            const SizedBox(height: 12),
+            KeyStatsRow(test: test),
+            const SizedBox(height: 12),
+            if (test.scores.isNotEmpty) _SubjectBreakdown(test: test, subjectNet: _subjectNet, subjectAcc: _subjectAcc),
+            if (test.scores.isNotEmpty) const SizedBox(height: 12),
+            if (keySubjects.isNotEmpty)
+              SubjectHighlights(keySubjects: keySubjects),
+            if (keySubjects.isNotEmpty) const SizedBox(height: 12),
+            // Hızlı eylemler - daha kompakt
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.analytics_rounded, size: 20),
+                    label: const Text('Detaylı', style: TextStyle(fontSize: 13)),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    onPressed: () => context.push('/home/test-detail', extra: test),
                   ),
-                  onPressed: () {
-                    final prompt = isGoodResult ? 'new_test_good' : 'new_test_bad';
-                    context.push('${AppRoutes.aiHub}/${AppRoutes.motivationChat}', extra: prompt);
-                  },
                 ),
-              ),
-            ],
-          ).animate().fadeIn(duration: 300.ms, delay: 80.ms).slideY(begin: 0.1),
-        ].animate(interval: 100.ms).fadeIn(duration: 400.ms).slideY(begin: 0.2),
-      ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: ElevatedButton.icon(
-          icon: const Icon(Icons.dashboard_customize_rounded),
-          label: const Text("Ana Panele Dön"),
-          onPressed: () => context.go('/home'),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.forum_rounded, size: 20),
+                    label: Text(
+                      isGoodResult ? "Kutla!" : "Değerlendir",
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      foregroundColor: isGoodResult ? colorScheme.secondary : colorScheme.primary,
+                      side: BorderSide(color: isGoodResult ? colorScheme.secondary : colorScheme.primary, width: 1.5),
+                    ),
+                    onPressed: () {
+                      final prompt = isGoodResult ? 'new_test_good' : 'new_test_bad';
+                      context.push('${AppRoutes.aiHub}/${AppRoutes.motivationChat}', extra: prompt);
+                    },
+                  ),
+                ),
+              ],
+            ).animate().fadeIn(duration: 300.ms, delay: 80.ms).slideY(begin: 0.1),
+            const SizedBox(height: 12),
+          ].animate(interval: 80.ms).fadeIn(duration: 350.ms).slideY(begin: 0.15),
         ),
+      ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.all(16.0),
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          border: Border(
+            top: BorderSide(
+              color: isDark 
+                ? colorScheme.surfaceContainerHighest.withOpacity(0.2)
+                : colorScheme.onSurface.withOpacity(0.08),
+              width: 1,
+            ),
+          ),
+        ),
+        child: SafeArea(
+          child: ElevatedButton.icon(
+            icon: const Icon(Icons.home_rounded),
+            label: const Text("Ana Panele Dön"),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+            ),
+            onPressed: () => context.go('/home'),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Yeni widget: Bilgi chip'i
+class _InfoChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final ColorScheme colorScheme;
+
+  const _InfoChip({
+    required this.icon,
+    required this.label,
+    required this.colorScheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: colorScheme.onSurfaceVariant.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: colorScheme.onSurfaceVariant),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -168,58 +285,148 @@ class _SubjectBreakdown extends StatelessWidget {
   Widget build(BuildContext context) {
     final entries = test.scores.entries.toList()
       ..sort((a, b) => subjectNet(b.value).compareTo(subjectNet(a.value)));
+    
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.insights_rounded, color: Theme.of(context).colorScheme.primary),
-                const SizedBox(width: 8),
-                Text('Ders Bazlı Sonuçlar', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-              ],
-            ),
-            const SizedBox(height: 12),
-            ...entries.map((e) {
-              final s = e.value;
-              final net = subjectNet(s);
-              final acc = subjectAcc(s);
-              return Column(
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(e.key, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
-                      ),
-                      Text('Net: ', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-                      Text(net.toStringAsFixed(2), style: Theme.of(context).textTheme.labelLarge?.copyWith(color: net >= 0 ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.error, fontWeight: FontWeight.w700)),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      _chip(context, 'D: ${s['dogru'] ?? 0}', Theme.of(context).colorScheme.secondary.withOpacity(0.2), Theme.of(context).colorScheme.secondary),
-                      const SizedBox(width: 6),
-                      _chip(context, 'Y: ${s['yanlis'] ?? 0}', Theme.of(context).colorScheme.error.withOpacity(0.15), Theme.of(context).colorScheme.error),
-                      const SizedBox(width: 6),
-                      _chip(context, 'B: ${s['bos'] ?? 0}', Theme.of(context).colorScheme.onSurface.withOpacity(0.1), Theme.of(context).colorScheme.onSurfaceVariant),
-                      const Spacer(),
-                      Icon(Icons.check_circle_outline_rounded, size: 16, color: Theme.of(context).colorScheme.primary),
-                      const SizedBox(width: 4),
-                      Text('%${acc.toStringAsFixed(1)}', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w700)),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  const Divider(height: 1),
-                  const SizedBox(height: 10),
-                ],
-              );
-            }),
-          ],
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        color: theme.cardColor,
+        border: Border.all(
+          color: isDark 
+            ? colorScheme.surfaceContainerHighest.withOpacity(0.3)
+            : colorScheme.onSurface.withOpacity(0.08),
+          width: 1.5,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark 
+              ? Colors.black.withOpacity(0.15)
+              : colorScheme.primary.withOpacity(0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(Icons.insights_rounded, color: colorScheme.primary, size: 20),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'Ders Bazlı Sonuçlar',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          ...entries.map((e) {
+            final s = e.value;
+            final net = subjectNet(s);
+            final acc = subjectAcc(s);
+            return Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerHighest.withOpacity(isDark ? 0.2 : 0.3),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isDark
+                        ? colorScheme.surfaceContainerHighest.withOpacity(0.3)
+                        : colorScheme.onSurface.withOpacity(0.06),
+                      width: 1,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              e.key,
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: (net >= 0 ? colorScheme.secondary : colorScheme.error).withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: (net >= 0 ? colorScheme.secondary : colorScheme.error).withOpacity(0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Net: ',
+                                  style: theme.textTheme.labelMedium?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Text(
+                                  net.toStringAsFixed(1),
+                                  style: theme.textTheme.labelLarge?.copyWith(
+                                    color: net >= 0 ? colorScheme.secondary : colorScheme.error,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          _chip(context, 'D: ${s['dogru'] ?? 0}', colorScheme.secondary.withOpacity(0.15), colorScheme.secondary),
+                          const SizedBox(width: 6),
+                          _chip(context, 'Y: ${s['yanlis'] ?? 0}', colorScheme.error.withOpacity(0.15), colorScheme.error),
+                          const SizedBox(width: 6),
+                          _chip(context, 'B: ${s['bos'] ?? 0}', colorScheme.onSurface.withOpacity(0.08), colorScheme.onSurfaceVariant),
+                          const Spacer(),
+                          Icon(Icons.check_circle, size: 16, color: colorScheme.primary),
+                          const SizedBox(width: 4),
+                          Text(
+                            '%${acc.toStringAsFixed(0)}',
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              color: colorScheme.primary,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
+            );
+          }),
+        ],
       ),
     );
   }
@@ -227,8 +434,21 @@ class _SubjectBreakdown extends StatelessWidget {
   Widget _chip(BuildContext context, String text, Color bg, Color fg) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
-      child: Text(text, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: fg, fontWeight: FontWeight.w700)),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: fg.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Text(
+        text,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+          color: fg,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
     );
   }
 }

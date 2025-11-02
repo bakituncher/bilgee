@@ -293,23 +293,44 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
 
     return Column(
       children: [
-        // Arama ve filtre barı
+        // Arama ve filtre barı - daha şık ve modern
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              TextField(
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.search_rounded),
-                  hintText: 'Deneme adı ara...',
-                  filled: true,
-                  fillColor: Theme.of(context).cardColor,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  color: Theme.of(context).cardColor,
+                  border: Border.all(
+                    color: Theme.of(context).brightness == Brightness.dark
+                      ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3)
+                      : Theme.of(context).colorScheme.onSurface.withOpacity(0.08),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.black.withOpacity(0.1)
+                        : Theme.of(context).colorScheme.primary.withOpacity(0.04),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-                onChanged: (v) => setState(() => _searchQuery = v),
+                child: TextField(
+                  decoration: InputDecoration(
+                    prefixIcon: Icon(Icons.search_rounded, color: Theme.of(context).colorScheme.primary),
+                    hintText: 'Deneme adı ara...',
+                    filled: false,
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  ),
+                  onChanged: (v) => setState(() => _searchQuery = v),
+                ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
@@ -317,13 +338,46 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                     final selected = _selectedSection == s;
                     return Padding(
                       padding: const EdgeInsets.only(right: 8.0),
-                      child: ChoiceChip(
-                        label: Text(s),
-                        selected: selected,
-                        onSelected: (_) => setState(() => _selectedSection = s),
-                        selectedColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                        labelStyle: TextStyle(color: selected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface),
-                        backgroundColor: Theme.of(context).cardColor,
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(20),
+                          onTap: () => setState(() => _selectedSection = s),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: selected 
+                                ? Theme.of(context).colorScheme.primary
+                                : Theme.of(context).cardColor,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: selected
+                                  ? Theme.of(context).colorScheme.primary
+                                  : Theme.of(context).brightness == Brightness.dark
+                                    ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3)
+                                    : Theme.of(context).colorScheme.onSurface.withOpacity(0.15),
+                                width: 1.5,
+                              ),
+                              boxShadow: selected ? [
+                                BoxShadow(
+                                  color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ] : null,
+                            ),
+                            child: Text(
+                              s,
+                              style: TextStyle(
+                                color: selected 
+                                  ? Theme.of(context).colorScheme.onPrimary
+                                  : Theme.of(context).colorScheme.onSurface,
+                                fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     );
                   }).toList(),
@@ -388,74 +442,179 @@ class _ArchiveListTile extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
     final acc = _accuracy(test);
+    final isDark = theme.brightness == Brightness.dark;
 
-    return Material(
-      color: theme.cardColor,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: () => context.push('/home/test-result-summary', extra: test),
-        onLongPress: () => context.push('/home/test-detail', extra: test),
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Row(
-            children: [
-              // Sol rozet
-              Container(
-                width: 54,
-                height: 54,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  color: colorScheme.surfaceContainerHighest.withOpacity(0.2),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  test.totalNet.toStringAsFixed(1),
-                  style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, color: colorScheme.onSurface),
-                ),
-              ),
-              const SizedBox(width: 12),
-              // Orta içerik
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Hero: Savaş Raporu başlığı ile akıcı geçiş
-                    Hero(
-                      tag: 'test_title_${test.id}',
-                      child: Material(
-                        color: Colors.transparent,
-                        child: Text(
-                          test.testName,
-                          style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: theme.cardColor,
+        border: Border.all(
+          color: isDark 
+            ? colorScheme.surfaceContainerHighest.withOpacity(0.3)
+            : colorScheme.onSurface.withOpacity(0.08),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark 
+              ? Colors.black.withOpacity(0.2)
+              : colorScheme.primary.withOpacity(0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => context.push('/home/test-result-summary', extra: test),
+          onLongPress: () => context.push('/home/test-detail', extra: test),
+          child: Padding(
+            padding: const EdgeInsets.all(14.0),
+            child: Row(
+              children: [
+                // Sol rozet - daha göze çarpan
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(14),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        colorScheme.primary.withOpacity(0.15),
+                        colorScheme.secondary.withOpacity(0.1),
+                      ],
+                    ),
+                    border: Border.all(
+                      color: colorScheme.primary.withOpacity(0.2),
+                      width: 1.5,
+                    ),
+                  ),
+                  alignment: Alignment.center,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        test.totalNet.toStringAsFixed(1),
+                        style: textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w900, 
+                          color: colorScheme.primary,
+                          letterSpacing: -0.5,
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${test.sectionName} • ${DateFormat.yMd('tr').format(test.date)}',
-                      style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
-                    ),
-                  ],
+                      Text(
+                        'NET',
+                        style: textTheme.labelSmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 9,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              // Sağ metrikler
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Row(children: [
-                    Icon(Icons.check_rounded, size: 16, color: colorScheme.secondary),
-                    const SizedBox(width: 4),
-                    Text('%${acc.toStringAsFixed(1)}', style: textTheme.bodyMedium?.copyWith(color: colorScheme.secondary, fontWeight: FontWeight.w700)),
-                  ]),
-                  const SizedBox(height: 4),
-                  Text('${test.totalCorrect}/${test.totalWrong}/${test.totalBlank}', style: textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant)),
-                ],
-              ),
-            ],
+                const SizedBox(width: 14),
+                // Orta içerik
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Hero: Savaş Raporu başlığı ile akıcı geçiş
+                      Hero(
+                        tag: 'test_title_${test.id}',
+                        child: Material(
+                          color: Colors.transparent,
+                          child: Text(
+                            test.testName,
+                            style: textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.onSurface,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(Icons.category_outlined, size: 14, color: colorScheme.onSurfaceVariant),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              test.sectionName,
+                              style: textTheme.bodySmall?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Icon(Icons.calendar_today_outlined, size: 14, color: colorScheme.onSurfaceVariant),
+                          const SizedBox(width: 4),
+                          Text(
+                            DateFormat.yMd('tr').format(test.date),
+                            style: textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Sağ metrikler - daha kompakt ve şık
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: colorScheme.secondary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: colorScheme.secondary.withOpacity(0.2),
+                      width: 1,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.check_circle, size: 16, color: colorScheme.secondary),
+                          const SizedBox(width: 4),
+                          Text(
+                            '%${acc.toStringAsFixed(0)}',
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.secondary, 
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${test.totalCorrect}/${test.totalWrong}/${test.totalBlank}',
+                        style: textTheme.labelSmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

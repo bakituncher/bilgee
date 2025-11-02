@@ -28,155 +28,447 @@ class TestDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final pieChartSections = _createPieChartSections(context);
     final weakestSubjectEntry = _findWeakestSubject(); // Zayıf dersi bul
 
     return Scaffold(
       appBar: AppBar(
         title: Text(test.testName),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Genel İstatistik Kartı
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              theme.scaffoldBackgroundColor,
+              theme.cardColor.withOpacity(0.3),
+              theme.scaffoldBackgroundColor,
+            ],
+          ),
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Genel İstatistik Kartı - daha şık
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  color: theme.cardColor,
+                  border: Border.all(
+                    color: isDark 
+                      ? colorScheme.surfaceContainerHighest.withOpacity(0.3)
+                      : colorScheme.onSurface.withOpacity(0.08),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: isDark 
+                        ? Colors.black.withOpacity(0.2)
+                        : colorScheme.primary.withOpacity(0.08),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildStatColumn('Toplam Net', test.totalNet.toStringAsFixed(2), context, isHeader: true),
-                    _buildStatColumn('Doğru', test.totalCorrect.toString(), context),
-                    _buildStatColumn('Yanlış', test.totalWrong.toString(), context),
+                    _buildStatColumn('Toplam Net', test.totalNet.toStringAsFixed(1), context, isHeader: true),
+                    _buildStatColumn('Doğru', test.totalCorrect.toString(), context, color: colorScheme.secondary),
+                    _buildStatColumn('Yanlış', test.totalWrong.toString(), context, color: colorScheme.error),
                     _buildStatColumn('Boş', test.totalBlank.toString(), context),
                   ],
                 ),
               ),
-            ),
-            const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
-            // Pasta Grafiği
-            Text('Derslerin Net Dağılımı', style: textTheme.titleLarge),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 200,
-              child: PieChart(
-                PieChartData(
-                  sections: pieChartSections,
-                  centerSpaceRadius: 40,
-                  sectionsSpace: 2,
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Yapay Zeka Analiz Kartı (Şimdilik statik, ileride dinamikleşecek)
-            Text('Analiz ve Tavsiye', style: textTheme.titleLarge),
-            const SizedBox(height: 8),
-            Card(
-              color: colorScheme.primary.withOpacity(0.1),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
+              // Pasta Grafiği Başlığı
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: Row(
                   children: [
-                    Icon(Icons.lightbulb_outline, color: colorScheme.secondary, size: 32),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(Icons.pie_chart_rounded, color: colorScheme.primary, size: 20),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Net Dağılımı',
+                      style: textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              
+              // Pasta Grafiği - iyileştirilmiş
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  color: theme.cardColor,
+                  border: Border.all(
+                    color: isDark 
+                      ? colorScheme.surfaceContainerHighest.withOpacity(0.3)
+                      : colorScheme.onSurface.withOpacity(0.08),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: isDark 
+                        ? Colors.black.withOpacity(0.15)
+                        : colorScheme.primary.withOpacity(0.06),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.all(20),
+                child: SizedBox(
+                  height: 260,
+                  child: pieChartSections.isEmpty
+                    ? Center(
+                        child: Text(
+                          'Net değeri olan ders yok',
+                          style: textTheme.bodyLarge?.copyWith(color: colorScheme.onSurfaceVariant),
+                        ),
+                      )
+                    : PieChart(
+                        PieChartData(
+                          sections: pieChartSections,
+                          centerSpaceRadius: 50,
+                          sectionsSpace: 3,
+                          borderData: FlBorderData(show: false),
+                        ),
+                      ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Yapay Zeka Analiz Kartı
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: colorScheme.secondary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(Icons.lightbulb_outline, color: colorScheme.secondary, size: 20),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Analiz ve Tavsiye',
+                      style: textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(18),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      colorScheme.primary.withOpacity(isDark ? 0.15 : 0.08),
+                      colorScheme.secondary.withOpacity(isDark ? 0.1 : 0.06),
+                    ],
+                  ),
+                  border: Border.all(
+                    color: isDark
+                      ? colorScheme.primary.withOpacity(0.2)
+                      : colorScheme.onSurface.withOpacity(0.08),
+                    width: 1.5,
+                  ),
+                ),
+                padding: const EdgeInsets.all(18.0),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: colorScheme.secondary.withOpacity(0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.psychology_rounded, color: colorScheme.secondary, size: 28),
+                    ),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Text.rich(
                         TextSpan(
                           children: [
-                            const TextSpan(text: 'Bu denemede en çok zorlandığın ders '),
+                            const TextSpan(text: 'En çok zorlandığın ders '),
                             TextSpan(
                               text: '${weakestSubjectEntry.key} ',
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: colorScheme.primary,
+                              ),
                             ),
-                            const TextSpan(text: 'görünüyor. Bu derse biraz daha ağırlık vererek netlerini hızla artırabilirsin!'),
+                            const TextSpan(text: 'görünüyor. Bu derse odaklanarak netlerini artırabilirsin!'),
                           ],
                         ),
-                        style: textTheme.bodyLarge,
+                        style: textTheme.bodyLarge?.copyWith(
+                          height: 1.5,
+                          color: colorScheme.onSurface,
+                        ),
                       ),
                     )
                   ],
                 ),
               ),
-            ),
-            const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
-            // Ders Sonuçları Listesi
-            Text('Ders Sonuçları', style: textTheme.titleLarge),
-            const SizedBox(height: 8),
-            ...test.scores.entries.map((entry) {
-              final subject = entry.key;
-              final scores = entry.value;
-              return Card(
-                margin: const EdgeInsets.symmetric(vertical: 6),
-                child: ListTile(
-                  title: Text(subject, style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                  subtitle: Text(
-                    'D: ${scores['dogru']} / Y: ${scores['yanlis']} / B: ${scores['bos']}',
-                    style: textTheme.bodyMedium,
-                  ),
-                  trailing: Text(
-                    'Net: ${(scores['dogru']! - (scores['yanlis']! * test.penaltyCoefficient)).toStringAsFixed(2)}',
-                    style: textTheme.titleMedium?.copyWith(color: colorScheme.secondary),
-                  ),
+              // Ders Sonuçları Listesi Başlığı
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(Icons.subject_rounded, color: colorScheme.primary, size: 20),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Ders Sonuçları',
+                      style: textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                  ],
                 ),
-              );
-            }),
-          ],
+              ),
+              const SizedBox(height: 12),
+              
+              // Ders kartları
+              ...test.scores.entries.map((entry) {
+                final subject = entry.key;
+                final scores = entry.value;
+                final net = scores['dogru']! - (scores['yanlis']! * test.penaltyCoefficient);
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    color: theme.cardColor,
+                    border: Border.all(
+                      color: isDark 
+                        ? colorScheme.surfaceContainerHighest.withOpacity(0.3)
+                        : colorScheme.onSurface.withOpacity(0.08),
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: isDark 
+                          ? Colors.black.withOpacity(0.1)
+                          : colorScheme.primary.withOpacity(0.04),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                subject,
+                                style: textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.onSurface,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: (net >= 0 ? colorScheme.secondary : colorScheme.error).withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: (net >= 0 ? colorScheme.secondary : colorScheme.error).withOpacity(0.3),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Text(
+                                'Net: ${net.toStringAsFixed(1)}',
+                                style: textTheme.titleSmall?.copyWith(
+                                  color: net >= 0 ? colorScheme.secondary : colorScheme.error,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            _resultChip(context, 'D', scores['dogru'].toString(), colorScheme.secondary),
+                            _resultChip(context, 'Y', scores['yanlis'].toString(), colorScheme.error),
+                            _resultChip(context, 'B', scores['bos'].toString(), colorScheme.onSurfaceVariant),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+            ],
+          ),
         ),
       ),
     );
   }
+  
+  Widget _resultChip(BuildContext context, String label, String value, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: color.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '$label: ',
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-  // Pasta grafiği dilimlerini oluşturan fonksiyon
+  // Pasta grafiği dilimlerini oluşturan fonksiyon - geliştirilmiş
   List<PieChartSectionData> _createPieChartSections(BuildContext context) {
     final List<Color> colors = [
-      Colors.blue, Colors.green, Colors.orange, Colors.purple, Colors.red,
-      Colors.teal, Colors.pink, Colors.amber, Colors.indigo, Colors.brown
+      const Color(0xFF3B82F6), // Blue
+      const Color(0xFF10B981), // Green
+      const Color(0xFFF59E0B), // Orange
+      const Color(0xFFA855F7), // Purple
+      const Color(0xFFEF4444), // Red
+      const Color(0xFF14B8A6), // Teal
+      const Color(0xFFEC4899), // Pink
+      const Color(0xFFFBBF24), // Amber
+      const Color(0xFF6366F1), // Indigo
+      const Color(0xFFA16207), // Brown
     ];
     int colorIndex = 0;
 
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final isDark = theme.brightness == Brightness.dark;
 
-    return test.scores.entries.map((entry) {
+    // Pozitif net değeri olan dersleri al ve sırala
+    final validEntries = test.scores.entries
+      .where((entry) {
+        final net = entry.value['dogru']! - (entry.value['yanlis']! * test.penaltyCoefficient);
+        return net > 0;
+      })
+      .toList()
+      ..sort((a, b) {
+        final netA = a.value['dogru']! - (a.value['yanlis']! * test.penaltyCoefficient);
+        final netB = b.value['dogru']! - (b.value['yanlis']! * test.penaltyCoefficient);
+        return netB.compareTo(netA);
+      });
+
+    return validEntries.map((entry) {
       final subjectNet = entry.value['dogru']! - (entry.value['yanlis']! * test.penaltyCoefficient);
-      if (subjectNet <= 0) return null; // Net'i 0 veya daha düşükse grafikte gösterme
-
+      final color = colors[colorIndex % colors.length];
+      
+      // Sadece net değerini göster, ders adını gösterme (çakışmayı önlemek için)
       final section = PieChartSectionData(
-          value: subjectNet,
-          title: '${subjectNet.toStringAsFixed(1)}\n${entry.key}',
-          radius: 80,
-          color: colors[colorIndex % colors.length],
-          titleStyle: textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: colorScheme.onPrimary
-          )
+        value: subjectNet,
+        title: subjectNet.toStringAsFixed(1),
+        radius: 90,
+        color: color,
+        titleStyle: textTheme.titleSmall?.copyWith(
+          fontWeight: FontWeight.w900,
+          color: Colors.white,
+          fontSize: 13,
+          shadows: [
+            Shadow(
+              color: Colors.black.withOpacity(0.5),
+              offset: const Offset(0, 1),
+              blurRadius: 2,
+            ),
+          ],
+        ),
+        badgeWidget: null,
+        titlePositionPercentageOffset: 0.55,
       );
       colorIndex++;
       return section;
-    }).where((section) => section != null).cast<PieChartSectionData>().toList();
+    }).toList();
   }
 
-  // İstatistik kolonu oluşturan yardımcı widget
-  Widget _buildStatColumn(String label, String value, BuildContext context, {bool isHeader = false}) {
+  // İstatistik kolonu oluşturan yardımcı widget - geliştirilmiş
+  Widget _buildStatColumn(String label, String value, BuildContext context, {bool isHeader = false, Color? color}) {
     final textTheme = Theme.of(context).textTheme;
-    final style = isHeader ? textTheme.titleLarge : textTheme.titleMedium;
-    final color = isHeader ? Theme.of(context).colorScheme.secondary : null;
+    final colorScheme = Theme.of(context).colorScheme;
+    final statColor = color ?? (isHeader ? colorScheme.primary : colorScheme.onSurface);
 
     return Column(
       children: [
-        Text(label, style: textTheme.bodySmall),
-        const SizedBox(height: 4),
         Text(
           value,
-          style: style?.copyWith(
-            color: color,
-            fontWeight: FontWeight.bold,
+          style: (isHeader ? textTheme.headlineMedium : textTheme.titleLarge)?.copyWith(
+            color: statColor,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -0.5,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          label,
+          style: textTheme.bodySmall?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w600,
+            fontSize: 11,
           ),
         ),
       ],
