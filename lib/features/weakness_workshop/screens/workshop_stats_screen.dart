@@ -680,44 +680,48 @@ class _AdaptiveBackgroundState extends State<_AdaptiveBackground> with SingleTic
       animation: _c,
       builder: (_, __) {
         final t = _c.value;
-        if (widget.isDark) {
-          // Dark mode: animated gradient with glow blobs
-          return Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color.lerp(const Color(0xFF0F172A), const Color(0xFF0B1020), t)!,
-                  Color.lerp(const Color(0xFF1E293B), const Color(0xFF0F172A), 1 - t)!,
-                ],
-              ),
-            ),
-            child: Stack(
-              children: [
-                _GlowBlob(top: -40, left: -20, color: const Color(0xFF22D3EE).withValues(alpha: 0.25), size: 200 + 40 * t),
-                _GlowBlob(bottom: -60, right: -30, color: const Color(0xFFA78BFA).withValues(alpha: 0.22), size: 240 - 20 * t),
-                _GlowBlob(top: 160, right: -40, color: const Color(0xFF34D399).withValues(alpha: 0.18), size: 180 + 20 * (1 - t)),
-              ],
-            ),
-          );
-        } else {
-          // Light mode: subtle gradient
-          final colorScheme = Theme.of(context).colorScheme;
-          return Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Theme.of(context).scaffoldBackgroundColor,
-                  colorScheme.surfaceContainerHighest.withOpacity(0.2),
-                ],
-              ),
-            ),
-          );
-        }
+        return widget.isDark 
+          ? _buildDarkBackground(t)
+          : _buildLightBackground(context);
       },
+    );
+  }
+
+  Widget _buildDarkBackground(double t) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color.lerp(const Color(0xFF0F172A), const Color(0xFF0B1020), t)!,
+            Color.lerp(const Color(0xFF1E293B), const Color(0xFF0F172A), 1 - t)!,
+          ],
+        ),
+      ),
+      child: Stack(
+        children: [
+          _GlowBlob(top: -40, left: -20, color: const Color(0xFF22D3EE).withValues(alpha: 0.25), size: 200 + 40 * t),
+          _GlowBlob(bottom: -60, right: -30, color: const Color(0xFFA78BFA).withValues(alpha: 0.22), size: 240 - 20 * t),
+          _GlowBlob(top: 160, right: -40, color: const Color(0xFF34D399).withValues(alpha: 0.18), size: 180 + 20 * (1 - t)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLightBackground(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Theme.of(context).scaffoldBackgroundColor,
+            colorScheme.surfaceContainerHighest.withOpacity(0.2),
+          ],
+        ),
+      ),
     );
   }
 }

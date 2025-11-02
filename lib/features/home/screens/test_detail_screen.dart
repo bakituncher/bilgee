@@ -256,12 +256,14 @@ class TestDetailScreen extends StatelessWidget {
     );
   }
 
+  // Color palette for charts - extracted as constant to avoid duplication
+  static const List<Color> _chartColors = [
+    Colors.blue, Colors.green, Colors.orange, Colors.purple, Colors.red,
+    Colors.teal, Colors.pink, Colors.amber, Colors.indigo, Colors.brown
+  ];
+
   // Pasta grafiği dilimlerini oluşturan fonksiyon - TEXT REMOVED to prevent overlap
   List<PieChartSectionData> _createPieChartSections(BuildContext context) {
-    final List<Color> colors = [
-      Colors.blue, Colors.green, Colors.orange, Colors.purple, Colors.red,
-      Colors.teal, Colors.pink, Colors.amber, Colors.indigo, Colors.brown
-    ];
     int colorIndex = 0;
 
     return test.scores.entries.map((entry) {
@@ -272,8 +274,8 @@ class TestDetailScreen extends StatelessWidget {
         value: subjectNet,
         title: '', // Remove text to prevent overlapping
         radius: 70,
-        color: colors[colorIndex % colors.length],
-        titleStyle: const TextStyle(fontSize: 0), // Hide any potential text
+        color: _chartColors[colorIndex % _chartColors.length],
+        titleStyle: null, // Cleaner than fontSize: 0
         badgeWidget: null,
       );
       colorIndex++;
@@ -284,11 +286,6 @@ class TestDetailScreen extends StatelessWidget {
   // Build legend for pie chart to show subject names without overlap
   Widget _buildLegend(BuildContext context, List<PieChartSectionData> sections) {
     final textTheme = Theme.of(context).textTheme;
-    final List<Color> colors = [
-      Colors.blue, Colors.green, Colors.orange, Colors.purple, Colors.red,
-      Colors.teal, Colors.pink, Colors.amber, Colors.indigo, Colors.brown
-    ];
-
     final entries = test.scores.entries.toList();
     final legendItems = <Widget>[];
     int colorIndex = 0;
@@ -308,7 +305,7 @@ class TestDetailScreen extends StatelessWidget {
                 width: 12,
                 height: 12,
                 decoration: BoxDecoration(
-                  color: colors[colorIndex % colors.length],
+                  color: _chartColors[colorIndex % _chartColors.length],
                   shape: BoxShape.circle,
                 ),
               ),
