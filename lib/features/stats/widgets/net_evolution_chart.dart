@@ -194,8 +194,8 @@ class _NetEvolutionChartState extends State<NetEvolutionChart> {
                       final text = '${test.testName}\n${DateFormat.yMd('tr').format(test.date)}\n\nNet: ${test.totalNet.toStringAsFixed(2)}\nİsabet: %${(accuracy * 100).toStringAsFixed(0)}';
                       return LineTooltipItem(
                         text,
-                        const TextStyle(
-                          color: Colors.white,
+                        TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
                           fontWeight: FontWeight.w600,
                           fontSize: 12,
                           height: 1.4,
@@ -244,7 +244,9 @@ class _NetEvolutionChartState extends State<NetEvolutionChart> {
                         return FlDotCirclePainter(
                           radius: isTouched ? 6.5 : 4,
                           color: Color.lerp(Theme.of(context).colorScheme.error, Theme.of(context).colorScheme.secondary, accuracy)!,
-                          strokeColor: isTouched ? Colors.white : Theme.of(context).cardColor,
+                          strokeColor: isTouched
+                              ? Theme.of(context).colorScheme.surface
+                              : Theme.of(context).cardColor,
                           strokeWidth: isTouched ? 3 : 2,
                         );
                       },

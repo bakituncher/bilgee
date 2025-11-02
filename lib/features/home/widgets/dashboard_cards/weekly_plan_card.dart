@@ -47,7 +47,13 @@ class WeeklyPlanCard extends ConsumerWidget {
         ),
         border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35), width: 1),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(.35), blurRadius: 18, offset: const Offset(0, 8))
+          BoxShadow(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.black.withOpacity(.35)
+                : Colors.black.withOpacity(.15),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          )
         ],
       ),
       clipBehavior: Clip.antiAlias,

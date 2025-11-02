@@ -219,7 +219,9 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                     color: Theme.of(context).cardColor,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.5),
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.black.withOpacity(0.5)
+                            : Colors.black.withOpacity(0.15),
                         spreadRadius: 5,
                         blurRadius: 15,
                         offset: const Offset(0, -5),
@@ -296,16 +298,23 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
       animation: _gradientAnimation,
       builder: (context, child) {
         final colorScheme = Theme.of(context).colorScheme;
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         return Container(
           decoration: BoxDecoration(
             gradient: RadialGradient(
               center: Alignment(0.5 + 0.5 * (1 - _gradientAnimation.value), 0.5 - 0.5 * _gradientAnimation.value),
               radius: 1.5,
-              colors: [
-                colorScheme.surface,
-                colorScheme.surface,
-                Color.lerp(colorScheme.surface, Colors.black, 0.5)!,
-              ],
+              colors: isDark
+                  ? [
+                      colorScheme.surface,
+                      colorScheme.surface,
+                      Color.lerp(colorScheme.surface, Colors.black, 0.5)!,
+                    ]
+                  : [
+                      colorScheme.surface,
+                      Color.lerp(colorScheme.surface, colorScheme.primary, 0.05)!,
+                      Color.lerp(colorScheme.surface, colorScheme.secondary, 0.08)!,
+                    ],
               stops: const [0.0, 0.4, 1.0],
             ),
           ),
@@ -768,7 +777,9 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                 ]
                     : [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
+                    color: isDark
+                        ? Colors.black.withOpacity(0.2)
+                        : Colors.black.withOpacity(0.08),
                     blurRadius: 5,
                     offset: const Offset(0, 3),
                   )
@@ -874,7 +885,9 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                             border: Border.all(color: colorScheme.onSurface.withOpacity(0.8), width: 1.5),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.3),
+                                color: isDark
+                                    ? Colors.black.withOpacity(0.3)
+                                    : Colors.black.withOpacity(0.15),
                                 blurRadius: 5,
                                 offset: const Offset(0, 2),
                               )

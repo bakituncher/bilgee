@@ -279,7 +279,10 @@ class _WeeklyPlanVictoryOverlay extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Colors.black.withOpacity(0.6), Colors.black.withOpacity(0.85)],
+                colors: [
+                  Colors.black.withOpacity(0.6),
+                  Colors.black.withOpacity(0.85),
+                ],
               ),
             ),
             child: Center(

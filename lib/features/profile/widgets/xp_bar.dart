@@ -23,7 +23,14 @@ class XpBar extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(rankName, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16)),
+            Text(
+              rankName,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
+                fontSize: 16,
+              ),
+            ),
             Text('$currentXp / $nextLevelXp BP', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 14)),
           ],
         ),

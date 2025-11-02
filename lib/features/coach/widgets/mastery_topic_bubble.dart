@@ -197,7 +197,9 @@ class _MasteryTopicBubbleState extends State<MasteryTopicBubble>
                         shadows: [
                           Shadow(
                             blurRadius: _isHovered ? 15.0 : 12.0,
-                            color: Colors.black.withOpacity(0.7),
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? Colors.black.withOpacity(0.7)
+                                : Colors.black.withOpacity(0.3),
                             offset: const Offset(0, 1),
                           ),
                           Shadow(

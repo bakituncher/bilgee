@@ -175,7 +175,7 @@ class _StatCardState extends State<_StatCard> with SingleTickerProviderStateMixi
                             widget.value,
                             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: Theme.of(context).colorScheme.onSurface,
                               letterSpacing: -0.5,
                             ),
                           ),

@@ -19,7 +19,11 @@ class AppLoader extends StatelessWidget {
             width: 160,
             height: 160,
             filterQuality: FilterQuality.medium,
-            errorBuilder: (_, __, ___) => const Icon(Icons.school, size: 96, color: Colors.white70),
+            errorBuilder: (_, __, ___) => Icon(
+              Icons.school,
+              size: 96,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+            ),
           ),
         ),
       ),

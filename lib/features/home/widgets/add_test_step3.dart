@@ -124,7 +124,14 @@ class Step3Summary extends ConsumerWidget {
               }
             },
             child: state.isSaving
-                ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3,))
+                ? SizedBox(
+                    height: 24,
+                    width: 24,
+                    child: CircularProgressIndicator(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                      strokeWidth: 3,
+                    ),
+                  )
                 : const Text('Kaydet ve Raporu Görüntüle'),
           ),
           TextButton(

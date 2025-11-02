@@ -47,10 +47,15 @@ class PremiumGate extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.bottomRight,
                   end: Alignment.topLeft,
-                  colors: [
-                    Colors.black.withOpacity(0.1),
-                    Colors.black.withOpacity(0.3),
-                  ],
+                  colors: Theme.of(context).brightness == Brightness.dark
+                      ? [
+                          Colors.black.withOpacity(0.1),
+                          Colors.black.withOpacity(0.3),
+                        ]
+                      : [
+                          Colors.black.withOpacity(0.05),
+                          Colors.black.withOpacity(0.15),
+                        ],
                   stops: const [0.0, 0.7],
                 ),
               ),
@@ -64,11 +69,13 @@ class PremiumGate extends StatelessWidget {
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.black.withOpacity(0.4),
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.black.withOpacity(0.4)
+                      : Colors.black.withOpacity(0.2),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.lock_outline_rounded,
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   size: 32,
                 ),
               ),

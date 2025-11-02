@@ -250,6 +250,8 @@ class GamifiedQuestCard extends ConsumerWidget {
     final progress = quest.goalValue > 0 ? (quest.currentProgress / quest.goalValue).clamp(0.0, 1.0) : (quest.isCompleted ? 1.0 : 0.0);
     final isCompleted = quest.isCompleted;
     final isClaimable = isCompleted && !quest.rewardClaimed;
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     VoidCallback? onTapAction;
     if (isClaimable) {
@@ -264,15 +266,19 @@ class GamifiedQuestCard extends ConsumerWidget {
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         decoration: BoxDecoration(
-          color: isClaimable ? const Color(0xFF17294D) : Theme.of(context).cardColor,
+          color: isClaimable
+              ? (isDark ? const Color(0xFF17294D) : Colors.amber.withOpacity(0.1))
+              : colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isClaimable ? Colors.amber : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+            color: isClaimable ? Colors.amber : colorScheme.surfaceContainerHighest.withOpacity(0.5),
             width: isClaimable ? 2 : 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: isClaimable ? Colors.amber.withOpacity(0.3) : Colors.black.withOpacity(0.3),
+              color: isClaimable
+                  ? Colors.amber.withOpacity(0.3)
+                  : (isDark ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.08)),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -292,12 +298,19 @@ class GamifiedQuestCard extends ConsumerWidget {
                     children: [
                       Text(
                         quest.title,
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurface,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         quest.description,
-                        style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ],
                   ),
@@ -424,7 +437,10 @@ class GamifiedQuestCard extends ConsumerWidget {
         const SizedBox(width: 12),
         Text(
           '${quest.currentProgress} / ${quest.goalValue}',
-          style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ],
     );

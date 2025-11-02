@@ -227,14 +227,14 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
         resizeToAvoidBottomInset: true,
         appBar: AppBar(
           title: const Text('Sohbet'),
-          backgroundColor: Theme.of(context).primaryColor,
+          backgroundColor: Theme.of(context).colorScheme.surface,
           elevation: 0,
           // YENI: Sohbet içindeyken geri ikonunu Süit’e dönecek şekilde özelleştir
           leading: selectedMood != null
               ? BackButton(onPressed: _exitToSuite)
               : null,
         ),
-        backgroundColor: Theme.of(context).primaryColor,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         body: Stack(
           children: [
             Column(
@@ -277,7 +277,7 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
                 child: FloatingActionButton.small(
                   heroTag: 'toBottom',
                   backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  foregroundColor: Colors.white,
+                  foregroundColor: Theme.of(context).colorScheme.onSurface,
                   onPressed: () => _scrollToBottom(isNewMessage: false),
                   child: const Icon(Icons.arrow_downward_rounded),
                 ),
@@ -300,7 +300,9 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(22),
-                  border: Border.all(color: Colors.white.withOpacity(0.06)),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                  ),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 14),
                 child: TextField(
@@ -325,7 +327,7 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
                   : const Icon(Icons.send_rounded),
               style: IconButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.secondary,
-                foregroundColor: Theme.of(context).primaryColor,
+                foregroundColor: Colors.black,
                 padding: const EdgeInsets.all(12),
                 shape: const CircleBorder(),
               ),
@@ -403,6 +405,9 @@ class _BriefingButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(24),
@@ -411,14 +416,29 @@ class _BriefingButton extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
-          gradient: const LinearGradient(
+          gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0x18222C2C), Color(0x10222C2C)],
+            colors: isDark
+                ? [const Color(0x18222C2C), const Color(0x10222C2C)]
+                : [
+                    colorScheme.surfaceContainerHighest.withOpacity(0.4),
+                    colorScheme.surfaceContainerHighest.withOpacity(0.2),
+                  ],
           ),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.08)
+                : colorScheme.outline.withOpacity(0.3),
+          ),
           boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: 0.25), blurRadius: 14, offset: const Offset(0, 4)),
+            BoxShadow(
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.25)
+                  : Colors.black.withOpacity(0.08),
+              blurRadius: 14,
+              offset: const Offset(0, 4),
+            ),
           ],
         ),
         child: Row(
@@ -431,7 +451,7 @@ class _BriefingButton extends StatelessWidget {
                 shape: BoxShape.circle,
                 gradient: LinearGradient(colors: [theme.colorScheme.secondary, theme.colorScheme.secondary]),
               ),
-              child: Icon(icon, size: 30, color: theme.primaryColor),
+              child: Icon(icon, size: 30, color: isDark ? theme.primaryColor : Colors.black87),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -440,7 +460,10 @@ class _BriefingButton extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: colorScheme.onSurface,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -455,7 +478,11 @@ class _BriefingButton extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            Icon(Icons.arrow_forward_ios_rounded, size: 18, color: theme.colorScheme.onSurfaceVariant.withOpacity(0.8)),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 18,
+              color: colorScheme.onSurfaceVariant.withOpacity(0.8),
+            ),
           ],
         ),
       ),
@@ -471,9 +498,10 @@ class _MessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isUser = message.isUser;
+    final colorScheme = Theme.of(context).colorScheme;
 
-    final Color bg = isUser ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.surfaceContainerHighest;
-    final Color fg = isUser ? Theme.of(context).primaryColor : Colors.white;
+    final Color bg = isUser ? colorScheme.secondary : colorScheme.surfaceContainerHighest;
+    final Color fg = isUser ? Colors.black : colorScheme.onSurface;
 
     final content = GestureDetector(
       onLongPress: () async {
@@ -488,8 +516,8 @@ class _MessageBubble extends StatelessWidget {
           children: [
             if (!isUser)
               CircleAvatar(
-                backgroundColor: Theme.of(context).colorScheme.secondary,
-                foregroundColor: Theme.of(context).primaryColor,
+                backgroundColor: colorScheme.secondary,
+                foregroundColor: Colors.black,
                 radius: 14,
                 child: const Icon(Icons.auto_awesome, size: 16),
               ),

@@ -155,7 +155,7 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
                             "%${(value * 100).toStringAsFixed(0)}",
                             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
                           Text(
@@ -283,7 +283,9 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
         color: Theme.of(context).cardColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.black.withOpacity(0.1)
+                : Colors.black.withOpacity(0.05),
             blurRadius: 20,
             offset: const Offset(0, -5),
           ),
@@ -299,7 +301,7 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.secondary,
-                foregroundColor: Colors.white,
+                foregroundColor: Colors.black,
                 elevation: 0,
                 shadowColor: Colors.transparent,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -343,7 +345,7 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
                 "Kaydet",
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: Colors.black,
                   letterSpacing: 0.5,
                 ),
               ),
