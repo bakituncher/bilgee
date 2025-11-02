@@ -441,26 +441,62 @@ class _FollowCount extends StatelessWidget {
   const _FollowCount({required this.label, required this.value, this.onTap});
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    return InkWell(
-      borderRadius: BorderRadius.circular(20),
-      onTap: onTap,
-      child: Container(
-        constraints: const BoxConstraints(minWidth: 86, minHeight: 72),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.06),
-          border: Border.all(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.12)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+    final isDark = theme.brightness == Brightness.dark;
+    
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Container(
+          constraints: const BoxConstraints(minWidth: 90, minHeight: 76),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDark
+                ? [
+                    colorScheme.surface.withOpacity(0.4),
+                    colorScheme.surface.withOpacity(0.15),
+                  ]
+                : [
+                    colorScheme.surface,
+                    colorScheme.surfaceContainerHighest.withOpacity(0.25),
+                  ],
+            ),
+            border: Border.all(
+              color: isDark
+                ? colorScheme.surfaceContainerHighest.withOpacity(0.3)
+                : colorScheme.onSurface.withOpacity(0.08),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: isDark
+                  ? Colors.black.withOpacity(0.15)
+                  : colorScheme.primary.withOpacity(0.04),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               FittedBox(
                 child: Text(
                   value.toString(),
-                  style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+                  style: textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color: colorScheme.primary,
+                    letterSpacing: -0.5,
+                  ),
                   maxLines: 1,
                 ),
               ),
@@ -469,12 +505,16 @@ class _FollowCount extends StatelessWidget {
                 child: FittedBox(
                   child: Text(
                     label,
-                    style: textTheme.labelMedium?.copyWith(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
+                    style: textTheme.labelLarge?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
+                    ),
                     maxLines: 1,
                   ),
                 ),
               ),
             ],
+          ),
         ),
       ),
     );
@@ -878,59 +918,128 @@ class _NeoXpBar extends StatelessWidget {
     final capped = progress.clamp(0.0, 1.0);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     final accentProfile1 = colorScheme.primary;
     final accentProfile2 = colorScheme.secondary;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(Icons.flash_on_rounded, size: 18, color: accentProfile2),
-            const SizedBox(width: 6),
-            Text('Rütbe Puanı', style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold)),
-            const Spacer(),
-            Text('$currentXp / $nextLevelXp', style: theme.textTheme.labelSmall?.copyWith(color: colorScheme.onSurface.withOpacity(0.7))),
-          ],
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+            ? [
+                colorScheme.surface.withOpacity(0.4),
+                colorScheme.surface.withOpacity(0.15),
+              ]
+            : [
+                colorScheme.surface,
+                colorScheme.surfaceContainerHighest.withOpacity(0.2),
+              ],
         ),
-        const SizedBox(height: 10),
-        Container(
-          padding: const EdgeInsets.all(2),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            gradient: LinearGradient(colors: [accentProfile1, accentProfile2]),
+        border: Border.all(
+          color: isDark
+            ? colorScheme.surfaceContainerHighest.withOpacity(0.3)
+            : colorScheme.onSurface.withOpacity(0.08),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+              ? Colors.black.withOpacity(0.15)
+              : colorScheme.primary.withOpacity(0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final w = constraints.maxWidth;
-              return Stack(
-                children: [
-                  Container(
-                    height: 22,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      color: colorScheme.surface.withOpacity(0.55),
-                    ),
-                  ),
-                  AnimatedContainer(
-                    duration: 700.ms,
-                    curve: Curves.easeOutCubic,
-                    width: (w) * capped,
-                    height: 22,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      gradient: LinearGradient(begin: Alignment.centerLeft, end: Alignment.centerRight, colors: [accentProfile2, accentProfile1]),
-                      boxShadow: [
-                        BoxShadow(color: accentProfile2.o(0.4), blurRadius: 18, spreadRadius: 1),
-                      ],
-                    ),
-                  ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: accentProfile2.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.flash_on_rounded, size: 16, color: accentProfile2),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Rütbe Puanı',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '$currentXp / $nextLevelXp',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              gradient: LinearGradient(
+                colors: [
+                  accentProfile1.withOpacity(0.8),
+                  accentProfile2.withOpacity(0.8),
                 ],
-              );
-            },
+              ),
+            ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final w = constraints.maxWidth;
+                return Stack(
+                  children: [
+                    Container(
+                      height: 20,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        color: isDark
+                          ? colorScheme.surface.withOpacity(0.6)
+                          : colorScheme.surface.withOpacity(0.9),
+                      ),
+                    ),
+                    AnimatedContainer(
+                      duration: 700.ms,
+                      curve: Curves.easeOutCubic,
+                      width: (w) * capped,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        gradient: LinearGradient(
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                          colors: [accentProfile2, accentProfile1],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: accentProfile2.withOpacity(0.4),
+                            blurRadius: 12,
+                            spreadRadius: 0,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -948,48 +1057,71 @@ class _ProfileStatCard extends StatelessWidget {
     return Semantics(
       label: '$label istatistiği: $value',
       child: Container(
-        // Sabit yükseklik kaldırıldı -> esnek, overflow engellendi
-        constraints: const BoxConstraints(minHeight: 104),
+        constraints: const BoxConstraints(minHeight: 108),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(20),
           gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: isDark
-                  ? [
-                      colorScheme.onSurface.withOpacity(0.1),
-                      colorScheme.onSurface.withOpacity(0.05)
-                    ]
-                  : [
-                      colorScheme.surfaceContainerHighest.withOpacity(0.35),
-                      colorScheme.surfaceContainerHighest.withOpacity(0.20)
-                    ]),
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isDark
+              ? [
+                  colorScheme.surface.withOpacity(0.5),
+                  colorScheme.surface.withOpacity(0.2),
+                ]
+              : [
+                  colorScheme.surface,
+                  colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                ],
+          ),
           border: Border.all(
             color: isDark
-                ? colorScheme.onSurface.withOpacity(0.12)
-                : colorScheme.surfaceContainerHighest.withOpacity(0.5),
+              ? colorScheme.surfaceContainerHighest.withOpacity(0.3)
+              : colorScheme.onSurface.withOpacity(0.08),
             width: 1.5,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: isDark
+                ? Colors.black.withOpacity(0.2)
+                : colorScheme.primary.withOpacity(0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+          padding: const EdgeInsets.all(16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, size: 22, color: colorScheme.secondary),
-              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, size: 24, color: colorScheme.primary),
+              ),
+              const Spacer(),
               FittedBox(
                 child: Text(
                   value,
-                  style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                  style: textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color: colorScheme.onSurface,
+                    letterSpacing: -0.5,
+                  ),
                   maxLines: 1,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 label,
-                style: textTheme.labelMedium?.copyWith(color: colorScheme.onSurface.withOpacity(0.7)),
+                style: textTheme.labelLarge?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -1041,6 +1173,10 @@ class _ActionNeoState extends State<_ActionNeo> {
   bool _pressed = false;
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    
     return GestureDetector(
       onTapDown: (_) => setState(() => _pressed = true),
       onTapCancel: () => setState(() => _pressed = false),
@@ -1054,24 +1190,57 @@ class _ActionNeoState extends State<_ActionNeo> {
         duration: 140.ms,
         curve: Curves.easeOut,
         child: Container(
-          height: 64,
+          height: 68,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(18),
             gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Theme.of(context).colorScheme.surface.withOpacity(0.5),
-                  Theme.of(context).colorScheme.surface.withOpacity(0.2)
-                ]),
-            border: Border.all(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.12), width: 1),
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDark
+                ? [
+                    colorScheme.surface.withOpacity(0.5),
+                    colorScheme.surface.withOpacity(0.2),
+                  ]
+                : [
+                    colorScheme.surface,
+                    colorScheme.surfaceContainerHighest.withOpacity(0.2),
+                  ],
+            ),
+            border: Border.all(
+              color: isDark
+                ? colorScheme.surfaceContainerHighest.withOpacity(0.3)
+                : colorScheme.onSurface.withOpacity(0.1),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: isDark
+                  ? Colors.black.withOpacity(0.15)
+                  : colorScheme.primary.withOpacity(0.04),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(widget.icon, color: Theme.of(context).colorScheme.primary, size: 22),
-              const SizedBox(width: 8),
-              Text(widget.label, style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600)),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(widget.icon, color: colorScheme.primary, size: 20),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                widget.label,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: colorScheme.onSurface,
+                ),
+              ),
             ],
           ),
         ),
