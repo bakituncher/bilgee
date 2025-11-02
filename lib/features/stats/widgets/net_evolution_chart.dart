@@ -56,6 +56,8 @@ class _NetEvolutionChartState extends State<NetEvolutionChart> {
       }
     }
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Container(
       height: 280,
       decoration: BoxDecoration(
@@ -69,12 +71,16 @@ class _NetEvolutionChartState extends State<NetEvolutionChart> {
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
-          width: 1,
+          color: isDark
+              ? Theme.of(context).colorScheme.secondary.withOpacity(0.2)
+              : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+          width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.08),
+            color: isDark
+                ? Theme.of(context).colorScheme.primary.withOpacity(0.08)
+                : Colors.black.withOpacity(0.10),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
