@@ -228,14 +228,14 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
         resizeToAvoidBottomInset: true,
         appBar: AppBar(
           title: const Text('Sohbet'),
-          backgroundColor: AppTheme.primaryColor,
+          backgroundColor: Theme.of(context).primaryColor,
           elevation: 0,
           // YENI: Sohbet içindeyken geri ikonunu Süit’e dönecek şekilde özelleştir
           leading: selectedMood != null
               ? BackButton(onPressed: _exitToSuite)
               : null,
         ),
-        backgroundColor: AppTheme.primaryColor,
+        backgroundColor: Theme.of(context).primaryColor,
         body: Stack(
           children: [
             Column(
@@ -247,25 +247,25 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
                     child: selectedMood == null
                         ? _SmartBriefingView(onPromptSelected: _onMoodSelected)
                         : RepaintBoundary(
-                            child: ListView.builder(
-                              controller: _scrollController,
-                              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                              cacheExtent: 300,
-                              addAutomaticKeepAlives: false,
-                              addRepaintBoundaries: true,
-                              addSemanticIndexes: false,
-                              padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-                              itemCount: history.length + (_isTyping ? 1 : 0),
-                              itemBuilder: (context, index) {
-                                if (_isTyping && index == history.length) {
-                                  return const _TypingBubble();
-                                }
-                                final message = history[index];
-                                final bool isLastRealMessage = index == history.length - 1;
-                                return _MessageBubble(message: message, animate: isLastRealMessage);
-                              },
-                            ),
-                          ),
+                      child: ListView.builder(
+                        controller: _scrollController,
+                        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                        cacheExtent: 300,
+                        addAutomaticKeepAlives: false,
+                        addRepaintBoundaries: true,
+                        addSemanticIndexes: false,
+                        padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                        itemCount: history.length + (_isTyping ? 1 : 0),
+                        itemBuilder: (context, index) {
+                          if (_isTyping && index == history.length) {
+                            return const _TypingBubble();
+                          }
+                          final message = history[index];
+                          final bool isLastRealMessage = index == history.length - 1;
+                          return _MessageBubble(message: message, animate: isLastRealMessage);
+                        },
+                      ),
+                    ),
                   ),
                 ),
                 if (selectedMood != null) _buildChatInput(),
@@ -277,7 +277,7 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
                 bottom: (selectedMood != null) ? 88 : 24,
                 child: FloatingActionButton.small(
                   heroTag: 'toBottom',
-                  backgroundColor: AppTheme.lightSurfaceColor,
+                  backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
                   foregroundColor: Colors.white,
                   onPressed: () => _scrollToBottom(isNewMessage: false),
                   child: const Icon(Icons.arrow_downward_rounded),
@@ -299,9 +299,9 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                  color: AppTheme.lightSurfaceColor,
+                  color: Theme.of(context).colorScheme.surfaceVariant,
                   borderRadius: BorderRadius.circular(22),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+                  border: Border.all(color: Colors.white.withOpacity(0.06)),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 14),
                 child: TextField(
@@ -325,8 +325,8 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
                   ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
                   : const Icon(Icons.send_rounded),
               style: IconButton.styleFrom(
-                backgroundColor: AppTheme.secondaryColor,
-                foregroundColor: AppTheme.primaryColor,
+                backgroundColor: Theme.of(context).colorScheme.secondary,
+                foregroundColor: Theme.of(context).primaryColor,
                 padding: const EdgeInsets.all(12),
                 shape: const CircleBorder(),
               ),
@@ -357,10 +357,10 @@ class _SmartBriefingView extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const SizedBox(height: 4),
-                  const CircleAvatar(
-                    backgroundColor: AppTheme.secondaryColor,
+                  CircleAvatar(
+                    backgroundColor: Theme.of(context).colorScheme.secondary,
                     radius: 42,
-                    child: Icon(Icons.auto_awesome, size: 42, color: AppTheme.primaryColor),
+                    child: Icon(Icons.auto_awesome, size: 42, color: Theme.of(context).primaryColor),
                   ).animate().fadeIn(delay: 180.ms).scale(),
                   const SizedBox(height: 24),
                   Text('Motivasyon Sohbeti', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700))
@@ -368,7 +368,7 @@ class _SmartBriefingView extends ConsumerWidget {
                   const SizedBox(height: 10),
                   Text(
                     'Hızlı destek için bir başlık seç. Deneme Değerlendirme ve Strateji Danışma AiHub’a taşındı.',
-                    style: theme.textTheme.titleMedium?.copyWith(color: AppTheme.secondaryTextColor, height: 1.3),
+                    style: theme.textTheme.titleMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant, height: 1.3),
                     textAlign: TextAlign.center,
                   ).animate().fadeIn(delay: 300.ms),
                   const SizedBox(height: 24),
@@ -428,11 +428,11 @@ class _BriefingButton extends StatelessWidget {
             Container(
               width: 54,
               height: 54,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: LinearGradient(colors: [AppTheme.secondaryColor, AppTheme.successColor]),
+                gradient: LinearGradient(colors: [theme.colorScheme.secondary, theme.colorScheme.secondary]),
               ),
-              child: Icon(icon, size: 30, color: AppTheme.primaryColor),
+              child: Icon(icon, size: 30, color: theme.primaryColor),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -448,7 +448,7 @@ class _BriefingButton extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     subtitle,
-                    style: theme.textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor, height: 1.25),
+                    style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant, height: 1.25),
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -456,7 +456,7 @@ class _BriefingButton extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            Icon(Icons.arrow_forward_ios_rounded, size: 18, color: AppTheme.secondaryTextColor.withValues(alpha: 0.8)),
+            Icon(Icons.arrow_forward_ios_rounded, size: 18, color: theme.colorScheme.onSurfaceVariant.withOpacity(0.8)),
           ],
         ),
       ),
@@ -473,8 +473,8 @@ class _MessageBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final isUser = message.isUser;
 
-    final Color bg = isUser ? AppTheme.secondaryColor : AppTheme.lightSurfaceColor;
-    final Color fg = isUser ? AppTheme.primaryColor : Colors.white;
+    final Color bg = isUser ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.surfaceVariant;
+    final Color fg = isUser ? Theme.of(context).primaryColor : Colors.white;
 
     final content = GestureDetector(
       onLongPress: () async {
@@ -488,11 +488,11 @@ class _MessageBubble extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             if (!isUser)
-              const CircleAvatar(
-                backgroundColor: AppTheme.secondaryColor,
-                foregroundColor: AppTheme.primaryColor,
+              CircleAvatar(
+                backgroundColor: Theme.of(context).colorScheme.secondary,
+                foregroundColor: Theme.of(context).primaryColor,
                 radius: 14,
-                child: Icon(Icons.auto_awesome, size: 16),
+                child: const Icon(Icons.auto_awesome, size: 16),
               ),
             if (!isUser) const SizedBox(width: 8),
             Flexible(
@@ -543,13 +543,13 @@ class _TypingBubble extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            const CircleAvatar(backgroundColor: AppTheme.secondaryColor, radius: 16,
-                child: Icon(Icons.auto_awesome, size: 20, color: AppTheme.primaryColor)),
+            CircleAvatar(backgroundColor: Theme.of(context).colorScheme.secondary, radius: 16,
+                child: Icon(Icons.auto_awesome, size: 20, color: Theme.of(context).primaryColor)),
             const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: const BoxDecoration(color: AppTheme.lightSurfaceColor,
-                  borderRadius: BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20),
+              decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceVariant,
+                  borderRadius: const BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20),
                       bottomRight: Radius.circular(20), bottomLeft: Radius.circular(4))),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -561,7 +561,7 @@ class _TypingBubble extends StatelessWidget {
                     child: Container(
                       margin: const EdgeInsets.symmetric(horizontal: 3),
                       width: 8, height: 8,
-                      decoration: BoxDecoration(color: AppTheme.secondaryTextColor.withValues(alpha: 0.7), shape: BoxShape.circle),
+                      decoration: BoxDecoration(color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.7), shape: BoxShape.circle),
                     ),
                   );
                 }),

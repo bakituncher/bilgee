@@ -283,7 +283,7 @@ class _TimerDial extends StatefulWidget {
 
 class _TimerDialState extends State<_TimerDial> with SingleTickerProviderStateMixin {
   late final AnimationController _rotCtrl;
-  double _lastProgress = 0.0; // 0..1 artan ilerleme
+  double _lastProgress = 0.0; // 0..1 artan
 
   @override
   void initState() {
@@ -397,21 +397,20 @@ class _DialPainter extends CustomPainter {
   final ColorScheme colorScheme;
   _DialPainter(
       {required this.progress,
-      required this.color,
-      required this.isPaused,
-      required this.interval,
-      required this.completedInCycle,
-      required this.rotationAngle,
-      required this.finalPulse,
-      required this.colorScheme});
+        required this.color,
+        required this.isPaused,
+        required this.interval,
+        required this.completedInCycle,
+        required this.rotationAngle,
+        required this.finalPulse,
+        required this.colorScheme});
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2;
     final rect = Rect.fromCircle(center: center, radius: radius);
-    final colorScheme =
-        Theme.of(context).colorScheme; // Assuming context is available, which it is not. A workaround is needed.
+
     // Let's assume the color scheme is passed to the painter.
     final surfaceVariant = colorScheme.surfaceVariant;
     final onSurface = colorScheme.onSurface;

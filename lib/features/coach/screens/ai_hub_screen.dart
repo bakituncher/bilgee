@@ -42,6 +42,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
   @override
   Widget build(BuildContext context) {
     final isPremium = ref.watch(premiumStatusProvider);
+    final theme = Theme.of(context);
 
     final tools = [
       _AiTool(
@@ -50,7 +51,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
         subtitle: 'Uzun vadeli zafer stratejini ve haftalık planını oluştur.',
         icon: Icons.insights_rounded,
         route: '/ai-hub/strategic-planning',
-        color: AppTheme.secondaryColor,
+        color: theme.colorScheme.secondary,
         heroTag: 'strategic-core',
         chip: 'Odak',
       ),
@@ -60,7 +61,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
         subtitle: 'En zayıf konunu, kişisel çalışma kartı ve özel test ile işle.',
         icon: Icons.construction_rounded,
         route: '/ai-hub/weakness-workshop',
-        color: AppTheme.successColor,
+        color: theme.colorScheme.secondary, // Assuming success is secondary
         heroTag: 'weakness-core',
         chip: 'Gelişim',
       ),
@@ -139,7 +140,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
                     mainAxisExtent: 168,
                   ),
                   delegate: SliverChildBuilderDelegate(
-                    (context, index) {
+                        (context, index) {
                       final tool = tools[index];
                       final marketingMap = {
                         'Haftalık Planlama': {
@@ -215,8 +216,8 @@ class _CoreVisual extends StatelessWidget {
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
                       colors: [
-                        AppTheme.secondaryColor.withOpacity(0.05 + g * 0.12),
-                        AppTheme.primaryColor.withOpacity(0),
+                        Theme.of(context).colorScheme.secondary.withOpacity(0.05 + g * 0.12),
+                        Theme.of(context).primaryColor.withOpacity(0),
                       ],
                       stops: const [0.5, 1],
                     ),
@@ -229,17 +230,17 @@ class _CoreVisual extends StatelessWidget {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: AppTheme.secondaryColor.withOpacity(.15 + g * .25),
+                        color: Theme.of(context).colorScheme.secondary.withOpacity(.15 + g * .25),
                         blurRadius: 50 + g * 30,
                         spreadRadius: 8 + g * 8,
                       ),
                     ],
                     gradient: SweepGradient(
                       colors: [
-                        AppTheme.secondaryColor.withOpacity(.4),
-                        AppTheme.successColor.withOpacity(.35),
+                        Theme.of(context).colorScheme.secondary.withOpacity(.4),
+                        AppTheme.successBrandColor.withOpacity(.35),
                         Colors.pinkAccent.withOpacity(.3),
-                        AppTheme.secondaryColor.withOpacity(.4),
+                        Theme.of(context).colorScheme.secondary.withOpacity(.4),
                       ],
                       stops: const [0, .33, .66, 1],
                       transform: GradientRotation(g * pi * 2),
@@ -251,11 +252,11 @@ class _CoreVisual extends StatelessWidget {
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          AppTheme.primaryColor.withOpacity(.9),
-                          AppTheme.primaryColor.withOpacity(.6),
+                          Theme.of(context).primaryColor.withOpacity(.9),
+                          Theme.of(context).primaryColor.withOpacity(.6),
                         ],
                       ),
-                      border: Border.all(color: AppTheme.secondaryColor.withOpacity(.2), width: 1.5),
+                      border: Border.all(color: Theme.of(context).colorScheme.secondary.withOpacity(.2), width: 1.5),
                     ),
                     child: Icon(Icons.auto_awesome, size: 60 + g * 6, color: Colors.white.withOpacity(.92)),
                   ),
@@ -296,9 +297,9 @@ class _AnimatedBackground extends StatelessWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                AppTheme.primaryColor,
-                AppTheme.primaryColor.blend(Colors.black, .2 + g * .1),
-                AppTheme.primaryColor.blend(AppTheme.secondaryColor.withOpacity(.2), .05 + g * .08),
+                Theme.of(context).primaryColor,
+                Theme.of(context).primaryColor.blend(Colors.black, .2 + g * .1),
+                Theme.of(context).primaryColor.blend(Theme.of(context).colorScheme.secondary.withOpacity(.2), .05 + g * .08),
               ],
             ),
           ),
@@ -327,7 +328,7 @@ class _ParticlePainter extends CustomPainter {
       final dy = rnd.nextDouble() * size.height;
       final radius = (rnd.nextDouble() * 2 + 1) * (1 + (progress * .3));
       final paint = Paint()
-        ..color = AppTheme.secondaryColor.withOpacity(.05 + rnd.nextDouble() * .08)
+        ..color = AppTheme.secondaryBrandColor.withOpacity(.05 + rnd.nextDouble() * .08)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
       canvas.drawCircle(Offset(dx, dy), radius, paint);
     }
@@ -420,7 +421,7 @@ class _AiToolTile extends StatelessWidget {
                           tool.subtitle,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor),
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                         ),
                         const Spacer(),
                         Row(
@@ -430,9 +431,9 @@ class _AiToolTile extends StatelessWidget {
                             Text(
                               'Hızlı başla',
                               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                    color: tool.color.withOpacity(.9),
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                                color: tool.color.withOpacity(.9),
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                             const Spacer(),
                             Icon(Icons.arrow_forward_rounded, size: 20, color: Colors.white.withOpacity(.9)),
@@ -484,10 +485,10 @@ class _Badge extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-              letterSpacing: .2,
-            ),
+          fontWeight: FontWeight.w800,
+          color: Colors.white,
+          letterSpacing: .2,
+        ),
       ),
     );
   }

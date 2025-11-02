@@ -16,12 +16,12 @@ class BadgeCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: badge.isUnlocked
               ? badge.color.withOpacity(0.1)
-              : AppTheme.cardColor.withOpacity(0.5),
+              : Theme.of(context).cardColor.withOpacity(0.5),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
               color: badge.isUnlocked
                   ? badge.color
-                  : AppTheme.lightSurfaceColor,
+                  : Theme.of(context).colorScheme.surfaceVariant,
               width: 2),
         ),
         child: Column(
@@ -30,7 +30,7 @@ class BadgeCard extends StatelessWidget {
             Icon(
               badge.isUnlocked ? badge.icon : Icons.lock_outline_rounded,
               size: 40,
-              color: badge.isUnlocked ? badge.color : AppTheme.secondaryTextColor,
+              color: badge.isUnlocked ? badge.color : Theme.of(context).colorScheme.onSurfaceVariant,
             ),
             Text(
               badge.name,
@@ -39,7 +39,7 @@ class BadgeCard extends StatelessWidget {
                 fontWeight: FontWeight.bold,
                 color: badge.isUnlocked
                     ? Colors.white
-                    : AppTheme.secondaryTextColor,
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -52,13 +52,13 @@ class BadgeCard extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.cardColor,
+        backgroundColor: Theme.of(context).cardColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Row(
           children: [
             Icon(
               badge.isUnlocked ? badge.icon : Icons.lock_outline_rounded,
-              color: badge.isUnlocked ? badge.color : AppTheme.secondaryTextColor,
+              color: badge.isUnlocked ? badge.color : Theme.of(context).colorScheme.onSurfaceVariant,
               size: 32,
             ),
             const SizedBox(width: 12),

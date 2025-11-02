@@ -67,13 +67,13 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> with SingleTickerPr
     final user = ref.watch(userProfileProvider).value;
 
     return Scaffold(
-      backgroundColor: AppTheme.scaffoldBackgroundColor,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         children: [
           // Animated Grid Background
           Positioned.fill(
             child: CustomPaint(
-              painter: AnimatedGridPainter(_bgController),
+              painter: AnimatedGridPainter(_bgController, Theme.of(context).colorScheme),
             ),
           ),
           // Main Content
@@ -165,9 +165,9 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> with SingleTickerPr
             quest: quest,
             userId: userId,
           )
-          .animate()
-          .fadeIn(delay: (index * 150).ms, duration: 600.ms)
-          .slideY(begin: 0.5, curve: Curves.easeOutCubic);
+              .animate()
+              .fadeIn(delay: (index * 150).ms, duration: 600.ms)
+              .slideY(begin: 0.5, curve: Curves.easeOutCubic);
         },
       ),
     );
@@ -264,59 +264,59 @@ class GamifiedQuestCard extends ConsumerWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-            decoration: BoxDecoration(
-              color: isClaimable ? Theme.of(context).cardColor.withBlue(170) : Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isClaimable ? Colors.amber : Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
-                width: isClaimable ? 2 : 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: isClaimable ? Colors.amber.withOpacity(0.3) : Colors.black.withOpacity(0.3),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    _buildCategoryIcon(isCompleted, isClaimable),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            quest.title,
-                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            quest.description,
-                            style: const TextStyle(fontSize: 14, color: AppTheme.secondaryTextColor),
-                          ),
-                        ],
-                      ),
-                    ),
-                    _buildRewardChip(isClaimable),
-                  ],
-                ),
-                if (!isCompleted || isClaimable) ...[
-                  const SizedBox(height: 20),
-                  if (isClaimable)
-                    _buildClaimRewardPrompt()
-                  else
-                    _buildProgressBar(progress),
-                ],
-              ],
-            ),
+        decoration: BoxDecoration(
+          color: isClaimable ? Theme.of(context).cardColor.withBlue(170) : Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isClaimable ? Colors.amber : Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+            width: isClaimable ? 2 : 1,
           ),
-        );
+          boxShadow: [
+            BoxShadow(
+              color: isClaimable ? Colors.amber.withOpacity(0.3) : Colors.black.withOpacity(0.3),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                _buildCategoryIcon(isCompleted, isClaimable),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        quest.title,
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        quest.description,
+                        style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                      ),
+                    ],
+                  ),
+                ),
+                _buildRewardChip(isClaimable),
+              ],
+            ),
+            if (!isCompleted || isClaimable) ...[
+              const SizedBox(height: 20),
+              if (isClaimable)
+                _buildClaimRewardPrompt()
+              else
+                _buildProgressBar(progress),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildCategoryIcon(bool isCompleted, bool isClaimable) {
@@ -336,7 +336,7 @@ class GamifiedQuestCard extends ConsumerWidget {
         case QuestCategory.engagement: icon = Icons.auto_awesome_rounded; color = Colors.purpleAccent; break;
         case QuestCategory.consistency: icon = Icons.event_repeat_rounded; color = Colors.orangeAccent; break;
         case QuestCategory.test_submission: icon = Icons.add_chart_rounded; color = Colors.redAccent; break;
-        case QuestCategory.focus: icon = Icons.center_focus_strong; color = Theme.of(context).colorScheme.primary; break;
+        case QuestCategory.focus: icon = Icons.center_focus_strong; color = Colors.blue; break;
       }
     }
 
@@ -397,7 +397,7 @@ class GamifiedQuestCard extends ConsumerWidget {
         const Icon(Icons.touch_app_rounded, color: Colors.amber),
       ],
     ).animate(onPlay: (controller) => controller.repeat())
-     .shimmer(delay: 400.ms, duration: 1800.ms, color: Colors.amber.withOpacity(0.3));
+        .shimmer(delay: 400.ms, duration: 1800.ms, color: Colors.amber.withOpacity(0.3));
   }
 
   Widget _buildProgressBar(double progress) {
@@ -435,13 +435,14 @@ class GamifiedQuestCard extends ConsumerWidget {
 
 class AnimatedGridPainter extends CustomPainter {
   final Animation<double> animation;
+  final ColorScheme colorScheme;
 
-  AnimatedGridPainter(this.animation) : super(repaint: animation);
+  AnimatedGridPainter(this.animation, this.colorScheme) : super(repaint: animation);
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.1)
+      ..color = colorScheme.surfaceVariant.withOpacity(0.1)
       ..strokeWidth = 1.0;
 
     final path = Path();

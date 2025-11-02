@@ -25,7 +25,7 @@ class XpBar extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(rankName, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16)),
-            Text('$currentXp / $nextLevelXp BP', style: const TextStyle(color: AppTheme.secondaryTextColor, fontSize: 14)),
+            Text('$currentXp / $nextLevelXp BP', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 14)),
           ],
         ),
         const SizedBox(height: 8),
@@ -34,7 +34,7 @@ class XpBar extends StatelessWidget {
             Container(
               height: 12,
               decoration: BoxDecoration(
-                color: AppTheme.lightSurfaceColor.withOpacity(0.5),
+                color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
                 borderRadius: BorderRadius.circular(6),
               ),
             ),
@@ -46,14 +46,14 @@ class XpBar extends StatelessWidget {
                     width: constraints.maxWidth * progress,
                     height: 12,
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [AppTheme.successColor, AppTheme.secondaryColor],
-                        stops: [0.3, 1.0],
+                      gradient: LinearGradient(
+                        colors: [Theme.of(context).colorScheme.secondary, Theme.of(context).colorScheme.secondary],
+                        stops: const [0.3, 1.0],
                       ),
                       borderRadius: BorderRadius.circular(6),
                       boxShadow: [
                         BoxShadow(
-                          color: AppTheme.secondaryColor.withOpacity(0.5),
+                          color: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
                           blurRadius: 8,
                           spreadRadius: 1,
                         )

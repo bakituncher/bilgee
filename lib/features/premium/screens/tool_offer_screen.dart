@@ -225,7 +225,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
     final bottomInset = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
-      backgroundColor: AppTheme.primaryColor,
+      backgroundColor: Theme.of(context).primaryColor,
       body: Stack(
         children: [
           _buildAnimatedGradientBackground(),
@@ -306,8 +306,8 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
           radius: 1.5,
           colors: [
             widget.color.withOpacity(0.3),
-            AppTheme.primaryColor.withOpacity(0.2),
-            AppTheme.primaryColor,
+            Theme.of(context).primaryColor.withOpacity(0.2),
+            Theme.of(context).primaryColor,
           ],
           stops: const [0.0, 0.4, 1.0],
         ),
@@ -322,7 +322,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: AppTheme.primaryColor.withOpacity(0.8),
+        color: Theme.of(context).primaryColor.withOpacity(0.8),
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(30),
           topRight: Radius.circular(30),
@@ -357,12 +357,12 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
             ),
           );
         },
-        loading: () => const Padding(
-          padding: EdgeInsets.all(40.0),
+        loading: () => Padding(
+          padding: const EdgeInsets.all(40.0),
           child: Center(
             child: CircularProgressIndicator(
               strokeWidth: 3,
-              color: AppTheme.secondaryColor,
+              color: Theme.of(context).colorScheme.secondary,
             ),
           ),
         ),
@@ -371,9 +371,9 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
+              Icon(
                 Icons.error_outline_rounded,
-                color: AppTheme.accentColor,
+                color: Theme.of(context).colorScheme.error,
                 size: 40,
               ),
               const SizedBox(height: 12),
@@ -473,7 +473,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
               'Potansiyelinin zirvesine ulaş',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppTheme.secondaryTextColor,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontSize: 13,
               ),
             ),
@@ -628,9 +628,9 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
 
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Harika! Premium özellikler aktif ediliyor...'),
-            backgroundColor: AppTheme.successColor,
+          SnackBar(
+            content: const Text('Harika! Premium özellikler aktif ediliyor...'),
+            backgroundColor: Theme.of(context).colorScheme.secondary,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -644,7 +644,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Başarısız: $errMsg'),
-            backgroundColor: AppTheme.accentColor,
+            backgroundColor: Theme.of(context).colorScheme.error,
             behavior: SnackBarBehavior.floating,
             action: SnackBarAction(
               label: 'Tekrar',
@@ -659,7 +659,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Hata: $e'),
-          backgroundColor: AppTheme.accentColor,
+          backgroundColor: Theme.of(context).colorScheme.error,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -709,7 +709,7 @@ class _ToolFeatureHeader extends StatelessWidget {
               height: 85,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppTheme.primaryColor.withOpacity(0.8),
+                color: Theme.of(context).primaryColor.withOpacity(0.8),
                 border: Border.all(color: color, width: 2.5),
                 boxShadow: [
                   BoxShadow(
@@ -774,7 +774,7 @@ class _MarketingInfo extends StatelessWidget {
             Text(
               subtitle,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppTheme.secondaryTextColor,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 height: 1.4,
                 fontSize: 13,
               ),
@@ -880,7 +880,7 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
 
     final borderColor = widget.isSelected
         ? widget.color
-        : AppTheme.cardColor.withOpacity(0.5);
+        : Theme.of(context).cardColor.withOpacity(0.5);
     final backgroundColor = widget.isSelected
         ? widget.color.withOpacity(0.15)
         : Colors.white.withOpacity(0.05);
@@ -969,19 +969,19 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
                                       vertical: 4,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: AppTheme.successColor.withOpacity(0.15),
+                                      color: Theme.of(context).colorScheme.secondary.withOpacity(0.15),
                                       borderRadius: BorderRadius.circular(6),
                                       border: Border.all(
-                                        color: AppTheme.successColor.withOpacity(0.5),
+                                        color: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
                                       ),
                                     ),
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        const Text(
+                                        Text(
                                           'İLK 7 GÜN ÜCRETSİZ',
                                           style: TextStyle(
-                                            color: AppTheme.successColor,
+                                            color: Theme.of(context).colorScheme.secondary,
                                             fontWeight: FontWeight.bold,
                                             fontSize: 10,
                                           ),
@@ -991,7 +991,7 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
                                           Text(
                                             widget.trialSubtitle!,
                                             style: TextStyle(
-                                              color: AppTheme.successColor.withOpacity(0.8),
+                                              color: Theme.of(context).colorScheme.secondary.withOpacity(0.8),
                                               fontWeight: FontWeight.w500,
                                               fontSize: 9,
                                             ),
@@ -1039,7 +1039,7 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
                         decoration: BoxDecoration(
                           color: widget.isSelected
                               ? widget.color
-                              : AppTheme.goldColor,
+                              : AppTheme.goldBrandColor,
                           borderRadius: BorderRadius.circular(99),
                           border: Border.all(
                             color: Colors.white.withOpacity(0.8),
@@ -1056,7 +1056,7 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
                         child: Text(
                           widget.tag!,
                           style: const TextStyle(
-                            color: AppTheme.primaryColor,
+                            color: Theme.of(context).primaryColor,
                             fontWeight: FontWeight.bold,
                             fontSize: 10,
                           ),

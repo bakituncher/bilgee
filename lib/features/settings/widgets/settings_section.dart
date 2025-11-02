@@ -13,7 +13,7 @@ class SettingsSection extends StatelessWidget {
       child: Text(
         title.toUpperCase(),
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: AppTheme.secondaryTextColor,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
           fontWeight: FontWeight.bold,
           letterSpacing: 1.2,
         ),

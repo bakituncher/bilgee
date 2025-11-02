@@ -78,7 +78,7 @@ class _PerformanceClusterState extends State<PerformanceCluster> with SingleTick
     return Card(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24),
-        side: BorderSide(color: AppTheme.lightSurfaceColor.withValues(alpha: .4)),
+        side: BorderSide(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.4)),
       ),
       child: InkWell(
         onTap: () => context.push('/home/stats'),
@@ -100,16 +100,16 @@ class _PerformanceClusterState extends State<PerformanceCluster> with SingleTick
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: AppTheme.secondaryColor.withValues(alpha: .15),
+                              color: Theme.of(context).colorScheme.secondary.withOpacity(0.15),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: AppTheme.secondaryColor.withValues(alpha: .5)),
+                              border: Border.all(color: Theme.of(context).colorScheme.secondary.withOpacity(0.5)),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.emoji_events_rounded, size: 14, color: AppTheme.secondaryColor),
+                                Icon(Icons.emoji_events_rounded, size: 14, color: Theme.of(context).colorScheme.secondary),
                                 const SizedBox(width: 4),
-                                Text(bestNet.toStringAsFixed(1), style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.secondaryColor, fontWeight: FontWeight.w600)),
+                                Text(bestNet.toStringAsFixed(1), style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.w600)),
                               ],
                             ),
                           ),
@@ -121,18 +121,18 @@ class _PerformanceClusterState extends State<PerformanceCluster> with SingleTick
                       children: [
                         _AvgHighlight(key: _highlightKey, value: avgNet),
                         const SizedBox(width: 6),
-                        Text('Ort. Net', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: AppTheme.secondaryTextColor)),
+                        Text('Ort. Net', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                       ],
                     ),
                     SizedBox(height: compact?10:14),
                     SizedBox(
                       height: compact?40:48,
-                      child: _AnimatedSparkline(values: lastValues, accent: AppTheme.secondaryColor, controller: _sparkController),
+                      child: _AnimatedSparkline(values: lastValues, accent: Theme.of(context).colorScheme.secondary, controller: _sparkController),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       lastValues.isEmpty ? 'Henüz deneme yok' : 'Son ${lastValues.length} deneme trendi',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.secondaryTextColor),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                     )
                   ],
                 ),
@@ -155,19 +155,19 @@ class _PerformanceClusterState extends State<PerformanceCluster> with SingleTick
                       icon: trend == 1
                           ? Icons.trending_up_rounded
                           : trend == -1
-                              ? Icons.trending_down_rounded
-                              : Icons.trending_flat_rounded,
+                          ? Icons.trending_down_rounded
+                          : Icons.trending_flat_rounded,
                       label: 'Trend',
                       value: trend == 1
                           ? 'Yukarı'
                           : trend == -1
-                              ? 'Aşağı'
-                              : 'Düz',
+                          ? 'Aşağı'
+                          : 'Düz',
                       color: trend == 1
                           ? Colors.greenAccent
                           : trend == -1
-                              ? AppTheme.accentColor
-                              : AppTheme.secondaryTextColor,
+                          ? Theme.of(context).colorScheme.error
+                          : Theme.of(context).colorScheme.onSurfaceVariant,
                       onTap: () => context.push('/home/stats'),
                       compact: compact,
                     ),
@@ -284,8 +284,8 @@ class _MiniStat extends StatelessWidget {
       child: Ink(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          color: AppTheme.cardColor,
-          border: Border.all(color: AppTheme.lightSurfaceColor.withValues(alpha: .45)),
+          color: Theme.of(context).cardColor,
+          border: Border.all(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.45)),
         ),
         padding: EdgeInsets.symmetric(horizontal: 12, vertical: compact?8:10),
         child: Center(
@@ -297,7 +297,7 @@ class _MiniStat extends StatelessWidget {
                 Icon(icon, color: color, size: compact?20:22),
                 SizedBox(height: compact?4:6),
                 Text(value, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600, fontSize: compact?16:null)),
-                Text(label, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.secondaryTextColor)),
+                Text(label, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
               ],
             ),
           ),
@@ -323,7 +323,7 @@ class _AvgHighlightState extends State<_AvgHighlight> with SingleTickerProviderS
   void initState() {
     super.initState();
     _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 900));
-    _color = ColorTween(begin: AppTheme.textColor, end: AppTheme.secondaryColor).animate(CurvedAnimation(parent: _c, curve: Curves.easeOut));
+    _color = ColorTween(begin: Theme.of(context).textTheme.bodyLarge?.color, end: Theme.of(context).colorScheme.secondary).animate(CurvedAnimation(parent: _c, curve: Curves.easeOut));
   }
   @override
   void didUpdateWidget(covariant _AvgHighlight oldWidget) {

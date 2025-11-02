@@ -27,11 +27,11 @@ class ResumeCta extends ConsumerWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
           gradient: LinearGradient(
-            colors: [AppTheme.cardColor, AppTheme.lightSurfaceColor.withValues(alpha: .35)],
+            colors: [Theme.of(context).cardColor, Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.35)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          border: Border.all(color: AppTheme.lightSurfaceColor.withValues(alpha: .45)),
+          border: Border.all(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.45)),
         ),
         padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
         child: Row(
@@ -40,7 +40,7 @@ class ResumeCta extends ConsumerWidget {
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: color.withValues(alpha: .15),
+                color: color.withOpacity(0.15),
               ),
               child: Icon(icon, color: color, size: 28),
             ),
@@ -49,7 +49,7 @@ class ResumeCta extends ConsumerWidget {
               child: Text(label,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
             ),
-            const Icon(Icons.arrow_forward_ios_rounded, size: 18, color: AppTheme.secondaryTextColor)
+            Icon(Icons.arrow_forward_ios_rounded, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant)
           ],
         ),
       ),

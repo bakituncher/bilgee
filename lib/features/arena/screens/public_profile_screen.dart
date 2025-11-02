@@ -12,7 +12,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/rendering.dart';
-import 'package.taktik/shared/widgets/logo_loader.dart';
+import 'package:taktik/shared/widgets/app_loader.dart';
 
 // Bu provider, ID'ye göre tek bir kullanıcı profili getirmek için kullanılır.
 final publicUserProfileProvider = FutureProvider.family.autoDispose<Map<String, dynamic>?, String>((ref, userId) async {
@@ -103,7 +103,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     child: Row(children: [
-                      Icon(it['icon'] as IconData, color: _accentProfile2),
+                      Icon(it['icon'] as IconData, color: Theme.of(context).colorScheme.primary),
                       const SizedBox(width: 8),
                       Expanded(child: Text(it['title'] as String, style: Theme.of(ctx).textTheme.labelLarge)),
                       Text(it['value'] as String, style: Theme.of(ctx).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
@@ -141,17 +141,17 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
   }
 
   Widget _kv(String k, String v, BuildContext ctx) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4.0),
-        child: Row(children: [
-          Expanded(
-              child: Text(k,
-                  style: Theme.of(ctx)
-                      .textTheme
-                      .bodyLarge
-                      ?.copyWith(color: Theme.of(ctx).colorScheme.onSurfaceVariant))),
-          Text(v, style: Theme.of(ctx).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold))
-        ]),
-      );
+    padding: const EdgeInsets.symmetric(vertical: 4.0),
+    child: Row(children: [
+      Expanded(
+          child: Text(k,
+              style: Theme.of(ctx)
+                  .textTheme
+                  .bodyLarge
+                  ?.copyWith(color: Theme.of(ctx).colorScheme.onSurfaceVariant))),
+      Text(v, style: Theme.of(ctx).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold))
+    ]),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -171,7 +171,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
           IconButton(
             tooltip: _sharing ? 'Hazırlanıyor...' : 'Paylaş',
             onPressed: _sharing ? null : () { HapticFeedback.selectionClick(); _shareProfileImage(); },
-            icon: const Icon(Icons.ios_share_rounded, color: _accentProfile2),
+            icon: Icon(Icons.ios_share_rounded, color: Theme.of(context).colorScheme.primary),
           ),
         ],
       ),
@@ -196,8 +196,14 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
           final updatedAt = statsAsync.valueOrNull?.updatedAt;
 
           return Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: _profileBgGradient),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Theme.of(context).scaffoldBackgroundColor,
+                    Theme.of(context).cardColor,
+                  ]),
             ),
             child: SafeArea(
               child: CustomScrollView(
@@ -306,7 +312,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
             ),
           );
         },
-        loading: () => const LogoLoader(),
+        loading: () => const AppLoader(),
         error: (e, s) => Center(child: Text('Savaşçı Künyesi Yüklenemedi: $e')),
       ),
     );
@@ -365,7 +371,7 @@ class _ShareableProfileCard extends StatelessWidget {
             children: [
               Image.asset('assets/images/logo.png', width: 28, height: 28),
               const SizedBox(width: 8),
-              Text('Taktik App', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: _accentProfile2, fontWeight: FontWeight.bold)),
+              Text('Taktik App', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
             ],
           ),
         ],
@@ -426,33 +432,33 @@ class _FollowButtonState extends ConsumerState<_FollowButton> {
       onPressed: _busy || me?.uid == null || me!.uid == widget.targetUserId
           ? null
           : () async {
-              HapticFeedback.selectionClick();
-              setState(() {
-                _busy = true;
-                _optimistic = !isFollowing;
-              });
-              try {
-                final svc = ref.read(firestoreServiceProvider);
-                if (isFollowing) {
-                  await svc.unfollowUser(currentUserId: me.uid, targetUserId: widget.targetUserId);
-                } else {
-                  await svc.followUser(currentUserId: me.uid, targetUserId: widget.targetUserId);
-                }
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('İşlem başarısız: $e')));
-                  setState(() {
-                    _optimistic = null;
-                  });
-                }
-              } finally {
-                if (mounted)
-                  setState(() {
-                    _busy = false;
-                    _optimistic = null;
-                  });
-              }
-            },
+        HapticFeedback.selectionClick();
+        setState(() {
+          _busy = true;
+          _optimistic = !isFollowing;
+        });
+        try {
+          final svc = ref.read(firestoreServiceProvider);
+          if (isFollowing) {
+            await svc.unfollowUser(currentUserId: me.uid, targetUserId: widget.targetUserId);
+          } else {
+            await svc.followUser(currentUserId: me.uid, targetUserId: widget.targetUserId);
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('İşlem başarısız: $e')));
+            setState(() {
+              _optimistic = null;
+            });
+          }
+        } finally {
+          if (mounted)
+            setState(() {
+              _busy = false;
+              _optimistic = null;
+            });
+        }
+      },
       style: ElevatedButton.styleFrom(
         backgroundColor: bg,
         foregroundColor: fg,
@@ -465,9 +471,9 @@ class _FollowButtonState extends ConsumerState<_FollowButton> {
       ),
       icon: (loading == true && _optimistic == null) || _busy
           ? SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2, color: colorScheme.secondary))
+          width: 16,
+          height: 16,
+          child: CircularProgressIndicator(strokeWidth: 2, color: colorScheme.secondary))
           : Icon(icon),
       label: Text(label),
     );
@@ -514,16 +520,16 @@ class _AvatarHalo extends StatelessWidget {
               child: ClipOval(
                 child: avatarStyle != null && avatarSeed != null
                     ? SvgPicture.network(
-                        "https://api.dicebear.com/9.x/$avatarStyle/svg?seed=$avatarSeed",
-                        fit: BoxFit.cover,
-                      )
+                  "https://api.dicebear.com/9.x/$avatarStyle/svg?seed=$avatarSeed",
+                  fit: BoxFit.cover,
+                )
                     : Text(
-                        (displayName.isNotEmpty ? displayName[0] : 'T').toUpperCase(),
-                        style: Theme.of(context)
-                            .textTheme
-                            .displayMedium
-                            ?.copyWith(color: colorScheme.secondary, fontWeight: FontWeight.bold),
-                      ),
+                  (displayName.isNotEmpty ? displayName[0] : 'T').toUpperCase(),
+                  style: Theme.of(context)
+                      .textTheme
+                      .displayMedium
+                      ?.copyWith(color: colorScheme.secondary, fontWeight: FontWeight.bold),
+                ),
               ),
             ).animate().fadeIn(duration: 500.ms).scale(curve: Curves.easeOutBack),
           ),

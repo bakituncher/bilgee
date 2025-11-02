@@ -264,7 +264,7 @@ class _SubjectGalaxyViewState extends ConsumerState<_SubjectGalaxyView> {
             color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.35),
             border: Border.all(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.55), width: 1),
           ),
-          child: Row(children:[ Expanded(child: const Text(e.topic.name, style: TextStyle(fontWeight: FontWeight.w600))), _MasteryPill(mastery: e.mastery), const SizedBox(width:12), Text(masteryPercent, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)) ]),
+          child: Row(children:[ Expanded(child: Text(e.topic.name, style: const TextStyle(fontWeight: FontWeight.w600))), _MasteryPill(mastery: e.mastery), const SizedBox(width:12), Text(masteryPercent, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)) ]),
         ),
       );},
     );

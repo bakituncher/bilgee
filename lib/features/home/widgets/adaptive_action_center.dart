@@ -18,7 +18,7 @@ class AdaptiveActionCenter extends StatelessWidget {
             semanticLabel: 'Deneme ekle butonu',
             icon: Icons.add_chart_outlined,
             onTap: () { HapticFeedback.lightImpact(); context.go('/home/add-test'); },
-            color: AppTheme.secondaryColor,
+            color: Theme.of(context).colorScheme.secondary,
           ),
         ),
         const SizedBox(width: 16),
@@ -61,8 +61,8 @@ class _ActionButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 18),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
-            color: AppTheme.cardColor,
-            border: Border.all(color: AppTheme.lightSurfaceColor.withValues(alpha: .5)),
+            color: Theme.of(context).cardColor,
+            border: Border.all(color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,

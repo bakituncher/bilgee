@@ -33,34 +33,6 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
   // State to prevent multiple purchase clicks
   bool _isPurchasing = false;
 
-  // Pazarlama Slaytları (İçerik değişmedi, sadece widget'lar güçlendirildi)
-  final List<({String title, String subtitle, IconData icon, Color color})> marketingSlides = const [
-    (
-    title: 'Sınırsız TaktikAI Koçu Erişimi',
-    subtitle: 'Sadece limitleri kaldırmakla kalmayın, Yapay Zeka Koçunuzla sınırsız strateji, motivasyon ve ders desteği alın. Daima bir adım öndesiniz.',
-    icon: Icons.rocket_launch_rounded,
-    color: Color(0xFF5b3d88)
-    ),
-    (
-    title: 'Dinamik, Kişiselleştirilmiş Yol Haritası',
-    subtitle: 'Hedeflerinize göre otomatik ayarlanan haftalık planlama. Eksiklerinize ve sınav tarihlerinize göre rotanızı yeniden çiziyoruz.',
-    icon: Icons.lightbulb_outline_rounded,
-    color: AppTheme.secondaryColor
-    ),
-    (
-    title: 'Cevher Atölyesi Full Erişim',
-    subtitle: 'Derinlemesine hata analizi, zayıf konulara özel ders notları ve testler. Her yanlış cevabınızı bir öğrenme zaferine dönüştürün.',
-    icon: Icons.diamond_outlined,
-    color: AppTheme.goldColor
-    ),
-    (
-    title: 'Kapsamlı Test Analizi Raporları',
-    subtitle: 'Gelişmiş metrikler ve yapay zeka yorumlarıyla test sonuçlarınızı en ince detayına kadar inceleyin. Performansınızı şansa bırakmayın.',
-    icon: Icons.analytics_rounded,
-    color: AppTheme.successColor
-    ),
-  ];
-
   // --- INITIALIZATION & DISPOSAL ---
 
   @override
@@ -149,9 +121,9 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
       if (context.mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Kontrol tamamlandı. Premium durumunuz güncellendi.'),
-            backgroundColor: AppTheme.successColor,
+          SnackBar(
+            content: const Text('Kontrol tamamlandı. Premium durumunuz güncellendi.'),
+            backgroundColor: Theme.of(context).colorScheme.secondary,
           ),
         );
         // NOT: `_handleBack()` çağrısını buradan kaldırdık. Arayüzün tepkisi
@@ -163,7 +135,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Bir hata oluştu: ${e.toString()}'),
-            backgroundColor: AppTheme.accentColor,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -179,6 +151,32 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     final offeringsAsyncValue = ref.watch(offeringsProvider);
     final bottomInset = MediaQuery.of(context).padding.bottom;
     final colorScheme = Theme.of(context).colorScheme;
+    final marketingSlides = [
+      (
+      title: 'Sınırsız TaktikAI Koçu Erişimi',
+      subtitle: 'Sadece limitleri kaldırmakla kalmayın, Yapay Zeka Koçunuzla sınırsız strateji, motivasyon ve ders desteği alın. Daima bir adım öndesiniz.',
+      icon: Icons.rocket_launch_rounded,
+      color: const Color(0xFF5b3d88)
+      ),
+      (
+      title: 'Dinamik, Kişiselleştirilmiş Yol Haritası',
+      subtitle: 'Hedeflerinize göre otomatik ayarlanan haftalık planlama. Eksiklerinize ve sınav tarihlerinize göre rotanızı yeniden çiziyoruz.',
+      icon: Icons.lightbulb_outline_rounded,
+      color: Theme.of(context).colorScheme.secondary
+      ),
+      (
+      title: 'Cevher Atölyesi Full Erişim',
+      subtitle: 'Derinlemesine hata analizi, zayıf konulara özel ders notları ve testler. Her yanlış cevabınızı bir öğrenme zaferine dönüştürün.',
+      icon: Icons.diamond_outlined,
+      color: AppTheme.goldBrandColor
+      ),
+      (
+      title: 'Kapsamlı Test Analizi Raporları',
+      subtitle: 'Gelişmiş metrikler ve yapay zeka yorumlarıyla test sonuçlarınızı en ince detayına kadar inceleyin. Performansınızı şansa bırakmayın.',
+      icon: Icons.analytics_rounded,
+      color: Theme.of(context).colorScheme.secondary
+      ),
+    ];
 
     return Scaffold(
       backgroundColor: colorScheme.background,
@@ -209,17 +207,17 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                 ),
                 const SizedBox(height: 15),
                 // PageView (Özellik Carousel - DYNAMIC)
-                _buildMarketingCarousel(),
+                _buildMarketingCarousel(marketingSlides),
                 const SizedBox(height: 15),
                 // Page Indicator
-                _buildPageIndicator(),
+                _buildPageIndicator(marketingSlides),
                 const SizedBox(height: 20),
 
                 // 3. FİYATLANDIRMA ALANI (Artık kaydırılabilir)
                 Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: _fixedBottomBarColor,
+                    color: Theme.of(context).cardColor,
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.5),
@@ -248,13 +246,13 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                         ),
                       ],
                     ),
-                    loading: () => const Padding(
-                      padding: EdgeInsets.all(32.0),
-                      child: CircularProgressIndicator(strokeWidth: 3, color: AppTheme.secondaryColor),
+                    loading: () => Padding(
+                      padding: const EdgeInsets.all(32.0),
+                      child: CircularProgressIndicator(strokeWidth: 3, color: Theme.of(context).colorScheme.secondary),
                     ),
                     error: (error, stack) => Padding(
                       padding: const EdgeInsets.all(32.0),
-                      child: Text('Hata: $error', style: const TextStyle(color: AppTheme.accentColor)),
+                      child: Text('Hata: $error', style: TextStyle(color: Theme.of(context).colorScheme.error)),
                     ),
                   ),
                 ),
@@ -284,9 +282,9 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
             child: Text(
               'Geri Yükle',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                    fontWeight: FontWeight.w600,
-                  ),
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                fontWeight: FontWeight.w600,
+              ),
             ),
           )
         ],
@@ -317,7 +315,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     );
   }
 
-  Widget _buildMarketingCarousel() {
+  Widget _buildMarketingCarousel(List<({String title, String subtitle, IconData icon, Color color})> marketingSlides) {
     return FadeTransition(
       opacity: _fadeController,
       child: Container(
@@ -340,7 +338,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     );
   }
 
-  Widget _buildPageIndicator() {
+  Widget _buildPageIndicator(List<({String title, String subtitle, IconData icon, Color color})> marketingSlides) {
     return AnimatedBuilder(
       animation: _pageController,
       builder: (context, child) {
@@ -448,7 +446,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator(color: AppTheme.secondaryColor)),
+      builder: (_) => Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.secondary)),
     );
 
     try {
@@ -459,9 +457,9 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
 
       if (outcome.cancelled) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Satın alma iptal edildi.'),
-            backgroundColor: AppTheme.accentColor,
+          SnackBar(
+            content: const Text('Satın alma iptal edildi.'),
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
         return;
@@ -480,9 +478,9 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
         }
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Harika! Premium özellikler aktif ediliyor...'),
-            backgroundColor: AppTheme.successColor,
+          SnackBar(
+            content: const Text('Harika! Premium özellikler aktif ediliyor...'),
+            backgroundColor: Theme.of(context).colorScheme.secondary,
           ),
         );
         _handleBack();
@@ -494,7 +492,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Satın alma başarısız: $errMsg'),
-          backgroundColor: AppTheme.accentColor,
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
     } catch (e) {
@@ -502,7 +500,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Satın alma sırasında bir hata oluştu: $e'),
-          backgroundColor: AppTheme.accentColor,
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
     } finally {
@@ -551,10 +549,10 @@ class _AnimatedHeader extends StatelessWidget {
               'TaktikAI Premium',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    color: Theme.of(context).colorScheme.onSurface,
-                    letterSpacing: 1.5,
-                  ),
+                fontWeight: FontWeight.w900,
+                color: Theme.of(context).colorScheme.onSurface,
+                letterSpacing: 1.5,
+              ),
             ),
           ),
         ),
@@ -568,10 +566,10 @@ class _AnimatedHeader extends StatelessWidget {
               'Sınırları kaldır, rekabette öne geç.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                    fontWeight: FontWeight.w500,
-                    height: 1.4,
-                  ),
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                fontWeight: FontWeight.w500,
+                height: 1.4,
+              ),
             ),
           ),
         ),
@@ -633,10 +631,10 @@ class _MarketingSlideCard extends StatelessWidget {
                 child: Text(
                   title,
                   style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                        fontWeight: FontWeight.w900,
-                        color: colorScheme.onSurface,
-                        letterSpacing: 0.5,
-                      ),
+                    fontWeight: FontWeight.w900,
+                    color: colorScheme.onSurface,
+                    letterSpacing: 0.5,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -647,9 +645,9 @@ class _MarketingSlideCard extends StatelessWidget {
           Text(
             subtitle,
             style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                  color: colorScheme.onSurface.withOpacity(0.7),
-                  height: 1.3,
-                ),
+              color: colorScheme.onSurface.withOpacity(0.7),
+              height: 1.3,
+            ),
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
           ),
@@ -758,24 +756,24 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                 border: Border.all(color: borderColor, width: widget.highlight ? 3.0 : 1.5),
                 boxShadow: widget.highlight
                     ? [
-                        BoxShadow(
-                          color: colorScheme.secondary.withOpacity(0.3),
-                          blurRadius: 10,
-                          spreadRadius: 2,
-                        ),
-                        BoxShadow(
-                          color: colorScheme.tertiary.withOpacity(0.15),
-                          blurRadius: 15,
-                          spreadRadius: 2,
-                        )
-                      ]
+                  BoxShadow(
+                    color: colorScheme.secondary.withOpacity(0.3),
+                    blurRadius: 10,
+                    spreadRadius: 2,
+                  ),
+                  BoxShadow(
+                    color: colorScheme.tertiary.withOpacity(0.15),
+                    blurRadius: 15,
+                    spreadRadius: 2,
+                  )
+                ]
                     : [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 5,
-                          offset: const Offset(0, 3),
-                        )
-                      ],
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 5,
+                    offset: const Offset(0, 3),
+                  )
+                ],
               ),
               child: Stack(
                 clipBehavior: Clip.none,
@@ -845,7 +843,7 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           decoration: BoxDecoration(
                             color:
-                                widget.highlight ? colorScheme.secondary : colorScheme.onSurface.withOpacity(0.15),
+                            widget.highlight ? colorScheme.secondary : colorScheme.onSurface.withOpacity(0.15),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Center(

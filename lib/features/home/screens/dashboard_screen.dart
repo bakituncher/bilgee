@@ -342,22 +342,22 @@ class _DailyQuestsCard extends ConsumerWidget {
     final card = Card(
       clipBehavior: Clip.antiAlias,
       elevation: progress >= 1.0 ? 10 : 6,
-      shadowColor: hasClaimable ? AppTheme.goldColor.withOpacity(0.7) : (progress >= 1.0 ? AppTheme.successColor.withOpacity(.6) : colorScheme.surfaceVariant.withOpacity(.35)),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24), side: BorderSide(color: hasClaimable ? AppTheme.goldColor : _progressColor(context, progress), width: 2)),
+      shadowColor: hasClaimable ? AppTheme.goldBrandColor.withOpacity(0.7) : (progress >= 1.0 ? AppTheme.successBrandColor.withOpacity(.6) : colorScheme.surfaceVariant.withOpacity(.35)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24), side: BorderSide(color: hasClaimable ? AppTheme.goldBrandColor : _progressColor(context, progress), width: 2)),
       child: InkWell(
         onTap: () => context.go('/home/quests'),
         child: Container(
           padding: const EdgeInsets.all(20.0),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [ (hasClaimable ? AppTheme.goldColor : _progressColor(context, progress)).withOpacity(0.18), theme.cardColor.withOpacity(0.55), ],
+              colors: [ (hasClaimable ? AppTheme.goldBrandColor : _progressColor(context, progress)).withOpacity(0.18), theme.cardColor.withOpacity(0.55), ],
               begin: Alignment.topLeft, end: Alignment.bottomRight,
             ),
           ),
           child: Row(children: [
             Stack(alignment: Alignment.center, children: [
-              SizedBox(height: 56, width: 56, child: CircularProgressIndicator(value: progress == 0 ? null : progress, strokeWidth: 6, backgroundColor: colorScheme.surfaceVariant.withOpacity(.25), valueColor: AlwaysStoppedAnimation(hasClaimable ? AppTheme.goldColor : _progressColor(context, progress)),)),
-              Icon(hasClaimable ? Icons.military_tech_rounded : (progress >=1 ? Icons.emoji_events_rounded : Icons.shield_moon_rounded), size: 28, color: hasClaimable ? AppTheme.goldColor : _progressColor(context, progress)),
+              SizedBox(height: 56, width: 56, child: CircularProgressIndicator(value: progress == 0 ? null : progress, strokeWidth: 6, backgroundColor: colorScheme.surfaceVariant.withOpacity(.25), valueColor: AlwaysStoppedAnimation(hasClaimable ? AppTheme.goldBrandColor : _progressColor(context, progress)),)),
+              Icon(hasClaimable ? Icons.military_tech_rounded : (progress >=1 ? Icons.emoji_events_rounded : Icons.shield_moon_rounded), size: 28, color: hasClaimable ? AppTheme.goldBrandColor : _progressColor(context, progress)),
             ]),
             const SizedBox(width: 16),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
@@ -365,7 +365,7 @@ class _DailyQuestsCard extends ConsumerWidget {
               const SizedBox(height: 4),
               Text(total == 0 ? 'Bugün görev yok' : '$completed / $total tamamlandı • Kalan ${_formatRemaining(remaining)}', style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
               const SizedBox(height: 6),
-              ClipRRect(borderRadius: BorderRadius.circular(6), child: LinearProgressIndicator(value: progress.clamp(0,1), minHeight: 6, backgroundColor: colorScheme.surfaceVariant.withOpacity(.25), valueColor: AlwaysStoppedAnimation(hasClaimable ? AppTheme.goldColor : _progressColor(context, progress)),)),
+              ClipRRect(borderRadius: BorderRadius.circular(6), child: LinearProgressIndicator(value: progress.clamp(0,1), minHeight: 6, backgroundColor: colorScheme.surfaceVariant.withOpacity(.25), valueColor: AlwaysStoppedAnimation(hasClaimable ? AppTheme.goldBrandColor : _progressColor(context, progress)),)),
             ])),
             const SizedBox(width: 8),
             Icon(Icons.arrow_forward_ios_rounded, color: colorScheme.onSurfaceVariant, size: 18),
@@ -374,7 +374,7 @@ class _DailyQuestsCard extends ConsumerWidget {
       ),
     );
     if (!hasClaimable) return card;
-    return Animate(onPlay: (c)=> c.repeat(reverse: true), effects: [ShimmerEffect(duration: 1500.ms, color: AppTheme.goldColor.withOpacity(0.5))], child: card);
+    return Animate(onPlay: (c)=> c.repeat(reverse: true), effects: [ShimmerEffect(duration: 1500.ms, color: AppTheme.goldBrandColor.withOpacity(0.5))], child: card);
   }
 }
 // ------------------------------------------

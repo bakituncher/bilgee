@@ -24,21 +24,21 @@ class SettingsTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       onTap: onTap,
-      leading: Icon(icon, color: iconColor ?? AppTheme.secondaryTextColor),
+      leading: Icon(icon, color: iconColor ?? Theme.of(context).colorScheme.onSurfaceVariant),
       title: Text(
         title,
         style: TextStyle(
-            fontWeight: FontWeight.bold, color: textColor ?? AppTheme.textColor),
+            fontWeight: FontWeight.bold, color: textColor ?? Theme.of(context).colorScheme.onSurface),
       ),
       subtitle: Text(
         subtitle,
-        style: const TextStyle(color: AppTheme.secondaryTextColor),
+        style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
       trailing: onTap != null
-          ? const Icon(Icons.arrow_forward_ios_rounded,
-          size: 16, color: AppTheme.secondaryTextColor)
+          ? Icon(Icons.arrow_forward_ios_rounded,
+          size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant)
           : null,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     );

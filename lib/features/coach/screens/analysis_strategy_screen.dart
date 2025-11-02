@@ -12,20 +12,20 @@ class AnalysisStrategyScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Analiz & Strateji'),
-        backgroundColor: AppTheme.primaryColor,
+        backgroundColor: Theme.of(context).primaryColor,
         elevation: 0,
       ),
-      backgroundColor: AppTheme.primaryColor,
+      backgroundColor: Theme.of(context).primaryColor,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const CircleAvatar(
-                backgroundColor: AppTheme.secondaryColor,
+              CircleAvatar(
+                backgroundColor: Theme.of(context).colorScheme.secondary,
                 radius: 42,
-                child: Icon(Icons.auto_awesome, size: 42, color: AppTheme.primaryColor),
+                child: Icon(Icons.auto_awesome, size: 42, color: Theme.of(context).primaryColor),
               ).animate().fadeIn(duration: 220.ms).scale(),
               const SizedBox(height: 20),
               Text(
@@ -36,7 +36,7 @@ class AnalysisStrategyScreen extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 'Deneme değerlendirme ve strateji danışmayı tek yerden başlat. Görüşme, kişisel verilerinle özelleştirilir.',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.secondaryTextColor, height: 1.3),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.3),
                 textAlign: TextAlign.center,
               ).animate().fadeIn(delay: 180.ms),
               const SizedBox(height: 24),
@@ -65,7 +65,7 @@ class AnalysisStrategyScreen extends StatelessWidget {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   'İpucu',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(color: AppTheme.secondaryTextColor),
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               ).animate().fadeIn(delay: 380.ms),
               const SizedBox(height: 8),
@@ -73,7 +73,7 @@ class AnalysisStrategyScreen extends StatelessWidget {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   'Danışma ekranında yazışmalar, durumuna göre kişiselleşir. Deneme ekleyerek analiz doğruluğunu artır.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               ).animate().fadeIn(delay: 420.ms),
             ],
@@ -130,7 +130,7 @@ class _SuiteButton extends StatelessWidget {
                 shape: BoxShape.circle,
                 gradient: gradient,
               ),
-              child: Icon(icon, size: 30, color: AppTheme.primaryColor),
+              child: Icon(icon, size: 30, color: theme.primaryColor),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -146,7 +146,7 @@ class _SuiteButton extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     subtitle,
-                    style: theme.textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor, height: 1.25),
+                    style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant, height: 1.25),
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -154,7 +154,7 @@ class _SuiteButton extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            Icon(Icons.arrow_forward_ios_rounded, size: 18, color: AppTheme.secondaryTextColor.withOpacity(0.8)),
+            Icon(Icons.arrow_forward_ios_rounded, size: 18, color: theme.colorScheme.onSurfaceVariant.withOpacity(0.8)),
           ],
         ),
       ),
