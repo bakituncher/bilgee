@@ -247,51 +247,54 @@ class _SubjectGalaxyViewState extends ConsumerState<_SubjectGalaxyView> {
       );
     });
 
-    Widget buildList()=> ListView.separated(
-      physics: const NeverScrollableScrollPhysics(),
-      shrinkWrap: true,
-      itemCount: processed.length,
-      separatorBuilder: (_,__)=> const SizedBox(height:12),
-      itemBuilder: (c,i){ 
-        final e=processed[i]; 
-        final masteryPercent = e.mastery<0 ? '—' : '%${(e.mastery*100).toStringAsFixed(0)}';
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-        
-        return InkWell(
-          onTap: ()=> context.go('/coach/update-topic-performance', extra:{'subject': subjectName,'topic': e.topic.name,'performance': e.performance}),
-          onLongPress: ()=> _showTopicStats(e),
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              color: isDark 
-                ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35)
-                : Colors.white,
-              border: Border.all(
+    Widget buildList(){
+      final isDark = Theme.of(context).brightness == Brightness.dark;
+      
+      return ListView.separated(
+        physics: const NeverScrollableScrollPhysics(),
+        shrinkWrap: true,
+        itemCount: processed.length,
+        separatorBuilder: (_,__)=> const SizedBox(height:12),
+        itemBuilder: (c,i){ 
+          final e=processed[i]; 
+          final masteryPercent = e.mastery<0 ? '—' : '%${(e.mastery*100).toStringAsFixed(0)}';
+          
+          return InkWell(
+            onTap: ()=> context.go('/coach/update-topic-performance', extra:{'subject': subjectName,'topic': e.topic.name,'performance': e.performance}),
+            onLongPress: ()=> _showTopicStats(e),
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
                 color: isDark 
-                  ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.55)
-                  : Theme.of(context).colorScheme.onSurface.withOpacity(0.15), 
-                width: isDark ? 1 : 1.5
-              ),
-              boxShadow: isDark ? null : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+                  ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35)
+                  : Colors.white,
+                border: Border.all(
+                  color: isDark 
+                    ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.55)
+                    : Theme.of(context).colorScheme.onSurface.withOpacity(0.15), 
+                  width: isDark ? 1 : 1.5
                 ),
-              ],
+                boxShadow: isDark ? null : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(children:[ 
+                Expanded(child: Text(e.topic.name, style: const TextStyle(fontWeight: FontWeight.w600))), 
+                _MasteryPill(mastery: e.mastery), 
+                const SizedBox(width:12), 
+                Text(masteryPercent, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)) 
+              ]),
             ),
-            child: Row(children:[ 
-              Expanded(child: Text(e.topic.name, style: const TextStyle(fontWeight: FontWeight.w600))), 
-              _MasteryPill(mastery: e.mastery), 
-              const SizedBox(width:12), 
-              Text(masteryPercent, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)) 
-            ]),
-          ),
-        );
-      },
-    );
+          );
+        },
+      );
+    }
 
     final content = switch(viewMode){ GalaxyViewMode.grid=>buildGrid(), GalaxyViewMode.list=>buildList() };
     return Container(
@@ -342,9 +345,7 @@ class _SubjectStatsCard extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark
-                ? Colors.black.withOpacity(0.1)
-                : Colors.black.withOpacity(0.1),
+            color: Colors.black.withOpacity(0.1),
             blurRadius: isDark ? 20 : 12,
             spreadRadius: isDark ? -10 : 0,
             offset: isDark ? const Offset(0, 10) : const Offset(0, 4),
