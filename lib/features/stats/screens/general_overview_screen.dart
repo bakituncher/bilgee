@@ -1,5 +1,6 @@
 // lib/features/stats/screens/general_overview_screen.dart
 import 'package:taktik/data/models/test_model.dart';
+import 'package:taktik/data/models/user_model.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -10,6 +11,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
 import 'package:taktik/core/theme/app_theme.dart';
 import 'package:intl/intl.dart';
+
+// Constants
+const int _maxRecentTests = 10;
+const int _maxWeeklyTasksDisplay = 10; // Maximum tasks to display per day for chart scaling
 
 /// Redesigned General Overview Screen with sector-level education analytics
 /// Features: Modern design, comprehensive metrics, interactive charts, elegant UI
@@ -78,7 +83,7 @@ class GeneralOverviewScreen extends ConsumerWidget {
 
 /// Main content widget with all overview sections
 class _OverviewContent extends ConsumerWidget {
-  final dynamic user;
+  final UserModel user;
   final List<TestModel> tests;
   final bool isDark;
 
@@ -231,7 +236,7 @@ class _OverviewContent extends ConsumerWidget {
 
 /// Hero header showing primary stats in an attractive layout
 class _HeroStatsHeader extends StatelessWidget {
-  final dynamic user;
+  final UserModel user;
   final List<TestModel> tests;
   final bool isDark;
 
@@ -518,10 +523,10 @@ class _PerformanceChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Take last 10 tests and sort chronologically
-    final recentTests = tests.length > 10
+    // Take last N tests and sort chronologically
+    final recentTests = tests.length > _maxRecentTests
         ? (tests.toList()..sort((a, b) => b.date.compareTo(a.date)))
-            .take(10)
+            .take(_maxRecentTests)
             .toList()
             .reversed
             .toList()
@@ -530,8 +535,16 @@ class _PerformanceChart extends StatelessWidget {
     final nets = recentTests.map((t) => t.totalNet).toList();
     if (nets.isEmpty) return const SizedBox.shrink();
 
-    final minY = (nets.reduce((a, b) => a < b ? a : b) - 5).clamp(0, double.infinity);
-    final maxY = nets.reduce((a, b) => a > b ? a : b) + 5;
+    // Calculate min and max in a single pass
+    var minNet = nets[0];
+    var maxNet = nets[0];
+    for (final net in nets) {
+      if (net < minNet) minNet = net;
+      if (net > maxNet) maxNet = net;
+    }
+    
+    final minY = (minNet - 5).clamp(0, double.infinity);
+    final maxY = maxNet + 5;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -692,8 +705,9 @@ class _WeeklyActivityCard extends StatelessWidget {
           '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
       return (data[key]?.length ?? 0).toDouble();
     }).toList();
+    // Cap maximum display at _maxWeeklyTasksDisplay for better chart scaling
     final maxY = (counts.isEmpty ? 1 : counts.reduce((a, b) => a > b ? a : b))
-        .clamp(1, 10)
+        .clamp(1, _maxWeeklyTasksDisplay.toDouble())
         .toDouble();
 
     return Container(
@@ -1024,7 +1038,7 @@ class _SubjectStatRow extends StatelessWidget {
 
 /// Recent insights showing latest achievements and trends
 class _RecentInsightsCard extends StatelessWidget {
-  final dynamic user;
+  final UserModel user;
   final List<TestModel> tests;
   final bool isDark;
 
@@ -1112,12 +1126,11 @@ class _RecentInsightsCard extends StatelessWidget {
       });
     }
 
-    // Recent improvement
+    // Recent improvement - sort once and reuse
     if (tests.length >= 3) {
-      final recent = tests
-          .toList()
+      final sortedTests = tests.toList()
         ..sort((a, b) => b.date.compareTo(a.date));
-      final last3 = recent.take(3).toList();
+      final last3 = sortedTests.take(3).toList();
       final avgRecent = last3.fold<double>(0, (sum, t) => sum + t.totalNet) / 3;
       final avgAll = tests.fold<double>(0, (sum, t) => sum + t.totalNet) / tests.length;
 
