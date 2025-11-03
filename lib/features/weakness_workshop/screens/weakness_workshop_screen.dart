@@ -699,13 +699,20 @@ class _StudyView extends StatelessWidget {
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
-            child: MarkdownWithMath(
-              data: material.studyGuide,
-              styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
-                p: TextStyle(fontSize: 16, height: 1.5, color: Theme.of(context).colorScheme.onSurface),
-                h1: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.secondary),
-                h3: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const _AIDisclaimerCard(),
+                const SizedBox(height: 16),
+                MarkdownWithMath(
+                  data: material.studyGuide,
+                  styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                    p: TextStyle(fontSize: 16, height: 1.5, color: Theme.of(context).colorScheme.onSurface),
+                    h1: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.secondary),
+                    h3: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -766,6 +773,10 @@ class _QuizViewState extends State<_QuizView> {
 
     return Column(
       children: [
+        const Padding(
+          padding: EdgeInsets.fromLTRB(24.0, 12.0, 24.0, 0),
+          child: _AIDisclaimerCard(),
+        ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
           child: LinearProgressIndicator(
@@ -889,20 +900,45 @@ class _QuestionCard extends StatelessWidget {
 
             return Card(
               color: tileColor ?? colorScheme.surface,
+              elevation: selectedOptionIndex == null ? 2 : (isSelected ? 4 : 1),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: borderColor ?? colorScheme.surfaceContainerHighest, width: 1.5)),
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(
+                    color: borderColor ?? colorScheme.surfaceContainerHighest, 
+                    width: borderColor != null ? 2.0 : 1.5
+                  )),
               margin: const EdgeInsets.only(bottom: 12),
-              child: ListTile(
+              child: InkWell(
                 onTap: selectedOptionIndex == null ? () => onOptionSelected(index) : null,
-                title: MarkdownWithMath(
-                  data: question.options[index],
-                  styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
-                    p: Theme.of(context).textTheme.bodyLarge,
+                borderRadius: BorderRadius.circular(16),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: MarkdownWithMath(
+                          data: question.options[index],
+                          styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                            p: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (trailingIcon != null) ...[
+                        const SizedBox(width: 12),
+                        Icon(trailingIcon, color: borderColor, size: 28),
+                      ],
+                    ],
                   ),
                 ),
-                trailing: trailingIcon != null ? Icon(trailingIcon, color: borderColor) : null,
               ),
+            ).animate(
+              target: isSelected ? 1.0 : 0.0,
+            ).scale(
+              begin: const Offset(1.0, 1.0),
+              end: const Offset(1.02, 1.02),
+              duration: 150.ms,
             );
           }),
           if (selectedOptionIndex != null && selectedOptionIndex != question.correctOptionIndex)
@@ -922,21 +958,39 @@ class _ExplanationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return Card(
-      color: colorScheme.surfaceContainerHighest,
+      elevation: 2,
+      color: colorScheme.primaryContainer.withOpacity(0.5),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: colorScheme.primary.withOpacity(0.3),
+          width: 1.5,
+        ),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(18.0),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.school_rounded, color: colorScheme.primary),
-            const SizedBox(width: 12),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: colorScheme.primary.withOpacity(0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.school_rounded, color: colorScheme.primary, size: 24),
+            ),
+            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text("Usta'nın Açıklaması",
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: colorScheme.primary)),
-                  const SizedBox(height: 8),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      )),
+                  const SizedBox(height: 10),
                   MarkdownWithMath(
                     data: explanation,
                     styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
@@ -1083,6 +1137,8 @@ class _SummaryViewState extends ConsumerState<_SummaryView> {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          const _AIDisclaimerCard(),
+          const SizedBox(height: 16),
           if (widget.masteredAchieved) ...[
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -1624,6 +1680,46 @@ class _WSHeader extends StatelessWidget {
             style: IconButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.08),
                 shape: const CircleBorder()),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AIDisclaimerCard extends StatelessWidget {
+  const _AIDisclaimerCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: colorScheme.errorContainer.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: colorScheme.error.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.info_outline_rounded,
+            color: colorScheme.error,
+            size: 20,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'AI tarafından oluşturulan içerik hata yapabilir. Lütfen dikkatli olun ve şüpheli durumlarda "Sorunu Bildir" özelliğini kullanın.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurface.withOpacity(0.85),
+                height: 1.4,
+              ),
+            ),
           ),
         ],
       ),

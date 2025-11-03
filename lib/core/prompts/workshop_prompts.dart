@@ -44,16 +44,38 @@ String getStudyGuideAndQuizPrompt(
   // KISALTILMIŞ KURALLAR (MALİYET OPTİMİZASYONU)
   final compactRules = "KURALLAR: Profesyonel üslup. StudyGuide max 700 kelime, quiz açıklamaları max 40 kelime. Şıklar ayırt edilebilir, cevap sızdırma yasak. $examGuidelines";
 
+  // KALİTE GÜVENCE KURALLARI
+  const qualityRules = """
+KRİTİK KALİTE KURALLARI:
+1. correctOptionIndex: Doğru cevabın indeksini (0-4 arası) MUTLAKA DOĞRU belirle. İndeks, doğru şıkkın pozisyonunu göstermelidir.
+2. Şık Kalitesi: Her şık net, farklı ve gerçekçi olmalı. Placeholder şıklar ("Seçenek A", "Diğer Seçenek") KESİNLİKLE YASAK.
+3. Cevap Kontrolü: Açıklamanda belirttiğin doğru cevap ile correctOptionIndex'in işaret ettiği şık MUTLAKA AYNI olmalı.
+4. Tutarlılık: Soru, şıklar ve açıklama arasında çelişki olmamalı.
+5. Çeldirici Şıklar: Yanlış şıklar gerçekçi hatalar veya kavram karışıklıkları olmalı, rastgele kelimeler değil.""";
+
   return """
 TaktikAI - Cevher İşleme Kiti oluştur.
 $fiveChoiceRule
 $compactRules
+$qualityRules
 
 INPUT:
 - Ders: '$weakestSubject' | Konu: '$weakestTopic' 
 - Sınav: $selectedExam | Zorluk: $difficulty $difficultyInstruction
 
-GÖREV: Temel kavramlar, sık hatalar, çözümlü örnek, 5 soruluk quiz hazırla.
+GÖREV: Temel kavramlar, sık hatalar, çözümlü örnek, 5 soruluk KALİTELİ quiz hazırla.
+
+ÖRNEK DOĞRU KULLANIM:
+{
+  "question": "2x + 3 = 11 denkleminde x kaçtır?",
+  "optionA": "3",
+  "optionB": "4",
+  "optionC": "5",
+  "optionD": "7",
+  "optionE": "8",
+  "correctOptionIndex": 1,
+  "explanation": "2x + 3 = 11 → 2x = 8 → x = 4. Cevap B şıkkıdır."
+}
 
 JSON ÇIKTI:
 {
@@ -61,11 +83,11 @@ JSON ÇIKTI:
   "topic": "$weakestTopic",
   "studyGuide": "# $weakestTopic - Cevher İşleme Kartı\\n\\n## 💎 Özü\\n...",
   "quiz": [
-    {"question": "Soru 1", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 0, "explanation": "..."},
-    {"question": "Soru 2", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 1, "explanation": "..."},
-    {"question": "Soru 3", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 2, "explanation": "..."},
-    {"question": "Soru 4", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 3, "explanation": "..."},
-    {"question": "Soru 5", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 4, "explanation": "..."}
+    {"question": "Soru 1", "optionA": "...", "optionB": "...", "optionC": "...", "optionD": "...", "optionE": "...", "correctOptionIndex": [0-4], "explanation": "..."},
+    {"question": "Soru 2", "optionA": "...", "optionB": "...", "optionC": "...", "optionD": "...", "optionE": "...", "correctOptionIndex": [0-4], "explanation": "..."},
+    {"question": "Soru 3", "optionA": "...", "optionB": "...", "optionC": "...", "optionD": "...", "optionE": "...", "correctOptionIndex": [0-4], "explanation": "..."},
+    {"question": "Soru 4", "optionA": "...", "optionB": "...", "optionC": "...", "optionD": "...", "optionE": "...", "correctOptionIndex": [0-4], "explanation": "..."},
+    {"question": "Soru 5", "optionA": "...", "optionB": "...", "optionC": "...", "optionD": "...", "optionE": "...", "correctOptionIndex": [0-4], "explanation": "..."}
   ]
 }
 """;

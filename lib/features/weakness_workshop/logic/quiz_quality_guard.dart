@@ -104,7 +104,15 @@ class QuizQualityGuard {
   static QuizQuestion _dedupOptions(QuizQuestion q) {
     final seen = <String, int>{};
     final cleaned = <String>[];
-    for (final opt in q.options) {
+    
+    // CRITICAL FIX: Track where the original correct option moves to
+    int newCorrectIndex = -1;
+    final originalCorrectOption = q.correctOptionIndex >= 0 && q.correctOptionIndex < q.options.length
+        ? _sanitizeText(q.options[q.correctOptionIndex]).trim().toLowerCase()
+        : '';
+    
+    for (int i = 0; i < q.options.length; i++) {
+      final opt = q.options[i];
       final k = _sanitizeText(opt).trim();
       final lk = k.toLowerCase();
       // Yer tutucu/boş şıkları atla
@@ -112,6 +120,10 @@ class QuizQualityGuard {
       if (!seen.containsKey(lk)) {
         seen[lk] = 1;
         cleaned.add(k);
+        // Track if this is the correct answer
+        if (lk == originalCorrectOption && newCorrectIndex == -1) {
+          newCorrectIndex = cleaned.length - 1;
+        }
       }
     }
 
@@ -124,8 +136,8 @@ class QuizQualityGuard {
       cleaned.removeRange(5, cleaned.length);
     }
 
-    int idx = q.correctOptionIndex;
-    if (idx >= cleaned.length) idx = 0;
+    // Use the tracked new index, or default to 0 if not found
+    int idx = newCorrectIndex >= 0 && newCorrectIndex < cleaned.length ? newCorrectIndex : 0;
 
     return QuizQuestion(
       question: _sanitizeText(q.question),
