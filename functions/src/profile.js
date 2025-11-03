@@ -31,7 +31,7 @@ async function updatePublicProfile(uid, options = {}) {
     };
     await db.collection("public_profiles").doc(uid).set(publicDoc, { merge: true });
     
-    // ÖNBELLEK: Public profile güncellendiğinde önbelleği temizle
+    // CACHE: Clear cache when public profile is updated / ÖNBELLEK: Public profile güncellendiğinde önbelleği temizle
     globalCache.invalidate(CacheKeys.publicProfile(uid));
     globalCache.invalidate(CacheKeys.userProfile(uid));
   } catch (e) {
@@ -127,7 +127,7 @@ exports.onUserUpdate = onDocumentUpdated("users/{userId}", async (event) => {
   try {
     await publicProfileRef.set(publicData, { merge: true });
     
-    // ÖNBELLEK: Public profile güncellendiğinde önbelleği temizle
+    // CACHE: Clear cache when public profile is updated / ÖNBELLEK: Public profile güncellendiğinde önbelleği temizle
     globalCache.invalidate(CacheKeys.publicProfile(uid));
     globalCache.invalidate(CacheKeys.userProfile(uid));
     

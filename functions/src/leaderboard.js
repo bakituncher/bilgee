@@ -114,7 +114,7 @@ async function publishLeaderboardSnapshot(examType, kind, limit = 200) {
   const topRef = db.collection("leaderboard_top").doc(examType).collection(kind).doc("latest");
   await topRef.set({ entries: top20, updatedAt: admin.firestore.FieldValue.serverTimestamp(), periodId }, { merge: true });
   
-  // ÖNBELLEK: Leaderboard güncellendiğinde önbelleği temizle
+  // CACHE: Clear cache when leaderboard is updated / ÖNBELLEK: Leaderboard güncellendiğinde önbelleği temizle
   globalCache.invalidate(CacheKeys.leaderboardSnapshot(examType, kind));
 }
 

@@ -15,7 +15,7 @@ import 'package:cloud_functions/cloud_functions.dart'; // SUNUCU GÖREVLERİ İ�
 import 'package:taktik/shared/notifications/in_app_notification_model.dart';
 import 'package:taktik/data/models/user_stats_model.dart';
 import 'package:taktik/data/models/focus_session_model.dart';
-import 'package:taktik/data/providers/cache_provider.dart'; // CACHE DESTEĞİ
+import 'package:taktik/data/providers/cache_provider.dart'; // CACHE SUPPORT / CACHE DESTEĞİ
 
 final firestoreProvider = Provider<FirebaseFirestore>((ref) => FirebaseFirestore.instance);
 
@@ -42,19 +42,20 @@ final testsProvider = FutureProvider<List<TestModel>>((ref) async {
 });
 
 
+// NEW: Daily and Weekly full ranking snapshot providers (optimized + CACHED)
 // YENİ: Günlük ve Haftalık tam sıralama anlık görüntü sağlayıcıları (optimize edilmiş + ÖNBELLEKLENMİŞ)
 final leaderboardDailyProvider = FutureProvider.family.autoDispose<List<LeaderboardEntry>, String>((ref, examType) async {
   final cache = ref.watch(cacheManagerProvider);
   final cacheKey = CacheKeys.leaderboard(examType, 'daily');
   
-  // Önbellekten dene
+  // Try from cache / Önbellekten dene
   final cached = cache.get<List<LeaderboardEntry>>(cacheKey);
   if (cached != null) return cached;
   
-  // Firestore'dan getir
+  // Fetch from Firestore / Firestore'dan getir
   final data = await ref.watch(firestoreServiceProvider).getLeaderboardSnapshot(examType, period: 'daily');
   
-  // 5 dakika önbellek
+  // Cache for 5 minutes / 5 dakika önbellek
   cache.set(cacheKey, data, CacheTTL.short);
   
   return data;
@@ -64,14 +65,14 @@ final leaderboardWeeklyProvider = FutureProvider.family.autoDispose<List<Leaderb
   final cache = ref.watch(cacheManagerProvider);
   final cacheKey = CacheKeys.leaderboard(examType, 'weekly');
   
-  // Önbellekten dene
+  // Try from cache / Önbellekten dene
   final cached = cache.get<List<LeaderboardEntry>>(cacheKey);
   if (cached != null) return cached;
   
-  // Firestore'dan getir
+  // Fetch from Firestore / Firestore'dan getir
   final data = await ref.watch(firestoreServiceProvider).getLeaderboardSnapshot(examType, period: 'weekly');
   
-  // 5 dakika önbellek
+  // Cache for 5 minutes / 5 dakika önbellek
   cache.set(cacheKey, data, CacheTTL.short);
   
   return data;
@@ -96,14 +97,14 @@ final performanceProvider = FutureProvider.autoDispose<PerformanceSummary?>((ref
   final cache = ref.watch(cacheManagerProvider);
   final cacheKey = CacheKeys.performanceSummary(user.uid);
   
-  // Önbellekten dene
+  // Try from cache / Önbellekten dene
   final cached = cache.get<PerformanceSummary?>(cacheKey);
   if (cached != null) return cached;
   
-  // Firestore'dan getir
+  // Fetch from Firestore / Firestore'dan getir
   final data = await ref.watch(firestoreServiceProvider).getPerformanceSummaryOnce(user.uid);
   
-  // 10 dakika önbellek
+  // Cache for 10 minutes / 10 dakika önbellek
   cache.set(cacheKey, data, CacheTTL.medium);
   
   return data;
@@ -217,19 +218,20 @@ final userStatsForUserProvider = StreamProvider.family.autoDispose<UserStats?, S
   return ref.watch(firestoreServiceProvider).getUserStatsStream(userId);
 });
 
+// PUBLIC: public profile summary via public_profiles (name, avatar, stats) - CACHED
 // PUBLIC: public_profiles üzerinden herkese açık profil özeti (isim, avatar, stats özet) - ÖNBELLEKLENMİŞ
 final publicProfileRawProvider = FutureProvider.family.autoDispose<Map<String, dynamic>?, String>((ref, userId) async {
   final cache = ref.watch(cacheManagerProvider);
   final cacheKey = CacheKeys.publicProfile(userId);
   
-  // Önbellekten dene
+  // Try from cache / Önbellekten dene
   final cached = cache.get<Map<String, dynamic>?>(cacheKey);
   if (cached != null) return cached;
   
   final svc = ref.watch(firestoreServiceProvider);
   final data = await svc.getPublicProfileRaw(userId);
   if (data != null) {
-    // 10 dakika önbellek (public profiller sık değişmez)
+    // Cache for 10 minutes (public profiles rarely change) / 10 dakika önbellek (public profiller sık değişmez)
     cache.set(cacheKey, data, CacheTTL.medium);
     return data;
   }
