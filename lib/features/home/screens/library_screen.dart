@@ -9,6 +9,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
+import 'package:taktik/shared/widgets/empty_state_widget.dart';
 
 class LibraryScreen extends ConsumerStatefulWidget {
   const LibraryScreen({super.key});
@@ -270,29 +271,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       return const LogoLoader();
     }
     if (_tests.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.inventory_2_outlined, size: 80, color: Theme.of(context).colorScheme.onSurfaceVariant),
-            const SizedBox(height: 16),
-            Text('Arşivin Henüz Boş', style: textTheme.headlineSmall),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32.0),
-              child: Text(
-                'Her deneme, gelecekteki başarın için bir kanıtıdır. İlk kanıtı arşive ekle.',
-                textAlign: TextAlign.center,
-                style: textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-              ),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () => context.push('/home/add-test'),
-              child: const Text("İlk Kaydı Ekle"),
-            )
-          ],
-        ).animate().fadeIn(duration: 800.ms),
+      return LibraryEmptyState(
+        onAddTest: () => context.push('/home/add-test'),
       );
     }
 

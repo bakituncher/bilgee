@@ -12,6 +12,7 @@ import 'package:taktik/features/settings/widgets/settings_tile.dart';
 import 'package:taktik/data/providers/admin_providers.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
 import 'package:taktik/core/theme/theme_provider.dart';
+import 'package:taktik/features/onboarding/providers/tutorial_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -312,6 +313,56 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
+  // Replay tutorial method
+  void _replayTutorial(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.school_rounded, color: Colors.blue),
+            SizedBox(width: 8),
+            Expanded(child: Text('Başlangıç Turu')),
+          ],
+        ),
+        content: const Text(
+          'Uygulamanın özelliklerini tanıtan başlangıç turunu yeniden başlatmak ister misin?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('İptal'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Başlat'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      // Mark tutorial as not completed in Firestore
+      final user = ref.read(authControllerProvider).value;
+      if (user != null) {
+        await ref.read(firestoreServiceProvider).usersCollection
+            .doc(user.uid)
+            .update({'tutorialCompleted': false});
+      }
+
+      // Navigate back to home and trigger tutorial
+      if (mounted) {
+        context.go('/home');
+        // Small delay to ensure we're on home screen
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted) {
+            ref.read(tutorialProvider.notifier).start();
+          }
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Sadece hata durumunda kullanıcıya mesaj göstermek için dinle
@@ -388,6 +439,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SettingsSection(title: "Görünüm"),
           _ThemeSelection(), // TEMA SEÇİM WIDGET'I EKLENDİ
           const SettingsSection(title: "Uygulama"),
+          SettingsTile(
+            icon: Icons.school_outlined,
+            title: "Uygulamayı Yeniden Tanıt",
+            subtitle: "Başlangıç turunu tekrar izle",
+            onTap: () => _replayTutorial(context, ref),
+          ),
           SettingsTile(
             icon: Icons.description_outlined,
             title: "Kullanım Sözleşmesi",
