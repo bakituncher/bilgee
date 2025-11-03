@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/data/models/test_model.dart';
 import 'package:taktik/data/models/user_model.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/models/performance_summary.dart';
 import 'package:taktik/data/models/topic_performance_model.dart';
 import 'package:taktik/data/repositories/firestore_service.dart';
@@ -119,11 +118,11 @@ class StatsAnalysis {
 
   // YENI: Özet veriden minimal StatsAnalysis oluşturur
   factory StatsAnalysis.fromSummary(
-    Map<String, dynamic> data,
-    Exam examData,
-    FirestoreService firestoreService, {
-    UserModel? user,
-  }) {
+      Map<String, dynamic> data,
+      Exam examData,
+      FirestoreService firestoreService, {
+        UserModel? user,
+      }) {
     final analysis = StatsAnalysis(
       const <TestModel>[],
       examData,
@@ -157,7 +156,7 @@ class StatsAnalysis {
     for (final test in tests) {
       // Her test için kendi bölümünü bul
       final testSection = examData.sections.firstWhereOrNull(
-        (s) => s.name == test.sectionName
+              (s) => s.name == test.sectionName
       );
 
       if (testSection == null) {
@@ -303,7 +302,7 @@ class StatsAnalysis {
       adviceList.add(TacticalAdvice(
         "💪 ÇOK İYİ SEVİYE: Savaşçı skorun ${warriorScore.toStringAsFixed(0)}/100. Sağlam bir performans gösteriyorsun. Tutarlılık ve doğruluğu artırarak zirveye çıkabilirsin.",
         icon: Icons.trending_up,
-        color: AppTheme.successColor,
+        color: const Color(0xFF34D399),
       ));
     } else if (warriorScore >= 50) {
       adviceList.add(TacticalAdvice(

@@ -1,7 +1,6 @@
 // lib/features/weakness_workshop/screens/saved_workshop_detail_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/weakness_workshop/models/saved_workshop_model.dart';
 import 'package:taktik/features/weakness_workshop/models/study_guide_model.dart';
 
@@ -20,9 +19,9 @@ class SavedWorkshopDetailScreen extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           title: Text(workshop.topic),
-          bottom: const TabBar(
-            indicatorColor: AppTheme.secondaryColor,
-            tabs: [
+          bottom: TabBar(
+            indicatorColor: Theme.of(context).colorScheme.secondary,
+            tabs: const [
               Tab(icon: Icon(Icons.school_rounded), text: "Çalışma Kartı"),
               Tab(icon: Icon(Icons.quiz_rounded), text: "Ustalık Sınavı"),
             ],
@@ -36,8 +35,8 @@ class SavedWorkshopDetailScreen extends StatelessWidget {
               child: MarkdownBody(
                 data: workshop.studyGuide,
                 styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
-                  p: const TextStyle(fontSize: 16, height: 1.5, color: AppTheme.textColor),
-                  h1: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppTheme.secondaryColor),
+                  p: TextStyle(fontSize: 16, height: 1.5, color: Theme.of(context).colorScheme.onSurface),
+                  h1: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.secondary),
                   h3: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
               ),
@@ -83,33 +82,33 @@ class _QuizReviewView extends StatelessWidget {
                     title: Text(
                       question.options[optIndex],
                       style: TextStyle(
-                        color: optIndex == question.correctOptionIndex ? AppTheme.successColor : AppTheme.textColor,
+                        color: optIndex == question.correctOptionIndex ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     leading: Icon(
                       optIndex == question.correctOptionIndex ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
-                      color: optIndex == question.correctOptionIndex ? AppTheme.successColor : AppTheme.secondaryTextColor,
+                      color: optIndex == question.correctOptionIndex ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   );
                 }),
                 const Divider(height: 24),
                 // Açıklama Kartı
                 Card(
-                  color: AppTheme.primaryColor.withValues(alpha: 0.7),
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.7),
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.school_rounded, color: AppTheme.secondaryColor),
+                        Icon(Icons.school_rounded, color: Theme.of(context).colorScheme.secondary),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text("Usta'nın Açıklaması", style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.secondaryColor)),
+                              Text("Usta'nın Açıklaması", style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.secondary)),
                               const SizedBox(height: 8),
-                              Text(question.explanation, style: const TextStyle(color: AppTheme.textColor, height: 1.5)),
+                              Text(question.explanation, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, height: 1.5)),
                             ],
                           ),
                         ),

@@ -1,5 +1,4 @@
 // lib/shared/widgets/scaffold_with_nav_bar.dart
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -130,16 +129,16 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                   ),
                   extendBody: true,
                   drawer: const SidePanelDrawer(),
-                  drawerScrimColor: AppTheme.primaryColor.withValues(alpha: 0.6),
+                  drawerScrimColor: Theme.of(context).colorScheme.surface.withOpacity(0.6),
                   drawerEdgeDragWidth: 48,
                   floatingActionButton: FloatingActionButton(
                     key: aiHubFabKey,
                     heroTag: 'main_fab',
                     onPressed: () => _onTap(2, ref, tutorialSteps),
-                    backgroundColor: AppTheme.secondaryColor,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
                     elevation: 4.0,
                     shape: const CircleBorder(),
-                    child: const Icon(Icons.auto_awesome, color: AppTheme.primaryColor, size: 28),
+                    child: Icon(Icons.auto_awesome, color: Theme.of(context).colorScheme.onPrimary, size: 28),
                   ).animate().scale(delay: 500.ms),
                   floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
                   bottomNavigationBar: BottomAppBar(
@@ -147,7 +146,7 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                     // notchMargin: 10.0,
                     padding: EdgeInsets.zero,
                     height: 70,
-                    color: AppTheme.cardColor.withOpacity(0.95),
+                    color: Theme.of(context).cardColor.withOpacity(0.95),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
@@ -184,13 +183,15 @@ class ScaffoldWithNavBar extends ConsumerWidget {
 
   Widget _buildNavItem(BuildContext context, {required IconData icon, required String label, required int index, required GlobalKey? key, required WidgetRef ref, required List<TutorialStep> steps}) {
     final isSelected = navigationShell.currentIndex == index;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return IconButton(
       key: key,
-      icon: Icon(icon, color: isSelected ? AppTheme.secondaryColor : AppTheme.secondaryTextColor, size: 28),
+      icon: Icon(icon, color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant, size: 28),
       onPressed: () => _onTap(index, ref, steps),
       tooltip: label,
-      splashColor: AppTheme.secondaryColor.withOpacity(0.2),
-      highlightColor: AppTheme.secondaryColor.withOpacity(0.1),
+      splashColor: colorScheme.primary.withOpacity(0.2),
+      highlightColor: colorScheme.primary.withOpacity(0.1),
     );
   }
 
@@ -278,7 +279,10 @@ class _WeeklyPlanVictoryOverlay extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Colors.black.withOpacity(0.6), Colors.black.withOpacity(0.85)],
+                colors: [
+                  Colors.black.withOpacity(0.6),
+                  Colors.black.withOpacity(0.85),
+                ],
               ),
             ),
             child: Center(
@@ -287,7 +291,7 @@ class _WeeklyPlanVictoryOverlay extends StatelessWidget {
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 480),
                   child: Material(
-                    color: AppTheme.cardColor.withOpacity(0.95),
+                    color: Theme.of(context).cardColor.withOpacity(0.95),
                     elevation: 12,
                     borderRadius: BorderRadius.circular(28),
                     child: Padding(
@@ -295,7 +299,7 @@ class _WeeklyPlanVictoryOverlay extends StatelessWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.emoji_events_rounded, size: 72, color: AppTheme.secondaryColor)
+                          Icon(Icons.emoji_events_rounded, size: 72, color: Theme.of(context).colorScheme.primary)
                               .animate().scale(duration: 600.ms, curve: Curves.elasticOut),
                           const SizedBox(height: 16),
                           Text('Haftalık Plan Tamamlandı!', textAlign: TextAlign.center,
@@ -303,7 +307,7 @@ class _WeeklyPlanVictoryOverlay extends StatelessWidget {
                           const SizedBox(height: 12),
                           Text('Planındaki tüm görevleri bitirdin. Stratejik disiplinin mükemmel! Yeni haftada sınırları daha da zorla.',
                             textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor),),
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),),
                           const SizedBox(height: 20),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,

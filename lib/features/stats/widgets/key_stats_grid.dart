@@ -1,6 +1,5 @@
 // lib/features/stats/widgets/key_stats_grid.dart
 import 'package:flutter/material.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/stats/logic/stats_analysis.dart';
 
 class KeyStatsGrid extends StatelessWidget {
@@ -31,7 +30,7 @@ class KeyStatsGrid extends StatelessWidget {
           itemBuilder: (context, index) {
             switch (index) {
               case 0:
-                return _StatCard(label: 'Savaşçı Skoru', value: analysis.warriorScore.toStringAsFixed(1), icon: Icons.shield_rounded, color: AppTheme.secondaryColor, tooltip: "Genel net, doğruluk ve istikrarı birleştiren özel puanın.");
+                return _StatCard(label: 'Savaşçı Skoru', value: analysis.warriorScore.toStringAsFixed(1), icon: Icons.shield_rounded, color: Theme.of(context).colorScheme.secondary, tooltip: "Genel net, doğruluk ve istikrarı birleştiren özel puanın.");
               case 1:
                 return _StatCard(label: 'İsabet Oranı', value: '%${analysis.accuracy.toStringAsFixed(1)}', icon: Icons.gps_fixed_rounded, color: Colors.green, tooltip: "Cevapladığın soruların yüzde kaçı doğru?");
               case 2:
@@ -63,7 +62,7 @@ class _StatCardState extends State<_StatCard> with SingleTickerProviderStateMixi
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.cardColor,
+        backgroundColor: Theme.of(context).cardColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
@@ -79,12 +78,12 @@ class _StatCardState extends State<_StatCard> with SingleTickerProviderStateMixi
             Expanded(child: Text(widget.label, maxLines: 2, overflow: TextOverflow.ellipsis)),
           ],
         ),
-        content: Text(widget.tooltip, style: const TextStyle(color: AppTheme.secondaryTextColor, height: 1.6, fontSize: 15)),
+        content: Text(widget.tooltip, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.6, fontSize: 15)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             style: TextButton.styleFrom(
-              backgroundColor: AppTheme.secondaryColor.withOpacity(0.2),
+              backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
@@ -97,6 +96,8 @@ class _StatCardState extends State<_StatCard> with SingleTickerProviderStateMixi
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return GestureDetector(
       onTapDown: (_) => setState(() => _isPressed = true),
       onTapUp: (_) => setState(() => _isPressed = false),
@@ -107,21 +108,30 @@ class _StatCardState extends State<_StatCard> with SingleTickerProviderStateMixi
         child: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                widget.color.withOpacity(0.16),
-                widget.color.withOpacity(0.06),
-              ],
+              colors: isDark
+                  ? [
+                      widget.color.withOpacity(0.16),
+                      widget.color.withOpacity(0.06),
+                    ]
+                  : [
+                      widget.color.withOpacity(0.22),
+                      widget.color.withOpacity(0.12),
+                    ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: widget.color.withOpacity(0.32),
+              color: isDark
+                  ? widget.color.withOpacity(0.32)
+                  : widget.color.withOpacity(0.45),
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: widget.color.withOpacity(0.18),
+                color: isDark
+                    ? widget.color.withOpacity(0.18)
+                    : Colors.black.withOpacity(0.12),
                 blurRadius: 8,
                 offset: const Offset(0, 3),
               ),
@@ -142,8 +152,8 @@ class _StatCardState extends State<_StatCard> with SingleTickerProviderStateMixi
                           widget.label,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: AppTheme.secondaryTextColor,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.bold,
                             fontSize: 11.5,
                             letterSpacing: 0.2,
@@ -176,7 +186,7 @@ class _StatCardState extends State<_StatCard> with SingleTickerProviderStateMixi
                             widget.value,
                             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: Theme.of(context).colorScheme.onSurface,
                               letterSpacing: -0.5,
                             ),
                           ),

@@ -1,6 +1,5 @@
 // lib/shared/widgets/edge_to_edge_wrapper.dart
 import 'package:flutter/material.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 
 /// Android 15+ SDK 35 için edge-to-edge layout desteği sağlayan wrapper widget
 class EdgeToEdgeWrapper extends StatelessWidget {
@@ -26,7 +25,7 @@ class EdgeToEdgeWrapper extends StatelessWidget {
     );
 
     return Container(
-      color: backgroundColor ?? AppTheme.scaffoldBackgroundColor,
+      color: backgroundColor ?? Theme.of(context).scaffoldBackgroundColor,
       child: Padding(
         padding: padding,
         child: child,
@@ -59,7 +58,7 @@ class EdgeToEdgeScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor ?? AppTheme.scaffoldBackgroundColor,
+      backgroundColor: backgroundColor ?? Theme.of(context).scaffoldBackgroundColor,
       drawer: drawer,
       endDrawer: endDrawer,
       floatingActionButton: floatingActionButton,

@@ -1,7 +1,6 @@
 // lib/features/home/widgets/adaptive_action_center.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter/services.dart';
 
@@ -18,7 +17,7 @@ class AdaptiveActionCenter extends StatelessWidget {
             semanticLabel: 'Deneme ekle butonu',
             icon: Icons.add_chart_outlined,
             onTap: () { HapticFeedback.lightImpact(); context.go('/home/add-test'); },
-            color: AppTheme.secondaryColor,
+            color: Theme.of(context).colorScheme.secondary,
           ),
         ),
         const SizedBox(width: 16),
@@ -61,8 +60,8 @@ class _ActionButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 18),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
-            color: AppTheme.cardColor,
-            border: Border.all(color: AppTheme.lightSurfaceColor.withValues(alpha: .5)),
+            color: Theme.of(context).cardColor,
+            border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,

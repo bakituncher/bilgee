@@ -5,12 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/data/models/test_model.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/stats/widgets/fortress_tab_selector.dart';
 import 'package:taktik/features/stats/widgets/cached_analysis_view.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
-import 'dart:ui';
 
 final selectedTabIndexProvider = StateProvider<int>((ref) => 0);
 
@@ -63,8 +61,8 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
                   colors: [
-                    AppTheme.secondaryColor.withOpacity(0.2),
-                    AppTheme.primaryColor.withOpacity(0.1),
+                    Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                    Theme.of(context).colorScheme.surface.withOpacity(0.1),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -73,7 +71,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
               child: Icon(
                 Icons.insights_rounded,
                 size: 60,
-                color: AppTheme.secondaryColor,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ).animate().scale(duration: 600.ms, curve: Curves.elasticOut),
             const SizedBox(height: 20),
@@ -91,7 +89,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                   : 'Bu cephede anlamlı bir strateji oluşturmak için en az 2 adet "$sectionName" denemesi eklemelisin.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppTheme.secondaryTextColor,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 height: 1.5,
               ),
             ).animate().fadeIn(delay: 300.ms, duration: 400.ms),
@@ -99,10 +97,10 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               decoration: BoxDecoration(
-                color: AppTheme.lightSurfaceColor.withOpacity(0.3),
+                color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: AppTheme.secondaryColor.withOpacity(0.3),
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
                   width: 1.5,
                 ),
               ),
@@ -110,12 +108,12 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.tips_and_updates_rounded,
-                    color: AppTheme.secondaryColor, size: 18),
+                    color: Theme.of(context).colorScheme.primary, size: 18),
                   const SizedBox(width: 10),
                   Text(
                     'İlk denemeyi ekle ve yükselişini izle',
                     style: TextStyle(
-                      color: AppTheme.secondaryColor,
+                      color: Theme.of(context).colorScheme.primary,
                       fontWeight: FontWeight.w600,
                       fontSize: 13,
                     ),
@@ -236,8 +234,8 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                AppTheme.primaryColor.withOpacity(0.05),
-                AppTheme.secondaryColor.withOpacity(0.05),
+                Theme.of(context).colorScheme.surface.withOpacity(0.05),
+                Theme.of(context).colorScheme.primary.withOpacity(0.05),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -255,22 +253,22 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        AppTheme.secondaryColor,
-                        AppTheme.secondaryColor.withOpacity(0.7),
+                        Theme.of(context).colorScheme.primary,
+                        Theme.of(context).colorScheme.primary.withOpacity(0.7),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(10),
                     boxShadow: [
                       BoxShadow(
-                        color: AppTheme.secondaryColor.withOpacity(0.25),
+                        color: Theme.of(context).colorScheme.primary.withOpacity(0.25),
                         blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),
                     ],
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.insights_rounded,
-                    color: AppTheme.primaryColor,
+                    color: Theme.of(context).colorScheme.onPrimary,
                     size: 20,
                   ),
                 ),

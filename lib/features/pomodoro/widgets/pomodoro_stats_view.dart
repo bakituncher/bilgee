@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:intl/intl.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/pomodoro/logic/pomodoro_notifier.dart';
@@ -58,7 +57,7 @@ class _PomodoroStatsViewState extends ConsumerState<PomodoroStatsView> {
     showModalBottomSheet(
       context: context,
       showDragHandle: true,
-      backgroundColor: AppTheme.cardColor,
+      backgroundColor: Theme.of(context).cardColor,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
       builder: (context) => Consumer(
         builder: (context, ref, _) {
@@ -82,21 +81,24 @@ class _PomodoroStatsViewState extends ConsumerState<PomodoroStatsView> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.bar_chart_rounded, color: AppTheme.secondaryColor),
+                      Icon(Icons.bar_chart_rounded, color: Theme.of(context).colorScheme.secondary),
                       const SizedBox(width: 8),
                       const Text('Odak İstatistikleri', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
                       const Spacer(),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
-                          color: Colors.amber.withOpacity(0.12),
+                          color: Theme.of(context).colorScheme.tertiary.withOpacity(0.12),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                          border: Border.all(color: Theme.of(context).colorScheme.tertiary.withOpacity(0.3)),
                         ),
                         child: Row(children: [
-                          const Icon(Icons.star_rounded, color: Colors.amber, size: 18),
+                          Icon(Icons.star_rounded, color: Theme.of(context).colorScheme.tertiary, size: 18),
                           const SizedBox(width: 6),
-                          Text('Pomodoro BP: ${userStats.pomodoroBp}', style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.w700)),
+                          Text(
+                            'Pomodoro BP: ${userStats.pomodoroBp}',
+                            style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontWeight: FontWeight.w700),
+                          ),
                         ]),
                       )
                     ],
@@ -136,7 +138,7 @@ class _PomodoroStatsViewState extends ConsumerState<PomodoroStatsView> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.shield_moon_rounded, size: 36, color: AppTheme.successColor),
+                      Icon(Icons.shield_moon_rounded, size: 36, color: Theme.of(context).colorScheme.primary),
                       const SizedBox(width: 10),
                       Expanded(child: Text('Odak Merkezi', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)) ),
                       IconButton(
@@ -153,14 +155,17 @@ class _PomodoroStatsViewState extends ConsumerState<PomodoroStatsView> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
-                          color: AppTheme.cardColor.withOpacity(0.7),
+                          color: Theme.of(context).cardColor.withOpacity(0.7),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.amber.withOpacity(0.35)),
+                          border: Border.all(color: Theme.of(context).colorScheme.tertiary.withOpacity(0.35)),
                         ),
                         child: Row(mainAxisSize: MainAxisSize.min, children: [
-                          const Icon(Icons.star_rounded, color: Colors.amber),
+                          Icon(Icons.star_rounded, color: Theme.of(context).colorScheme.tertiary),
                           const SizedBox(width: 8),
-                          Text('Pomodoro BP: ${stats.pomodoroBp}', style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.w700)),
+                          Text(
+                            'Pomodoro BP: ${stats.pomodoroBp}',
+                            style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontWeight: FontWeight.w700),
+                          ),
                         ]),
                       ),
                     ),
@@ -214,9 +219,12 @@ class _PomodoroStatsViewState extends ConsumerState<PomodoroStatsView> {
                     style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14)),
                   ).animate().fadeIn(delay: 600.ms),
                   const SizedBox(height: 6),
-                  const Align(
+                  Align(
                     alignment: Alignment.center,
-                    child: Text('Odaklanmaya başla.', style: TextStyle(color: AppTheme.secondaryTextColor, fontSize: 12)),
+                    child: Text(
+                      'Odaklanmaya başla.',
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12),
+                    ),
                   ),
                 ],
               ),
@@ -237,6 +245,7 @@ class _KpiCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Card(
       elevation: 0,
       child: Padding(
@@ -245,10 +254,14 @@ class _KpiCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            CircleAvatar(radius: 18, backgroundColor: AppTheme.secondaryColor.withOpacity(0.18), child: Icon(icon, color: AppTheme.secondaryColor, size: 20)),
+            CircleAvatar(
+              radius: 18,
+              backgroundColor: colorScheme.secondary.withOpacity(0.18),
+              child: Icon(icon, color: colorScheme.secondary, size: 20),
+            ),
             const SizedBox(height: 12),
             Text(value, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-            Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor)),
+            Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
           ],
         ),
       ),

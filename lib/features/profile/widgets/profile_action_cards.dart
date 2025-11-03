@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taktik/data/models/user_model.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 
@@ -20,7 +19,7 @@ class TimeManagementActions extends StatelessWidget {
           padding: const EdgeInsets.all(20.0),
           child: Row(
             children: [
-              const Icon(Icons.edit_calendar_rounded, color: AppTheme.successColor, size: 32),
+              Icon(Icons.edit_calendar_rounded, color: Theme.of(context).colorScheme.secondary, size: 32),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
@@ -28,11 +27,11 @@ class TimeManagementActions extends StatelessWidget {
                   children: [
                     Text("Zaman Haritanı Düzenle", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 4),
-                    Text("Haftalık müsaitlik durumunu güncelle.", style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor)),
+                    Text("Haftalık müsaitlik durumunu güncelle.", style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                   ],
                 ),
               ),
-              const Icon(Icons.arrow_forward_ios_rounded, color: AppTheme.secondaryTextColor),
+              Icon(Icons.arrow_forward_ios_rounded, color: Theme.of(context).colorScheme.onSurfaceVariant),
             ],
           ),
         ),
@@ -50,10 +49,10 @@ class StrategicActions extends ConsumerWidget {
     final planDoc = ref.watch(planProvider).value;
 
     return Card(
-      color: AppTheme.secondaryColor.withValues(alpha: AppTheme.secondaryColor.a * 0.1),
+      color: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: AppTheme.secondaryColor, width: 1)
+          side: BorderSide(color: Theme.of(context).colorScheme.secondary, width: 1)
       ),
       child: InkWell(
         onTap: () {
@@ -61,10 +60,10 @@ class StrategicActions extends ConsumerWidget {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: const Text('Lütfen önce "Zaman Haritanı Düzenle" bölümünden müsaitlik durumunuzu belirtin.'),
-                backgroundColor: AppTheme.accentColor,
+                backgroundColor: Theme.of(context).colorScheme.error,
                 action: SnackBarAction(
                   label: 'DÜZENLE',
-                  textColor: Colors.white,
+                  textColor: Theme.of(context).colorScheme.onError,
                   onPressed: () => context.push(AppRoutes.availability),
                 ),
               ),
@@ -82,18 +81,18 @@ class StrategicActions extends ConsumerWidget {
           padding: const EdgeInsets.all(20.0),
           child: Row(
             children: [
-              const Icon(Icons.map_rounded, color: AppTheme.secondaryColor, size: 32),
+              Icon(Icons.map_rounded, color: Theme.of(context).colorScheme.secondary, size: 32),
               const SizedBox(width: 16),
               Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text("Zafer Planı", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                      Text("Kişisel zafer planını oluştur veya görüntüle.", style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor)),
+                      Text("Kişisel zafer planını oluştur veya görüntüle.", style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                     ],
                   )
               ),
-              const Icon(Icons.arrow_forward_ios_rounded, color: AppTheme.secondaryTextColor),
+              Icon(Icons.arrow_forward_ios_rounded, color: Theme.of(context).colorScheme.onSurfaceVariant),
             ],
           ),
         ),

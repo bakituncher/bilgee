@@ -5,7 +5,6 @@ import 'package:taktik/features/pomodoro/logic/pomodoro_notifier.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/quests/logic/quest_session_state.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:taktik/features/quests/logic/quest_completion_notifier.dart';
 import 'package:taktik/features/quests/logic/optimized_quests_provider.dart';
 import 'package:flutter/foundation.dart';

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taktik/data/repositories/ai_service.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:flutter/services.dart';
 
@@ -228,14 +227,14 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
         resizeToAvoidBottomInset: true,
         appBar: AppBar(
           title: const Text('Sohbet'),
-          backgroundColor: AppTheme.primaryColor,
+          backgroundColor: Theme.of(context).colorScheme.surface,
           elevation: 0,
           // YENI: Sohbet içindeyken geri ikonunu Süit’e dönecek şekilde özelleştir
           leading: selectedMood != null
               ? BackButton(onPressed: _exitToSuite)
               : null,
         ),
-        backgroundColor: AppTheme.primaryColor,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         body: Stack(
           children: [
             Column(
@@ -247,25 +246,25 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
                     child: selectedMood == null
                         ? _SmartBriefingView(onPromptSelected: _onMoodSelected)
                         : RepaintBoundary(
-                            child: ListView.builder(
-                              controller: _scrollController,
-                              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                              cacheExtent: 300,
-                              addAutomaticKeepAlives: false,
-                              addRepaintBoundaries: true,
-                              addSemanticIndexes: false,
-                              padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-                              itemCount: history.length + (_isTyping ? 1 : 0),
-                              itemBuilder: (context, index) {
-                                if (_isTyping && index == history.length) {
-                                  return const _TypingBubble();
-                                }
-                                final message = history[index];
-                                final bool isLastRealMessage = index == history.length - 1;
-                                return _MessageBubble(message: message, animate: isLastRealMessage);
-                              },
-                            ),
-                          ),
+                      child: ListView.builder(
+                        controller: _scrollController,
+                        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                        cacheExtent: 300,
+                        addAutomaticKeepAlives: false,
+                        addRepaintBoundaries: true,
+                        addSemanticIndexes: false,
+                        padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                        itemCount: history.length + (_isTyping ? 1 : 0),
+                        itemBuilder: (context, index) {
+                          if (_isTyping && index == history.length) {
+                            return const _TypingBubble();
+                          }
+                          final message = history[index];
+                          final bool isLastRealMessage = index == history.length - 1;
+                          return _MessageBubble(message: message, animate: isLastRealMessage);
+                        },
+                      ),
+                    ),
                   ),
                 ),
                 if (selectedMood != null) _buildChatInput(),
@@ -277,8 +276,8 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
                 bottom: (selectedMood != null) ? 88 : 24,
                 child: FloatingActionButton.small(
                   heroTag: 'toBottom',
-                  backgroundColor: AppTheme.lightSurfaceColor,
-                  foregroundColor: Colors.white,
+                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  foregroundColor: Theme.of(context).colorScheme.onSurface,
                   onPressed: () => _scrollToBottom(isNewMessage: false),
                   child: const Icon(Icons.arrow_downward_rounded),
                 ),
@@ -299,9 +298,11 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                  color: AppTheme.lightSurfaceColor,
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(22),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                  ),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 14),
                 child: TextField(
@@ -325,8 +326,8 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
                   ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
                   : const Icon(Icons.send_rounded),
               style: IconButton.styleFrom(
-                backgroundColor: AppTheme.secondaryColor,
-                foregroundColor: AppTheme.primaryColor,
+                backgroundColor: Theme.of(context).colorScheme.secondary,
+                foregroundColor: Colors.black,
                 padding: const EdgeInsets.all(12),
                 shape: const CircleBorder(),
               ),
@@ -357,10 +358,10 @@ class _SmartBriefingView extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const SizedBox(height: 4),
-                  const CircleAvatar(
-                    backgroundColor: AppTheme.secondaryColor,
+                  CircleAvatar(
+                    backgroundColor: Theme.of(context).colorScheme.secondary,
                     radius: 42,
-                    child: Icon(Icons.auto_awesome, size: 42, color: AppTheme.primaryColor),
+                    child: Icon(Icons.auto_awesome, size: 42, color: Theme.of(context).primaryColor),
                   ).animate().fadeIn(delay: 180.ms).scale(),
                   const SizedBox(height: 24),
                   Text('Motivasyon Sohbeti', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700))
@@ -368,7 +369,7 @@ class _SmartBriefingView extends ConsumerWidget {
                   const SizedBox(height: 10),
                   Text(
                     'Hızlı destek için bir başlık seç. Deneme Değerlendirme ve Strateji Danışma AiHub’a taşındı.',
-                    style: theme.textTheme.titleMedium?.copyWith(color: AppTheme.secondaryTextColor, height: 1.3),
+                    style: theme.textTheme.titleMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant, height: 1.3),
                     textAlign: TextAlign.center,
                   ).animate().fadeIn(delay: 300.ms),
                   const SizedBox(height: 24),
@@ -404,6 +405,9 @@ class _BriefingButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(24),
@@ -412,14 +416,29 @@ class _BriefingButton extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
-          gradient: const LinearGradient(
+          gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0x18222C2C), Color(0x10222C2C)],
+            colors: isDark
+                ? [const Color(0x18222C2C), const Color(0x10222C2C)]
+                : [
+                    colorScheme.surfaceContainerHighest.withOpacity(0.4),
+                    colorScheme.surfaceContainerHighest.withOpacity(0.2),
+                  ],
           ),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.08)
+                : colorScheme.outline.withOpacity(0.3),
+          ),
           boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: 0.25), blurRadius: 14, offset: const Offset(0, 4)),
+            BoxShadow(
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.25)
+                  : Colors.black.withOpacity(0.08),
+              blurRadius: 14,
+              offset: const Offset(0, 4),
+            ),
           ],
         ),
         child: Row(
@@ -428,11 +447,11 @@ class _BriefingButton extends StatelessWidget {
             Container(
               width: 54,
               height: 54,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: LinearGradient(colors: [AppTheme.secondaryColor, AppTheme.successColor]),
+                gradient: LinearGradient(colors: [theme.colorScheme.secondary, theme.colorScheme.secondary]),
               ),
-              child: Icon(icon, size: 30, color: AppTheme.primaryColor),
+              child: Icon(icon, size: 30, color: isDark ? theme.primaryColor : Colors.black87),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -441,14 +460,17 @@ class _BriefingButton extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: colorScheme.onSurface,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 6),
                   Text(
                     subtitle,
-                    style: theme.textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor, height: 1.25),
+                    style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant, height: 1.25),
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -456,7 +478,11 @@ class _BriefingButton extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            Icon(Icons.arrow_forward_ios_rounded, size: 18, color: AppTheme.secondaryTextColor.withValues(alpha: 0.8)),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 18,
+              color: colorScheme.onSurfaceVariant.withOpacity(0.8),
+            ),
           ],
         ),
       ),
@@ -472,9 +498,10 @@ class _MessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isUser = message.isUser;
+    final colorScheme = Theme.of(context).colorScheme;
 
-    final Color bg = isUser ? AppTheme.secondaryColor : AppTheme.lightSurfaceColor;
-    final Color fg = isUser ? AppTheme.primaryColor : Colors.white;
+    final Color bg = isUser ? colorScheme.secondary : colorScheme.surfaceContainerHighest;
+    final Color fg = isUser ? Colors.black : colorScheme.onSurface;
 
     final content = GestureDetector(
       onLongPress: () async {
@@ -488,11 +515,11 @@ class _MessageBubble extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             if (!isUser)
-              const CircleAvatar(
-                backgroundColor: AppTheme.secondaryColor,
-                foregroundColor: AppTheme.primaryColor,
+              CircleAvatar(
+                backgroundColor: colorScheme.secondary,
+                foregroundColor: Colors.black,
                 radius: 14,
-                child: Icon(Icons.auto_awesome, size: 16),
+                child: const Icon(Icons.auto_awesome, size: 16),
               ),
             if (!isUser) const SizedBox(width: 8),
             Flexible(
@@ -543,13 +570,13 @@ class _TypingBubble extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            const CircleAvatar(backgroundColor: AppTheme.secondaryColor, radius: 16,
-                child: Icon(Icons.auto_awesome, size: 20, color: AppTheme.primaryColor)),
+            CircleAvatar(backgroundColor: Theme.of(context).colorScheme.secondary, radius: 16,
+                child: Icon(Icons.auto_awesome, size: 20, color: Theme.of(context).primaryColor)),
             const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: const BoxDecoration(color: AppTheme.lightSurfaceColor,
-                  borderRadius: BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20),
+              decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  borderRadius: const BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20),
                       bottomRight: Radius.circular(20), bottomLeft: Radius.circular(4))),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -561,7 +588,7 @@ class _TypingBubble extends StatelessWidget {
                     child: Container(
                       margin: const EdgeInsets.symmetric(horizontal: 3),
                       width: 8, height: 8,
-                      decoration: BoxDecoration(color: AppTheme.secondaryTextColor.withValues(alpha: 0.7), shape: BoxShape.circle),
+                      decoration: BoxDecoration(color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.7), shape: BoxShape.circle),
                     ),
                   );
                 }),

@@ -1,6 +1,5 @@
 // lib/features/stats/widgets/subject_stat_card.dart
 import 'package:flutter/material.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/stats/logic/stats_analysis.dart';
 
 class SubjectStatCard extends StatefulWidget {
@@ -22,8 +21,9 @@ class _SubjectStatCardState extends State<SubjectStatCard> {
     final double minNet = -(widget.analysis.questionCount * widget.analysis.penaltyCoefficient);
     final double maxNet = widget.analysis.questionCount.toDouble();
     final double progress = (maxNet - minNet) == 0 ? 0.0 : (widget.analysis.averageNet - minNet) / (maxNet - minNet);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final Color progressColor = Color.lerp(AppTheme.accentColor, AppTheme.successColor, progress.clamp(0.0, 1.0))!;
+    final Color progressColor = Color.lerp(Theme.of(context).colorScheme.error, Theme.of(context).colorScheme.secondary, progress.clamp(0.0, 1.0))!;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -38,33 +38,42 @@ class _SubjectStatCardState extends State<SubjectStatCard> {
             curve: Curves.easeOutCubic,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  progressColor.withOpacity(_isHovered ? 0.14 : 0.09),
-                  progressColor.withOpacity(_isHovered ? 0.09 : 0.05),
-                ],
+                colors: isDark
+                    ? [
+                        progressColor.withOpacity(_isHovered ? 0.14 : 0.09),
+                        progressColor.withOpacity(_isHovered ? 0.09 : 0.05),
+                      ]
+                    : [
+                        progressColor.withOpacity(_isHovered ? 0.20 : 0.15),
+                        progressColor.withOpacity(_isHovered ? 0.15 : 0.10),
+                      ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: progressColor.withOpacity(_isHovered ? 0.45 : 0.28),
+                color: isDark
+                    ? progressColor.withOpacity(_isHovered ? 0.45 : 0.28)
+                    : progressColor.withOpacity(_isHovered ? 0.60 : 0.45),
                 width: 1.5,
               ),
               boxShadow: _isHovered
                   ? [
-                      BoxShadow(
-                        color: progressColor.withOpacity(0.25),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ]
+                BoxShadow(
+                  color: progressColor.withOpacity(isDark ? 0.25 : 0.30),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ]
                   : [
-                      BoxShadow(
-                        color: AppTheme.primaryColor.withOpacity(0.05),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+                BoxShadow(
+                  color: isDark
+                      ? Theme.of(context).colorScheme.primary.withOpacity(0.05)
+                      : Colors.black.withOpacity(0.10),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -93,9 +102,9 @@ class _SubjectStatCardState extends State<SubjectStatCard> {
                             child: Text(
                               widget.subjectName,
                               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 0.2,
-                                  ),
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.2,
+                              ),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -119,9 +128,9 @@ class _SubjectStatCardState extends State<SubjectStatCard> {
                           Text(
                             widget.analysis.averageNet.toStringAsFixed(2),
                             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: progressColor,
-                                ),
+                              fontWeight: FontWeight.bold,
+                              color: progressColor,
+                            ),
                           ),
                           const SizedBox(width: 4),
                           Icon(
@@ -147,19 +156,19 @@ class _SubjectStatCardState extends State<SubjectStatCard> {
                               Text(
                                 'Hakimiyet',
                                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: AppTheme.secondaryTextColor,
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: 0.3,
-                                      fontSize: 11,
-                                    ),
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.3,
+                                  fontSize: 11,
+                                ),
                               ),
                               Text(
                                 '%${(progress * 100).toStringAsFixed(0)}',
                                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: progressColor,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 11,
-                                    ),
+                                  color: progressColor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 11,
+                                ),
                               ),
                             ],
                           ),
@@ -167,7 +176,7 @@ class _SubjectStatCardState extends State<SubjectStatCard> {
                           Container(
                             height: 8,
                             decoration: BoxDecoration(
-                              color: AppTheme.lightSurfaceColor.withOpacity(0.3),
+                              color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: ClipRRect(

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 
 class PremiumBadge extends StatelessWidget {
   const PremiumBadge({super.key});
@@ -12,7 +11,7 @@ class PremiumBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         gradient: LinearGradient(
           colors: [
-            AppTheme.secondaryColor.withOpacity(0.8),
+            Theme.of(context).colorScheme.secondary.withOpacity(0.8),
             Colors.amber.withOpacity(0.8),
           ],
           begin: Alignment.topLeft,
@@ -20,7 +19,7 @@ class PremiumBadge extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.secondaryColor.withOpacity(0.3),
+            color: Theme.of(context).colorScheme.secondary.withOpacity(0.3),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -29,16 +28,16 @@ class PremiumBadge extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
+          Icon(
             Icons.workspace_premium_rounded,
-            color: AppTheme.primaryColor,
+            color: Theme.of(context).colorScheme.primary,
             size: 24,
           ),
           const SizedBox(width: 12),
           Text(
             'Premium Üye',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: AppTheme.primaryColor,
+              color: Theme.of(context).colorScheme.primary,
               fontWeight: FontWeight.bold,
             ),
           ),

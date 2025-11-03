@@ -152,7 +152,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             end: Alignment.bottomCenter,
             colors: [
               Theme.of(context).colorScheme.surface,
-              Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
+              Theme.of(context).colorScheme.primary.withOpacity(0.08),
             ],
           ),
         ),
@@ -286,7 +286,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   icon: const Icon(Icons.login_rounded),
                                   onPressed: _isLoading ? null : _submit,
                                   label: _isLoading
-                                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                      ? SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Theme.of(context).colorScheme.onPrimary, strokeWidth: 2))
                                       : const Text('Giriş Yap'),
                                 ),
                               ),

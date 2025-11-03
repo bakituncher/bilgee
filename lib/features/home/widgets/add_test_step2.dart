@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:taktik/data/models/exam_model.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/shared/widgets/score_slider.dart';
 import 'package:taktik/features/home/logic/add_test_notifier.dart';
 
@@ -103,13 +102,13 @@ class _SubjectScoreCard extends ConsumerWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(subjectName, style: Theme.of(context).textTheme.displaySmall, textAlign: TextAlign.center,),
-          Text("${details.questionCount} Soru", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppTheme.secondaryTextColor)),
+          Text("${details.questionCount} Soru", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
           const SizedBox(height: 48),
           ScoreSlider(
             label: "Doğru",
             value: correct.toDouble(),
             max: details.questionCount.toDouble(),
-            color: AppTheme.successColor,
+            color: Theme.of(context).colorScheme.secondary,
             onChanged: (value) {
               final newCorrect = value.toInt();
               if (newCorrect + wrong > details.questionCount) {
@@ -124,7 +123,7 @@ class _SubjectScoreCard extends ConsumerWidget {
             label: "Yanlış",
             value: wrong.toDouble(),
             max: (details.questionCount - correct).toDouble(),
-            color: AppTheme.accentColor,
+            color: Theme.of(context).colorScheme.error,
             onChanged: (value) {
               notifier.updateScores(subjectName, wrong: value.toInt());
             },
@@ -163,7 +162,7 @@ class _StatDisplay extends StatelessWidget {
     return Column(
       children: [
         Text(value, style: Theme.of(context).textTheme.headlineMedium),
-        Text(label, style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.secondaryTextColor)),
+        Text(label, style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
       ],
     );
   }

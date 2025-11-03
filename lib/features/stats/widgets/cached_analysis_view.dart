@@ -11,7 +11,6 @@ import 'package:taktik/features/stats/widgets/key_stats_grid.dart';
 import 'package:taktik/features/stats/widgets/ai_insight_card.dart';
 import 'package:taktik/features/stats/widgets/subject_stat_card.dart';
 import 'package:taktik/features/stats/logic/stats_analysis.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 
 final _selectedAnalysisTabProvider = StateProvider.autoDispose<int>((ref) => 0);
 
@@ -68,23 +67,40 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
 
   Widget _buildBody(BuildContext context, StatsAnalysis analysis) {
     final selectedTab = ref.watch(_selectedAnalysisTabProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Column(
       children: [
-        // Modern Tab Bar
+        // Modern Tab Bar - Enhanced for Light Mode
         Container(
           margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
           decoration: BoxDecoration(
-            color: AppTheme.lightSurfaceColor.withOpacity(0.35),
+            gradient: LinearGradient(
+              colors: isDark
+                  ? [
+                      Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                      Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25),
+                    ]
+                  : [
+                      Theme.of(context).cardColor.withOpacity(0.95),
+                      Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                    ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: AppTheme.secondaryColor.withOpacity(0.15),
+              color: isDark
+                  ? Theme.of(context).colorScheme.secondary.withOpacity(0.15)
+                  : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: AppTheme.primaryColor.withOpacity(0.05),
-                blurRadius: 8,
+                color: isDark 
+                    ? Theme.of(context).colorScheme.primary.withOpacity(0.06)
+                    : Colors.black.withOpacity(0.08),
+                blurRadius: 10,
                 offset: const Offset(0, 2),
               ),
             ],
@@ -94,14 +110,14 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
             indicator: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppTheme.secondaryColor,
-                  AppTheme.secondaryColor.withOpacity(0.88),
+                  Theme.of(context).colorScheme.secondary,
+                  Theme.of(context).colorScheme.secondary.withOpacity(0.88),
                 ],
               ),
               borderRadius: BorderRadius.circular(11),
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.secondaryColor.withOpacity(0.35),
+                  color: Theme.of(context).colorScheme.secondary.withOpacity(0.35),
                   blurRadius: 10,
                   offset: const Offset(0, 3),
                 ),
@@ -109,8 +125,10 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
             ),
             indicatorSize: TabBarIndicatorSize.tab,
             dividerColor: Colors.transparent,
-            labelColor: AppTheme.primaryColor,
-            unselectedLabelColor: AppTheme.secondaryTextColor,
+            labelColor: isDark 
+                ? Theme.of(context).colorScheme.primary
+                : Colors.black,
+            unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
             labelStyle: const TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 13,
@@ -121,15 +139,15 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
               fontSize: 12.5,
             ),
             padding: const EdgeInsets.all(5),
-            tabs: [
+            tabs: const [
               Tab(
                 height: 44,
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.analytics_rounded, size: 18),
-                    const SizedBox(width: 6),
-                    const Text('Özet'),
+                    SizedBox(width: 6),
+                    Text('Özet'),
                   ],
                 ),
               ),
@@ -139,8 +157,8 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.auto_awesome_rounded, size: 18),
-                    const SizedBox(width: 6),
-                    const Text('Taktik'),
+                    SizedBox(width: 6),
+                    Text('Taktik'),
                   ],
                 ),
               ),
@@ -150,8 +168,8 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.menu_book_rounded, size: 18),
-                    const SizedBox(width: 6),
-                    const Text('Dersler'),
+                    SizedBox(width: 6),
+                    Text('Dersler'),
                   ],
                 ),
               ),

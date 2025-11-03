@@ -42,6 +42,8 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
   @override
   Widget build(BuildContext context) {
     final isPremium = ref.watch(premiumStatusProvider);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     final tools = [
       _AiTool(
@@ -50,7 +52,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
         subtitle: 'Uzun vadeli zafer stratejini ve haftalık planını oluştur.',
         icon: Icons.insights_rounded,
         route: '/ai-hub/strategic-planning',
-        color: AppTheme.secondaryColor,
+        color: theme.colorScheme.secondary,
         heroTag: 'strategic-core',
         chip: 'Odak',
       ),
@@ -60,7 +62,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
         subtitle: 'En zayıf konunu, kişisel çalışma kartı ve özel test ile işle.',
         icon: Icons.construction_rounded,
         route: '/ai-hub/weakness-workshop',
-        color: AppTheme.successColor,
+        color: theme.colorScheme.secondary, // Assuming success is secondary
         heroTag: 'weakness-core',
         chip: 'Gelişim',
       ),
@@ -102,12 +104,17 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
                 backgroundColor: Colors.transparent,
                 elevation: 0,
                 toolbarHeight: kToolbarHeight,
-                title: const Text('TaktikAI Çekirdeği'),
+                title: Text(
+                  'TaktikAI Çekirdeği',
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                ),
                 flexibleSpace: ClipRect(
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
                     child: Container(
-                      color: Colors.black.withOpacity(0.25),
+                      color: isDark 
+                          ? Colors.black.withOpacity(0.25)
+                          : Theme.of(context).scaffoldBackgroundColor.withOpacity(0.85),
                     ),
                   ),
                 ),
@@ -139,7 +146,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
                     mainAxisExtent: 168,
                   ),
                   delegate: SliverChildBuilderDelegate(
-                    (context, index) {
+                        (context, index) {
                       final tool = tools[index];
                       final marketingMap = {
                         'Haftalık Planlama': {
@@ -215,8 +222,8 @@ class _CoreVisual extends StatelessWidget {
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
                       colors: [
-                        AppTheme.secondaryColor.withOpacity(0.05 + g * 0.12),
-                        AppTheme.primaryColor.withOpacity(0),
+                        Theme.of(context).colorScheme.primary.withOpacity(0.05 + g * 0.12),
+                        Theme.of(context).scaffoldBackgroundColor.withOpacity(0),
                       ],
                       stops: const [0.5, 1],
                     ),
@@ -229,17 +236,17 @@ class _CoreVisual extends StatelessWidget {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: AppTheme.secondaryColor.withOpacity(.15 + g * .25),
+                        color: Theme.of(context).colorScheme.primary.withOpacity(.15 + g * .25),
                         blurRadius: 50 + g * 30,
                         spreadRadius: 8 + g * 8,
                       ),
                     ],
                     gradient: SweepGradient(
                       colors: [
-                        AppTheme.secondaryColor.withOpacity(.4),
-                        AppTheme.successColor.withOpacity(.35),
+                        Theme.of(context).colorScheme.primary.withOpacity(.4),
+                        AppTheme.successBrandColor.withOpacity(.35),
                         Colors.pinkAccent.withOpacity(.3),
-                        AppTheme.secondaryColor.withOpacity(.4),
+                        Theme.of(context).colorScheme.primary.withOpacity(.4),
                       ],
                       stops: const [0, .33, .66, 1],
                       transform: GradientRotation(g * pi * 2),
@@ -251,13 +258,17 @@ class _CoreVisual extends StatelessWidget {
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          AppTheme.primaryColor.withOpacity(.9),
-                          AppTheme.primaryColor.withOpacity(.6),
+                          Theme.of(context).cardColor.withOpacity(.9),
+                          Theme.of(context).cardColor.withOpacity(.6),
                         ],
                       ),
-                      border: Border.all(color: AppTheme.secondaryColor.withOpacity(.2), width: 1.5),
+                      border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(.2), width: 1.5),
                     ),
-                    child: Icon(Icons.auto_awesome, size: 60 + g * 6, color: Colors.white.withOpacity(.92)),
+                    child: Icon(
+                      Icons.auto_awesome, 
+                      size: 60 + g * 6, 
+                      color: Theme.of(context).colorScheme.primary.withOpacity(.92),
+                    ),
                   ),
                 ),
               ],
@@ -286,6 +297,7 @@ class _AnimatedBackground extends StatelessWidget {
   final Animation<double> glow;
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return AnimatedBuilder(
       animation: glow,
       builder: (context, _) {
@@ -295,15 +307,21 @@ class _AnimatedBackground extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [
-                AppTheme.primaryColor,
-                AppTheme.primaryColor.blend(Colors.black, .2 + g * .1),
-                AppTheme.primaryColor.blend(AppTheme.secondaryColor.withOpacity(.2), .05 + g * .08),
-              ],
+              colors: isDark
+                  ? [
+                      Theme.of(context).scaffoldBackgroundColor,
+                      Theme.of(context).scaffoldBackgroundColor.blend(Colors.black, .2 + g * .1),
+                      Theme.of(context).scaffoldBackgroundColor.blend(Theme.of(context).colorScheme.primary.withOpacity(.2), .05 + g * .08),
+                    ]
+                  : [
+                      Theme.of(context).scaffoldBackgroundColor,
+                      Theme.of(context).scaffoldBackgroundColor.blend(Theme.of(context).colorScheme.primary.withOpacity(.15), .03 + g * .05),
+                      Theme.of(context).scaffoldBackgroundColor.blend(Theme.of(context).colorScheme.primary.withOpacity(.1), .02 + g * .04),
+                    ],
             ),
           ),
           child: CustomPaint(
-            painter: _ParticlePainter(progress: g),
+            painter: _ParticlePainter(progress: g, isDark: isDark),
           ),
         );
       },
@@ -316,24 +334,28 @@ extension on Color {
 }
 
 class _ParticlePainter extends CustomPainter {
-  _ParticlePainter({required this.progress});
+  _ParticlePainter({required this.progress, required this.isDark});
   final double progress;
+  final bool isDark;
   final int count = 22;
   @override
   void paint(Canvas canvas, Size size) {
     final rnd = Random(42);
+    final baseOpacity = isDark ? 0.05 : 0.03;
+    final variableOpacity = isDark ? 0.08 : 0.05;
     for (var i = 0; i < count; i++) {
       final dx = rnd.nextDouble() * size.width;
       final dy = rnd.nextDouble() * size.height;
       final radius = (rnd.nextDouble() * 2 + 1) * (1 + (progress * .3));
       final paint = Paint()
-        ..color = AppTheme.secondaryColor.withOpacity(.05 + rnd.nextDouble() * .08)
+        ..color = AppTheme.secondaryBrandColor.withOpacity(baseOpacity + rnd.nextDouble() * variableOpacity)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
       canvas.drawCircle(Offset(dx, dy), radius, paint);
     }
   }
   @override
-  bool shouldRepaint(covariant _ParticlePainter oldDelegate) => oldDelegate.progress != progress;
+  bool shouldRepaint(covariant _ParticlePainter oldDelegate) => 
+      oldDelegate.progress != progress || oldDelegate.isDark != isDark;
 }
 
 class _AiToolTile extends StatelessWidget {
@@ -343,6 +365,7 @@ class _AiToolTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final radius = BorderRadius.circular(20);
 
     return Hero(
@@ -375,12 +398,22 @@ class _AiToolTile extends StatelessWidget {
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [
-                          Colors.white.withOpacity(.08),
-                          Colors.white.withOpacity(.03),
-                        ],
+                        colors: isDark
+                            ? [
+                                Colors.white.withOpacity(.08),
+                                Colors.white.withOpacity(.03),
+                              ]
+                            : [
+                                Theme.of(context).cardColor.withOpacity(.98),
+                                Theme.of(context).cardColor.withOpacity(.92),
+                              ],
                       ),
-                      border: Border.all(color: Colors.white.withOpacity(.12)),
+                      border: Border.all(
+                        color: isDark 
+                            ? Colors.white.withOpacity(.12)
+                            : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(.5),
+                        width: 1.5,
+                      ),
                     ),
                   ),
                   Positioned(
@@ -420,7 +453,7 @@ class _AiToolTile extends StatelessWidget {
                           tool.subtitle,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor),
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                         ),
                         const Spacer(),
                         Row(
@@ -430,12 +463,12 @@ class _AiToolTile extends StatelessWidget {
                             Text(
                               'Hızlı başla',
                               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                    color: tool.color.withOpacity(.9),
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                                color: tool.color.withOpacity(.9),
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                             const Spacer(),
-                            Icon(Icons.arrow_forward_rounded, size: 20, color: Colors.white.withOpacity(.9)),
+                            Icon(Icons.arrow_forward_rounded, size: 20, color: Theme.of(context).colorScheme.onSurface.withOpacity(.9)),
                           ],
                         )
                       ],
@@ -484,10 +517,12 @@ class _Badge extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-              letterSpacing: .2,
-            ),
+          fontWeight: FontWeight.w800,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.white
+              : Theme.of(context).colorScheme.onSurface,
+          letterSpacing: .2,
+        ),
       ),
     );
   }

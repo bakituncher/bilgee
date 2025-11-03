@@ -3,7 +3,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/onboarding/models/tutorial_step.dart';
 import 'package:taktik/features/onboarding/providers/tutorial_provider.dart';
 import 'tutorial_painter.dart';
@@ -45,7 +44,7 @@ class TutorialOverlay extends ConsumerWidget {
             },
             child: CustomPaint(
               size: MediaQuery.of(context).size,
-              painter: TutorialPainter(highlightRect: highlightRect),
+              painter: TutorialPainter(highlightRect: highlightRect, highlightColor: Theme.of(context).colorScheme.secondary),
               child: ClipPath(
                 clipper: _HighlightClipper(highlightRect),
                 child: BackdropFilter(
@@ -114,19 +113,19 @@ class _TutorialCard extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-          color: AppTheme.cardColor,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppTheme.secondaryColor, width: 2),
+          border: Border.all(color: Theme.of(context).colorScheme.secondary, width: 2),
           boxShadow: [
-            BoxShadow(color: AppTheme.secondaryColor.withValues(alpha: 0.3), blurRadius: 20)
+            BoxShadow(color: Theme.of(context).colorScheme.secondary.withOpacity(0.3), blurRadius: 20)
           ]
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(step.title, style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppTheme.secondaryColor, fontWeight: FontWeight.bold)),
+          Text(step.title, style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          Text(step.text, style: const TextStyle(color: AppTheme.textColor, height: 1.5, fontSize: 15)),
+          Text(step.text, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, height: 1.5, fontSize: 15)),
           const SizedBox(height: 20),
           Align(
             alignment: Alignment.centerRight,

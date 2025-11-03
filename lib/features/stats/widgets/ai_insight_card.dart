@@ -1,7 +1,6 @@
 // lib/features/stats/widgets/ai_insight_card.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/stats/logic/stats_analysis.dart';
 
 class AiInsightCard extends StatelessWidget {
@@ -17,25 +16,35 @@ class AiInsightCard extends StatelessWidget {
     // En önemli 3 öneriyi al
     final prioritizedAdvice = _prioritizeAdvice(analysis.tacticalAdvice);
     final topAdvice = prioritizedAdvice.take(3).toList();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            AppTheme.cardColor,
-            AppTheme.cardColor.withOpacity(0.96),
-          ],
+          colors: isDark
+              ? [
+                  Theme.of(context).cardColor,
+                  Theme.of(context).cardColor.withOpacity(0.96),
+                ]
+              : [
+                  Theme.of(context).cardColor.withOpacity(0.98),
+                  Theme.of(context).cardColor,
+                ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: AppTheme.secondaryColor.withOpacity(0.28),
+          color: isDark
+              ? Theme.of(context).colorScheme.secondary.withOpacity(0.28)
+              : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryColor.withOpacity(0.1),
+            color: isDark
+                ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                : Colors.black.withOpacity(0.12),
             blurRadius: 14,
             offset: const Offset(0, 4),
           ),
@@ -50,8 +59,8 @@ class AiInsightCard extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppTheme.secondaryColor.withOpacity(0.18),
-                  AppTheme.secondaryColor.withOpacity(0.06),
+                  Theme.of(context).colorScheme.secondary.withOpacity(0.18),
+                  Theme.of(context).colorScheme.secondary.withOpacity(0.06),
                 ],
               ),
               borderRadius: const BorderRadius.only(
@@ -66,22 +75,24 @@ class AiInsightCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        AppTheme.secondaryColor,
-                        AppTheme.secondaryColor.withOpacity(0.8),
+                        Theme.of(context).colorScheme.secondary,
+                        Theme.of(context).colorScheme.secondary.withOpacity(0.8),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(10),
                     boxShadow: [
                       BoxShadow(
-                        color: AppTheme.secondaryColor.withOpacity(0.3),
+                        color: Theme.of(context).colorScheme.secondary.withOpacity(0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
                     ],
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.psychology_rounded,
-                    color: AppTheme.primaryColor,
+                    color: isDark 
+                        ? Theme.of(context).colorScheme.primary
+                        : Colors.black,
                     size: 18,
                   ),
                 ),
@@ -94,13 +105,13 @@ class AiInsightCard extends StatelessWidget {
                         'Taktiksel Analiz',
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: AppTheme.textColor,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       Text(
                         'En önemli ${topAdvice.length} öneri',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppTheme.secondaryTextColor,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -109,7 +120,7 @@ class AiInsightCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: AppTheme.secondaryColor.withOpacity(0.15),
+                    color: Theme.of(context).colorScheme.secondary.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -117,14 +128,14 @@ class AiInsightCard extends StatelessWidget {
                     children: [
                       Icon(
                         Icons.speed,
-                        color: AppTheme.secondaryColor,
+                        color: Theme.of(context).colorScheme.secondary,
                         size: 14,
                       ),
                       const SizedBox(width: 4),
                       Text(
                         'Akıllı',
                         style: TextStyle(
-                          color: AppTheme.secondaryColor,
+                          color: Theme.of(context).colorScheme.secondary,
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
                         ),
@@ -195,7 +206,7 @@ class AiInsightCard extends StatelessWidget {
                           child: Text(
                             advice.text,
                             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppTheme.textColor,
+                              color: Theme.of(context).colorScheme.onSurface,
                               height: 1.6,
                               fontSize: 13.5,
                               fontWeight: FontWeight.w500,
@@ -222,7 +233,7 @@ class AiInsightCard extends StatelessWidget {
       Colors.orange: 3,
       Colors.amber: 4,
       Colors.green: 5,
-      AppTheme.successColor: 6,
+      const Color(0xFF34D399): 6,
       Colors.teal: 7,
       Colors.blue: 8,
     };
@@ -243,13 +254,13 @@ class AiInsightCard extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppTheme.cardColor,
-            AppTheme.cardColor.withOpacity(0.96),
+            Theme.of(context).cardColor,
+            Theme.of(context).cardColor.withOpacity(0.96),
           ],
         ),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: AppTheme.secondaryColor.withOpacity(0.2),
+          color: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
           width: 1.5,
         ),
       ),
@@ -260,15 +271,15 @@ class AiInsightCard extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppTheme.secondaryColor.withOpacity(0.15),
-                  AppTheme.secondaryColor.withOpacity(0.05),
+                  Theme.of(context).colorScheme.secondary.withOpacity(0.15),
+                  Theme.of(context).colorScheme.secondary.withOpacity(0.05),
                 ],
               ),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.lightbulb_outline,
-              color: AppTheme.secondaryColor,
+              color: Theme.of(context).colorScheme.secondary,
               size: 40,
             ),
           ),
@@ -284,7 +295,7 @@ class AiInsightCard extends StatelessWidget {
           Text(
             'Daha fazla deneme ekledikçe özel taktiksel öneriler burada görünecek.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppTheme.secondaryTextColor,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               height: 1.5,
             ),
             textAlign: TextAlign.center,

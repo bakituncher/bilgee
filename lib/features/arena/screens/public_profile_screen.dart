@@ -3,7 +3,6 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/services.dart';
@@ -12,12 +11,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/rendering.dart';
-import 'package:taktik/shared/widgets/logo_loader.dart';
-
-// NovaPulse accent renkleri (arena ile uyumlu)
-const _accentProfile1 = Color(0xFF7F5BFF);
-const _accentProfile2 = Color(0xFF6BFF7A);
-const _profileBgGradient = [Color(0xFF0B0F14), Color(0xFF2A155A), Color(0xFF061F38)];
+import 'package:taktik/shared/widgets/app_loader.dart';
 
 // Bu provider, ID'ye göre tek bir kullanıcı profili getirmek için kullanılır.
 final publicUserProfileProvider = FutureProvider.family.autoDispose<Map<String, dynamic>?, String>((ref, userId) async {
@@ -68,7 +62,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
   void _showPublicAchievements(BuildContext context, {required String displayName, required int testCount, required double avgNet, required int streak, required int engagement}) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppTheme.cardColor,
+      backgroundColor: Theme.of(context).cardColor,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) {
         final items = [
@@ -97,12 +91,18 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                   return Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
-                      gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0x221F1F1F), Color(0x111F1F1F)]),
-                      border: Border.all(color: Colors.white.withValues(alpha: (Colors.white.a * 0.12).toDouble())),
+                      gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Theme.of(context).colorScheme.surface.withOpacity(0.5),
+                            Theme.of(context).colorScheme.surface.withOpacity(0.2)
+                          ]),
+                      border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)),
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     child: Row(children: [
-                      Icon(it['icon'] as IconData, color: _accentProfile2),
+                      Icon(it['icon'] as IconData, color: Theme.of(context).colorScheme.primary),
                       const SizedBox(width: 8),
                       Expanded(child: Text(it['title'] as String, style: Theme.of(ctx).textTheme.labelLarge)),
                       Text(it['value'] as String, style: Theme.of(ctx).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
@@ -121,7 +121,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppTheme.cardColor,
+        backgroundColor: Theme.of(context).cardColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('İlerleme Özeti'),
         content: Column(
@@ -141,7 +141,15 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
 
   Widget _kv(String k, String v, BuildContext ctx) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 4.0),
-    child: Row(children: [Expanded(child: Text(k, style: Theme.of(ctx).textTheme.bodyLarge?.copyWith(color: Colors.white70))), Text(v, style: Theme.of(ctx).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold))]),
+    child: Row(children: [
+      Expanded(
+          child: Text(k,
+              style: Theme.of(ctx)
+                  .textTheme
+                  .bodyLarge
+                  ?.copyWith(color: Theme.of(ctx).colorScheme.onSurfaceVariant))),
+      Text(v, style: Theme.of(ctx).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold))
+    ]),
   );
 
   @override
@@ -162,7 +170,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
           IconButton(
             tooltip: _sharing ? 'Hazırlanıyor...' : 'Paylaş',
             onPressed: _sharing ? null : () { HapticFeedback.selectionClick(); _shareProfileImage(); },
-            icon: const Icon(Icons.ios_share_rounded, color: _accentProfile2),
+            icon: Icon(Icons.ios_share_rounded, color: Theme.of(context).colorScheme.primary),
           ),
         ],
       ),
@@ -187,8 +195,14 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
           final updatedAt = statsAsync.valueOrNull?.updatedAt;
 
           return Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: _profileBgGradient),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Theme.of(context).scaffoldBackgroundColor,
+                    Theme.of(context).cardColor,
+                  ]),
             ),
             child: SafeArea(
               child: CustomScrollView(
@@ -297,7 +311,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
             ),
           );
         },
-        loading: () => const LogoLoader(),
+        loading: () => const AppLoader(),
         error: (e, s) => Center(child: Text('Savaşçı Künyesi Yüklenemedi: $e')),
       ),
     );
@@ -324,8 +338,14 @@ class _ShareableProfileCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
-        gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0x221F1F1F), Color(0x111F1F1F)]),
-        border: Border.all(color: Colors.white.withValues(alpha: (Colors.white.a * 0.12).toDouble()), width: 1),
+        gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Theme.of(context).colorScheme.surface.withOpacity(0.5),
+              Theme.of(context).colorScheme.surface.withOpacity(0.2)
+            ]),
+        border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5), width: 1),
       ),
       child: Column(
         children: [
@@ -350,7 +370,7 @@ class _ShareableProfileCard extends StatelessWidget {
             children: [
               Image.asset('assets/images/logo.png', width: 28, height: 28),
               const SizedBox(width: 8),
-              Text('Taktik App', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: _accentProfile2, fontWeight: FontWeight.bold)),
+              Text('Taktik App', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
             ],
           ),
         ],
@@ -363,18 +383,19 @@ class _CountPill extends StatelessWidget {
   final String label; final int value; const _CountPill({required this.label, required this.value});
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: Colors.white.withValues(alpha: (Colors.white.a * 0.06).toDouble()),
-        border: Border.all(color: Colors.white.withValues(alpha: (Colors.white.a * 0.12).toDouble())),
+        color: colorScheme.onSurface.withOpacity(0.06),
+        border: Border.all(color: colorScheme.onSurface.withOpacity(0.12)),
       ),
       child: Row(
         children: [
           Text(value.toString(), style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
           const SizedBox(width: 6),
-          Text(label, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white70)),
+          Text(label, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: colorScheme.onSurface.withOpacity(0.7))),
         ],
       ),
     );
@@ -399,9 +420,10 @@ class _FollowButtonState extends ConsumerState<_FollowButton> {
     final bool? streamVal = isFollowingAsync.valueOrNull;
     final bool? loading = isFollowingAsync.isLoading ? true : null;
     final bool isFollowing = _optimistic ?? (streamVal ?? false);
+    final colorScheme = Theme.of(context).colorScheme;
 
-    final bg = isFollowing ? Colors.transparent : _accentProfile2;
-    final fg = isFollowing ? _accentProfile2 : Colors.black;
+    final bg = isFollowing ? Colors.transparent : colorScheme.secondary;
+    final fg = isFollowing ? colorScheme.secondary : colorScheme.onSecondary;
     final icon = isFollowing ? Icons.check_rounded : Icons.person_add_alt_1_rounded;
     final label = isFollowing ? 'Takipten Çık' : 'Takip Et';
 
@@ -410,7 +432,10 @@ class _FollowButtonState extends ConsumerState<_FollowButton> {
           ? null
           : () async {
         HapticFeedback.selectionClick();
-        setState(() { _busy = true; _optimistic = !isFollowing; });
+        setState(() {
+          _busy = true;
+          _optimistic = !isFollowing;
+        });
         try {
           final svc = ref.read(firestoreServiceProvider);
           if (isFollowing) {
@@ -421,24 +446,34 @@ class _FollowButtonState extends ConsumerState<_FollowButton> {
         } catch (e) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('İşlem başarısız: $e')));
-            setState(() { _optimistic = null; });
+            setState(() {
+              _optimistic = null;
+            });
           }
         } finally {
-          if (mounted) setState(() { _busy = false; _optimistic = null; });
+          if (mounted) {
+            setState(() {
+              _busy = false;
+              _optimistic = null;
+            });
+          }
         }
       },
       style: ElevatedButton.styleFrom(
         backgroundColor: bg,
         foregroundColor: fg,
         elevation: 0,
-        side: BorderSide(color: _accentProfile2.withValues(alpha: (_accentProfile2.a * 0.8).toDouble())),
+        side: BorderSide(color: colorScheme.secondary.withOpacity(0.8)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
         minimumSize: const Size(0, 40),
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       ),
       icon: (loading == true && _optimistic == null) || _busy
-          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: _accentProfile2))
+          ? SizedBox(
+          width: 16,
+          height: 16,
+          child: CircularProgressIndicator(strokeWidth: 2, color: colorScheme.secondary))
           : Icon(icon),
       label: Text(label),
     );
@@ -451,21 +486,32 @@ class _AvatarHalo extends StatelessWidget {
   const _AvatarHalo({required this.displayName, required this.avatarStyle, required this.avatarSeed, required this.rankColor});
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return SizedBox(
       width: 150,
       height: 150,
       child: Stack(
         alignment: Alignment.center,
         children: [
-          _HaloCircle(color: _accentProfile1.withValues(alpha: (_accentProfile1.a * 0.25).toDouble()), size: 140, begin: 0.85, end: 1.05, delay: 0.ms),
-          _HaloCircle(color: _accentProfile2.withValues(alpha: (_accentProfile2.a * 0.18).toDouble()), size: 110, begin: 0.9, end: 1.08, delay: 400.ms),
+          _HaloCircle(
+              color: colorScheme.primary.withOpacity(0.25),
+              size: 140,
+              begin: 0.85,
+              end: 1.05,
+              delay: 0.ms),
+          _HaloCircle(
+              color: colorScheme.secondary.withOpacity(0.18),
+              size: 110,
+              begin: 0.9,
+              end: 1.08,
+              delay: 400.ms),
           Container(
             padding: const EdgeInsets.all(3),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [_accentProfile2, _accentProfile1]),
+              gradient: LinearGradient(colors: [colorScheme.secondary, colorScheme.primary]),
               shape: BoxShape.circle,
               boxShadow: [
-                BoxShadow(color: _accentProfile2.withValues(alpha: (_accentProfile2.a * 0.4).toDouble()), blurRadius: 20, spreadRadius: 2),
+                BoxShadow(color: colorScheme.secondary.withOpacity(0.4), blurRadius: 20, spreadRadius: 2),
               ],
             ),
             child: CircleAvatar(
@@ -479,7 +525,10 @@ class _AvatarHalo extends StatelessWidget {
                 )
                     : Text(
                   (displayName.isNotEmpty ? displayName[0] : 'T').toUpperCase(),
-                  style: Theme.of(context).textTheme.displayMedium?.copyWith(color: _accentProfile2, fontWeight: FontWeight.bold),
+                  style: Theme.of(context)
+                      .textTheme
+                      .displayMedium
+                      ?.copyWith(color: colorScheme.secondary, fontWeight: FontWeight.bold),
                 ),
               ),
             ).animate().fadeIn(duration: 500.ms).scale(curve: Curves.easeOutBack),
@@ -509,7 +558,9 @@ class _HaloCircle extends StatelessWidget {
 }
 
 class _RankCapsule extends StatelessWidget {
-  final String rankName; final IconData icon; final Color color;
+  final String rankName;
+  final IconData icon;
+  final Color color;
   const _RankCapsule({required this.rankName, required this.icon, required this.color});
   @override
   Widget build(BuildContext context) {
@@ -518,8 +569,8 @@ class _RankCapsule extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(30),
-        gradient: LinearGradient(colors: [color.withValues(alpha: (color.a * 0.2).toDouble()), color.withValues(alpha: (color.a * 0.05).toDouble())]),
-        border: Border.all(color: color.withValues(alpha: (color.a * 0.6).toDouble()), width: 1.2),
+        gradient: LinearGradient(colors: [color.withOpacity(0.2), color.withOpacity(0.05)]),
+        border: Border.all(color: color.withOpacity(0.6), width: 1.2),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -538,24 +589,32 @@ class _StatCard extends StatelessWidget {
   const _StatCard({required this.label, required this.value, required this.icon, required this.delay});
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Semantics(
       label: '$label istatistiği: $value',
       child: Container(
         height: 80,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(18),
-          gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0x1FFFFFFF), Color(0x0DFFFFFF)]),
-          border: Border.all(color: Colors.white.withValues(alpha: (Colors.white.a * 0.12).toDouble()), width: 1),
+          gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [colorScheme.onSurface.withOpacity(0.1), colorScheme.onSurface.withOpacity(0.05)]),
+          border: Border.all(color: colorScheme.onSurface.withOpacity(0.12), width: 1),
         ),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, size: 20, color: _accentProfile2),
+              Icon(icon, size: 20, color: colorScheme.secondary),
               const Spacer(),
               Text(value, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-              Text(label, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white70)),
+              Text(label,
+                  style: Theme.of(context)
+                      .textTheme
+                      .labelSmall
+                      ?.copyWith(color: colorScheme.onSurface.withOpacity(0.7))),
             ],
           ),
         ),
@@ -585,14 +644,20 @@ class _ActionTileState extends State<_ActionTile> {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
-            gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0x221F1F1F), Color(0x111F1F1F)]),
-            border: Border.all(color: Colors.white.withValues(alpha: (Colors.white.a * 0.12).toDouble())),
+            gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Theme.of(context).colorScheme.surface.withOpacity(0.5),
+                  Theme.of(context).colorScheme.surface.withOpacity(0.2)
+                ]),
+            border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(widget.icon, color: _accentProfile1, size: 22),
+              Icon(widget.icon, color: Theme.of(context).colorScheme.primary, size: 22),
               const SizedBox(width: 8),
               Text(widget.label, style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600)),
             ],

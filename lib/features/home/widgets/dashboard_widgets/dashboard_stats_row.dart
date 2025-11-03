@@ -20,11 +20,11 @@ class DashboardStatsRow extends StatelessWidget {
     return IntrinsicHeight(
       child: Row(
         children: [
-          Expanded(child: StatCard(icon: Icons.track_changes_rounded, value: avgNet.toStringAsFixed(1), label: 'Ortalama Net', color: Colors.blueAccent, onTap: () => context.push('/home/stats'))),
+          Expanded(child: StatCard(icon: Icons.track_changes_rounded, value: avgNet.toStringAsFixed(1), label: 'Ortalama Net', onTap: () => context.push('/home/stats'))),
           const SizedBox(width: 12),
-          Expanded(child: StatCard(icon: Icons.emoji_events_rounded, value: bestNet.toStringAsFixed(1), label: 'En Yüksek Net', color: Colors.amber, onTap: () => context.push('/home/stats'))),
+          Expanded(child: StatCard(icon: Icons.emoji_events_rounded, value: bestNet.toStringAsFixed(1), label: 'En Yüksek Net', onTap: () => context.push('/home/stats'))),
           const SizedBox(width: 12),
-          Expanded(child: StatCard(icon: Icons.local_fire_department_rounded, value: streak.toString(), label: 'Günlük Seri', color: Colors.orangeAccent, onTap: () => context.push('/home/stats'))),
+          Expanded(child: StatCard(icon: Icons.local_fire_department_rounded, value: streak.toString(), label: 'Günlük Seri', onTap: () => context.push('/home/stats'))),
         ],
       ),
     );

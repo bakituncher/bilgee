@@ -1,7 +1,6 @@
 // lib/features/onboarding/screens/availability_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
@@ -57,9 +56,9 @@ class AvailabilityScreen extends ConsumerWidget {
 
     if (availability.values.every((list) => list.isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Zafer planı için en az bir zaman dilimi belirlemelisin.'),
-          backgroundColor: AppTheme.accentColor,
+        SnackBar(
+          content: const Text('Zafer planı için en az bir zaman dilimi belirlemelisin.'),
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
       return;
@@ -95,9 +94,9 @@ class AvailabilityScreen extends ConsumerWidget {
                   currentAvailability[day] = List.from(clipboard);
                 }
                 availabilityNotifier.state = currentAvailability;
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text("Kopyalanan plan tüm haftaya uygulandı!"),
-                  backgroundColor: AppTheme.successColor,
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: const Text("Kopyalanan plan tüm haftaya uygulandı!"),
+                  backgroundColor: Theme.of(context).colorScheme.secondary,
                 ));
               },
               icon: const Icon(Icons.content_paste_go_rounded),
@@ -207,7 +206,7 @@ class _DayHeader extends ConsumerWidget {
             ),
             if (clipboard != null)
               IconButton(
-                icon: const Icon(Icons.content_paste_rounded, color: AppTheme.successColor),
+                icon: Icon(Icons.content_paste_rounded, color: Theme.of(context).colorScheme.secondary),
                 tooltip: "Kopyalanan planı bu güne yapıştır",
                 onPressed: () {
                   final availabilityNotifier = ref.read(availabilityProvider.notifier);
@@ -243,7 +242,7 @@ class _TimeSlotGroup extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: Theme.of(context).textTheme.titleSmall?.copyWith(color: AppTheme.secondaryTextColor)),
+          Text(title, style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8.0,
@@ -271,10 +270,10 @@ class _TimeSlotGroup extends ConsumerWidget {
                   duration: 200.ms,
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
-                    color: isSelected ? AppTheme.successColor.withOpacity(0.3) : AppTheme.lightSurfaceColor.withOpacity(0.4),
+                    color: isSelected ? Theme.of(context).colorScheme.secondary.withOpacity(0.3) : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.4),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isSelected ? AppTheme.successColor : AppTheme.lightSurfaceColor,
+                      color: isSelected ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.surfaceContainerHighest,
                       width: 1.5,
                     ),
                   ),
@@ -282,7 +281,7 @@ class _TimeSlotGroup extends ConsumerWidget {
                     slot,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: isSelected ? AppTheme.successColor : AppTheme.textColor,
+                      color: isSelected ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                 ),

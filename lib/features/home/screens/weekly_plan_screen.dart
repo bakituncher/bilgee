@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/models/plan_model.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
@@ -41,7 +40,7 @@ class WeeklyPlanScreen extends ConsumerWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [AppTheme.primaryColor, AppTheme.cardColor.withValues(alpha: 0.8)],
+            colors: [Theme.of(context).colorScheme.surface, Theme.of(context).cardColor.withOpacity(0.8)],
           ),
         ),
         child: SafeArea(
@@ -55,11 +54,11 @@ class WeeklyPlanScreen extends ConsumerWidget {
                   children: [
                     Text(
                       "Stratejik Odak:",
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.secondaryTextColor),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                     Text(
                       weeklyPlan.strategyFocus,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppTheme.secondaryColor, fontStyle: FontStyle.italic),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Theme.of(context).colorScheme.primary, fontStyle: FontStyle.italic),
                     ),
                   ],
                 ).animate().fadeIn(duration: 500.ms),
@@ -72,7 +71,7 @@ class WeeklyPlanScreen extends ConsumerWidget {
               const _DaySelector(
                 days: ['PZT', 'SAL', 'ÇAR', 'PER', 'CUM', 'CMT', 'PAZ'],
               ),
-              const Divider(height: 1, color: AppTheme.lightSurfaceColor),
+              const Divider(height: 1),
               _buildPlanView(context, ref, weeklyPlan, user.id),
             ],
           ),
@@ -121,16 +120,16 @@ class _DaySelector extends ConsumerWidget {
               margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                color: isSelected ? AppTheme.secondaryColor : AppTheme.cardColor.withValues(alpha: 0.5),
+                color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).cardColor.withOpacity(0.5),
                 borderRadius: BorderRadius.circular(20),
-                border: isSelected ? null : Border.all(color: AppTheme.lightSurfaceColor),
+                border: isSelected ? null : Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
               ),
               child: Center(
                 child: Text(
                   days[index],
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: isSelected ? AppTheme.primaryColor : Colors.white,
+                    color: isSelected ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ),
@@ -271,7 +270,7 @@ class _TaskListViewState extends ConsumerState<_TaskListView> with AutomaticKeep
   Future<_TaskAction?> _askAction(BuildContext context, String taskTitle) async {
     return showModalBottomSheet<_TaskAction>(
       context: context,
-      backgroundColor: AppTheme.cardColor.withValues(alpha: .95),
+      backgroundColor: Theme.of(context).cardColor.withOpacity(0.95),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) => SafeArea(
         child: Padding(
@@ -281,12 +280,12 @@ class _TaskListViewState extends ConsumerState<_TaskListView> with AutomaticKeep
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Row(children:[
-                const Icon(Icons.play_circle_fill_rounded, color: AppTheme.secondaryColor),
+                Icon(Icons.play_circle_fill_rounded, color: Theme.of(context).colorScheme.primary),
                 const SizedBox(width: 8),
                 Expanded(child: Text('Ne yapalım?', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)))
               ]),
               const SizedBox(height: 8),
-              Text("'$taskTitle' için bir aksiyon seç.", style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor)),
+              Text("'$taskTitle' için bir aksiyon seç.", style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
               const SizedBox(height: 16),
               ElevatedButton.icon(
                 onPressed: ()=> Navigator.of(context).pop(_TaskAction.startPomodoro),
@@ -322,8 +321,8 @@ class _DaySummaryHeader extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        color: AppTheme.cardColor.withValues(alpha: .55),
-        border: Border.all(color: AppTheme.lightSurfaceColor.withValues(alpha: .20)),
+        color: Theme.of(context).cardColor.withOpacity(0.55),
+        border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -335,7 +334,7 @@ class _DaySummaryHeader extends StatelessWidget {
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
               ),
               Text('${(progress*100).toStringAsFixed(0)}%',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.secondaryColor, fontWeight: FontWeight.w700)),
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w700)),
             ],
           ),
           const SizedBox(height: 8),
@@ -344,12 +343,12 @@ class _DaySummaryHeader extends StatelessWidget {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 5,
-              backgroundColor: AppTheme.lightSurfaceColor.withValues(alpha: .18),
-              valueColor: AlwaysStoppedAnimation(progress >= 1 ? AppTheme.successColor : AppTheme.secondaryColor),
+              backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.18),
+              valueColor: AlwaysStoppedAnimation(progress >= 1 ? Colors.green : Theme.of(context).colorScheme.primary),
             ),
           ),
           const SizedBox(height: 6),
-          Text('$completed / $total görev', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.secondaryTextColor)),
+          Text('$completed / $total görev', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
         ],
       ),
     );
@@ -400,8 +399,8 @@ class WeeklyOverviewCard extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          color: AppTheme.cardColor.withValues(alpha: .50),
-          border: Border.all(color: AppTheme.lightSurfaceColor.withValues(alpha: .20)),
+          color: Theme.of(context).cardColor.withOpacity(0.5),
+          border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.2)),
         ),
         child: Row(
           children: [
@@ -411,8 +410,8 @@ class WeeklyOverviewCard extends ConsumerWidget {
                 CircularProgressIndicator(
                   value: progress,
                   strokeWidth: 5,
-                  backgroundColor: AppTheme.lightSurfaceColor.withValues(alpha: .18),
-                  valueColor: AlwaysStoppedAnimation(progress>=1? AppTheme.successColor : AppTheme.secondaryColor),
+                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.18),
+                  valueColor: AlwaysStoppedAnimation(progress>=1? Colors.green : Theme.of(context).colorScheme.primary),
                 ),
                 Text('${(progress*100).toStringAsFixed(0)}%', style: Theme.of(context).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w600)),
               ]),
@@ -425,7 +424,7 @@ class WeeklyOverviewCard extends ConsumerWidget {
                 children: [
                   Text('Haftalık Plan', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
                   const SizedBox(height: 2),
-                  Text(weekRange, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.secondaryTextColor)),
+                  Text(weekRange, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                   const SizedBox(height: 6),
                   Text('$completedTasks / $totalTasks görev', style: Theme.of(context).textTheme.labelSmall),
                   const SizedBox(height: 8),
@@ -441,11 +440,11 @@ class WeeklyOverviewCard extends ConsumerWidget {
                             borderRadius: BorderRadius.circular(3),
                             gradient: LinearGradient(
                               colors: [
-                                (ratio>=1? AppTheme.successColor : AppTheme.secondaryColor).withValues(alpha: ratio==0 ? .15 : .85),
-                                (ratio>=1? AppTheme.successColor : AppTheme.secondaryColor).withValues(alpha: ratio==0 ? .18 : 1),
+                                (ratio>=1? Colors.green : Theme.of(context).colorScheme.primary).withOpacity(ratio==0 ? .15 : .85),
+                                (ratio>=1? Colors.green : Theme.of(context).colorScheme.primary).withOpacity(ratio==0 ? .18 : 1),
                               ],
                             ),
-                            border: isToday ? Border.all(color: Colors.white.withValues(alpha: .6), width: 1) : null,
+                            border: isToday ? Border.all(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), width: 1) : null,
                           ),
                         ),
                       );
@@ -455,7 +454,7 @@ class WeeklyOverviewCard extends ConsumerWidget {
               ),
             ),
             const SizedBox(width: 8),
-            if (totalTasks>0) Text(remainingLabel(completedTasks,totalTasks), style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.secondaryTextColor)),
+            if (totalTasks>0) Text(remainingLabel(completedTasks,totalTasks), style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
           ],
         ),
       ),
@@ -472,7 +471,7 @@ class WeeklyOverviewCard extends ConsumerWidget {
   void _showWeekDetails(BuildContext context, WidgetRef ref, List<DateTime> dates, List<String> dateKeys, Map<String,int> dayTotals, Map<String,int> dayCompleted){
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppTheme.cardColor.withValues(alpha: .9),
+      backgroundColor: Theme.of(context).cardColor.withOpacity(0.9),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
       builder: (_) {
         return Padding(
@@ -483,7 +482,7 @@ class WeeklyOverviewCard extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.insights_rounded, color: AppTheme.secondaryColor),
+                  Icon(Icons.insights_rounded, color: Theme.of(context).colorScheme.primary),
                   const SizedBox(width: 8),
                   Text('Haftalık Detay', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
                 ],
@@ -503,13 +502,13 @@ class WeeklyOverviewCard extends ConsumerWidget {
                           child: LinearProgressIndicator(
                             value: ratio,
                             minHeight: 6,
-                            backgroundColor: AppTheme.lightSurfaceColor.withValues(alpha: .2),
-                            valueColor: AlwaysStoppedAnimation(ratio>=1? AppTheme.successColor : AppTheme.secondaryColor),
+                            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.2),
+                            valueColor: AlwaysStoppedAnimation(ratio>=1? Colors.green : Theme.of(context).colorScheme.primary),
                           ),
                         ),
                       ),
                       const SizedBox(width: 10),
-                      SizedBox(width: 54, child: Text('$done/$total', textAlign: TextAlign.end, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.secondaryTextColor)))
+                      SizedBox(width: 54, child: Text('$done/$total', textAlign: TextAlign.end, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)))
                     ],
                   ),
                 );
@@ -530,11 +529,11 @@ class _EmptyDayView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.self_improvement_rounded, color: AppTheme.secondaryColor, size: 64),
+          Icon(Icons.self_improvement_rounded, color: Theme.of(context).colorScheme.primary, size: 64),
           const SizedBox(height: 8),
           Text('Dinlenme Günü', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
           const SizedBox(height: 6),
-          Text('Zihinsel depoları doldur �� yarın yeniden hücum.', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor)),
+          Text('Zihinsel depoları doldur 🧘 yarın yeniden hücum.', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
         ],
       ),
     );
@@ -551,8 +550,8 @@ class _TaskTimelineTile extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(12, 12, 6, 12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: (isCompleted? AppTheme.successColor : AppTheme.lightSurfaceColor).withValues(alpha: .35)),
-        gradient: LinearGradient(colors:[ (isCompleted? AppTheme.successColor : AppTheme.secondaryColor).withValues(alpha: .08), AppTheme.cardColor.withValues(alpha: .35)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+        border: Border.all(color: (isCompleted? Colors.green : Theme.of(context).colorScheme.surfaceContainerHighest).withOpacity(0.35)),
+        gradient: LinearGradient(colors:[ (isCompleted? Colors.green : Theme.of(context).colorScheme.primary).withOpacity(0.08), Theme.of(context).cardColor.withOpacity(0.35)], begin: Alignment.topLeft, end: Alignment.bottomRight),
       ),
       child: Row(
         children: [
@@ -561,10 +560,10 @@ class _TaskTimelineTile extends StatelessWidget {
             children: [
               Container(
                 width: 36, height: 36,
-                decoration: BoxDecoration(shape: BoxShape.circle, color: (isCompleted? AppTheme.successColor : AppTheme.secondaryColor).withValues(alpha: .18)),
-                child: Icon(Icons.schedule_rounded, color: isCompleted? AppTheme.successColor : AppTheme.secondaryColor),
+                decoration: BoxDecoration(shape: BoxShape.circle, color: (isCompleted? Colors.green : Theme.of(context).colorScheme.primary).withOpacity(0.18)),
+                child: Icon(Icons.schedule_rounded, color: isCompleted? Colors.green : Theme.of(context).colorScheme.primary),
               ),
-              if (!isLast) Container(width: 2, height: 24, color: AppTheme.lightSurfaceColor.withValues(alpha: .3))
+              if (!isLast) Container(width: 2, height: 24, color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3))
             ],
           ),
           const SizedBox(width: 12),
@@ -575,10 +574,10 @@ class _TaskTimelineTile extends StatelessWidget {
                 Text(item.activity, style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w600,
                   decoration: isCompleted? TextDecoration.lineThrough : TextDecoration.none,
-                  color: isCompleted? AppTheme.secondaryTextColor : Colors.white,
+                  color: isCompleted? Theme.of(context).colorScheme.onSurfaceVariant : Theme.of(context).colorScheme.onSurface,
                 )),
                 const SizedBox(height: 4),
-                Text(item.time, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.secondaryTextColor)),
+                Text(item.time, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
               ],
             ),
           ),
@@ -588,7 +587,7 @@ class _TaskTimelineTile extends StatelessWidget {
               switchInCurve: Curves.elasticOut,
               child: Icon(isCompleted? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
                 key: ValueKey<bool>(isCompleted),
-                color: isCompleted? AppTheme.successColor : AppTheme.lightSurfaceColor,
+                color: isCompleted? Colors.green : Theme.of(context).colorScheme.surfaceContainerHighest,
                 size: 28,
               ),
             ),

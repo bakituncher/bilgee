@@ -1,6 +1,5 @@
 // lib/features/settings/widgets/settings_section.dart
 import 'package:flutter/material.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 
 class SettingsSection extends StatelessWidget {
   final String title;
@@ -13,7 +12,7 @@ class SettingsSection extends StatelessWidget {
       child: Text(
         title.toUpperCase(),
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: AppTheme.secondaryTextColor,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
           fontWeight: FontWeight.bold,
           letterSpacing: 1.2,
         ),

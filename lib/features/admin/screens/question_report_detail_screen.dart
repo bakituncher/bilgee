@@ -1,5 +1,4 @@
 // lib/features/admin/screens/question_report_detail_screen.dart
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/providers/admin_providers.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -134,7 +133,9 @@ class QuestionReportDetailScreen extends ConsumerWidget {
                                 dense: true,
                                 leading: Icon(
                                   i == correctIndex ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
-                                  color: i == correctIndex ? AppTheme.successColor : AppTheme.secondaryTextColor,
+                                  color: i == correctIndex
+                                      ? Theme.of(context).colorScheme.primary
+                                      : Theme.of(context).colorScheme.onSurfaceVariant,
                                 ),
                                 title: Text(options[i].toString()),
                               )),
@@ -176,15 +177,15 @@ class QuestionReportDetailScreen extends ConsumerWidget {
                       background: Container(
                         alignment: Alignment.centerRight,
                         padding: const EdgeInsets.symmetric(horizontal: 16),
-                        color: Colors.redAccent,
-                        child: const Icon(Icons.delete_forever_rounded, color: Colors.white),
+                        color: Theme.of(context).colorScheme.error,
+                        child: Icon(Icons.delete_forever_rounded, color: Theme.of(context).colorScheme.onError),
                       ),
                       child: Card(
                         child: ListTile(
                           title: Text(reason.isEmpty ? '(Gerekçe yok)' : reason),
                           subtitle: Text('Kullanıcı: $userId  |  Seçim: ${selectedIndex ?? '-'}  |  Tarih: ${ts ?? '-'}'),
                           trailing: IconButton(
-                            icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
+                            icon: Icon(Icons.delete_outline_rounded, color: Theme.of(context).colorScheme.error),
                             onPressed: () async {
                               final ok = await showDialog<bool>(
                                 context: context,

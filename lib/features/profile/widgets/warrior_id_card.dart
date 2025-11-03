@@ -1,7 +1,6 @@
 // lib/features/profile/widgets/warrior_id_card.dart
 import 'package:flutter/material.dart';
 import 'package:taktik/data/models/user_model.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 
 class WarriorIDCard extends StatelessWidget {
   final UserModel user;
@@ -13,7 +12,7 @@ class WarriorIDCard extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     return Card(
       elevation: 4,
-      shadowColor: AppTheme.primaryColor.withOpacity(0.5),
+      shadowColor: Theme.of(context).primaryColor.withOpacity(0.5),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -21,10 +20,10 @@ class WarriorIDCard extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 36,
-              backgroundColor: AppTheme.secondaryColor,
+              backgroundColor: Theme.of(context).colorScheme.secondary,
               child: Text(
                 user.name?.substring(0, 1).toUpperCase() ?? 'T',
-                style: textTheme.displaySmall?.copyWith(color: AppTheme.primaryColor, fontWeight: FontWeight.bold),
+                style: textTheme.displaySmall?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold),
               ),
             ),
             const SizedBox(width: 16),
@@ -34,7 +33,7 @@ class WarriorIDCard extends StatelessWidget {
                 children: [
                   Text(user.name ?? 'İsimsiz Savaşçı', style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),
-                  Text(title, style: textTheme.titleMedium?.copyWith(color: AppTheme.secondaryColor, fontStyle: FontStyle.italic)),
+                  Text(title, style: textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.secondary, fontStyle: FontStyle.italic)),
                   const SizedBox(height: 8),
                   Row(
                     children: [

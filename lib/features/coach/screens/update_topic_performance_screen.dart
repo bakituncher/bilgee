@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:taktik/data/models/topic_performance_model.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:taktik/shared/widgets/score_slider.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
@@ -42,7 +41,7 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
     final double mastery = _calculateMastery(isAddingMode, initialPerformance, correct, wrong, sessionQuestions, penaltyCoefficient);
 
     return Scaffold(
-      backgroundColor: AppTheme.scaffoldBackgroundColor,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(topic),
         elevation: 0,
@@ -82,9 +81,9 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
     final isAddingMode = ref.watch(_updateModeProvider);
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.cardColor,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.lightSurfaceColor.withValues(alpha: 0.3)),
+        border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3)),
       ),
       child: Row(
         children: [
@@ -96,7 +95,7 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
               onTap: () => ref.read(_updateModeProvider.notifier).state = true,
             ),
           ),
-          Container(width: 1, height: 48, color: AppTheme.lightSurfaceColor.withValues(alpha: 0.3)),
+          Container(width: 1, height: 48, color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3)),
           Expanded(
             child: _CompactModeOption(
               title: "Değiştir",
@@ -116,14 +115,14 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppTheme.secondaryColor.withValues(alpha: 0.15),
-            AppTheme.primaryColor.withValues(alpha: 0.1),
+            Theme.of(context).colorScheme.secondary.withOpacity(0.15),
+            Theme.of(context).primaryColor.withOpacity(0.1),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppTheme.lightSurfaceColor.withValues(alpha: 0.2)),
+        border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.2)),
       ),
       child: Row(
         children: [
@@ -142,9 +141,9 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
                     CircularProgressIndicator(
                       value: value,
                       strokeWidth: 10,
-                      backgroundColor: AppTheme.lightSurfaceColor.withValues(alpha: 0.3),
+                      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        Color.lerp(AppTheme.accentColor, AppTheme.successColor, value)!,
+                        Color.lerp(Theme.of(context).colorScheme.error, Theme.of(context).colorScheme.secondary, value)!,
                       ),
                       strokeCap: StrokeCap.round,
                     ),
@@ -156,13 +155,13 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
                             "%${(value * 100).toStringAsFixed(0)}",
                             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
                           Text(
                             "Hakimiyet",
                             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppTheme.secondaryTextColor,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
                               fontSize: 11,
                             ),
                           ),
@@ -185,21 +184,21 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
                   icon: Icons.check_circle_rounded,
                   label: "Doğru",
                   value: correct.toString(),
-                  color: AppTheme.successColor,
+                  color: Theme.of(context).colorScheme.secondary,
                 ),
                 const SizedBox(height: 8),
                 _QuickStat(
                   icon: Icons.cancel_rounded,
                   label: "Yanlış",
                   value: wrong.toString(),
-                  color: AppTheme.accentColor,
+                  color: Theme.of(context).colorScheme.error,
                 ),
                 const SizedBox(height: 8),
                 _QuickStat(
                   icon: Icons.radio_button_unchecked,
                   label: "Boş",
                   value: blank.toString(),
-                  color: AppTheme.secondaryTextColor,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ],
             ),
@@ -213,16 +212,16 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppTheme.cardColor,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.lightSurfaceColor.withValues(alpha: 0.2)),
+        border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.tune_rounded, color: AppTheme.secondaryColor, size: 20),
+              Icon(Icons.tune_rounded, color: Theme.of(context).colorScheme.secondary, size: 20),
               const SizedBox(width: 8),
               Text(
                 isAddingMode ? "Test Detayları" : "Yeni Değerler",
@@ -237,7 +236,7 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
             label: "Toplam Soru",
             value: sessionQuestions.toDouble(),
             max: 200,
-            color: AppTheme.lightSurfaceColor,
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
             onChanged: (value) {
               final int newTotal = value.toInt();
               ref.read(_sessionQuestionCountProvider.notifier).state = newTotal;
@@ -254,7 +253,7 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
             label: "Doğru",
             value: correct.toDouble(),
             max: sessionQuestions.toDouble(),
-            color: AppTheme.successColor,
+            color: Theme.of(context).colorScheme.secondary,
             onChanged: (value) {
               final newCorrect = value.toInt();
               ref.read(_correctCountProvider.notifier).state = newCorrect;
@@ -268,7 +267,7 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
             label: "Yanlış",
             value: wrong.toDouble(),
             max: (sessionQuestions - correct).toDouble(),
-            color: AppTheme.accentColor,
+            color: Theme.of(context).colorScheme.error,
             onChanged: (value) {
               ref.read(_wrongCountProvider.notifier).state = value.toInt();
             },
@@ -281,10 +280,12 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
   Widget _buildSaveButton(BuildContext context, WidgetRef ref, bool isAddingMode, int correct, int wrong, int blank, int sessionQuestions) {
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.cardColor,
+        color: Theme.of(context).cardColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.black.withOpacity(0.1)
+                : Colors.black.withOpacity(0.05),
             blurRadius: 20,
             offset: const Offset(0, -5),
           ),
@@ -299,8 +300,8 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
             height: 56,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.secondaryColor,
-                foregroundColor: Colors.white,
+                backgroundColor: Theme.of(context).colorScheme.secondary,
+                foregroundColor: Colors.black,
                 elevation: 0,
                 shadowColor: Colors.transparent,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -344,7 +345,7 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
                 "Kaydet",
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: Colors.black,
                   letterSpacing: 0.5,
                 ),
               ),
@@ -415,7 +416,7 @@ class _SuccessDialogState extends State<_SuccessDialog> {
             const SizedBox(height: 8),
             Text('Kaydedildi!', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
-            Text('Ders netlerin başarıyla güncellendi.', style: theme.textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor), textAlign: TextAlign.center),
+            Text('Ders netlerin başarıyla güncellendi.', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant), textAlign: TextAlign.center),
           ],
         ),
       ),
@@ -445,7 +446,7 @@ class _CompactModeOption extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.secondaryColor.withValues(alpha: 0.15) : Colors.transparent,
+          color: isSelected ? Theme.of(context).colorScheme.secondary.withOpacity(0.15) : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
@@ -453,7 +454,7 @@ class _CompactModeOption extends StatelessWidget {
           children: [
             Icon(
               icon,
-              color: isSelected ? AppTheme.secondaryColor : AppTheme.secondaryTextColor,
+              color: isSelected ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.onSurfaceVariant,
               size: 20,
             ),
             const SizedBox(width: 8),
@@ -461,7 +462,7 @@ class _CompactModeOption extends StatelessWidget {
               title,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                color: isSelected ? AppTheme.secondaryColor : AppTheme.secondaryTextColor,
+                color: isSelected ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -501,7 +502,7 @@ class _QuickStat extends StatelessWidget {
             child: Text(
               label,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppTheme.secondaryTextColor,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w500,
               ),
             ),

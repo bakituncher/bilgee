@@ -1,7 +1,6 @@
 // lib/features/home/widgets/dashboard_header.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 
 class DashboardHeader extends StatelessWidget {
   const DashboardHeader({
@@ -22,12 +21,12 @@ class DashboardHeader extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(name, style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.white)),
-            Text(title, style: textTheme.titleMedium?.copyWith(color: AppTheme.secondaryColor, fontStyle: FontStyle.italic)),
+            Text(name, style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+            Text(title, style: textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.primary, fontStyle: FontStyle.italic)),
           ],
         ),
         IconButton(
-          icon: const Icon(Icons.history_edu_rounded, color: AppTheme.secondaryTextColor, size: 28),
+          icon: Icon(Icons.history_edu_rounded, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 28),
           tooltip: 'Deneme Arşivi',
           onPressed: () => context.go('/library'),
         ),

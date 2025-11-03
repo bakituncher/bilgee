@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/providers/admin_providers.dart';
 
 class AdminPanelScreen extends ConsumerWidget {
@@ -23,9 +22,9 @@ class AdminPanelScreen extends ConsumerWidget {
           Text(
             'Yönetim Araçları',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: AppTheme.primaryColor,
-            ),
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
           ),
           const SizedBox(height: 16),
           // Conditionally show User Management for Super Admins

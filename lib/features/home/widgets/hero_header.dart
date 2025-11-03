@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/profile/logic/rank_service.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taktik/features/home/providers/home_providers.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
@@ -64,11 +63,11 @@ class HeroHeader extends ConsumerWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
             gradient: LinearGradient(
-              colors: [AppTheme.cardColor, AppTheme.lightSurfaceColor.withValues(alpha: .25)],
+              colors: [Theme.of(context).cardColor, Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            border: Border.all(color: AppTheme.lightSurfaceColor.withValues(alpha: .35)),
+            border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -93,16 +92,16 @@ class HeroHeader extends ConsumerWidget {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
-                                color: AppTheme.secondaryColor.withValues(alpha: .15),
+                                color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
                                 borderRadius: BorderRadius.circular(14),
-                                border: Border.all(color: AppTheme.secondaryColor.withValues(alpha: .6), width: 1),
+                                border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.6), width: 1),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(Icons.workspace_premium_rounded, size: 14, color: AppTheme.secondaryColor),
+                                  Icon(Icons.workspace_premium_rounded, size: 14, color: Theme.of(context).colorScheme.primary),
                                   const SizedBox(width: 4),
-                                  Text(current.name, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.secondaryColor, fontWeight: FontWeight.w600)),
+                                  Text(current.name, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w600)),
                                 ],
                               ),
                             ),
@@ -110,16 +109,16 @@ class HeroHeader extends ConsumerWidget {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.lightSurfaceColor.withValues(alpha: .25),
+                                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25),
                                   borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(color: AppTheme.lightSurfaceColor.withValues(alpha: .4)),
+                                  border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.4)),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    const Icon(Icons.checklist_rounded, size: 14, color: AppTheme.secondaryTextColor),
+                                    Icon(Icons.checklist_rounded, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
                                     const SizedBox(width: 4),
-                                    Text('%${(plan.ratio*100).toStringAsFixed(0)} Plan', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.secondaryTextColor)),
+                                    Text('%${(plan.ratio*100).toStringAsFixed(0)} Plan', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                                   ],
                                 ),
                               ),
@@ -138,20 +137,20 @@ class HeroHeader extends ConsumerWidget {
                 child: LinearProgressIndicator(
                   value: progress,
                   minHeight: 8,
-                  backgroundColor: AppTheme.lightSurfaceColor.withValues(alpha: .25),
-                  valueColor: const AlwaysStoppedAnimation(AppTheme.secondaryColor),
+                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25),
+                  valueColor: AlwaysStoppedAnimation(Theme.of(context).colorScheme.primary),
                 ),
               ),
               const SizedBox(height: 6),
               Row(
                 children: [
-                  Text('BP ${user.engagementScore}', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: AppTheme.secondaryTextColor)),
+                  Text('BP ${user.engagementScore}', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                   const SizedBox(width: 6),
-                  Text('%${(progress*100).toStringAsFixed(0)} rütbe ilerleme', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.secondaryTextColor)),
+                  Text('%${(progress*100).toStringAsFixed(0)} rütbe ilerleme', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                 ],
               ),
               const SizedBox(height: 4),
-              Text(lastInfo, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.secondaryTextColor.withValues(alpha: .85))),
+              Text(lastInfo, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.85))),
             ],
           ),
         );
@@ -173,15 +172,15 @@ class _ArchiveButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.secondaryColor.withValues(alpha: .7), width: 1.2),
-          color: AppTheme.secondaryColor.withValues(alpha: .1),
+          border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.7), width: 1.2),
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.history_edu_rounded, size: 18, color: AppTheme.secondaryColor),
+            Icon(Icons.history_edu_rounded, size: 18, color: Theme.of(context).colorScheme.primary),
             const SizedBox(width: 6),
-            Text('Arşiv', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.secondaryColor, fontWeight: FontWeight.w600)),
+            Text('Arşiv', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w600)),
           ],
         ),
       ),

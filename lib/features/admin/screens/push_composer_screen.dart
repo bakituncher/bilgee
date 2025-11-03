@@ -211,7 +211,7 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.check_circle_rounded, color: Colors.green, size: 28),
+                  Icon(Icons.check_circle_rounded, color: Theme.of(context).colorScheme.primary, size: 28),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -436,7 +436,7 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
               child: LinearProgressIndicator(
                 value: ((_currentStep + 1) / (_lastStep + 1)).clamp(0.0, 1.0),
                 minHeight: 3,
-                backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: .3),
+                backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
               ),
             ),
           ),

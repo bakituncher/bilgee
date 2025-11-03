@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 import 'package:taktik/data/models/test_model.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/home/logic/add_test_notifier.dart';
 import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
@@ -52,9 +51,9 @@ class Step3Summary extends ConsumerWidget {
         children: [
           Text("Genel Özet", style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 24),
-          _SummaryRow(label: "Toplam Doğru", value: totalCorrect.toString(), color: AppTheme.successColor),
-          _SummaryRow(label: "Toplam Yanlış", value: totalWrong.toString(), color: AppTheme.accentColor),
-          _SummaryRow(label: "Toplam Boş", value: totalBlank.toString(), color: AppTheme.secondaryTextColor),
+          _SummaryRow(label: "Toplam Doğru", value: totalCorrect.toString(), color: Theme.of(context).colorScheme.secondary),
+          _SummaryRow(label: "Toplam Yanlış", value: totalWrong.toString(), color: Theme.of(context).colorScheme.error),
+          _SummaryRow(label: "Toplam Boş", value: totalBlank.toString(), color: Theme.of(context).colorScheme.onSurfaceVariant),
           const Divider(height: 32),
           _SummaryRow(label: "Toplam Net", value: totalNet.toStringAsFixed(2), isTotal: true),
           const Spacer(),
@@ -112,9 +111,9 @@ class Step3Summary extends ConsumerWidget {
                 debugPrint('Stack trace: $s');
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Deneme sonucu kaydedilemedi. Lütfen tekrar deneyin.'),
-                      backgroundColor: AppTheme.accentColor,
+                    SnackBar(
+                      content: const Text('Deneme sonucu kaydedilemedi. Lütfen tekrar deneyin.'),
+                      backgroundColor: Theme.of(context).colorScheme.error,
                     ),
                   );
                 }
@@ -125,7 +124,14 @@ class Step3Summary extends ConsumerWidget {
               }
             },
             child: state.isSaving
-                ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3,))
+                ? SizedBox(
+                    height: 24,
+                    width: 24,
+                    child: CircularProgressIndicator(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                      strokeWidth: 3,
+                    ),
+                  )
                 : const Text('Kaydet ve Raporu Görüntüle'),
           ),
           TextButton(
@@ -214,7 +220,7 @@ class _SuccessDialogState extends State<_SuccessDialog> {
             const SizedBox(height: 8),
             Text('Kaydedildi!', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
-            Text('Deneme sonuçların başarıyla kaydedildi.', style: theme.textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor), textAlign: TextAlign.center),
+            Text('Deneme sonuçların başarıyla kaydedildi.', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant), textAlign: TextAlign.center),
           ],
         ),
       ),

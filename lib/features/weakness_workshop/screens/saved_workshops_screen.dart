@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
 import 'package:taktik/features/weakness_workshop/models/saved_workshop_model.dart';
@@ -30,16 +29,16 @@ class SavedWorkshopsScreen extends ConsumerStatefulWidget {
 class _SavedWorkshopsScreenState extends ConsumerState<SavedWorkshopsScreen> {
   Future<bool> _confirmDelete(BuildContext context) async {
     return await showDialog<bool>(
-          context: context,
-          builder: (_) => AlertDialog(
-            title: const Text('Silinsin mi?'),
-            content: const Text('Bu kaydı kalıcı olarak silmek istiyor musun?'),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Vazgeç')),
-              ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Sil')),
-            ],
-          ),
-        ) ??
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Silinsin mi?'),
+        content: const Text('Bu kaydı kalıcı olarak silmek istiyor musun?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Vazgeç')),
+          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Sil')),
+        ],
+      ),
+    ) ??
         false;
   }
 
@@ -78,7 +77,7 @@ class _SavedWorkshopsScreenState extends ConsumerState<SavedWorkshopsScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.inventory_2_outlined, size: 80, color: AppTheme.secondaryTextColor),
+                        Icon(Icons.inventory_2_outlined, size: 80, color: Theme.of(context).colorScheme.onSurfaceVariant),
                         const SizedBox(height: 16),
                         Text(query.isEmpty ? 'Kasan Henüz Boş' : 'Sonuç bulunamadı', style: Theme.of(context).textTheme.headlineSmall),
                         const SizedBox(height: 8),
@@ -89,7 +88,7 @@ class _SavedWorkshopsScreenState extends ConsumerState<SavedWorkshopsScreen> {
                                 ? 'Atölyede işlediğin değerli cevherleri buraya kaydederek onlara istediğin zaman geri dönebilirsin.'
                                 : 'Farklı bir anahtar kelime dene.',
                             textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.secondaryTextColor),
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                           ),
                         ),
                       ],
@@ -109,8 +108,8 @@ class _SavedWorkshopsScreenState extends ConsumerState<SavedWorkshopsScreen> {
                       background: Container(
                         alignment: Alignment.centerRight,
                         padding: const EdgeInsets.symmetric(horizontal: 20),
-                        decoration: BoxDecoration(color: AppTheme.accentColor.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(16)),
-                        child: const Icon(Icons.delete_forever_rounded, color: AppTheme.accentColor),
+                        decoration: BoxDecoration(color: Theme.of(context).colorScheme.error.withOpacity(0.2), borderRadius: BorderRadius.circular(16)),
+                        child: Icon(Icons.delete_forever_rounded, color: Theme.of(context).colorScheme.error),
                       ),
                       confirmDismiss: (_) => _confirmDelete(context),
                       onDismissed: (_) async {
@@ -148,7 +147,7 @@ class _SavedWorkshopCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 4,
-      shadowColor: AppTheme.primaryColor.withValues(alpha: 0.5),
+      shadowColor: Theme.of(context).colorScheme.primary.withOpacity(0.5),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -162,10 +161,10 @@ class _SavedWorkshopCard extends StatelessWidget {
           padding: const EdgeInsets.all(20.0),
           child: Row(
             children: [
-              const CircleAvatar(
+              CircleAvatar(
                 radius: 28,
-                backgroundColor: AppTheme.secondaryColor,
-                child: Icon(Icons.diamond_rounded, color: AppTheme.primaryColor, size: 28),
+                backgroundColor: Theme.of(context).colorScheme.secondary,
+                child: Icon(Icons.diamond_rounded, color: Theme.of(context).colorScheme.primary, size: 28),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -181,12 +180,12 @@ class _SavedWorkshopCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       "${workshop.subject} | ${DateFormat.yMMMMd('tr').format(workshop.savedDate.toDate())}",
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryTextColor),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.arrow_forward_ios_rounded, color: AppTheme.secondaryTextColor),
+              Icon(Icons.arrow_forward_ios_rounded, color: Theme.of(context).colorScheme.onSurfaceVariant),
             ],
           ),
         ),

@@ -1,7 +1,6 @@
 // lib/features/home/widgets/dashboard_widgets/action_center.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 
 class ActionCenter extends StatelessWidget {
   const ActionCenter({super.key});
@@ -45,14 +44,14 @@ class _ActionButton extends StatelessWidget {
       child: Ink(
         padding: const EdgeInsets.symmetric(vertical: 20),
         decoration: BoxDecoration(
-          color: AppTheme.cardColor,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
           children: [
-            Icon(icon, size: 28, color: Colors.white),
+            Icon(icon, size: 28, color: Theme.of(context).colorScheme.onSurface),
             const SizedBox(height: 8),
-            Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+            Text(label, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w600)),
           ],
         ),
       ),

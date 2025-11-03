@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
 
 // State model for the user management screen
@@ -201,7 +200,7 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
               padding: const EdgeInsets.all(16.0),
               child: Text(
                 'Bir hata oluştu: ${state.error}',
-                style: const TextStyle(color: Colors.red),
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -222,7 +221,7 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
                   subtitle: Text(user['email'] ?? 'E-posta yok'),
                   trailing: Switch(
                     value: isAdmin,
-                    activeThumbColor: AppTheme.successColor,
+                    activeThumbColor: Theme.of(context).colorScheme.primary,
                     onChanged: (bool value) async {
                       try {
                         final functions = ref.read(functionsProvider);

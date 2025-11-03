@@ -1,7 +1,6 @@
 // lib/features/quests/screens/quests_screen.dart
 import 'dart:async';
 import 'package:taktik/core/analytics/analytics_logger.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/quests/logic/quest_service.dart';
 import 'package:taktik/features/quests/logic/optimized_quests_provider.dart';
@@ -67,13 +66,13 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> with SingleTickerPr
     final user = ref.watch(userProfileProvider).value;
 
     return Scaffold(
-      backgroundColor: AppTheme.scaffoldBackgroundColor,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         children: [
           // Animated Grid Background
           Positioned.fill(
             child: CustomPaint(
-              painter: AnimatedGridPainter(_bgController),
+              painter: AnimatedGridPainter(_bgController, Theme.of(context).colorScheme),
             ),
           ),
           // Main Content
@@ -107,7 +106,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> with SingleTickerPr
           Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+                icon: Icon(Icons.arrow_back_ios_new_rounded, color: Theme.of(context).colorScheme.onSurface),
                 onPressed: () => context.pop(),
               ),
               const SizedBox(width: 8),
@@ -115,7 +114,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> with SingleTickerPr
                 'Günlük Görevler',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ],
@@ -128,7 +127,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> with SingleTickerPr
   Widget _buildLoadingState() {
     return Expanded(
       child: Center(
-        child: const CircularProgressIndicator(color: AppTheme.secondaryColor)
+        child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary)
             .animate()
             .scale(),
       ),
@@ -165,9 +164,9 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> with SingleTickerPr
             quest: quest,
             userId: userId,
           )
-          .animate()
-          .fadeIn(delay: (index * 150).ms, duration: 600.ms)
-          .slideY(begin: 0.5, curve: Curves.easeOutCubic);
+              .animate()
+              .fadeIn(delay: (index * 150).ms, duration: 600.ms)
+              .slideY(begin: 0.5, curve: Curves.easeOutCubic);
         },
       ),
     );
@@ -179,20 +178,20 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> with SingleTickerPr
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
+            Icon(
               Icons.shield_moon_rounded,
               size: 100,
-              color: AppTheme.secondaryTextColor,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
             const SizedBox(height: 20),
             Text(
               'Tüm Görevler Tamamlandı!',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.white),
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Theme.of(context).colorScheme.onSurface),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Yeni Görevler için yarını bekle, Savaşçı.',
-              style: TextStyle(color: AppTheme.secondaryTextColor, fontSize: 16),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 16),
             ),
           ],
         ).animate().fadeIn(duration: 500.ms),
@@ -232,15 +231,15 @@ class GamifiedQuestCard extends ConsumerWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('${quest.reward} BP kazandın!'),
-          backgroundColor: AppTheme.successColor,
+          backgroundColor: Colors.green,
         ),
       );
       ref.invalidate(optimizedQuestsProvider);
     } else if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Ödül alınırken bir hata oluştu.'),
-          backgroundColor: AppTheme.accentColor,
+        SnackBar(
+          content: const Text('Ödül alınırken bir hata oluştu.'),
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
     }
@@ -251,6 +250,8 @@ class GamifiedQuestCard extends ConsumerWidget {
     final progress = quest.goalValue > 0 ? (quest.currentProgress / quest.goalValue).clamp(0.0, 1.0) : (quest.isCompleted ? 1.0 : 0.0);
     final isCompleted = quest.isCompleted;
     final isClaimable = isCompleted && !quest.rewardClaimed;
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     VoidCallback? onTapAction;
     if (isClaimable) {
@@ -264,59 +265,70 @@ class GamifiedQuestCard extends ConsumerWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-            decoration: BoxDecoration(
-              color: isClaimable ? AppTheme.cardColor.withBlue(170) : AppTheme.cardColor,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isClaimable ? AppTheme.goldColor : AppTheme.lightSurfaceColor.withOpacity(0.5),
-                width: isClaimable ? 2 : 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: isClaimable ? AppTheme.goldColor.withOpacity(0.3) : Colors.black.withOpacity(0.3),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    _buildCategoryIcon(isCompleted, isClaimable),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            quest.title,
-                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            quest.description,
-                            style: const TextStyle(fontSize: 14, color: AppTheme.secondaryTextColor),
-                          ),
-                        ],
-                      ),
-                    ),
-                    _buildRewardChip(isClaimable),
-                  ],
-                ),
-                if (!isCompleted || isClaimable) ...[
-                  const SizedBox(height: 20),
-                  if (isClaimable)
-                    _buildClaimRewardPrompt()
-                  else
-                    _buildProgressBar(progress),
-                ],
-              ],
-            ),
+        decoration: BoxDecoration(
+          color: isClaimable
+              ? (isDark ? const Color(0xFF17294D) : Colors.amber.withOpacity(0.1))
+              : colorScheme.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isClaimable ? Colors.amber : colorScheme.surfaceContainerHighest.withOpacity(0.5),
+            width: isClaimable ? 2 : 1,
           ),
-        );
+          boxShadow: [
+            BoxShadow(
+              color: isClaimable
+                  ? Colors.amber.withOpacity(0.3)
+                  : (isDark ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.08)),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                _buildCategoryIcon(isCompleted, isClaimable),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        quest.title,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        quest.description,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                _buildRewardChip(isClaimable),
+              ],
+            ),
+            if (!isCompleted || isClaimable) ...[
+              const SizedBox(height: 20),
+              if (isClaimable)
+                _buildClaimRewardPrompt()
+              else
+                _buildProgressBar(context, progress),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildCategoryIcon(bool isCompleted, bool isClaimable) {
@@ -325,10 +337,10 @@ class GamifiedQuestCard extends ConsumerWidget {
 
     if (isClaimable) {
       icon = Icons.military_tech_rounded;
-      color = AppTheme.goldColor;
+      color = Colors.amber;
     } else if (isCompleted) {
       icon = Icons.check_circle_rounded;
-      color = AppTheme.successColor;
+      color = Colors.green;
     } else {
       switch (quest.category) {
         case QuestCategory.study: icon = Icons.menu_book_rounded; color = Colors.blueAccent; break;
@@ -336,7 +348,7 @@ class GamifiedQuestCard extends ConsumerWidget {
         case QuestCategory.engagement: icon = Icons.auto_awesome_rounded; color = Colors.purpleAccent; break;
         case QuestCategory.consistency: icon = Icons.event_repeat_rounded; color = Colors.orangeAccent; break;
         case QuestCategory.test_submission: icon = Icons.add_chart_rounded; color = Colors.redAccent; break;
-        case QuestCategory.focus: icon = Icons.center_focus_strong; color = AppTheme.secondaryColor; break;
+        case QuestCategory.focus: icon = Icons.center_focus_strong; color = Colors.blue; break;
       }
     }
 
@@ -356,18 +368,18 @@ class GamifiedQuestCard extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: (isClaimable ? AppTheme.goldColor : AppTheme.goldColor).withOpacity(0.1),
+        color: (isClaimable ? Colors.amber : Colors.amber).withOpacity(0.1),
         borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: (isClaimable ? AppTheme.goldColor : AppTheme.goldColor).withOpacity(0.3)),
+        border: Border.all(color: (isClaimable ? Colors.amber : Colors.amber).withOpacity(0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(isClaimable ? Icons.military_tech_rounded : Icons.star_rounded, color: AppTheme.goldColor, size: 18),
+          Icon(isClaimable ? Icons.military_tech_rounded : Icons.star_rounded, color: Colors.amber, size: 18),
           const SizedBox(width: 6),
           Text(
             '+${quest.reward}',
-            style: const TextStyle(color: AppTheme.goldColor, fontSize: 16, fontWeight: FontWeight.bold),
+            style: const TextStyle(color: Colors.amber, fontSize: 16, fontWeight: FontWeight.bold),
           ),
         ],
       ),
@@ -381,33 +393,33 @@ class GamifiedQuestCard extends ConsumerWidget {
         Text(
           'Ödülünü Topla!',
           style: TextStyle(
-            color: AppTheme.goldColor,
+            color: Colors.amber,
             fontWeight: FontWeight.bold,
             fontSize: 16,
             shadows: [
               Shadow(
                 blurRadius: 10.0,
-                color: AppTheme.goldColor.withOpacity(0.5),
+                color: Colors.amber.withOpacity(0.5),
                 offset: const Offset(0, 0),
               ),
             ],
           ),
         ),
         const SizedBox(width: 8),
-        const Icon(Icons.touch_app_rounded, color: AppTheme.goldColor),
+        const Icon(Icons.touch_app_rounded, color: Colors.amber),
       ],
     ).animate(onPlay: (controller) => controller.repeat())
-     .shimmer(delay: 400.ms, duration: 1800.ms, color: AppTheme.goldColor.withOpacity(0.3));
+        .shimmer(delay: 400.ms, duration: 1800.ms, color: Colors.amber.withOpacity(0.3));
   }
 
-  Widget _buildProgressBar(double progress) {
+  Widget _buildProgressBar(BuildContext context, double progress) {
     return Row(
       children: [
         Expanded(
           child: Container(
             height: 8,
             decoration: BoxDecoration(
-              color: AppTheme.lightSurfaceColor,
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(4),
             ),
             child: ClipRRect(
@@ -416,7 +428,7 @@ class GamifiedQuestCard extends ConsumerWidget {
                 alignment: Alignment.centerLeft,
                 child: FractionallySizedBox(
                   widthFactor: progress,
-                  child: Container(color: AppTheme.secondaryColor),
+                  child: Container(color: Theme.of(context).colorScheme.primary),
                 ),
               ),
             ),
@@ -425,7 +437,10 @@ class GamifiedQuestCard extends ConsumerWidget {
         const SizedBox(width: 12),
         Text(
           '${quest.currentProgress} / ${quest.goalValue}',
-          style: const TextStyle(color: AppTheme.secondaryTextColor, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ],
     );
@@ -435,13 +450,14 @@ class GamifiedQuestCard extends ConsumerWidget {
 
 class AnimatedGridPainter extends CustomPainter {
   final Animation<double> animation;
+  final ColorScheme colorScheme;
 
-  AnimatedGridPainter(this.animation) : super(repaint: animation);
+  AnimatedGridPainter(this.animation, this.colorScheme) : super(repaint: animation);
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AppTheme.lightSurfaceColor.withOpacity(0.1)
+      ..color = colorScheme.surfaceContainerHighest.withOpacity(0.1)
       ..strokeWidth = 1.0;
 
     final path = Path();

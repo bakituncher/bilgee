@@ -4,6 +4,7 @@
 import 'dart:async';
 import 'package:taktik/core/navigation/app_router.dart';
 import 'package:taktik/core/theme/app_theme.dart';
+import 'package:taktik/core/theme/theme_provider.dart'; // EKLENDİ
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart'; // kDebugMode için bu import gerekli
@@ -55,7 +56,8 @@ void main() async {
     }
 
     // Android 15+ SDK 35 için zorunlu edge-to-edge ayarları - öncelik sırası önemli
-    AppTheme.configureSystemUI();
+    // Artık main'de değil, tema değişimine duyarlı olarak BilgeAiApp içinde yapılacak.
+    // AppTheme.configureSystemUI();
 
     try {
       await Firebase.initializeApp(
@@ -207,26 +209,73 @@ void _setupRevenueCatListeners() {
   }
 }
 
-class BilgeAiApp extends ConsumerWidget {
+class BilgeAiApp extends ConsumerStatefulWidget {
   const BilgeAiApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final router = ref.watch(goRouterProvider);
+  ConsumerState<BilgeAiApp> createState() => _BilgeAiAppState();
+}
 
-    // Bildirim servisini post-frame'de başlat (tek seferlik ve build dışı yan etki)
+class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // İlk bildirim servisi başlatma
     WidgetsBinding.instance.addPostFrameCallback((_) {
+       final router = ref.read(goRouterProvider);
       NotificationService.instance.initialize(onNavigate: (route) {
         router.go(route);
       });
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangePlatformBrightness() {
+    super.didChangePlatformBrightness();
+    // Sistem teması değiştiğinde, eğer kullanıcı "Sistem" modunu seçtiyse,
+    // UI'ı yeniden çizmek için state'i tazelemeye gerek kalmaz,
+    // MaterialApp değişikliği otomatik olarak yönetir.
+    // Ancak SystemUIOverlay'ı manuel güncellememiz gerekiyor.
+    final themeMode = ref.read(themeModeNotifierProvider);
+    if (themeMode == ThemeMode.system) {
+      final platformBrightness = WidgetsBinding.instance.platformDispatcher.platformBrightness;
+      AppTheme.configureSystemUI(platformBrightness);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final router = ref.watch(goRouterProvider);
+    final themeMode = ref.watch(themeModeNotifierProvider);
+
+    // Tema her değiştiğinde (açık, koyu veya sistem) doğru UI overlay'i ayarla
+    final Brightness currentBrightness;
+    switch (themeMode) {
+      case ThemeMode.light:
+        currentBrightness = Brightness.light;
+        break;
+      case ThemeMode.dark:
+        currentBrightness = Brightness.dark;
+        break;
+      case ThemeMode.system:
+        currentBrightness = MediaQuery.of(context).platformBrightness;
+        break;
+    }
+    AppTheme.configureSystemUI(currentBrightness);
 
     return MaterialApp.router(
       title: 'Taktik',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.modernTheme,
-      darkTheme: AppTheme.modernTheme,
-      themeMode: ThemeMode.dark,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeMode,
       routerConfig: router,
     );
   }
@@ -241,7 +290,8 @@ class ErrorApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       themeMode: ThemeMode.dark,
-      theme: AppTheme.modernTheme,
+      theme: AppTheme.darkTheme,
+      darkTheme: AppTheme.darkTheme,
       home: Scaffold(
         body: Center(
           child: Padding(

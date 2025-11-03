@@ -8,7 +8,6 @@ import 'package:taktik/features/quests/models/quest_model.dart';
 import 'package:flutter/foundation.dart';
 import 'package:taktik/core/app_check/app_check_helper.dart';
 import 'package:taktik/features/quests/logic/quest_session_state.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:taktik/features/quests/logic/optimized_quests_provider.dart';
 
 final questServiceProvider = Provider<QuestService>((ref) {

@@ -1,4 +1,3 @@
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/shared/notifications/in_app_notification_model.dart';
 import 'package:flutter/material.dart';
@@ -109,10 +108,10 @@ class NotificationCenterScreen extends ConsumerWidget {
                       alignment: Alignment.centerRight,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
-                        color: Colors.red.withValues(alpha: 0.12),
+                        color: Theme.of(context).colorScheme.error.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: const Icon(Icons.delete_rounded, color: Colors.red),
+                      child: Icon(Icons.delete_rounded, color: Theme.of(context).colorScheme.error),
                     ),
                     confirmDismiss: (_) async {
                       final u = ref.read(authControllerProvider).value;
@@ -159,12 +158,15 @@ class _NotificationTile extends ConsumerWidget {
     final createdAtText = item.createdAt != null ? _formatDate(item.createdAt!.toDate()) : null;
 
     final bool unread = !item.read;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     final Color bg = unread
-        ? AppTheme.secondaryColor.withValues(alpha: 0.08)
-        : Theme.of(context).colorScheme.surfaceContainerLowest.withValues(alpha: 0.5);
+        ? colorScheme.primary.withOpacity(0.08)
+        : theme.colorScheme.surfaceContainerLowest.withOpacity(0.5);
     final Color border = unread
-        ? AppTheme.secondaryColor.withValues(alpha: 0.35)
-        : Theme.of(context).dividerColor.withValues(alpha: 0.25);
+        ? colorScheme.primary.withOpacity(0.35)
+        : theme.dividerColor.withOpacity(0.25);
 
     final leading = item.imageUrl != null && item.imageUrl!.isNotEmpty
         ? ClipRRect(
@@ -193,7 +195,7 @@ class _NotificationTile extends ConsumerWidget {
                   color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.broken_image_rounded, color: Colors.grey),
+                child: Icon(Icons.broken_image_rounded, color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ),
           )
@@ -201,10 +203,10 @@ class _NotificationTile extends ConsumerWidget {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: AppTheme.cardColor,
+              color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.notifications_rounded, color: AppTheme.secondaryColor),
+            child: Icon(Icons.notifications_rounded, color: Theme.of(context).colorScheme.primary),
           );
 
     return InkWell(
@@ -258,8 +260,8 @@ class _NotificationTile extends ConsumerWidget {
                           margin: const EdgeInsets.only(left: 8),
                           width: 8,
                           height: 8,
-                          decoration: const BoxDecoration(
-                            color: AppTheme.secondaryColor,
+                          decoration: BoxDecoration(
+                            color: colorScheme.primary,
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -270,17 +272,17 @@ class _NotificationTile extends ConsumerWidget {
                     item.body,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyMedium,
+                    style: theme.textTheme.bodyMedium,
                   ),
                   if (createdAtText != null) ...[
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        const Icon(Icons.schedule_rounded, size: 14, color: Colors.grey),
+                        Icon(Icons.schedule_rounded, size: 14, color: colorScheme.onSurfaceVariant),
                         const SizedBox(width: 6),
                         Text(
                           createdAtText,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor),
+                          style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
                         ),
                       ],
                     ),
@@ -330,7 +332,7 @@ class _NotificationDetailSheet extends ConsumerWidget {
                   fit: BoxFit.cover,
                   fadeInDuration: const Duration(milliseconds: 150),
                   placeholder: (ctx, _) => const Center(child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))),
-                  errorWidget: (ctx, _, __) => const Center(child: Icon(Icons.broken_image_rounded, color: Colors.grey)),
+                  errorWidget: (ctx, _, __) => Center(child: Icon(Icons.broken_image_rounded, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                 ),
               ),
             ),
@@ -338,7 +340,7 @@ class _NotificationDetailSheet extends ConsumerWidget {
           Text(item.title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
           if (createdAtText != null) ...[
             const SizedBox(height: 4),
-            Text(createdAtText, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor)),
+            Text(createdAtText, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
           ],
           const SizedBox(height: 12),
           Flexible(
@@ -393,11 +395,11 @@ class _EmptyNotifications extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.notifications_none_rounded, size: 64, color: AppTheme.secondaryTextColor),
+            Icon(Icons.notifications_none_rounded, size: 64, color: Theme.of(context).colorScheme.onSurfaceVariant),
             const SizedBox(height: 12),
             const Text('Henüz bildirimin yok', style: TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 6),
-            Text('Yeni duyurular ve hatırlatmalar burada görünecek.', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryTextColor), textAlign: TextAlign.center),
+            Text('Yeni duyurular ve hatırlatmalar burada görünecek.', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant), textAlign: TextAlign.center),
             const SizedBox(height: 16),
             OutlinedButton.icon(
               onPressed: onBack,

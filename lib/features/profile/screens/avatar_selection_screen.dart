@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
 
@@ -64,7 +63,7 @@ class AvatarSelectionScreen extends ConsumerWidget {
           const SizedBox(height: 20),
           CircleAvatar(
             radius: 80,
-            backgroundColor: AppTheme.lightSurfaceColor,
+            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
             child: ClipOval(
               child: SvgPicture.network(
                 _getAvatarUri(selectedStyle, avatarSeed).toString(),
@@ -83,9 +82,9 @@ class AvatarSelectionScreen extends ConsumerWidget {
             icon: const Icon(Icons.casino_rounded),
             label: const Text("Rastgele"),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.cardColor,
-              foregroundColor: AppTheme.secondaryColor,
-              side: const BorderSide(color: AppTheme.lightSurfaceColor),
+              backgroundColor: Theme.of(context).cardColor,
+              foregroundColor: Theme.of(context).colorScheme.primary,
+              side: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHighest),
             ),
           ),
           const SizedBox(height: 20),
@@ -109,7 +108,7 @@ class AvatarSelectionScreen extends ConsumerWidget {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: isSelected ? AppTheme.secondaryColor : AppTheme.lightSurfaceColor,
+                        color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surfaceContainerHighest,
                         width: 3,
                       ),
                     ),

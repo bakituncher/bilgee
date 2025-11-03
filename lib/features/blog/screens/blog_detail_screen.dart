@@ -1,5 +1,4 @@
 // lib/features/blog/screens/blog_detail_screen.dart
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/providers/admin_providers.dart';
 import 'package:taktik/features/blog/providers/blog_providers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -85,8 +84,8 @@ class BlogDetailScreen extends ConsumerWidget {
 
           final chips = post.tags.map((t) => Chip(
             label: Text(t, style: GoogleFonts.montserrat(fontWeight: FontWeight.w600)),
-            backgroundColor: AppTheme.lightSurfaceColor.withValues(alpha: .25),
-            shape: StadiumBorder(side: BorderSide(color: AppTheme.lightSurfaceColor.withValues(alpha: .4))),
+            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25),
+            shape: StadiumBorder(side: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.4))),
           ));
 
           return CustomScrollView(
@@ -110,9 +109,9 @@ class BlogDetailScreen extends ConsumerWidget {
                                 maxWidthDiskCache: 1920,
                                 memCacheHeight: 720,
                                 memCacheWidth: 1280,
-                                placeholder: (c, _) => Container(color: AppTheme.lightSurfaceColor.withValues(alpha: .25)),
+                                placeholder: (c, _) => Container(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25)),
                                 errorWidget: (c, _, __) => Container(
-                                  color: AppTheme.lightSurfaceColor.withValues(alpha: .2),
+                                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.2),
                                   child: const Icon(Icons.image_not_supported_rounded),
                                 ),
                               ),
@@ -144,24 +143,24 @@ class BlogDetailScreen extends ConsumerWidget {
                               height: 1.25,
                               fontWeight: FontWeight.w800,
                               letterSpacing: .1,
-                              color: AppTheme.textColor,
+                              color: Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
                           const SizedBox(height: 8),
                           Row(
                             children: [
-                              const Icon(Icons.person_outline_rounded, size: 16, color: AppTheme.secondaryTextColor),
+                              Icon(Icons.person_outline_rounded, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
                               const SizedBox(width: 6),
-                              const Text('Taktik Ekibi', style: TextStyle(color: AppTheme.secondaryTextColor)),
+                              Text('Taktik Ekibi', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                               const SizedBox(width: 12),
-                              const Icon(Icons.schedule_rounded, size: 16, color: AppTheme.secondaryTextColor),
+                              Icon(Icons.schedule_rounded, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
                               const SizedBox(width: 6),
                               Text(
                                 [
                                   if (post.publishedAt != null) dateFmt.format(post.publishedAt!),
                                   if (post.readTime != null) '${post.readTime} dk'
                                 ].join(' • '),
-                                style: const TextStyle(color: AppTheme.secondaryTextColor),
+                                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                               ),
                             ],
                           ),
@@ -180,7 +179,7 @@ class BlogDetailScreen extends ConsumerWidget {
                   child: MarkdownBody(
                     data: post.contentMarkdown,
                     styleSheet: MarkdownStyleSheet(
-                      p: GoogleFonts.montserrat(fontSize: 16, height: 1.65, letterSpacing: .05, color: AppTheme.textColor),
+                      p: GoogleFonts.montserrat(fontSize: 16, height: 1.65, letterSpacing: .05, color: Theme.of(context).colorScheme.onSurface),
                       h1: GoogleFonts.montserrat(fontSize: 26, fontWeight: FontWeight.w800, height: 1.25),
                       h2: GoogleFonts.montserrat(fontSize: 22, fontWeight: FontWeight.w800, height: 1.3),
                       h3: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w700, height: 1.35),
@@ -189,24 +188,24 @@ class BlogDetailScreen extends ConsumerWidget {
                       h2Padding: const EdgeInsets.only(top: 16, bottom: 8),
                       h3Padding: const EdgeInsets.only(top: 14, bottom: 6),
                       h4Padding: const EdgeInsets.only(top: 12, bottom: 6),
-                      code: GoogleFonts.robotoMono(fontSize: 13.5, height: 1.5, color: AppTheme.textColor),
+                      code: GoogleFonts.robotoMono(fontSize: 13.5, height: 1.5, color: Theme.of(context).colorScheme.onSurface),
                       codeblockPadding: const EdgeInsets.all(12),
                       codeblockDecoration: BoxDecoration(
-                        color: AppTheme.lightSurfaceColor.withValues(alpha: .12),
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppTheme.lightSurfaceColor.withValues(alpha: .3)),
+                        border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3)),
                       ),
-                      blockquote: GoogleFonts.montserrat(fontStyle: FontStyle.italic, color: AppTheme.secondaryTextColor),
+                      blockquote: GoogleFonts.montserrat(fontStyle: FontStyle.italic, color: Theme.of(context).colorScheme.onSurfaceVariant),
                       blockquotePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       blockquoteDecoration: BoxDecoration(
-                        color: AppTheme.lightSurfaceColor.withValues(alpha: .08),
-                        border: const Border(left: BorderSide(color: AppTheme.secondaryColor, width: 3)),
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.08),
+                        border: Border(left: BorderSide(color: Theme.of(context).colorScheme.secondary, width: 3)),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      listBullet: const TextStyle(color: AppTheme.secondaryColor),
+                      listBullet: TextStyle(color: Theme.of(context).colorScheme.secondary),
                       a: const TextStyle(color: Color(0xFF55C1FF), fontWeight: FontWeight.w600),
                       horizontalRuleDecoration: BoxDecoration(
-                        border: Border(top: BorderSide(color: AppTheme.lightSurfaceColor.withValues(alpha: .6), width: 1)),
+                        border: Border(top: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.6), width: 1)),
                       ),
                       img: GoogleFonts.montserrat(),
                       tableHead: GoogleFonts.montserrat(fontWeight: FontWeight.w700),
@@ -224,11 +223,11 @@ class BlogDetailScreen extends ConsumerWidget {
                             imageUrl: uri.toString(),
                             fit: BoxFit.cover,
                             placeholder: (c, _) => Container(
-                              color: AppTheme.lightSurfaceColor.withValues(alpha: .25),
+                              color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25),
                             ),
                             errorWidget: (c, _, __) => Container(
                               alignment: Alignment.center,
-                              color: AppTheme.lightSurfaceColor.withValues(alpha: .2),
+                              color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.2),
                               child: const Icon(Icons.image_not_supported_rounded),
                             ),
                           ),

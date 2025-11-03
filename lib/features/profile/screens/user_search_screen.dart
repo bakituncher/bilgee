@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
 
@@ -68,11 +67,15 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
         elevation: 0,
       ),
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF0B0F14), Color(0xFF2A155A), Color(0xFF061F38)],
+            colors: [
+              Theme.of(context).scaffoldBackgroundColor,
+              Theme.of(context).cardColor,
+              Theme.of(context).scaffoldBackgroundColor,
+            ],
           ),
         ),
         child: SafeArea(
@@ -83,10 +86,10 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.05),
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.1),
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
                     ),
                   ),
                   child: Row(
@@ -104,7 +107,7 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             decoration: BoxDecoration(
                               color: _searchType == SearchType.name
-                                  ? AppTheme.secondaryColor.withValues(alpha: 0.2)
+                                  ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
                                   : Colors.transparent,
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -115,16 +118,16 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
                                   Icons.person,
                                   size: 18,
                                   color: _searchType == SearchType.name
-                                      ? AppTheme.secondaryColor
-                                      : Colors.white70,
+                                      ? Theme.of(context).colorScheme.primary
+                                      : Theme.of(context).colorScheme.onSurfaceVariant,
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
                                   'İsim',
                                   style: TextStyle(
                                     color: _searchType == SearchType.name
-                                        ? AppTheme.secondaryColor
-                                        : Colors.white70,
+                                        ? Theme.of(context).colorScheme.primary
+                                        : Theme.of(context).colorScheme.onSurfaceVariant,
                                     fontWeight: _searchType == SearchType.name
                                         ? FontWeight.w600
                                         : FontWeight.normal,
@@ -148,7 +151,7 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             decoration: BoxDecoration(
                               color: _searchType == SearchType.username
-                                  ? AppTheme.secondaryColor.withValues(alpha: 0.2)
+                                  ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
                                   : Colors.transparent,
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -159,16 +162,16 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
                                   Icons.alternate_email,
                                   size: 18,
                                   color: _searchType == SearchType.username
-                                      ? AppTheme.secondaryColor
-                                      : Colors.white70,
+                                      ? Theme.of(context).colorScheme.primary
+                                      : Theme.of(context).colorScheme.onSurfaceVariant,
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
                                   'Kullanıcı Adı',
                                   style: TextStyle(
                                     color: _searchType == SearchType.username
-                                        ? AppTheme.secondaryColor
-                                        : Colors.white70,
+                                        ? Theme.of(context).colorScheme.primary
+                                        : Theme.of(context).colorScheme.onSurfaceVariant,
                                     fontWeight: _searchType == SearchType.username
                                         ? FontWeight.w600
                                         : FontWeight.normal,
@@ -189,30 +192,30 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
                 padding: const EdgeInsets.all(16.0),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.05),
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.1),
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
                     ),
                   ),
                   child: TextField(
                     controller: _searchController,
                     focusNode: _searchFocus,
-                    style: const TextStyle(color: Colors.white, fontSize: 16),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 16),
                     decoration: InputDecoration(
                       hintText: _getPlaceholderText(),
                       hintStyle: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.6),
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                       ),
                       prefixIcon: Icon(
                         Icons.search,
-                        color: Colors.white.withValues(alpha: 0.7),
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                       ),
                       suffixIcon: searchQuery.isNotEmpty
                           ? IconButton(
                               icon: Icon(
                                 Icons.clear,
-                                color: Colors.white.withValues(alpha: 0.7),
+                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                               ),
                               onPressed: () {
                                 _searchController.clear();
@@ -259,13 +262,13 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
           Icon(
             Icons.search,
             size: 64,
-            color: Colors.white.withValues(alpha: 0.3),
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
           ),
           const SizedBox(height: 16),
           Text(
             'Takip etmek istediğin kullanıcıları ara',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Colors.white.withValues(alpha: 0.7),
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                 ),
             textAlign: TextAlign.center,
           ),
@@ -273,7 +276,7 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
           Text(
             'Kullanıcı adı yazarak arama yapabilirsin',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.white.withValues(alpha: 0.5),
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
                 ),
             textAlign: TextAlign.center,
           ),
@@ -283,9 +286,9 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
   }
 
   Widget _buildLoadingState() {
-    return const Center(
+    return Center(
       child: CircularProgressIndicator(
-        color: AppTheme.secondaryColor,
+        color: Theme.of(context).colorScheme.primary,
       ),
     );
   }
@@ -298,20 +301,20 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
           Icon(
             Icons.error_outline,
             size: 64,
-            color: Colors.red.withValues(alpha: 0.7),
+            color: Theme.of(context).colorScheme.error.withOpacity(0.7),
           ),
           const SizedBox(height: 16),
           Text(
             'Arama sırasında bir hata oluştu',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Colors.red.withValues(alpha: 0.7),
+                  color: Theme.of(context).colorScheme.error.withOpacity(0.7),
                 ),
           ),
           const SizedBox(height: 8),
           Text(
             'Lütfen tekrar deneyin',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.white.withValues(alpha: 0.5),
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
                 ),
           ),
         ],
@@ -328,20 +331,20 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
             Icon(
               Icons.person_search,
               size: 64,
-              color: Colors.white.withValues(alpha: 0.3),
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
             ),
             const SizedBox(height: 16),
             Text(
               'Kullanıcı bulunamadı',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.7),
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                   ),
             ),
             const SizedBox(height: 8),
             Text(
               'Farklı bir arama terimi deneyin',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.5),
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
                   ),
             ),
           ],
@@ -408,10 +411,10 @@ class _UserSearchTileState extends ConsumerState<_UserSearchTile> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.03),
+        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.03),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.08),
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.08),
         ),
       ),
       child: Material(
@@ -426,7 +429,7 @@ class _UserSearchTileState extends ConsumerState<_UserSearchTile> {
                 // Avatar
                 CircleAvatar(
                   radius: 24,
-                  backgroundColor: Colors.white.withValues(alpha: 0.06),
+                  backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.06),
                   child: ClipOval(
                     child: (avatarStyle != null && avatarSeed != null)
                         ? SvgPicture.network(
@@ -463,7 +466,7 @@ class _UserSearchTileState extends ConsumerState<_UserSearchTile> {
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w700,
-                              color: Colors.white,
+                              color: Theme.of(context).colorScheme.onSurface,
                             ),
                       ),
                       const SizedBox(height: 4),
@@ -471,7 +474,7 @@ class _UserSearchTileState extends ConsumerState<_UserSearchTile> {
                         data: (counts) => Text(
                           'Takipçi ${counts.$1} • Takip ${counts.$2}',
                           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                color: Colors.white.withValues(alpha: 0.7),
+                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                               ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -480,7 +483,7 @@ class _UserSearchTileState extends ConsumerState<_UserSearchTile> {
                           height: 14,
                           width: 120,
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.1),
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(7),
                           ),
                         ),
@@ -513,7 +516,7 @@ class _UserSearchTileState extends ConsumerState<_UserSearchTile> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text('Takipten çıkarma hatası: $e'),
-                                  backgroundColor: Colors.red,
+                                  backgroundColor: Theme.of(context).colorScheme.error,
                                 ),
                               );
                             } finally {
@@ -521,8 +524,8 @@ class _UserSearchTileState extends ConsumerState<_UserSearchTile> {
                             }
                           },
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.redAccent,
-                            side: const BorderSide(color: Colors.redAccent),
+                            foregroundColor: Theme.of(context).colorScheme.error,
+                            side: BorderSide(color: Theme.of(context).colorScheme.error),
                             padding: const EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 10,
@@ -550,7 +553,7 @@ class _UserSearchTileState extends ConsumerState<_UserSearchTile> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text('$displayName takip edildi!'),
-                                  backgroundColor: AppTheme.secondaryColor,
+                                  backgroundColor: Theme.of(context).colorScheme.primary,
                                   duration: const Duration(seconds: 2),
                                 ),
                               );
@@ -560,7 +563,7 @@ class _UserSearchTileState extends ConsumerState<_UserSearchTile> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text('Takip etme hatası: $e'),
-                                  backgroundColor: Colors.red,
+                                  backgroundColor: Theme.of(context).colorScheme.error,
                                 ),
                               );
                             } finally {
@@ -568,8 +571,8 @@ class _UserSearchTileState extends ConsumerState<_UserSearchTile> {
                             }
                           },
                           style: FilledButton.styleFrom(
-                            backgroundColor: AppTheme.secondaryColor.withValues(alpha: 0.18),
-                            foregroundColor: AppTheme.secondaryColor,
+                            backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.18),
+                            foregroundColor: Theme.of(context).colorScheme.primary,
                             padding: const EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 10,

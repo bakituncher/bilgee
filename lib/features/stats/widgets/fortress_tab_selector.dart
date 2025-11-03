@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/stats/screens/stats_screen.dart'; // State provider'a erişim için
 
 class FortressTabSelector extends ConsumerWidget {
@@ -12,26 +11,36 @@ class FortressTabSelector extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedIndex = ref.watch(selectedTabIndexProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            AppTheme.lightSurfaceColor.withOpacity(0.5),
-            AppTheme.lightSurfaceColor.withOpacity(0.25),
-          ],
+          colors: isDark
+              ? [
+                  Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                  Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25),
+                ]
+              : [
+                  Theme.of(context).cardColor.withOpacity(0.95),
+                  Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: AppTheme.secondaryColor.withOpacity(0.15),
+          color: isDark
+              ? Theme.of(context).colorScheme.primary.withOpacity(0.15)
+              : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryColor.withOpacity(0.06),
+            color: isDark 
+                ? Theme.of(context).colorScheme.primary.withOpacity(0.06)
+                : Colors.black.withOpacity(0.08),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -41,7 +50,7 @@ class FortressTabSelector extends ConsumerWidget {
         children: List.generate(tabs.length, (index) {
           final isSelected = selectedIndex == index;
           return Expanded(
-              child: GestureDetector(
+            child: GestureDetector(
               onTap: () => ref.read(selectedTabIndexProvider.notifier).state = index,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
@@ -50,23 +59,23 @@ class FortressTabSelector extends ConsumerWidget {
                 decoration: BoxDecoration(
                   gradient: isSelected
                       ? LinearGradient(
-                          colors: [
-                            AppTheme.secondaryColor,
-                            AppTheme.secondaryColor.withOpacity(0.88),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        )
+                    colors: [
+                      Theme.of(context).colorScheme.primary,
+                      Theme.of(context).colorScheme.primary.withOpacity(0.88),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
                       : null,
                   borderRadius: BorderRadius.circular(10),
                   boxShadow: isSelected
                       ? [
-                          BoxShadow(
-                            color: AppTheme.secondaryColor.withOpacity(0.4),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
-                          ),
-                        ]
+                    BoxShadow(
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.4),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ]
                       : null,
                 ),
                 child: Row(
@@ -76,7 +85,7 @@ class FortressTabSelector extends ConsumerWidget {
                       Icon(
                         Icons.auto_graph_rounded,
                         size: 14,
-                        color: AppTheme.primaryColor,
+                        color: Theme.of(context).colorScheme.onPrimary,
                       ).animate(
                         onPlay: (controller) => controller.repeat(),
                       ).shimmer(
@@ -94,7 +103,9 @@ class FortressTabSelector extends ConsumerWidget {
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: isSelected ? 14 : 13,
-                          color: isSelected ? AppTheme.primaryColor : AppTheme.secondaryTextColor,
+                          color: isSelected 
+                              ? Theme.of(context).colorScheme.onPrimary
+                              : Theme.of(context).colorScheme.onSurfaceVariant,
                           letterSpacing: 0.2,
                         ),
                       ),

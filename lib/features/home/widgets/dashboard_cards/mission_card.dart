@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 // import 'package:taktik/data/models/exam_model.dart';
 // import 'package:taktik/features/stats/logic/stats_analysis.dart';
 import 'package:taktik/data/models/user_model.dart';
@@ -25,7 +24,7 @@ class MissionCard extends ConsumerWidget {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8),
       elevation: 4,
-      shadowColor: AppTheme.secondaryColor.withOpacity(0.2),
+      shadowColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       clipBehavior: Clip.antiAlias,
       child: user == null || tests == null || performance == null
@@ -74,7 +73,7 @@ class MissionCard extends ConsumerWidget {
           padding: const EdgeInsets.all(24.0),
           decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [AppTheme.secondaryColor.withOpacity(0.1), AppTheme.cardColor],
+                colors: [Theme.of(context).colorScheme.primary.withOpacity(0.1), Theme.of(context).cardColor],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               )),
@@ -84,15 +83,15 @@ class MissionCard extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                  Icon(icon, size: 28, color: AppTheme.secondaryColor),
+                  Icon(icon, size: 28, color: Theme.of(context).colorScheme.primary),
                   const SizedBox(width: 12),
                   Text(title, style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                 ],
               ),
               const Spacer(),
               _buildRichTextFromMarkdown(subtitle,
-                  baseStyle: textTheme.bodyLarge?.copyWith(color: AppTheme.secondaryTextColor, height: 1.5),
-                  boldStyle: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textColor)),
+                  baseStyle: textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.5),
+                  boldStyle: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
               const Spacer(),
               if (onTap != null)
                 Align(

@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:confetti/confetti.dart';
 import 'dart:ui' as ui;
 import '../logic/pomodoro_notifier.dart';
@@ -64,7 +63,7 @@ class _PomodoroCompletedViewState extends State<PomodoroCompletedView> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           const SizedBox(height: 12),
-                          const Icon(Icons.check_circle_outline_rounded, size: 80, color: AppTheme.successColor)
+                          const Icon(Icons.check_circle_outline_rounded, size: 80, color: Colors.green)
                               .animate().scale(duration: 600.ms, curve: Curves.elasticOut),
                           const SizedBox(height: 16),
                           Text(
@@ -75,7 +74,7 @@ class _PomodoroCompletedViewState extends State<PomodoroCompletedView> {
                           const SizedBox(height: 4),
                           Text(
                             "'${widget.result.task}' görevine $earnedMinutes dakika odaklandın.",
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.secondaryTextColor),
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                             textAlign: TextAlign.center,
                           ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.5),
                           const SizedBox(height: 16),
@@ -96,8 +95,8 @@ class _PomodoroCompletedViewState extends State<PomodoroCompletedView> {
                                   label: Text("${(breakDuration/60).round()} Dakika Mola Ver"),
                                   onPressed: notifier.startNextSession,
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppTheme.successColor,
-                                    foregroundColor: AppTheme.primaryColor,
+                                    backgroundColor: Colors.green,
+                                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
                                     padding: const EdgeInsets.symmetric(vertical: 14),
                                   ),
                                 ),
@@ -121,7 +120,7 @@ class _PomodoroCompletedViewState extends State<PomodoroCompletedView> {
               confettiController: _confettiController,
               blastDirectionality: BlastDirectionality.explosive,
               shouldLoop: false,
-              colors: const [Colors.green, Colors.blue, Colors.pink, Colors.orange, Colors.purple],
+              colors: [Colors.green, Theme.of(context).colorScheme.primary, Colors.pink, Colors.orange, Colors.purple],
             ),
           ],
         );
@@ -142,9 +141,9 @@ class _GlassPanel extends StatelessWidget {
         filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.06),
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.06),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity(0.08)),
+            border: Border.all(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.08)),
             boxShadow: [
               BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 20, spreadRadius: 2),
             ],

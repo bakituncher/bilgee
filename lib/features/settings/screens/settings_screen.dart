@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
 import 'package:taktik/features/settings/logic/settings_notifier.dart';
@@ -12,6 +11,7 @@ import 'package:taktik/features/settings/widgets/settings_section.dart';
 import 'package:taktik/features/settings/widgets/settings_tile.dart';
 import 'package:taktik/data/providers/admin_providers.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
+import 'package:taktik/core/theme/theme_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -25,16 +25,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   // ONAY AKIŞINI YÖNETEN FONKSİYONLAR
 
   void _showExamChangeFlow(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
     // 1. Onay Diyaloğu
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.cardColor,
-        title: const Row(
+        backgroundColor: theme.cardColor,
+        title: Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: AppTheme.accentColor),
-            SizedBox(width: 10),
-            Expanded(child: Text("Çok Önemli Uyarı", overflow: TextOverflow.ellipsis)),
+            Icon(Icons.warning_amber_rounded, color: theme.colorScheme.error),
+            const SizedBox(width: 10),
+            const Expanded(child: Text("Çok Önemli Uyarı", overflow: TextOverflow.ellipsis)),
           ],
         ),
         content: const Text(
@@ -49,7 +50,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             child: const Text("İptal Et"),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accentColor),
+            style: ElevatedButton.styleFrom(backgroundColor: theme.colorScheme.error),
             onPressed: () {
               Navigator.of(context).pop();
               _showFinalConfirmationDialog(context, ref); // 2. Onay Diyaloğuna geç
@@ -107,7 +108,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   builder: (context, ref, child) {
                     final isLoading = ref.watch(settingsNotifierProvider).isLoading;
                     return ElevatedButton(
-                      style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accentColor),
+                      style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
                       onPressed: (confirmationController.text == confirmationText && !isLoading)
                           ? () {
                         if (formKey.currentState!.validate()) {
@@ -119,7 +120,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       }
                           : null, // Butonu pasif yap
                       child: isLoading
-                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Theme.of(context).colorScheme.onPrimary))
                           : const Text("Tüm Verileri Sil ve Değiştir"),
                     );
                   },
@@ -155,11 +156,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   void _showLogoutDialog(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: AppTheme.cardColor,
+          backgroundColor: theme.cardColor,
           title: const Text("Çıkış Yap"),
           content: const Text("Oturumu sonlandırmak istediğinizden emin misiniz?"),
           actions: <Widget>[
@@ -168,7 +170,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               onPressed: () => Navigator.of(context).pop(),
             ),
             TextButton(
-              child: const Text("Çıkış Yap", style: TextStyle(color: AppTheme.accentColor)),
+              child: Text("Çıkış Yap", style: TextStyle(color: theme.colorScheme.error)),
               onPressed: () {
                 Navigator.of(context).pop();
                 ref.read(authControllerProvider.notifier).signOut();
@@ -206,9 +208,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 if (context.mounted) {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Şifre başarıyla güncellendi.'),
-                      backgroundColor: AppTheme.successColor,
+                    SnackBar(
+                      content: const Text('Şifre başarıyla güncellendi.'),
+                      backgroundColor: Theme.of(context).colorScheme.primary,
                     ),
                   );
                 }
@@ -217,7 +219,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(e.toString().replaceAll('Exception: ', '')),
-                      backgroundColor: AppTheme.accentColor,
+                      backgroundColor: Theme.of(context).colorScheme.error,
                     ),
                   );
                 }
@@ -227,7 +229,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             }
 
             return AlertDialog(
-              backgroundColor: AppTheme.cardColor,
+              backgroundColor: Theme.of(context).cardColor,
               title: const Text('Şifreyi Değiştir'),
               content: Form(
                 key: formKey,
@@ -316,9 +318,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     ref.listen<SettingsState>(settingsNotifierProvider, (previous, next) {
       if (next.resetStatus == ResetStatus.failure) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Veriler sıfırlanırken bir hata oluştu. Lütfen tekrar deneyin."),
-            backgroundColor: AppTheme.accentColor,
+          SnackBar(
+            content: const Text("Veriler sıfırlanırken bir hata oluştu. Lütfen tekrar deneyin."),
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
         ref.read(settingsNotifierProvider.notifier).resetOperationStatus();
@@ -383,6 +385,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             subtitle: "Haftalık çalışma takviminizi düzenleyin",
             onTap: () => context.push(AppRoutes.availability),
           ),
+          const SettingsSection(title: "Görünüm"),
+          _ThemeSelection(), // TEMA SEÇİM WIDGET'I EKLENDİ
           const SettingsSection(title: "Uygulama"),
           SettingsTile(
             icon: Icons.description_outlined,
@@ -430,11 +434,52 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             icon: Icons.logout_rounded,
             title: "Çıkış Yap",
             subtitle: "Hesabınızdan güvenle çıkış yapın",
-            iconColor: AppTheme.accentColor,
-            textColor: AppTheme.accentColor,
+            iconColor: Theme.of(context).colorScheme.error,
+            textColor: Theme.of(context).colorScheme.error,
             onTap: () => _showLogoutDialog(context, ref),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// TEMA SEÇİMİ İÇİN YENİ WIDGET
+class _ThemeSelection extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentThemeMode = ref.watch(themeModeNotifierProvider);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: SegmentedButton<ThemeMode>(
+        segments: const <ButtonSegment<ThemeMode>>[
+          ButtonSegment<ThemeMode>(
+            value: ThemeMode.light,
+            label: Text('Açık'),
+            icon: Icon(Icons.wb_sunny_outlined),
+          ),
+          ButtonSegment<ThemeMode>(
+            value: ThemeMode.dark,
+            label: Text('Koyu'),
+            icon: Icon(Icons.nightlight_round),
+          ),
+          ButtonSegment<ThemeMode>(
+            value: ThemeMode.system,
+            label: Text('Sistem'),
+            icon: Icon(Icons.phone_iphone_rounded),
+          ),
+        ],
+        selected: <ThemeMode>{currentThemeMode},
+        onSelectionChanged: (Set<ThemeMode> newSelection) {
+          ref.read(themeModeNotifierProvider.notifier).setThemeMode(newSelection.first);
+        },
+        style: SegmentedButton.styleFrom(
+          backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+          foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
+          selectedForegroundColor: Theme.of(context).colorScheme.onPrimary,
+          selectedBackgroundColor: Theme.of(context).colorScheme.primary,
+        ),
       ),
     );
   }

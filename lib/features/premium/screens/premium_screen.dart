@@ -3,18 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:taktik/core/services/revenuecat_service.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:collection/collection.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
 import 'dart:ui';
 import 'dart:async';
 import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-
-// --- THEME CONSTANTS ---
-const Color _cardBackgroundColor = AppTheme.cardColor; // 0xFF1E293B
-const Color _cardBorderColor = Color(0xFF3A445C); // Temayla uyumlu, belirgin bir sınır rengi
-const Color _fixedBottomBarColor = Color(0xFF141D34); // Sabit alt bar rengi
 
 // --- PREMIUM SCREEN (Mükemmeliyetçi Son Versiyon) ---
 
@@ -37,34 +31,6 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
 
   // State to prevent multiple purchase clicks
   bool _isPurchasing = false;
-
-  // Pazarlama Slaytları (İçerik değişmedi, sadece widget'lar güçlendirildi)
-  final List<({String title, String subtitle, IconData icon, Color color})> marketingSlides = const [
-    (
-    title: 'Sınırsız TaktikAI Koçu Erişimi',
-    subtitle: 'Sadece limitleri kaldırmakla kalmayın, Yapay Zeka Koçunuzla sınırsız strateji, motivasyon ve ders desteği alın. Daima bir adım öndesiniz.',
-    icon: Icons.rocket_launch_rounded,
-    color: Color(0xFF5b3d88)
-    ),
-    (
-    title: 'Dinamik, Kişiselleştirilmiş Yol Haritası',
-    subtitle: 'Hedeflerinize göre otomatik ayarlanan haftalık planlama. Eksiklerinize ve sınav tarihlerinize göre rotanızı yeniden çiziyoruz.',
-    icon: Icons.lightbulb_outline_rounded,
-    color: AppTheme.secondaryColor
-    ),
-    (
-    title: 'Cevher Atölyesi Full Erişim',
-    subtitle: 'Derinlemesine hata analizi, zayıf konulara özel ders notları ve testler. Her yanlış cevabınızı bir öğrenme zaferine dönüştürün.',
-    icon: Icons.diamond_outlined,
-    color: AppTheme.goldColor
-    ),
-    (
-    title: 'Kapsamlı Test Analizi Raporları',
-    subtitle: 'Gelişmiş metrikler ve yapay zeka yorumlarıyla test sonuçlarınızı en ince detayına kadar inceleyin. Performansınızı şansa bırakmayın.',
-    icon: Icons.analytics_rounded,
-    color: AppTheme.successColor
-    ),
-  ];
 
   // --- INITIALIZATION & DISPOSAL ---
 
@@ -95,7 +61,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
       if (!_pageController.hasClients) return;
 
       int nextPage = _pageController.page!.round() + 1;
-      if (nextPage >= marketingSlides.length) {
+      if (nextPage >= 4) {
         nextPage = 0;
       }
       _pageController.animateToPage(
@@ -154,9 +120,9 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
       if (context.mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Kontrol tamamlandı. Premium durumunuz güncellendi.'),
-            backgroundColor: AppTheme.successColor,
+          SnackBar(
+            content: const Text('Kontrol tamamlandı. Premium durumunuz güncellendi.'),
+            backgroundColor: Theme.of(context).colorScheme.secondary,
           ),
         );
         // NOT: `_handleBack()` çağrısını buradan kaldırdık. Arayüzün tepkisi
@@ -168,7 +134,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Bir hata oluştu: ${e.toString()}'),
-            backgroundColor: AppTheme.accentColor,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -183,16 +149,43 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
   Widget build(BuildContext context) {
     final offeringsAsyncValue = ref.watch(offeringsProvider);
     final bottomInset = MediaQuery.of(context).padding.bottom;
+    final colorScheme = Theme.of(context).colorScheme;
+    final marketingSlides = [
+      (
+      title: 'Sınırsız TaktikAI Koçu Erişimi',
+      subtitle: 'Sadece limitleri kaldırmakla kalmayın, Yapay Zeka Koçunuzla sınırsız strateji, motivasyon ve ders desteği alın. Daima bir adım öndesiniz.',
+      icon: Icons.rocket_launch_rounded,
+      color: const Color(0xFF5b3d88)
+      ),
+      (
+      title: 'Dinamik, Kişiselleştirilmiş Yol Haritası',
+      subtitle: 'Hedeflerinize göre otomatik ayarlanan haftalık planlama. Eksiklerinize ve sınav tarihlerinize göre rotanızı yeniden çiziyoruz.',
+      icon: Icons.lightbulb_outline_rounded,
+      color: Theme.of(context).colorScheme.secondary
+      ),
+      (
+      title: 'Cevher Atölyesi Full Erişim',
+      subtitle: 'Derinlemesine hata analizi, zayıf konulara özel ders notları ve testler. Her yanlış cevabınızı bir öğrenme zaferine dönüştürün.',
+      icon: Icons.diamond_outlined,
+      color: const Color(0xFFFFB020)
+      ),
+      (
+      title: 'Kapsamlı Test Analizi Raporları',
+      subtitle: 'Gelişmiş metrikler ve yapay zeka yorumlarıyla test sonuçlarınızı en ince detayına kadar inceleyin. Performansınızı şansa bırakmayın.',
+      icon: Icons.analytics_rounded,
+      color: Theme.of(context).colorScheme.secondary
+      ),
+    ];
 
     return Scaffold(
-      backgroundColor: AppTheme.primaryColor,
+      backgroundColor: colorScheme.surface,
       body: Stack(
         children: [
           // Arka Plan (Gradient + Blur)
           _buildAnimatedGradientBackground(),
           BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-            child: Container(color: Colors.black.withOpacity(0.3)),
+            child: Container(color: colorScheme.surface.withOpacity(0.3)),
           ),
 
           SingleChildScrollView(
@@ -213,20 +206,22 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                 ),
                 const SizedBox(height: 15),
                 // PageView (Özellik Carousel - DYNAMIC)
-                _buildMarketingCarousel(),
+                _buildMarketingCarousel(marketingSlides),
                 const SizedBox(height: 15),
                 // Page Indicator
-                _buildPageIndicator(),
+                _buildPageIndicator(marketingSlides),
                 const SizedBox(height: 20),
 
                 // 3. FİYATLANDIRMA ALANI (Artık kaydırılabilir)
                 Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: _fixedBottomBarColor,
+                    color: Theme.of(context).cardColor,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.5),
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.black.withOpacity(0.5)
+                            : Colors.black.withOpacity(0.15),
                         spreadRadius: 5,
                         blurRadius: 15,
                         offset: const Offset(0, -5),
@@ -252,13 +247,13 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                         ),
                       ],
                     ),
-                    loading: () => const Padding(
-                      padding: EdgeInsets.all(32.0),
-                      child: CircularProgressIndicator(strokeWidth: 3, color: AppTheme.secondaryColor),
+                    loading: () => Padding(
+                      padding: const EdgeInsets.all(32.0),
+                      child: CircularProgressIndicator(strokeWidth: 3, color: Theme.of(context).colorScheme.secondary),
                     ),
                     error: (error, stack) => Padding(
                       padding: const EdgeInsets.all(32.0),
-                      child: Text('Hata: $error', style: const TextStyle(color: AppTheme.accentColor)),
+                      child: Text('Hata: $error', style: TextStyle(color: Theme.of(context).colorScheme.error)),
                     ),
                   ),
                 ),
@@ -279,7 +274,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: const Icon(Icons.close_rounded, size: 30, color: Colors.white70),
+            icon: Icon(Icons.close_rounded, size: 30, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
             tooltip: 'Kapat',
             onPressed: _handleBack,
           ),
@@ -288,7 +283,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
             child: Text(
               'Geri Yükle',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Colors.white70,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -302,16 +297,24 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     return AnimatedBuilder(
       animation: _gradientAnimation,
       builder: (context, child) {
+        final colorScheme = Theme.of(context).colorScheme;
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         return Container(
           decoration: BoxDecoration(
             gradient: RadialGradient(
               center: Alignment(0.5 + 0.5 * (1 - _gradientAnimation.value), 0.5 - 0.5 * _gradientAnimation.value),
               radius: 1.5,
-              colors: const [
-                Color(0xFF282f42),
-                Color(0xFF1a202c),
-                Color(0xFF0e1218),
-              ],
+              colors: isDark
+                  ? [
+                      colorScheme.surface,
+                      colorScheme.surface,
+                      Color.lerp(colorScheme.surface, Colors.black, 0.5)!,
+                    ]
+                  : [
+                      colorScheme.surface,
+                      Color.lerp(colorScheme.surface, colorScheme.primary, 0.05)!,
+                      Color.lerp(colorScheme.surface, colorScheme.secondary, 0.08)!,
+                    ],
               stops: const [0.0, 0.4, 1.0],
             ),
           ),
@@ -320,7 +323,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     );
   }
 
-  Widget _buildMarketingCarousel() {
+  Widget _buildMarketingCarousel(List<({String title, String subtitle, IconData icon, Color color})> marketingSlides) {
     return FadeTransition(
       opacity: _fadeController,
       child: Container(
@@ -343,7 +346,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     );
   }
 
-  Widget _buildPageIndicator() {
+  Widget _buildPageIndicator(List<({String title, String subtitle, IconData icon, Color color})> marketingSlides) {
     return AnimatedBuilder(
       animation: _pageController,
       builder: (context, child) {
@@ -361,8 +364,8 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                 height: 8.0 * scale.clamp(0.6, 1.0),
                 decoration: BoxDecoration(
                   color: index == currentPage.round()
-                      ? AppTheme.secondaryColor
-                      : Colors.white.withOpacity(0.4),
+                      ? Theme.of(context).colorScheme.secondary
+                      : Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -451,7 +454,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator(color: AppTheme.secondaryColor)),
+      builder: (_) => Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.secondary)),
     );
 
     try {
@@ -462,9 +465,9 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
 
       if (outcome.cancelled) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Satın alma iptal edildi.'),
-            backgroundColor: AppTheme.accentColor,
+          SnackBar(
+            content: const Text('Satın alma iptal edildi.'),
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
         return;
@@ -483,9 +486,9 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
         }
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Harika! Premium özellikler aktif ediliyor...'),
-            backgroundColor: AppTheme.successColor,
+          SnackBar(
+            content: const Text('Harika! Premium özellikler aktif ediliyor...'),
+            backgroundColor: Theme.of(context).colorScheme.secondary,
           ),
         );
         _handleBack();
@@ -497,7 +500,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Satın alma başarısız: $errMsg'),
-          backgroundColor: AppTheme.accentColor,
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
     } catch (e) {
@@ -505,7 +508,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Satın alma sırasında bir hata oluştu: $e'),
-          backgroundColor: AppTheme.accentColor,
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
     } finally {
@@ -541,7 +544,7 @@ class _AnimatedHeader extends StatelessWidget {
               .animate(CurvedAnimation(parent: slideController, curve: Curves.easeOutCubic)),
           child: FadeTransition(
             opacity: fadeController,
-            child: const Icon(Icons.workspace_premium_rounded, size: 55, color: AppTheme.goldColor),
+            child: Icon(Icons.workspace_premium_rounded, size: 55, color: Theme.of(context).colorScheme.tertiary),
           ),
         ),
         const SizedBox(height: 10),
@@ -555,7 +558,7 @@ class _AnimatedHeader extends StatelessWidget {
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w900,
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onSurface,
                 letterSpacing: 1.5,
               ),
             ),
@@ -571,7 +574,7 @@ class _AnimatedHeader extends StatelessWidget {
               'Sınırları kaldır, rekabette öne geç.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: Colors.white70,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                 fontWeight: FontWeight.w500,
                 height: 1.4,
               ),
@@ -600,13 +603,14 @@ class _MarketingSlideCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(25),
       margin: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
-          color: _cardBackgroundColor,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(25),
-          border: Border.all(color: AppTheme.lightSurfaceColor.withOpacity(0.5), width: 1.5),
+          border: Border.all(color: colorScheme.surfaceContainerHighest.withOpacity(0.5), width: 1.5),
           // Pazarlamayı kuvvetlendirmek için hafif bir iç gölge efekti (Inner Glow Simulation)
           boxShadow: [
             BoxShadow(
@@ -614,8 +618,7 @@ class _MarketingSlideCard extends StatelessWidget {
               blurRadius: 10,
               spreadRadius: 1,
             )
-          ]
-      ),
+          ]),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -637,7 +640,7 @@ class _MarketingSlideCard extends StatelessWidget {
                   title,
                   style: Theme.of(context).textTheme.titleMedium!.copyWith(
                     fontWeight: FontWeight.w900,
-                    color: Colors.white,
+                    color: colorScheme.onSurface,
                     letterSpacing: 0.5,
                   ),
                   maxLines: 1,
@@ -650,7 +653,7 @@ class _MarketingSlideCard extends StatelessWidget {
           Text(
             subtitle,
             style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-              color: Colors.white70,
+              color: colorScheme.onSurface.withOpacity(0.7),
               height: 1.3,
             ),
             maxLines: 3,
@@ -737,9 +740,11 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
   Widget build(BuildContext context) {
     final introPrice = widget.package.storeProduct.introductoryPrice;
     final hasFreeTrial = introPrice != null && introPrice.price == 0;
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final borderColor = widget.highlight ? AppTheme.secondaryColor : _cardBorderColor;
-    final backgroundColor = widget.highlight ? AppTheme.secondaryColor.withOpacity(0.2) : _cardBackgroundColor;
+    final borderColor = widget.highlight ? colorScheme.secondary : colorScheme.surfaceContainerHighest;
+    final backgroundColor = widget.highlight ? colorScheme.secondary.withOpacity(0.2) : colorScheme.surface;
 
     // --- SEKTÖR STANDARDI TASARIM İYİLEŞTİRMELERİ ---
     return SlideTransition(
@@ -761,19 +766,21 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                 boxShadow: widget.highlight
                     ? [
                   BoxShadow(
-                    color: AppTheme.secondaryColor.withOpacity(0.3),
+                    color: colorScheme.secondary.withOpacity(0.3),
                     blurRadius: 10,
                     spreadRadius: 2,
                   ),
                   BoxShadow(
-                    color: AppTheme.goldColor.withOpacity(0.15),
+                    color: colorScheme.tertiary.withOpacity(0.15),
                     blurRadius: 15,
                     spreadRadius: 2,
                   )
                 ]
                     : [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
+                    color: isDark
+                        ? Colors.black.withOpacity(0.2)
+                        : Colors.black.withOpacity(0.08),
                     blurRadius: 5,
                     offset: const Offset(0, 3),
                   )
@@ -789,10 +796,10 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                       children: [
                         Text(
                           widget.title,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.w900,
                             fontSize: 20,
-                            color: Colors.white,
+                            color: colorScheme.onSurface,
                           ),
                         ),
                         // ÜCRETSİZ DENEME VURGUSU
@@ -802,14 +809,13 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                               decoration: BoxDecoration(
-                                  color: AppTheme.successColor.withOpacity(0.15),
+                                  color: colorScheme.primary.withOpacity(0.15),
                                   borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: AppTheme.successColor.withOpacity(0.5))
-                              ),
-                              child: const Text(
+                                  border: Border.all(color: colorScheme.primary.withOpacity(0.5))),
+                              child: Text(
                                 'İLK 7 GÜN ÜCRETSİZ DENE',
                                 style: TextStyle(
-                                  color: AppTheme.successColor,
+                                  color: colorScheme.primary,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 12,
                                 ),
@@ -828,16 +834,16 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                               style: TextStyle(
                                 fontSize: 26,
                                 fontWeight: FontWeight.w900,
-                                color: widget.highlight ? AppTheme.secondaryColor : Colors.white,
+                                color: widget.highlight ? colorScheme.secondary : colorScheme.onSurface,
                               ),
                             ),
                             const SizedBox(width: 4),
                             Text(
                               widget.billingPeriod,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.white70,
+                                color: colorScheme.onSurface.withOpacity(0.7),
                               ),
                             ),
                           ],
@@ -847,7 +853,8 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           decoration: BoxDecoration(
-                            color: widget.highlight ? AppTheme.secondaryColor : Colors.white.withOpacity(0.15),
+                            color:
+                            widget.highlight ? colorScheme.secondary : colorScheme.onSurface.withOpacity(0.15),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Center(
@@ -856,7 +863,7 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                               style: TextStyle(
                                 fontSize: 17,
                                 fontWeight: FontWeight.w900,
-                                color: widget.highlight ? AppTheme.primaryColor : Colors.white,
+                                color: widget.highlight ? colorScheme.onSecondary : colorScheme.onSurface,
                               ),
                             ),
                           ),
@@ -874,12 +881,14 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: widget.highlight ? AppTheme.secondaryColor : AppTheme.goldColor,
+                            color: widget.highlight ? colorScheme.secondary : colorScheme.tertiary,
                             borderRadius: BorderRadius.circular(99),
-                            border: Border.all(color: Colors.white.withOpacity(0.8), width: 1.5),
+                            border: Border.all(color: colorScheme.onSurface.withOpacity(0.8), width: 1.5),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.3),
+                                color: isDark
+                                    ? Colors.black.withOpacity(0.3)
+                                    : Colors.black.withOpacity(0.15),
                                 blurRadius: 5,
                                 offset: const Offset(0, 2),
                               )
@@ -887,8 +896,8 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                           ),
                           child: Text(
                             widget.tag!,
-                            style: const TextStyle(
-                              color: AppTheme.primaryColor,
+                            style: TextStyle(
+                              color: widget.highlight ? colorScheme.onSecondary : colorScheme.onTertiary,
                               fontWeight: FontWeight.w900,
                               fontSize: 12,
                             ),
@@ -914,11 +923,11 @@ class _TrustBadges extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
+        children: [
           _TrustRow(icon: Icons.lock_rounded, text: 'Google ile Güvenli Ödeme'),
           SizedBox(width: 20),
           _TrustRow(icon: Icons.cancel_schedule_send_rounded, text: 'Kolay İptal'),
@@ -935,13 +944,14 @@ class _TrustRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.onSurface.withOpacity(0.7);
     return Row(
       children: [
-        Icon(icon, color: Colors.white70, size: 16),
+        Icon(icon, color: color, size: 16),
         const SizedBox(width: 6),
         Text(
           text,
-          style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w500, fontSize: 13),
+          style: TextStyle(color: color, fontWeight: FontWeight.w500, fontSize: 13),
         ),
       ],
     );
@@ -961,11 +971,11 @@ class _LegalFooter extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _FooterLink(text: 'Kullanım Şartları', targetRoute: AppRoutes.settings),
+              const _FooterLink(text: 'Kullanım Şartları', targetRoute: AppRoutes.settings),
               const SizedBox(width: 10),
-              const Text('|', style: TextStyle(color: Colors.white38, fontSize: 11)),
+              Text('|', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.38), fontSize: 11)),
               const SizedBox(width: 10),
-              _FooterLink(text: 'Gizlilik Politikası', targetRoute: AppRoutes.settings),
+              const _FooterLink(text: 'Gizlilik Politikası', targetRoute: AppRoutes.settings),
             ],
           ),
         ],
@@ -982,6 +992,7 @@ class _FooterLink extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.onSurface.withOpacity(0.7);
     return GestureDetector(
       onTap: () {
         // Gerçekte URL Launcher veya Webview kullanılmalıdır.
@@ -991,12 +1002,12 @@ class _FooterLink extends StatelessWidget {
       },
       child: Text(
         text,
-        style: const TextStyle(
-          color: Colors.white70,
+        style: TextStyle(
+          color: color,
           fontSize: 11,
           fontWeight: FontWeight.w600,
           decoration: TextDecoration.underline,
-          decorationColor: Colors.white70,
+          decorationColor: color,
         ),
       ),
     );

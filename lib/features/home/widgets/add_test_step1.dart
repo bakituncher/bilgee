@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:taktik/data/models/exam_model.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/home/logic/add_test_notifier.dart';
 
 class Step1TestInfo extends ConsumerWidget {
@@ -23,8 +22,8 @@ class Step1TestInfo extends ConsumerWidget {
       padding: const EdgeInsets.all(24.0),
       children: [
         // 1. Başlık ve İkon
-        const Icon(Icons.edit_document,
-            size: 64, color: AppTheme.secondaryColor),
+        Icon(Icons.edit_document,
+            size: 64, color: Theme.of(context).colorScheme.secondary),
         const SizedBox(height: 16),
         Text(
           "Yeni Deneme Sonucu Ekle",
@@ -35,7 +34,7 @@ class Step1TestInfo extends ConsumerWidget {
         Text(
           "Kaydedilecek denemenin temel bilgilerini girerek ilk adımı at.",
           textAlign: TextAlign.center,
-          style: textTheme.titleMedium?.copyWith(color: AppTheme.secondaryTextColor),
+          style: textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
         const SizedBox(height: 48),
 
@@ -47,11 +46,11 @@ class Step1TestInfo extends ConsumerWidget {
           decoration: InputDecoration(
             hintText: 'Örn: 3D Genel Deneme Sınavı',
             prefixIcon:
-            const Icon(Icons.label_important_outline, color: AppTheme.secondaryTextColor),
+            Icon(Icons.label_important_outline, color: Theme.of(context).colorScheme.onSurfaceVariant),
             // Odaklanıldığında ve normal durumda kenarlık rengi
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16.0),
-              borderSide: const BorderSide(color: AppTheme.secondaryColor, width: 2),
+              borderSide: BorderSide(color: Theme.of(context).colorScheme.secondary, width: 2),
             ),
           ),
           onChanged: (value) => notifier.setTestName(value),
@@ -68,7 +67,7 @@ class Step1TestInfo extends ConsumerWidget {
             isSelected: state.selectedSection == section,
             onTap: () => notifier.setSection(section),
           ))
-              ,
+          ,
         ],
         const SizedBox(height: 32),
 
@@ -79,10 +78,10 @@ class Step1TestInfo extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(vertical: 16),
             // Buton pasifken farklı bir görünüm
             backgroundColor: isButtonEnabled
-                ? AppTheme.secondaryColor
-                : AppTheme.lightSurfaceColor,
+                ? Theme.of(context).colorScheme.secondary
+                : Theme.of(context).colorScheme.surfaceContainerHighest,
             foregroundColor:
-            isButtonEnabled ? AppTheme.primaryColor : AppTheme.secondaryTextColor,
+            isButtonEnabled ? Theme.of(context).primaryColor : Theme.of(context).colorScheme.onSurfaceVariant,
           ),
           child: const Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -121,7 +120,7 @@ class _SectionSelectionCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: isSelected ? AppTheme.successColor : AppTheme.lightSurfaceColor,
+          color: isSelected ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.surfaceContainerHighest,
           width: 2,
         ),
       ),
@@ -135,8 +134,8 @@ class _SectionSelectionCard extends StatelessWidget {
               AnimatedOpacity(
                 opacity: isSelected ? 1.0 : 0.0,
                 duration: 200.ms,
-                child: const Icon(Icons.check_circle_rounded,
-                    color: AppTheme.successColor),
+                child: Icon(Icons.check_circle_rounded,
+                    color: Theme.of(context).colorScheme.secondary),
               ),
               if (isSelected) const SizedBox(width: 12),
               Text(

@@ -1,5 +1,4 @@
 // lib/features/home/widgets/focus_hub_card.dart
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/home/providers/home_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -57,10 +56,10 @@ class FocusHubCard extends ConsumerWidget {
 
     return Card(
       elevation: 10,
-      shadowColor: AppTheme.lightSurfaceColor.withValues(alpha: .45),
+      shadowColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.45),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24),
-        side: BorderSide(color: AppTheme.lightSurfaceColor.withValues(alpha: .35)),
+        side: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35)),
       ),
       child: InkWell(
         onTap: primary,
@@ -75,12 +74,12 @@ class FocusHubCard extends ConsumerWidget {
                 children: [
                   Container(
                     decoration: BoxDecoration(
-                      color: AppTheme.secondaryColor.withValues(alpha: .15),
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppTheme.secondaryColor.withValues(alpha: .6)),
+                      border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.6)),
                     ),
                     padding: const EdgeInsets.all(10),
-                    child: Icon(icon, color: AppTheme.secondaryColor),
+                    child: Icon(icon, color: Theme.of(context).colorScheme.primary),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -89,17 +88,17 @@ class FocusHubCard extends ConsumerWidget {
                       children: [
                         Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
                         const SizedBox(height: 2),
-                        Text(subtitle, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.secondaryTextColor)),
+                        Text(subtitle, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                       ],
                     ),
                   ),
-                  const Icon(Icons.chevron_right_rounded, color: AppTheme.secondaryTextColor),
+                  Icon(Icons.chevron_right_rounded, color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ],
               ),
 
               const SizedBox(height: 14),
               // Ayrıştırıcı çizgi
-              Divider(color: AppTheme.lightSurfaceColor.withValues(alpha: .35), height: 1),
+              Divider(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35), height: 1),
               const SizedBox(height: 12),
 
               // Hızlı İşlemler
@@ -135,14 +134,14 @@ class _QuickAction extends StatelessWidget {
       child: Ink(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
-          color: AppTheme.cardColor,
-          border: Border.all(color: AppTheme.lightSurfaceColor.withValues(alpha: .45)),
+          color: Theme.of(context).cardColor,
+          border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.45)),
         ),
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: AppTheme.secondaryColor),
+            Icon(icon, color: Theme.of(context).colorScheme.primary),
             const SizedBox(height: 6),
             Text(label, style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600)),
           ],

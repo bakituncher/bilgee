@@ -1,18 +1,18 @@
 // lib/features/onboarding/widgets/tutorial_painter.dart
 import 'package:flutter/material.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 
 class TutorialPainter extends CustomPainter {
   final Rect? highlightRect;
+  final Color highlightColor;
 
-  TutorialPainter({required this.highlightRect});
+  TutorialPainter({required this.highlightRect, required this.highlightColor});
 
   @override
   void paint(Canvas canvas, Size size) {
     if (highlightRect == null) return;
 
     final paint = Paint()
-      ..color = AppTheme.secondaryColor
+      ..color = highlightColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3.0
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5.0);

@@ -21,18 +21,18 @@ class EdgeToEdgeExampleScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Android 15+ Edge-to-Edge Desteği',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.textColor,
+                  color: Theme.of(context).textTheme.bodyLarge!.color,
                 ),
               ),
               const SizedBox(height: 16),
-              const Card(
+              Card(
                 child: Padding(
-                  padding: EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(16.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -41,16 +41,16 @@ class EdgeToEdgeExampleScreen extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: AppTheme.secondaryColor,
+                          color: Theme.of(context).colorScheme.secondary,
                         ),
                       ),
-                      SizedBox(height: 12),
+                      const SizedBox(height: 12),
                       Text(
                         '• SDK 35 hedefleyen uygulamalar için edge-to-edge zorunludur\n'
-                        '• Status bar ve navigation bar şeffaf olmalıdır\n'
-                        '• EdgeToEdgeWrapper veya EdgeToEdgeScaffold kullanın\n'
-                        '• MediaQuery padding değerlerini doğru kullanın',
-                        style: TextStyle(color: AppTheme.textColor),
+                            '• Status bar ve navigation bar şeffaf olmalıdır\n'
+                            '• EdgeToEdgeWrapper veya EdgeToEdgeScaffold kullanın\n'
+                            '• MediaQuery padding değerlerini doğru kullanın',
+                        style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color),
                       ),
                     ],
                   ),
@@ -60,7 +60,7 @@ class EdgeToEdgeExampleScreen extends StatelessWidget {
               ElevatedButton(
                 onPressed: () {
                   // System UI'yi yeniden yapılandır
-                  AppTheme.configureSystemUI();
+                  AppTheme.configureSystemUI(Theme.of(context).brightness);
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('System UI yeniden yapılandırıldı'),

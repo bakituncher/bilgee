@@ -2,7 +2,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/profile/models/badge_model.dart' as app_badge;
 import 'package:confetti/confetti.dart'; // YENİ: Partikül efekti için
 
@@ -33,7 +32,7 @@ class HonorWallScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text("Madalya Koleksiyonu", style: Theme.of(context).textTheme.titleMedium),
-                        Text("${unlockedBadges.length} / ${allBadges.length}", style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.secondaryColor)),
+                        Text("${unlockedBadges.length} / ${allBadges.length}", style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.primary)),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -42,8 +41,8 @@ class HonorWallScreen extends StatelessWidget {
                       child: LinearProgressIndicator(
                         value: progress,
                         minHeight: 8,
-                        backgroundColor: AppTheme.lightSurfaceColor.withValues(alpha: AppTheme.lightSurfaceColor.a * 0.5),
-                        valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.secondaryColor),
+                        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                        valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
                       ),
                     ),
                   ],
@@ -68,7 +67,7 @@ class HonorWallScreen extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 48.0),
             child: Column(
               children: [
-                Icon( isUnlocked ? Icons.shield_moon_rounded : Icons.flag_rounded, size: 64, color: AppTheme.secondaryTextColor),
+                Icon( isUnlocked ? Icons.shield_moon_rounded : Icons.flag_rounded, size: 64, color: Theme.of(context).colorScheme.onSurfaceVariant),
                 const SizedBox(height: 16),
                 Text( isUnlocked ? 'Henüz Madalya Kazanılmadı' : 'Tüm Hedefler Fethedildi!', style: Theme.of(context).textTheme.headlineSmall),
               ],
@@ -116,28 +115,29 @@ class BadgeCard extends StatelessWidget {
   final app_badge.Badge badge;
   const BadgeCard({super.key, required this.badge});
 
-  Color _getRarityColor(app_badge.BadgeRarity rarity) {
+  Color _getRarityColor(BuildContext context, app_badge.BadgeRarity rarity) {
+    final colorScheme = Theme.of(context).colorScheme;
     switch (rarity) {
-      case app_badge.BadgeRarity.rare: return Colors.blueAccent;
-      case app_badge.BadgeRarity.epic: return Colors.purpleAccent;
-      case app_badge.BadgeRarity.legendary: return Colors.amber;
-      default: return badge.color;
+      case app_badge.BadgeRarity.rare: return colorScheme.primary;
+      case app_badge.BadgeRarity.epic: return colorScheme.tertiary;
+      case app_badge.BadgeRarity.legendary: return colorScheme.primaryContainer;
+      default: return badge.color ?? colorScheme.secondary;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final rarityColor = _getRarityColor(badge.rarity);
+    final rarityColor = _getRarityColor(context, badge.rarity);
     final bool isShiny = badge.isUnlocked && (badge.rarity == app_badge.BadgeRarity.epic || badge.rarity == app_badge.BadgeRarity.legendary);
 
     Widget iconWidget = Icon(
       badge.isUnlocked ? badge.icon : Icons.question_mark_rounded,
       size: 40,
-      color: badge.isUnlocked ? rarityColor : AppTheme.secondaryTextColor,
+      color: badge.isUnlocked ? rarityColor : Theme.of(context).colorScheme.onSurfaceVariant,
     );
     if (isShiny) {
       iconWidget = Animate(
-        effects: [ShimmerEffect(duration: 2200.ms, color: rarityColor.withValues(alpha: rarityColor.a * 0.5))],
+        effects: [ShimmerEffect(duration: 2200.ms, color: rarityColor.withOpacity(0.5))],
         child: iconWidget,
       );
     }
@@ -145,9 +145,9 @@ class BadgeCard extends StatelessWidget {
     Widget cardContent = Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: badge.isUnlocked ? rarityColor.withValues(alpha: rarityColor.a * 0.1) : AppTheme.cardColor.withValues(alpha: AppTheme.cardColor.a * 0.5),
+        color: badge.isUnlocked ? rarityColor.withOpacity(0.1) : Theme.of(context).cardColor.withOpacity(0.5),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: badge.isUnlocked ? rarityColor : AppTheme.lightSurfaceColor.withValues(alpha: AppTheme.lightSurfaceColor.a * 0.5), width: 2),
+        border: Border.all(color: badge.isUnlocked ? rarityColor : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5), width: 2),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -161,7 +161,7 @@ class BadgeCard extends StatelessWidget {
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 13,
-                color: badge.isUnlocked ? Colors.white : AppTheme.secondaryTextColor,
+                color: badge.isUnlocked ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           ),
@@ -181,7 +181,7 @@ class BadgeCard extends StatelessWidget {
   void _showBadgeDetails(BuildContext context, Color rarityColor) {
     showDialog(
       context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.5),
+      barrierColor: Colors.black.withOpacity(0.5),
       builder: (context) {
         return BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
@@ -221,6 +221,7 @@ class _BadgeDetailsDialogState extends State<_BadgeDetailsDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final onSurfaceVariant = Theme.of(context).colorScheme.onSurfaceVariant;
     return Stack(
       alignment: Alignment.topCenter,
       children: [
@@ -231,17 +232,17 @@ class _BadgeDetailsDialogState extends State<_BadgeDetailsDialog> {
             child: Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                  color: AppTheme.cardColor.withOpacity(0.95),
+                  color: Theme.of(context).cardColor.withOpacity(0.95),
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: widget.badge.isUnlocked ? widget.rarityColor : AppTheme.secondaryTextColor, width: 2),
-                  boxShadow: [BoxShadow(color: (widget.badge.isUnlocked ? widget.rarityColor : AppTheme.secondaryTextColor).withValues(alpha: 0.3), blurRadius: 20)]
+                  border: Border.all(color: widget.badge.isUnlocked ? widget.rarityColor : onSurfaceVariant, width: 2),
+                  boxShadow: [BoxShadow(color: (widget.badge.isUnlocked ? widget.rarityColor : onSurfaceVariant).withOpacity(0.3), blurRadius: 20)]
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
                     widget.badge.isUnlocked ? widget.badge.icon : Icons.lock_outline_rounded,
-                    color: widget.badge.isUnlocked ? widget.rarityColor : AppTheme.secondaryTextColor,
+                    color: widget.badge.isUnlocked ? widget.rarityColor : onSurfaceVariant,
                     size: 60,
                   ),
                   const SizedBox(height: 16),
@@ -250,7 +251,7 @@ class _BadgeDetailsDialogState extends State<_BadgeDetailsDialog> {
                   Text(
                     widget.badge.isUnlocked ? widget.badge.description : widget.badge.hint,
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.secondaryTextColor),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: onSurfaceVariant),
                   ),
                   const SizedBox(height: 24),
                   TextButton(
@@ -267,7 +268,7 @@ class _BadgeDetailsDialogState extends State<_BadgeDetailsDialog> {
             confettiController: _confettiController,
             blastDirectionality: BlastDirectionality.explosive,
             shouldLoop: false,
-            colors: [widget.rarityColor, Colors.white, AppTheme.secondaryColor],
+            colors: [widget.rarityColor, Theme.of(context).colorScheme.onSurface, Theme.of(context).colorScheme.primary],
           ),
       ],
     );

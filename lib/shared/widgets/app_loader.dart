@@ -1,6 +1,5 @@
 // lib/shared/widgets/app_loader.dart
 import 'package:flutter/material.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 
 class AppLoader extends StatelessWidget {
   const AppLoader({super.key});
@@ -9,7 +8,7 @@ class AppLoader extends StatelessWidget {
   Widget build(BuildContext context) {
     // Sade, hızlı açılan loader: sadece logo ve hafif opak geçiş
     return Scaffold(
-      backgroundColor: AppTheme.primaryColor,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Center(
         child: TweenAnimationBuilder<double>(
           tween: Tween(begin: 0, end: 1),
@@ -20,7 +19,11 @@ class AppLoader extends StatelessWidget {
             width: 160,
             height: 160,
             filterQuality: FilterQuality.medium,
-            errorBuilder: (_, __, ___) => const Icon(Icons.school, size: 96, color: Colors.white70),
+            errorBuilder: (_, __, ___) => Icon(
+              Icons.school,
+              size: 96,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+            ),
           ),
         ),
       ),

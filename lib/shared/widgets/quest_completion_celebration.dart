@@ -2,7 +2,6 @@ import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/quests/logic/quest_completion_notifier.dart';
 import 'package:taktik/features/quests/models/quest_model.dart';
 
@@ -65,10 +64,10 @@ class _QuestCompletionCelebrationState extends ConsumerState<QuestCompletionCele
             numberOfParticles: 30,
             gravity: 0.2,
             emissionFrequency: 0.05,
-            colors: const [
-              AppTheme.goldColor,
+            colors: [
+              Theme.of(context).colorScheme.tertiary,
               Colors.white,
-              AppTheme.secondaryColor,
+              Theme.of(context).colorScheme.secondary,
               Colors.lightBlueAccent,
             ],
           ),
@@ -87,25 +86,25 @@ class _QuestCompletionCelebrationState extends ConsumerState<QuestCompletionCele
           borderRadius: BorderRadius.circular(24),
           gradient: LinearGradient(
             colors: [
-              AppTheme.primaryColor,
-              AppTheme.primaryColor.withOpacity(0.8),
+              Theme.of(context).colorScheme.primary,
+              Theme.of(context).colorScheme.primary.withOpacity(0.8),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          border: Border.all(color: AppTheme.goldColor.withOpacity(0.5), width: 2),
+          border: Border.all(color: Theme.of(context).colorScheme.tertiary.withOpacity(0.5), width: 2),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             _buildTrophyIcon(),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'GÖREV TAMAMLANDI!',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: AppTheme.goldColor,
+                color: Theme.of(context).colorScheme.tertiary,
                 letterSpacing: 1.5,
               ),
             ),
@@ -124,7 +123,7 @@ class _QuestCompletionCelebrationState extends ConsumerState<QuestCompletionCele
             ElevatedButton(
               onPressed: _dismiss,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.goldColor,
+                backgroundColor: Theme.of(context).colorScheme.tertiary,
                 padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
@@ -150,12 +149,12 @@ class _QuestCompletionCelebrationState extends ConsumerState<QuestCompletionCele
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: AppTheme.goldColor.withOpacity(0.1),
+        color: Theme.of(context).colorScheme.tertiary.withOpacity(0.1),
       ),
-      child: const Icon(
+      child: Icon(
         Icons.emoji_events_rounded,
         size: 60,
-        color: AppTheme.goldColor,
+        color: Theme.of(context).colorScheme.tertiary,
       ),
     ).animate(
       onPlay: (controller) => controller.repeat(reverse: true),
@@ -171,14 +170,14 @@ class _QuestCompletionCelebrationState extends ConsumerState<QuestCompletionCele
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: AppTheme.secondaryColor.withOpacity(0.2),
+        color: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.secondaryColor),
+        border: Border.all(color: Theme.of(context).colorScheme.secondary),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.star_rounded, color: AppTheme.goldColor, size: 24),
+          Icon(Icons.star_rounded, color: Theme.of(context).colorScheme.tertiary, size: 24),
           const SizedBox(width: 8),
           Text(
             '+${widget.completedQuest.reward} BP',

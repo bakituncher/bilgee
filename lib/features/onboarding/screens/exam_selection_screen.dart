@@ -7,7 +7,6 @@ import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 
 class ExamSelectionScreen extends ConsumerWidget {
   const ExamSelectionScreen({super.key});
@@ -65,9 +64,9 @@ class ExamSelectionScreen extends ConsumerWidget {
     if (context.canPop()) {
       context.pop();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Sınav tercihin başarıyla güncellendi!"),
-          backgroundColor: AppTheme.successColor,
+        SnackBar(
+          content: const Text("Sınav tercihin başarıyla güncellendi!"),
+          backgroundColor: Theme.of(context).colorScheme.secondary,
         ),
       );
     } else {
