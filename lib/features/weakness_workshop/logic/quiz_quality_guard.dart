@@ -73,7 +73,7 @@ class QuizQualityGuard {
 
     // Şıklar ve indeks
     if (q.options.isEmpty || q.correctOptionIndex < 0 || q.correctOptionIndex >= q.options.length) {
-      issues.add('Geçersiz şık/indeks nedeniyle soru elendi.');
+      issues.add('Geçersiz şık/indeks nedeniyle soru elendi. (Index: ${q.correctOptionIndex}, Options: ${q.options.length})');
       return false;
     }
 
@@ -81,14 +81,19 @@ class QuizQualityGuard {
     final cleaned = q.options.map(_sanitizeText).where((e) => e.trim().isNotEmpty).toList();
     final setLower = cleaned.map((e) => e.toLowerCase()).toSet();
     if (setLower.length < 3) {
-      issues.add('Tekrarlayan şıklar nedeniyle soru elendi.');
+      issues.add('Tekrarlayan şıklar nedeniyle soru elendi. (Benzersiz şık sayısı: ${setLower.length})');
       return false;
     }
 
-    // Doğru şık boş/placeholder olmasın
+    // Doğru şık boş/placeholder olmasın - Index geçerliliğini kontrol et
+    if (q.correctOptionIndex >= cleaned.length) {
+      issues.add('Doğru cevap indeksi temizlenmiş şık listesi dışında. (Index: ${q.correctOptionIndex}, Cleaned: ${cleaned.length})');
+      return false;
+    }
+    
     final correct = cleaned[q.correctOptionIndex];
     if (correct.trim().isEmpty || correct.toLowerCase().startsWith('seçenek ') || _isPlaceholderOption(correct)) {
-      issues.add('Doğru şık geçersiz görünüyor.');
+      issues.add('Doğru şık geçersiz görünüyor: "$correct"');
       return false;
     }
 
@@ -138,6 +143,15 @@ class QuizQualityGuard {
 
     // Use the tracked new index, or default to 0 if not found
     int idx = newCorrectIndex >= 0 && newCorrectIndex < cleaned.length ? newCorrectIndex : 0;
+    
+    // Debug logging if index changed (only in debug mode)
+    if (idx != q.correctOptionIndex) {
+      assert(() {
+        print('INFO: QuizQualityGuard adjusted correctOptionIndex from ${q.correctOptionIndex} to $idx '
+            'after deduplication. Original correct option: "$originalCorrectOption"');
+        return true;
+      }());
+    }
 
     return QuizQuestion(
       question: _sanitizeText(q.question),

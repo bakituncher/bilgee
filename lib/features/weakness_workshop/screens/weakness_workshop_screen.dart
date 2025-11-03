@@ -112,10 +112,21 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
     int wrong = 0;
     material.quiz.asMap().forEach((index, q) {
       if (_selectedAnswers.containsKey(index)) {
-        if (_selectedAnswers[index] == q.correctOptionIndex) {
+        final userAnswer = _selectedAnswers[index]!;
+        final correctAnswer = q.correctOptionIndex;
+        final isCorrect = userAnswer == correctAnswer;
+        
+        // Debug logging for answer validation
+        if (isCorrect) {
           correct++;
         } else {
           wrong++;
+          // Log incorrect answers for debugging (only in debug mode)
+          assert(() {
+            print('DEBUG: Question ${index + 1} - User selected: $userAnswer (${q.options[userAnswer]}), '
+                'Correct: $correctAnswer (${q.options[correctAnswer]})');
+            return true;
+          }());
         }
       }
     });
