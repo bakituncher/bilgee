@@ -139,46 +139,101 @@ class _NewPlanPromptCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
       child: Card(
         margin: const EdgeInsets.symmetric(horizontal: 8),
-        elevation: 4,
-        shadowColor: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        elevation: isDark ? 6 : 5,
+        shadowColor: isDark 
+          ? Colors.black.withOpacity(0.35)
+          : Theme.of(context).colorScheme.primary.withOpacity(0.2),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(28),
+          side: BorderSide(
+            color: isDark 
+              ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25)
+              : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35),
+            width: 1.5,
+          ),
+        ),
         child: Container(
           height: 400,
-          padding: const EdgeInsets.symmetric(vertical: 32.0, horizontal: 24.0),
+          padding: const EdgeInsets.symmetric(vertical: 36.0, horizontal: 26.0),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28),
+            gradient: LinearGradient(
+              colors: isDark
+                ? [
+                    Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                    Theme.of(context).cardColor,
+                    Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.08),
+                  ]
+                : [
+                    Theme.of(context).colorScheme.primary.withOpacity(0.08),
+                    Theme.of(context).cardColor,
+                    Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.05),
+                  ],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Icon(Icons.auto_awesome, color: Theme.of(context).colorScheme.primary, size: 48),
-              const SizedBox(height: 16),
+              Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(isDark ? 0.18 : 0.12),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.primary.withOpacity(isDark ? 0.4 : 0.5),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.all(16),
+                child: Icon(Icons.auto_awesome, color: Theme.of(context).colorScheme.primary, size: 50),
+              ),
+              const SizedBox(height: 20),
               Text(
                 'Yeni Bir Hafta, Yeni Bir Strateji!',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.5,
+                ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
               Text(
                 'Geçen haftanın planı tamamlandı. Performansını güncelleyerek bu hafta için yeni bir zafer yolu çizelim.',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.5),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant, 
+                  height: 1.6,
+                ),
               ),
               const Spacer(),
               ElevatedButton.icon(
                 onPressed: () => context.go('${AppRoutes.aiHub}/${AppRoutes.strategicPlanning}'),
-                icon: const Icon(Icons.insights_rounded),
+                icon: const Icon(Icons.insights_rounded, size: 22),
                 label: const Text('Yeni Stratejini Oluştur'),
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                  elevation: isDark ? 6 : 4,
                 ),
               )
             ],
           ),
         ),
-      ).animate().fadeIn(duration: 500.ms).scale(begin: const Offset(0.95, 0.95)),
+      ).animate().fadeIn(duration: 500.ms, curve: Curves.easeOut).scale(begin: const Offset(0.96, 0.96), curve: Curves.easeOutCubic),
     );
   }
 }

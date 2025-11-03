@@ -347,19 +347,43 @@ class _DailyQuestsCard extends ConsumerWidget {
       }
     }
 
+    final isDark = theme.brightness == Brightness.dark;
+    
     final card = Card(
       clipBehavior: Clip.antiAlias,
-      elevation: progress >= 1.0 ? 10 : 6,
-      shadowColor: hasClaimable ? AppTheme.goldBrandColor.withOpacity(0.7) : (progress >= 1.0 ? AppTheme.successBrandColor.withOpacity(.6) : colorScheme.surfaceContainerHighest.withOpacity(.35)),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24), side: BorderSide(color: hasClaimable ? AppTheme.goldBrandColor : _progressColor(context, progress), width: 2)),
+      elevation: progress >= 1.0 ? (isDark ? 10 : 8) : (isDark ? 8 : 6),
+      shadowColor: hasClaimable 
+        ? AppTheme.goldBrandColor.withOpacity(0.6) 
+        : (progress >= 1.0 
+          ? AppTheme.successBrandColor.withOpacity(isDark ? .5 : .4) 
+          : (isDark ? Colors.black.withOpacity(0.35) : colorScheme.surfaceContainerHighest.withOpacity(.25))),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(28), 
+        side: BorderSide(
+          color: hasClaimable 
+            ? AppTheme.goldBrandColor 
+            : _progressColor(context, progress).withOpacity(isDark ? 0.5 : 0.7), 
+          width: 1.5
+        )
+      ),
       child: InkWell(
         onTap: () => context.go('/home/quests'),
         child: Container(
-          padding: const EdgeInsets.all(20.0),
+          padding: const EdgeInsets.all(22.0),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [ (hasClaimable ? AppTheme.goldBrandColor : _progressColor(context, progress)).withOpacity(0.18), theme.cardColor.withOpacity(0.55), ],
-              begin: Alignment.topLeft, end: Alignment.bottomRight,
+              colors: isDark
+                ? [ 
+                    (hasClaimable ? AppTheme.goldBrandColor : _progressColor(context, progress)).withOpacity(0.15), 
+                    theme.cardColor,
+                    colorScheme.surfaceContainerHighest.withOpacity(0.08),
+                  ]
+                : [ 
+                    (hasClaimable ? AppTheme.goldBrandColor : _progressColor(context, progress)).withOpacity(0.12), 
+                    theme.cardColor.withOpacity(0.95),
+                  ],
+              begin: Alignment.topLeft, 
+              end: Alignment.bottomRight,
             ),
           ),
           child: Row(children: [

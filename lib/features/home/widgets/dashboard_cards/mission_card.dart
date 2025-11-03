@@ -21,11 +21,23 @@ class MissionCard extends ConsumerWidget {
     final user = ref.watch(userProfileProvider).valueOrNull;
     final performance = ref.watch(performanceProvider).value;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8),
-      elevation: 4,
-      shadowColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      elevation: isDark ? 6 : 5,
+      shadowColor: isDark 
+        ? Colors.black.withOpacity(0.35)
+        : Theme.of(context).colorScheme.primary.withOpacity(0.15),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(28),
+        side: BorderSide(
+          color: isDark 
+            ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25)
+            : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35),
+          width: 1.5,
+        ),
+      ),
       clipBehavior: Clip.antiAlias,
       child: user == null || tests == null || performance == null
           ? const LogoLoader(size: 60)
@@ -36,6 +48,7 @@ class MissionCard extends ConsumerWidget {
   Widget _buildMissionContent(BuildContext context, WidgetRef ref, UserModel user, List<TestModel> tests, PerformanceSummary performance) {
     if (user.selectedExam == null) return const SizedBox.shrink();
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final analysisAsync = ref.watch(overallStatsAnalysisProvider);
 
     return analysisAsync.when(
@@ -70,10 +83,20 @@ class MissionCard extends ConsumerWidget {
 
         return Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(26.0),
           decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Theme.of(context).colorScheme.primary.withOpacity(0.1), Theme.of(context).cardColor],
+                colors: isDark
+                  ? [
+                      Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                      Theme.of(context).cardColor,
+                      Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.08),
+                    ]
+                  : [
+                      Theme.of(context).colorScheme.primary.withOpacity(0.08),
+                      Theme.of(context).cardColor,
+                      Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.05),
+                    ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               )),
@@ -83,20 +106,63 @@ class MissionCard extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                  Icon(icon, size: 28, color: Theme.of(context).colorScheme.primary),
-                  const SizedBox(width: 12),
-                  Text(title, style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary.withOpacity(isDark ? 0.18 : 0.12),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.primary.withOpacity(isDark ? 0.4 : 0.5),
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.all(12),
+                    child: Icon(icon, size: 26, color: Theme.of(context).colorScheme.primary),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Text(
+                      title, 
+                      style: textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                  ),
                 ],
               ),
               const Spacer(),
-              _buildRichTextFromMarkdown(subtitle,
-                  baseStyle: textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.5),
-                  boldStyle: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+              _buildRichTextFromMarkdown(
+                subtitle,
+                baseStyle: textTheme.bodyLarge?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant, 
+                  height: 1.6,
+                  fontSize: 15,
+                ),
+                boldStyle: TextStyle(
+                  fontWeight: FontWeight.w700, 
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
               const Spacer(),
               if (onTap != null)
                 Align(
                   alignment: Alignment.bottomRight,
-                  child: ElevatedButton(onPressed: onTap, child: Text(buttonText)),
+                  child: ElevatedButton.icon(
+                    onPressed: onTap, 
+                    icon: const Icon(Icons.arrow_forward_rounded, size: 20),
+                    label: Text(buttonText),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                      elevation: isDark ? 6 : 4,
+                    ),
+                  ),
                 )
             ],
           ),

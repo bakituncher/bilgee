@@ -54,9 +54,9 @@ class WeeklyPlanCard extends ConsumerWidget {
         ),
         border: Border.all(
           color: isDark
-              ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35)
-              : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
-          width: 1,
+              ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3)
+              : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.45),
+          width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
@@ -70,13 +70,13 @@ class WeeklyPlanCard extends ConsumerWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
         child: _PlanView(
           weeklyPlan: planDoc?.weeklyPlan != null ? WeeklyPlan.fromJson(planDoc!.weeklyPlan!) : null,
           userId: userId,
         ),
       ),
-    ).animate().fadeIn(duration: 400.ms).slideY(begin: .12, curve: Curves.easeOut);
+    ).animate().fadeIn(duration: 420.ms, curve: Curves.easeOutCubic).slideY(begin: .14, curve: Curves.easeOutCubic).scale(begin: const Offset(0.96, 0.96), curve: Curves.easeOutCubic);
   }
 }
 
@@ -433,26 +433,77 @@ class _EmptyStateCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 32.0, horizontal: 16.0),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 32.0, horizontal: 20.0),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isDark
+            ? [
+                Theme.of(context).colorScheme.primary.withOpacity(0.08),
+                Theme.of(context).cardColor,
+              ]
+            : [
+                Theme.of(context).cardColor,
+                Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.1),
+              ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.auto_awesome, color: Theme.of(context).colorScheme.primary, size: 40),
-          const SizedBox(height: 16),
-          Text('Kader parşömenin mühürlenmeyi bekliyor.',
-              textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 8),
-          Text('Stratejik planını oluşturarak görevlerini buraya yazdır.',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-          const SizedBox(height: 24),
-          ElevatedButton(
+          Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary.withOpacity(isDark ? 0.18 : 0.12),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.primary.withOpacity(isDark ? 0.4 : 0.5),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.all(16),
+            child: Icon(Icons.auto_awesome, color: Theme.of(context).colorScheme.primary, size: 42),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'Kader parşömenin mühürlenmeyi bekliyor.',
+            textAlign: TextAlign.center, 
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.3,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Stratejik planını oluşturarak görevlerini buraya yazdır.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 26),
+          ElevatedButton.icon(
             onPressed: () => context.go('${AppRoutes.aiHub}/${AppRoutes.strategicPlanning}'),
-            child: const Text('Stratejini Oluştur'),
+            icon: const Icon(Icons.stars_rounded, size: 20),
+            label: const Text('Stratejini Oluştur'),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              elevation: isDark ? 6 : 4,
+            ),
           )
         ],
       ),
-    ).animate().fadeIn(duration: 500.ms);
+    ).animate().fadeIn(duration: 500.ms, curve: Curves.easeOut).scale(begin: const Offset(0.95, 0.95), curve: Curves.easeOutCubic);
   }
 }
