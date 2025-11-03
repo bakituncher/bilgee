@@ -233,7 +233,7 @@ class _NewPlanPromptCard extends StatelessWidget {
             ],
           ),
         ),
-      ).animate().fadeIn(duration: 500.ms, curve: Curves.easeOut).scale(begin: const Offset(0.96, 0.96), curve: Curves.easeOutCubic),
+      ).animate().fadeIn(duration: 500.ms, curve: Curves.easeOutCubic).scale(begin: const Offset(0.96, 0.96), curve: Curves.easeOutCubic),
     );
   }
 }

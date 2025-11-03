@@ -56,6 +56,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     }
   }
 
+  /// Wraps section with appropriate padding based on index
+  Widget _wrapSection(Widget section, int index) {
+    return index == 0 ? section : Padding(padding: const EdgeInsets.only(top: 6), child: section);
+  }
+
   Widget _animatedSection(Widget child, int index) {
     if (!_animateSectionsOnce) return child; // İlk frame sonrasında animasyon yok
     return Animate(
@@ -291,10 +296,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 padding: const EdgeInsets.fromLTRB(_hPad, 12, _hPad, 12),
                 sliver: SliverList.separated(
                   itemCount: sections.length,
-                  itemBuilder: (c, i) {
-                    final w = i == 0 ? sections[i] : Padding(padding: const EdgeInsets.only(top: 6), child: sections[i]);
-                    return _animatedSection(w, i);
-                  },
+                  itemBuilder: (c, i) => _animatedSection(_wrapSection(sections[i], i), i),
                   separatorBuilder: (_, i) {
                     // Sıra: Hero -> Focus -> (PageView kartları) -> Motivasyon
                     if (i == 0) return const SizedBox(height: 16); // Hero sonrası (increased)

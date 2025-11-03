@@ -76,7 +76,11 @@ class WeeklyPlanCard extends ConsumerWidget {
           userId: userId,
         ),
       ),
-    ).animate().fadeIn(duration: 420.ms, curve: Curves.easeOutCubic).slideY(begin: .14, curve: Curves.easeOutCubic).scale(begin: const Offset(0.96, 0.96), curve: Curves.easeOutCubic);
+    ).animate(effects: [
+      FadeEffect(duration: 420.ms, curve: Curves.easeOutCubic),
+      SlideEffect(begin: const Offset(0, 0.14), duration: 420.ms, curve: Curves.easeOutCubic),
+      ScaleEffect(begin: const Offset(0.96, 0.96), duration: 420.ms, curve: Curves.easeOutCubic),
+    ]);
   }
 }
 

@@ -139,7 +139,7 @@ class DashboardOverviewCard extends ConsumerWidget {
                     Expanded(
                       child: _OverviewStat(
                         icon: Icons.timer_outlined,
-                        value: '${(user.totalStudyTime / 60).toStringAsFixed(0)}s',
+                        value: '${(user.totalStudyTime / 60).toStringAsFixed(0)}dk',
                         label: 'Toplam Odak',
                         onTap: () => context.push('/home/pomodoro'),
                       ),
@@ -248,7 +248,7 @@ class _OverviewStat extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(4),
                 child: LinearProgressIndicator(
-                  value: progress!.clamp(0.0, 1.0),
+                  value: progress,
                   minHeight: 4,
                   backgroundColor: theme.colorScheme.surfaceContainerHighest.withOpacity(isDark ? 0.2 : 0.3),
                   valueColor: AlwaysStoppedAnimation(theme.colorScheme.primary),
