@@ -15,6 +15,7 @@ import 'package:cloud_functions/cloud_functions.dart'; // SUNUCU GÖREVLERİ İ�
 import 'package:taktik/shared/notifications/in_app_notification_model.dart';
 import 'package:taktik/data/models/user_stats_model.dart';
 import 'package:taktik/data/models/focus_session_model.dart';
+import 'package:taktik/data/providers/cache_provider.dart'; // CACHE DESTEĞİ
 
 final firestoreProvider = Provider<FirebaseFirestore>((ref) => FirebaseFirestore.instance);
 
@@ -41,12 +42,39 @@ final testsProvider = FutureProvider<List<TestModel>>((ref) async {
 });
 
 
-// YENİ: Günlük ve Haftalık tam sıralama anlık görüntü sağlayıcıları (optimize edilmiş)
+// YENİ: Günlük ve Haftalık tam sıralama anlık görüntü sağlayıcıları (optimize edilmiş + ÖNBELLEKLENMİŞ)
 final leaderboardDailyProvider = FutureProvider.family.autoDispose<List<LeaderboardEntry>, String>((ref, examType) async {
-  return ref.watch(firestoreServiceProvider).getLeaderboardSnapshot(examType, period: 'daily');
+  final cache = ref.watch(cacheManagerProvider);
+  final cacheKey = CacheKeys.leaderboard(examType, 'daily');
+  
+  // Önbellekten dene
+  final cached = cache.get<List<LeaderboardEntry>>(cacheKey);
+  if (cached != null) return cached;
+  
+  // Firestore'dan getir
+  final data = await ref.watch(firestoreServiceProvider).getLeaderboardSnapshot(examType, period: 'daily');
+  
+  // 5 dakika önbellek
+  cache.set(cacheKey, data, CacheTTL.short);
+  
+  return data;
 });
+
 final leaderboardWeeklyProvider = FutureProvider.family.autoDispose<List<LeaderboardEntry>, String>((ref, examType) async {
-  return ref.watch(firestoreServiceProvider).getLeaderboardSnapshot(examType, period: 'weekly');
+  final cache = ref.watch(cacheManagerProvider);
+  final cacheKey = CacheKeys.leaderboard(examType, 'weekly');
+  
+  // Önbellekten dene
+  final cached = cache.get<List<LeaderboardEntry>>(cacheKey);
+  if (cached != null) return cached;
+  
+  // Firestore'dan getir
+  final data = await ref.watch(firestoreServiceProvider).getLeaderboardSnapshot(examType, period: 'weekly');
+  
+  // 5 dakika önbellek
+  cache.set(cacheKey, data, CacheTTL.short);
+  
+  return data;
 });
 
 // KALDIRILDI: Bu sağlayıcı artık kullanılmıyor. Sıralama ve komşular
@@ -61,12 +89,24 @@ final planProvider = StreamProvider<PlanDocument?>((ref) {
   return Stream.value(null);
 });
 
-final performanceProvider = FutureProvider.autoDispose<PerformanceSummary?>((ref) {
+final performanceProvider = FutureProvider.autoDispose<PerformanceSummary?>((ref) async {
   final user = ref.watch(authControllerProvider).value;
-  if (user != null) {
-    return ref.watch(firestoreServiceProvider).getPerformanceSummaryOnce(user.uid);
-  }
-  return Future.value(null);
+  if (user == null) return null;
+  
+  final cache = ref.watch(cacheManagerProvider);
+  final cacheKey = CacheKeys.performanceSummary(user.uid);
+  
+  // Önbellekten dene
+  final cached = cache.get<PerformanceSummary?>(cacheKey);
+  if (cached != null) return cached;
+  
+  // Firestore'dan getir
+  final data = await ref.watch(firestoreServiceProvider).getPerformanceSummaryOnce(user.uid);
+  
+  // 10 dakika önbellek
+  cache.set(cacheKey, data, CacheTTL.medium);
+  
+  return data;
 });
 
 final appStateProvider = StreamProvider<AppState?>((ref) {
@@ -177,14 +217,29 @@ final userStatsForUserProvider = StreamProvider.family.autoDispose<UserStats?, S
   return ref.watch(firestoreServiceProvider).getUserStatsStream(userId);
 });
 
-// PUBLIC: public_profiles üzerinden herkese açık profil özeti (isim, avatar, stats özet)
+// PUBLIC: public_profiles üzerinden herkese açık profil özeti (isim, avatar, stats özet) - ÖNBELLEKLENMİŞ
 final publicProfileRawProvider = FutureProvider.family.autoDispose<Map<String, dynamic>?, String>((ref, userId) async {
+  final cache = ref.watch(cacheManagerProvider);
+  final cacheKey = CacheKeys.publicProfile(userId);
+  
+  // Önbellekten dene
+  final cached = cache.get<Map<String, dynamic>?>(cacheKey);
+  if (cached != null) return cached;
+  
   final svc = ref.watch(firestoreServiceProvider);
   final data = await svc.getPublicProfileRaw(userId);
-  if (data != null) return data;
+  if (data != null) {
+    // 10 dakika önbellek (public profiller sık değişmez)
+    cache.set(cacheKey, data, CacheTTL.medium);
+    return data;
+  }
   final myExam = ref.watch(userProfileProvider).value?.selectedExam;
   if (myExam != null) {
-    return await svc.getLeaderboardUserRaw(myExam, userId);
+    final leaderboardData = await svc.getLeaderboardUserRaw(myExam, userId);
+    if (leaderboardData != null) {
+      cache.set(cacheKey, leaderboardData, CacheTTL.medium);
+    }
+    return leaderboardData;
   }
   return null;
 });
