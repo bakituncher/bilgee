@@ -49,6 +49,10 @@ class TutorialNotifier extends StateNotifier<int?> {
     if (userId != null) {
       _ref.read(firestoreServiceProvider).markTutorialAsCompleted(userId);
     }
+    
+    // Show celebration before closing
+    _ref.read(showTutorialCelebrationProvider.notifier).state = true;
+    
     state = null; // Öğreticiyi bitir ve kapat
   }
 }
@@ -57,3 +61,6 @@ final tutorialProvider = StateNotifierProvider<TutorialNotifier, int?>((ref) {
   // Bu provider, ScaffoldWithNavBar'da override edilerek gerçek değerleriyle oluşturulacak.
   throw UnimplementedError('tutorialProvider must be overridden');
 });
+
+// Provider to control celebration display
+final showTutorialCelebrationProvider = StateProvider<bool>((ref) => false);

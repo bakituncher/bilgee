@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:taktik/features/onboarding/providers/tutorial_provider.dart';
 import 'package:taktik/features/onboarding/widgets/tutorial_overlay.dart';
+import 'package:taktik/features/onboarding/widgets/tutorial_completion_celebration.dart';
 import 'package:taktik/features/onboarding/models/tutorial_step.dart';
 import 'package:taktik/features/quests/logic/quest_completion_notifier.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
@@ -32,55 +33,59 @@ class ScaffoldWithNavBar extends ConsumerWidget {
     ref.watch(questNotifierProvider);
     final List<TutorialStep> tutorialSteps = [
       TutorialStep(
-        title: "Karargaha Hoş Geldin!",
-        text: "Ben Taktik Baykuş! Zafer yolundaki en büyük destekçin ben olacağım. Sana hızlıca komuta merkezini tanıtayım.",
+        title: "Taktik'e Hoş Geldin! 🎯",
+        text: "Merhaba! Ben senin kişisel başarı koçunum. Sana uygulamamızın en güçlü özelliklerini tanıtacağım ve başarıya giden yolda rehberlik edeceğim. Hazır mısın?",
+        buttonText: "Hadi Başlayalım!",
       ),
       TutorialStep(
         highlightKey: todaysPlanKey,
-        title: "Burası Harekat Merkezin",
-        text: "Günlük görevlerin, haftalık planın ve performans raporun... En kritik bilgiler burada. Sağa kaydırarak diğer kartları görebilirsin!",
+        title: "📊 Komuta Merkezi",
+        text: "İşte karşında ana gösterge panelin! Burada günlük görevlerini, haftalık çalışma planını ve performans istatistiklerini görebilirsin. Başarıya giden yolda her şey burada takip altında!",
+        buttonText: "Anladım, Devam!",
         requiredScreenIndex: 0,
       ),
       TutorialStep(
         highlightKey: addTestKey,
-        title: "Veri Güçtür!",
-        text: "Buraya eklediğin her deneme, yapay zekanın seni daha iyi tanımasını ve sana özel stratejiler üretmesini sağlar! Hadi devam edelim.",
+        title: "📝 Deneme Ekle",
+        text: "Her çözdüğün denemeyi buradan ekle! Yapay zeka, sonuçlarını analiz ederek senin için özel stratejiler geliştirecek ve zayıf yönlerini güçlendirecek. Ne kadar çok veri, o kadar akıllı koçluk!",
+        buttonText: "Harika! 🚀",
         requiredScreenIndex: 0,
       ),
       TutorialStep(
         highlightKey: coachKey,
-        title: "Ders Netlerim",
-        text: "Şimdi en güçlü silahımızın olduğu yer, çözdüğün testlerin sonuçlarını bu kısıma girerek yapay zekanın sana özel koçluk yapmasını sağlayabilirsin.",
-        buttonText: "Harika! ",
+        title: "🎓 Koçluk Merkezi",
+        text: "Deneme sonuçlarını girdikten sonra buradan yapay zeka koçunla konuşabilirsin. Sana özel ders çalışma stratejileri, konu anlatımları ve motivasyon desteği alabilirsin!",
+        buttonText: "Süper! 💪",
         isNavigational: true,
         requiredScreenIndex: 0,
       ),
       TutorialStep(
         highlightKey: aiHubFabKey,
-        title: "İşte TaktikAI Çekirdeği!",
-        text: "Burası sihrin gerçekleştiği yer! Buradan kişisel zafer planını oluşturabilir, en zayıf konularına özel çalışmalar yapabilirsin.",
+        title: "🤖 TaktikAI Merkezi",
+        text: "Burası sihrin gerçekleştiği yer! AI asistanın ile stratejik planlama yap, zayıf konularını çalış, sorularına cevap bul. 7/24 yanında olan kişisel öğretmenin!",
+        buttonText: "Muhteşem! ✨",
         requiredScreenIndex: 1,
       ),
       TutorialStep(
         highlightKey: arenaKey,
-        title: "Savaşçılar Arenası",
-        text: "Diğer savaşçılar arasındaki yerini gör ve rekabetin tadını çıkar! Hadi Arena sekmesine dokun.",
-        buttonText: "Arenayı Ziyaret Et!",
+        title: "🏆 Arena - Rekabet Et",
+        text: "Diğer kullanıcılarla yarış! Lider tablosundaki yerini gör, başarılarını karşılaştır ve motivasyonunu her zaman yüksek tut. En iyiler arasına sen de katıl!",
+        buttonText: "Rekabete Hazırım! 🔥",
         isNavigational: true,
         requiredScreenIndex: 1,
       ),
       TutorialStep(
         highlightKey: profileKey,
-        title: "Komuta Merkezin",
-        text: "Son olarak burası senin profilin. Madalyalarını ve genel istatistiklerini buradan takip edebilirsin. Profil sekmesine dokun.",
-        buttonText: "Profilime Gidelim!",
+        title: "👤 Profil & İstatistikler",
+        text: "Burada başarı hikayeni yaz! Kazandığın rozetleri, tamamladığın görevleri ve genel performans istatistiklerini incele. İlerleme kaydını buradan takip et.",
+        buttonText: "Profilime Bakalım! 📈",
         isNavigational: true,
         requiredScreenIndex: 3,
       ),
       TutorialStep(
-        title: "Keşif Turu Bitti!",
-        text: "Harika! Artık karargahı tanıyorsun. Unutma, zafer azim, strateji ve doğru rehberlikle kazanılır. Ben her zaman buradayım!",
-        buttonText: "Harika, Başlayalım!",
+        title: "🎉 Hazırsın!",
+        text: "Tebrikler! Artık Taktik'in tüm özelliklerini biliyorsun. Başarı yolculuğunda her adımda yanındayız. Unutma: Düzenli çalışma + Akıllı strateji = Kesin başarı! Şimdi harekete geç ve hedefe ulaş! 💯",
+        buttonText: "Başarıya Doğru! 🚀",
         requiredScreenIndex: 4,
       ),
     ];
@@ -106,6 +111,8 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                 });
               }
             });
+
+            final showTutorialCelebration = ref.watch(showTutorialCelebrationProvider);
 
             return Stack(
               children: [
@@ -161,6 +168,12 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                 ),
                 if (shouldShowTutorial)
                   TutorialOverlay(steps: tutorialSteps),
+                if (showTutorialCelebration)
+                  TutorialCompletionCelebration(
+                    onDismiss: () {
+                      ref.read(showTutorialCelebrationProvider.notifier).state = false;
+                    },
+                  ),
                 if (completedQuest != null && !shouldShowTutorial)
                   QuestCompletionCelebration(completedQuest: completedQuest),
                 Consumer(builder: (context, r, _) {

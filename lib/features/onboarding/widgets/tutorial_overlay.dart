@@ -64,6 +64,7 @@ class TutorialOverlay extends ConsumerWidget {
 
   Widget _buildTutorialContent(BuildContext context, WidgetRef ref, TutorialStep step, Rect? rect) {
     const bottomNavBarHeight = kBottomNavigationBarHeight + 20;
+    final currentStepIndex = ref.watch(tutorialProvider) ?? 0;
 
     return Positioned.fill(
       child: LayoutBuilder(builder: (context, constraints) {
@@ -84,62 +85,271 @@ class TutorialOverlay extends ConsumerWidget {
               top: top,
               left: 24,
               right: 24,
-              child: _TutorialCard(step: step)
+              child: _TutorialCard(
+                step: step,
+                currentStep: currentStepIndex,
+                totalSteps: steps.length,
+              )
                   .animate()
                   .fadeIn(duration: 400.ms)
                   .slideY(begin: 0.2, duration: 400.ms, curve: Curves.easeOutCubic),
             ),
+            // Enhanced skip button with icon
             Positioned(
               top: 40,
               right: 16,
-              child: TextButton(
-                onPressed: () => _finishTutorial(ref),
-                child: const Text("Turu Atla", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
+                ),
+                child: TextButton.icon(
+                  onPressed: () => _finishTutorial(ref),
+                  icon: const Icon(Icons.close, color: Colors.white, size: 18),
+                  label: const Text("Atla", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  ),
+                ),
               ),
+            ),
+            // Progress indicator at bottom
+            Positioned(
+              bottom: bottomNavBarHeight + 10,
+              left: 0,
+              right: 0,
+              child: _buildProgressIndicator(context, currentStepIndex, steps.length),
             ),
           ],
         );
       }),
     );
   }
+
+  Widget _buildProgressIndicator(BuildContext context, int current, int total) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ...List.generate(total, (index) {
+                final isActive = index <= current;
+                return Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: isActive ? 24 : 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: isActive ? Colors.white : Colors.white.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                )
+                    .animate(key: ValueKey('dot_$index'))
+                    .fadeIn(duration: 300.ms)
+                    .scale(delay: (index * 50).ms);
+              }),
+              const SizedBox(width: 12),
+              Text(
+                '${current + 1}/$total',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _TutorialCard extends ConsumerWidget {
   final TutorialStep step;
-  const _TutorialCard({required this.step});
+  final int currentStep;
+  final int totalSteps;
+  
+  const _TutorialCard({
+    required this.step,
+    required this.currentStep,
+    required this.totalSteps,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isLastStep = currentStep == totalSteps - 1;
+
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Theme.of(context).colorScheme.secondary, width: 2),
-          boxShadow: [
-            BoxShadow(color: Theme.of(context).colorScheme.secondary.withOpacity(0.3), blurRadius: 20)
-          ]
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            theme.cardColor,
+            theme.cardColor.withOpacity(0.95),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: colorScheme.secondary.withOpacity(0.5),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.secondary.withOpacity(0.3),
+            blurRadius: 30,
+            spreadRadius: 5,
+            offset: const Offset(0, 10),
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Text(step.title, style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          Text(step.text, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, height: 1.5, fontSize: 15)),
-          const SizedBox(height: 20),
-          Align(
-            alignment: Alignment.centerRight,
-            child: ElevatedButton(
-              onPressed: () => ref.read(tutorialProvider.notifier).next(),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          // Icon and title row
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      colorScheme.secondary,
+                      colorScheme.secondary.withOpacity(0.7),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colorScheme.secondary.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  _getStepIcon(currentStep),
+                  color: colorScheme.onSecondary,
+                  size: 28,
+                ),
+              )
+                  .animate()
+                  .scale(delay: 200.ms, duration: 400.ms)
+                  .shimmer(delay: 600.ms, duration: 800.ms),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      step.title,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: colorScheme.secondary,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 20,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              child: Text(step.buttonText, textAlign: TextAlign.center),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Description
+          Text(
+            step.text,
+            style: TextStyle(
+              color: colorScheme.onSurface.withOpacity(0.85),
+              height: 1.6,
+              fontSize: 15,
+              letterSpacing: 0.2,
             ),
-          )
+          ),
+          const SizedBox(height: 24),
+          // Action button
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Previous button (only show after first step)
+              if (currentStep > 0)
+                OutlinedButton.icon(
+                  onPressed: () => ref.read(tutorialProvider.notifier).finish(),
+                  icon: const Icon(Icons.arrow_back, size: 18),
+                  label: const Text('Geri'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    side: BorderSide(color: colorScheme.secondary.withOpacity(0.3)),
+                  ),
+                )
+              else
+                const SizedBox(),
+              // Next/Finish button
+              ElevatedButton.icon(
+                onPressed: () => ref.read(tutorialProvider.notifier).next(),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  elevation: 8,
+                  shadowColor: colorScheme.secondary.withOpacity(0.5),
+                  backgroundColor: colorScheme.secondary,
+                  foregroundColor: colorScheme.onSecondary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                icon: Icon(
+                  isLastStep ? Icons.check_circle : Icons.arrow_forward,
+                  size: 20,
+                ),
+                label: Text(
+                  step.buttonText,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
+                ),
+              )
+                  .animate()
+                  .shimmer(delay: 1000.ms, duration: 1500.ms)
+                  .then()
+                  .shake(hz: 2, duration: 500.ms),
+            ],
+          ),
         ],
       ),
     );
+  }
+
+  IconData _getStepIcon(int step) {
+    // Map step indices to appropriate icons
+    const icons = [
+      Icons.waving_hand_rounded, // Welcome
+      Icons.dashboard_rounded, // Dashboard
+      Icons.add_circle_outline_rounded, // Add test
+      Icons.school_rounded, // Coach
+      Icons.psychology_rounded, // AI Hub
+      Icons.emoji_events_rounded, // Arena
+      Icons.person_rounded, // Profile
+      Icons.celebration_rounded, // Completion
+    ];
+    return step < icons.length ? icons[step] : Icons.info_rounded;
   }
 }
 
