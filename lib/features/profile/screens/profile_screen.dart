@@ -308,7 +308,7 @@ class _ProfileView extends ConsumerWidget {
                           child: Column(
                             children: [
                               _ProfileAvatarHalo(user: user, color: currentRank.color, rankIndex: rankIndex),
-                              const SizedBox(height: 10),
+                              const SizedBox(height: 8),
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -316,36 +316,36 @@ class _ProfileView extends ConsumerWidget {
                                   Flexible(
                                     child: Text(
                                       user.name ?? 'İsimsiz Savaşçı',
-                                      style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 0.5),
+                                      style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 0.3, fontSize: 20),
                                       textAlign: TextAlign.center,
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                   if (isPremium) ...[
-                                    const SizedBox(width: 8),
+                                    const SizedBox(width: 6),
                                     const _PremiumStatusBadge(),
                                   ],
                                 ],
                               ),
-                              const SizedBox(height: 6),
+                              const SizedBox(height: 4),
                               _RankPill(rank: currentRank),
-                              const SizedBox(height: 14),
+                              const SizedBox(height: 10),
                               Row(
                                 children: [
                                   Expanded(child: _ProfileStatCard(label: 'Deneme', value: testCount.toString(), icon: Icons.library_books_rounded, delay: 0.ms)),
-                                  const SizedBox(width: 10),
+                                  const SizedBox(width: 8),
                                   Expanded(child: _ProfileStatCard(label: 'Ort. Net', value: avgNet.toStringAsFixed(1), icon: Icons.track_changes_rounded, delay: 0.ms)),
-                                  const SizedBox(width: 10),
+                                  const SizedBox(width: 8),
                                   Expanded(child: _ProfileStatCard(label: 'Seri', value: user.streak.toString(), icon: Icons.local_fire_department_rounded, delay: 0.ms)),
                                 ],
                               ),
-                              const SizedBox(height: 14),
+                              const SizedBox(height: 10),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Image.asset('assets/images/logo.png', width: 28, height: 28),
-                                  const SizedBox(width: 8),
-                                  Text('Taktik App', style: theme.textTheme.titleMedium?.copyWith(color: colorScheme.secondary, fontWeight: FontWeight.bold)),
+                                  Image.asset('assets/images/logo.png', width: 24, height: 24),
+                                  const SizedBox(width: 6),
+                                  Text('Taktik App', style: theme.textTheme.titleSmall?.copyWith(color: colorScheme.secondary, fontWeight: FontWeight.bold, fontSize: 13)),
                                 ],
                               ),
                             ],
@@ -372,33 +372,33 @@ class _ProfileView extends ConsumerWidget {
                             style: theme.textTheme.labelSmall?.copyWith(color: colorScheme.onSurface.withOpacity(0.7)),
                           ),
                         ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 12),
                       _NeoXpBar(
                         currentXp: user.engagementScore,
                         nextLevelXp: nextRank.requiredScore == currentRank.requiredScore ? currentRank.requiredScore : nextRank.requiredScore,
                         progress: progressToNext,
                       ).animate().fadeIn(duration: 450.ms, delay: 200.ms),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
                       Row(
                         children: [
                           Expanded(child: _ProfileStatCard(label: 'Madalyalar', value: '$unlockedCount/${allBadges.length}', icon: Icons.military_tech_rounded, delay: 260.ms)),
-                          const SizedBox(width: 14),
+                          const SizedBox(width: 10),
                           Expanded(child: _ProfileStatCard(label: 'Seviye', value: (rankIndex + 1).toString(), icon: Icons.workspace_premium, delay: 320.ms)),
                         ],
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
                       Row(
                         children: [
                           Expanded(child: _ActionNeo(icon: Icons.emoji_events_outlined, label: 'Başarılar', onTap: () => context.push('/profile/honor-wall', extra: allBadges))),
-                          const SizedBox(width: 14),
+                          const SizedBox(width: 10),
                           Expanded(child: _ActionNeo(icon: Icons.timeline_rounded, label: 'İlerleme', onTap: () => context.push('/home/stats'))),
                         ],
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 10),
                       Row(
                         children: [
                           Expanded(child: _ActionNeo(icon: Icons.person_rounded, label: 'Avatar', onTap: () => context.push('/profile/avatar-selection'))),
-                          const SizedBox(width: 14),
+                          const SizedBox(width: 10),
                           Expanded(child: _ActionNeo(icon: Icons.map_rounded, label: 'Strateji', onTap: () {
                             if (planDoc?.weeklyPlan != null) {
                               context.push('/home/weekly-plan');
@@ -408,7 +408,7 @@ class _ProfileView extends ConsumerWidget {
                           })),
                         ],
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 10),
                       if (ref.watch(adminClaimProvider).valueOrNull == true)
                         Row(
                           children: [
@@ -886,18 +886,30 @@ class _NeoXpBar extends StatelessWidget {
       children: [
         Row(
           children: [
-            Icon(Icons.flash_on_rounded, size: 18, color: accentProfile2),
-            const SizedBox(width: 6),
-            Text('Rütbe Puanı', style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold)),
+            Icon(Icons.flash_on_rounded, size: 16, color: accentProfile2),
+            const SizedBox(width: 4),
+            Text(
+              'Rütbe Puanı',
+              style: theme.textTheme.labelMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
             const Spacer(),
-            Text('$currentXp / $nextLevelXp', style: theme.textTheme.labelSmall?.copyWith(color: colorScheme.onSurface.withOpacity(0.7))),
+            Text(
+              '$currentXp / $nextLevelXp',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: colorScheme.onSurface.withOpacity(0.7),
+                fontSize: 11,
+              ),
+            ),
           ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         Container(
-          padding: const EdgeInsets.all(2),
+          padding: const EdgeInsets.all(1.5),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(14),
             gradient: LinearGradient(colors: [accentProfile1, accentProfile2]),
           ),
           child: LayoutBuilder(
@@ -906,9 +918,9 @@ class _NeoXpBar extends StatelessWidget {
               return Stack(
                 children: [
                   Container(
-                    height: 22,
+                    height: 18,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(12),
                       color: colorScheme.surface.withOpacity(0.55),
                     ),
                   ),
@@ -916,12 +928,12 @@ class _NeoXpBar extends StatelessWidget {
                     duration: 700.ms,
                     curve: Curves.easeOutCubic,
                     width: (w) * capped,
-                    height: 22,
+                    height: 18,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(12),
                       gradient: LinearGradient(begin: Alignment.centerLeft, end: Alignment.centerRight, colors: [accentProfile2, accentProfile1]),
                       boxShadow: [
-                        BoxShadow(color: accentProfile2.o(0.4), blurRadius: 18, spreadRadius: 1),
+                        BoxShadow(color: accentProfile2.o(0.4), blurRadius: 14, spreadRadius: 1),
                       ],
                     ),
                   ),
@@ -948,10 +960,9 @@ class _ProfileStatCard extends StatelessWidget {
     return Semantics(
       label: '$label istatistiği: $value',
       child: Container(
-        // Sabit yükseklik kaldırıldı -> esnek, overflow engellendi
-        constraints: const BoxConstraints(minHeight: 104),
+        constraints: const BoxConstraints(minHeight: 88),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(16),
           gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -968,35 +979,35 @@ class _ProfileStatCard extends StatelessWidget {
             color: isDark
                 ? colorScheme.onSurface.withOpacity(0.12)
                 : colorScheme.surfaceContainerHighest.withOpacity(0.5),
-            width: 1.5,
+            width: 1,
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, size: 22, color: colorScheme.secondary),
-              const SizedBox(height: 10),
+              Icon(icon, size: 20, color: colorScheme.secondary),
+              const SizedBox(height: 6),
               FittedBox(
                 child: Text(
                   value,
-                  style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                  style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, fontSize: 16),
                   maxLines: 1,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               Text(
                 label,
-                style: textTheme.labelMedium?.copyWith(color: colorScheme.onSurface.withOpacity(0.7)),
+                style: textTheme.labelSmall?.copyWith(color: colorScheme.onSurface.withOpacity(0.7), fontSize: 11),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
         ),
-      ).animate().fadeIn(duration: 400.ms, delay: delay).slideY(begin: 0.22, end: 0, curve: Curves.easeOutCubic),
+      ).animate().fadeIn(duration: 400.ms, delay: delay).slideY(begin: 0.15, end: 0, curve: Curves.easeOutCubic),
     );
   }
 }
@@ -1041,6 +1052,10 @@ class _ActionNeoState extends State<_ActionNeo> {
   bool _pressed = false;
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
     return GestureDetector(
       onTapDown: (_) => setState(() => _pressed = true),
       onTapCancel: () => setState(() => _pressed = false),
@@ -1050,28 +1065,44 @@ class _ActionNeoState extends State<_ActionNeo> {
         widget.onTap();
       },
       child: AnimatedScale(
-        scale: _pressed ? 0.95 : 1,
-        duration: 140.ms,
+        scale: _pressed ? 0.96 : 1,
+        duration: 120.ms,
         curve: Curves.easeOut,
         child: Container(
-          height: 64,
+          height: 52,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(14),
             gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  Theme.of(context).colorScheme.surface.withOpacity(0.5),
-                  Theme.of(context).colorScheme.surface.withOpacity(0.2)
-                ]),
-            border: Border.all(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.12), width: 1),
+                colors: isDark
+                    ? [
+                        colorScheme.surface.withOpacity(0.5),
+                        colorScheme.surface.withOpacity(0.2)
+                      ]
+                    : [
+                        colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                        colorScheme.surfaceContainerHighest.withOpacity(0.15)
+                      ]),
+            border: Border.all(
+              color: isDark
+                  ? colorScheme.onSurface.withOpacity(0.12)
+                  : colorScheme.surfaceContainerHighest.withOpacity(0.5),
+              width: 1,
+            ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(widget.icon, color: Theme.of(context).colorScheme.primary, size: 22),
-              const SizedBox(width: 8),
-              Text(widget.label, style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600)),
+              Icon(widget.icon, color: colorScheme.primary, size: 20),
+              const SizedBox(width: 6),
+              Text(
+                widget.label,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
+              ),
             ],
           ),
         ),

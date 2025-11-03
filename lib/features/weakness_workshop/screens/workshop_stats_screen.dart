@@ -13,18 +13,21 @@ class WorkshopStatsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final perfAsync = ref.watch(performanceProvider);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      // Eski: AppBar + Container gradient
-      // Yeni: Özel başlık + animasyonlu arka plan
       body: Stack(
         children: [
-          const _FancyBackground(),
+          // Adaptive background for both themes
+          _AdaptiveBackground(isDark: isDark),
           Column(
             children: [
               _WSHeader(
                 title: 'İstatistikler',
                 onBack: () => context.pop(),
                 onSaved: () => context.push('/ai-hub/weakness-workshop/saved-workshops'),
+                isDark: isDark,
               ),
               Expanded(
                 child: perfAsync.when(
@@ -40,15 +43,15 @@ class WorkshopStatsScreen extends ConsumerWidget {
                       padding: const EdgeInsets.all(16.0),
                       children: [
                         _buildAlchemistPrism(context, analysis),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 20),
                         _buildSubjectSpectrum(context, analysis),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 20),
                         _buildForgingBench(context, analysis),
-                      ].animate(interval: 150.ms).fadeIn(duration: 600.ms).slideY(begin: 0.3),
+                      ].animate(interval: 120.ms).fadeIn(duration: 500.ms).slideY(begin: 0.2),
                     );
                   },
-                  loading: () => Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.secondary)),
-                  error: (e, s) => Center(child: Text('Hata: $e')),
+                  loading: () => Center(child: CircularProgressIndicator(color: theme.colorScheme.secondary)),
+                  error: (e, s) => Center(child: Text('Hata: $e', style: TextStyle(color: isDark ? Colors.white : theme.colorScheme.onSurface))),
                 ),
               ),
             ],
@@ -59,20 +62,33 @@ class WorkshopStatsScreen extends ConsumerWidget {
   }
 
   Widget _buildEmptyState(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.diamond_rounded, size: 80, color: Colors.white),
+            Icon(Icons.diamond_rounded, size: 80, color: isDark ? Colors.white : colorScheme.primary),
             const SizedBox(height: 16),
-            Text('Ocak Henüz Soğuk', style: Theme.of(context).textTheme.headlineSmall, textAlign: TextAlign.center),
+            Text(
+              'Ocak Henüz Soğuk',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                color: isDark ? Colors.white : colorScheme.onSurface,
+              ),
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 8),
             Text(
               'Atölyede bir konuyu işlediğinde ocak alevlenecek. İlk ham cevherini dövmeye başla!',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.5),
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: isDark ? Colors.white70 : colorScheme.onSurfaceVariant,
+                height: 1.5,
+              ),
             ),
           ],
         ).animate().fadeIn(duration: 600.ms).scale(begin: const Offset(0.9, 0.9)),
@@ -80,54 +96,76 @@ class WorkshopStatsScreen extends ConsumerWidget {
     );
   }
 
-  // YENİ WIDGET: Simya Prizması
+  // Compact Mastery Circle - Adaptive for both themes
   Widget _buildAlchemistPrism(BuildContext context, WorkshopAnalysis analysis) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     final masteryPercent = analysis.overallAccuracy;
-    final masteryColor = Color.lerp(Theme.of(context).colorScheme.error, Theme.of(context).colorScheme.secondary, masteryPercent / 100)!;
+    final masteryColor = Color.lerp(colorScheme.error, colorScheme.secondary, masteryPercent / 100)!;
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3)),
+        color: isDark ? theme.cardColor.withOpacity(0.5) : theme.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark
+              ? colorScheme.surfaceContainerHighest.withOpacity(0.3)
+              : colorScheme.surfaceContainerHighest.withOpacity(0.5),
+          width: 1,
+        ),
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
       ),
       child: Column(
         children: [
           Animate(
             onPlay: (c) => c.repeat(reverse: true),
             effects: [
-              ShimmerEffect(duration: 3000.ms, color: masteryColor.withOpacity(0.5)),
+              ShimmerEffect(duration: 3000.ms, color: masteryColor.withOpacity(0.4)),
             ],
             child: Container(
-              width: 120,
-              height: 120,
+              width: 100,
+              height: 100,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
-                  colors: [masteryColor.withOpacity(0.5), Colors.transparent],
-                  stops: const [0.4, 1.0],
+                  colors: [masteryColor.withOpacity(0.4), Colors.transparent],
+                  stops: const [0.5, 1.0],
                 ),
               ),
               child: Center(
                 child: Text(
                   "%${masteryPercent.toStringAsFixed(1)}",
-                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                  style: theme.textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    shadows: [Shadow(color: masteryColor, blurRadius: 15)],
+                    color: isDark ? Colors.white : colorScheme.onSurface,
+                    shadows: isDark ? [Shadow(color: masteryColor, blurRadius: 12)] : [],
                   ),
                 ),
               ),
             ),
           ),
           const SizedBox(height: 12),
-          Text("Genel Ustalık Oranı", style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 16),
+          Text(
+            "Genel Ustalık Oranı",
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white : colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 14),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              // *** HATA ÇÖZÜMÜ: Her istatistik öğesi Expanded ile sarmalandı ***
               Expanded(child: _StatItem(value: analysis.totalQuestionsAnswered.toString(), label: "Toplam Soru")),
               Expanded(child: _StatItem(value: analysis.uniqueTopicsWorkedOn.toString(), label: "İşlenen Cevher")),
               Expanded(child: _StatItem(value: analysis.mostWorkedSubject, label: "Favori Cephe")),
@@ -138,22 +176,31 @@ class WorkshopStatsScreen extends ConsumerWidget {
     );
   }
 
-  // YENİ WIDGET: Bilgi Tayfı (Kristal Barlar)
+  // Compact Subject Spectrum - Adaptive for both themes
   Widget _buildSubjectSpectrum(BuildContext context, WorkshopAnalysis analysis) {
     final chartData = analysis.subjectAccuracyList;
     if (chartData.isEmpty) return const SizedBox.shrink();
+    
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Bilgi Tayfı", style: Theme.of(context).textTheme.headlineSmall),
+        Text(
+          "Bilgi Tayfı",
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: isDark ? Colors.white : theme.colorScheme.onSurface,
+          ),
+        ),
         const SizedBox(height: 12),
         ...chartData.map((data) => _SubjectCrystalBar(data: data)),
       ],
     );
   }
 
-  // YENİ WIDGET: Dövme Tezgâhı
+  // Compact Topic Lists - Adaptive for both themes
   Widget _buildForgingBench(BuildContext context, WorkshopAnalysis analysis) {
     final strongest = analysis.getTopTopicsByMastery(count: 2);
     final weakest = analysis.getWeakestTopics(count: 3);
@@ -169,7 +216,7 @@ class WorkshopStatsScreen extends ConsumerWidget {
               topics: strongest,
               isPolished: true
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
         ],
         if (weakest.isNotEmpty) ...[
           _buildTopicSection(
@@ -194,19 +241,36 @@ class WorkshopStatsScreen extends ConsumerWidget {
     required List<Map<String, dynamic>> topics,
     required bool isPolished,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Icon(icon, color: iconColor, size: 24),
+            Icon(icon, color: iconColor, size: 22),
             const SizedBox(width: 8),
-            Text(title, style: Theme.of(context).textTheme.headlineSmall),
+            Text(
+              title,
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : theme.colorScheme.onSurface,
+              ),
+            ),
           ],
         ),
         if (subtitle != null)
-          Text(subtitle, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-        const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              subtitle,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: isDark ? Colors.white70 : theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        const SizedBox(height: 10),
         ...topics.map((topic) => _TopicCard(topic: topic, isPolished: isPolished))
       ],
     );
@@ -221,19 +285,28 @@ class _StatItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Column(
       children: [
-        // *** HATA ÇÖZÜMÜ: Uzun metinler için hizalama ve taşma kontrolü eklendi ***
         Text(
           value,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: isDark ? Colors.white : theme.colorScheme.onSurface,
+          ),
           textAlign: TextAlign.center,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
+        const SizedBox(height: 2),
         Text(
           label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: isDark ? Colors.white70 : theme.colorScheme.onSurfaceVariant,
+            fontSize: 11,
+          ),
           textAlign: TextAlign.center,
         ),
       ],
@@ -247,92 +320,107 @@ class _SubjectCrystalBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     final progress = data.accuracy / 100;
-    final color = Color.lerp(Theme.of(context).colorScheme.error, Theme.of(context).colorScheme.secondary, progress)!;
+    final color = Color.lerp(colorScheme.error, colorScheme.secondary, progress)!;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(4),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3)),
+        color: isDark ? theme.cardColor.withOpacity(0.5) : theme.cardColor,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: isDark
+              ? colorScheme.surfaceContainerHighest.withOpacity(0.3)
+              : colorScheme.surfaceContainerHighest.withOpacity(0.5),
+          width: 1,
+        ),
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
       ),
       child: Row(
         children: [
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(left: 12.0),
-              child: Text(
-                data.subject,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
+            child: Text(
+              data.subject,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+                color: isDark ? Colors.white : colorScheme.onSurface,
               ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
           ),
           const SizedBox(width: 12),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final maxW = constraints.maxWidth;
-              final barWidth = (maxW * 0.38).clamp(80.0, 180.0);
-              return SizedBox(
-                width: barWidth,
-                child: Stack(
-                  children: [
-                    Container(
-                      width: barWidth,
-                      height: 25,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
-                      ),
-                    ),
-                    Animate(
-                      effects: [
-                        ScaleEffect(
-                          duration: 1200.ms,
-                          curve: Curves.easeOutCubic,
-                          alignment: Alignment.centerLeft,
-                          begin: const Offset(0, 1),
-                          end: Offset(progress, 1),
-                        ),
-                      ],
-                      child: Container(
-                        width: barWidth,
-                        height: 25,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          gradient: LinearGradient(
-                            colors: [color.withOpacity(0.7), color],
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                          ),
-                          boxShadow: [
-                            BoxShadow(color: color, blurRadius: 10, spreadRadius: -5),
-                          ],
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      width: barWidth,
-                      height: 25,
-                      child: Center(
-                        child: Text(
-                          "%${data.accuracy.toStringAsFixed(1)}",
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                            shadows: [Shadow(color: Colors.black, blurRadius: 5)],
-                          ),
-                        ),
-                      ),
+          SizedBox(
+            width: 100,
+            child: Stack(
+              children: [
+                Container(
+                  width: 100,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(6),
+                    color: isDark
+                        ? colorScheme.surfaceContainerHighest.withOpacity(0.3)
+                        : colorScheme.surfaceContainerHighest.withOpacity(0.4),
+                  ),
+                ),
+                Animate(
+                  effects: [
+                    ScaleEffect(
+                      duration: 1000.ms,
+                      curve: Curves.easeOutCubic,
+                      alignment: Alignment.centerLeft,
+                      begin: const Offset(0, 1),
+                      end: Offset(progress, 1),
                     ),
                   ],
+                  child: Container(
+                    width: 100,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(6),
+                      gradient: LinearGradient(
+                        colors: [color.withOpacity(0.8), color],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                      ),
+                      boxShadow: isDark
+                          ? [BoxShadow(color: color.withOpacity(0.3), blurRadius: 8)]
+                          : [],
+                    ),
+                  ),
                 ),
-              );
-            },
-          )
+                SizedBox(
+                  width: 100,
+                  height: 20,
+                  child: Center(
+                    child: Text(
+                      "%${data.accuracy.toStringAsFixed(0)}",
+                      style: TextStyle(
+                        color: progress > 0.3 ? Colors.white : (isDark ? Colors.white70 : colorScheme.onSurface),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                        shadows: progress > 0.3 && isDark ? [const Shadow(color: Colors.black, blurRadius: 4)] : null,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -346,35 +434,68 @@ class _TopicCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isPolished ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.secondary;
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      color: Theme.of(context).cardColor.withOpacity(0.8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: color.withOpacity(0.5)),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: isPolished ? null : () => context.push('/ai-hub/weakness-workshop'),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(topic['topic'] as String, style: Theme.of(context).textTheme.titleMedium),
-                    Text(topic['subject'] as String, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-                  ],
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final color = isPolished ? colorScheme.secondary : colorScheme.primary;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: isDark ? theme.cardColor.withOpacity(0.6) : theme.cardColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withOpacity(isDark ? 0.4 : 0.5),
+          width: 1,
+        ),
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
                 ),
-              ),
-              if (!isPolished) ...[
-                const SizedBox(width: 12),
-                Icon(Icons.chevron_right_rounded, color: Theme.of(context).colorScheme.secondary),
-              ]
-            ],
+              ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: isPolished ? null : () => context.push('/ai-hub/weakness-workshop'),
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        topic['topic'] as String,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                          color: isDark ? Colors.white : colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        topic['subject'] as String,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: isDark ? Colors.white70 : colorScheme.onSurfaceVariant,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (!isPolished) ...[
+                  const SizedBox(width: 8),
+                  Icon(Icons.chevron_right_rounded, color: color, size: 20),
+                ]
+              ],
+            ),
           ),
         ),
       ),
@@ -461,33 +582,57 @@ class _WSHeader extends StatelessWidget {
   final String title;
   final VoidCallback onBack;
   final VoidCallback onSaved;
-  const _WSHeader({required this.title, required this.onBack, required this.onSaved});
+  final bool isDark;
+  const _WSHeader({required this.title, required this.onBack, required this.onSaved, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final top = MediaQuery.of(context).padding.top;
+    
     return Container(
       padding: EdgeInsets.fromLTRB(16, top + 8, 16, 16),
       child: Row(
         children: [
           IconButton(
             onPressed: onBack,
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-            style: IconButton.styleFrom(backgroundColor: Colors.white.withValues(alpha: 0.08), shape: const CircleBorder()),
+            icon: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: isDark ? Colors.white : colorScheme.onSurface,
+            ),
+            style: IconButton.styleFrom(
+              backgroundColor: isDark
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : colorScheme.surfaceContainerHighest.withOpacity(0.5),
+              shape: const CircleBorder(),
+            ),
           ),
           const SizedBox(width: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.06),
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.06)
+                  : colorScheme.surface,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Theme.of(context).colorScheme.surface),
+              border: Border.all(
+                color: isDark
+                    ? colorScheme.surfaceContainerHighest.withOpacity(0.3)
+                    : colorScheme.surfaceContainerHighest.withOpacity(0.5),
+              ),
             ),
             child: Row(
               children: [
-                Icon(Icons.bar_chart_rounded, color: Theme.of(context).colorScheme.secondary),
+                Icon(Icons.bar_chart_rounded, color: colorScheme.secondary, size: 20),
                 const SizedBox(width: 8),
-                Text(title, style: Theme.of(context).textTheme.titleMedium),
+                Text(
+                  title,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : colorScheme.onSurface,
+                  ),
+                ),
               ],
             ),
           ),
@@ -495,8 +640,16 @@ class _WSHeader extends StatelessWidget {
           IconButton(
             tooltip: 'Cevher Kasası',
             onPressed: onSaved,
-            icon: const Icon(Icons.inventory_2_outlined, color: Colors.white),
-            style: IconButton.styleFrom(backgroundColor: Colors.white.withValues(alpha: 0.08), shape: const CircleBorder()),
+            icon: Icon(
+              Icons.inventory_2_outlined,
+              color: isDark ? Colors.white : colorScheme.onSurface,
+            ),
+            style: IconButton.styleFrom(
+              backgroundColor: isDark
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : colorScheme.surfaceContainerHighest.withOpacity(0.5),
+              shape: const CircleBorder(),
+            ),
           ),
         ],
       ),
@@ -504,13 +657,14 @@ class _WSHeader extends StatelessWidget {
   }
 }
 
-class _FancyBackground extends StatefulWidget {
-  const _FancyBackground();
+class _AdaptiveBackground extends StatefulWidget {
+  final bool isDark;
+  const _AdaptiveBackground({required this.isDark});
   @override
-  State<_FancyBackground> createState() => _FancyBackgroundState();
+  State<_AdaptiveBackground> createState() => _AdaptiveBackgroundState();
 }
 
-class _FancyBackgroundState extends State<_FancyBackground> with SingleTickerProviderStateMixin {
+class _AdaptiveBackgroundState extends State<_AdaptiveBackground> with SingleTickerProviderStateMixin {
   late AnimationController _c;
   @override
   void initState() {
@@ -526,26 +680,48 @@ class _FancyBackgroundState extends State<_FancyBackground> with SingleTickerPro
       animation: _c,
       builder: (_, __) {
         final t = _c.value;
-        return Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color.lerp(const Color(0xFF0F172A), const Color(0xFF0B1020), t)!,
-                Color.lerp(const Color(0xFF1E293B), const Color(0xFF0F172A), 1 - t)!,
-              ],
-            ),
-          ),
-          child: Stack(
-            children: [
-              _GlowBlob(top: -40, left: -20, color: const Color(0xFF22D3EE).withValues(alpha: 0.25), size: 200 + 40 * t),
-              _GlowBlob(bottom: -60, right: -30, color: const Color(0xFFA78BFA).withValues(alpha: 0.22), size: 240 - 20 * t),
-              _GlowBlob(top: 160, right: -40, color: const Color(0xFF34D399).withValues(alpha: 0.18), size: 180 + 20 * (1 - t)),
-            ],
-          ),
-        );
+        return widget.isDark 
+          ? _buildDarkBackground(t)
+          : _buildLightBackground(context);
       },
+    );
+  }
+
+  Widget _buildDarkBackground(double t) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color.lerp(const Color(0xFF0F172A), const Color(0xFF0B1020), t)!,
+            Color.lerp(const Color(0xFF1E293B), const Color(0xFF0F172A), 1 - t)!,
+          ],
+        ),
+      ),
+      child: Stack(
+        children: [
+          _GlowBlob(top: -40, left: -20, color: const Color(0xFF22D3EE).withValues(alpha: 0.25), size: 200 + 40 * t),
+          _GlowBlob(bottom: -60, right: -30, color: const Color(0xFFA78BFA).withValues(alpha: 0.22), size: 240 - 20 * t),
+          _GlowBlob(top: 160, right: -40, color: const Color(0xFF34D399).withValues(alpha: 0.18), size: 180 + 20 * (1 - t)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLightBackground(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Theme.of(context).scaffoldBackgroundColor,
+            colorScheme.surfaceContainerHighest.withOpacity(0.2),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -114,6 +114,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
@@ -139,16 +141,21 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           ),
         ],
       ),
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Theme.of(context).colorScheme.surface,
-              Theme.of(context).cardColor.withOpacity(0.8),
-            ],
+            colors: isDark
+                ? [
+                    theme.scaffoldBackgroundColor,
+                    theme.cardColor.withOpacity(0.5),
+                  ]
+                : [
+                    theme.scaffoldBackgroundColor,
+                    theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                  ],
           ),
         ),
         child: _buildBody(textTheme),
@@ -291,39 +298,83 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
 
     final filtered = _applyFiltersAndSort();
 
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
     return Column(
       children: [
-        // Arama ve filtre barı
+        // Arama ve filtre barı - compact ve elegant
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              TextField(
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.search_rounded),
-                  hintText: 'Deneme adı ara...',
-                  filled: true,
-                  fillColor: Theme.of(context).cardColor,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+              Container(
+                decoration: BoxDecoration(
+                  color: theme.cardColor,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isDark
+                        ? colorScheme.surfaceContainerHighest.withOpacity(0.3)
+                        : colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                    width: 1,
+                  ),
+                  boxShadow: isDark
+                      ? []
+                      : [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.03),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                 ),
-                onChanged: (v) => setState(() => _searchQuery = v),
+                child: TextField(
+                  decoration: InputDecoration(
+                    prefixIcon: Icon(Icons.search_rounded, color: colorScheme.primary),
+                    hintText: 'Deneme adı ara...',
+                    filled: false,
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
+                  onChanged: (v) => setState(() => _searchQuery = v),
+                ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: _availableSections().map((s) {
                     final selected = _selectedSection == s;
                     return Padding(
-                      padding: const EdgeInsets.only(right: 8.0),
-                      child: ChoiceChip(
-                        label: Text(s),
+                      padding: const EdgeInsets.only(right: 6.0),
+                      child: FilterChip(
+                        label: Text(
+                          s,
+                          style: textTheme.labelMedium?.copyWith(
+                            fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                            fontSize: 12,
+                          ),
+                        ),
                         selected: selected,
                         onSelected: (_) => setState(() => _selectedSection = s),
-                        selectedColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                        labelStyle: TextStyle(color: selected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface),
-                        backgroundColor: Theme.of(context).cardColor,
+                        backgroundColor: theme.cardColor,
+                        selectedColor: colorScheme.primary.withOpacity(0.15),
+                        checkmarkColor: colorScheme.primary,
+                        side: BorderSide(
+                          color: selected
+                              ? colorScheme.primary.withOpacity(0.5)
+                              : colorScheme.surfaceContainerHighest.withOpacity(0.4),
+                          width: 1,
+                        ),
+                        labelStyle: TextStyle(
+                          color: selected ? colorScheme.primary : colorScheme.onSurface,
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                     );
                   }).toList(),
@@ -332,7 +383,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         Expanded(
           child: RefreshIndicator(
             onRefresh: () async {
@@ -388,74 +439,143 @@ class _ArchiveListTile extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
     final acc = _accuracy(test);
+    final isDark = theme.brightness == Brightness.dark;
 
-    return Material(
-      color: theme.cardColor,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: () => context.push('/home/test-result-summary', extra: test),
-        onLongPress: () => context.push('/home/test-detail', extra: test),
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Row(
-            children: [
-              // Sol rozet
-              Container(
-                width: 54,
-                height: 54,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  color: colorScheme.surfaceContainerHighest.withOpacity(0.2),
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark
+              ? colorScheme.surfaceContainerHighest.withOpacity(0.3)
+              : colorScheme.surfaceContainerHighest.withOpacity(0.6),
+          width: 1.5,
+        ),
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
-                alignment: Alignment.center,
-                child: Text(
-                  test.totalNet.toStringAsFixed(1),
-                  style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, color: colorScheme.onSurface),
+              ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => context.push('/home/test-result-summary', extra: test),
+          onLongPress: () => context.push('/home/test-detail', extra: test),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
+            child: Row(
+              children: [
+                // Sol rozet - daha compact
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        colorScheme.primary.withOpacity(0.15),
+                        colorScheme.secondary.withOpacity(0.1),
+                      ],
+                    ),
+                    border: Border.all(
+                      color: colorScheme.primary.withOpacity(0.2),
+                      width: 1,
+                    ),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    test.totalNet.toStringAsFixed(1),
+                    style: textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: colorScheme.primary,
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              // Orta içerik
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Hero: Savaş Raporu başlığı ile akıcı geçiş
-                    Hero(
-                      tag: 'test_title_${test.id}',
-                      child: Material(
-                        color: Colors.transparent,
-                        child: Text(
-                          test.testName,
-                          style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                const SizedBox(width: 10),
+                // Orta içerik - daha compact
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Hero(
+                        tag: 'test_title_${test.id}',
+                        child: Material(
+                          color: Colors.transparent,
+                          child: Text(
+                            test.testName,
+                            style: textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${test.sectionName} • ${DateFormat.yMd('tr').format(test.date)}',
-                      style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
-                    ),
-                  ],
+                      const SizedBox(height: 2),
+                      Text(
+                        '${test.sectionName} • ${DateFormat.yMd('tr').format(test.date)}',
+                        style: textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              // Sağ metrikler
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Row(children: [
-                    Icon(Icons.check_rounded, size: 16, color: colorScheme.secondary),
-                    const SizedBox(width: 4),
-                    Text('%${acc.toStringAsFixed(1)}', style: textTheme.bodyMedium?.copyWith(color: colorScheme.secondary, fontWeight: FontWeight.w700)),
-                  ]),
-                  const SizedBox(height: 4),
-                  Text('${test.totalCorrect}/${test.totalWrong}/${test.totalBlank}', style: textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant)),
-                ],
-              ),
-            ],
+                const SizedBox(width: 8),
+                // Sağ metrikler - daha compact ve elegant
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: colorScheme.secondary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: colorScheme.secondary.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.check_circle_rounded, size: 14, color: colorScheme.secondary),
+                          const SizedBox(width: 3),
+                          Text(
+                            '%${acc.toStringAsFixed(0)}',
+                            style: textTheme.labelLarge?.copyWith(
+                              color: colorScheme.secondary,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${test.totalCorrect}/${test.totalWrong}/${test.totalBlank}',
+                        style: textTheme.labelSmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
