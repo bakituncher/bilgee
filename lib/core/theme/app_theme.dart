@@ -11,19 +11,23 @@ class AppTheme {
   static const Color successBrandColor = Color(0xFF34D399);   // Emerald (Success)
   static const Color goldBrandColor = Color(0xFFFFB020);      // Gold (Premium/Awards)
 
-  // --- DARK THEME COLOR CONSTANTS ---
-  static const Color _darkScaffoldBackgroundColor = Color(0xFF0F172A); // slate-900
-  static const Color _darkCardColor = Color(0xFF1E293B);               // slate-800
-  static const Color _darkLightSurfaceColor = Color(0xFF334155);       // slate-700
-  static const Color _darkTextColor = Color(0xFFE2E8F0);               // slate-200
-  static const Color _darkSecondaryTextColor = Color(0xFF94A3B8);      // slate-400
+  // --- DARK THEME COLOR CONSTANTS (Enhanced Professional) ---
+  static const Color _darkScaffoldBackgroundColor = Color(0xFF0A0E1A); // Deeper slate
+  static const Color _darkCardColor = Color(0xFF1A1F2E);               // Enhanced slate-800
+  static const Color _darkSurfaceVariant = Color(0xFF252B3D);          // Mid-level surface
+  static const Color _darkLightSurfaceColor = Color(0xFF2D3548);       // Elevated surface
+  static const Color _darkTextColor = Color(0xFFF1F5F9);               // Brighter text
+  static const Color _darkSecondaryTextColor = Color(0xFFA0AEC0);      // Enhanced slate-400
+  static const Color _darkDividerColor = Color(0xFF334155);            // Subtle divider
 
-  // --- LIGHT THEME COLOR CONSTANTS ---
-  static const Color _lightScaffoldBackgroundColor = Color(0xFFF1F5F9); // slate-100
-  static const Color _lightCardColor = Color(0xFFFFFFFF);               // white
+  // --- LIGHT THEME COLOR CONSTANTS (Enhanced Professional) ---
+  static const Color _lightScaffoldBackgroundColor = Color(0xFFF8FAFC); // Brighter slate-50
+  static const Color _lightCardColor = Color(0xFFFFFFFF);               // Pure white
+  static const Color _lightSurfaceVariant = Color(0xFFF1F5F9);          // slate-100
   static const Color _lightLightSurfaceColor = Color(0xFFE2E8F0);       // slate-200
   static const Color _lightTextColor = Color(0xFF0F172A);               // slate-900
-  static const Color _lightSecondaryTextColor = Color(0xFF64748B);      // slate-500
+  static const Color _lightSecondaryTextColor = Color(0xFF475569);      // Enhanced slate-600
+  static const Color _lightDividerColor = Color(0xFFCBD5E1);            // Subtle divider
 
   // --- System UI Overlays ---
   static const SystemUiOverlayStyle darkSystemUiOverlay = SystemUiOverlayStyle(
@@ -89,9 +93,10 @@ class AppTheme {
       foregroundColor: Colors.black, // Cyan on black is good for contrast
       minimumSize: const Size(double.infinity, 52.0),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
-      elevation: 4.0,
+      elevation: isDark ? 8.0 : 4.0,
       textStyle: GoogleFonts.montserrat(fontWeight: FontWeight.w700, fontSize: 16),
-      shadowColor: secondaryBrandColor.withOpacity(0.4),
+      shadowColor: secondaryBrandColor.withOpacity(isDark ? 0.5 : 0.3),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
     );
 
     final inputDecorationTheme = InputDecorationTheme(
@@ -127,12 +132,15 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(style: buttonStyle),
       inputDecorationTheme: inputDecorationTheme,
       cardTheme: CardThemeData(
-        elevation: isDark ? 0 : 2,
+        elevation: isDark ? 2 : 3,
         color: cardColor,
-        shadowColor: isDark ? Colors.transparent : Colors.black.withOpacity(0.1),
+        shadowColor: isDark ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.08),
         shape: RoundedRectangleBorder(
-            side: BorderSide(color: isDark ? lightSurfaceColor.withOpacity(0.5) : lightSurfaceColor, width: 1),
-            borderRadius: BorderRadius.circular(16)
+            side: BorderSide(
+              color: isDark ? lightSurfaceColor.withOpacity(0.3) : lightSurfaceColor.withOpacity(0.6), 
+              width: isDark ? 0.5 : 1
+            ),
+            borderRadius: BorderRadius.circular(20)
         ),
       ),
       appBarTheme: AppBarTheme(

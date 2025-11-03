@@ -58,16 +58,42 @@ class HeroHeader extends ConsumerWidget {
           if (delta.isNotEmpty) lastInfo += ' • Net farkı: $delta';
         }
 
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        
         return Container(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(28),
             gradient: LinearGradient(
-              colors: [Theme.of(context).cardColor, Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25)],
+              colors: isDark 
+                ? [
+                    Theme.of(context).cardColor,
+                    Theme.of(context).colorScheme.primary.withOpacity(0.08),
+                    Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.15),
+                  ]
+                : [
+                    Theme.of(context).cardColor,
+                    Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.15),
+                    Theme.of(context).cardColor.withOpacity(0.95),
+                  ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35)),
+            border: Border.all(
+              color: isDark 
+                ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25)
+                : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.4), 
+              width: 1.5
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: isDark 
+                  ? Colors.black.withOpacity(0.3)
+                  : Colors.black.withOpacity(0.06),
+                blurRadius: isDark ? 16 : 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -82,8 +108,11 @@ class HeroHeader extends ConsumerWidget {
                         Text('${_greeting()}, ${user.name ?? 'Taktik'}',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                        const SizedBox(height: 2),
+                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.5,
+                            )),
+                        const SizedBox(height: 6),
                         // Row -> Wrap (overflow fix)
                         Wrap(
                           spacing: 8,
@@ -131,13 +160,13 @@ class HeroHeader extends ConsumerWidget {
                   const _ArchiveButton(),
                 ],
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
               ClipRRect(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(12),
                 child: LinearProgressIndicator(
                   value: progress,
-                  minHeight: 8,
-                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25),
+                  minHeight: 10,
+                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(isDark ? 0.2 : 0.3),
                   valueColor: AlwaysStoppedAnimation(Theme.of(context).colorScheme.primary),
                 ),
               ),

@@ -54,13 +54,25 @@ class _MotivationQuotesCardState extends State<MotivationQuotesCard> {
 
   @override
   Widget build(BuildContext context) {
-    const height = 168.0;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    const height = 180.0;
+    
     return Card(
-      elevation: 10,
-      shadowColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.45),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      elevation: isDark ? 8 : 6,
+      shadowColor: isDark 
+        ? Colors.black.withOpacity(0.4)
+        : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(28),
+        side: BorderSide(
+          color: isDark 
+            ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25)
+            : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.4),
+          width: 1.5,
+        ),
+      ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(28),
         child: SizedBox(
           height: height,
           child: Stack(
@@ -70,10 +82,17 @@ class _MotivationQuotesCardState extends State<MotivationQuotesCard> {
               Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [
-                      Theme.of(context).cardColor,
-                      Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35),
-                    ],
+                    colors: isDark
+                      ? [
+                          Theme.of(context).cardColor,
+                          Theme.of(context).colorScheme.primary.withOpacity(0.08),
+                          Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.12),
+                        ]
+                      : [
+                          Theme.of(context).cardColor,
+                          Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.2),
+                          Theme.of(context).cardColor.withOpacity(0.95),
+                        ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -81,14 +100,22 @@ class _MotivationQuotesCardState extends State<MotivationQuotesCard> {
               ),
               // Dekoratif parlama daireleri
               Positioned(
-                left: -30, top: -20, child: _glowCircle(color: Theme.of(context).colorScheme.primary.withOpacity(0.18), size: 140),
+                left: -30, top: -20, 
+                child: _glowCircle(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(isDark ? 0.15 : 0.12), 
+                  size: 150
+                ),
               ),
               Positioned(
-                right: -24, bottom: -18, child: _glowCircle(color: Colors.green.withOpacity(0.16), size: 120),
+                right: -24, bottom: -18, 
+                child: _glowCircle(
+                  color: (isDark ? Colors.teal : Colors.green).withOpacity(isDark ? 0.12 : 0.10), 
+                  size: 130
+                ),
               ),
-              // İç blur ile yumuşatma
+              // İç blur ile yumuşatma (Glassmorphism effect)
               BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
                 child: const SizedBox.expand(),
               ),
 
@@ -112,12 +139,26 @@ class _MotivationQuotesCardState extends State<MotivationQuotesCard> {
                           children: [
                             Container(
                               decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.6)),
+                                color: Theme.of(context).colorScheme.primary.withOpacity(isDark ? 0.18 : 0.12),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: Theme.of(context).colorScheme.primary.withOpacity(isDark ? 0.4 : 0.5),
+                                  width: 1.5,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
                               ),
-                              padding: const EdgeInsets.all(10),
-                              child: Icon(Icons.format_quote_rounded, color: Theme.of(context).colorScheme.primary),
+                              padding: const EdgeInsets.all(11),
+                              child: Icon(
+                                Icons.format_quote_rounded, 
+                                color: Theme.of(context).colorScheme.primary,
+                                size: 24,
+                              ),
                             ),
                             const SizedBox(width: 10),
                             Expanded(

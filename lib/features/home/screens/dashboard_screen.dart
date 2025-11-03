@@ -37,12 +37,12 @@ class DashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
-  // Tutarlı yatay boşluk
-  static const double _hPad = 16;
+  // Tutarlı yatay boşluk (Enhanced for professional look)
+  static const double _hPad = 20;
   // Scroll controller + appbar opaklığı
   late final ScrollController _scrollController;
   double _appBarOpacity = 0.0; // 0 -> transparan, 1 -> opak
-  static const double _opacityTrigger = 36; // kaç px sonra tam opak
+  static const double _opacityTrigger = 48; // kaç px sonra tam opak (increased for smoother transition)
 
   // Liste animasyonlarını sadece ilk yüklemede çalıştırmak için bayrak
   bool _animateSectionsOnce = true;
@@ -59,10 +59,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Widget _animatedSection(Widget child, int index) {
     if (!_animateSectionsOnce) return child; // İlk frame sonrasında animasyon yok
     return Animate(
-      delay: (70 * index).ms,
+      delay: (80 * index).ms,
       effects: const [
-        FadeEffect(duration: Duration(milliseconds: 240), curve: Curves.easeOut),
-        SlideEffect(begin: Offset(0, .06), duration: Duration(milliseconds: 260), curve: Curves.easeOut),
+        FadeEffect(duration: Duration(milliseconds: 300), curve: Curves.easeOutCubic),
+        SlideEffect(begin: Offset(0, .08), duration: Duration(milliseconds: 320), curve: Curves.easeOutCubic),
+        ScaleEffect(begin: Offset(0.96, 0.96), duration: Duration(milliseconds: 320), curve: Curves.easeOutCubic),
       ],
       child: child,
     );
@@ -241,10 +242,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 pinned: true,
                 floating: false,
                 snap: false,
-                elevation: _appBarOpacity > 0.95 ? 2 : 0,
-                backgroundColor: Theme.of(context).cardColor.withOpacity(_appBarOpacity * 0.92),
+                elevation: _appBarOpacity > 0.95 ? 3 : 0,
+                backgroundColor: Theme.of(context).cardColor.withOpacity(_appBarOpacity * 0.95),
                 surfaceTintColor: Colors.transparent,
-                toolbarHeight: 56,
+                toolbarHeight: 60,
                 leading: Builder(
                   builder: (ctx) => IconButton(
                     icon: Icon(Icons.menu_rounded, color: Theme.of(context).colorScheme.primary),
@@ -253,9 +254,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ),
                 ),
                 title: AnimatedOpacity(
-                  duration: 200.ms,
+                  duration: 250.ms,
+                  curve: Curves.easeOut,
                   opacity: _appBarOpacity.clamp(0, 1),
-                  child: const Text('Komuta Merkezi'),
+                  child: Text(
+                    'Komuta Merkezi',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
                 ),
                 centerTitle: true,
                 actions: [
@@ -280,19 +288,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               ),
 
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(_hPad, 8, _hPad, 8),
+                padding: const EdgeInsets.fromLTRB(_hPad, 12, _hPad, 12),
                 sliver: SliverList.separated(
                   itemCount: sections.length,
                   itemBuilder: (c, i) {
-                    final w = i == 0 ? sections[i] : Padding(padding: const EdgeInsets.only(top: 4), child: sections[i]);
+                    final w = i == 0 ? sections[i] : Padding(padding: const EdgeInsets.only(top: 6), child: sections[i]);
                     return _animatedSection(w, i);
                   },
                   separatorBuilder: (_, i) {
                     // Sıra: Hero -> Focus -> (PageView kartları) -> Motivasyon
-                    if (i == 0) return const SizedBox(height: 12); // Hero sonrası
-                    if (i == 1) return const SizedBox(height: 16); // Focus sonrası
-                    if (i == 2) return const SizedBox(height: 18); // PageView sonrası
-                    return const SizedBox(height: 12);
+                    if (i == 0) return const SizedBox(height: 16); // Hero sonrası (increased)
+                    if (i == 1) return const SizedBox(height: 18); // Focus sonrası (increased)
+                    if (i == 2) return const SizedBox(height: 20); // PageView sonrası (increased)
+                    return const SizedBox(height: 14);
                   },
                 ),
               ),

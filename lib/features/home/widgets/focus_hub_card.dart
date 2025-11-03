@@ -54,18 +54,44 @@ class FocusHubCard extends ConsumerWidget {
       _QuickAction(icon: Icons.construction_rounded, label: 'Atölye', onTap: () => context.go('/ai-hub/weakness-workshop')),
     ];
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Card(
-      elevation: 10,
-      shadowColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.45),
+      elevation: isDark ? 8 : 6,
+      shadowColor: isDark 
+        ? Colors.black.withOpacity(0.4)
+        : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
-        side: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35)),
+        borderRadius: BorderRadius.circular(28),
+        side: BorderSide(
+          color: isDark 
+            ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25)
+            : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.4),
+          width: 1.5,
+        ),
       ),
-      child: InkWell(
-        onTap: primary,
-        borderRadius: BorderRadius.circular(24),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(28),
+          gradient: LinearGradient(
+            colors: isDark
+              ? [
+                  Theme.of(context).cardColor,
+                  Theme.of(context).colorScheme.primary.withOpacity(0.06),
+                ]
+              : [
+                  Theme.of(context).cardColor,
+                  Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.1),
+                ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: InkWell(
+          onTap: primary,
+          borderRadius: BorderRadius.circular(28),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -74,12 +100,22 @@ class FocusHubCard extends ConsumerWidget {
                 children: [
                   Container(
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.6)),
+                      color: Theme.of(context).colorScheme.primary.withOpacity(isDark ? 0.18 : 0.12),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.primary.withOpacity(isDark ? 0.4 : 0.5),
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
-                    padding: const EdgeInsets.all(10),
-                    child: Icon(icon, color: Theme.of(context).colorScheme.primary),
+                    padding: const EdgeInsets.all(12),
+                    child: Icon(icon, color: Theme.of(context).colorScheme.primary, size: 26),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -96,10 +132,21 @@ class FocusHubCard extends ConsumerWidget {
                 ],
               ),
 
+              const SizedBox(height: 16),
+              // Ayrıştırıcı çizgi (Enhanced)
+              Container(
+                height: 1,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.transparent,
+                      Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(isDark ? 0.3 : 0.4),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
               const SizedBox(height: 14),
-              // Ayrıştırıcı çizgi
-              Divider(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35), height: 1),
-              const SizedBox(height: 12),
 
               // Hızlı İşlemler
               Row(
@@ -109,10 +156,11 @@ class FocusHubCard extends ConsumerWidget {
               ),
               const SizedBox(height: 4),
             ],
+            ),
           ),
         ),
       ),
-    ).animate().fadeIn(duration: 220.ms).slideY(begin: .04, curve: Curves.easeOut);
+    ).animate().fadeIn(duration: 280.ms, curve: Curves.easeOut).slideY(begin: .06, curve: Curves.easeOutCubic);
   }
 
   String _humanize(Duration d) {
@@ -128,25 +176,50 @@ class _QuickAction extends StatelessWidget {
   const _QuickAction({required this.icon, required this.label, required this.onTap});
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(16),
       child: Ink(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          color: Theme.of(context).cardColor,
-          border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.45)),
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            colors: isDark
+              ? [
+                  Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.12),
+                  Theme.of(context).cardColor,
+                ]
+              : [
+                  Theme.of(context).cardColor,
+                  Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.08),
+                ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          border: Border.all(
+            color: isDark 
+              ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35)
+              : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+            width: 1.5,
+          ),
         ),
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.symmetric(vertical: 12),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: Theme.of(context).colorScheme.primary),
-            const SizedBox(height: 6),
-            Text(label, style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600)),
+            Icon(icon, color: Theme.of(context).colorScheme.primary, size: 22),
+            const SizedBox(height: 7),
+            Text(
+              label, 
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                fontSize: 12,
+              ),
+            ),
           ],
         ),
       ),
-    ).animate().scale(duration: 120.ms, curve: Curves.easeOut);
+    ).animate().fadeIn(duration: 160.ms).scale(begin: const Offset(0.95, 0.95), duration: 160.ms, curve: Curves.easeOutCubic);
   }
 }
