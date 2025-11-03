@@ -543,8 +543,8 @@ class _PerformanceChart extends StatelessWidget {
       if (net > maxNet) maxNet = net;
     }
     
-    final minY = (minNet - 5).clamp(0, double.infinity);
-    final maxY = maxNet + 5;
+    final minY = (minNet - 5).clamp(0.0, double.infinity).toDouble();
+    final maxY = (maxNet + 5).toDouble();
 
     return Container(
       padding: const EdgeInsets.all(20),
