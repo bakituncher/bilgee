@@ -1,6 +1,7 @@
 const { onDocumentCreated, onDocumentDeleted, onDocumentUpdated } = require("firebase-functions/v2/firestore");
 const { logger } = require("firebase-functions");
 const { db, admin } = require("./init");
+const { globalCache, CacheKeys } = require("./cache");
 
 async function updatePublicProfile(uid, options = {}) {
   try {
@@ -29,6 +30,10 @@ async function updatePublicProfile(uid, options = {}) {
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
     await db.collection("public_profiles").doc(uid).set(publicDoc, { merge: true });
+    
+    // ÖNBELLEK: Public profile güncellendiğinde önbelleği temizle
+    globalCache.invalidate(CacheKeys.publicProfile(uid));
+    globalCache.invalidate(CacheKeys.userProfile(uid));
   } catch (e) {
     logger.warn("updatePublicProfile failed", { uid, error: String(e) });
   }
@@ -121,6 +126,11 @@ exports.onUserUpdate = onDocumentUpdated("users/{userId}", async (event) => {
 
   try {
     await publicProfileRef.set(publicData, { merge: true });
+    
+    // ÖNBELLEK: Public profile güncellendiğinde önbelleği temizle
+    globalCache.invalidate(CacheKeys.publicProfile(uid));
+    globalCache.invalidate(CacheKeys.userProfile(uid));
+    
     logger.log(`Successfully synced profile for user ${uid}.`);
   } catch (e) {
     logger.error("onUserUpdate failed", { uid, error: String(e) });

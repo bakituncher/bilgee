@@ -4,6 +4,7 @@ const { logger } = require("firebase-functions");
 const { db, admin } = require("./init");
 const { weekKeyIstanbul, dayKeyIstanbul } = require("./utils");
 const { updatePublicProfile } = require("./profile");
+const { globalCache, CacheKeys } = require("./cache");
 
 // ==== Liderlik Tabloları: Yardımcılar ====
 
@@ -112,6 +113,9 @@ async function publishLeaderboardSnapshot(examType, kind, limit = 200) {
   const top20 = entries.slice(0, 20);
   const topRef = db.collection("leaderboard_top").doc(examType).collection(kind).doc("latest");
   await topRef.set({ entries: top20, updatedAt: admin.firestore.FieldValue.serverTimestamp(), periodId }, { merge: true });
+  
+  // ÖNBELLEK: Leaderboard güncellendiğinde önbelleği temizle
+  globalCache.invalidate(CacheKeys.leaderboardSnapshot(examType, kind));
 }
 
 async function cleanupOldLeaderboards() {
