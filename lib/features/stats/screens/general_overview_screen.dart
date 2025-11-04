@@ -141,28 +141,42 @@ class _OverviewContent extends ConsumerWidget {
           ),
         ),
 
-        // Performance Chart Section - YKS için TYT ve AYT ayrı
-        if (tests.isNotEmpty && user.selectedExam == 'YKS')
+        // Performance Chart Section - Kaydırılabilir şık grafik kartları
+        if (tests.isNotEmpty)
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-              child: _YKSPerformanceCharts(
-                tests: tests,
-                isDark: isDark,
-              ).animate(delay: 200.ms).fadeIn(duration: 250.ms).slideY(begin: 0.02),
-            ),
-          ),
-
-        // Performance Chart Section - Diğer sınavlar için tek grafik
-        if (tests.isNotEmpty && user.selectedExam != 'YKS')
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-              child: _PerformanceChart(
-                tests: tests,
-                isDark: isDark,
-                title: 'Performans Trendi',
-              ).animate(delay: 200.ms).fadeIn(duration: 250.ms).slideY(begin: 0.02),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.analytics_rounded,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Performans Analizi',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(
+                  height: 240,
+                  child: _SmartPerformanceCharts(
+                    tests: tests,
+                    isDark: isDark,
+                    examType: user.selectedExam ?? 'YKS',
+                  ).animate(delay: 200.ms).fadeIn(duration: 250.ms).slideX(begin: 0.02),
+                ),
+              ],
             ),
           ),
 
@@ -327,63 +341,429 @@ class _CompactStatCard extends StatelessWidget {
   }
 }
 
-/// YKS için TYT ve AYT performans grafiklerini ayrı gösteren widget
-class _YKSPerformanceCharts extends StatelessWidget {
+/// Akıllı performans grafik sistemi - Kaydırılabilir şık kartlar
+class _SmartPerformanceCharts extends StatelessWidget {
   final List<TestModel> tests;
   final bool isDark;
+  final String examType;
 
-  const _YKSPerformanceCharts({
+  const _SmartPerformanceCharts({
     required this.tests,
     required this.isDark,
+    required this.examType,
   });
 
   @override
   Widget build(BuildContext context) {
-    // TYT ve AYT testlerini ayır
-    final tytTests = tests.where((t) => t.sectionName == 'TYT').toList();
-    final aytTests = tests.where((t) => t.sectionName == 'AYT').toList();
+    final List<_ChartData> chartDataList = [];
 
-    return Column(
-      children: [
-        // TYT Grafiği
-        if (tytTests.isNotEmpty)
-          _PerformanceChart(
-            tests: tytTests,
+    // YKS için TYT ve AYT'yi ayır
+    if (examType == 'YKS') {
+      final tytTests = tests.where((t) => t.sectionName.toUpperCase() == 'TYT').toList();
+      final aytTests = tests.where((t) => t.sectionName.toUpperCase() == 'AYT').toList();
+
+      if (tytTests.isNotEmpty) {
+        chartDataList.add(_ChartData(
+          tests: tytTests,
+          title: 'TYT',
+          subtitle: 'Temel Yeterlilik',
+          icon: Icons.lightbulb_rounded,
+          baseColor: AppTheme.primaryBrandColor,
+        ));
+      }
+      if (aytTests.isNotEmpty) {
+        chartDataList.add(_ChartData(
+          tests: aytTests,
+          title: 'AYT',
+          subtitle: 'Alan Yeterlilik',
+          icon: Icons.school_rounded,
+          baseColor: AppTheme.secondaryBrandColor,
+        ));
+      }
+
+      // Hiçbiri yoksa tüm testleri göster
+      if (chartDataList.isEmpty) {
+        chartDataList.add(_ChartData(
+          tests: tests,
+          title: 'Tüm Testler',
+          subtitle: 'Genel Performans',
+          icon: Icons.trending_up_rounded,
+          baseColor: AppTheme.successBrandColor,
+        ));
+      }
+    } else {
+      // Diğer sınavlar için bölümlere göre grupla
+      final groupedTests = <String, List<TestModel>>{};
+      for (final test in tests) {
+        (groupedTests[test.sectionName] ??= []).add(test);
+      }
+
+      if (groupedTests.length > 1) {
+        final colors = [
+          AppTheme.primaryBrandColor,
+          AppTheme.secondaryBrandColor,
+          AppTheme.successBrandColor,
+          Colors.deepOrange,
+        ];
+        final icons = [
+          Icons.menu_book_rounded,
+          Icons.science_rounded,
+          Icons.calculate_rounded,
+          Icons.psychology_rounded,
+        ];
+
+        int index = 0;
+        for (final entry in groupedTests.entries) {
+          chartDataList.add(_ChartData(
+            tests: entry.value,
+            title: entry.key,
+            subtitle: '${entry.value.length} deneme',
+            icon: icons[index % icons.length],
+            baseColor: colors[index % colors.length],
+          ));
+          index++;
+        }
+      } else {
+        chartDataList.add(_ChartData(
+          tests: tests,
+          title: examType,
+          subtitle: 'Genel Performans',
+          icon: Icons.trending_up_rounded,
+          baseColor: AppTheme.successBrandColor,
+        ));
+      }
+    }
+
+    return ListView.builder(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      itemCount: chartDataList.length,
+      itemBuilder: (context, index) {
+        final data = chartDataList[index];
+        return Padding(
+          padding: EdgeInsets.only(right: index < chartDataList.length - 1 ? 12 : 0),
+          child: _SwipeablePerformanceCard(
+            data: data,
             isDark: isDark,
-            title: 'TYT Performans Trendi',
-          ),
-
-        // Boşluk
-        if (tytTests.isNotEmpty && aytTests.isNotEmpty)
-          const SizedBox(height: 12),
-
-        // AYT Grafiği
-        if (aytTests.isNotEmpty)
-          _PerformanceChart(
-            tests: aytTests,
-            isDark: isDark,
-            title: 'AYT Performans Trendi',
-          ),
-      ],
+          ).animate(delay: (200 + index * 50).ms)
+            .fadeIn(duration: 250.ms)
+            .slideX(begin: 0.1),
+        );
+      },
     );
   }
 }
 
-/// Performance chart showing test score trends
-class _PerformanceChart extends StatelessWidget {
+/// Grafik verisi için model
+class _ChartData {
   final List<TestModel> tests;
-  final bool isDark;
   final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color baseColor;
 
-  const _PerformanceChart({
+  _ChartData({
     required this.tests,
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.baseColor,
+  });
+
+  // Performans trendini hesapla (son 3 test vs önceki 3 test)
+  double get performanceTrend {
+    if (tests.length < 2) return 0.0;
+
+    final sortedTests = tests.toList()..sort((a, b) => a.date.compareTo(b.date));
+    final halfPoint = (sortedTests.length / 2).floor();
+
+    final firstHalf = sortedTests.take(halfPoint);
+    final secondHalf = sortedTests.skip(halfPoint);
+
+    final firstAvg = firstHalf.isEmpty ? 0.0 : firstHalf.fold<double>(0.0, (sum, t) => sum + t.totalNet) / firstHalf.length;
+    final secondAvg = secondHalf.isEmpty ? 0.0 : secondHalf.fold<double>(0.0, (sum, t) => sum + t.totalNet) / secondHalf.length;
+
+    return (secondAvg - firstAvg).toDouble();
+  }
+
+  // Ortalama net
+  double get averageNet {
+    if (tests.isEmpty) return 0.0;
+    return (tests.fold<double>(0.0, (sum, t) => sum + t.totalNet) / tests.length).toDouble();
+  }
+}
+
+/// Kaydırılabilir şık performans kartı - Performansa göre dinamik renkler
+class _SwipeablePerformanceCard extends StatelessWidget {
+  final _ChartData data;
+  final bool isDark;
+
+  const _SwipeablePerformanceCard({
+    required this.data,
     required this.isDark,
-    this.title = 'Performans Trendi',
   });
 
   @override
   Widget build(BuildContext context) {
-    // Take last N tests and sort chronologically
+    final trend = data.performanceTrend;
+    final avgNet = data.averageNet;
+
+    // Trend durumuna göre renk belirle
+    Color trendColor;
+    Color gradientStart;
+    Color gradientEnd;
+    IconData trendIcon;
+    String trendText;
+
+    if (trend > 5) {
+      trendColor = const Color(0xFF10B981); // Yeşil - Harika yükseliş
+      gradientStart = const Color(0xFF10B981);
+      gradientEnd = const Color(0xFF059669);
+      trendIcon = Icons.trending_up_rounded;
+      trendText = 'Harika Yükseliş!';
+    } else if (trend > 2) {
+      trendColor = const Color(0xFF3B82F6); // Mavi - İyi yükseliş
+      gradientStart = const Color(0xFF3B82F6);
+      gradientEnd = const Color(0xFF2563EB);
+      trendIcon = Icons.trending_up_rounded;
+      trendText = 'İyi Gidiyor';
+    } else if (trend > -2) {
+      trendColor = AppTheme.goldBrandColor; // Sarı - Stabil
+      gradientStart = AppTheme.goldBrandColor;
+      gradientEnd = const Color(0xFFD97706);
+      trendIcon = Icons.trending_flat_rounded;
+      trendText = 'Stabil';
+    } else if (trend > -5) {
+      trendColor = const Color(0xFFEF4444); // Kırmızı - Düşüş
+      gradientStart = const Color(0xFFEF4444);
+      gradientEnd = const Color(0xFFDC2626);
+      trendIcon = Icons.trending_down_rounded;
+      trendText = 'Dikkat Et';
+    } else {
+      trendColor = const Color(0xFF991B1B); // Koyu kırmızı - Ciddi düşüş
+      gradientStart = const Color(0xFFEF4444);
+      gradientEnd = const Color(0xFF991B1B);
+      trendIcon = Icons.trending_down_rounded;
+      trendText = 'Çalışman Lazım';
+    }
+
+    return Container(
+      width: MediaQuery.of(context).size.width * 0.85,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            gradientStart.withOpacity(0.15),
+            gradientEnd.withOpacity(0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: trendColor.withOpacity(0.3),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: trendColor.withOpacity(0.15),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+            spreadRadius: -4,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Stack(
+          children: [
+            // Arka plan deseni
+            Positioned(
+              right: -30,
+              top: -30,
+              child: Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: trendColor.withOpacity(0.05),
+                ),
+              ),
+            ),
+            Positioned(
+              left: -20,
+              bottom: -20,
+              child: Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: trendColor.withOpacity(0.05),
+                ),
+              ),
+            ),
+
+            // İçerik
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: (isDark ? const Color(0xFF1E293B) : Colors.white).withOpacity(0.95),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Başlık ve durum
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [gradientStart, gradientEnd],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: trendColor.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Icon(data.icon, color: Colors.white, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              data.title,
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                            Text(
+                              data.subtitle,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: isDark
+                                    ? Colors.white.withOpacity(0.5)
+                                    : Colors.black.withOpacity(0.45),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: trendColor.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: trendColor.withOpacity(0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(trendIcon, color: trendColor, size: 14),
+                            const SizedBox(width: 4),
+                            Text(
+                              trendText,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                color: trendColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Ortalama net bilgisi
+                  Row(
+                    children: [
+                      Text(
+                        'Ort. Net: ',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: isDark
+                              ? Colors.white.withOpacity(0.6)
+                              : Colors.black.withOpacity(0.5),
+                        ),
+                      ),
+                      Text(
+                        avgNet.toStringAsFixed(1),
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                          color: trendColor,
+                          height: 1,
+                        ),
+                      ),
+                      const Spacer(),
+                      if (trend.abs() > 0.5)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: trendColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            '${trend > 0 ? '+' : ''}${trend.toStringAsFixed(1)}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: trendColor,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Mini grafik
+                  Expanded(
+                    child: _MiniPerformanceChart(
+                      tests: data.tests,
+                      color: trendColor,
+                      isDark: isDark,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Mini performans grafiği
+class _MiniPerformanceChart extends StatelessWidget {
+  final List<TestModel> tests;
+  final Color color;
+  final bool isDark;
+
+  const _MiniPerformanceChart({
+    required this.tests,
+    required this.color,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     final recentTests = tests.length > _maxRecentTests
         ? (tests.toList()..sort((a, b) => b.date.compareTo(a.date)))
         .take(_maxRecentTests)
@@ -395,7 +775,6 @@ class _PerformanceChart extends StatelessWidget {
     final nets = recentTests.map((t) => t.totalNet).toList();
     if (nets.isEmpty) return const SizedBox.shrink();
 
-    // Calculate min and max
     var minNet = nets[0];
     var maxNet = nets[0];
     for (final net in nets) {
@@ -406,138 +785,112 @@ class _PerformanceChart extends StatelessWidget {
     final minY = (minNet - 5).clamp(0.0, double.infinity).toDouble();
     final maxY = (maxNet + 5).toDouble();
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withOpacity(0.06)
-              : Colors.black.withOpacity(0.04),
-          width: 1,
+    return LineChart(
+      LineChartData(
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          horizontalInterval: (maxY - minY) / 3,
+          getDrawingHorizontalLine: (value) {
+            return FlLine(
+              color: isDark
+                  ? Colors.white.withOpacity(0.03)
+                  : Colors.black.withOpacity(0.03),
+              strokeWidth: 1,
+              dashArray: [5, 5],
+            );
+          },
         ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withOpacity(0.2)
-                : Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.show_chart_rounded,
-                color: AppTheme.successBrandColor,
-                size: 20,
-              ),
-              const SizedBox(width: 10),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 160,
-            child: LineChart(
-              LineChartData(
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  horizontalInterval: (maxY - minY) / 4,
-                  getDrawingHorizontalLine: (value) {
-                    return FlLine(
+        titlesData: FlTitlesData(
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 28,
+              interval: (maxY - minY) / 3,
+              getTitlesWidget: (value, meta) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 4),
+                  child: Text(
+                    value.toInt().toString(),
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
                       color: isDark
-                          ? Colors.white.withOpacity(0.04)
-                          : Colors.black.withOpacity(0.04),
-                      strokeWidth: 1,
-                    );
-                  },
-                ),
-                titlesData: FlTitlesData(
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 32,
-                      getTitlesWidget: (value, meta) {
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 6),
-                          child: Text(
-                            value.toInt().toString(),
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
-                              color: isDark
-                                  ? Colors.white.withOpacity(0.4)
-                                  : Colors.black.withOpacity(0.4),
-                            ),
-                          ),
-                        );
-                      },
+                          ? Colors.white.withOpacity(0.35)
+                          : Colors.black.withOpacity(0.35),
                     ),
                   ),
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
+                );
+              },
+            ),
+          ),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          bottomTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        ),
+        borderData: FlBorderData(show: false),
+        minY: minY,
+        maxY: maxY,
+        lineTouchData: LineTouchData(
+          enabled: true,
+          touchTooltipData: LineTouchTooltipData(
+            getTooltipColor: (touchedSpot) => color.withOpacity(0.9),
+            tooltipRoundedRadius: 8,
+            tooltipPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            getTooltipItems: (touchedSpots) {
+              return touchedSpots.map((spot) {
+                return LineTooltipItem(
+                  spot.y.toStringAsFixed(1),
+                  const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11,
                   ),
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  bottomTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                ),
-                borderData: FlBorderData(show: false),
-                minY: minY,
-                maxY: maxY,
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: [
-                      for (int i = 0; i < nets.length; i++)
-                        FlSpot(i.toDouble(), nets[i])
-                    ],
-                    isCurved: true,
-                    curveSmoothness: 0.35,
-                    color: AppTheme.successBrandColor,
-                    barWidth: 2.5,
-                    dotData: FlDotData(
-                      show: true,
-                      getDotPainter: (spot, percent, barData, index) {
-                        return FlDotCirclePainter(
-                          radius: 3.5,
-                          color: AppTheme.successBrandColor,
-                          strokeWidth: 2,
-                          strokeColor: isDark
-                              ? const Color(0xFF1E293B)
-                              : Colors.white,
-                        );
-                      },
-                    ),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          AppTheme.successBrandColor.withOpacity(0.25),
-                          AppTheme.successBrandColor.withOpacity(0.02),
-                        ],
-                      ),
-                    ),
-                  ),
+                );
+              }).toList();
+            },
+          ),
+          handleBuiltInTouches: true,
+        ),
+        lineBarsData: [
+          LineChartBarData(
+            spots: [
+              for (int i = 0; i < nets.length; i++)
+                FlSpot(i.toDouble(), nets[i])
+            ],
+            isCurved: true,
+            curveSmoothness: 0.4,
+            color: color,
+            barWidth: 3,
+            dotData: FlDotData(
+              show: true,
+              getDotPainter: (spot, percent, barData, index) {
+                return FlDotCirclePainter(
+                  radius: 4,
+                  color: color,
+                  strokeWidth: 2.5,
+                  strokeColor: isDark
+                      ? const Color(0xFF1E293B)
+                      : Colors.white,
+                );
+              },
+            ),
+            belowBarData: BarAreaData(
+              show: true,
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  color.withOpacity(0.3),
+                  color.withOpacity(0.05),
+                  color.withOpacity(0.0),
                 ],
               ),
+            ),
+            shadow: Shadow(
+              color: color.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
             ),
           ),
         ],
