@@ -2,11 +2,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
 import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/shared/widgets/score_slider.dart';
 import 'package:taktik/features/home/logic/add_test_notifier.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
-import 'package:taktik/core/navigation/app_router.dart';
 
 class Step2ScoreEntry extends ConsumerStatefulWidget {
   const Step2ScoreEntry({super.key});
@@ -31,11 +31,17 @@ class _Step2ScoreEntryState extends ConsumerState<Step2ScoreEntry> {
   void _onPageChanged() {
     if (!_pageController.hasClients) return;
     
-    final newPage = _pageController.page?.round() ?? 0;
+    final currentPage = _pageController.page;
+    if (currentPage == null) return;
+    
+    // Only track when we're settled on a page (not mid-animation)
+    final pageIndex = currentPage.round();
+    final isSettled = (currentPage - pageIndex).abs() < 0.1;
     
     // Only track each page once, even if user navigates back and forth
-    if (!_trackedPages.contains(newPage) && newPage > 0) {
-      _trackedPages.add(newPage);
+    // Start counting from page 1 (second subject) since page 0 is the first subject
+    if (isSettled && !_trackedPages.contains(pageIndex) && pageIndex > 0) {
+      _trackedPages.add(pageIndex);
       _trackSubjectScoreUpdate();
     }
   }
@@ -52,8 +58,7 @@ class _Step2ScoreEntryState extends ConsumerState<Step2ScoreEntry> {
       
       if (shouldShow && mounted) {
         // Show premium screen
-        final router = ref.read(goRouterProvider);
-        router.push('/premium');
+        context.push('/premium');
         debugPrint('[SubjectUpdate] Premium screen displayed');
       }
     } catch (e) {
