@@ -22,6 +22,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:taktik/data/providers/premium_provider.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -217,6 +219,8 @@ class BilgeAiApp extends ConsumerStatefulWidget {
 }
 
 class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObserver {
+  bool _hasTrackedAppLaunch = false;
+
   @override
   void initState() {
     super.initState();
@@ -227,7 +231,53 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
       NotificationService.instance.initialize(onNavigate: (route) {
         router.go(route);
       });
+      
+      // Track app launch and show premium screen if needed
+      _trackAppLaunchAndShowPremium();
     });
+  }
+  
+  Future<void> _trackAppLaunchAndShowPremium() async {
+    // Only track once per app session
+    if (_hasTrackedAppLaunch) return;
+    _hasTrackedAppLaunch = true;
+    
+    try {
+      // Wait for user profile to be loaded and check if user is fully onboarded
+      final userProfile = await ref.read(userProfileProvider.future);
+      
+      // Only show premium screen if user is fully onboarded
+      if (userProfile.profileCompleted && 
+          userProfile.selectedExam != null && 
+          userProfile.selectedExam!.isNotEmpty &&
+          userProfile.weeklyAvailability.isNotEmpty) {
+        
+        // Check if user is already premium
+        final isPremium = ref.read(premiumStatusProvider);
+        if (isPremium) {
+          if (kDebugMode) debugPrint('[AppLaunch] User is premium, skipping premium screen');
+          return;
+        }
+        
+        // Get the trigger service and track the launch
+        final triggerService = await ref.read(premiumTriggerServiceProvider.future);
+        final shouldShow = await triggerService.trackAppLaunch();
+        
+        if (shouldShow && mounted) {
+          // Wait a bit to ensure navigation is ready
+          await Future.delayed(const Duration(milliseconds: 500));
+          
+          if (mounted) {
+            final context = this.context;
+            final router = ref.read(goRouterProvider);
+            router.push('/premium');
+            if (kDebugMode) debugPrint('[AppLaunch] Premium screen displayed');
+          }
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('[AppLaunch] Error tracking app launch: $e');
+    }
   }
 
   @override

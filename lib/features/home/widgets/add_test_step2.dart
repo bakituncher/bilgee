@@ -5,6 +5,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/shared/widgets/score_slider.dart';
 import 'package:taktik/features/home/logic/add_test_notifier.dart';
+import 'package:taktik/data/providers/premium_provider.dart';
+import 'package:taktik/core/navigation/app_routes.dart';
+import 'package:taktik/core/navigation/app_router.dart';
 
 class Step2ScoreEntry extends ConsumerStatefulWidget {
   const Step2ScoreEntry({super.key});
@@ -15,15 +18,53 @@ class Step2ScoreEntry extends ConsumerStatefulWidget {
 
 class _Step2ScoreEntryState extends ConsumerState<Step2ScoreEntry> {
   late PageController _pageController;
+  int _currentPageIndex = 0;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
+    
+    // Listen to page changes to track subject score updates
+    _pageController.addListener(_onPageChanged);
+  }
+
+  void _onPageChanged() {
+    if (!_pageController.hasClients) return;
+    
+    final newPage = _pageController.page?.round() ?? 0;
+    
+    // If we've moved to a new page (completed a subject), track it
+    if (newPage != _currentPageIndex && newPage > _currentPageIndex) {
+      _currentPageIndex = newPage;
+      _trackSubjectScoreUpdate();
+    }
+  }
+
+  Future<void> _trackSubjectScoreUpdate() async {
+    try {
+      // Check if user is already premium
+      final isPremium = ref.read(premiumStatusProvider);
+      if (isPremium) return;
+      
+      // Get the trigger service and track the subject update
+      final triggerService = await ref.read(premiumTriggerServiceProvider.future);
+      final shouldShow = await triggerService.trackSubjectScoreUpdate();
+      
+      if (shouldShow && mounted) {
+        // Show premium screen
+        final router = ref.read(goRouterProvider);
+        router.push(AppRoutes.premium);
+        debugPrint('[SubjectUpdate] Premium screen displayed');
+      }
+    } catch (e) {
+      debugPrint('[SubjectUpdate] Error checking premium screen: $e');
+    }
   }
 
   @override
   void dispose() {
+    _pageController.removeListener(_onPageChanged);
     _pageController.dispose();
     super.dispose();
   }

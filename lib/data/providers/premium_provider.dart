@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:taktik/core/services/revenuecat_service.dart';
+import 'package:taktik/core/services/premium_trigger_service.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 
 // Provider to fetch offerings from RevenueCat using the static method
@@ -14,6 +15,12 @@ final offeringsProvider = FutureProvider<Offerings>((ref) async {
 final premiumStatusProvider = Provider<bool>((ref) {
   final userProfile = ref.watch(userProfileProvider);
   return userProfile.value?.isPremium ?? false;
+});
+
+// Provider for PremiumTriggerService
+// This manages when to show the premium screen based on user actions
+final premiumTriggerServiceProvider = FutureProvider<PremiumTriggerService>((ref) async {
+  return await PremiumTriggerService.init();
 });
 
 // The unnecessary revenueCatServiceProvider has been removed.

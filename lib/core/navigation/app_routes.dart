@@ -31,4 +31,5 @@ class AppRoutes {
   static const String strategyReview = 'strategy-review';
   static const String quests = 'quests'; // GÜNLÜK GÖREVLER EKRANI
   static const String analysisStrategy = 'analysis-strategy'; // YENİ: Analiz & Strateji birleşik ekran
+  static const String premium = '/premium'; // Premium ekranı
 }

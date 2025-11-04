@@ -5,11 +5,13 @@ import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 import 'package:taktik/data/models/test_model.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:taktik/features/home/logic/add_test_notifier.dart';
 import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:taktik/features/stats/logic/stats_analysis.dart';
 import 'package:lottie/lottie.dart';
+import 'package:taktik/core/navigation/app_routes.dart';
 
 class Step3Summary extends ConsumerWidget {
   const Step3Summary({super.key});
@@ -101,6 +103,11 @@ class Step3Summary extends ConsumerWidget {
                 // Başarılı kaydın ardından şık bir Lottie onayı göster
                 if (context.mounted) {
                   await _showSuccessDialog(context);
+                }
+
+                // Track test addition and show premium screen if needed
+                if (context.mounted) {
+                  await _checkAndShowPremiumScreen(context, ref);
                 }
 
                 if (context.mounted) {
@@ -225,5 +232,29 @@ class _SuccessDialogState extends State<_SuccessDialog> {
         ),
       ),
     );
+  }
+}
+
+// Helper function to check and show premium screen after test addition
+Future<void> _checkAndShowPremiumScreen(BuildContext context, WidgetRef ref) async {
+  try {
+    // Check if user is already premium
+    final isPremium = ref.read(premiumStatusProvider);
+    if (isPremium) {
+      debugPrint('[TestAddition] User is premium, skipping premium screen');
+      return;
+    }
+    
+    // Get the trigger service and track the test addition
+    final triggerService = await ref.read(premiumTriggerServiceProvider.future);
+    final shouldShow = await triggerService.trackTestAddition();
+    
+    if (shouldShow && context.mounted) {
+      // Show premium screen
+      context.push(AppRoutes.premium);
+      debugPrint('[TestAddition] Premium screen displayed');
+    }
+  } catch (e) {
+    debugPrint('[TestAddition] Error checking premium screen: $e');
   }
 }
