@@ -208,15 +208,21 @@ class _StatsPremiumOfferScreenState extends ConsumerState<StatsPremiumOfferScree
                               minHeight: constraints.maxHeight,
                             ),
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                              padding: const EdgeInsets.symmetric(horizontal: 24),
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                 children: [
+                                  const SizedBox(height: 10),
+
                                   // Hero Animation
                                   _buildHeroSection(colorScheme),
 
+                                  const SizedBox(height: 16),
+
                                   // Title
                                   _buildTitleSection(theme, colorScheme),
+
+                                  const SizedBox(height: 20),
 
                                   // Stats Comparison
                                   _CompactStatsCard(
@@ -226,6 +232,8 @@ class _StatsPremiumOfferScreenState extends ConsumerState<StatsPremiumOfferScree
                                     isDark: isDark,
                                   ),
 
+                                  const SizedBox(height: 18),
+
                                   // Features Grid
                                   _CompactFeatureGrid(
                                     colorScheme: colorScheme,
@@ -233,12 +241,16 @@ class _StatsPremiumOfferScreenState extends ConsumerState<StatsPremiumOfferScree
                                     isDark: isDark,
                                   ),
 
-                                  // Premium Features
+                                  const SizedBox(height: 18),
+
+                                  // Premium Features (daha kompakt)
                                   _CompactFeaturesList(
                                     colorScheme: colorScheme,
                                     theme: theme,
                                     isDark: isDark,
                                   ),
+
+                                  const SizedBox(height: 20),
 
                                   // CTA + Restore
                                   Column(
@@ -249,6 +261,7 @@ class _StatsPremiumOfferScreenState extends ConsumerState<StatsPremiumOfferScree
                                         colorScheme: colorScheme,
                                         theme: theme,
                                       ),
+                                      const SizedBox(height: 8),
                                       TextButton(
                                         onPressed: () {
                                           ScaffoldMessenger.of(context).showSnackBar(
@@ -260,20 +273,22 @@ class _StatsPremiumOfferScreenState extends ConsumerState<StatsPremiumOfferScree
                                           );
                                         },
                                         style: TextButton.styleFrom(
-                                          padding: const EdgeInsets.symmetric(vertical: 4),
-                                          minimumSize: const Size(0, 28),
+                                          padding: const EdgeInsets.symmetric(vertical: 2),
+                                          minimumSize: const Size(0, 24),
                                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                         ),
                                         child: Text(
                                           'Satın alımları geri yükle',
                                           style: theme.textTheme.bodySmall?.copyWith(
-                                            color: colorScheme.onSurfaceVariant.withOpacity(0.7),
-                                            fontSize: 11,
+                                            color: colorScheme.onSurfaceVariant.withOpacity(0.6),
+                                            fontSize: 10,
                                           ),
                                         ),
                                       ),
                                     ],
                                   ),
+
+                                  const SizedBox(height: 10),
                                 ],
                               ),
                             ),
@@ -295,7 +310,7 @@ class _StatsPremiumOfferScreenState extends ConsumerState<StatsPremiumOfferScree
 
   Widget _buildHeroSection(ColorScheme colorScheme) {
     return SizedBox(
-      height: 140,
+      height: 120,
       child: Stack(
         alignment: Alignment.center,
         children: [
@@ -303,14 +318,14 @@ class _StatsPremiumOfferScreenState extends ConsumerState<StatsPremiumOfferScree
             animation: _fadeAnimation,
             builder: (context, child) {
               return Container(
-                width: 160,
-                height: 160,
+                width: 140,
+                height: 140,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      colorScheme.primary.withOpacity(0.15 * _fadeAnimation.value),
-                      colorScheme.secondary.withOpacity(0.08 * _fadeAnimation.value),
+                      colorScheme.primary.withOpacity(0.12 * _fadeAnimation.value),
+                      colorScheme.secondary.withOpacity(0.06 * _fadeAnimation.value),
                       Colors.transparent,
                     ],
                   ),
@@ -326,8 +341,8 @@ class _StatsPremiumOfferScreenState extends ConsumerState<StatsPremiumOfferScree
                 child: Opacity(
                   opacity: _fadeAnimation.value,
                   child: SizedBox(
-                    width: 140,
-                    height: 140,
+                    width: 120,
+                    height: 120,
                     child: Lottie.asset(
                       'assets/lotties/data.json',
                       fit: BoxFit.contain,
@@ -349,43 +364,21 @@ class _StatsPremiumOfferScreenState extends ConsumerState<StatsPremiumOfferScree
       children: [
         Text(
           'Deneme Gelişimi',
-          style: theme.textTheme.headlineSmall?.copyWith(
+          style: theme.textTheme.headlineMedium?.copyWith(
             fontWeight: FontWeight.w900,
-            letterSpacing: -0.8,
+            letterSpacing: -1,
+            height: 1.1,
           ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 6),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                colorScheme.primary.withOpacity(0.15),
-                colorScheme.secondary.withOpacity(0.15),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: colorScheme.primary.withOpacity(0.3),
-              width: 1.5,
-            ),
+        const SizedBox(height: 8),
+        Text(
+          'Profesyonel analiz araçlarıyla başarıya ulaş',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w500,
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.auto_graph_rounded, size: 14, color: colorScheme.primary),
-              const SizedBox(width: 4),
-              Text(
-                'Sektör Lideri Platform',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: colorScheme.primary,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 11,
-                ),
-              ),
-            ],
-          ),
+          textAlign: TextAlign.center,
         ),
       ],
     );
@@ -638,13 +631,12 @@ class _CompactFeatureGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final features = [
       {'icon': Icons.analytics_rounded, 'title': 'Detaylı\nAnaliz', 'color': colorScheme.primary},
-      {'icon': Icons.show_chart_rounded, 'title': 'Gelişim\nTakibi', 'color': colorScheme.secondary},
       {'icon': Icons.psychology_rounded, 'title': 'AI\nÖnerileri', 'color': Colors.purple},
-      {'icon': Icons.compare_arrows_rounded, 'title': 'Karşılaştırma', 'color': Colors.orange},
+      {'icon': Icons.show_chart_rounded, 'title': 'Gelişim\nTakibi', 'color': colorScheme.secondary},
     ];
 
     return SizedBox(
-      height: 90,
+      height: 95,
       child: Row(
         children: features.asMap().entries.map((entry) {
           final index = entry.key;
