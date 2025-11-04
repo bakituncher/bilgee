@@ -58,16 +58,37 @@ class HeroHeader extends ConsumerWidget {
           if (delta.isNotEmpty) lastInfo += ' • Net farkı: $delta';
         }
 
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+
         return Container(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
             gradient: LinearGradient(
-              colors: [Theme.of(context).cardColor, Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25)],
+              colors: isDark
+                  ? [
+                      Theme.of(context).colorScheme.surfaceContainer.withOpacity(0.8),
+                      Theme.of(context).cardColor.withOpacity(0.9),
+                    ]
+                  : [
+                      Theme.of(context).cardColor,
+                      Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25),
+                    ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35)),
+            border: Border.all(
+              color: isDark
+                  ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
+                  : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: isDark ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.08),
+                blurRadius: isDark ? 16 : 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

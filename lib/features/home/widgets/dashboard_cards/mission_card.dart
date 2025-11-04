@@ -21,11 +21,22 @@ class MissionCard extends ConsumerWidget {
     final user = ref.watch(userProfileProvider).valueOrNull;
     final performance = ref.watch(performanceProvider).value;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8),
-      elevation: 4,
-      shadowColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      elevation: isDark ? 6 : 4,
+      shadowColor: isDark
+          ? Colors.black.withOpacity(0.4)
+          : Theme.of(context).colorScheme.primary.withOpacity(0.2),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(
+          color: isDark
+              ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
+              : Colors.transparent,
+        ),
+      ),
       clipBehavior: Clip.antiAlias,
       child: user == null || tests == null || performance == null
           ? const LogoLoader(size: 60)
@@ -68,12 +79,23 @@ class MissionCard extends ConsumerWidget {
           icon = Icons.construction_rounded;
         }
 
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+
         return Container(
           width: double.infinity,
           padding: const EdgeInsets.all(24.0),
           decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Theme.of(context).colorScheme.primary.withOpacity(0.1), Theme.of(context).cardColor],
+                colors: isDark
+                    ? [
+                        Theme.of(context).colorScheme.primary.withOpacity(0.08),
+                        Theme.of(context).colorScheme.surfaceContainer.withOpacity(0.6),
+                        Theme.of(context).cardColor.withOpacity(0.9),
+                      ]
+                    : [
+                        Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                        Theme.of(context).cardColor,
+                      ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               )),

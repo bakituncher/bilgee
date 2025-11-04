@@ -54,12 +54,20 @@ class FocusHubCard extends ConsumerWidget {
       _QuickAction(icon: Icons.construction_rounded, label: 'Atölye', onTap: () => context.go('/ai-hub/weakness-workshop')),
     ];
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Card(
-      elevation: 10,
-      shadowColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.45),
+      elevation: isDark ? 8 : 10,
+      shadowColor: isDark
+          ? Colors.black.withOpacity(0.4)
+          : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.45),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24),
-        side: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35)),
+        side: BorderSide(
+          color: isDark
+              ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
+              : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35),
+        ),
       ),
       child: InkWell(
         onTap: primary,
@@ -126,16 +134,35 @@ class FocusHubCard extends ConsumerWidget {
 class _QuickAction extends StatelessWidget {
   final IconData icon; final String label; final VoidCallback onTap;
   const _QuickAction({required this.icon, required this.label, required this.onTap});
+
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
       child: Ink(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
-          color: Theme.of(context).cardColor,
-          border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.45)),
+          gradient: LinearGradient(
+            colors: isDark
+                ? [
+                    Theme.of(context).colorScheme.surfaceContainer.withOpacity(0.5),
+                    Theme.of(context).cardColor.withOpacity(0.7),
+                  ]
+                : [
+                    Theme.of(context).cardColor,
+                    Theme.of(context).cardColor,
+                  ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          border: Border.all(
+            color: isDark
+                ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3)
+                : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.45),
+          ),
         ),
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: Column(

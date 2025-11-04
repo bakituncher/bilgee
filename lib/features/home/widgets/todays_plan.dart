@@ -139,13 +139,24 @@ class _NewPlanPromptCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
       child: Card(
         margin: const EdgeInsets.symmetric(horizontal: 8),
-        elevation: 4,
-        shadowColor: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        elevation: isDark ? 6 : 4,
+        shadowColor: isDark
+            ? Colors.black.withOpacity(0.4)
+            : Theme.of(context).colorScheme.primary.withOpacity(0.3),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: BorderSide(
+            color: isDark
+                ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
+                : Colors.transparent,
+          ),
+        ),
         child: Container(
           height: 400,
           padding: const EdgeInsets.symmetric(vertical: 32.0, horizontal: 24.0),

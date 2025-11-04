@@ -54,11 +54,22 @@ class _MotivationQuotesCardState extends State<MotivationQuotesCard> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     const height = 168.0;
+
     return Card(
-      elevation: 10,
-      shadowColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.45),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      elevation: isDark ? 8 : 10,
+      shadowColor: isDark
+          ? Colors.black.withOpacity(0.4)
+          : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.45),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(
+          color: isDark
+              ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
+              : Colors.transparent,
+        ),
+      ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
         child: SizedBox(
@@ -70,10 +81,15 @@ class _MotivationQuotesCardState extends State<MotivationQuotesCard> {
               Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [
-                      Theme.of(context).cardColor,
-                      Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35),
-                    ],
+                    colors: isDark
+                        ? [
+                            Theme.of(context).colorScheme.surfaceContainer.withOpacity(0.7),
+                            Theme.of(context).cardColor.withOpacity(0.9),
+                          ]
+                        : [
+                            Theme.of(context).cardColor,
+                            Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35),
+                          ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),

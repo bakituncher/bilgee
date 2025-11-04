@@ -241,10 +241,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 pinned: true,
                 floating: false,
                 snap: false,
-                elevation: _appBarOpacity > 0.95 ? 2 : 0,
-                backgroundColor: Theme.of(context).cardColor.withOpacity(_appBarOpacity * 0.92),
+                elevation: _appBarOpacity > 0.95 ? 3 : 0,
+                backgroundColor: Theme.of(context).cardColor.withOpacity(_appBarOpacity * 0.95),
                 surfaceTintColor: Colors.transparent,
                 toolbarHeight: 56,
+                shadowColor: Colors.black.withOpacity(0.2),
                 leading: Builder(
                   builder: (ctx) => IconButton(
                     icon: Icon(Icons.menu_rounded, color: Theme.of(context).colorScheme.primary),
@@ -270,10 +271,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Theme.of(context).cardColor.withOpacity((_appBarOpacity * 0.95).clamp(0, .95)),
-                          Theme.of(context).cardColor.withOpacity((_appBarOpacity * 0.70).clamp(0, .70)),
+                          Theme.of(context).cardColor.withOpacity((_appBarOpacity * 0.98).clamp(0, .98)),
+                          Theme.of(context).cardColor.withOpacity((_appBarOpacity * 0.85).clamp(0, .85)),
                         ],
                       ),
+                      border: _appBarOpacity > 0.7
+                          ? Border(
+                              bottom: BorderSide(
+                                color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.2),
+                                width: 1,
+                              ),
+                            )
+                          : null,
                     ),
                   ),
                 ),
