@@ -126,7 +126,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                     padding: EdgeInsets.zero,
                     children: [
                       _navTile(context, currentLocation: location, icon: Icons.dashboard_rounded, title: 'Ana Panel', route: '/home'),
-                      _navTile(context, currentLocation: location, icon: Icons.bar_chart_rounded, title: 'Deneme Gelişimi', route: '/home/stats'),
+                      _navTile(context, currentLocation: location, icon: Icons.bar_chart_rounded, title: 'Deneme Gelişimi', route: '/home/stats', isPremium: true, showPremiumBadge: !isPremium),
                       _navTile(context, currentLocation: location, icon: Icons.insights_rounded, title: 'Genel Bakış', route: '/stats/overview'),
                       _navTile(context, currentLocation: location, icon: Icons.shield_moon_rounded, title: 'Günlük Görevler', route: '/home/quests'),
                       _navTile(context, currentLocation: location, icon: Icons.inventory_2_outlined, title: 'Deneme Arşivi', route: '/library'),
@@ -217,16 +217,26 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
         required IconData icon,
         required String title,
         required String route,
+        bool isPremium = false,
+        bool showPremiumBadge = false,
       }) {
     final bool selected = currentLocation == route || (route != '/home' && currentLocation.startsWith(route));
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final userIsPremium = ref.watch(premiumStatusProvider);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () { Navigator.of(context).pop(); context.go(route); },
+        onTap: () {
+          Navigator.of(context).pop();
+          if (isPremium && !userIsPremium) {
+            context.go('/stats-premium-offer');
+          } else {
+            context.go(route);
+          }
+        },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeOut,
@@ -251,6 +261,34 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                   ),
                 ),
               ),
+              if (showPremiumBadge) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [colorScheme.primary.withOpacity(0.2), Colors.amber.withOpacity(0.2)],
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: colorScheme.primary.withOpacity(0.3), width: 1),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.workspace_premium_rounded, size: 12, color: colorScheme.primary),
+                      const SizedBox(width: 2),
+                      Text(
+                        'PRO',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: colorScheme.primary,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 4),
+              ],
               AnimatedOpacity(
                 opacity: selected ? 1 : 0,
                 duration: const Duration(milliseconds: 180),

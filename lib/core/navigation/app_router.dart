@@ -15,6 +15,7 @@ import 'package:taktik/features/blog/screens/blog_screen.dart';
 import 'package:taktik/features/premium/screens/premium_screen.dart' as premium;
 import 'package:taktik/features/premium/screens/tool_offer_screen.dart';
 import 'package:taktik/features/stats/screens/general_overview_screen.dart';
+import 'package:taktik/features/stats/screens/stats_premium_offer_screen.dart';
 import '../../features/blog/screens/blog_admin_editor_screen.dart';
 import 'package:taktik/features/blog/screens/blog_detail_screen.dart';
 import 'package:taktik/features/admin/screens/question_reports_screen.dart';
@@ -202,6 +203,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           context: context,
           state: state,
           child: const GeneralOverviewScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/stats-premium-offer',
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) => buildPageWithFadeTransition(
+          context: context,
+          state: state,
+          child: const StatsPremiumOfferScreen(),
         ),
       ),
       // Bildirim Merkezi
