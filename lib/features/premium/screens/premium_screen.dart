@@ -9,6 +9,7 @@ import 'dart:ui';
 import 'dart:async';
 import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:taktik/shared/widgets/welcome_animation_dialog.dart';
 
 // --- PREMIUM SCREEN (Mükemmeliyetçi Son Versiyon) ---
 
@@ -484,14 +485,13 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
           // Webhook zaten eninde sonunda durumu düzeltecektir.
           print("Callable function for premium sync failed (safe to ignore): $e");
         }
+        // Welcome animasyonunu göster
+        await WelcomeAnimationDialog.show(context);
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Harika! Premium özellikler aktif ediliyor...'),
-            backgroundColor: Theme.of(context).colorScheme.secondary,
-          ),
-        );
-        _handleBack();
+        // Animasyon bittikten sonra ekranı kapat
+        if (context.mounted) {
+          _handleBack();
+        }
         return;
       }
 
