@@ -6,7 +6,6 @@ import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/shared/widgets/score_slider.dart';
 import 'package:taktik/features/home/logic/add_test_notifier.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
-import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:taktik/core/navigation/app_router.dart';
 
 class Step2ScoreEntry extends ConsumerStatefulWidget {
@@ -18,7 +17,7 @@ class Step2ScoreEntry extends ConsumerStatefulWidget {
 
 class _Step2ScoreEntryState extends ConsumerState<Step2ScoreEntry> {
   late PageController _pageController;
-  int _currentPageIndex = 0;
+  final Set<int> _trackedPages = {}; // Track which pages have been counted
 
   @override
   void initState() {
@@ -34,9 +33,9 @@ class _Step2ScoreEntryState extends ConsumerState<Step2ScoreEntry> {
     
     final newPage = _pageController.page?.round() ?? 0;
     
-    // If we've moved to a new page (completed a subject), track it
-    if (newPage != _currentPageIndex && newPage > _currentPageIndex) {
-      _currentPageIndex = newPage;
+    // Only track each page once, even if user navigates back and forth
+    if (!_trackedPages.contains(newPage) && newPage > 0) {
+      _trackedPages.add(newPage);
       _trackSubjectScoreUpdate();
     }
   }
@@ -54,7 +53,7 @@ class _Step2ScoreEntryState extends ConsumerState<Step2ScoreEntry> {
       if (shouldShow && mounted) {
         // Show premium screen
         final router = ref.read(goRouterProvider);
-        router.push(AppRoutes.premium);
+        router.push('/premium');
         debugPrint('[SubjectUpdate] Premium screen displayed');
       }
     } catch (e) {

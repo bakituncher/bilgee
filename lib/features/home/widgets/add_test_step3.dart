@@ -11,7 +11,6 @@ import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:taktik/features/stats/logic/stats_analysis.dart';
 import 'package:lottie/lottie.dart';
-import 'package:taktik/core/navigation/app_routes.dart';
 
 class Step3Summary extends ConsumerWidget {
   const Step3Summary({super.key});
@@ -251,7 +250,7 @@ Future<void> _checkAndShowPremiumScreen(BuildContext context, WidgetRef ref) asy
     
     if (shouldShow && context.mounted) {
       // Show premium screen
-      context.push(AppRoutes.premium);
+      context.push('/premium');
       debugPrint('[TestAddition] Premium screen displayed');
     }
   } catch (e) {
