@@ -40,9 +40,9 @@ class WeeklyPlanCard extends ConsumerWidget {
         gradient: LinearGradient(
           colors: isDark
               ? [
-                  Theme.of(context).colorScheme.primary.withOpacity(0.85),
-                  Theme.of(context).colorScheme.primary.withOpacity(0.55),
-                  Theme.of(context).cardColor.withOpacity(0.40),
+                  Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.6),
+                  Theme.of(context).colorScheme.surfaceContainer.withOpacity(0.8),
+                  Theme.of(context).cardColor.withOpacity(0.9),
                 ]
               : [
                   Theme.of(context).cardColor.withOpacity(0.98),
@@ -54,16 +54,16 @@ class WeeklyPlanCard extends ConsumerWidget {
         ),
         border: Border.all(
           color: isDark
-              ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35)
+              ? Theme.of(context).colorScheme.primary.withOpacity(0.15)
               : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
             color: isDark
-                ? Colors.black.withOpacity(.35)
+                ? Colors.black.withOpacity(.4)
                 : Colors.black.withOpacity(.12),
-            blurRadius: 18,
+            blurRadius: 20,
             offset: const Offset(0, 8),
           )
         ],
@@ -169,8 +169,8 @@ class _HeaderBar extends ConsumerWidget {
         gradient: LinearGradient(
           colors: isDark
               ? [
-                  Theme.of(context).colorScheme.primary.withOpacity(.18), 
-                  Theme.of(context).colorScheme.primary.withOpacity(.04),
+                  Theme.of(context).colorScheme.primary.withOpacity(.10),
+                  Theme.of(context).colorScheme.surfaceContainer.withOpacity(.15),
                 ]
               : [
                   Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(.25),
@@ -232,12 +232,14 @@ class _DaySelector extends ConsumerWidget {
                   color: isSelected 
                       ? Theme.of(context).colorScheme.primary 
                       : (isDark
-                          ? Colors.transparent
+                          ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25)
                           : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.4)),
                   borderRadius: BorderRadius.circular(12),
-                  border: !isSelected && !isDark
+                  border: !isSelected
                       ? Border.all(
-                          color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                          color: isDark
+                              ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3)
+                              : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
                           width: 1,
                         )
                       : null,
@@ -342,15 +344,15 @@ class _TaskTile extends ConsumerWidget {
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
               color: isDark
-                  ? (isCompleted? Colors.green: Theme.of(context).colorScheme.primary).withOpacity(.35)
-                  : (isCompleted? Colors.green: Theme.of(context).colorScheme.primary).withOpacity(.50), 
+                  ? (isCompleted? Colors.green.withOpacity(.4): Theme.of(context).colorScheme.primary.withOpacity(.25))
+                  : (isCompleted? Colors.green: Theme.of(context).colorScheme.primary).withOpacity(.50),
               width: 1.5,
             ),
             gradient: LinearGradient(
               colors: isDark
                   ? [
-                      (isCompleted? Colors.green: Theme.of(context).colorScheme.primary).withOpacity(.08), 
-                      Theme.of(context).cardColor.withOpacity(.35),
+                      (isCompleted? Colors.green: Theme.of(context).colorScheme.primary).withOpacity(.06),
+                      Theme.of(context).colorScheme.surfaceContainer.withOpacity(.5),
                     ]
                   : [
                       (isCompleted? Colors.green: Theme.of(context).colorScheme.primary).withOpacity(.12),
@@ -360,7 +362,13 @@ class _TaskTile extends ConsumerWidget {
               end: Alignment.bottomRight,
             ),
             boxShadow: isDark
-                ? null
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.15),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
                 : [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.08),
