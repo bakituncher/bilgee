@@ -44,24 +44,4 @@ class LocalStorageService {
   Future<void> resetCourseNetCounter() async {
     await _prefs.setInt(_courseNetCounterKey, 0);
   }
-
-  // --- Premium Screen Logic ---
-
-  // Checks if the premium screen was shown today.
-  Future<bool> wasPremiumScreenShownToday() async {
-    final lastShownDateString = _prefs.getString(_lastPremiumShowDateKey);
-    if (lastShownDateString == null) {
-      return false;
-    }
-    final lastShownDate = DateTime.parse(lastShownDateString);
-    final now = DateTime.now();
-    return now.year == lastShownDate.year &&
-           now.month == lastShownDate.month &&
-           now.day == lastShownDate.day;
-  }
-
-  // Records that the premium screen has been shown.
-  Future<void> recordPremiumScreenShown() async {
-    await _prefs.setString(_lastPremiumShowDateKey, DateTime.now().toIso8601String());
-  }
 }

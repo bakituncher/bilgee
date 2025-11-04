@@ -14,18 +14,12 @@ class ShowPremiumService {
   ShowPremiumService(this._ref);
 
   Future<void> showPremiumScreenOnLaunch(BuildContext context) async {
-    final localStorage = _ref.read(localStorageProvider);
-    final wasShownToday = await localStorage.wasPremiumScreenShownToday();
-
-    if (!wasShownToday) {
-      await localStorage.recordPremiumScreenShown();
-      // Use a post-frame callback to ensure the widget tree is built
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (context.mounted) {
-          GoRouter.of(context).push('/premium');
-        }
-      });
-    }
+    // Use a post-frame callback to ensure the widget tree is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (context.mounted) {
+        GoRouter.of(context).push('/premium');
+      }
+    });
   }
 
   Future<void> showPremiumAfterTestAdded(BuildContext context) async {
@@ -35,11 +29,9 @@ class ShowPremiumService {
 
     if (testCounter >= 2) {
       await localStorage.resetTestCounter();
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (context.mounted) {
-          GoRouter.of(context).push('/premium');
-        }
-      });
+      if (context.mounted) {
+        await GoRouter.of(context).push('/premium');
+      }
     }
   }
 
@@ -50,11 +42,9 @@ class ShowPremiumService {
 
     if (courseNetCounter >= 2) {
       await localStorage.resetCourseNetCounter();
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (context.mounted) {
-          GoRouter.of(context).push('/premium');
-        }
-      });
+      if (context.mounted) {
+        await GoRouter.of(context).push('/premium');
+      }
     }
   }
 }
