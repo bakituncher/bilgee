@@ -95,119 +95,145 @@ class _OverviewContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final streak = _calculateStreak(tests);
+    final avgNet = _calculateAvgNet(user, tests);
+
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: [
-        // Compact Stats Grid
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-          sliver: SliverGrid(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              childAspectRatio: 1.6,
-            ),
-            delegate: SliverChildListDelegate([
-              _CompactStatCard(
-                icon: Icons.quiz_rounded,
-                label: 'Deneme',
-                value: '${user.testCount ?? 0}',
-                color: AppTheme.secondaryBrandColor,
-                isDark: isDark,
-              ).animate().fadeIn(duration: 200.ms).scale(begin: const Offset(0.9, 0.9)),
-              _CompactStatCard(
-                icon: Icons.trending_up_rounded,
-                label: 'Ort. Net',
-                value: _calculateAvgNet(user, tests),
-                color: AppTheme.successBrandColor,
-                isDark: isDark,
-              ).animate(delay: 50.ms).fadeIn(duration: 200.ms).scale(begin: const Offset(0.9, 0.9)),
-              _CompactStatCard(
-                icon: Icons.local_fire_department_rounded,
-                label: 'Seri',
-                value: '${_calculateStreak(tests)}',
-                color: Colors.deepOrange,
-                isDark: isDark,
-              ).animate(delay: 100.ms).fadeIn(duration: 200.ms).scale(begin: const Offset(0.9, 0.9)),
-              _CompactStatCard(
-                icon: Icons.star_rounded,
-                label: 'Puan',
-                value: '${user.engagementScore ?? 0}',
-                color: AppTheme.goldBrandColor,
-                isDark: isDark,
-              ).animate(delay: 150.ms).fadeIn(duration: 200.ms).scale(begin: const Offset(0.9, 0.9)),
-            ]),
+        // Premium Hero Kartı - Sektör seviyesinde tasarım
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+            child: _PremiumHeroCard(
+              user: user,
+              tests: tests,
+              isDark: isDark,
+              streak: streak,
+              avgNet: avgNet,
+            ).animate()
+              .fadeIn(duration: 400.ms)
+              .slideY(begin: -0.05, duration: 500.ms, curve: Curves.easeOutCubic)
+              .shimmer(duration: 1500.ms, delay: 300.ms),
           ),
         ),
 
-        // Performance Chart Section - Kaydırılabilir şık grafik kartları
+        // Performans Grafikleri - Kompakt kaydırılabilir kartlar
         if (tests.isNotEmpty)
           SliverToBoxAdapter(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                  padding: const EdgeInsets.fromLTRB(12, 6, 12, 8),
                   child: Row(
                     children: [
-                      Icon(
-                        Icons.analytics_rounded,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Performans Analizi',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              AppTheme.primaryBrandColor.withOpacity(0.2),
+                              AppTheme.secondaryBrandColor.withOpacity(0.1),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.insights_rounded,
+                          color: AppTheme.primaryBrandColor,
+                          size: 16,
                         ),
                       ),
+                      const SizedBox(width: 10),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Performans Trendleri',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w900,
+                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          Text(
+                            'Gelişimini takip et',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: isDark
+                                  ? Colors.white.withOpacity(0.5)
+                                  : Colors.black.withOpacity(0.45),
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
-                  ),
+                  ).animate(delay: 300.ms).fadeIn().slideX(begin: -0.05),
                 ),
                 SizedBox(
-                  height: 240,
+                  height: 220,
                   child: _SmartPerformanceCharts(
                     tests: tests,
                     isDark: isDark,
                     examType: user.selectedExam ?? 'YKS',
-                  ).animate(delay: 200.ms).fadeIn(duration: 250.ms).slideX(begin: 0.02),
+                  ).animate(delay: 350.ms).fadeIn(duration: 300.ms),
                 ),
               ],
             ),
           ),
 
-        // Daily Activity Tracker
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: _DailyActivityCard(
-              userId: user.id,
-              isDark: isDark,
-              tests: tests,
-            ).animate(delay: 250.ms).fadeIn(duration: 250.ms).slideY(begin: 0.02),
-          ),
-        ),
+        const SliverToBoxAdapter(child: SizedBox(height: 4)),
 
-        // Subject Performance Breakdown
+        // Daily Activity & Subject Performance - Kompakt
         if (tests.isNotEmpty)
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-              child: _SubjectBreakdownCard(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Column(
+                children: [
+                  // Aktivite Haritası
+                  _EnhancedActivityCard(
+                    userId: user.id,
+                    isDark: isDark,
+                    tests: tests,
+                  ).animate(delay: 400.ms)
+                    .fadeIn(duration: 300.ms)
+                    .slideY(begin: 0.05, curve: Curves.easeOutCubic),
+
+                  const SizedBox(height: 8),
+
+                  // Ders Performansı
+                  _EnhancedSubjectBreakdown(
+                    tests: tests,
+                    isDark: isDark,
+                  ).animate(delay: 450.ms)
+                    .fadeIn(duration: 300.ms)
+                    .slideY(begin: 0.05, curve: Curves.easeOutCubic),
+                ],
+              ),
+            ),
+          ),
+
+        // Motivasyonel Alt Bilgi
+        if (tests.isNotEmpty)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
+              child: _MotivationalFooter(
                 tests: tests,
+                streak: streak,
                 isDark: isDark,
-              ).animate(delay: 300.ms).fadeIn(duration: 250.ms).slideY(begin: 0.02),
+              ).animate(delay: 500.ms)
+                .fadeIn(duration: 300.ms)
+                .scale(begin: const Offset(0.95, 0.95)),
             ),
           ),
 
         // Bottom spacing
-        const SliverToBoxAdapter(
-          child: SizedBox(height: 24),
-        ),
+        const SliverToBoxAdapter(child: SizedBox(height: 12)),
       ],
     );
   }
@@ -263,42 +289,582 @@ class _OverviewContent extends ConsumerWidget {
   }
 }
 
-/// Compact stat card for key metrics
-class _CompactStatCard extends StatelessWidget {
+/// Premium Hero Kartı - Sektör seviyesinde tasarım
+class _PremiumHeroCard extends StatelessWidget {
+  final UserModel user;
+  final List<TestModel> tests;
+  final bool isDark;
+  final int streak;
+  final String avgNet;
+
+  const _PremiumHeroCard({
+    required this.user,
+    required this.tests,
+    required this.isDark,
+    required this.streak,
+    required this.avgNet,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final motivationMessage = _getMotivationMessage();
+    final motivationColor = _getMotivationColor();
+    final progressPercentage = _calculateProgress();
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: motivationColor.withOpacity(0.3),
+            blurRadius: 32,
+            offset: const Offset(0, 12),
+            spreadRadius: -8,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Stack(
+          children: [
+            // Arka plan gradient
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    motivationColor.withOpacity(0.15),
+                    motivationColor.withOpacity(0.05),
+                    isDark ? const Color(0xFF0F172A) : Colors.white,
+                  ],
+                  stops: const [0.0, 0.5, 1.0],
+                ),
+              ),
+            ),
+
+            // Animasyonlu arka plan desenleri
+            Positioned(
+              right: -40,
+              top: -40,
+              child: Container(
+                width: 160,
+                height: 160,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      motivationColor.withOpacity(0.1),
+                      motivationColor.withOpacity(0.0),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              left: -30,
+              bottom: -30,
+              child: Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      motivationColor.withOpacity(0.08),
+                      motivationColor.withOpacity(0.0),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // İçerik
+            Container(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Üst kısım - Karşılama ve durum
+                  Row(
+                    children: [
+                      // Avatar
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [motivationColor, motivationColor.withOpacity(0.7)],
+                          ),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white.withOpacity(isDark ? 0.1 : 0.3),
+                            width: 3,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: motivationColor.withOpacity(0.5),
+                              blurRadius: 16,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          _getMotivationIcon(),
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Hoşgeldin, ${user.firstName.isNotEmpty ? user.firstName : 'Öğrenci'}',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: isDark
+                                    ? Colors.white.withOpacity(0.6)
+                                    : Colors.black.withOpacity(0.5),
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              motivationMessage,
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                height: 1.2,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Durum rozeti
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [motivationColor, motivationColor.withOpacity(0.8)],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: motivationColor.withOpacity(0.4),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _getStatusIcon(),
+                              color: Colors.white,
+                              size: 14,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _getStatusText(),
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // İstatistik kartları - Grid
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _PremiumStatItem(
+                          icon: Icons.assignment_turned_in_rounded,
+                          label: 'Deneme',
+                          value: '${user.testCount ?? 0}',
+                          color: const Color(0xFF8B5CF6),
+                          isDark: isDark,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _PremiumStatItem(
+                          icon: Icons.trending_up_rounded,
+                          label: 'Ort. Net',
+                          value: avgNet,
+                          color: const Color(0xFF10B981),
+                          isDark: isDark,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _PremiumStatItem(
+                          icon: Icons.local_fire_department_rounded,
+                          label: 'Seri',
+                          value: '$streak',
+                          suffix: 'gün',
+                          color: const Color(0xFFEF4444),
+                          isDark: isDark,
+                          isHighlight: streak >= 3,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _PremiumStatItem(
+                          icon: Icons.emoji_events_rounded,
+                          label: 'Puan',
+                          value: '${user.engagementScore ?? 0}',
+                          color: AppTheme.goldBrandColor,
+                          isDark: isDark,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // İlerleme barı
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Haftalık İlerleme',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: isDark
+                                  ? Colors.white.withOpacity(0.6)
+                                  : Colors.black.withOpacity(0.5),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          Text(
+                            '${(progressPercentage * 100).toInt()}%',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w900,
+                              color: motivationColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Stack(
+                        children: [
+                          Container(
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? Colors.white.withOpacity(0.1)
+                                  : Colors.black.withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(3),
+                            ),
+                          ),
+                          FractionallySizedBox(
+                            widthFactor: progressPercentage.clamp(0.0, 1.0),
+                            child: Container(
+                              height: 6,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    motivationColor,
+                                    motivationColor.withOpacity(0.7),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(3),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: motivationColor.withOpacity(0.5),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _getMotivationMessage() {
+    if (tests.isEmpty) return 'İlk denemeni ekle';
+    if (streak >= 7) return 'Muhteşem performans! 🔥';
+    if (streak >= 3) return 'Harika gidiyorsun! 💪';
+    if (tests.length >= 20) return 'Süper çalışkansın! 📚';
+    if (tests.length >= 10) return 'İyi ilerliyorsun! 🎯';
+    return 'Yolculuğuna devam et! 🚀';
+  }
+
+  Color _getMotivationColor() {
+    if (streak >= 7) return const Color(0xFFEF4444);
+    if (streak >= 3) return const Color(0xFFF97316);
+    if (tests.length >= 20) return const Color(0xFF8B5CF6);
+    if (tests.length >= 10) return const Color(0xFF10B981);
+    return AppTheme.primaryBrandColor;
+  }
+
+  IconData _getMotivationIcon() {
+    if (streak >= 7) return Icons.emoji_events_rounded;
+    if (streak >= 3) return Icons.local_fire_department_rounded;
+    if (tests.length >= 20) return Icons.military_tech_rounded;
+    if (tests.length >= 10) return Icons.trending_up_rounded;
+    return Icons.rocket_launch_rounded;
+  }
+
+  IconData _getStatusIcon() {
+    if (streak >= 7) return Icons.auto_awesome_rounded;
+    if (streak >= 3) return Icons.bolt_rounded;
+    if (tests.length >= 10) return Icons.star_rounded;
+    return Icons.thumb_up_rounded;
+  }
+
+  String _getStatusText() {
+    if (streak >= 7) return 'ÇOK İYİ';
+    if (streak >= 3) return 'GÜZEL';
+    if (tests.length >= 10) return 'AKTİF';
+    return 'YENİ';
+  }
+
+  double _calculateProgress() {
+    if (tests.isEmpty) return 0.0;
+    // Haftalık hedef: 5 test
+    final weeklyGoal = 5;
+    final now = DateTime.now();
+    final weekStart = now.subtract(Duration(days: now.weekday - 1));
+    final weekTests = tests.where((t) => t.date.isAfter(weekStart)).length;
+    return (weekTests / weeklyGoal).clamp(0.0, 1.0);
+  }
+}
+
+/// Premium istatistik öğesi
+class _PremiumStatItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
+  final String? suffix;
   final Color color;
   final bool isDark;
+  final bool isHighlight;
 
-  const _CompactStatCard({
+  const _PremiumStatItem({
     required this.icon,
     required this.label,
     required this.value,
+    this.suffix,
     required this.color,
     required this.isDark,
+    this.isHighlight = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: (isDark ? const Color(0xFF1E293B) : Colors.white).withOpacity(0.6),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isHighlight
+              ? color.withOpacity(0.5)
+              : (isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05)),
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 18),
+          const SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Flexible(
+                child: Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    color: color,
+                    height: 1,
+                    letterSpacing: -0.5,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (suffix != null) ...[
+                const SizedBox(width: 2),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 1),
+                  child: Text(
+                    suffix!,
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      color: color.withOpacity(0.7),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 3),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+              color: isDark
+                  ? Colors.white.withOpacity(0.5)
+                  : Colors.black.withOpacity(0.4),
+              letterSpacing: 0.3,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Hızlı istatistik rozeti
+class _QuickStatBadge extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
+  final bool isDark;
+  final bool isHighlight;
+
+  const _QuickStatBadge({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+    required this.isDark,
+    this.isHighlight = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: (isDark ? const Color(0xFF1E293B) : Colors.white).withOpacity(0.8),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: isHighlight ? color.withOpacity(0.5) : Colors.transparent,
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: color, size: 13),
+          const SizedBox(width: 4),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  color: color,
+                  height: 1,
+                ),
+              ),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 8,
+                  fontWeight: FontWeight.w600,
+                  color: isDark
+                      ? Colors.white.withOpacity(0.5)
+                      : Colors.black.withOpacity(0.45),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Modern istatistik kartı - Yatay scroll için
+class _ModernStatCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final String? suffix;
+  final Color color;
+  final Gradient gradient;
+  final bool isDark;
+  final bool isSpecial;
+
+  const _ModernStatCard({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.suffix,
+    required this.color,
+    required this.gradient,
+    required this.isDark,
+    this.isSpecial = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 120,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            color.withOpacity(0.12),
+            color.withOpacity(0.04),
+          ],
+        ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark
-              ? Colors.white.withOpacity(0.06)
-              : Colors.black.withOpacity(0.04),
-          width: 1,
+          color: color.withOpacity(0.3),
+          width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark
-                ? Colors.black.withOpacity(0.2)
-                : Colors.black.withOpacity(0.04),
+            color: color.withOpacity(0.15),
             blurRadius: 8,
             offset: const Offset(0, 2),
+            spreadRadius: -1,
           ),
         ],
       ),
@@ -307,33 +873,69 @@ class _CompactStatCard extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(10),
+              gradient: gradient,
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withOpacity(0.3),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-            child: Icon(icon, color: color, size: 18),
+            child: Icon(icon, color: Colors.white, size: 16),
           ),
-          const Spacer(),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.w900,
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
-              height: 1,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: isDark
-                  ? Colors.white.withOpacity(0.5)
-                  : Colors.black.withOpacity(0.45),
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Flexible(
+                    child: Text(
+                      value,
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: color,
+                        height: 1,
+                        letterSpacing: -0.5,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (suffix != null) ...[
+                    const SizedBox(width: 3),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 1),
+                      child: Text(
+                        suffix!,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: color.withOpacity(0.7),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 3),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: isDark
+                      ? Colors.white.withOpacity(0.6)
+                      : Colors.black.withOpacity(0.5),
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -436,12 +1038,12 @@ class _SmartPerformanceCharts extends StatelessWidget {
 
     return ListView.builder(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       itemCount: chartDataList.length,
       itemBuilder: (context, index) {
         final data = chartDataList[index];
         return Padding(
-          padding: EdgeInsets.only(right: index < chartDataList.length - 1 ? 12 : 0),
+          padding: EdgeInsets.only(right: index < chartDataList.length - 1 ? 10 : 0),
           child: _SwipeablePerformanceCard(
             data: data,
             isDark: isDark,
@@ -548,7 +1150,7 @@ class _SwipeablePerformanceCard extends StatelessWidget {
     }
 
     return Container(
-      width: MediaQuery.of(context).size.width * 0.85,
+      width: MediaQuery.of(context).size.width * 0.80,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -558,56 +1160,56 @@ class _SwipeablePerformanceCard extends StatelessWidget {
             gradientEnd.withOpacity(0.05),
           ],
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: trendColor.withOpacity(0.3),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: trendColor.withOpacity(0.15),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-            spreadRadius: -4,
+            color: trendColor.withOpacity(0.12),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+            spreadRadius: -2,
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         child: Stack(
           children: [
-            // Arka plan deseni
+            // Arka plan deseni - daha küçük
             Positioned(
-              right: -30,
-              top: -30,
-              child: Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: trendColor.withOpacity(0.05),
-                ),
-              ),
-            ),
-            Positioned(
-              left: -20,
-              bottom: -20,
+              right: -20,
+              top: -20,
               child: Container(
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: trendColor.withOpacity(0.05),
+                  color: trendColor.withOpacity(0.04),
+                ),
+              ),
+            ),
+            Positioned(
+              left: -15,
+              bottom: -15,
+              child: Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: trendColor.withOpacity(0.04),
                 ),
               ),
             ),
 
             // İçerik
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: (isDark ? const Color(0xFF1E293B) : Colors.white).withOpacity(0.95),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -616,23 +1218,23 @@ class _SwipeablePerformanceCard extends StatelessWidget {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(10),
+                        padding: const EdgeInsets.all(7),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [gradientStart, gradientEnd],
                           ),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(10),
                           boxShadow: [
                             BoxShadow(
-                              color: trendColor.withOpacity(0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
+                              color: trendColor.withOpacity(0.25),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
                             ),
                           ],
                         ),
-                        child: Icon(data.icon, color: Colors.white, size: 20),
+                        child: Icon(data.icon, color: Colors.white, size: 16),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -640,7 +1242,7 @@ class _SwipeablePerformanceCard extends StatelessWidget {
                             Text(
                               data.title,
                               style: TextStyle(
-                                fontSize: 18,
+                                fontSize: 15,
                                 fontWeight: FontWeight.w900,
                                 color: isDark ? Colors.white : const Color(0xFF0F172A),
                                 letterSpacing: -0.5,
@@ -649,7 +1251,7 @@ class _SwipeablePerformanceCard extends StatelessWidget {
                             Text(
                               data.subtitle,
                               style: TextStyle(
-                                fontSize: 11,
+                                fontSize: 10,
                                 fontWeight: FontWeight.w600,
                                 color: isDark
                                     ? Colors.white.withOpacity(0.5)
@@ -660,10 +1262,10 @@ class _SwipeablePerformanceCard extends StatelessWidget {
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                         decoration: BoxDecoration(
                           color: trendColor.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(6),
                           border: Border.all(
                             color: trendColor.withOpacity(0.3),
                             width: 1,
@@ -672,12 +1274,12 @@ class _SwipeablePerformanceCard extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(trendIcon, color: trendColor, size: 14),
-                            const SizedBox(width: 4),
+                            Icon(trendIcon, color: trendColor, size: 12),
+                            const SizedBox(width: 3),
                             Text(
                               trendText,
                               style: TextStyle(
-                                fontSize: 10,
+                                fontSize: 9,
                                 fontWeight: FontWeight.w800,
                                 color: trendColor,
                               ),
@@ -687,7 +1289,7 @@ class _SwipeablePerformanceCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
 
                   // Ortalama net bilgisi
                   Row(
@@ -695,7 +1297,7 @@ class _SwipeablePerformanceCard extends StatelessWidget {
                       Text(
                         'Ort. Net: ',
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: isDark
                               ? Colors.white.withOpacity(0.6)
@@ -705,7 +1307,7 @@ class _SwipeablePerformanceCard extends StatelessWidget {
                       Text(
                         avgNet.toStringAsFixed(1),
                         style: TextStyle(
-                          fontSize: 22,
+                          fontSize: 18,
                           fontWeight: FontWeight.w900,
                           color: trendColor,
                           height: 1,
@@ -714,15 +1316,15 @@ class _SwipeablePerformanceCard extends StatelessWidget {
                       const Spacer(),
                       if (trend.abs() > 0.5)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                           decoration: BoxDecoration(
                             color: trendColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(5),
                           ),
                           child: Text(
                             '${trend > 0 ? '+' : ''}${trend.toStringAsFixed(1)}',
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: 10,
                               fontWeight: FontWeight.w800,
                               color: trendColor,
                             ),
@@ -730,7 +1332,7 @@ class _SwipeablePerformanceCard extends StatelessWidget {
                         ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
 
                   // Mini grafik
                   Expanded(
@@ -896,6 +1498,299 @@ class _MiniPerformanceChart extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// Gelişmiş Aktivite Kartı - GitHub tarzı ısı haritası
+class _EnhancedActivityCard extends StatelessWidget {
+  final String userId;
+  final bool isDark;
+  final List<TestModel> tests;
+
+  const _EnhancedActivityCard({
+    required this.userId,
+    required this.isDark,
+    required this.tests,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final Map<String, int> dailyTests = {};
+    final now = DateTime.now();
+    final startDate = now.subtract(const Duration(days: _daysToShowVisits - 1));
+
+    for (int i = 0; i < _daysToShowVisits; i++) {
+      final date = startDate.add(Duration(days: i));
+      final key = DateFormat('yyyy-MM-dd').format(date);
+      dailyTests[key] = 0;
+    }
+
+    for (final test in tests) {
+      final testDate = test.date;
+      if (testDate.isAfter(startDate.subtract(const Duration(days: 1)))) {
+        final key = DateFormat('yyyy-MM-dd').format(testDate);
+        if (dailyTests.containsKey(key)) {
+          dailyTests[key] = dailyTests[key]! + 1;
+        }
+      }
+    }
+
+    final sortedDates = dailyTests.keys.toList()..sort();
+    final activeDays = dailyTests.values.where((count) => count > 0).length;
+    final maxStreak = _calculateMaxStreak(dailyTests, sortedDates);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppTheme.primaryBrandColor.withOpacity(0.08),
+            AppTheme.secondaryBrandColor.withOpacity(0.04),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withOpacity(0.08)
+              : Colors.black.withOpacity(0.06),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withOpacity(0.2)
+                : Colors.black.withOpacity(0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppTheme.primaryBrandColor,
+                      AppTheme.primaryBrandColor.withOpacity(0.7),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.primaryBrandColor.withOpacity(0.3),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.calendar_month_rounded,
+                  color: Colors.white,
+                  size: 16,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Aktivite Haritası',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    Text(
+                      'Son 30 günlük çalışma geçmişin',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: isDark
+                            ? Colors.white.withOpacity(0.5)
+                            : Colors.black.withOpacity(0.45),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppTheme.successBrandColor,
+                      AppTheme.successBrandColor.withOpacity(0.8),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.successBrandColor.withOpacity(0.25),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  '$activeDays/${_daysToShowVisits}',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _buildEnhancedActivityGrid(dailyTests, sortedDates),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  _buildLegendItem('Az', AppTheme.primaryBrandColor.withOpacity(0.2)),
+                  const SizedBox(width: 8),
+                  _buildLegendItem('Orta', AppTheme.primaryBrandColor.withOpacity(0.5)),
+                  const SizedBox(width: 8),
+                  _buildLegendItem('Çok', AppTheme.primaryBrandColor),
+                ],
+              ),
+              if (maxStreak > 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.deepOrange.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: Colors.deepOrange.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.local_fire_department_rounded,
+                        color: Colors.deepOrange, size: 14),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Rekor: $maxStreak gün',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.deepOrange,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEnhancedActivityGrid(Map<String, int> dailyTests, List<String> sortedDates) {
+    return SizedBox(
+      height: 70,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final cellSize = (constraints.maxWidth / 30).clamp(8.0, 11.0);
+          return Wrap(
+            spacing: 3,
+            runSpacing: 3,
+            children: sortedDates.map((dateKey) {
+              final count = dailyTests[dateKey] ?? 0;
+              return _buildEnhancedActivityCell(count, cellSize);
+            }).toList(),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildEnhancedActivityCell(int count, double size) {
+    Color color;
+    if (count == 0) {
+      color = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+    } else if (count == 1) {
+      color = AppTheme.primaryBrandColor.withOpacity(0.3);
+    } else if (count == 2) {
+      color = AppTheme.primaryBrandColor.withOpacity(0.6);
+    } else {
+      color = AppTheme.primaryBrandColor;
+    }
+
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(3),
+        boxShadow: count > 0 ? [
+          BoxShadow(
+            color: color.withOpacity(0.4),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ] : null,
+      ),
+    );
+  }
+
+  Widget _buildLegendItem(String label, Color color) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(3),
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+            color: isDark
+                ? Colors.white.withOpacity(0.5)
+                : Colors.black.withOpacity(0.5),
+          ),
+        ),
+      ],
+    );
+  }
+
+  int _calculateMaxStreak(Map<String, int> dailyTests, List<String> sortedDates) {
+    int maxStreak = 0;
+    int currentStreak = 0;
+
+    for (final dateKey in sortedDates) {
+      if (dailyTests[dateKey]! > 0) {
+        currentStreak++;
+        if (currentStreak > maxStreak) maxStreak = currentStreak;
+      } else {
+        currentStreak = 0;
+      }
+    }
+
+    return maxStreak;
   }
 }
 
@@ -1083,6 +1978,509 @@ class _DailyActivityCard extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+/// Gelişmiş Ders Performans Kartı - Görsel çubuk grafikleriyle
+class _EnhancedSubjectBreakdown extends StatelessWidget {
+  final List<TestModel> tests;
+  final bool isDark;
+
+  const _EnhancedSubjectBreakdown({
+    required this.tests,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final Map<String, _SubjectStats> subjectStats = {};
+
+    for (final test in tests) {
+      for (final entry in test.scores.entries) {
+        final subject = entry.key;
+        final scores = entry.value;
+        final correct = scores['dogru'] ?? 0;
+        final wrong = scores['yanlis'] ?? 0;
+        final blank = scores['bos'] ?? 0;
+
+        if (!subjectStats.containsKey(subject)) {
+          subjectStats[subject] = _SubjectStats(
+            subject: subject,
+            totalCorrect: 0,
+            totalWrong: 0,
+            totalBlank: 0,
+          );
+        }
+
+        subjectStats[subject]!.totalCorrect += correct;
+        subjectStats[subject]!.totalWrong += wrong;
+        subjectStats[subject]!.totalBlank += blank;
+      }
+    }
+
+    final sortedSubjects = subjectStats.values.toList()
+      ..sort((a, b) => b.net.compareTo(a.net));
+
+    final topSubjects = sortedSubjects.take(6).toList();
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppTheme.goldBrandColor.withOpacity(0.08),
+            AppTheme.successBrandColor.withOpacity(0.04),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withOpacity(0.08)
+              : Colors.black.withOpacity(0.06),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withOpacity(0.2)
+                : Colors.black.withOpacity(0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppTheme.goldBrandColor,
+                      AppTheme.goldBrandColor.withOpacity(0.7),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.goldBrandColor.withOpacity(0.3),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.bar_chart_rounded,
+                  color: Colors.white,
+                  size: 16,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Ders Performansı',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    Text(
+                      'En yüksek net ortalamaları',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: isDark
+                            ? Colors.white.withOpacity(0.5)
+                            : Colors.black.withOpacity(0.45),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...topSubjects.asMap().entries.map((entry) {
+            final index = entry.key;
+            final stat = entry.value;
+            return Padding(
+              padding: EdgeInsets.only(bottom: index < topSubjects.length - 1 ? 10 : 0),
+              child: _EnhancedSubjectRow(
+                stat: stat,
+                isDark: isDark,
+                rank: index + 1,
+                maxNet: sortedSubjects.first.net,
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+}
+
+/// Gelişmiş ders satırı - Progress bar ile
+class _EnhancedSubjectRow extends StatelessWidget {
+  final _SubjectStats stat;
+  final bool isDark;
+  final int rank;
+  final double maxNet;
+
+  const _EnhancedSubjectRow({
+    required this.stat,
+    required this.isDark,
+    required this.rank,
+    required this.maxNet,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final percentage = maxNet > 0 ? (stat.net / maxNet) : 0.0;
+    final color = _getColorForRank(rank);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [color, color.withOpacity(0.7)],
+                ),
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withOpacity(0.3),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Text(
+                  '$rank',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                stat.subject,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: color.withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: Text(
+                '${stat.net.toStringAsFixed(1)}',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w900,
+                  color: color,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Stack(
+          children: [
+            Container(
+              height: 8,
+              decoration: BoxDecoration(
+                color: isDark
+                    ? const Color(0xFF334155)
+                    : const Color(0xFFE2E8F0),
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+            FractionallySizedBox(
+              widthFactor: percentage.clamp(0.0, 1.0),
+              child: Container(
+                height: 8,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [color, color.withOpacity(0.7)],
+                  ),
+                  borderRadius: BorderRadius.circular(4),
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withOpacity(0.4),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            _MiniStat(
+              icon: Icons.check_circle_rounded,
+              value: '${stat.totalCorrect}',
+              color: const Color(0xFF10B981),
+              isDark: isDark,
+            ),
+            const SizedBox(width: 8),
+            _MiniStat(
+              icon: Icons.cancel_rounded,
+              value: '${stat.totalWrong}',
+              color: const Color(0xFFEF4444),
+              isDark: isDark,
+            ),
+            const SizedBox(width: 8),
+            _MiniStat(
+              icon: Icons.radio_button_unchecked_rounded,
+              value: '${stat.totalBlank}',
+              color: isDark ? Colors.white.withOpacity(0.3) : Colors.black.withOpacity(0.3),
+              isDark: isDark,
+            ),
+            const Spacer(),
+            Text(
+              '${(stat.accuracy * 100).toStringAsFixed(0)}% doğru',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: isDark
+                    ? Colors.white.withOpacity(0.5)
+                    : Colors.black.withOpacity(0.5),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Color _getColorForRank(int rank) {
+    switch (rank) {
+      case 1: return const Color(0xFFF59E0B); // Altın
+      case 2: return const Color(0xFF94A3B8); // Gümüş
+      case 3: return const Color(0xFFF97316); // Bronz
+      default: return AppTheme.primaryBrandColor;
+    }
+  }
+}
+
+/// Mini istatistik göstergesi
+class _MiniStat extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final Color color;
+  final bool isDark;
+
+  const _MiniStat({
+    required this.icon,
+    required this.value,
+    required this.color,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 12, color: color),
+        const SizedBox(width: 3),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: isDark
+                ? Colors.white.withOpacity(0.7)
+                : Colors.black.withOpacity(0.6),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Motivasyonel Alt Bilgi - Kullanıcıyı teşvik eden mesajlar
+class _MotivationalFooter extends StatelessWidget {
+  final List<TestModel> tests;
+  final int streak;
+  final bool isDark;
+
+  const _MotivationalFooter({
+    required this.tests,
+    required this.streak,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final message = _getFooterMessage();
+    final icon = _getFooterIcon();
+    final color = _getFooterColor();
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            color.withOpacity(0.15),
+            color.withOpacity(0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: color.withOpacity(0.3),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.15),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+            spreadRadius: -2,
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [color, color.withOpacity(0.7)],
+              ),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Icon(icon, color: Colors.white, size: 24),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  message.title,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    color: color,
+                    height: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  message.subtitle,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: isDark
+                        ? Colors.white.withOpacity(0.7)
+                        : Colors.black.withOpacity(0.6),
+                    height: 1.2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  ({String title, String subtitle}) _getFooterMessage() {
+    if (streak >= 7) {
+      return (
+        title: 'Durmak yok! 🔥',
+        subtitle: '$streak günlük serinle harika gidiyorsun. Bu temponu koru!'
+      );
+    }
+    if (streak >= 3) {
+      return (
+        title: 'Süper gidiyorsun! 💪',
+        subtitle: 'Çalışma temponu mükemmel. Böyle devam et!'
+      );
+    }
+    if (tests.length >= 20) {
+      return (
+        title: 'İnanılmaz çalışkansın! 📚',
+        subtitle: '${tests.length} deneme çözdün. Başarı yakın!'
+      );
+    }
+    if (tests.length >= 10) {
+      return (
+        title: 'Güzel bir ilerleme! 🎯',
+        subtitle: 'Çalışmalarına devam et, başarı seni bekliyor!'
+      );
+    }
+    if (tests.isEmpty) {
+      return (
+        title: 'Hadi başlayalım! 🚀',
+        subtitle: 'İlk denemeni ekle ve yolculuğuna başla!'
+      );
+    }
+    return (
+      title: 'Doğru yoldasın! ⭐',
+      subtitle: 'Her deneme seni hedefe bir adım daha yaklaştırıyor!'
+    );
+  }
+
+  IconData _getFooterIcon() {
+    if (streak >= 7) return Icons.local_fire_department_rounded;
+    if (streak >= 3) return Icons.bolt_rounded;
+    if (tests.length >= 20) return Icons.emoji_events_rounded;
+    if (tests.length >= 10) return Icons.trending_up_rounded;
+    if (tests.isEmpty) return Icons.rocket_launch_rounded;
+    return Icons.star_rounded;
+  }
+
+  Color _getFooterColor() {
+    if (streak >= 7) return Colors.deepOrange;
+    if (streak >= 3) return const Color(0xFFF97316);
+    if (tests.length >= 20) return const Color(0xFF8B5CF6);
+    if (tests.length >= 10) return const Color(0xFF10B981);
+    if (tests.isEmpty) return AppTheme.primaryBrandColor;
+    return AppTheme.goldBrandColor;
   }
 }
 
