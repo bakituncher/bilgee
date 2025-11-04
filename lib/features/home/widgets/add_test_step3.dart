@@ -10,6 +10,7 @@ import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:taktik/features/stats/logic/stats_analysis.dart';
 import 'package:lottie/lottie.dart';
+import 'package:taktik/core/services/show_premium_service.dart';
 
 class Step3Summary extends ConsumerWidget {
   const Step3Summary({super.key});
@@ -101,6 +102,11 @@ class Step3Summary extends ConsumerWidget {
                 // Başarılı kaydın ardından şık bir Lottie onayı göster
                 if (context.mounted) {
                   await _showSuccessDialog(context);
+                }
+
+                // Show premium screen after event
+                if (context.mounted) {
+                  await ref.read(showPremiumServiceProvider).showPremiumAfterTestAdded(context);
                 }
 
                 if (context.mounted) {

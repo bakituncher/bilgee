@@ -10,6 +10,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:taktik/shared/widgets/score_slider.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:lottie/lottie.dart';
+import 'package:taktik/core/services/show_premium_service.dart';
 
 final _updateModeProvider = StateProvider.autoDispose<bool>((ref) => true);
 final _sessionQuestionCountProvider = StateProvider.autoDispose<int>((ref) => 20);
@@ -338,6 +339,8 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
                   HapticFeedback.mediumImpact();
                   // Başarı Lottie diyaloğunu göster, ardından sayfadan geri dön
                   await _showSuccessDialog(context);
+                  // Show premium screen after event
+                  await ref.read(showPremiumServiceProvider).showPremiumAfterCourseNetUpdated(context);
                   if (context.mounted) context.pop();
                 }
               },

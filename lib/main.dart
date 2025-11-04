@@ -22,6 +22,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:taktik/core/services/local_storage_service.dart';
+import 'package:taktik/core/services/show_premium_service.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -137,8 +140,19 @@ void main() async {
       if (kDebugMode) debugPrint('[Intl] Tarih format başlatılamadı: $e');
     }
 
+    // Initialize SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    final localStorageService = LocalStorageService(prefs);
+
     // Uygulamayı hızlıca ayağa kaldır
-    runApp(const ProviderScope(child: BilgeAiApp()));
+    runApp(
+      ProviderScope(
+        overrides: [
+          localStorageProvider.overrideWithValue(localStorageService),
+        ],
+        child: const BilgeAiApp(),
+      ),
+    );
 
     // Ağ bağımlı preload işleri uygulamayı bloklamasın
     // RemotePrompts, StrategyPrompts ve QuestArmory eşzamanlı ve hata yalıtımlı
@@ -227,6 +241,8 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
       NotificationService.instance.initialize(onNavigate: (route) {
         router.go(route);
       });
+      // Show premium screen on launch
+      ref.read(showPremiumServiceProvider).showPremiumScreenOnLaunch(context);
     });
   }
 
