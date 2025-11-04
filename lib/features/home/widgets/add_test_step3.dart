@@ -10,6 +10,8 @@ import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:taktik/features/stats/logic/stats_analysis.dart';
 import 'package:lottie/lottie.dart';
+import 'package:taktik/data/providers/activity_tracker_provider.dart';
+import 'package:taktik/core/navigation/app_routes.dart';
 
 class Step3Summary extends ConsumerWidget {
   const Step3Summary({super.key});

@@ -14,6 +14,7 @@ import 'main_shell_routes.dart';
 import 'package:taktik/features/blog/screens/blog_screen.dart';
 import 'package:taktik/features/premium/screens/premium_screen.dart' as premium;
 import 'package:taktik/features/premium/screens/tool_offer_screen.dart';
+import 'package:taktik/features/premium/screens/ai_tools_offer_screen.dart';
 import 'package:taktik/features/stats/screens/general_overview_screen.dart';
 import 'package:taktik/features/stats/screens/stats_premium_offer_screen.dart';
 import '../../features/blog/screens/blog_admin_editor_screen.dart';
@@ -195,6 +196,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             ),
           );
         },
+      ),
+      GoRoute(
+        path: '/ai-tools-offer',
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) => buildPageWithFadeTransition(
+          context: context,
+          state: state,
+          child: const AIToolsOfferScreen(),
+        ),
       ),
       GoRoute(
         path: '/stats/overview',

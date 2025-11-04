@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:taktik/data/providers/shared_prefs_provider.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
+import 'package:taktik/features/auth/application/auth_controller.dart';
 
 class SplashScreen extends ConsumerWidget {
   const SplashScreen({super.key});
@@ -12,6 +13,7 @@ class SplashScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Watch the FutureProvider that provides the SharedPreferences instance.
     final asyncPrefs = ref.watch(sharedPreferencesProvider);
+    final authState = ref.watch(authControllerProvider);
 
     return asyncPrefs.when(
       data: (prefs) {
@@ -20,7 +22,13 @@ class SplashScreen extends ConsumerWidget {
         // before we try to navigate.
         WidgetsBinding.instance.addPostFrameCallback((_) {
           final hasSeen = prefs.getBool('hasSeenWelcomeScreen') ?? false;
-          if (hasSeen) {
+          final isLoggedIn = authState.hasValue && authState.value != null;
+          final isEmailVerified = authState.value?.emailVerified ?? false;
+
+          // Eğer kullanıcı giriş yapmış ve email doğrulanmışsa, her seferinde premium ekranına yönlendir
+          if (hasSeen && isLoggedIn && isEmailVerified) {
+            context.go('/premium');
+          } else if (hasSeen) {
             context.go(AppRoutes.loading);
           } else {
             context.go(AppRoutes.preAuthWelcome);

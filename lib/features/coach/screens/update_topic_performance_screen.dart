@@ -10,6 +10,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:taktik/shared/widgets/score_slider.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:lottie/lottie.dart';
+import 'package:taktik/data/providers/activity_tracker_provider.dart';
+import 'package:taktik/core/navigation/app_routes.dart';
 
 final _updateModeProvider = StateProvider.autoDispose<bool>((ref) => true);
 final _sessionQuestionCountProvider = StateProvider.autoDispose<int>((ref) => 20);
@@ -334,10 +336,25 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
 
                 ref.invalidate(performanceProvider);
                 ref.read(questNotifierProvider.notifier).userUpdatedTopicPerformance(subject, topic, sessionQuestions);
+
+                // Aktivite takibi: Ders neti sayısını artır
+                await ref.read(activityTrackerProvider).incrementLessonNetCount();
+
                 if (context.mounted) {
                   HapticFeedback.mediumImpact();
-                  // Başarı Lottie diyaloğunu göster, ardından sayfadan geri dön
+                  // Başarı Lottie diyaloğunu göster
                   await _showSuccessDialog(context);
+
+                  // Her 2 ders neti güncellemesinde AI Tools Offer göster (1 saat içinde max 5 kez)
+                  final shouldShowOffer = ref.read(activityTrackerProvider).shouldShowToolOfferForLessonNet();
+
+                  if (shouldShowOffer && context.mounted) {
+                    await ref.read(activityTrackerProvider).markToolOfferShown();
+                    // Ders neti sayacını sıfırla
+                    await ref.read(activityTrackerProvider).resetLessonNetCount();
+                    await context.push(AppRoutes.aiToolsOffer);
+                  }
+
                   if (context.mounted) context.pop();
                 }
               },
