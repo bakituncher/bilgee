@@ -268,7 +268,6 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
           await Future.delayed(const Duration(milliseconds: 500));
           
           if (mounted) {
-            final context = this.context;
             final router = ref.read(goRouterProvider);
             router.push('/premium');
             if (kDebugMode) debugPrint('[AppLaunch] Premium screen displayed');
