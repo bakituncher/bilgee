@@ -109,15 +109,22 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
             controller: _tabController,
             indicator: BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  Theme.of(context).colorScheme.secondary,
-                  Theme.of(context).colorScheme.secondary.withOpacity(0.88),
-                ],
+                colors: isDark
+                    ? [
+                        Theme.of(context).colorScheme.primary.withOpacity(0.9),
+                        Theme.of(context).colorScheme.primary.withOpacity(0.75),
+                      ]
+                    : [
+                        Theme.of(context).colorScheme.secondary,
+                        Theme.of(context).colorScheme.secondary.withOpacity(0.88),
+                      ],
               ),
               borderRadius: BorderRadius.circular(11),
               boxShadow: [
                 BoxShadow(
-                  color: Theme.of(context).colorScheme.secondary.withOpacity(0.35),
+                  color: isDark
+                      ? Theme.of(context).colorScheme.primary.withOpacity(0.4)
+                      : Theme.of(context).colorScheme.secondary.withOpacity(0.35),
                   blurRadius: 10,
                   offset: const Offset(0, 3),
                 ),
@@ -126,9 +133,11 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
             indicatorSize: TabBarIndicatorSize.tab,
             dividerColor: Colors.transparent,
             labelColor: isDark 
-                ? Theme.of(context).colorScheme.primary
+                ? Colors.black
                 : Colors.black,
-            unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
+            unselectedLabelColor: isDark
+                ? Theme.of(context).colorScheme.onSurface.withOpacity(0.7)
+                : Theme.of(context).colorScheme.onSurfaceVariant,
             labelStyle: const TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 13,

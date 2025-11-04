@@ -40,8 +40,8 @@ class _SubjectStatCardState extends State<SubjectStatCard> {
               gradient: LinearGradient(
                 colors: isDark
                     ? [
-                        progressColor.withOpacity(_isHovered ? 0.14 : 0.09),
-                        progressColor.withOpacity(_isHovered ? 0.09 : 0.05),
+                        Theme.of(context).colorScheme.surfaceContainer.withOpacity(_isHovered ? 0.7 : 0.6),
+                        Theme.of(context).cardColor.withOpacity(_isHovered ? 0.85 : 0.75),
                       ]
                     : [
                         progressColor.withOpacity(_isHovered ? 0.20 : 0.15),
@@ -53,14 +53,14 @@ class _SubjectStatCardState extends State<SubjectStatCard> {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: isDark
-                    ? progressColor.withOpacity(_isHovered ? 0.45 : 0.28)
+                    ? progressColor.withOpacity(_isHovered ? 0.6 : 0.45)
                     : progressColor.withOpacity(_isHovered ? 0.60 : 0.45),
                 width: 1.5,
               ),
               boxShadow: _isHovered
                   ? [
                 BoxShadow(
-                  color: progressColor.withOpacity(isDark ? 0.25 : 0.30),
+                  color: progressColor.withOpacity(isDark ? 0.3 : 0.30),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -68,7 +68,7 @@ class _SubjectStatCardState extends State<SubjectStatCard> {
                   : [
                 BoxShadow(
                   color: isDark
-                      ? Theme.of(context).colorScheme.primary.withOpacity(0.05)
+                      ? Colors.black.withOpacity(0.25)
                       : Colors.black.withOpacity(0.10),
                   blurRadius: 6,
                   offset: const Offset(0, 2),

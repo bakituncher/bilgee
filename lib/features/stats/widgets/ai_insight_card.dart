@@ -23,8 +23,8 @@ class AiInsightCard extends StatelessWidget {
         gradient: LinearGradient(
           colors: isDark
               ? [
-                  Theme.of(context).cardColor,
-                  Theme.of(context).cardColor.withOpacity(0.96),
+                  Theme.of(context).colorScheme.surfaceContainer.withOpacity(0.8),
+                  Theme.of(context).cardColor.withOpacity(0.95),
                 ]
               : [
                   Theme.of(context).cardColor.withOpacity(0.98),
@@ -36,14 +36,14 @@ class AiInsightCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: isDark
-              ? Theme.of(context).colorScheme.secondary.withOpacity(0.28)
+              ? Theme.of(context).colorScheme.primary.withOpacity(0.35)
               : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
             color: isDark
-                ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                ? Colors.black.withOpacity(0.3)
                 : Colors.black.withOpacity(0.12),
             blurRadius: 14,
             offset: const Offset(0, 4),
@@ -58,10 +58,15 @@ class AiInsightCard extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  Theme.of(context).colorScheme.secondary.withOpacity(0.18),
-                  Theme.of(context).colorScheme.secondary.withOpacity(0.06),
-                ],
+                colors: isDark
+                    ? [
+                        Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                        Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                      ]
+                    : [
+                        Theme.of(context).colorScheme.secondary.withOpacity(0.18),
+                        Theme.of(context).colorScheme.secondary.withOpacity(0.06),
+                      ],
               ),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(18),

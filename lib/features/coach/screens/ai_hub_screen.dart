@@ -112,9 +112,27 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
                     child: Container(
-                      color: isDark 
-                          ? Colors.black.withOpacity(0.25)
-                          : Theme.of(context).scaffoldBackgroundColor.withOpacity(0.85),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: isDark
+                              ? [
+                                  Theme.of(context).scaffoldBackgroundColor.withOpacity(0.9),
+                                  Theme.of(context).scaffoldBackgroundColor.withOpacity(0.7),
+                                ]
+                              : [
+                                  Theme.of(context).scaffoldBackgroundColor.withOpacity(0.9),
+                                  Theme.of(context).scaffoldBackgroundColor.withOpacity(0.75),
+                                ],
+                        ),
+                        border: const Border(
+                          bottom: BorderSide(
+                            color: Colors.white10,
+                            width: 0.5,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -310,8 +328,8 @@ class _AnimatedBackground extends StatelessWidget {
               colors: isDark
                   ? [
                       Theme.of(context).scaffoldBackgroundColor,
-                      Theme.of(context).scaffoldBackgroundColor.blend(Colors.black, .2 + g * .1),
-                      Theme.of(context).scaffoldBackgroundColor.blend(Theme.of(context).colorScheme.primary.withOpacity(.2), .05 + g * .08),
+                      Theme.of(context).scaffoldBackgroundColor.blend(Theme.of(context).colorScheme.primary.withOpacity(.15), .08 + g * .1),
+                      Theme.of(context).scaffoldBackgroundColor.blend(Theme.of(context).colorScheme.secondary.withOpacity(.12), .05 + g * .08),
                     ]
                   : [
                       Theme.of(context).scaffoldBackgroundColor,
@@ -400,8 +418,8 @@ class _AiToolTile extends StatelessWidget {
                         end: Alignment.bottomRight,
                         colors: isDark
                             ? [
-                                Colors.white.withOpacity(.08),
-                                Colors.white.withOpacity(.03),
+                                Theme.of(context).colorScheme.surfaceContainer.withOpacity(.85),
+                                Theme.of(context).cardColor.withOpacity(.9),
                               ]
                             : [
                                 Theme.of(context).cardColor.withOpacity(.98),
@@ -410,7 +428,7 @@ class _AiToolTile extends StatelessWidget {
                       ),
                       border: Border.all(
                         color: isDark 
-                            ? Colors.white.withOpacity(.12)
+                            ? tool.color.withOpacity(.4)
                             : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(.5),
                         width: 1.5,
                       ),
