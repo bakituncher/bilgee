@@ -126,7 +126,7 @@ class _OverviewContent extends ConsumerWidget {
               _CompactStatCard(
                 icon: Icons.local_fire_department_rounded,
                 label: 'Seri',
-                value: '${user.streak ?? 0}',
+                value: '${_calculateStreak(tests)}',
                 color: Colors.deepOrange,
                 isDark: isDark,
               ).animate(delay: 100.ms).fadeIn(duration: 200.ms).scale(begin: const Offset(0.9, 0.9)),
@@ -141,14 +141,27 @@ class _OverviewContent extends ConsumerWidget {
           ),
         ),
 
-        // Performance Chart Section
-        if (tests.isNotEmpty)
+        // Performance Chart Section - YKS için TYT ve AYT ayrı
+        if (tests.isNotEmpty && user.selectedExam == 'YKS')
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+              child: _YKSPerformanceCharts(
+                tests: tests,
+                isDark: isDark,
+              ).animate(delay: 200.ms).fadeIn(duration: 250.ms).slideY(begin: 0.02),
+            ),
+          ),
+
+        // Performance Chart Section - Diğer sınavlar için tek grafik
+        if (tests.isNotEmpty && user.selectedExam != 'YKS')
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
               child: _PerformanceChart(
                 tests: tests,
                 isDark: isDark,
+                title: 'Performans Trendi',
               ).animate(delay: 200.ms).fadeIn(duration: 250.ms).slideY(begin: 0.02),
             ),
           ),
@@ -160,6 +173,7 @@ class _OverviewContent extends ConsumerWidget {
             child: _DailyActivityCard(
               userId: user.id,
               isDark: isDark,
+              tests: tests,
             ).animate(delay: 250.ms).fadeIn(duration: 250.ms).slideY(begin: 0.02),
           ),
         ),
@@ -190,6 +204,48 @@ class _OverviewContent extends ConsumerWidget {
         tests.fold<double>(0, (sum, t) => sum + t.totalNet);
     final avgNet = testCount > 0 ? (totalNet / testCount) : 0.0;
     return avgNet.toStringAsFixed(1);
+  }
+
+  int _calculateStreak(List<TestModel> tests) {
+    if (tests.isEmpty) return 0;
+
+    // Testleri tarihe göre sırala (en yeni en başta)
+    final sortedTests = tests.toList()
+      ..sort((a, b) => b.date.compareTo(a.date));
+
+    int streak = 0;
+    DateTime? lastDate;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    for (final test in sortedTests) {
+      final testDate = DateTime(test.date.year, test.date.month, test.date.day);
+
+      if (lastDate == null) {
+        // İlk test - bugün veya dün olmalı
+        final daysDiff = today.difference(testDate).inDays;
+        if (daysDiff <= 1) {
+          streak = 1;
+          lastDate = testDate;
+        } else {
+          break; // Seri kırılmış
+        }
+      } else {
+        // Bir önceki günde test var mı?
+        final daysDiff = lastDate.difference(testDate).inDays;
+        if (daysDiff == 1) {
+          streak++;
+          lastDate = testDate;
+        } else if (daysDiff == 0) {
+          // Aynı gün içinde birden fazla test - sayma
+          continue;
+        } else {
+          break; // Seri kırılmış
+        }
+      }
+    }
+
+    return streak;
   }
 }
 
@@ -271,14 +327,58 @@ class _CompactStatCard extends StatelessWidget {
   }
 }
 
+/// YKS için TYT ve AYT performans grafiklerini ayrı gösteren widget
+class _YKSPerformanceCharts extends StatelessWidget {
+  final List<TestModel> tests;
+  final bool isDark;
+
+  const _YKSPerformanceCharts({
+    required this.tests,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // TYT ve AYT testlerini ayır
+    final tytTests = tests.where((t) => t.sectionName == 'TYT').toList();
+    final aytTests = tests.where((t) => t.sectionName == 'AYT').toList();
+
+    return Column(
+      children: [
+        // TYT Grafiği
+        if (tytTests.isNotEmpty)
+          _PerformanceChart(
+            tests: tytTests,
+            isDark: isDark,
+            title: 'TYT Performans Trendi',
+          ),
+
+        // Boşluk
+        if (tytTests.isNotEmpty && aytTests.isNotEmpty)
+          const SizedBox(height: 12),
+
+        // AYT Grafiği
+        if (aytTests.isNotEmpty)
+          _PerformanceChart(
+            tests: aytTests,
+            isDark: isDark,
+            title: 'AYT Performans Trendi',
+          ),
+      ],
+    );
+  }
+}
+
 /// Performance chart showing test score trends
 class _PerformanceChart extends StatelessWidget {
   final List<TestModel> tests;
   final bool isDark;
+  final String title;
 
   const _PerformanceChart({
     required this.tests,
     required this.isDark,
+    this.title = 'Performans Trendi',
   });
 
   @override
@@ -339,7 +439,7 @@ class _PerformanceChart extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Text(
-                'Performans Trendi',
+                title,
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
@@ -446,135 +546,121 @@ class _PerformanceChart extends StatelessWidget {
   }
 }
 
-/// Daily activity tracker showing visits over time
-class _DailyActivityCard extends ConsumerWidget {
+/// Daily activity tracker showing test activity over time
+class _DailyActivityCard extends StatelessWidget {
   final String userId;
   final bool isDark;
+  final List<TestModel> tests;
 
   const _DailyActivityCard({
     required this.userId,
     required this.isDark,
+    required this.tests,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return FutureBuilder<List<Timestamp>>(
-      future: ref.read(firestoreServiceProvider).getVisitsForMonth(userId, DateTime.now()),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Container(
-            height: 120,
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : Colors.white,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Center(child: LogoLoader()),
-          );
+  Widget build(BuildContext context) {
+    // Group tests by date
+    final Map<String, int> dailyTests = {};
+    final now = DateTime.now();
+    final startDate = now.subtract(Duration(days: _daysToShowVisits - 1));
+
+    // Initialize all dates with 0
+    for (int i = 0; i < _daysToShowVisits; i++) {
+      final date = startDate.add(Duration(days: i));
+      final key = DateFormat('yyyy-MM-dd').format(date);
+      dailyTests[key] = 0;
+    }
+
+    // Count tests per day
+    for (final test in tests) {
+      final testDate = test.date;
+      if (testDate.isAfter(startDate.subtract(const Duration(days: 1)))) {
+        final key = DateFormat('yyyy-MM-dd').format(testDate);
+        if (dailyTests.containsKey(key)) {
+          dailyTests[key] = dailyTests[key]! + 1;
         }
+      }
+    }
 
-        final visits = snapshot.data ?? [];
+    final sortedDates = dailyTests.keys.toList()..sort();
+    final activeDays = dailyTests.values.where((count) => count > 0).length;
 
-        // Group visits by date
-        final Map<String, int> dailyVisits = {};
-        final now = DateTime.now();
-        final startDate = now.subtract(Duration(days: _daysToShowVisits - 1));
-
-        // Initialize all dates with 0
-        for (int i = 0; i < _daysToShowVisits; i++) {
-          final date = startDate.add(Duration(days: i));
-          final key = DateFormat('yyyy-MM-dd').format(date);
-          dailyVisits[key] = 0;
-        }
-
-        // Count visits per day
-        for (final timestamp in visits) {
-          final date = timestamp.toDate();
-          if (date.isAfter(startDate.subtract(const Duration(days: 1)))) {
-            final key = DateFormat('yyyy-MM-dd').format(date);
-            dailyVisits[key] = (dailyVisits[key] ?? 0) + 1;
-          }
-        }
-
-        final sortedDates = dailyVisits.keys.toList()..sort();
-        final activeDays = dailyVisits.values.where((count) => count > 0).length;
-
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isDark
-                  ? Colors.white.withOpacity(0.06)
-                  : Colors.black.withOpacity(0.04),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: isDark
-                    ? Colors.black.withOpacity(0.2)
-                    : Colors.black.withOpacity(0.04),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withOpacity(0.06)
+              : Colors.black.withOpacity(0.04),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withOpacity(0.2)
+                : Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.calendar_today_rounded,
-                    color: AppTheme.primaryBrandColor,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    'Son 30 Gün Aktivite',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
-                    ),
-                  ),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppTheme.successBrandColor.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '$activeDays aktif gün',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.successBrandColor,
-                      ),
-                    ),
-                  ),
-                ],
+              Icon(
+                Icons.calendar_today_rounded,
+                color: AppTheme.primaryBrandColor,
+                size: 20,
               ),
-              const SizedBox(height: 16),
-              _buildActivityGrid(dailyVisits, sortedDates),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _buildLegendItem('Yok', isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-                  const SizedBox(width: 12),
-                  _buildLegendItem('Az', AppTheme.primaryBrandColor.withOpacity(0.3)),
-                  const SizedBox(width: 12),
-                  _buildLegendItem('Orta', AppTheme.primaryBrandColor.withOpacity(0.6)),
-                  const SizedBox(width: 12),
-                  _buildLegendItem('Çok', AppTheme.primaryBrandColor),
-                ],
+              const SizedBox(width: 10),
+              Text(
+                'Son 30 Gün Aktivite',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppTheme.successBrandColor.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '$activeDays aktif gün',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.successBrandColor,
+                  ),
+                ),
               ),
             ],
           ),
-        );
-      },
+          const SizedBox(height: 16),
+          _buildActivityGrid(dailyTests, sortedDates),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildLegendItem('Yok', isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+              const SizedBox(width: 12),
+              _buildLegendItem('1 test', AppTheme.primaryBrandColor.withOpacity(0.3)),
+              const SizedBox(width: 12),
+              _buildLegendItem('2 test', AppTheme.primaryBrandColor.withOpacity(0.6)),
+              const SizedBox(width: 12),
+              _buildLegendItem('3+ test', AppTheme.primaryBrandColor),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
