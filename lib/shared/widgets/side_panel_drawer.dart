@@ -129,7 +129,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                       _navTile(context, currentLocation: location, icon: Icons.bar_chart_rounded, title: 'Deneme Gelişimi', route: '/home/stats', isPremium: true, showPremiumBadge: !isPremium),
                       _navTile(context, currentLocation: location, icon: Icons.insights_rounded, title: 'Genel Bakış', route: '/stats/overview'),
                       _navTile(context, currentLocation: location, icon: Icons.shield_moon_rounded, title: 'Günlük Görevler', route: '/home/quests'),
-                      _navTile(context, currentLocation: location, icon: Icons.inventory_2_outlined, title: 'Deneme Arşivi', route: '/library'),
+                      _navTile(context, currentLocation: location, icon: Icons.inventory_2_outlined, title: 'Deneme Arşivi', route: '/library', isPremium: true, showPremiumBadge: !isPremium),
                       _navTile(context, currentLocation: location, icon: Icons.article_rounded, title: 'Taktik Blog', route: '/blog'),
                       const SizedBox(height: 12),
                       const Padding(
@@ -232,7 +232,12 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
         onTap: () {
           Navigator.of(context).pop();
           if (isPremium && !userIsPremium) {
-            context.go('/stats-premium-offer');
+            // Deneme Arşivi için source=archive parametresi ekle
+            if (route == '/library') {
+              context.push('/stats-premium-offer?source=archive');
+            } else {
+              context.go('/stats-premium-offer');
+            }
           } else {
             context.go(route);
           }

@@ -1,8 +1,10 @@
 // lib/features/home/widgets/dashboard_header.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:taktik/data/providers/premium_provider.dart';
 
-class DashboardHeader extends StatelessWidget {
+class DashboardHeader extends ConsumerWidget {
   const DashboardHeader({
     super.key,
     required this.name,
@@ -13,7 +15,8 @@ class DashboardHeader extends StatelessWidget {
   final String title;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isPremium = ref.watch(premiumStatusProvider);
     final textTheme = Theme.of(context).textTheme;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -28,7 +31,13 @@ class DashboardHeader extends StatelessWidget {
         IconButton(
           icon: Icon(Icons.history_edu_rounded, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 28),
           tooltip: 'Deneme Arşivi',
-          onPressed: () => context.go('/library'),
+          onPressed: () {
+            if (isPremium) {
+              context.go('/library');
+            } else {
+              context.push('/stats-premium-offer?source=archive');
+            }
+          },
         ),
       ],
     );

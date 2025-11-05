@@ -221,7 +221,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => buildPageWithFadeTransition(
           context: context,
           state: state,
-          child: const StatsPremiumOfferScreen(),
+          child: StatsPremiumOfferScreen(
+            source: state.uri.queryParameters['source'],
+          ),
         ),
       ),
       // Bildirim Merkezi

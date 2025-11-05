@@ -5,9 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:taktik/data/providers/activity_tracker_provider.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
-/// Ultra-şık AI Tools tanıtım ekranı
+/// Ultra-şık AI Tools tanıtım ekranı - Premium kalitede tasarım
 class AIToolsOfferScreen extends ConsumerStatefulWidget {
   const AIToolsOfferScreen({super.key});
 
@@ -15,16 +14,22 @@ class AIToolsOfferScreen extends ConsumerStatefulWidget {
   ConsumerState<AIToolsOfferScreen> createState() => _AIToolsOfferScreenState();
 }
 
-class _AIToolsOfferScreenState extends ConsumerState<AIToolsOfferScreen> with SingleTickerProviderStateMixin {
-  late AnimationController _shimmerController;
+class _AIToolsOfferScreenState extends ConsumerState<AIToolsOfferScreen> with TickerProviderStateMixin {
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
-    _shimmerController = AnimationController(
+    _fadeController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 2),
-    )..repeat();
+      duration: const Duration(milliseconds: 800),
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeOut,
+    );
+    _fadeController.forward();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(activityTrackerProvider).markToolOfferShown();
@@ -33,7 +38,7 @@ class _AIToolsOfferScreenState extends ConsumerState<AIToolsOfferScreen> with Si
 
   @override
   void dispose() {
-    _shimmerController.dispose();
+    _fadeController.dispose();
     super.dispose();
   }
 
@@ -41,11 +46,11 @@ class _AIToolsOfferScreenState extends ConsumerState<AIToolsOfferScreen> with Si
   Widget build(BuildContext context) {
     final isPremium = ref.watch(premiumStatusProvider);
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
-    final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F0F1E) : const Color(0xFFFAFBFF),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -53,150 +58,106 @@ class _AIToolsOfferScreenState extends ConsumerState<AIToolsOfferScreen> with Si
             end: Alignment.bottomRight,
             colors: isDark
                 ? [
-                    const Color(0xFF1A1A2E),
-                    const Color(0xFF16213E),
-                    const Color(0xFF0F0F1E),
+                    colorScheme.surface,
+                    colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
                   ]
                 : [
-                    const Color(0xFFFFFFFF),
-                    const Color(0xFFF8F9FF),
-                    const Color(0xFFF0F4FF),
+                    colorScheme.surface,
+                    colorScheme.primaryContainer.withValues(alpha: 0.08),
                   ],
           ),
         ),
         child: SafeArea(
-          child: Stack(
-            children: [
-              // Dekoratif arka plan elementleri
-              Positioned(
-                top: -50,
-                right: -50,
-                child: Container(
-                  width: 200,
-                  height: 200,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        theme.colorScheme.primary.withValues(alpha: 0.15),
-                        theme.colorScheme.primary.withValues(alpha: 0.0),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                bottom: -80,
-                left: -80,
-                child: Container(
-                  width: 250,
-                  height: 250,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        theme.colorScheme.secondary.withValues(alpha: 0.12),
-                        theme.colorScheme.secondary.withValues(alpha: 0.0),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-
-              // Ana içerik
-              Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 28,
-                  vertical: size.height * 0.05,
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _buildHeader(theme, isDark),
-                    _buildFeatures(theme, isDark, isPremium),
-                    _buildActions(theme, isDark, isPremium),
-                  ],
-                ),
-              ),
-
-              // Kapat butonu
-              Positioned(
-                top: 12,
-                right: 12,
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: _handleClose,
-                    borderRadius: BorderRadius.circular(24),
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surface.withValues(alpha: 0.8),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: theme.colorScheme.outline.withValues(alpha: 0.2),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Kapat butonu
+                Align(
+                  alignment: Alignment.topRight,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: _handleClose,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: colorScheme.outline.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Icon(
+                          Icons.close_rounded,
+                          color: colorScheme.onSurface,
+                          size: 20,
                         ),
                       ),
-                      child: Icon(
-                        Icons.close_rounded,
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                        size: 20,
-                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+
+                // Ana içerik
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Hero + Title
+                      _buildHeroSection(colorScheme),
+                      const SizedBox(height: 16),
+                      _buildTitleSection(theme, colorScheme),
+
+                      const SizedBox(height: 32),
+
+                      // Kompakt Features
+                      _CompactFeaturesList(
+                        colorScheme: colorScheme,
+                        theme: theme,
+                        isDark: isDark,
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Action Buttons
+                _buildActions(theme, colorScheme, isPremium),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildHeader(ThemeData theme, bool isDark) {
-    return Column(
-      children: [
-        // Ana ikon
-        Stack(
-          alignment: Alignment.center,
-          children: [
-            // Parlama efekti
-            AnimatedBuilder(
-              animation: _shimmerController,
-              builder: (context, child) {
-                return Container(
-                  width: 110,
-                  height: 110,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        theme.colorScheme.primary.withValues(alpha: 0.3 * _shimmerController.value),
-                        theme.colorScheme.secondary.withValues(alpha: 0.0),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-            Container(
-              width: 90,
-              height: 90,
+  Widget _buildHeroSection(ColorScheme colorScheme) {
+    return AnimatedBuilder(
+      animation: _fadeAnimation,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: 0.8 + (_fadeAnimation.value * 0.2),
+          child: Opacity(
+            opacity: _fadeAnimation.value,
+            child: Container(
+              width: 80,
+              height: 80,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    theme.colorScheme.primary,
-                    theme.colorScheme.secondary,
+                    colorScheme.primary,
+                    colorScheme.secondary,
                   ],
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.5),
-                    blurRadius: 30,
-                    spreadRadius: 5,
+                    color: colorScheme.primary.withValues(alpha: 0.4),
+                    blurRadius: 24,
+                    spreadRadius: 3,
                     offset: const Offset(0, 8),
                   ),
                 ],
@@ -211,339 +172,162 @@ class _AIToolsOfferScreenState extends ConsumerState<AIToolsOfferScreen> with Si
                 ),
                 child: const Icon(
                   Icons.auto_awesome_rounded,
-                  size: 42,
+                  size: 38,
                   color: Colors.white,
                 ),
               ),
             ),
-          ],
-        )
-            .animate()
-            .scale(
-              delay: 100.ms,
-              duration: 700.ms,
-              curve: Curves.elasticOut,
-            )
-            .then()
-            .shimmer(
-              delay: 800.ms,
-              duration: 1500.ms,
-            ),
+          ),
+        );
+      },
+    );
+  }
 
-        const SizedBox(height: 28),
-
-        // Başlık
+  Widget _buildTitleSection(ThemeData theme, ColorScheme colorScheme) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
         Text(
-          'Harika İlerliyorsun!',
-          style: theme.textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.w800,
+          'AI Koçun Seni Bekliyor',
+          style: theme.textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.w900,
             letterSpacing: -0.8,
             height: 1.1,
           ),
           textAlign: TextAlign.center,
-        ).animate().fadeIn(delay: 200.ms, duration: 600.ms).slideY(begin: 0.3, end: 0),
-
-        const SizedBox(height: 8),
-
-        // Emoji
-        const Text(
-          '🎯',
-          style: TextStyle(fontSize: 32),
-        ).animate().scale(delay: 400.ms, duration: 600.ms, curve: Curves.elasticOut),
-
-        const SizedBox(height: 16),
-
-        // Alt başlık
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: theme.colorScheme.primary.withValues(alpha: 0.2),
-              width: 1,
-            ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Yapay zeka destekli kişisel asistanınla hedeflerine ulaş',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w500,
+            fontSize: 13,
           ),
-          child: Text(
-            '✨ AI Asistanın hazır bekliyor',
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.2,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ).animate().fadeIn(delay: 500.ms).scale(begin: const Offset(0.8, 0.8), end: const Offset(1.0, 1.0)),
+          textAlign: TextAlign.center,
+        ),
       ],
     );
   }
 
-  Widget _buildFeatures(ThemeData theme, bool isDark, bool isPremium) {
-    final features = [
-      _FeatureData(
-        icon: Icons.psychology_rounded,
-        title: 'AI Koçu',
-        subtitle: 'Kişisel analiz & öneriler',
-        color: const Color(0xFF9C27B0),
-        delay: 600,
-      ),
-      _FeatureData(
-        icon: Icons.insights_rounded,
-        title: 'Akıllı Analiz',
-        subtitle: 'Detaylı performans raporları',
-        color: const Color(0xFF2196F3),
-        delay: 700,
-      ),
-      _FeatureData(
-        icon: Icons.trending_up_rounded,
-        title: 'Strateji Planlama',
-        subtitle: 'Hedef odaklı çalışma programı',
-        color: const Color(0xFFFF9800),
-        delay: 800,
-      ),
-    ];
-
-    return Column(
-      children: features
-          .map((feature) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _buildFeatureCard(theme, isDark, feature, !isPremium),
-              ))
-          .toList(),
-    );
-  }
-
-  Widget _buildFeatureCard(ThemeData theme, bool isDark, _FeatureData data, bool showPro) {
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark
-            ? data.color.withValues(alpha: 0.12)
-            : data.color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: data.color.withValues(alpha: 0.3),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: data.color.withValues(alpha: 0.15),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+  Widget _buildActions(ThemeData theme, ColorScheme colorScheme, bool isPremium) {
+    if (isPremium) {
+      return Column(
+        children: [
+          SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: ElevatedButton(
+              onPressed: () => context.go(AppRoutes.coach),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colorScheme.primary,
+                foregroundColor: Colors.white,
+                elevation: 8,
+                shadowColor: colorScheme.primary.withValues(alpha: 0.5),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.psychology_rounded, size: 24),
+                  const SizedBox(width: 12),
+                  Text(
+                    'AI Koçuna Git',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextButton(
+            onPressed: _handleClose,
+            style: TextButton.styleFrom(
+              minimumSize: const Size(double.infinity, 48),
+            ),
+            child: Text(
+              'Daha Sonra',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: showPro ? () => context.push('/premium') : null,
-            child: Padding(
-              padding: const EdgeInsets.all(18),
-              child: Row(
-                children: [
-                  // İkon
-                  Container(
-                    width: 54,
-                    height: 54,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          data.color,
-                          data.color.withValues(alpha: 0.7),
-                        ],
+      );
+    }
+
+    return Column(
+      children: [
+        Container(
+          width: double.infinity,
+          height: 56,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                colorScheme.primary,
+                colorScheme.secondary,
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: colorScheme.primary.withValues(alpha: 0.4),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => context.push('/premium'),
+              borderRadius: BorderRadius.circular(16),
+              child: Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.workspace_premium_rounded,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Premium\'a Yükselt',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.3,
                       ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: data.color.withValues(alpha: 0.4),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
                     ),
-                    child: Icon(data.icon, color: Colors.white, size: 28),
-                  ),
-
-                  const SizedBox(width: 16),
-
-                  // Metin içeriği
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                data.title,
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 0.1,
-                                ),
-                              ),
-                            ),
-                            if (showPro)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    colors: [
-                                      Color(0xFFFFD700),
-                                      Color(0xFFFFB300),
-                                    ],
-                                  ),
-                                  borderRadius: BorderRadius.circular(8),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: const Color(0xFFFFD700).withValues(alpha: 0.4),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: const Text(
-                                  'PRO',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          data.subtitle,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
-                            fontSize: 13,
-                            height: 1.3,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Ok ikonu
-                  if (showPro)
-                    Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 16,
-                      color: data.color.withValues(alpha: 0.6),
-                    ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
         ),
-      ),
-    )
-        .animate()
-        .fadeIn(delay: Duration(milliseconds: data.delay), duration: 500.ms)
-        .slideX(begin: -0.2, end: 0, curve: Curves.easeOutCubic);
-  }
-
-  Widget _buildActions(ThemeData theme, bool isDark, bool isPremium) {
-    return Column(
-      children: [
-        if (!isPremium)
-          Container(
-            width: double.infinity,
-            height: 58,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-                colors: [
-                  theme.colorScheme.primary,
-                  theme.colorScheme.secondary,
-                ],
-              ),
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [
-                BoxShadow(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.5),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () => context.push('/premium'),
-                borderRadius: BorderRadius.circular(18),
-                child: Center(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.workspace_premium_rounded,
-                        color: Colors.white,
-                        size: 24,
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        'Premium\'a Geç',
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Icon(
-                        Icons.arrow_forward_rounded,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          )
-              .animate()
-              .fadeIn(delay: 900.ms, duration: 600.ms)
-              .slideY(begin: 0.3, end: 0, curve: Curves.easeOutCubic)
-              .then()
-              .shimmer(delay: 500.ms, duration: 1500.ms),
-
-        const SizedBox(height: 14),
-
-        // Daha sonra butonu
+        const SizedBox(height: 12),
         TextButton(
-          onPressed: () {
-            if (isPremium) {
-              context.go(AppRoutes.coach);
-            } else {
-              _handleClose();
-            }
-          },
+          onPressed: _handleClose,
           style: TextButton.styleFrom(
-            minimumSize: const Size(double.infinity, 52),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
+            minimumSize: const Size(double.infinity, 48),
           ),
           child: Text(
-            isPremium ? '🚀 Koça Git' : 'Daha Sonra',
-            style: theme.textTheme.titleMedium?.copyWith(
+            'Daha Sonra',
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w600,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-              letterSpacing: 0.2,
             ),
           ),
-        ).animate().fadeIn(delay: 1000.ms),
+        ),
       ],
     );
   }
@@ -559,19 +343,141 @@ class _AIToolsOfferScreenState extends ConsumerState<AIToolsOfferScreen> with Si
   }
 }
 
-class _FeatureData {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Color color;
-  final int delay;
+// Kompakt Features List Widget - Ultra kompakt ve şık
+class _CompactFeaturesList extends StatelessWidget {
+  final ColorScheme colorScheme;
+  final ThemeData theme;
+  final bool isDark;
 
-  _FeatureData({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.color,
-    required this.delay,
+  const _CompactFeaturesList({
+    required this.colorScheme,
+    required this.theme,
+    required this.isDark,
   });
+
+  @override
+  Widget build(BuildContext context) {
+    final features = [
+      {'text': 'AI destekli kişisel koçluk', 'icon': Icons.psychology_rounded},
+      {'text': 'Akıllı performans analizi', 'icon': Icons.analytics_rounded},
+      {'text': 'Özel strateji önerileri', 'icon': Icons.lightbulb_rounded},
+      {'text': 'Hedef odaklı çalışma planı', 'icon': Icons.track_changes_rounded},
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [
+                  colorScheme.primary.withValues(alpha: 0.15),
+                  colorScheme.secondary.withValues(alpha: 0.10),
+                ]
+              : [
+                  colorScheme.primary.withValues(alpha: 0.12),
+                  colorScheme.secondary.withValues(alpha: 0.08),
+                ],
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: colorScheme.primary.withValues(alpha: 0.3),
+          width: 2,
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.auto_awesome_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Premium Özellikler',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFFD700), Color(0xFFFFB300)],
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Text(
+                  'PRO',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          ...features.map((feature) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: colorScheme.primary.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Icon(
+                        feature['icon'] as IconData,
+                        size: 18,
+                        color: colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        feature['text'] as String,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                          height: 1.2,
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      Icons.check_circle_rounded,
+                      color: colorScheme.primary,
+                      size: 20,
+                    ),
+                  ],
+                ),
+              )),
+        ],
+      ),
+    );
+  }
 }
+
+
 

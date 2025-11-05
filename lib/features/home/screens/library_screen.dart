@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:taktik/data/models/test_model.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
@@ -423,7 +424,7 @@ class _SortOption {
 }
 
 // YENI: Liste görünümü satırı
-class _ArchiveListTile extends StatelessWidget {
+class _ArchiveListTile extends ConsumerWidget {
   final TestModel test;
   const _ArchiveListTile({required this.test});
 
@@ -434,12 +435,13 @@ class _ArchiveListTile extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
     final acc = _accuracy(test);
     final isDark = theme.brightness == Brightness.dark;
+    final isPremium = ref.watch(premiumStatusProvider);
 
     return Container(
       decoration: BoxDecoration(
@@ -465,7 +467,13 @@ class _ArchiveListTile extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          onTap: () => context.push('/home/test-result-summary', extra: test),
+          onTap: () {
+            if (isPremium) {
+              context.push('/home/test-result-summary', extra: test);
+            } else {
+              context.push('/stats-premium-offer?source=archive');
+            }
+          },
           onLongPress: () => context.push('/home/test-detail', extra: test),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),

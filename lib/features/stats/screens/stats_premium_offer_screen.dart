@@ -6,7 +6,9 @@ import 'package:lottie/lottie.dart';
 import 'dart:ui';
 
 class StatsPremiumOfferScreen extends ConsumerStatefulWidget {
-  const StatsPremiumOfferScreen({super.key});
+  final String? source; // 'archive' veya 'stats'
+
+  const StatsPremiumOfferScreen({super.key, this.source});
 
   @override
   ConsumerState<StatsPremiumOfferScreen> createState() => _StatsPremiumOfferScreenState();
@@ -248,6 +250,7 @@ class _StatsPremiumOfferScreenState extends ConsumerState<StatsPremiumOfferScree
                                     colorScheme: colorScheme,
                                     theme: theme,
                                     isDark: isDark,
+                                    source: widget.source,
                                   ),
 
                                   const SizedBox(height: 20),
@@ -359,11 +362,13 @@ class _StatsPremiumOfferScreenState extends ConsumerState<StatsPremiumOfferScree
   }
 
   Widget _buildTitleSection(ThemeData theme, ColorScheme colorScheme) {
+    final isArchive = widget.source == 'archive';
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          'Deneme Gelişimi',
+          isArchive ? 'Deneme Arşivi' : 'Deneme Gelişimi',
           style: theme.textTheme.headlineMedium?.copyWith(
             fontWeight: FontWeight.w900,
             letterSpacing: -1,
@@ -373,7 +378,9 @@ class _StatsPremiumOfferScreenState extends ConsumerState<StatsPremiumOfferScree
         ),
         const SizedBox(height: 8),
         Text(
-          'Profesyonel analiz araçlarıyla başarıya ulaş',
+          isArchive
+              ? 'Detaylı analizlerle her denemenin hikayesini keşfet'
+              : 'Profesyonel analiz araçlarıyla başarıya ulaş',
           style: theme.textTheme.bodyMedium?.copyWith(
             color: colorScheme.onSurfaceVariant,
             fontWeight: FontWeight.w500,
@@ -729,22 +736,34 @@ class _CompactFeaturesList extends StatelessWidget {
   final ColorScheme colorScheme;
   final ThemeData theme;
   final bool isDark;
+  final String? source;
 
   const _CompactFeaturesList({
     required this.colorScheme,
     required this.theme,
     required this.isDark,
+    this.source,
   });
 
   @override
   Widget build(BuildContext context) {
-    final features = [
-      {'text': 'Sınırsız deneme analizi', 'icon': Icons.all_inclusive_rounded},
-      {'text': 'Konular arası ilerleme', 'icon': Icons.map_rounded},
-      {'text': 'AI destekli öneriler', 'icon': Icons.psychology_alt_rounded},
-      {'text': 'Akıllı strateji planlama', 'icon': Icons.track_changes_rounded},
-      {'text': 'Detaylı performans analizi', 'icon': Icons.insights_rounded},
-    ];
+    final isArchive = source == 'archive';
+
+    final features = isArchive
+        ? [
+            {'text': 'Tüm denemelerine sınırsız erişim', 'icon': Icons.all_inclusive_rounded},
+            {'text': 'Detaylı performans raporları', 'icon': Icons.analytics_rounded},
+            {'text': 'AI destekli analiz ve öneriler', 'icon': Icons.psychology_alt_rounded},
+            {'text': 'Konu bazlı gelişim takibi', 'icon': Icons.trending_up_rounded},
+            {'text': 'Geçmiş denemeler karşılaştırması', 'icon': Icons.compare_arrows_rounded},
+          ]
+        : [
+            {'text': 'Sınırsız deneme analizi', 'icon': Icons.all_inclusive_rounded},
+            {'text': 'Konular arası ilerleme', 'icon': Icons.map_rounded},
+            {'text': 'AI destekli öneriler', 'icon': Icons.psychology_alt_rounded},
+            {'text': 'Akıllı strateji planlama', 'icon': Icons.track_changes_rounded},
+            {'text': 'Detaylı performans analizi', 'icon': Icons.insights_rounded},
+          ];
 
     return Container(
       padding: const EdgeInsets.all(12),
