@@ -11,7 +11,7 @@ class ActivityTracker {
 
   static const String _lessonNetCountKey = 'activity_lesson_net_count';
   static const String _offerShowTimesKey = 'offer_show_times';
-  static const int _maxShowsPerHour = 5;
+  static const int _maxShowsPerHour = 10;
 
   int getLessonNetCount() => _prefs.getInt(_lessonNetCountKey) ?? 0;
 
