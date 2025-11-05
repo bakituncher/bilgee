@@ -12,6 +12,7 @@ import 'package:taktik/features/stats/logic/stats_analysis.dart';
 import 'package:lottie/lottie.dart';
 import 'package:taktik/data/providers/activity_tracker_provider.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
+import 'package:taktik/data/providers/premium_provider.dart';
 
 class Step3Summary extends ConsumerWidget {
   const Step3Summary({super.key});
@@ -103,6 +104,15 @@ class Step3Summary extends ConsumerWidget {
                 // Başarılı kaydın ardından şık bir Lottie onayı göster
                 if (context.mounted) {
                   await _showSuccessDialog(context);
+                }
+
+                // Her deneme eklendiğinde AI Tools Offer göster (sadece premium olmayan kullanıcılara, 1 saat içinde max 5 kez)
+                final isPremium = ref.read(premiumStatusProvider);
+                final shouldShowOffer = !isPremium && ref.read(activityTrackerProvider).shouldShowToolOfferForTest();
+
+                if (shouldShowOffer && context.mounted) {
+                  await ref.read(activityTrackerProvider).markToolOfferShown();
+                  await context.push(AppRoutes.aiToolsOffer);
                 }
 
                 if (context.mounted) {

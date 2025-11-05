@@ -12,6 +12,7 @@ import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:lottie/lottie.dart';
 import 'package:taktik/data/providers/activity_tracker_provider.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
+import 'package:taktik/data/providers/premium_provider.dart';
 
 final _updateModeProvider = StateProvider.autoDispose<bool>((ref) => true);
 final _sessionQuestionCountProvider = StateProvider.autoDispose<int>((ref) => 20);
@@ -345,8 +346,9 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
                   // Başarı Lottie diyaloğunu göster
                   await _showSuccessDialog(context);
 
-                  // Her 2 ders neti güncellemesinde AI Tools Offer göster (1 saat içinde max 5 kez)
-                  final shouldShowOffer = ref.read(activityTrackerProvider).shouldShowToolOfferForLessonNet();
+                  // Her 2 ders neti güncellemesinde AI Tools Offer göster (sadece premium olmayan kullanıcılara, 1 saat içinde max 5 kez)
+                  final isPremium = ref.read(premiumStatusProvider);
+                  final shouldShowOffer = !isPremium && ref.read(activityTrackerProvider).shouldShowToolOfferForLessonNet();
 
                   if (shouldShowOffer && context.mounted) {
                     await ref.read(activityTrackerProvider).markToolOfferShown();
