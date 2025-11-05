@@ -2,9 +2,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
 import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/shared/widgets/score_slider.dart';
 import 'package:taktik/features/home/logic/add_test_notifier.dart';
+import 'package:taktik/data/providers/premium_provider.dart';
 
 class Step2ScoreEntry extends ConsumerStatefulWidget {
   const Step2ScoreEntry({super.key});
@@ -15,15 +17,58 @@ class Step2ScoreEntry extends ConsumerStatefulWidget {
 
 class _Step2ScoreEntryState extends ConsumerState<Step2ScoreEntry> {
   late PageController _pageController;
+  final Set<int> _trackedPages = {}; // Track which pages have been counted
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
+    
+    // Listen to page changes to track subject score updates
+    _pageController.addListener(_onPageChanged);
+  }
+
+  void _onPageChanged() {
+    if (!_pageController.hasClients) return;
+    
+    final currentPage = _pageController.page;
+    if (currentPage == null) return;
+    
+    // Only track when we're settled on a page (not mid-animation)
+    final pageIndex = currentPage.round();
+    final isSettled = (currentPage - pageIndex).abs() < 0.1;
+    
+    // Only track each page once, even if user navigates back and forth
+    // Start counting from page 1 (second subject) since page 0 is the first subject
+    if (isSettled && !_trackedPages.contains(pageIndex) && pageIndex > 0) {
+      _trackedPages.add(pageIndex);
+      _trackSubjectScoreUpdate();
+    }
+  }
+
+  Future<void> _trackSubjectScoreUpdate() async {
+    try {
+      // Check if user is already premium
+      final isPremium = ref.read(premiumStatusProvider);
+      if (isPremium) return;
+      
+      // Get the trigger service and track the subject update
+      final triggerService = await ref.read(premiumTriggerServiceProvider.future);
+      final shouldShow = await triggerService.trackSubjectScoreUpdate();
+      
+      if (shouldShow && mounted) {
+        // Show premium screen
+        context.push('/premium');
+        debugPrint('[SubjectUpdate] Premium screen displayed');
+      }
+    } catch (e) {
+      debugPrint('[SubjectUpdate] Error checking premium screen: $e');
+    }
   }
 
   @override
   void dispose() {
+    _pageController.removeListener(_onPageChanged);
     _pageController.dispose();
     super.dispose();
   }
