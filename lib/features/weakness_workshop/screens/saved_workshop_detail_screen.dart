@@ -32,13 +32,20 @@ class SavedWorkshopDetailScreen extends StatelessWidget {
             // Çalışma Kartı Sekmesi
             SingleChildScrollView(
               padding: const EdgeInsets.all(24),
-              child: MarkdownBody(
-                data: workshop.studyGuide,
-                styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
-                  p: TextStyle(fontSize: 16, height: 1.5, color: Theme.of(context).colorScheme.onSurface),
-                  h1: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.secondary),
-                  h3: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _AIDisclaimerCard(),
+                  const SizedBox(height: 16),
+                  MarkdownBody(
+                    data: workshop.studyGuide,
+                    styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                      p: TextStyle(fontSize: 16, height: 1.5, color: Theme.of(context).colorScheme.onSurface),
+                      h1: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.secondary),
+                      h3: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                  ),
+                ],
               ),
             ),
             // Ustalık Sınavı Sekmesi
@@ -63,9 +70,19 @@ class _QuizReviewView extends StatelessWidget {
     }
     return ListView.builder(
       padding: const EdgeInsets.all(16.0),
-      itemCount: quizQuestions.length,
+      itemCount: quizQuestions.length + 1, // +1 for disclaimer at top
       itemBuilder: (context, index) {
-        final question = quizQuestions[index];
+        // Show disclaimer as first item
+        if (index == 0) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 16.0),
+            child: _AIDisclaimerCard(),
+          );
+        }
+        
+        // Adjust index for actual questions
+        final questionIndex = index - 1;
+        final question = quizQuestions[questionIndex];
         return Card(
           margin: const EdgeInsets.only(bottom: 16),
           child: Padding(
@@ -73,7 +90,7 @@ class _QuizReviewView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Soru ${index + 1}: ${question.question}", style: Theme.of(context).textTheme.titleLarge),
+                Text("Soru ${questionIndex + 1}: ${question.question}", style: Theme.of(context).textTheme.titleLarge),
                 const SizedBox(height: 16),
                 ...List.generate(question.options.length, (optIndex) {
                   return ListTile(
@@ -121,6 +138,46 @@ class _QuizReviewView extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _AIDisclaimerCard extends StatelessWidget {
+  const _AIDisclaimerCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: colorScheme.errorContainer.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: colorScheme.error.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.info_outline_rounded,
+            color: colorScheme.error,
+            size: 20,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'AI tarafından oluşturulan içerik hata yapabilir. Lütfen dikkatli olun ve şüpheli durumlarda "Sorunu Bildir" özelliğini kullanın.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurface.withOpacity(0.85),
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

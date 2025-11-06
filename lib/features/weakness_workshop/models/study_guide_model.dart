@@ -88,13 +88,27 @@ class QuizQuestion {
 
     // Doğru cevap indeksini güvenli aralığa sabitle
     int idx = 0;
+    int originalIdx = -1;
     try {
-      idx = (json['correctOptionIndex'] as num?)?.toInt() ?? 0;
+      originalIdx = (json['correctOptionIndex'] as num?)?.toInt() ?? 0;
+      idx = originalIdx;
     } catch (_) {
       idx = 0;
     }
+    
+    // Validate and correct the index if needed
+    final bool indexWasCorrected = idx < 0 || idx >= parsedOptions.length;
     if (idx < 0) idx = 0;
     if (idx >= parsedOptions.length) idx = 0;
+    
+    // Debug logging for index correction (only in debug mode)
+    if (indexWasCorrected) {
+      assert(() {
+        print('WARNING: QuizQuestion correctOptionIndex was corrected from $originalIdx to $idx '
+            '(Options count: ${parsedOptions.length})');
+        return true;
+      }());
+    }
 
     return QuizQuestion(
       question: JsonTextCleaner.cleanDynamic(json['question'] ?? 'Soru yüklenemedi.'),

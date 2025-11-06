@@ -73,7 +73,7 @@ class QuizQualityGuard {
 
     // Şıklar ve indeks
     if (q.options.isEmpty || q.correctOptionIndex < 0 || q.correctOptionIndex >= q.options.length) {
-      issues.add('Geçersiz şık/indeks nedeniyle soru elendi.');
+      issues.add('Geçersiz şık/indeks nedeniyle soru elendi. (Index: ${q.correctOptionIndex}, Options: ${q.options.length})');
       return false;
     }
 
@@ -81,14 +81,19 @@ class QuizQualityGuard {
     final cleaned = q.options.map(_sanitizeText).where((e) => e.trim().isNotEmpty).toList();
     final setLower = cleaned.map((e) => e.toLowerCase()).toSet();
     if (setLower.length < 3) {
-      issues.add('Tekrarlayan şıklar nedeniyle soru elendi.');
+      issues.add('Tekrarlayan şıklar nedeniyle soru elendi. (Benzersiz şık sayısı: ${setLower.length})');
       return false;
     }
 
-    // Doğru şık boş/placeholder olmasın
+    // Doğru şık boş/placeholder olmasın - Index geçerliliğini kontrol et
+    if (q.correctOptionIndex >= cleaned.length) {
+      issues.add('Doğru cevap indeksi temizlenmiş şık listesi dışında. (Index: ${q.correctOptionIndex}, Cleaned: ${cleaned.length})');
+      return false;
+    }
+    
     final correct = cleaned[q.correctOptionIndex];
     if (correct.trim().isEmpty || correct.toLowerCase().startsWith('seçenek ') || _isPlaceholderOption(correct)) {
-      issues.add('Doğru şık geçersiz görünüyor.');
+      issues.add('Doğru şık geçersiz görünüyor: "$correct"');
       return false;
     }
 
@@ -104,7 +109,15 @@ class QuizQualityGuard {
   static QuizQuestion _dedupOptions(QuizQuestion q) {
     final seen = <String, int>{};
     final cleaned = <String>[];
-    for (final opt in q.options) {
+    
+    // CRITICAL FIX: Track where the original correct option moves to
+    int newCorrectIndex = -1;
+    final originalCorrectOption = q.correctOptionIndex >= 0 && q.correctOptionIndex < q.options.length
+        ? _sanitizeText(q.options[q.correctOptionIndex]).trim().toLowerCase()
+        : '';
+    
+    for (int i = 0; i < q.options.length; i++) {
+      final opt = q.options[i];
       final k = _sanitizeText(opt).trim();
       final lk = k.toLowerCase();
       // Yer tutucu/boş şıkları atla
@@ -112,6 +125,10 @@ class QuizQualityGuard {
       if (!seen.containsKey(lk)) {
         seen[lk] = 1;
         cleaned.add(k);
+        // Track if this is the correct answer
+        if (lk == originalCorrectOption && newCorrectIndex == -1) {
+          newCorrectIndex = cleaned.length - 1;
+        }
       }
     }
 
@@ -124,8 +141,17 @@ class QuizQualityGuard {
       cleaned.removeRange(5, cleaned.length);
     }
 
-    int idx = q.correctOptionIndex;
-    if (idx >= cleaned.length) idx = 0;
+    // Use the tracked new index, or default to 0 if not found
+    int idx = newCorrectIndex >= 0 && newCorrectIndex < cleaned.length ? newCorrectIndex : 0;
+    
+    // Debug logging if index changed (only in debug mode)
+    if (idx != q.correctOptionIndex) {
+      assert(() {
+        print('INFO: QuizQualityGuard adjusted correctOptionIndex from ${q.correctOptionIndex} to $idx '
+            'after deduplication. Original correct option: "$originalCorrectOption"');
+        return true;
+      }());
+    }
 
     return QuizQuestion(
       question: _sanitizeText(q.question),
