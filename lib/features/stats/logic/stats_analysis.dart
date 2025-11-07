@@ -61,10 +61,11 @@ class StatsAnalysis {
   late String strongestSubjectByNet;
   late PerformanceSummary performanceSummary;
 
-  StatsAnalysis(this.tests, this.examData, this.firestoreService, {this.user}) {
+  StatsAnalysis(this.tests, this.examData, this.firestoreService, {this.user, PerformanceSummary? externalPerformance}) {
 
-    // Calculate performanceSummary from tests
-    performanceSummary = _calculatePerformanceFromTests();
+    // ÖNEMLİ: Artık testlerden konu verisi üretmiyoruz!
+    // Sadece kullanıcının Coach Screen'de girdiği gerçek konu bazlı verileri kullanıyoruz
+    performanceSummary = externalPerformance ?? const PerformanceSummary();
 
     if (tests.isEmpty && performanceSummary.topicPerformances.isEmpty) {
       _initializeEmpty();
@@ -146,84 +147,6 @@ class StatsAnalysis {
     return analysis;
   }
 
-  PerformanceSummary _calculatePerformanceFromTests() {
-    if (tests.isEmpty) return const PerformanceSummary();
-
-    final Map<String, Map<String, dynamic>> topicPerformances = {};
-    final Set<String> masteredTopics = {};
-
-    // Iterate through all tests and accumulate topic performance data
-    for (final test in tests) {
-      // Her test için kendi bölümünü bul
-      final testSection = examData.sections.firstWhereOrNull(
-              (s) => s.name == test.sectionName
-      );
-
-      if (testSection == null) {
-        debugPrint('StatsAnalysis Hata: ${test.sectionName} bölümü examData içinde bulunamadı.');
-        continue; // Bu testi atla, diğerlerine devam et
-      }
-
-      test.scores.forEach((subjectName, scores) {
-        // Bu dersin testin kendi bölümünde olup olmadığını kontrol et
-        final SubjectDetails? subjectDetails = testSection.subjects[subjectName];
-
-        if (subjectDetails == null) {
-          // Bu ders bu bölümde yok, muhtemelen yanlış kaydedilmiş, atla
-          return;
-        }
-
-        final sanitizedSubject = firestoreService.sanitizeKey(subjectName);
-
-        final correct = scores['dogru'] ?? 0;
-        final wrong = scores['yanlis'] ?? 0;
-
-        // For now, distribute performance across all topics in the subject
-        // This is a simplified approach since test data doesn't track per-topic performance
-        for (final topic in subjectDetails.topics) {
-          final sanitizedTopic = firestoreService.sanitizeKey(topic.name);
-
-          topicPerformances.putIfAbsent(sanitizedSubject, () => {});
-
-          if (!topicPerformances[sanitizedSubject]!.containsKey(sanitizedTopic)) {
-            topicPerformances[sanitizedSubject]![sanitizedTopic] = {
-              'correctCount': 0,
-              'wrongCount': 0,
-              'questionCount': 0,
-            };
-          }
-
-          // Distribute subject performance across topics proportionally
-          final topicCount = subjectDetails.topics.length;
-          final topicCorrect = (correct / topicCount).round();
-          final topicWrong = (wrong / topicCount).round();
-          final topicQuestions = topicCorrect + topicWrong;
-
-          topicPerformances[sanitizedSubject]![sanitizedTopic]['correctCount'] += topicCorrect;
-          topicPerformances[sanitizedSubject]![sanitizedTopic]['wrongCount'] += topicWrong;
-          topicPerformances[sanitizedSubject]![sanitizedTopic]['questionCount'] += topicQuestions;
-        }
-      });
-    }
-
-    // Convert to TopicPerformanceModel objects
-    final Map<String, Map<String, TopicPerformanceModel>> convertedPerformances = {};
-    topicPerformances.forEach((subject, topics) {
-      convertedPerformances[subject] = {};
-      topics.forEach((topic, data) {
-        convertedPerformances[subject]![topic] = TopicPerformanceModel(
-          correctCount: data['correctCount'],
-          wrongCount: data['wrongCount'],
-          questionCount: data['questionCount'],
-        );
-      });
-    });
-
-    return PerformanceSummary(
-      topicPerformances: convertedPerformances,
-      masteredTopics: masteredTopics.toList(),
-    );
-  }
 
   double _calculateTrend(List<double> data) {
     if (data.length < 2) return 0.0;

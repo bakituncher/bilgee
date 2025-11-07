@@ -23,14 +23,23 @@ class StatsAnalysisController extends AutoDisposeAsyncNotifier<Map<String, Stats
     final FirestoreService firestoreService = ref.watch(firestoreServiceProvider);
 
     if (user == null || user.selectedExam == null) return {};
+
+    // ÖNEMLI: Artık testler boş olsa bile, performance verisi varsa analiz yapıyoruz
+    // Çünkü kullanıcı Coach Screen'de konu bazlı veri giriyor
     if (tests.isEmpty && performance.topicPerformances.isEmpty) return {};
 
     final Exam exam = await ExamData.getExamByType(ExamType.values.byName(user.selectedExam!));
 
     final Map<String, StatsAnalysis> result = {};
 
-    // Genel analiz (tüm testler)
-    result[kAllSectionsKey] = StatsAnalysis(tests, exam, firestoreService, user: user);
+    // Genel analiz (tüm testler) - gerçek performance verisini geçiriyoruz
+    result[kAllSectionsKey] = StatsAnalysis(
+      tests,
+      exam,
+      firestoreService,
+      user: user,
+      externalPerformance: performance, // ← GERÇEK KONU VERİSİ
+    );
 
     // Bölüm bazlı analizler
     final Map<String, List<TestModel>> grouped = <String, List<TestModel>>{};
@@ -39,7 +48,13 @@ class StatsAnalysisController extends AutoDisposeAsyncNotifier<Map<String, Stats
     }
 
     for (final entry in grouped.entries) {
-      result[entry.key] = StatsAnalysis(entry.value, exam, firestoreService, user: user);
+      result[entry.key] = StatsAnalysis(
+        entry.value,
+        exam,
+        firestoreService,
+        user: user,
+        externalPerformance: performance, // ← GERÇEK KONU VERİSİ
+      );
     }
 
     return result;
