@@ -566,37 +566,165 @@ class _BriefingView extends ConsumerWidget {
       data: (analysis) {
         final suggestions = analysis?.getWorkshopSuggestions(count: 3) ?? [];
 
+        // Hiç veri yoksa özel ekran göster
+        if (suggestions.isEmpty) {
+          return _EmptyStateView();
+        }
+
         return ListView(
           padding: const EdgeInsets.all(24.0),
           children: [
             Text("Stratejik Mola", style: Theme.of(context).textTheme.headlineMedium),
             const SizedBox(height: 8),
             Text(
-              suggestions.any((s) => s['isSuggestion'] == true)
-                  ? "Henüz yeterli verin olmadığı için TaktikAI, yolculuğa başlaman için bazı kilit konuları belirledi. Bunlar 'Keşif Noktaları'dır."
-                  : "TaktikAI, performansını analiz etti ve gelişim için en parlak fırsatları belirledi. Aşağıdaki cevherlerden birini seçerek işlemeye başla.",
+              "TaktikAI, performansını analiz etti ve gelişim için en parlak fırsatları belirledi. Aşağıdaki cevherlerden birini seçerek işlemeye başla.",
               style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
+            const SizedBox(height: 16),
+            // AI Uyarısı
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline_rounded,
+                    size: 20,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      "TaktikAI hata yapabilir. Üretilen içerikleri kontrol etmeyi unutma.",
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ).animate().fadeIn(delay: 100.ms),
             const SizedBox(height: 24),
-            if(suggestions.isEmpty)
-              const Center(child: Padding(padding: EdgeInsets.all(32.0), child: Text("Harika! Önerilecek bir zayıf nokta veya fethedilmemiş konu kalmadı.", textAlign: TextAlign.center)))
-            else
-              ...suggestions.asMap().entries.map((entry) {
-                int idx = entry.key;
-                var topicData = entry.value;
-                final topicForSelection = {'subject': topicData['subject'].toString(),'topic': topicData['topic'].toString(),};
-                return _TopicCard(
-                  topic: topicData,
-                  isRecommended: idx == 0,
-                  onTap: () => onTopicSelected(topicForSelection),
-                ).animate().fadeIn(delay: (200 * idx).ms).slideX(begin: 0.2);
-              })
+            ...suggestions.asMap().entries.map((entry) {
+              int idx = entry.key;
+              var topicData = entry.value;
+              final topicForSelection = {'subject': topicData['subject'].toString(),'topic': topicData['topic'].toString(),};
+              return _TopicCard(
+                topic: topicData,
+                isRecommended: idx == 0,
+                onTap: () => onTopicSelected(topicForSelection),
+              ).animate().fadeIn(delay: (200 * idx).ms).slideX(begin: 0.2);
+            })
           ],
         );
       },
     );
   }
 }
+class _EmptyStateView extends StatelessWidget {
+  const _EmptyStateView();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.insert_chart_outlined_rounded,
+                size: 100,
+                color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.5),
+              ),
+            ).animate().fadeIn(duration: 600.ms).scale(delay: 200.ms),
+            const SizedBox(height: 32),
+            Text(
+              "Henüz Ders Neti Yok",
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.3),
+            const SizedBox(height: 16),
+            Text(
+              "Cevher Atölyesi'nin sana özel içerik üretebilmesi için önce deneme sınavı sonuçlarını eklemelisin.",
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ).animate().fadeIn(delay: 600.ms),
+            const SizedBox(height: 32),
+            Card(
+              color: Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.5),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(
+                  color: Theme.of(context).colorScheme.secondary.withOpacity(0.3),
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.lightbulb_outline_rounded,
+                      size: 40,
+                      color: Theme.of(context).colorScheme.secondary,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      "Nasıl Başlarım?",
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      "1. Ana sayfaya dön\n2. Deneme sınavı sonucunu ekle\n3. TaktikAI senin için en zayıf konuları analiz edecek\n4. Geri gel ve özel çalışma materyallerine eriş!",
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        height: 1.6,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            ).animate().fadeIn(delay: 800.ms).slideY(begin: 0.3),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () {
+                if (Navigator.of(context).canPop()) {
+                  context.pop();
+                }
+              },
+              icon: const Icon(Icons.arrow_back_ios_new_rounded),
+              label: const Text("Ana Sayfaya Dön"),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+              ),
+            ).animate().fadeIn(delay: 1000.ms).scale(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _TopicCard extends StatelessWidget {
   final Map<String, dynamic> topic;
   final bool isRecommended;
@@ -699,13 +827,48 @@ class _StudyView extends StatelessWidget {
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
-            child: MarkdownWithMath(
-              data: material.studyGuide,
-              styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
-                p: TextStyle(fontSize: 16, height: 1.5, color: Theme.of(context).colorScheme.onSurface),
-                h1: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.secondary),
-                h3: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // AI Uyarısı
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline_rounded,
+                        size: 20,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          "TaktikAI hata yapabilir. Üretilen içerikleri kontrol etmeyi unutma.",
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                MarkdownWithMath(
+                  data: material.studyGuide,
+                  styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                    p: TextStyle(fontSize: 16, height: 1.5, color: Theme.of(context).colorScheme.onSurface),
+                    h1: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.secondary),
+                    h3: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -766,6 +929,40 @@ class _QuizViewState extends State<_QuizView> {
 
     return Column(
       children: [
+        // AI Uyarısı
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+          margin: const EdgeInsets.only(top: 8),
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline_rounded,
+                  size: 18,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    "TaktikAI hata yapabilir. Soruları kontrol et.",
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
           child: LinearProgressIndicator(

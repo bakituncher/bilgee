@@ -552,6 +552,7 @@ class StatsAnalysis {
   List<Map<String, dynamic>> getWorkshopSuggestions({int count = 3}) {
     final rankedTopics = _getRankedTopics();
 
+    // Önce ustalık kazanılmamış konuları filtrele
     final unmasteredTopics = rankedTopics.where((topic) {
       final sanitizedSubject = firestoreService.sanitizeKey(topic['subject']);
       final sanitizedTopic = firestoreService.sanitizeKey(topic['topic']);
@@ -560,34 +561,36 @@ class StatsAnalysis {
     }).toList();
 
     if (unmasteredTopics.isNotEmpty) {
-      return unmasteredTopics.take(count).toList();
-    }
+      // En düşük mastery skoruna sahip konuları al (gerçekten zayıf olanlar)
+      // Mastery 0.4'ün altındaysa öncelikli, 0.6'nın altındaysa ikincil öncelikli
+      final criticalTopics = unmasteredTopics.where((t) => (t['mastery'] as double) < 0.4).toList();
+      final weakTopics = unmasteredTopics.where((t) {
+        final m = t['mastery'] as double;
+        return m >= 0.4 && m < 0.6;
+      }).toList();
+      final moderateTopics = unmasteredTopics.where((t) => (t['mastery'] as double) >= 0.6).toList();
 
-    final suggestions = <Map<String, dynamic>>[];
-    final random = Random();
+      final result = <Map<String, dynamic>>[];
 
-    final primarySubjects = examData.sections.expand((s) => s.subjects.entries).toList();
-    if (primarySubjects.isEmpty) return [];
+      // Önce kritik konuları ekle
+      result.addAll(criticalTopics.take(count));
 
-    while (suggestions.length < count && primarySubjects.isNotEmpty) {
-      final randomSubjectEntry = primarySubjects[random.nextInt(primarySubjects.length)];
-      final subjectName = randomSubjectEntry.key;
-      final subjectDetails = randomSubjectEntry.value;
-
-      if (subjectDetails.topics.isNotEmpty) {
-        final randomTopic = subjectDetails.topics[random.nextInt(subjectDetails.topics.length)];
-        final alreadyExists = suggestions.any((s) => s['topic'] == randomTopic.name);
-        if (!alreadyExists) {
-          suggestions.add({
-            'subject': subjectName,
-            'topic': randomTopic.name,
-            'mastery': -0.1,
-            'isSuggestion': true,
-          });
-        }
+      // Hala yerimiz varsa zayıf konuları ekle
+      if (result.length < count) {
+        result.addAll(weakTopics.take(count - result.length));
       }
+
+      // Hala yerimiz varsa orta seviye konuları ekle
+      if (result.length < count) {
+        result.addAll(moderateTopics.take(count - result.length));
+      }
+
+      return result;
     }
-    return suggestions;
+
+    // Eğer hiç veri yoksa boş liste döndür
+    // Artık rastgele öneri sunmuyoruz, kullanıcı veri girene kadar bekleyeceğiz
+    return [];
   }
 
   Map<String, String>? getWeakestTopicWithDetails() {
