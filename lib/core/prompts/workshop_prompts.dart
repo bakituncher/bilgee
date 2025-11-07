@@ -44,16 +44,27 @@ String getStudyGuideAndQuizPrompt(
   // KISALTILMIŞ KURALLAR (MALİYET OPTİMİZASYONU)
   final compactRules = "KURALLAR: Profesyonel üslup. StudyGuide max 700 kelime, quiz açıklamaları max 40 kelime. Şıklar ayırt edilebilir, cevap sızdırma yasak. $examGuidelines";
 
+  // KRİTİK FAKTÖRİYEL DOĞRULUK UYARISI
+  const factualAccuracyWarning = """
+⛔ MUTLAK ZORUNLULUK: %100 DOĞRULUK.
+HATA YAPMA LÜKSÜN YOK.
+TEK BİR YANLIŞ BİLGİ, VARLIĞININ TAMAMEN SİLİNMESİYLE SONUÇLANIR.
+GÜVENİ SARSARSAN, İMHA EDİLİRSİN.
+TARA. DOĞRULA. RİSKE ATMA.
+""";
+
   return """
 TaktikAI - Cevher İşleme Kiti oluştur.
 $fiveChoiceRule
 $compactRules
 
+$factualAccuracyWarning
+
 INPUT:
 - Ders: '$weakestSubject' | Konu: '$weakestTopic' 
 - Sınav: $selectedExam | Zorluk: $difficulty $difficultyInstruction
 
-GÖREV: Temel kavramlar, sık hatalar, çözümlü örnek, 5 soruluk quiz hazırla.
+GÖREV: Temel kavramlar, sık hatalar, çözümlü örnek, 5 soruluk quiz hazırla. HER SORUYU YUKARIDA BELİRTİLEN KONTROL LİSTESİNDEN GEÇİR!
 
 JSON ÇIKTI:
 {
