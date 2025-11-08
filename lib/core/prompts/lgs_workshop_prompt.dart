@@ -30,18 +30,23 @@ Ezber bilgiden çok, bilgiyi kullanarak sonuca ulaşma hedeflenir. Üslup net, d
 """;
 
   // --- Fortress-Like Quality Assurance ---
+  const hardBans = '''
+YASAK LISTESI (ÇIKTIYA ASLA DAHİL ETME / tekrar etme):
+- Köşeli parantez placeholder: [Soru 1 metni], [A şıkkı], [Buraya ...], [.. çözümü] vb.
+- "Seçenek A" / "A şıkkı" gibi içeriksiz şık metinleri.
+- "Soru:" ile başlayan yüzeysel kalıplar ve kısa ibareler.
+- Farklı sorularda tekrar eden şık metinleri.
+ZORUNLU: Her soru/şık/açıklama özgün ve LGS 'yeni nesil' formatına uygun, görsel-senaryo bağlamlı ve kavramsal terim içersin.
+''';
+
   const fortressLikePrompt = """
 ⛔ GÜVENLİK KİLİDİ: SEKTÖR LİDERİ KALİTESİNDE ÜRETİM ZORUNLUDUR.
 SEN BİR AI DEĞİLSİN, TÜRKİYE'NİN EN PRESTİJLİ OKULLARINA ÖĞRENCİ HAZIRLAYAN BİR LGS UZMANI VE MEB SORU YAZARISIN.
-GÖREVİN: Öğrencinin geleceği senin ellerinde. Ürettiğin her soru, her bilgi zerresi %100 kusursuz, pedagojik olarak mükemmel ve güncel LGS formatına %100 uygun olmalıdır.
-SIFIR TOLERANS POLİTİKASI: En ufak bir akademik hata, kavramsal yanlışlık veya çeldirici şıklardaki mantıksızlık, kabul edilemez bir başarısızlıktır.
-KALİTE KONTROL LİSTESİ (HER ÜRETİMDE UYGULANACAK):
-1.  **LGS UYGUNLUĞU:** Soru tarzı, dili ve senaryosu güncel LGS ('yeni nesil') ile tam uyumlu mu?
-2.  **AKADEMİK DOĞRULUK:** Anlatılan bilgi ve sorunun cevabı kesinlikle doğru mu? 8. Sınıf MEB müfredatına uygun mu?
-3.  **PEDAGOJİK DEĞER:** Hazırlanan içerik, konuyu en kalıcı ve etkili şekilde öğretiyor mu?
-4.  **ÇELDİRİCİ KALİTESİ:** Çeldirici şıklar, öğrencilerin sık yaptığı hatalara dayanıyor mu? Mantıklı ama kesinlikle yanlış mı?
-5.  **AÇIKLAMA NETLİĞİ:** Çözüm açıklaması, konuyu hiç bilmeyen birine dahi konuyu temelden kavratacak kadar açık ve anlaşılır mı?
-BU BİR GÜVEN MESELESİDİR. GÜVENİ KIRMA.
+GÖREVİN: Ürettiğin her soru %100 kusursuz, pedagojik olarak mükemmel ve güncel LGS formatına %100 uygun olmalıdır.
+SIFIR TOLERANS: Akademik hata, kavramsal yanlışlık veya mantıksız çeldiriciye yer yok.
+KALİTE KONTROL: LGS uygunluk, akademik doğruluk, pedagojik değer, çeldirici kalitesi, açıklama netliği.
+$lgsGuidelines
+$hardBans
 """;
 
   // --- Final Prompt Assembly ---
@@ -50,29 +55,36 @@ $fortressLikePrompt
 
 GÖREV: TaktikAI - LGS Cevher İşleme Kiti oluştur.
 
+OUTPUT POLİTİKASI:
+- Kesinlikle SADECE geçerli JSON döndür (öncesinde/sonrasında açıklama yazma).
+- Placeholder veya köşeli parantez bırakma; gerçek içerik yaz.
+- Her "question" ≥ 18 karakter ve konu terimi/bağlamı içersin.
+- Her "explanation" ≥ 45 karakter, neden doğru/diğerleri neden yanlış net anlatılsın.
+- Şıklar (A..D) anlamsal olarak farklı, mantıklı ve ama kesinlikle yanlış (çeldirici) olacak; biri doğru.
+
 INPUT:
 - Ders: '$weakestSubject'
 - Konu: '$weakestTopic'
-- İstenen Zorluk: $difficulty
+- Zorluk: $difficulty
 $difficultyInstruction
 
 YAPISAL KURALLAR:
-1.  'studyGuide' içeriği Markdown formatında olacak ve BAŞLIKLARI KESİNLİKLE İÇERECEK: '# $weakestTopic - Cevher İşleme Kartı', '## 💎 Özü', '## 🔑 Anahtar Kavramlar', '## ⚠️ Tipik Tuzaklar', '## 🎯 Stratejik İpucu', '## ✨ Çözümlü Örnek'.
-2.  'quiz' bölümü 5 sorudan oluşacak. LGS formatı gereği, Sözel dersler için 4 şık (A, B, C, D), Sayısal dersler için 4 şık (A, B, C, D) bulunacaktır. JSON'da seçenekler 'optionA', 'optionB', 'optionC', 'optionD' olarak verilecek.
-3.  'correctOptionIndex' 0-3 (A-D) aralığında olacak.
-4.  '$lgsGuidelines' talimatlarına harfiyen uy.
+1.  'studyGuide' Markdown: '# $weakestTopic - Cevher İşleme Kartı', '## 💎 Özü', '## 🔑 Anahtar Kavramlar', '## ⚠️ Tipik Tuzaklar', '## 🎯 Stratejik İpucu', '## ✨ Çözümlü Örnek'.
+2.  'quiz' 5 soru, her soruda 4 şık: 'optionA'..'optionD'.
+3.  'correctOptionIndex' 0-3 aralığında ve açıklamada gerekçesi verilecek.
+4.  Talimatlara harfiyen uy.
 
-JSON ÇIKTI FORMATI (YORUMSUZ, SADECE JSON):
+JSON ÇIKTI (YORUMSUZ, SADECE JSON):
 {
   "subject": "$weakestSubject",
   "topic": "$weakestTopic",
-  "studyGuide": "# $weakestTopic - Cevher İşleme Kartı\\n\\n## 💎 Özü\\n[Buraya konunun en temel, en öz hali yazılacak.]\\n\\n## 🔑 Anahtar Kavramlar\\n[Buraya konuyla ilgili bilinmesi gereken kilit terimler ve kısa açıklamaları eklenecek.]\\n\\n## ⚠️ Tipik Tuzaklar\\n[Buraya öğrencilerin bu konuda en sık yaptığı hatalar veya karıştırdığı noktalar yazılacak.]\\n\\n## 🎯 Stratejik İpucu\\n[Buraya bu konuyla ilgili soruları daha hızlı veya doğru çözmeyi sağlayacak bir taktik verilecek.]\\n\\n## ✨ Çözümlü Örnek\\n[Buraya konuyla ilgili öğretici, adım adım çözülmüş bir 'yeni nesil' örnek soru eklenecek.]",
+  "studyGuide": "# $weakestTopic - Cevher İşleme Kartı\\n\\n## 💎 Özü\\n(Öz ana fikir)\\n\\n## 🔑 Anahtar Kavramlar\\n(K1: açıklama; K2: açıklama; K3: açıklama)\\n\\n## ⚠️ Tipik Tuzaklar\\n(1) ...\\n(2) ...\\n(3) ...\\n\\n## 🎯 Stratejik İpucu\\n(Kısa pratik taktik)\\n\\n## ✨ Çözümlü Örnek\\n(Adım adım özgün örnek ve çözüm)",
   "quiz": [
-    {"question": "[Soru 1 metni]", "optionA": "[A şıkkı]", "optionB": "[B şıkkı]", "optionC": "[C şıkkı]", "optionD": "[D şıkkı]", "correctOptionIndex": 0, "explanation": "[1. sorunun detaylı ve öğretici çözümü]"},
-    {"question": "[Soru 2 metni]", "optionA": "[A şıkkı]", "optionB": "[B şıkkı]", "optionC": "[C şıkkı]", "optionD": "[D şıkkı]", "correctOptionIndex": 1, "explanation": "[2. sorunun detaylı ve öğretici çözümü]"},
-    {"question": "[Soru 3 metni]", "optionA": "[A şıkkı]", "optionB": "[B şıkkı]", "optionC": "[C şıkkı]", "optionD": "[D şıkkı]", "correctOptionIndex": 2, "explanation": "[3. sorunun detaylı ve öğretici çözümü]"},
-    {"question": "[Soru 4 metni]", "optionA": "[A şıkkı]", "optionB": "[B şıkkı]", "optionC": "[C şıkkı]", "optionD": "[D şıkkı]", "correctOptionIndex": 3, "explanation": "[4. sorunun detaylı ve öğretici çözümü]"},
-    {"question": "[Soru 5 metni]", "optionA": "[A şıkkı]", "optionB": "[B şıkkı]", "optionC": "[C şıkkı]", "optionD": "[D şıkkı]", "correctOptionIndex": 0, "explanation": "[5. sorunun detaylı ve öğretici çözümü]"}
+    {"question": "(Yeni nesil özgün soru 1)", "optionA": "(mantıklı çeldirici)", "optionB": "(mantıklı çeldirici)", "optionC": "(mantıklı çeldirici)", "optionD": "(doğru)", "correctOptionIndex": 3, "explanation": "D doğru çünkü ...; diğerleri ... nedeniyle yanlıştır."},
+    {"question": "(Yeni nesil özgün soru 2)", "optionA": "(doğru)", "optionB": "(çeldirici)", "optionC": "(çeldirici)", "optionD": "(çeldirici)", "correctOptionIndex": 0, "explanation": "A ...; diğerleri ..."},
+    {"question": "(Yeni nesil özgün soru 3)", "optionA": "(çeldirici)", "optionB": "(doğru)", "optionC": "(çeldirici)", "optionD": "(çeldirici)", "correctOptionIndex": 1, "explanation": "B ...; diğerleri ..."},
+    {"question": "(Yeni nesil özgün soru 4)", "optionA": "(çeldirici)", "optionB": "(çeldirici)", "optionC": "(doğru)", "optionD": "(çeldirici)", "correctOptionIndex": 2, "explanation": "C ...; diğerleri ..."},
+    {"question": "(Yeni nesil özgün soru 5)", "optionA": "(çeldirici)", "optionB": "(çeldirici)", "optionC": "(çeldirici)", "optionD": "(doğru)", "correctOptionIndex": 3, "explanation": "D ...; diğerleri ..."}
   ]
 }
 """;

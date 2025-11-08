@@ -49,8 +49,8 @@ class QuizQuestion {
 
     List<String> parsedOptions = [];
 
-    // --- NİHAİ ÇÖZÜM: ÇİFT KATMANLI SAVUNMA MEKANİZMASI ---
-    // 1. ÖNCELİK: Yeni ve güvenli "optionA, optionB..." formatını dene (A-E, 5 şık desteği).
+    // 1) Yeni format: optionA..E
+    bool hasOptionE = false;
     if (json.containsKey('optionA')) {
       parsedOptions = [
         JsonTextCleaner.cleanDynamic(json['optionA'] ?? ''),
@@ -59,27 +59,27 @@ class QuizQuestion {
         JsonTextCleaner.cleanDynamic(json['optionD'] ?? ''),
         if (json.containsKey('optionE')) JsonTextCleaner.cleanDynamic(json['optionE'] ?? ''),
       ];
+      hasOptionE = json.containsKey('optionE');
       parsedOptions = parsedOptions.where((e) => e != '').toList();
     }
-    // 2. YEDEK PLAN: Eğer yeni format yoksa, eski "options" listesi formatını
-    // zırhlı temizleyici ile işlemeyi dene.
+    // 2) Eski format: options list
     else if (json['options'] is List) {
       parsedOptions = (json['options'] as List)
           .map((option) => JsonTextCleaner.cleanDynamic(option))
           .toList();
     }
 
-    // Boşları doldur
+    // Boşları etiketle (çok kısa olanları da boş say)
     for (int i = 0; i < parsedOptions.length; i++) {
-      if (parsedOptions[i].isEmpty) {
-        parsedOptions[i] = "Seçenek ${String.fromCharCode(65 + i)}";
+      if (parsedOptions[i].trim().isEmpty) {
+        parsedOptions[i] = '';
       }
     }
 
-    // Şık sayısını en az 5 olacak şekilde doldur (A-E). 4 gelirse E'yi ekle.
-    while (parsedOptions.length < 5) {
-      final idx = parsedOptions.length;
-      parsedOptions.add("Seçenek ${String.fromCharCode(65 + idx)}");
+    // Hedef minimum: optionE varsa 5; yoksa 4 (LGS ile uyum)
+    final int desiredMin = hasOptionE ? 5 : 4;
+    while (parsedOptions.length < desiredMin) {
+      parsedOptions.add(''); // doldurma yapma; kalite koruma tamamlayacak ya da eleyecek
     }
     // Çok fazlaysa 5'e kısalt
     if (parsedOptions.length > 5) {

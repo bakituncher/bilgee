@@ -27,25 +27,23 @@ enum WorkshopStep { briefing, study, quiz, results }
 
 final _selectedTopicProvider = StateProvider<Map<String, String>?>((ref) => null);
 final _difficultyProvider = StateProvider<(String, int)>((ref) => ('normal', 1));
+final workshopIssuesProvider = StateProvider<List<String>>((ref) => []);
 
 final workshopSessionProvider = FutureProvider.autoDispose<StudyGuideAndQuiz>((ref) async {
   final selectedTopic = ref.watch(_selectedTopicProvider);
   final difficultyInfo = ref.watch(_difficultyProvider);
-
   if (selectedTopic == null) {
     return Future.error("Konu seçilmedi.");
   }
-
   final user = ref.read(userProfileProvider).value;
   final tests = ref.read(testsProvider).value;
   final performance = ref.read(performanceProvider).value;
-
   if (user == null || tests == null || performance == null) {
     return Future.error("Analiz için kullanıcı, test veya performans verisi bulunamadı.");
   }
 
   Future<StudyGuideAndQuiz> attempt({double? temperature}) async {
-    final jsonString = await ref.read(aiServiceProvider).generateStudyGuideAndQuiz(
+    final rawString = await ref.read(aiServiceProvider).generateStudyGuideAndQuiz(
       user,
       tests,
       performance,
@@ -58,17 +56,37 @@ final workshopSessionProvider = FutureProvider.autoDispose<StudyGuideAndQuiz>((r
       onTimeout: () => throw TimeoutException("Yapay zeka çok uzun süredir yanıt vermiyor. Lütfen tekrar deneyin."),
     );
 
-    final decodedJson = jsonDecode(jsonString);
-    if (decodedJson.containsKey('error')) {
-      throw Exception(decodedJson['error']);
+    Future<StudyGuideAndQuiz> _parseAndGuard(String jsonString) async {
+      try {
+        final decodedJson = jsonDecode(jsonString);
+        if (decodedJson is Map && decodedJson.containsKey('error')) {
+          throw Exception(decodedJson['error']);
+        }
+        final raw = StudyGuideAndQuiz.fromJson(decodedJson as Map<String, dynamic>);
+        final guardResult = QuizQualityGuard.apply(raw);
+        ref.read(workshopIssuesProvider.notifier).state = guardResult.issues;
+        return guardResult.material;
+      } catch (e) {
+        // JSON veya Guard hatası -> AI destekli onarım dene
+        final examTypeName = user.selectedExam ?? '';
+        final repaired = await ref.read(aiServiceProvider).repairStudyGuideAndQuizJson(
+          badJson: rawString,
+          examTypeName: examTypeName,
+        );
+        final repairedDecoded = jsonDecode(repaired);
+        if (repairedDecoded is Map && repairedDecoded.containsKey('error')) {
+          throw Exception(repairedDecoded['error']);
+        }
+        final repairedRaw = StudyGuideAndQuiz.fromJson(repairedDecoded as Map<String, dynamic>);
+        final guardResult = QuizQualityGuard.apply(repairedRaw);
+        ref.read(workshopIssuesProvider.notifier).state = ['(Onarım Uygulandı)'] + guardResult.issues;
+        return guardResult.material;
+      }
     }
-    final raw = StudyGuideAndQuiz.fromJson(decodedJson);
-    // Soru kalite güvencesi uygula (yetersizse hata fırlatır)
-    final guarded = QuizQualityGuard.apply(raw).material;
-    return guarded;
+
+    return _parseAndGuard(rawString);
   }
 
-  // 1) Varsayılan sıcaklıkla dene -> 2) 0.35 -> 3) 0.25
   final attempts = <double?>[null, 0.35, 0.25];
   Exception? lastErr;
   for (final t in attempts) {
@@ -76,7 +94,13 @@ final workshopSessionProvider = FutureProvider.autoDispose<StudyGuideAndQuiz>((r
       return await attempt(temperature: t);
     } catch (e) {
       lastErr = Exception(e.toString());
-      // denemeye devam
+      // Son denemede guard issues varsa ekle
+      if (e.toString().contains('Soru kalitesi') || e.toString().contains('tamamen yetersiz')) {
+        final issues = ref.read(workshopIssuesProvider);
+        if (issues.isNotEmpty) {
+          return Future.error('${e.toString()}\nKalite Notları: ${issues.take(6).join(' | ')}');
+        }
+      }
     }
   }
   throw lastErr ?? Exception('Soru kalitesi yetersiz. Lütfen tekrar deneyin.');

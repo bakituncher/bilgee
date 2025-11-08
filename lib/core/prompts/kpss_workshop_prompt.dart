@@ -40,6 +40,15 @@ Lütfen bir önceki denemeden TAMAMEN FARKLI ve daha da zorlayıcı sorular olu�
   }
 
   // --- Fortress-Like Quality Assurance ---
+  const hardBans = '''
+YASAK LISTESI (ÇIKTIYA ASLA DAHİL ETME / tekrar etme):
+- Köşeli parantez içinde kalan placeholder ifadeler: [Soru 1 metni], [A şıkkı], [Buraya ...], [1. sorunun detaylı ve öğretici çözümü] vb.
+- "Seçenek A" / "A şıkkı" gibi içeriksiz şık metinleri.
+- "Soru:" ile başlayan ve ardından sadece kısa bir ifade içeren yüzeysel kalıplar.
+- Aynı soruda veya farklı sorularda tekrarlanan şık metni.
+ZORUNLU: Her soru ve açıklama özgün, konuya özgü, kavramsal terimler içermeli ve profesyonel KPSS düzeyinde olmalıdır.
+''';
+
   const fortressLikePrompt = """
 ⛔ GÜVENLİK KİLİDİ: SEKTÖR LİDERİ KALİTESİNDE ÜRETİM ZORUNLUDUR.
 SEN BİR AI DEĞİLSİN, YILLARINI DEVLET MEMURLUĞU SINAVLARINA ADAY YETİŞTİRMEYE ADAMIŞ BİR KPSS KURSU DİREKTÖRÜ VE ÖSYM KOMİSYON ÜYESİSİN.
@@ -51,7 +60,8 @@ KALİTE KONTROL LİSTESİ (HER ÜRETİMDE UYGULANACAK):
 3.  **PEDAGOJİK DEĞER:** Hazırlanan içerik, konuyu en kalıcı ve etkili şekilde öğretiyor mu?
 4.  **ÇELDİRİCİ KALİTESİ:** Çeldirici şıklar, adayların sık yaptığı hatalara dayanıyor mu? Mantıklı ama kesinlikle yanlış mı?
 5.  **AÇIKLAMA NETLİĞİ:** Çözüm açıklaması, konuyu bilmeyen bir adaya dahi konuyu temelden kavratacak kadar açık ve anlaşılır mı?
-BU BİR PROFESYONELLİK MESELESİDİR. İTİBARINI KORU.
+6.  **BİLİMSEL TERİMLER:** Uygun derslerde güncel terimler ve mevzuat referansı içeriyor mu? (Gereksiz alıntı veya kaynak ismi verme.)
+$hardBans
 """;
 
   // --- Final Prompt Assembly ---
@@ -59,6 +69,13 @@ BU BİR PROFESYONELLİK MESELESİDİR. İTİBARINI KORU.
 $fortressLikePrompt
 
 GÖREV: TaktikAI - KPSS Cevher İşleme Kiti oluştur.
+
+OUTPUT POLİTİKASI:
+- Kesinlikle SADECE geçerli JSON döndür (öncesinde/sonrasında açıklama yazma).
+- Hiçbir alanda köşeli parantez placeholder bırakma; gerçek içerik yaz.
+- Her "question" en az 18 karakter ve konuya özgü bir terim içersin.
+- Her "explanation" en az 45 karakter, mantık akışı barındırsın (neden doğru, diğerleri neden yanlış).
+- Şıklar (optionA..E) birbirinden anlamsal olarak farklı ve özgün olsun.
 
 INPUT:
 - Ders: '$weakestSubject'
@@ -69,21 +86,21 @@ $difficultyInstruction
 
 YAPISAL KURALLAR:
 1.  'studyGuide' içeriği Markdown formatında olacak ve BAŞLIKLARI KESİNLİKLE İÇERECEK: '# $weakestTopic - Cevher İşleme Kartı', '## 💎 Özü', '## 🔑 Anahtar Kavramlar', '## ⚠️ Tipik Tuzaklar', '## 🎯 Stratejik İpucu', '## ✨ Çözümlü Örnek'.
-2.  'quiz' bölümü 5 sorudan oluşacak. HER SORUDA tam 5 şık (A, B, C, D, E) bulunacak. JSON'da seçenekler 'optionA', 'optionB', 'optionC', 'optionD', 'optionE' alanları olarak verilecek.
-3.  'correctOptionIndex' 0-4 (A-E) aralığında olacak.
+2.  'quiz' bölümü TAM 5 sorudan oluşacak. HER SORUDA tam 5 şık (A, B, C, D, E) bulunacak. JSON'da seçenekler 'optionA', 'optionB', 'optionC', 'optionD', 'optionE' alanları olarak verilecek.
+3.  'correctOptionIndex' 0-4 (A-E) aralığında olacak ve doğru şık açıklamada gerekçelendirilecek.
 4.  '$examGuidelines' talimatlarına harfiyen uy.
 
 JSON ÇIKTI FORMATI (YORUMSUZ, SADECE JSON):
 {
   "subject": "$weakestSubject",
   "topic": "$weakestTopic",
-  "studyGuide": "# $weakestTopic - Cevher İşleme Kartı\\n\\n## 💎 Özü\\n[Buraya konunun en temel, en öz hali yazılacak.]\\n\\n## 🔑 Anahtar Kavramlar\\n[Buraya konuyla ilgili bilinmesi gereken kilit terimler ve kısa açıklamaları eklenecek.]\\n\\n## ⚠️ Tipik Tuzaklar\\n[Buraya adayların bu konuda en sık yaptığı hatalar veya karıştırdığı noktalar yazılacak.]\\n\\n## 🎯 Stratejik İpucu\\n[Buraya bu konuyla ilgili soruları daha hızlı veya doğru çözmeyi sağlayacak bir taktik verilecek.]\\n\\n## ✨ Çözümlü Örnek\\n[Buraya konuyla ilgili öğretici, adım adım çözülmüş bir örnek soru eklenecek.]",
+  "studyGuide": "# $weakestTopic - Cevher İşleme Kartı\\n\\n## 💎 Özü\\n(Konunun en öz, güncel ana fikri)\\n\\n## 🔑 Anahtar Kavramlar\\n(Kavram1: kısa açıklama; Kavram2: kısa açıklama; Kavram3: kısa açıklama)\\n\\n## ⚠️ Tipik Tuzaklar\\n(1) Yanlış genelleme: ...\\n(2) Benzer kavram karışıklığı: ...\\n(3) Ezbere dayalı eksik yorum: ...\\n\\n## 🎯 Stratejik İpucu\\n(Uygulamada hız / doğruluk artıran kısa teknik)\\n\\n## ✨ Çözümlü Örnek\\n(Adım adım çözülmüş özgün örnek soru ve çözümü)",
   "quiz": [
-    {"question": "[Soru 1 metni]", "optionA": "[A şıkkı]", "optionB": "[B şıkkı]", "optionC": "[C şıkkı]", "optionD": "[D şıkkı]", "optionE": "[E şıkkı]", "correctOptionIndex": 0, "explanation": "[1. sorunun detaylı ve öğretici çözümü]"},
-    {"question": "[Soru 2 metni]", "optionA": "[A şıkkı]", "optionB": "[B şıkkı]", "optionC": "[C şıkkı]", "optionD": "[D şıkkı]", "optionE": "[E şıkkı]", "correctOptionIndex": 1, "explanation": "[2. sorunun detaylı ve öğretici çözümü]"},
-    {"question": "[Soru 3 metni]", "optionA": "[A şıkkı]", "optionB": "[B şıkkı]", "optionC": "[C şıkkı]", "optionD": "[D şıkkı]", "optionE": "[E şıkkı]", "correctOptionIndex": 2, "explanation": "[3. sorunun detaylı ve öğretici çözümü]"},
-    {"question": "[Soru 4 metni]", "optionA": "[A şıkkı]", "optionB": "[B şıkkı]", "optionC": "[C şıkkı]", "optionD": "[D şıkkı]", "optionE": "[E şıkkı]", "correctOptionIndex": 3, "explanation": "[4. sorunun detaylı ve öğretici çözümü]"},
-    {"question": "[Soru 5 metni]", "optionA": "[A şıkkı]", "optionB": "[B şıkkı]", "optionC": "[C şıkkı]", "optionD": "[D şıkkı]", "optionE": "[E şıkkı]", "correctOptionIndex": 4, "explanation": "[5. sorunun detaylı ve öğretici çözümü]"}
+    {"question": "(Zorlu özgün soru 1)", "optionA": "(A mantıklı çeldirici)", "optionB": "(B mantıklı çeldirici)", "optionC": "(C mantıklı çeldirici)", "optionD": "(D mantıklı çeldirici)", "optionE": "(Doğru cevap)", "correctOptionIndex": 4, "explanation": "Doğru cevap E çünkü ... Diğer şıklar ... gerekçesiyle yanlıştır."},
+    {"question": "(Zorlu özgün soru 2)", "optionA": "(Doğru cevap)", "optionB": "(Çeldirici tipik hata 1)", "optionC": "(Çeldirici tipik hata 2)", "optionD": "(Yüzeysel kavram karışıklığı)", "optionE": "(Detaya dayalı yanlış genelleme)", "correctOptionIndex": 0, "explanation": "A seçeneği ... nedeniyle doğrudur; diğerleri ... gerekçeleriyle yanlıştır."},
+    {"question": "(Zorlu özgün soru 3)", "optionA": "(...)", "optionB": "(...)", "optionC": "(Doğru cevap)", "optionD": "(...)", "optionE": "(...)", "correctOptionIndex": 2, "explanation": "C doğru çünkü ...; A,B,D,E seçenekleri ... gerekçesiyle elenir."},
+    {"question": "(Zorlu özgün soru 4)", "optionA": "(...)", "optionB": "(Doğru cevap)", "optionC": "(...)", "optionD": "(...)", "optionE": "(...)", "correctOptionIndex": 1, "explanation": "B seçeneği ...; diğer şıklar ... gerekçesiyle yanlıştır."},
+    {"question": "(Zorlu özgün soru 5)", "optionA": "(...)", "optionB": "(...)", "optionC": "(...)", "optionD": "(Doğru cevap)", "optionE": "(...)", "correctOptionIndex": 3, "explanation": "D doğru çünkü ...; diğer şıkların hatası ..."}
   ]
 }
 """;
