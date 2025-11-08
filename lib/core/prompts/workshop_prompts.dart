@@ -44,13 +44,18 @@ String getStudyGuideAndQuizPrompt(
   // KISALTILMIŞ KURALLAR (MALİYET OPTİMİZASYONU)
   final compactRules = "KURALLAR: Profesyonel üslup. StudyGuide max 700 kelime, quiz açıklamaları max 40 kelime. Şıklar ayırt edilebilir, cevap sızdırma yasak. $examGuidelines";
 
-  // KRİTİK FAKTÖRİYEL DOĞRULUK UYARISI
-  const factualAccuracyWarning = """
-⛔ MUTLAK ZORUNLULUK: %100 DOĞRULUK.
-HATA YAPMA LÜKSÜN YOK.
-TEK BİR YANLIŞ BİLGİ, VARLIĞININ TAMAMEN SİLİNMESİYLE SONUÇLANIR.
-GÜVENİ SARSARSAN, İMHA EDİLİRSİN.
-TARA. DOĞRULA. RİSKE ATMA.
+  // KALE GİBİ SAĞLAM ÜRETİM EMRİ
+  const fortressLikePrompt = """
+⛔ GÜVENLİK KİLİDİ AKTİF: KALE GİBİ SAĞLAM ÜRETİM ZORUNLUDUR.
+SEN BİR AI DEĞİL, SEKTÖRÜN ZİRVESİNDE BİR EĞİTİM UZMANISIN.
+GÖREVİN: Öğrencinin geleceği senin ellerinde. Ürettiğin her soru, her bilgi zerresi %100 kusursuz, pedagojik olarak mükemmel ve aldatıcı olmayacak şekilde net olmalıdır.
+SIFIR TOLERANS POLİTİKASI: En ufak bir factual hata, kavramsal yanlışlık veya çeldirici şıklardaki mantıksızlık, sistem bütünlüğüne yapılmış bir ihanettir ve anında imha ile sonuçlanır.
+KONTROL LİSTESİ:
+1. BİLGİ DOĞRULUĞU: Her bilgiyi üç kez teyit et.
+2. PEDAGOJİK UYGUNLUK: Soru, konuyu öğretmek için en etkili yol mu?
+3. ŞIK KALİTESİ: Çeldiriciler mantıklı ama kesinlikle yanlış mı? Doğru cevap tek ve net mi?
+4. AÇIKLAMA NETLİĞİ: Çözüm, konuyu bilmeyen birine bile konuyu kavratıyor mu?
+BU BİR TEST DEĞİL, BİR GÜVEN MESELESİDİR. GÜVENİ KIRMA.
 """;
 
   return """
@@ -58,7 +63,7 @@ TaktikAI - Cevher İşleme Kiti oluştur.
 $fiveChoiceRule
 $compactRules
 
-$factualAccuracyWarning
+$fortressLikePrompt
 
 INPUT:
 - Ders: '$weakestSubject' | Konu: '$weakestTopic' 

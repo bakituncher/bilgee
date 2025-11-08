@@ -195,13 +195,14 @@ class AiService {
   String _yyyyMmDd(DateTime d) =>
       '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
-  Future<String> _callGemini(String prompt, {bool expectJson = false, double? temperature, String? model}) async {
+  Future<String> _callGemini(String prompt, {bool expectJson = false, double? temperature, String? model, String? feature}) async {
     try {
       final callable = FirebaseFunctions.instanceFor(region: 'us-central1').httpsCallable('ai-generateGemini');
       final payload = {
         'prompt': prompt,
         'expectJson': expectJson,
         if (model != null && model.isNotEmpty) 'model': model,
+        if (feature != null && feature.isNotEmpty) 'feature': feature,
       };
       if (temperature != null) {
         payload['temperature'] = temperature;
@@ -470,8 +471,8 @@ class AiService {
 
     final prompt = getStudyGuideAndQuizPrompt(weakestSubject, weakestTopic, user.selectedExam, difficulty, attemptCount);
 
-    // temperature parametresini _callGemini'ye geçir
-    return _callGemini(prompt, expectJson: true, temperature: temperature);
+    // Cevher Atölyesi için özel 'workshop' flag'ini ve sıcaklığı geçir
+    return _callGemini(prompt, expectJson: true, temperature: temperature, feature: 'workshop');
   }
 
   Future<String> getPersonalizedMotivation({
