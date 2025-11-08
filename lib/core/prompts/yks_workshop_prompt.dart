@@ -7,83 +7,65 @@ String getYksStudyGuideAndQuizPrompt(
   String difficulty,
   int attemptCount,
 ) {
-  // --- Difficulty Modifier ---
+  // --- Difficulty Modifier (kısa) ---
   String difficultyInstruction = "";
   if (difficulty == 'hard') {
     difficultyInstruction = """
-KRİTİK EMİR: Kullanıcı 'Derinleşmek İstiyorum' dedi. Bu, sıradan bir test olmayacak.
-Hazırlayacağın 5 soruluk 'Ustalık Sınavı', bu konunun en zor, en çeldirici, birden fazla adımla çözülen,
-genellikle en iyi öğrencilerin bile takıldığı türden olmalıdır.
-Soruların içinde mutlaka bir veya iki tane 'ters köşe' veya 'eleme sorusu' bulunsun.
-Kolay ve orta seviye soru KESİNLİKLE YASAK.""";
+[ZOR MOD] 5 soruluk Ustalık Seti: Sadece üst düzey, çok adımlı, kavramsal derin ve çeldirici yoğun sorular. Kolay/orta KESİNLİKLE YOK.
+Ters köşe ≥1. Aynı kalıp tekrar etme.
+""";
     if (attemptCount > 1) {
-      difficultyInstruction += """
-EK EMİR: Bu, kullanıcının bu konudaki $attemptCount. ustalık denemesidir.
-Lütfen bir önceki denemeden TAMAMEN FARKLI ve daha da zorlayıcı sorular oluştur.""";
+      difficultyInstruction += "Deneme #$attemptCount: Önceki sorularla içerik ve yapı bakımından %100 farklılaştır. Daha fazla soyutlama/bağlantı ekle.";
     }
   }
 
-  // --- YKS-Specific Guidelines ---
   final examSectionGuidelines = (selectedExamSection?.toLowerCase() == 'tyt')
-      ? "Odak: TYT formatı. Sorular temel yeterlilikleri, okuduğunu anlama, mantıksal akıl yürütme ve temel kavramların pratik uygulamasını ölçmelidir. Bilgi yoğunluğundan çok, yorumlama ve hız ön plandadır."
-      : "Odak: AYT formatı. Sorular alan bilgisini, derinlemesine kavramsal anlamayı, soyut düşünmeyi ve bilgiyi farklı senaryolarda kullanma becerisini ölçmelidir. Bilgi ve analiz ağırlıklıdır.";
+      ? "TYT: Temel yeterlilik, yorumlama, hız, sade akıl yürütme. Aşırı ayrıntı yok; kavram özüne odak."
+      : "AYT: Derin kavramsal analiz, soyutlama, bağlantı kurma, farklı senaryoda uygulama. Yüzeysel soru YASAK.";
 
-  // --- Fortress-Like Quality Assurance ---
-  const hardBans = '''
-YASAK LISTESI (ÇIKTIYA ASLA DAHİL ETME / tekrar etme):
-- Köşeli parantez placeholder: [Soru 1 metni], [A şıkkı], [Buraya ...], [.. çözümü] vb.
-- "Seçenek A" / "A şıkkı" gibi içeriksiz şık metinleri.
-- "Soru:" ile başlayan yüzeysel kalıplar ve tümleşik kısa ibareler.
-- Farklı sorularda tekrar eden şık metinleri.
-ZORUNLU: Her soru/şık/açıklama özgün ve ÖSYM (TYT/AYT) formatına uygun, konu-terim içersin.
-''';
+  // Yasak & Doğruluk Guard (kısaltıldı)
+  const bans = "YASAK: Placeholder ([...]), 'Seçenek A', tekrarlayan şık, cevap sızıntısı, köşeli parantez kalıntısı.";
 
-  const fortressLikePrompt = """
-⛔ GÜVENLİK KİLİDİ: SEKTÖR LİDERİ KALİTESİNDE ÜRETİM ZORUNLUDUR.
-SEN BİR AI DEĞİLSİN, TÜRKİYE'NİN EN İYİ DERECE GRUPLARINI YETİŞTİREN BİR YKS KOÇU VE ÖSYM SORU YAZARISIN.
-GÖREVİN: Ürettiğin her soru %100 kusursuz, pedagojik olarak mükemmel ve ÖSYM formatına %100 uygun olmalıdır.
-SIFIR TOLERANS: Akademik hata, kavramsal yanlışlık veya mantıksız çeldiriciye yer yok.
-KALİTE KONTROL: ÖSYM uygunluk, akademik doğruluk, pedagojik değer, çeldirici kalitesi, açıklama netliği.
-$hardBans
+  // İçsel denetim talimatları (gizli düşünme)
+  const internalThinking = """
+İÇSEL DÜŞÜNME: Her soru üretiminde sessizce şu 5 kontrolü uygula (YAZMA): (1) Kavramsal doğruluk (2) Tek kesin doğru şık (3) Her çeldirici yaygın hata mantığı (4) Terminoloji uygunluğu (5) Açıklama neden-doğru & neden-yanlış. Eğer bir kontrol başarısızsa soruyu SESSİZCE yeniden yaz.
+DIŞA VURMA: İç düşünmeyi veya kontrol adımlarını asla çıktı olarak yazma; sadece nihai JSON.
+FİNAL ÖN DENETİM: Ürettiğin seti sessizce tekrar tarayıp hata yakalarsan düzeltmeden JSON verme.
+""";
+
+  // Çıktı kalite kriterleri (kısa)
+  const quality = """
+KALİTE: Her question ≥18; explanation 55–130 (tek kesin doğru şık gerekçesi + diğerlerinin elenme sebebi). Çoklu doğru KESİNLİKLE YOK: Eğer birden çok şık kısmen doğru görünüyorsa, en tanılayıcı/ayırt edici olanı DOĞRU seç; diğerlerini açıklamada spesifik bir hata ile ele. 'Hepsi', 'Tümü', 'Hem A hem B' gibi kalıplar YASAK.
 """;
 
   // --- Final Prompt Assembly ---
   return """
-$fortressLikePrompt
-
-GÖREV: TaktikAI - YKS Cevher İşleme Kiti oluştur.
-
-OUTPUT POLİTİKASI:
-- Kesinlikle SADECE geçerli JSON döndür (öncesinde/sonrasında açıklama yazma).
-- Placeholder veya köşeli parantez bırakma; gerçek içerik yaz.
-- Her "question" ≥ 18 karakter ve konu terimi içersin.
-- Her "explanation" ≥ 45 karakter, neden-sonuç ve karşılaştırma içersin.
-- Şıklar (A..E) anlamsal olarak farklı, mantıklı ve ama kesinlikle yanlış (çeldirici) olacak; biri doğru.
+ROLE: Elit ÖSYM soru yazarı & YKS koçu.
+AMAÇ: Zayıf konu için kompakt çalıştırma kartı + 5 soru.
+$bans
+$internalThinking
+$quality
 
 INPUT:
-- Ders: '$weakestSubject'
-- Konu: '$weakestTopic'
-- Sınav Bölümü: ${selectedExamSection ?? 'Belirtilmedi'}
-- Zorluk: $difficulty
+Ders: '$weakestSubject' | Konu: '$weakestTopic' | Bölüm: ${selectedExamSection ?? 'Belirtilmedi'} | Zorluk: $difficulty
+$examSectionGuidelines
 $difficultyInstruction
 
-YAPISAL KURALLAR:
-1.  'studyGuide' Markdown: '# $weakestTopic - Cevher İşleme Kartı', '## 💎 Özü', '## 🔑 Anahtar Kavramlar', '## ⚠️ Tipik Tuzaklar', '## 🎯 Stratejik İpucu', '## ✨ Çözümlü Örnek'.
-2.  'quiz' 5 soru, her soruda 5 şık: 'optionA'..'optionE'.
-3.  'correctOptionIndex' 0-4 aralığında ve açıklamada gerekçesi verilecek.
-4.  '$examSectionGuidelines' talimatlarına harfiyen uy.
+YAPI:
+studyGuide -> Markdown başlıkları: # $weakestTopic - Cevher İşleme Kartı; ## 💎 Özü; ## 🔑 Anahtar Kavramlar; ## ⚠️ Tipik Tuzaklar; ## 🎯 Stratejik İpucu; ## ✨ Çözümlü Örnek. (Her alt bölüm 1–2 cümle)
+quiz -> 5 soru; her soru optionA..optionE + correctOptionIndex (0-4) + explanation.
 
-JSON ÇIKTI (YORUMSUZ, SADECE JSON):
+SADECE GEÇERLİ JSON DÖN (Ön/son yazı, kod bloğu yok):
 {
   "subject": "$weakestSubject",
   "topic": "$weakestTopic",
-  "studyGuide": "# $weakestTopic - Cevher İşleme Kartı\\n\\n## 💎 Özü\\n(Öz, güncel ana fikir)\\n\\n## 🔑 Anahtar Kavramlar\\n(K1: açıklama; K2: açıklama; K3: açıklama)\\n\\n## ⚠️ Tipik Tuzaklar\\n(1) ...\\n(2) ...\\n(3) ...\\n\\n## 🎯 Stratejik İpucu\\n(Kısa pratik taktik)\\n\\n## ✨ Çözümlü Örnek\\n(Adım adım özgün örnek ve çözüm)",
+  "studyGuide": "# $weakestTopic - Cevher İşleme Kartı\n\n## 💎 Özü\n(konunun öz fikri)\n\n## 🔑 Anahtar Kavramlar\n(K1: kısa; K2: kısa; K3: kısa)\n\n## ⚠️ Tipik Tuzaklar\n(1) ...\n(2) ...\n(3) ...\n\n## 🎯 Stratejik İpucu\n(pratik taktik)\n\n## ✨ Çözümlü Örnek\n(adım adım özgün örnek + çözüm)",
   "quiz": [
-    {"question": "(Özgün soru 1)", "optionA": "(mantıklı çeldirici)", "optionB": "(mantıklı çeldirici)", "optionC": "(mantıklı çeldirici)", "optionD": "(mantıklı çeldirici)", "optionE": "(doğru)", "correctOptionIndex": 4, "explanation": "E doğru çünkü ...; diğerleri ... nedenle yanlıştır."},
-    {"question": "(Özgün soru 2)", "optionA": "(doğru)", "optionB": "(çeldirici)", "optionC": "(çeldirici)", "optionD": "(çeldirici)", "optionE": "(çeldirici)", "correctOptionIndex": 0, "explanation": "A ...; B,C,D,E ... gerekçesiyle yanlıştır."},
-    {"question": "(Özgün soru 3)", "optionA": "(çeldirici)", "optionB": "(çeldirici)", "optionC": "(doğru)", "optionD": "(çeldirici)", "optionE": "(çeldirici)", "correctOptionIndex": 2, "explanation": "C ...; diğer şıklar ..."},
-    {"question": "(Özgün soru 4)", "optionA": "(çeldirici)", "optionB": "(doğru)", "optionC": "(çeldirici)", "optionD": "(çeldirici)", "optionE": "(çeldirici)", "correctOptionIndex": 1, "explanation": "B ...; diğerleri ..."},
-    {"question": "(Özgün soru 5)", "optionA": "(çeldirici)", "optionB": "(çeldirici)", "optionC": "(çeldirici)", "optionD": "(doğru)", "optionE": "(çeldirici)", "correctOptionIndex": 3, "explanation": "D ...; diğerleri ..."}
+    {"question": "(Özgün soru 1)", "optionA": "...", "optionB": "...", "optionC": "...", "optionD": "...", "optionE": "...", "correctOptionIndex": 0, "explanation": "..."},
+    {"question": "(Özgün soru 2)", "optionA": "...", "optionB": "...", "optionC": "...", "optionD": "...", "optionE": "...", "correctOptionIndex": 1, "explanation": "..."},
+    {"question": "(Özgün soru 3)", "optionA": "...", "optionB": "...", "optionC": "...", "optionD": "...", "optionE": "...", "correctOptionIndex": 2, "explanation": "..."},
+    {"question": "(Özgün soru 4)", "optionA": "...", "optionB": "...", "optionC": "...", "optionD": "...", "optionE": "...", "correctOptionIndex": 3, "explanation": "..."},
+    {"question": "(Özgün soru 5)", "optionA": "...", "optionB": "...", "optionC": "...", "optionD": "...", "optionE": "...", "correctOptionIndex": 4, "explanation": "..."}
   ]
 }
 """;

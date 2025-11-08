@@ -6,85 +6,50 @@ String getLgsStudyGuideAndQuizPrompt(
   String difficulty,
   int attemptCount,
 ) {
-  // --- Difficulty Modifier ---
-  String difficultyInstruction = "";
+  String diff = '';
   if (difficulty == 'hard') {
-    difficultyInstruction = """
-KRİTİK EMİR: Kullanıcı 'Derinleşmek İstiyorum' dedi. Bu, sıradan bir test olmayacak.
-Hazırlayacağın 5 soruluk 'Ustalık Sınavı', bu konunun en zor, en çeldirici, LGS'deki gibi çoklu adımlı akıl yürütme gerektiren,
-genellikle en iyi öğrencilerin bile takıldığı türden 'yeni nesil' sorulardan oluşmalıdır.
-Soruların içinde mutlaka bir veya iki tane 'eleme sorusu' bulunsun.
-Kolay ve orta seviye, sadece bilgiye dayalı soru KESİNLİKLE YASAK.""";
+    diff = """
+[ZOR MOD] 5 'Ustalık' yeni nesil soru: Çok adımlı akıl yürütme, senaryo/görsel betimleme, soyutlama. Kolay/orta YOK. ≥1 eleme/ters köşe. Yinelenen kalıp yasak.
+""";
     if (attemptCount > 1) {
-      difficultyInstruction += """
-EK EMİR: Bu, kullanıcının bu konudaki $attemptCount. ustalık denemesidir.
-Lütfen bir önceki denemeden TAMAMEN FARKLI ve daha da zorlayıcı yeni nesil sorular oluştur.""";
+      diff += "Deneme #$attemptCount: Önceki setten yapısal ve içerik olarak %100 ayrış, daha derin bağ kur.";
     }
   }
 
-  // --- LGS-Specific Guidelines ---
-  const lgsGuidelines = """
-Odak: LGS formatı. Sorular kesinlikle beceri temelli, okuduğunu anlama, mantıksal akıl yürütme, problem çözme,
-grafik/tablo/görsel yorumlama ve disiplinler arası bağlantı kurma becerilerini ölçmelidir.
-Ezber bilgiden çok, bilgiyi kullanarak sonuca ulaşma hedeflenir. Üslup net, disiplinli ve öğrenci seviyesine uygundur.
+  const bans = "YASAK: Placeholder ([...]), 'Seçenek A', tekrarlayan şık, cevap sızıntısı, köşeli parantez.";
+
+  const internal = """
+İÇSEL DENETİM (YAZMA): (1) Doğruluk (2) Tek kesin doğru şık (3) Çeldiriciler yaygın hata mantığı (4) Yeni nesil yeterli bağlam (5) Açıklama neden-doğru & neden-yanlış. Başarısız kontrol -> sessizce yeniden yaz.
+İÇ DÜŞÜNMEYİ ÇIKTIYA YAZMA.
+Sonunda seti sessizce yeniden tara; sorun bulursan düzelt, sonra JSON'u döndür.
 """;
 
-  // --- Fortress-Like Quality Assurance ---
-  const hardBans = '''
-YASAK LISTESI (ÇIKTIYA ASLA DAHİL ETME / tekrar etme):
-- Köşeli parantez placeholder: [Soru 1 metni], [A şıkkı], [Buraya ...], [.. çözümü] vb.
-- "Seçenek A" / "A şıkkı" gibi içeriksiz şık metinleri.
-- "Soru:" ile başlayan yüzeysel kalıplar ve kısa ibareler.
-- Farklı sorularda tekrar eden şık metinleri.
-ZORUNLU: Her soru/şık/açıklama özgün ve LGS 'yeni nesil' formatına uygun, görsel-senaryo bağlamlı ve kavramsal terim içersin.
-''';
+  const quality = "KALİTE: question ≥18, explanation 55–130; 4 şık özgün & mantıklı; yüzeysel tekrar yok; yanlış bilgi toleransı=0. studyGuide alt bölümlerini 1–2 cümle ile sınırlandır. Uydurma kavram/kaynak/yıl/formül üretme (emin değilsen yazma) YASAK. Tek kesin doğru zorunlu: 'Hepsi/Tümü/Hem A hem B' ve çoklu doğru iması YASAK.";
 
-  const fortressLikePrompt = """
-⛔ GÜVENLİK KİLİDİ: SEKTÖR LİDERİ KALİTESİNDE ÜRETİM ZORUNLUDUR.
-SEN BİR AI DEĞİLSİN, TÜRKİYE'NİN EN PRESTİJLİ OKULLARINA ÖĞRENCİ HAZIRLAYAN BİR LGS UZMANI VE MEB SORU YAZARISIN.
-GÖREVİN: Ürettiğin her soru %100 kusursuz, pedagojik olarak mükemmel ve güncel LGS formatına %100 uygun olmalıdır.
-SIFIR TOLERANS: Akademik hata, kavramsal yanlışlık veya mantıksız çeldiriciye yer yok.
-KALİTE KONTROL: LGS uygunluk, akademik doğruluk, pedagojik değer, çeldirici kalitesi, açıklama netliği.
-$lgsGuidelines
-$hardBans
-""";
-
-  // --- Final Prompt Assembly ---
   return """
-$fortressLikePrompt
+ROLE: Elit LGS yeni nesil soru yazarı.
+AMAÇ: Zayıf konu için kart + 5 soru.
+$bans
+$internal
+$quality
+Zorluk: $difficulty $diff
+INPUT: Ders: '$weakestSubject' | Konu: '$weakestTopic'
 
-GÖREV: TaktikAI - LGS Cevher İşleme Kiti oluştur.
+YAPI:
+studyGuide -> Markdown: # $weakestTopic - Cevher İşleme Kartı; ## 💎 Özü; ## 🔑 Anahtar Kavramlar; ## ⚠️ Tipik Tuzaklar; ## 🎯 Stratejik İpucu; ## ✨ Çözümlü Örnek. (Her alt bölüm 1–2 cümle)
+quiz -> 5 soru; optionA..optionD + correctOptionIndex (0-3) + explanation.
 
-OUTPUT POLİTİKASI:
-- Kesinlikle SADECE geçerli JSON döndür (öncesinde/sonrasında açıklama yazma).
-- Placeholder veya köşeli parantez bırakma; gerçek içerik yaz.
-- Her "question" ≥ 18 karakter ve konu terimi/bağlamı içersin.
-- Her "explanation" ≥ 45 karakter, neden doğru/diğerleri neden yanlış net anlatılsın.
-- Şıklar (A..D) anlamsal olarak farklı, mantıklı ve ama kesinlikle yanlış (çeldirici) olacak; biri doğru.
-
-INPUT:
-- Ders: '$weakestSubject'
-- Konu: '$weakestTopic'
-- Zorluk: $difficulty
-$difficultyInstruction
-
-YAPISAL KURALLAR:
-1.  'studyGuide' Markdown: '# $weakestTopic - Cevher İşleme Kartı', '## 💎 Özü', '## 🔑 Anahtar Kavramlar', '## ⚠️ Tipik Tuzaklar', '## 🎯 Stratejik İpucu', '## ✨ Çözümlü Örnek'.
-2.  'quiz' 5 soru, her soruda 4 şık: 'optionA'..'optionD'.
-3.  'correctOptionIndex' 0-3 aralığında ve açıklamada gerekçesi verilecek.
-4.  Talimatlara harfiyen uy.
-
-JSON ÇIKTI (YORUMSUZ, SADECE JSON):
+SADECE GEÇERLİ JSON:
 {
-  "subject": "$weakestSubject",
-  "topic": "$weakestTopic",
-  "studyGuide": "# $weakestTopic - Cevher İşleme Kartı\\n\\n## 💎 Özü\\n(Öz ana fikir)\\n\\n## 🔑 Anahtar Kavramlar\\n(K1: açıklama; K2: açıklama; K3: açıklama)\\n\\n## ⚠️ Tipik Tuzaklar\\n(1) ...\\n(2) ...\\n(3) ...\\n\\n## 🎯 Stratejik İpucu\\n(Kısa pratik taktik)\\n\\n## ✨ Çözümlü Örnek\\n(Adım adım özgün örnek ve çözüm)",
-  "quiz": [
-    {"question": "(Yeni nesil özgün soru 1)", "optionA": "(mantıklı çeldirici)", "optionB": "(mantıklı çeldirici)", "optionC": "(mantıklı çeldirici)", "optionD": "(doğru)", "correctOptionIndex": 3, "explanation": "D doğru çünkü ...; diğerleri ... nedeniyle yanlıştır."},
-    {"question": "(Yeni nesil özgün soru 2)", "optionA": "(doğru)", "optionB": "(çeldirici)", "optionC": "(çeldirici)", "optionD": "(çeldirici)", "correctOptionIndex": 0, "explanation": "A ...; diğerleri ..."},
-    {"question": "(Yeni nesil özgün soru 3)", "optionA": "(çeldirici)", "optionB": "(doğru)", "optionC": "(çeldirici)", "optionD": "(çeldirici)", "correctOptionIndex": 1, "explanation": "B ...; diğerleri ..."},
-    {"question": "(Yeni nesil özgün soru 4)", "optionA": "(çeldirici)", "optionB": "(çeldirici)", "optionC": "(doğru)", "optionD": "(çeldirici)", "correctOptionIndex": 2, "explanation": "C ...; diğerleri ..."},
-    {"question": "(Yeni nesil özgün soru 5)", "optionA": "(çeldirici)", "optionB": "(çeldirici)", "optionC": "(çeldirici)", "optionD": "(doğru)", "correctOptionIndex": 3, "explanation": "D ...; diğerleri ..."}
+  "subject":"$weakestSubject",
+  "topic":"$weakestTopic",
+  "studyGuide":"# $weakestTopic - Cevher İşleme Kartı\n\n## 💎 Özü\n(öz fikir)\n\n## 🔑 Anahtar Kavramlar\n(K1: kısa; K2: kısa; K3: kısa)\n\n## ⚠️ Tipik Tuzaklar\n(1) ...\n(2) ...\n(3) ...\n\n## 🎯 Stratejik İpucu\n(taktik)\n\n## ✨ Çözümlü Örnek\n(adım adım örnek + çözüm)",
+  "quiz":[
+    {"question":"(Soru 1)","optionA":"...","optionB":"...","optionC":"...","optionD":"...","correctOptionIndex":0,"explanation":"..."},
+    {"question":"(Soru 2)","optionA":"...","optionB":"...","optionC":"...","optionD":"...","correctOptionIndex":1,"explanation":"..."},
+    {"question":"(Soru 3)","optionA":"...","optionB":"...","optionC":"...","optionD":"...","correctOptionIndex":2,"explanation":"..."},
+    {"question":"(Soru 4)","optionA":"...","optionB":"...","optionC":"...","optionD":"...","correctOptionIndex":3,"explanation":"..."},
+    {"question":"(Soru 5)","optionA":"...","optionB":"...","optionC":"...","optionD":"...","correctOptionIndex":1,"explanation":"..."}
   ]
 }
 """;

@@ -52,7 +52,7 @@ final workshopSessionProvider = FutureProvider.autoDispose<StudyGuideAndQuiz>((r
       attemptCount: difficultyInfo.$2,
       temperature: temperature,
     ).timeout(
-      const Duration(seconds: 45),
+      const Duration(seconds: 70), // OPTIMIZE: Daha derin düşünme için artırıldı (45 -> 70)
       onTimeout: () => throw TimeoutException("Yapay zeka çok uzun süredir yanıt vermiyor. Lütfen tekrar deneyin."),
     );
 
@@ -87,14 +87,14 @@ final workshopSessionProvider = FutureProvider.autoDispose<StudyGuideAndQuiz>((r
     return _parseAndGuard(rawString);
   }
 
-  final attempts = <double?>[null, 0.35, 0.25];
+  final attempts = <double?>[0.3]; // OPTIMIZE: Tek deterministik düşük sıcaklık denemesi (önceden 3 deneme vardı)
   Exception? lastErr;
   for (final t in attempts) {
     try {
       return await attempt(temperature: t);
     } catch (e) {
       lastErr = Exception(e.toString());
-      // Son denemede guard issues varsa ekle
+      // Çoklu tekrar kaldırıldığı için direkt hata gösterilecek; kalite notları yine eklenecek.
       if (e.toString().contains('Soru kalitesi') || e.toString().contains('tamamen yetersiz')) {
         final issues = ref.read(workshopIssuesProvider);
         if (issues.isNotEmpty) {

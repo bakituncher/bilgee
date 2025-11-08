@@ -209,7 +209,8 @@ class AiService {
       if (temperature != null) {
         payload['temperature'] = temperature;
       }
-      final result = await callable.call(payload).timeout(const Duration(seconds: 70));
+      final timeoutSec = (feature == 'workshop') ? 85 : 70; // workshop için daha uzun düşünme süresi
+      final result = await callable.call(payload).timeout(Duration(seconds: timeoutSec));
       final data = result.data;
       final rawResponse = (data is Map && data['raw'] is String) ? (data['raw'] as String).trim() : '';
       if (rawResponse.isEmpty) {
@@ -424,6 +425,7 @@ class AiService {
       'backlogCount': backlogActivities.length,
       'backlogSample': backlogActivities.take(10).toList(),
       'topicStatus': topicStatus,
+      'counts': {'red': redCount, 'yellow': yellowCount, 'unknown': unknownCount},
       'policy': policy,
     };
 
@@ -433,7 +435,7 @@ class AiService {
   Future<String> generateStudyGuideAndQuiz(UserModel user, List<TestModel> tests, PerformanceSummary performance, {Map<String, String>? topicOverride, String difficulty = 'normal', int attemptCount = 1, double? temperature}) async {
     // Eğer test yoksa hemen hata döndürme: bazı yeni hesaplarda konu performansı (ör. manuel veri) olabilir.
     if (tests.isEmpty) {
-      final hasTopicData = performance.topicPerformances.values.any((subjectMap) => subjectMap.values.any((t) => (t.questionCount ?? 0) > 0));
+      final hasTopicData = performance.topicPerformances.values.any((subjectMap) => subjectMap.values.any((t) => t.questionCount > 0));
       if (!hasTopicData && topicOverride == null) {
         return '{"error":"Analiz için en az bir deneme sonucu gereklidir."}';
       }
@@ -543,7 +545,6 @@ class AiService {
 
     // Yeni: Dört mod için özel promptlar + default akışın modüler hali
     String prompt;
-    int maxSentences = 3;
     switch (promptType) {
       case 'trial_review':
         prompt = MotivationSuitePrompts.trialReview(
@@ -555,7 +556,6 @@ class AiService {
           conversationHistory: combinedHistory,
           lastUserMessage: lastUserMessage,
         );
-        maxSentences = 5;
         break;
       case 'strategy_consult':
         prompt = MotivationSuitePrompts.strategyConsult(
@@ -567,7 +567,6 @@ class AiService {
           conversationHistory: combinedHistory,
           lastUserMessage: lastUserMessage,
         );
-        maxSentences = 5;
         break;
       case 'psych_support':
         prompt = MotivationSuitePrompts.psychSupport(
@@ -577,7 +576,6 @@ class AiService {
           conversationHistory: combinedHistory,
           lastUserMessage: lastUserMessage,
         );
-        maxSentences = 5;
         break;
       case 'motivation_corner':
         prompt = MotivationSuitePrompts.motivationCorner(
@@ -586,7 +584,6 @@ class AiService {
           conversationHistory: combinedHistory,
           lastUserMessage: lastUserMessage,
         );
-        maxSentences = 5;
         break;
       case 'welcome':
         prompt = DefaultMotivationPrompts.welcome(
@@ -723,13 +720,14 @@ class AiService {
   }) async {
     final isLgs = examTypeName.toLowerCase().contains('lgs');
     final repairPrompt = """
-Sadece GEÇERLİ JSON döndür. Cevher Atölyesi çıktısını ONAR:
-- Placeholder / köşeli parantez ([...]) / 'Seçenek A' / 'A şıkkı' gibi boş metinleri kaldır ve gerçek içerik yaz.
-- question >= 15 karakter; explanation >= 40 karakter; neden doğru / diğerleri neden yanlış açıkla.
-- Şıklar mantıklı ama yanlış çeldirici olsun; tekrar etmesin.
-- ${isLgs ? 'Her soruda 4 şık (optionA..optionD) ve correctOptionIndex 0-3' : 'Her soruda 5 şık (optionA..optionE) ve correctOptionIndex 0-4'} aralığında olmalı.
-- correctOptionIndex aralık dışındaysa en tutarlı doğru şıkkı seçip açıklamayı ona göre güncelle.
-- SADECE JSON döndür; öncesine/sonrasına metin ekleme.
+SADECE GEÇERLİ JSON döndür. Cevher Atölyesi çıktısını ONAR:
+- Placeholder / köşeli parantez ([...]) / 'Seçenek A' / tekrar eden şıklar / cevap sızıntısı: TEMİZLE ve gerçek içerik yaz.
+- question ≥ 18 karakter; explanation 55–130 karakter: doğru şık gerekçesi + en az 2 çeldirici eleme nedeni.
+- Şıklar mantıklı ama yanlış çeldirici olsun; tekrar yok.
+- ${isLgs ? 'Her soruda 4 şık (optionA..optionD) ve correctOptionIndex 0–3' : 'Her soruda 5 şık (optionA..optionE) ve correctOptionIndex 0–4'} aralığında olmalı.
+- correctOptionIndex aralık dışındaysa en tutarlı doğru şıkkı seç ve açıklamayı ona göre güncelle.
+- studyGuide bölümleri 1–2 cümle ile sınırlandır; gereksiz uzatma yapma.
+- SADECE JSON döndür; kod bloğu veya metin ekleme.
 
 ONARILACAK HAM JSON:
 $badJson
