@@ -7,7 +7,9 @@ import 'package:taktik/data/models/user_model.dart';
 import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/data/models/topic_performance_model.dart';
 import 'package:taktik/core/prompts/strategy_prompts.dart';
-import 'package:taktik/core/prompts/workshop_prompts.dart';
+import 'package:taktik/core/prompts/yks_workshop_prompt.dart';
+import 'package:taktik/core/prompts/lgs_workshop_prompt.dart';
+import 'package:taktik/core/prompts/kpss_workshop_prompt.dart';
 import 'package:taktik/core/prompts/motivation_suite_prompts.dart';
 import 'package:taktik/core/prompts/default_motivation_prompts.dart';
 import 'package:taktik/features/stats/logic/stats_analysis.dart';
@@ -469,7 +471,37 @@ class AiService {
       }
     }
 
-    final prompt = getStudyGuideAndQuizPrompt(weakestSubject, weakestTopic, user.selectedExam, difficulty, attemptCount);
+    String prompt;
+    final examType = ExamType.values.byName(user.selectedExam!);
+
+    switch (examType) {
+      case ExamType.yks:
+        prompt = getYksStudyGuideAndQuizPrompt(
+          weakestSubject,
+          weakestTopic,
+          user.selectedExamSection,
+          difficulty,
+          attemptCount,
+        );
+        break;
+      case ExamType.lgs:
+        prompt = getLgsStudyGuideAndQuizPrompt(
+          weakestSubject,
+          weakestTopic,
+          difficulty,
+          attemptCount,
+        );
+        break;
+      default: // Covers all KPSS types
+        prompt = getKpssStudyGuideAndQuizPrompt(
+          weakestSubject,
+          weakestTopic,
+          examType.displayName,
+          difficulty,
+          attemptCount,
+        );
+        break;
+    }
 
     // Cevher Atölyesi için özel 'workshop' flag'ini ve sıcaklığı geçir
     return _callGemini(prompt, expectJson: true, temperature: temperature, feature: 'workshop');
