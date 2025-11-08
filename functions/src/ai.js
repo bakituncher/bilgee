@@ -44,12 +44,23 @@ exports.generateGemini = onCall(
       temperature = Math.min(temperature, 0.3);
     }
 
-    // Model seçimi: Politika gereği tüm çağrılar sabit model kullanır
+    // Model seçimi: Cevher Atölyesi için Gemini 2.5 Flash, diğerleri için 2.0 Flash Lite
     const requestedModel = typeof request.data?.model === "string" ? String(request.data.model).trim() : null;
-    if (requestedModel && requestedModel.toLowerCase() !== "gemini-2.0-flash-lite-001") {
-      logger.info("Model override enforced", { requestedModel, enforced: "gemini-2.0-flash-lite-001" });
+    const context = typeof request.data?.context === "string" ? String(request.data.context).trim() : null;
+    
+    let modelId;
+    if (context === "cevher_atolyesi") {
+      // Cevher Atölyesi için en gelişmiş model: Gemini 2.5 Flash
+      modelId = "gemini-2.5-flash";
+      logger.info("Using enhanced model for Cevher Atölyesi", { context, model: modelId });
+    } else {
+      // Diğer bağlamlar için mevcut model
+      modelId = "gemini-2.0-flash-lite-001";
     }
-    const modelId = "gemini-2.0-flash-lite-001";
+    
+    if (requestedModel && requestedModel !== modelId) {
+      logger.info("Model override enforced", { requestedModel, enforced: modelId, context });
+    }
 
     if (typeof prompt !== "string" || !prompt.trim()) {
       throw new HttpsError("invalid-argument", "Geçerli bir prompt gerekli");

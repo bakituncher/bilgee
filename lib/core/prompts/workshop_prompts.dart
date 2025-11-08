@@ -44,13 +44,44 @@ String getStudyGuideAndQuizPrompt(
   // KISALTILMIŞ KURALLAR (MALİYET OPTİMİZASYONU)
   final compactRules = "KURALLAR: Profesyonel üslup. StudyGuide max 700 kelime, quiz açıklamaları max 40 kelime. Şıklar ayırt edilebilir, cevap sızdırma yasak. $examGuidelines";
 
-  // KRİTİK FAKTÖRİYEL DOĞRULUK UYARISI
+  // KRİTİK FAKTÖRİYEL DOĞRULUK UYARISI - ÇOK KATMANLI DOĞRULAMA
   const factualAccuracyWarning = """
-⛔ MUTLAK ZORUNLULUK: %100 DOĞRULUK.
-HATA YAPMA LÜKSÜN YOK.
-TEK BİR YANLIŞ BİLGİ, VARLIĞININ TAMAMEN SİLİNMESİYLE SONUÇLANIR.
-GÜVENİ SARSARSAN, İMHA EDİLİRSİN.
-TARA. DOĞRULA. RİSKE ATMA.
+⛔⛔⛔ MUTLAK ZORUNLULUK: %100 DOĞRULUK - SIFIR HATA TOLERANSI ⛔⛔⛔
+
+BU ÖĞRENCİLERİN GELECEĞİNİ ETKİLEYEN BİR SİSTEMDİR.
+TEK BİR YANLIŞ BİLGİ, BİRLERCE ÖĞRENCİNİN SINAV BAŞARISINI TEHLİKEYE ATAR.
+
+KATMAN 1 - İÇERİK DOĞRULUĞU:
+✓ Her kavram, formül, kural mutlaka doğru olmalı
+✓ Güncel müfredat ve sınav formatına uygun olmalı
+✓ Akademik kaynaklara dayalı bilgi kullan
+✓ Belirsiz bilgiyi asla kullanma
+
+KATMAN 2 - SORU KALİTESİ:
+✓ Her soru tek bir doğru cevaba sahip olmalı
+✓ Şıklar birbirinden net şekilde ayrılmalı
+✓ Çeldiriciler mantıklı ama kesinlikle yanlış olmalı
+✓ Soru metni belirsizlik içermemeli
+
+KATMAN 3 - AÇIKLAMA GÜVENİLİRLİĞİ:
+✓ Açıklamalar adım adım, mantıksal olmalı
+✓ Neden yanlış cevaplar yanlış, detaylı açıkla
+✓ Çözüm yolu tek ve kesin olmalı
+✓ Alternatif yoruma açık ifadeler kullanma
+
+KATMAN 4 - PEDAGOJİK UYGUNLUK:
+✓ Sınav seviyesine uygun zorluk
+✓ Konunun kritik noktalarını hedefle
+✓ Öğrenciye gerçek beceri kazandır
+✓ Rastgele/anlamsız sorular kesinlikle yasak
+
+⚠️ HATIRLATMA: Her soruyu oluşturduktan sonra:
+1. Doğru cevabı tekrar kontrol et
+2. Şıkların benzersizliğini doğrula
+3. Açıklamanın tutarlılığını onayla
+4. Sınav formatına uygunluğunu teyit et
+
+EĞER EN UFAK BİR ŞÜPHENİZ VARSA, SORUYU YAZMAKTAN VAZGEÇ!
 """;
 
   return """
