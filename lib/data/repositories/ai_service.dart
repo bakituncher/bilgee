@@ -711,32 +711,4 @@ class AiService {
     }
   }
 
-  // --- REPAIR LAYER ---
-  // Kalitesiz / bozuk workshop JSON çıktısını (studyGuide + quiz) düşük maliyetli deterministik şekilde onarır.
-  // Parametre examTypeName: 'yks', 'lgs', 'kpss ...' -> şık sayısı mantığını belirler.
-  Future<String> repairStudyGuideAndQuizJson({
-    required String badJson,
-    required String examTypeName,
-  }) async {
-    final isLgs = examTypeName.toLowerCase().contains('lgs');
-    final repairPrompt = """
-SADECE GEÇERLİ JSON döndür. Cevher Atölyesi çıktısını ONAR:
-- Placeholder / köşeli parantez ([...]) / 'Seçenek A' / tekrar eden şıklar / cevap sızıntısı: TEMİZLE ve gerçek içerik yaz.
-- question ≥ 18 karakter; explanation 55–130 karakter: doğru şık gerekçesi + en az 2 çeldirici eleme nedeni.
-- Şıklar mantıklı ama yanlış çeldirici olsun; tekrar yok.
-- ${isLgs ? 'Her soruda 4 şık (optionA..optionD) ve correctOptionIndex 0–3' : 'Her soruda 5 şık (optionA..optionE) ve correctOptionIndex 0–4'} aralığında olmalı.
-- correctOptionIndex aralık dışındaysa en tutarlı doğru şıkkı seç ve açıklamayı ona göre güncelle.
-- studyGuide bölümleri 1–2 cümle ile sınırlandır; gereksiz uzatma yapma.
-- SADECE JSON döndür; kod bloğu veya metin ekleme.
-
-ONARILACAK HAM JSON:
-$badJson
-""";
-    return _callGemini(
-      repairPrompt,
-      expectJson: true,
-      temperature: 0.2,
-      feature: 'workshop',
-    );
-  }
 }

@@ -19,7 +19,7 @@ const PREMIUM_RATE_LIMIT_PER_MINUTE = parseInt(process.env.PREMIUM_RATE_LIMIT_PE
 const PREMIUM_RATE_LIMIT_PER_HOUR = parseInt(process.env.PREMIUM_RATE_LIMIT_PER_HOUR || "100", 10);
 
 exports.generateGemini = onCall(
-  { region: "us-central1", timeoutSeconds: 60, memory: "256MiB", secrets: [GEMINI_API_KEY], enforceAppCheck: true, maxInstances: 20, concurrency: 10 },
+  { region: "us-central1", timeoutSeconds: 120, memory: "256MiB", secrets: [GEMINI_API_KEY], enforceAppCheck: true, maxInstances: 20, concurrency: 10 },
   async (request) => {
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Oturum gerekli");
@@ -144,9 +144,9 @@ exports.generateGemini = onCall(
 
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${GEMINI_API_KEY.value()}`;
 
-      // Zaman aşımı kontrolü (55s):
+      // Zaman aşımı kontrolü (110s):
       const ac = new AbortController();
-      const t = setTimeout(() => ac.abort(), 55_000);
+      const t = setTimeout(() => ac.abort(), 110000);
 
       const resp = await fetch(url, {
         method: "POST",

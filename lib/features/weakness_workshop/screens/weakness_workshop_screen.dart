@@ -18,7 +18,6 @@ import 'package:uuid/uuid.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
-import 'package:taktik/features/weakness_workshop/logic/quiz_quality_guard.dart';
 import 'package:confetti/confetti.dart';
 import 'package:lottie/lottie.dart';
 
@@ -56,35 +55,15 @@ final workshopSessionProvider = FutureProvider.autoDispose<StudyGuideAndQuiz>((r
       onTimeout: () => throw TimeoutException("Yapay zeka çok uzun süredir yanıt vermiyor. Lütfen tekrar deneyin."),
     );
 
-    Future<StudyGuideAndQuiz> _parseAndGuard(String jsonString) async {
-      try {
-        final decodedJson = jsonDecode(jsonString);
+    try {
+        final decodedJson = jsonDecode(rawString);
         if (decodedJson is Map && decodedJson.containsKey('error')) {
           throw Exception(decodedJson['error']);
         }
-        final raw = StudyGuideAndQuiz.fromJson(decodedJson as Map<String, dynamic>);
-        final guardResult = QuizQualityGuard.apply(raw);
-        ref.read(workshopIssuesProvider.notifier).state = guardResult.issues;
-        return guardResult.material;
-      } catch (e) {
-        // JSON veya Guard hatası -> AI destekli onarım dene
-        final examTypeName = user.selectedExam ?? '';
-        final repaired = await ref.read(aiServiceProvider).repairStudyGuideAndQuizJson(
-          badJson: rawString,
-          examTypeName: examTypeName,
-        );
-        final repairedDecoded = jsonDecode(repaired);
-        if (repairedDecoded is Map && repairedDecoded.containsKey('error')) {
-          throw Exception(repairedDecoded['error']);
-        }
-        final repairedRaw = StudyGuideAndQuiz.fromJson(repairedDecoded as Map<String, dynamic>);
-        final guardResult = QuizQualityGuard.apply(repairedRaw);
-        ref.read(workshopIssuesProvider.notifier).state = ['(Onarım Uygulandı)'] + guardResult.issues;
-        return guardResult.material;
-      }
+        return StudyGuideAndQuiz.fromJson(decodedJson as Map<String, dynamic>);
+    } catch (e) {
+        throw Exception("Yapay zeka yanıtı işlenirken bir hata oluştu: ${e.toString()}");
     }
-
-    return _parseAndGuard(rawString);
   }
 
   final attempts = <double?>[0.3]; // OPTIMIZE: Tek deterministik düşük sıcaklık denemesi (önceden 3 deneme vardı)
