@@ -634,70 +634,75 @@ class _EmptyStateView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(32.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 200,
-              height: 200,
+              width: 120,
+              height: 120,
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.insert_chart_outlined_rounded,
-                size: 100,
+                size: 60,
                 color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.5),
               ),
             ).animate().fadeIn(duration: 600.ms).scale(delay: 200.ms),
-            const SizedBox(height: 32),
+            const SizedBox(height: 16),
             Text(
               "Henüz Ders Neti Yok",
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
               textAlign: TextAlign.center,
             ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.3),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
             Text(
-              "Cevher Atölyesi'nin sana özel içerik üretebilmesi için önce deneme sınavı sonuçlarını eklemelisin.",
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              "Cevher Atölyesi'nin sana özel içerik üretebilmesi için önce ders neti eklemelisin.",
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
               textAlign: TextAlign.center,
             ).animate().fadeIn(delay: 600.ms),
-            const SizedBox(height: 32),
+            const SizedBox(height: 16),
             Card(
               color: Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.5),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(12),
                 side: BorderSide(
                   color: Theme.of(context).colorScheme.secondary.withOpacity(0.3),
                 ),
               ),
               child: Padding(
-                padding: const EdgeInsets.all(20.0),
+                padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
-                    Icon(
-                      Icons.lightbulb_outline_rounded,
-                      size: 40,
-                      color: Theme.of(context).colorScheme.secondary,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      "Nasıl Başlarım?",
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.lightbulb_outline_rounded,
+                          size: 24,
+                          color: Theme.of(context).colorScheme.secondary,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          "Nasıl Başlarım?",
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      "1. Ana sayfaya dön\n2. Deneme sınavı sonucunu ekle\n3. TaktikAI senin için en zayıf konuları analiz edecek\n4. Geri gel ve özel çalışma materyallerine eriş!",
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      "1. Ders netlerini ekle\n2. TaktikAI en zayıf konuları analiz edecek\n3. Özel çalışma materyallerine eriş!",
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        height: 1.6,
+                        height: 1.5,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -705,19 +710,29 @@ class _EmptyStateView extends StatelessWidget {
                 ),
               ),
             ).animate().fadeIn(delay: 800.ms).slideY(begin: 0.3),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             ElevatedButton.icon(
+              onPressed: () {
+                context.go(AppRoutes.coach);
+              },
+              icon: const Icon(Icons.add_chart_rounded, size: 20),
+              label: const Text("Ders Neti Ekle"),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+            ).animate().fadeIn(delay: 1000.ms).scale(),
+            const SizedBox(height: 8),
+            TextButton.icon(
               onPressed: () {
                 if (Navigator.of(context).canPop()) {
                   context.pop();
+                } else {
+                  context.go(AppRoutes.home);
                 }
               },
-              icon: const Icon(Icons.arrow_back_ios_new_rounded),
+              icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 14),
               label: const Text("Ana Sayfaya Dön"),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-              ),
-            ).animate().fadeIn(delay: 1000.ms).scale(),
+            ).animate().fadeIn(delay: 1100.ms),
           ],
         ),
       ),
