@@ -75,14 +75,10 @@ void main() async {
     // Initialize RevenueCat
     try {
       await RevenueCatService.init();
-      // Sync RevenueCat with Firebase Auth
-      _setupAuthListener();
-      // Müşteri bilgisi değişimlerindeki premium senkronu etkinleştir
-      _setupRevenueCatListeners();
     } catch (e) {
-        if (kDebugMode) {
-            debugPrint('[RevenueCat] Initialization failed: $e');
-        }
+      if (kDebugMode) {
+        debugPrint('[RevenueCat] Initialization failed: $e');
+      }
     }
 
     // App Check'i başlat ve güvenlik sağlayıcılarını aktive et.
@@ -163,52 +159,6 @@ void main() async {
   });
 }
 
-void _setupAuthListener() {
-  FirebaseAuth.instance.authStateChanges().listen((User? user) {
-    if (user != null) {
-      // User is signed in, log in to RevenueCat
-      Purchases.logIn(user.uid).catchError((e) {
-        if (kDebugMode) {
-          debugPrint('[RevenueCat] Login failed: $e');
-        }
-      }).whenComplete(() async {
-        // Kullanıcı oturum açtıktan sonra premium durumunu anında sunucu ile eşitle
-        try {
-          final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
-          final callable = functions.httpsCallable('premium-syncRevenueCatPremiumCallable');
-          await callable.call();
-        } catch (e) {
-          if (kDebugMode) debugPrint('[PremiumSync] Callable sync after login failed: $e');
-        }
-      });
-    } else {
-      // User is signed out, log out from RevenueCat
-      Purchases.logOut().catchError((e) {
-        if (kDebugMode) {
-          debugPrint('[RevenueCat] Logout failed: $e');
-        }
-      });
-    }
-  });
-}
-
-// RevenueCat müşteri bilgisi değiştikçe premium senkronu tetikle (global dinleyici)
-void _setupRevenueCatListeners() {
-  try {
-    Purchases.addCustomerInfoUpdateListener((customerInfo) async {
-      try {
-        final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
-        final callable = functions.httpsCallable('premium-syncRevenueCatPremiumCallable');
-        await callable.call();
-      } catch (e) {
-        if (kDebugMode) debugPrint('[PremiumSync] Callable sync on CustomerInfo update failed: $e');
-      }
-    });
-  } catch (e) {
-    if (kDebugMode) debugPrint('[RevenueCat] addCustomerInfoUpdateListener failed: $e');
-  }
-}
-
 class BilgeAiApp extends ConsumerStatefulWidget {
   const BilgeAiApp({super.key});
 
@@ -223,7 +173,7 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
     WidgetsBinding.instance.addObserver(this);
     // İlk bildirim servisi başlatma
     WidgetsBinding.instance.addPostFrameCallback((_) {
-       final router = ref.read(goRouterProvider);
+      final router = ref.read(goRouterProvider);
       NotificationService.instance.initialize(onNavigate: (route) {
         router.go(route);
       });

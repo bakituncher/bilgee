@@ -19,9 +19,22 @@ class AuthController extends StreamNotifier<User?> {
   Stream<User?> build() {
     final authRepository = ref.watch(authRepositoryProvider);
     final authStream = authRepository.authStateChanges;
-    // Uygulama her açıldığında veya kullanıcı durumu değiştiğinde tetiklenir.
-    final subscription = authStream.listen(_onUserActivity);
-    ref.onDispose(() => subscription.cancel());
+
+    // Auth state dinleyicisini ayarla
+    final authSubscription = authStream.listen(_onUserActivity);
+
+    // RevenueCat müşteri bilgisi dinleyicisini ayarla
+    // Bu dinleyici, uygulama içindeki satın almalar veya sunucu tarafındaki
+    // değişiklikler (örn. abonelik yenileme) sonrası tetiklenir.
+    Purchases.addCustomerInfoUpdateListener((_) {
+      // Değişiklik olduğunda, rate-limit korumalı sunucu senkronunu tetikle.
+      _triggerServerSideSync();
+    });
+
+    ref.onDispose(() {
+      authSubscription.cancel();
+    });
+
     return authStream;
   }
 
@@ -91,10 +104,10 @@ class AuthController extends StreamNotifier<User?> {
   // THROTTLE KORUMASLI: Son çağrıdan 30 saniye geçmediyse çağrılmaz
   DateTime? _lastSyncAttempt;
   Future<void> _triggerServerSideSync() async {
-    // Throttle kontrolü: Son 30 saniyede zaten çağrıldıysa atla
+    // Throttle kontrolü: Son 60 saniyede zaten çağrıldıysa atla
     final now = DateTime.now();
-    if (_lastSyncAttempt != null && now.difference(_lastSyncAttempt!) < const Duration(seconds: 30)) {
-      print("Premium sync throttled - son çağrıdan 30 saniye geçmedi, atlanıyor.");
+    if (_lastSyncAttempt != null && now.difference(_lastSyncAttempt!) < const Duration(seconds: 60)) {
+      print("Premium sync throttled - son çağrıdan 60 saniye geçmedi, atlanıyor.");
       return;
     }
 
@@ -167,6 +180,8 @@ class AuthController extends StreamNotifier<User?> {
     await _logOutFromRevenueCat();
     final authRepository = ref.read(authRepositoryProvider);
     await authRepository.signOut();
+    // Oturum kapatıldıktan sonra kullanıcıya özel verileri temizle
+    ref.invalidate(userProfileProvider);
   }
 
   Future<void> updatePassword({required String currentPassword, required String newPassword}) {
