@@ -401,6 +401,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             onTap: () => _launchURL(context, "https://www.codenzi.com/taktik-gizlilik-politikasi.html"),
           ),
           SettingsTile(
+            icon: Icons.subscriptions_outlined,
+            title: "Abonelikleri Yönet",
+            subtitle: "Aboneliklerinizi Google Play'de yönetin",
+            onTap: () => _launchURL(context, "https://play.google.com/store/account/subscriptions"),
+          ),
+          SettingsTile(
             icon: Icons.contact_support_outlined,
             title: "Bize Ulaşın",
             subtitle: "Görüş ve önerileriniz için",

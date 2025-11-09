@@ -238,6 +238,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                           child: Column(
                             children: [
                               const _TrustBadges(),
+                              const _PriceTransparencyFooter(),
                               Padding(
                                 padding: EdgeInsets.only(bottom: bottomInset > 0 ? bottomInset + 4 : 10),
                                 child: const _LegalFooter(isCompact: true),
@@ -306,15 +307,15 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
               radius: 1.5,
               colors: isDark
                   ? [
-                      colorScheme.surface,
-                      colorScheme.surface,
-                      Color.lerp(colorScheme.surface, Colors.black, 0.5)!,
-                    ]
+                colorScheme.surface,
+                colorScheme.surface,
+                Color.lerp(colorScheme.surface, Colors.black, 0.5)!,
+              ]
                   : [
-                      colorScheme.surface,
-                      Color.lerp(colorScheme.surface, colorScheme.primary, 0.05)!,
-                      Color.lerp(colorScheme.surface, colorScheme.secondary, 0.08)!,
-                    ],
+                colorScheme.surface,
+                Color.lerp(colorScheme.surface, colorScheme.primary, 0.05)!,
+                Color.lerp(colorScheme.surface, colorScheme.secondary, 0.08)!,
+              ],
               stops: const [0.0, 0.4, 1.0],
             ),
           ),
@@ -526,6 +527,30 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
 // ====================================================================
 // --- WIDGETS ---
 // ====================================================================
+
+// --- NEW: Price Transparency Footer ---
+class _PriceTransparencyFooter extends StatelessWidget {
+  const _PriceTransparencyFooter();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textColor = theme.colorScheme.onSurface.withOpacity(0.6);
+    final textStyle = theme.textTheme.bodySmall?.copyWith(color: textColor, height: 1.4);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+      child: Text(
+        'Abonelik, siz iptal edene kadar seçtiğiniz tarife (aylık/yıllık) üzerinden otomatik olarak yenilenir. '
+            'Ücretsiz deneme süresi (varsa) sonunda ücretlendirme başlar. '
+            'Aboneliğinizi Google Play Store\'daki "Abonelikler" bölümünden istediğiniz zaman kolayca iptal edebilirsiniz. '
+            'Fiyatlara tüm vergiler dahildir.',
+        textAlign: TextAlign.center,
+        style: textStyle,
+      ),
+    );
+  }
+}
 
 // --- 1. ANIMATED HEADER (No Change) ---
 

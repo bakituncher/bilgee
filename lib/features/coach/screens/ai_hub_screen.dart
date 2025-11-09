@@ -117,13 +117,13 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
                           end: Alignment.bottomCenter,
                           colors: isDark
                               ? [
-                                  Theme.of(context).scaffoldBackgroundColor.withOpacity(0.9),
-                                  Theme.of(context).scaffoldBackgroundColor.withOpacity(0.7),
-                                ]
+                            Theme.of(context).scaffoldBackgroundColor.withOpacity(0.9),
+                            Theme.of(context).scaffoldBackgroundColor.withOpacity(0.7),
+                          ]
                               : [
-                                  Theme.of(context).scaffoldBackgroundColor.withOpacity(0.9),
-                                  Theme.of(context).scaffoldBackgroundColor.withOpacity(0.75),
-                                ],
+                            Theme.of(context).scaffoldBackgroundColor.withOpacity(0.9),
+                            Theme.of(context).scaffoldBackgroundColor.withOpacity(0.75),
+                          ],
                         ),
                         border: const Border(
                           bottom: BorderSide(
@@ -221,7 +221,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
                         },
                         'Motivasyon Sohbeti': {
                           'title': 'Sınav Sürecindeki En Yakın Dostunuz',
-                          'subtitle': 'Stresli veya motivasyonsuz hissettiğinizde, yapay zeka koçunuzla sohbet edin. Size özel tavsiyeler ve psikolojik destekle mental olarak her zaman zirvede kalın.',
+                          'subtitle': 'Stresli veya motivasyonsuz hissettiğinizde, yapay zeka koçunuzla sohbet edin. Size özel tavsiyeler ve Dostça destekle mental olarak her zaman zirvede kalın.',
                         },
                       };
 
@@ -252,7 +252,19 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
                   ),
                 ),
               ),
-              SliverToBoxAdapter(child: SizedBox(height: bottomInset + 8)),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                  child: Text(
+                    'Taktik AI Koçu yalnızca akademik strateji ve motivasyon aracıdır. Tıbbi veya psikolojik teşhis/tedavi amaçlı tasarlanmamıştır. Sağlık sorunları için lütfen lisanslı bir uzmana başvurun.',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.7),
+                    ),
+                  ),
+                ),
+              ),
+              SliverToBoxAdapter(child: SizedBox(height: bottomInset + 24)),
             ],
           ),
         ],
@@ -325,8 +337,8 @@ class _CoreVisual extends StatelessWidget {
                       border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(.2), width: 1.5),
                     ),
                     child: Icon(
-                      Icons.auto_awesome, 
-                      size: 60 + g * 6, 
+                      Icons.auto_awesome,
+                      size: 60 + g * 6,
                       color: Theme.of(context).colorScheme.primary.withOpacity(.92),
                     ),
                   ),
@@ -369,15 +381,15 @@ class _AnimatedBackground extends StatelessWidget {
               end: Alignment.bottomRight,
               colors: isDark
                   ? [
-                      Theme.of(context).scaffoldBackgroundColor,
-                      Theme.of(context).scaffoldBackgroundColor.blend(Theme.of(context).colorScheme.primary.withOpacity(.15), .08 + g * .1),
-                      Theme.of(context).scaffoldBackgroundColor.blend(Theme.of(context).colorScheme.secondary.withOpacity(.12), .05 + g * .08),
-                    ]
+                Theme.of(context).scaffoldBackgroundColor,
+                Theme.of(context).scaffoldBackgroundColor.blend(Theme.of(context).colorScheme.primary.withOpacity(.15), .08 + g * .1),
+                Theme.of(context).scaffoldBackgroundColor.blend(Theme.of(context).colorScheme.secondary.withOpacity(.12), .05 + g * .08),
+              ]
                   : [
-                      Theme.of(context).scaffoldBackgroundColor,
-                      Theme.of(context).scaffoldBackgroundColor.blend(Theme.of(context).colorScheme.primary.withOpacity(.15), .03 + g * .05),
-                      Theme.of(context).scaffoldBackgroundColor.blend(Theme.of(context).colorScheme.primary.withOpacity(.1), .02 + g * .04),
-                    ],
+                Theme.of(context).scaffoldBackgroundColor,
+                Theme.of(context).scaffoldBackgroundColor.blend(Theme.of(context).colorScheme.primary.withOpacity(.15), .03 + g * .05),
+                Theme.of(context).scaffoldBackgroundColor.blend(Theme.of(context).colorScheme.primary.withOpacity(.1), .02 + g * .04),
+              ],
             ),
           ),
           child: CustomPaint(
@@ -414,7 +426,7 @@ class _ParticlePainter extends CustomPainter {
     }
   }
   @override
-  bool shouldRepaint(covariant _ParticlePainter oldDelegate) => 
+  bool shouldRepaint(covariant _ParticlePainter oldDelegate) =>
       oldDelegate.progress != progress || oldDelegate.isDark != isDark;
 }
 
@@ -460,16 +472,16 @@ class _AiToolTile extends StatelessWidget {
                         end: Alignment.bottomRight,
                         colors: isDark
                             ? [
-                                Theme.of(context).colorScheme.surfaceContainer.withOpacity(.85),
-                                Theme.of(context).cardColor.withOpacity(.9),
-                              ]
+                          Theme.of(context).colorScheme.surfaceContainer.withOpacity(.85),
+                          Theme.of(context).cardColor.withOpacity(.9),
+                        ]
                             : [
-                                Theme.of(context).cardColor.withOpacity(.98),
-                                Theme.of(context).cardColor.withOpacity(.92),
-                              ],
+                          Theme.of(context).cardColor.withOpacity(.98),
+                          Theme.of(context).cardColor.withOpacity(.92),
+                        ],
                       ),
                       border: Border.all(
-                        color: isDark 
+                        color: isDark
                             ? tool.color.withOpacity(.4)
                             : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(.5),
                         width: 1.5,

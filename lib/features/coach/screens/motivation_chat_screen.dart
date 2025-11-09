@@ -373,10 +373,10 @@ class _SmartBriefingView extends ConsumerWidget {
                     textAlign: TextAlign.center,
                   ).animate().fadeIn(delay: 300.ms),
                   const SizedBox(height: 24),
-                  // KALDI: Psikolojik Destek
+                  // KALDI: Dostça Destek
                   _BriefingButton(
                     icon: Icons.favorite_rounded,
-                    title: 'Psikolojik Destek',
+                    title: 'Dostça Destek',
                     subtitle: 'Stres / moral düşüşü için kısa destek + mikro adım.',
                     onTap: () => onPromptSelected('psych_support'),
                     delay: 380.ms,
@@ -388,6 +388,17 @@ class _SmartBriefingView extends ConsumerWidget {
                     subtitle: '5 dk. mikro meydan okuma ve ritim önerisi.',
                     onTap: () => onPromptSelected('motivation_corner'),
                     delay: 460.ms,
+                  ),
+                  const SizedBox(height: 32),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      'Taktik AI Koçu yalnızca akademik strateji ve motivasyon aracıdır. Tıbbi veya psikolojik teşhis/tedavi amaçlı tasarlanmamıştır. Sağlık sorunları için lütfen lisanslı bir uzmana başvurun.',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.6),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -407,7 +418,7 @@ class _BriefingButton extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
-    
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(24),
@@ -422,9 +433,9 @@ class _BriefingButton extends StatelessWidget {
             colors: isDark
                 ? [const Color(0x18222C2C), const Color(0x10222C2C)]
                 : [
-                    colorScheme.surfaceContainerHighest.withOpacity(0.4),
-                    colorScheme.surfaceContainerHighest.withOpacity(0.2),
-                  ],
+              colorScheme.surfaceContainerHighest.withOpacity(0.4),
+              colorScheme.surfaceContainerHighest.withOpacity(0.2),
+            ],
           ),
           border: Border.all(
             color: isDark

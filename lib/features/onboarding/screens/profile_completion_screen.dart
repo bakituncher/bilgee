@@ -43,6 +43,15 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
     }
 
     if (_formKey.currentState!.validate()) {
+      final now = DateTime.now();
+      final eighteenYearsAgo = DateTime(now.year - 18, now.month, now.day);
+      if (_dateOfBirth != null && _dateOfBirth!.isAfter(eighteenYearsAgo)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Kayıt olmak için 18 yaşından büyük olmalısınız.')),
+        );
+        return;
+      }
+
       setState(() => _isLoading = true);
 
       final firestoreService = ref.read(firestoreServiceProvider);
@@ -81,11 +90,13 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
   }
 
   Future<void> _selectDate(BuildContext context) async {
+    final now = DateTime.now();
+    final eighteenYearsAgo = DateTime(now.year - 18, now.month, now.day);
     final pickedDate = await showDatePicker(
       context: context,
-      initialDate: _dateOfBirth ?? DateTime(2000),
+      initialDate: _dateOfBirth ?? eighteenYearsAgo,
       firstDate: DateTime(1950),
-      lastDate: DateTime.now().subtract(const Duration(days: 365 * 10)), // Min 10 years old
+      lastDate: eighteenYearsAgo,
       helpText: 'Doğum Tarihini Seç',
       cancelText: 'İptal',
       confirmText: 'Tamam',
