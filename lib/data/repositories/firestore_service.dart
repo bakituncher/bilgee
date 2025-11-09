@@ -440,7 +440,7 @@ class FirestoreService {
   }
 
   Future<void> markTutorialAsCompleted(String userId) async {
-    await _appStateDoc(userId).set({'tutorialCompleted': true}, SetOptions(merge: true));
+    // Sadece ana users belgesini güncelle (state belgesine yazma izni yok)
     await usersCollection.doc(userId).update({'tutorialCompleted': true});
   }
 

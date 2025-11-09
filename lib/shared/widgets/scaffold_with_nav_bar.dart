@@ -10,6 +10,7 @@ import 'package:taktik/features/quests/logic/quest_completion_notifier.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:taktik/shared/widgets/quest_completion_celebration.dart';
 import 'package:taktik/data/models/plan_model.dart';
+import 'package:taktik/data/models/user_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/shared/constants/highlight_keys.dart';
@@ -30,6 +31,7 @@ class ScaffoldWithNavBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // QuestNotifier'ı canlı tut (arkaplan olaylarını dinlesin)
     ref.watch(questNotifierProvider);
+
     final List<TutorialStep> tutorialSteps = [
       TutorialStep(
         title: "Karargaha Hoş Geldin!",
@@ -95,6 +97,19 @@ class ScaffoldWithNavBar extends ConsumerWidget {
             final shouldShowTutorial = currentStepIndex != null;
             final completionState = ref.watch(questCompletionProvider);
             final completedQuest = completionState.completedQuest;
+
+            // Tutorial'ı sadece tutorialCompleted=false olan kullanıcılara göster
+            ref.listen<UserModel?>(
+              userProfileProvider.select((data) => data.value),
+              (previous, next) {
+                if (next != null && !next.tutorialCompleted && currentStepIndex == null) {
+                  // Tutorial henüz başlatılmamışsa ve kullanıcı tutorial'ı görmemişse başlat
+                  Future.microtask(() {
+                    ref.read(tutorialProvider.notifier).start();
+                  });
+                }
+              },
+            );
 
             ref.listen<QuestCompletionState>(questCompletionProvider, (previous, next) {
               final nextQuest = next.completedQuest;
