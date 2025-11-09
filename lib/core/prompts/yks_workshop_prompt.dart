@@ -1,4 +1,5 @@
 // lib/core/prompts/yks_workshop_prompt.dart
+import 'package:taktik/core/prompts/knowledge_base/tdk_yazim_kurallari.dart';
 
 String getYksStudyGuideAndQuizPrompt(
   String weakestSubject,
@@ -63,8 +64,39 @@ Eğer bu kontrollerden herhangi biri başarısız olursa, soruyu yayınlamadan �
 -   Placeholder, "[...]" gibi tamamlanmamış ifadeler KESİNLİKLE YASAKTIR.
 """;
 
-  // --- Final Prompt Assembly ---
-  return """
+  // --- Bilgi Bankası Entegrasyonu ---
+  String finalPrompt;
+  final bool isYazimKurali = weakestSubject.toLowerCase().contains('türkçe') &&
+                           (weakestTopic.toLowerCase().contains('yazım kuralları') || weakestTopic.toLowerCase().contains('imla kuralları'));
+
+  if (isYazimKurali) {
+    finalPrompt = """
+$persona
+$pedagogy
+$difficultyInstruction
+$examSectionGuidelines
+$qualityProtocol
+$formattingRules
+
+**ÖZEL TALİMAT: YAZIM KURALLARI**
+Şu anda konu "Yazım Kuralları". Bu, mutlak doğruluk ve kesin kurallara bağlılık gerektirir. Tüm içeriğini, sorularını, şıklarını ve açıklamalarını AŞAĞIDA VERİLEN TDK YAZIM KURALLARI BİLGİ BANKASI'na dayandırarak oluştur. Bu belgenin dışına asla çıkma. Halüsinasyon görme, tahmin yürütme. Sadece belgedeki bilgiyi kullan.
+
+İç Kalite Kontrol Protokolü'nü uygularken, her soru için kendine şunu sor (ve cevabın evet olduğundan emin ol): "Bu sorunun doğru cevabı ve çeldiricileri, bilgi bankasındaki hangi spesifik maddeye dayanıyor?"
+
+--- TDK BİLGİ BANKASI BAŞLANGICI ---
+$tdkYazimKurallariBilgiBankasi
+--- TDK BİLGİ BANKASI SONU ---
+
+GÖREV: Aşağıdaki konu için belirtilen yapıya ve YALNIZCA yukarıdaki bilgi bankasına uygun bir "Cevher İşleme Kartı" ve 5 soruluk bir "Ustalık Sınavı" oluştur.
+
+INPUT:
+- Ders: '$weakestSubject'
+- Konu: '$weakestTopic'
+
+YAPI:
+""";
+  } else {
+    finalPrompt = """
 $persona
 $pedagogy
 $difficultyInstruction
@@ -79,6 +111,11 @@ INPUT:
 - Konu: '$weakestTopic'
 
 YAPI:
+""";
+  }
+
+  // --- Final Prompt Assembly ---
+  return finalPrompt + """
 {
   "subject": "$weakestSubject",
   "topic": "$weakestTopic",
