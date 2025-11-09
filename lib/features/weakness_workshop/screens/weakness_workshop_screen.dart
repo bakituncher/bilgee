@@ -18,7 +18,6 @@ import 'package:uuid/uuid.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
-import 'package:taktik/features/weakness_workshop/logic/quiz_quality_guard.dart';
 import 'package:confetti/confetti.dart';
 import 'package:lottie/lottie.dart';
 
@@ -27,25 +26,23 @@ enum WorkshopStep { briefing, study, quiz, results }
 
 final _selectedTopicProvider = StateProvider<Map<String, String>?>((ref) => null);
 final _difficultyProvider = StateProvider<(String, int)>((ref) => ('normal', 1));
+final workshopIssuesProvider = StateProvider<List<String>>((ref) => []);
 
 final workshopSessionProvider = FutureProvider.autoDispose<StudyGuideAndQuiz>((ref) async {
   final selectedTopic = ref.watch(_selectedTopicProvider);
   final difficultyInfo = ref.watch(_difficultyProvider);
-
   if (selectedTopic == null) {
     return Future.error("Konu seçilmedi.");
   }
-
   final user = ref.read(userProfileProvider).value;
   final tests = ref.read(testsProvider).value;
   final performance = ref.read(performanceProvider).value;
-
   if (user == null || tests == null || performance == null) {
     return Future.error("Analiz için kullanıcı, test veya performans verisi bulunamadı.");
   }
 
   Future<StudyGuideAndQuiz> attempt({double? temperature}) async {
-    final jsonString = await ref.read(aiServiceProvider).generateStudyGuideAndQuiz(
+    final rawString = await ref.read(aiServiceProvider).generateStudyGuideAndQuiz(
       user,
       tests,
       performance,
@@ -54,29 +51,35 @@ final workshopSessionProvider = FutureProvider.autoDispose<StudyGuideAndQuiz>((r
       attemptCount: difficultyInfo.$2,
       temperature: temperature,
     ).timeout(
-      const Duration(seconds: 45),
+      const Duration(seconds: 70), // OPTIMIZE: Daha derin düşünme için artırıldı (45 -> 70)
       onTimeout: () => throw TimeoutException("Yapay zeka çok uzun süredir yanıt vermiyor. Lütfen tekrar deneyin."),
     );
 
-    final decodedJson = jsonDecode(jsonString);
-    if (decodedJson.containsKey('error')) {
-      throw Exception(decodedJson['error']);
+    try {
+        final decodedJson = jsonDecode(rawString);
+        if (decodedJson is Map && decodedJson.containsKey('error')) {
+          throw Exception(decodedJson['error']);
+        }
+        return StudyGuideAndQuiz.fromJson(decodedJson as Map<String, dynamic>);
+    } catch (e) {
+        throw Exception("Yapay zeka yanıtı işlenirken bir hata oluştu: ${e.toString()}");
     }
-    final raw = StudyGuideAndQuiz.fromJson(decodedJson);
-    // Soru kalite güvencesi uygula (yetersizse hata fırlatır)
-    final guarded = QuizQualityGuard.apply(raw).material;
-    return guarded;
   }
 
-  // 1) Varsayılan sıcaklıkla dene -> 2) 0.35 -> 3) 0.25
-  final attempts = <double?>[null, 0.35, 0.25];
+  final attempts = <double?>[0.3]; // OPTIMIZE: Tek deterministik düşük sıcaklık denemesi (önceden 3 deneme vardı)
   Exception? lastErr;
   for (final t in attempts) {
     try {
       return await attempt(temperature: t);
     } catch (e) {
       lastErr = Exception(e.toString());
-      // denemeye devam
+      // Çoklu tekrar kaldırıldığı için direkt hata gösterilecek; kalite notları yine eklenecek.
+      if (e.toString().contains('Soru kalitesi') || e.toString().contains('tamamen yetersiz')) {
+        final issues = ref.read(workshopIssuesProvider);
+        if (issues.isNotEmpty) {
+          return Future.error('${e.toString()}\nKalite Notları: ${issues.take(6).join(' | ')}');
+        }
+      }
     }
   }
   throw lastErr ?? Exception('Soru kalitesi yetersiz. Lütfen tekrar deneyin.');

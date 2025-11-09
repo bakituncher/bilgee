@@ -19,7 +19,7 @@ const PREMIUM_RATE_LIMIT_PER_MINUTE = parseInt(process.env.PREMIUM_RATE_LIMIT_PE
 const PREMIUM_RATE_LIMIT_PER_HOUR = parseInt(process.env.PREMIUM_RATE_LIMIT_PER_HOUR || "100", 10);
 
 exports.generateGemini = onCall(
-  { region: "us-central1", timeoutSeconds: 60, memory: "256MiB", secrets: [GEMINI_API_KEY], enforceAppCheck: true, maxInstances: 20, concurrency: 10 },
+  { region: "us-central1", timeoutSeconds: 120, memory: "256MiB", secrets: [GEMINI_API_KEY], enforceAppCheck: true, maxInstances: 20, concurrency: 10 },
   async (request) => {
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Oturum gerekli");
@@ -33,6 +33,7 @@ exports.generateGemini = onCall(
 
     const prompt = request.data?.prompt;
     const expectJson = !!request.data?.expectJson;
+    const feature = request.data?.feature; // Özellik parametresini oku
 
     // Sıcaklık aralığını güvenli tut; JSON isteklerinde daha deterministik
     let temperature = 0.7;
@@ -44,12 +45,20 @@ exports.generateGemini = onCall(
       temperature = Math.min(temperature, 0.3);
     }
 
-    // Model seçimi: Politika gereği tüm çağrılar sabit model kullanır
-    const requestedModel = typeof request.data?.model === "string" ? String(request.data.model).trim() : null;
-    if (requestedModel && requestedModel.toLowerCase() !== "gemini-2.0-flash-lite-001") {
-      logger.info("Model override enforced", { requestedModel, enforced: "gemini-2.0-flash-lite-001" });
+    // Model seçimi: Özelliğe göre model yönlendirme
+    // Cevher Atölyesi (workshop) için daha güçlü ve yeni model kullanılır.
+    // Diğer tüm özellikler maliyet-etkin standart modeli kullanır.
+    let modelId = "gemini-2.0-flash-lite-001"; // Varsayılan model
+    if (feature === "workshop") {
+      modelId = "gemini-2.5-flash-lite"; // Cevher Atölyesi için yükseltilmiş model
+      logger.info(`Workshop feature detected. Upgrading model to ${modelId}.`, { uid: request.auth.uid.substring(0, 6) + "***" });
+    } else {
+      // İstemci tarafından istenen modeli logla, ama üzerine yazma (eski davranış)
+      const requestedModel = typeof request.data?.model === "string" ? String(request.data.model).trim() : null;
+      if (requestedModel && requestedModel.toLowerCase() !== modelId) {
+        logger.info(`Model override enforced for non-workshop feature.`, { requestedModel, enforced: modelId });
+      }
     }
-    const modelId = "gemini-2.0-flash-lite-001";
 
     if (typeof prompt !== "string" || !prompt.trim()) {
       throw new HttpsError("invalid-argument", "Geçerli bir prompt gerekli");
@@ -135,9 +144,9 @@ exports.generateGemini = onCall(
 
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${GEMINI_API_KEY.value()}`;
 
-      // Zaman aşımı kontrolü (55s):
+      // Zaman aşımı kontrolü (110s):
       const ac = new AbortController();
-      const t = setTimeout(() => ac.abort(), 55_000);
+      const t = setTimeout(() => ac.abort(), 110000);
 
       const resp = await fetch(url, {
         method: "POST",

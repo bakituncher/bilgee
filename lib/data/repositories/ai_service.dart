@@ -7,7 +7,9 @@ import 'package:taktik/data/models/user_model.dart';
 import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/data/models/topic_performance_model.dart';
 import 'package:taktik/core/prompts/strategy_prompts.dart';
-import 'package:taktik/core/prompts/workshop_prompts.dart';
+import 'package:taktik/core/prompts/yks_workshop_prompt.dart';
+import 'package:taktik/core/prompts/lgs_workshop_prompt.dart';
+import 'package:taktik/core/prompts/kpss_workshop_prompt.dart';
 import 'package:taktik/core/prompts/motivation_suite_prompts.dart';
 import 'package:taktik/core/prompts/default_motivation_prompts.dart';
 import 'package:taktik/features/stats/logic/stats_analysis.dart';
@@ -195,18 +197,20 @@ class AiService {
   String _yyyyMmDd(DateTime d) =>
       '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
-  Future<String> _callGemini(String prompt, {bool expectJson = false, double? temperature, String? model}) async {
+  Future<String> _callGemini(String prompt, {bool expectJson = false, double? temperature, String? model, String? feature}) async {
     try {
       final callable = FirebaseFunctions.instanceFor(region: 'us-central1').httpsCallable('ai-generateGemini');
       final payload = {
         'prompt': prompt,
         'expectJson': expectJson,
         if (model != null && model.isNotEmpty) 'model': model,
+        if (feature != null && feature.isNotEmpty) 'feature': feature,
       };
       if (temperature != null) {
         payload['temperature'] = temperature;
       }
-      final result = await callable.call(payload).timeout(const Duration(seconds: 70));
+      final timeoutSec = (feature == 'workshop') ? 85 : 70; // workshop için daha uzun düşünme süresi
+      final result = await callable.call(payload).timeout(Duration(seconds: timeoutSec));
       final data = result.data;
       final rawResponse = (data is Map && data['raw'] is String) ? (data['raw'] as String).trim() : '';
       if (rawResponse.isEmpty) {
@@ -421,6 +425,7 @@ class AiService {
       'backlogCount': backlogActivities.length,
       'backlogSample': backlogActivities.take(10).toList(),
       'topicStatus': topicStatus,
+      'counts': {'red': redCount, 'yellow': yellowCount, 'unknown': unknownCount},
       'policy': policy,
     };
 
@@ -430,7 +435,7 @@ class AiService {
   Future<String> generateStudyGuideAndQuiz(UserModel user, List<TestModel> tests, PerformanceSummary performance, {Map<String, String>? topicOverride, String difficulty = 'normal', int attemptCount = 1, double? temperature}) async {
     // Eğer test yoksa hemen hata döndürme: bazı yeni hesaplarda konu performansı (ör. manuel veri) olabilir.
     if (tests.isEmpty) {
-      final hasTopicData = performance.topicPerformances.values.any((subjectMap) => subjectMap.values.any((t) => (t.questionCount ?? 0) > 0));
+      final hasTopicData = performance.topicPerformances.values.any((subjectMap) => subjectMap.values.any((t) => t.questionCount > 0));
       if (!hasTopicData && topicOverride == null) {
         return '{"error":"Analiz için en az bir deneme sonucu gereklidir."}';
       }
@@ -468,10 +473,40 @@ class AiService {
       }
     }
 
-    final prompt = getStudyGuideAndQuizPrompt(weakestSubject, weakestTopic, user.selectedExam, difficulty, attemptCount);
+    String prompt;
+    final examType = ExamType.values.byName(user.selectedExam!);
 
-    // temperature parametresini _callGemini'ye geçir
-    return _callGemini(prompt, expectJson: true, temperature: temperature);
+    switch (examType) {
+      case ExamType.yks:
+        prompt = getYksStudyGuideAndQuizPrompt(
+          weakestSubject,
+          weakestTopic,
+          user.selectedExamSection,
+          difficulty,
+          attemptCount,
+        );
+        break;
+      case ExamType.lgs:
+        prompt = getLgsStudyGuideAndQuizPrompt(
+          weakestSubject,
+          weakestTopic,
+          difficulty,
+          attemptCount,
+        );
+        break;
+      default: // Covers all KPSS types
+        prompt = getKpssStudyGuideAndQuizPrompt(
+          weakestSubject,
+          weakestTopic,
+          examType.displayName,
+          difficulty,
+          attemptCount,
+        );
+        break;
+    }
+
+    // Cevher Atölyesi için özel 'workshop' flag'ini ve sıcaklığı geçir
+    return _callGemini(prompt, expectJson: true, temperature: temperature, feature: 'workshop');
   }
 
   Future<String> getPersonalizedMotivation({
@@ -510,7 +545,6 @@ class AiService {
 
     // Yeni: Dört mod için özel promptlar + default akışın modüler hali
     String prompt;
-    int maxSentences = 3;
     switch (promptType) {
       case 'trial_review':
         prompt = MotivationSuitePrompts.trialReview(
@@ -522,7 +556,6 @@ class AiService {
           conversationHistory: combinedHistory,
           lastUserMessage: lastUserMessage,
         );
-        maxSentences = 5;
         break;
       case 'strategy_consult':
         prompt = MotivationSuitePrompts.strategyConsult(
@@ -534,7 +567,6 @@ class AiService {
           conversationHistory: combinedHistory,
           lastUserMessage: lastUserMessage,
         );
-        maxSentences = 5;
         break;
       case 'psych_support':
         prompt = MotivationSuitePrompts.psychSupport(
@@ -544,7 +576,6 @@ class AiService {
           conversationHistory: combinedHistory,
           lastUserMessage: lastUserMessage,
         );
-        maxSentences = 5;
         break;
       case 'motivation_corner':
         prompt = MotivationSuitePrompts.motivationCorner(
@@ -553,7 +584,6 @@ class AiService {
           conversationHistory: combinedHistory,
           lastUserMessage: lastUserMessage,
         );
-        maxSentences = 5;
         break;
       case 'welcome':
         prompt = DefaultMotivationPrompts.welcome(
@@ -680,4 +710,5 @@ class AiService {
       return {};
     }
   }
+
 }
