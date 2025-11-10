@@ -6,7 +6,6 @@ import 'package:taktik/data/models/user_model.dart';
 import 'package:taktik/data/models/test_model.dart';
 import 'package:taktik/features/arena/models/leaderboard_entry_model.dart'; // EKLENDİ
 import 'package:taktik/features/auth/application/auth_controller.dart';
-import 'package:taktik/features/profile/screens/user_search_screen.dart'; // SearchType enum için
 import '../repositories/firestore_service.dart';
 import 'package:taktik/data/models/plan_document.dart';
 import 'package:taktik/data/models/performance_summary.dart';
@@ -190,28 +189,18 @@ final publicProfileRawProvider = FutureProvider.family.autoDispose<Map<String, d
   return null;
 });
 
-// YENİ: Kullanıcı arama provider'ı
-final userSearchProvider = FutureProvider.family.autoDispose<List<Map<String, dynamic>>, String>((ref, query) async {
-  if (query.trim().isEmpty) return [];
-  final svc = ref.watch(firestoreServiceProvider);
-  final searchType = ref.watch(searchTypeProvider);
-  return await svc.searchUsersByName(query, searchType: searchType);
-});
-
 // YENİ: Kullanıcı arama sonuçları için state provider
 final userSearchQueryProvider = StateProvider<String>((ref) => '');
 
-// YENİ: Arama tipi provider'ı
-final searchTypeProvider = StateProvider<SearchType>((ref) => SearchType.name);
-
 // YENİ: Arama sonuçlarını reaktif olarak getiren provider (engellenen kullanıcılar filtrelenmiş)
+// Sadece kullanıcı adı ile arama yapılır
 final searchResultsProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
   final query = ref.watch(userSearchQueryProvider);
   if (query.trim().isEmpty) return [];
 
   final svc = ref.watch(firestoreServiceProvider);
-  final searchType = ref.watch(searchTypeProvider);
-  final results = await svc.searchUsersByName(query, searchType: searchType);
+  // Sadece kullanıcı adı ile arama yapılıyor (SearchType.username)
+  final results = await svc.searchUsersByUsername(query);
 
   // Engellenen kullanıcıları filtrele
   final moderationService = ref.watch(moderationServiceProvider);

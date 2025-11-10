@@ -1140,32 +1140,21 @@ class FirestoreService {
     await batch.commit();
   }
 
-  /// Search users by name/username - GÜVENLİK GÜNCELLEMESİ
-  Future<List<Map<String, dynamic>>> searchUsersByName(String query, {SearchType searchType = SearchType.name}) async {
+  /// Search users by username only - OPTIMIZE EDİLMİŞ VE GÜVENLİ
+  /// Sadece public_profiles koleksiyonunda username alanında arama yapar
+  /// Bu yöntem hem güvenli hem de maliyet optimizasyonludur
+  Future<List<Map<String, dynamic>>> searchUsersByUsername(String query) async {
     if (query.trim().isEmpty) return [];
 
     final normalizedQuery = query.trim().toLowerCase();
 
     try {
-      Query<Map<String, dynamic>> searchQuery;
-
-      // Arama mantığı artık yalnızca `public_profiles` koleksiyonunu hedefliyor.
-      final publicProfiles = _firestore.collection('public_profiles');
-
-      if (searchType == SearchType.username) {
-        // Kullanıcı adına göre arama
-        searchQuery = publicProfiles
-            .where('username', isGreaterThanOrEqualTo: normalizedQuery)
-            .where('username', isLessThan: '$normalizedQuery\uf8ff')
-            .limit(20);
-      } else {
-        // İsimle arama (keywords kullanarak)
-        // Cloud Function'ın `searchableKeywords` alanını doldurduğunu varsayıyoruz.
-        final keywords = _generateSearchKeywords(normalizedQuery);
-        searchQuery = publicProfiles
-            .where('searchableKeywords', arrayContainsAny: keywords.take(10).toList())
-            .limit(20);
-      }
+      // Sadece public_profiles koleksiyonunda username ile arama
+      final searchQuery = _firestore
+          .collection('public_profiles')
+          .where('username', isGreaterThanOrEqualTo: normalizedQuery)
+          .where('username', isLessThan: '$normalizedQuery\uf8ff')
+          .limit(20);
 
       final querySnapshot = await searchQuery.get();
 
@@ -1175,19 +1164,10 @@ class FirestoreService {
         return data;
       }).toList();
 
-      // Yinelenen sonuçları engellemek için (farklı keyword'ler aynı dokümanı getirebilir)
-      final uniqueResults = <String, Map<String, dynamic>>{};
-      for (final result in results) {
-        final userId = result['userId'] as String;
-        if (!uniqueResults.containsKey(userId)) {
-          uniqueResults[userId] = result;
-        }
-      }
-
-      return uniqueResults.values.toList();
+      return results;
 
     } catch (e) {
-      print('Error searching users in public_profiles: $e');
+      print('Error searching users by username: $e');
       return [];
     }
   }

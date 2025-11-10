@@ -8,8 +8,6 @@ import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
 import 'package:taktik/features/profile/widgets/user_moderation_menu.dart';
 
-enum SearchType { name, username }
-
 class UserSearchScreen extends ConsumerStatefulWidget {
   const UserSearchScreen({super.key});
 
@@ -20,7 +18,6 @@ class UserSearchScreen extends ConsumerStatefulWidget {
 class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocus = FocusNode();
-  SearchType _searchType = SearchType.name;
 
   @override
   void initState() {
@@ -50,11 +47,6 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
     return raw;
   }
 
-  String _getPlaceholderText() {
-    return _searchType == SearchType.name
-        ? 'İsim ile ara...'
-        : 'Kullanıcı adı ile ara...';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -82,111 +74,6 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
         child: SafeArea(
           child: Column(
             children: [
-              // Arama türü seçici
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            setState(() => _searchType = SearchType.name);
-                            if (_searchController.text.isNotEmpty) {
-                              ref.read(userSearchQueryProvider.notifier).state = _searchController.text;
-                              ref.read(searchTypeProvider.notifier).state = SearchType.name;
-                            }
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            decoration: BoxDecoration(
-                              color: _searchType == SearchType.name
-                                  ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.person,
-                                  size: 18,
-                                  color: _searchType == SearchType.name
-                                      ? Theme.of(context).colorScheme.primary
-                                      : Theme.of(context).colorScheme.onSurfaceVariant,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'İsim',
-                                  style: TextStyle(
-                                    color: _searchType == SearchType.name
-                                        ? Theme.of(context).colorScheme.primary
-                                        : Theme.of(context).colorScheme.onSurfaceVariant,
-                                    fontWeight: _searchType == SearchType.name
-                                        ? FontWeight.w600
-                                        : FontWeight.normal,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            setState(() => _searchType = SearchType.username);
-                            if (_searchController.text.isNotEmpty) {
-                              ref.read(userSearchQueryProvider.notifier).state = _searchController.text;
-                              ref.read(searchTypeProvider.notifier).state = SearchType.username;
-                            }
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            decoration: BoxDecoration(
-                              color: _searchType == SearchType.username
-                                  ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.alternate_email,
-                                  size: 18,
-                                  color: _searchType == SearchType.username
-                                      ? Theme.of(context).colorScheme.primary
-                                      : Theme.of(context).colorScheme.onSurfaceVariant,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Kullanıcı Adı',
-                                  style: TextStyle(
-                                    color: _searchType == SearchType.username
-                                        ? Theme.of(context).colorScheme.primary
-                                        : Theme.of(context).colorScheme.onSurfaceVariant,
-                                    fontWeight: _searchType == SearchType.username
-                                        ? FontWeight.w600
-                                        : FontWeight.normal,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
 
               // Arama çubuğu
               Padding(
@@ -204,12 +91,12 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
                     focusNode: _searchFocus,
                     style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 16),
                     decoration: InputDecoration(
-                      hintText: _getPlaceholderText(),
+                      hintText: 'Kullanıcı adı ile ara...',
                       hintStyle: TextStyle(
                         color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                       ),
                       prefixIcon: Icon(
-                        Icons.search,
+                        Icons.alternate_email,
                         color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                       ),
                       suffixIcon: searchQuery.isNotEmpty
@@ -232,7 +119,6 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
                     ),
                     onChanged: (query) {
                       ref.read(userSearchQueryProvider.notifier).state = query;
-                      ref.read(searchTypeProvider.notifier).state = _searchType;
                     },
                   ),
                 ),
@@ -406,6 +292,7 @@ class _UserSearchTileState extends ConsumerState<_UserSearchTile> {
     }
 
     final displayName = _safeDisplayName(widget.userData);
+    final username = widget.userData['username'] as String? ?? '';
     final avatarStyle = widget.userData['avatarStyle'] as String?;
     final avatarSeed = widget.userData['avatarSeed'] as String?;
     final isFollowing = _optimistic ?? (isFollowingAsync.valueOrNull ?? false);
@@ -470,6 +357,17 @@ class _UserSearchTileState extends ConsumerState<_UserSearchTile> {
                               color: Theme.of(context).colorScheme.onSurface,
                             ),
                       ),
+                      if (username.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          '@$username',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                              ),
+                        ),
+                      ],
                       const SizedBox(height: 4),
                       countsAsync.when(
                         data: (counts) => Text(
