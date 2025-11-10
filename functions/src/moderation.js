@@ -258,7 +258,7 @@ exports.reportUser = onCall({
   }
 
   // Rate limiting (saatte 20 raporlama - çok esnek)
-  if (checkRateLimit(reporterId, "report", 20, 3600000)) {
+  if (checkRateLimit(reporterId, "report", 3, 3600000)) {
     logger.warn("reportUser: rate limit exceeded", { reporterId });
     throw new HttpsError(
       "resource-exhausted",
