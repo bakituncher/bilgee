@@ -12,6 +12,7 @@ import 'package:taktik/features/auth/application/auth_controller.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/rendering.dart';
 import 'package:taktik/shared/widgets/app_loader.dart';
+import 'package:taktik/features/profile/widgets/user_moderation_menu.dart';
 
 // Bu provider, ID'ye göre tek bir kullanıcı profili getirmek için kullanılır.
 final publicUserProfileProvider = FutureProvider.family.autoDispose<Map<String, dynamic>?, String>((ref, userId) async {
@@ -167,6 +168,27 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
+          // Moderasyon menüsü (kendi profilinde gösterme)
+          if (me?.uid != widget.userId)
+            Builder(
+              builder: (context) {
+                return userProfileAsync.maybeWhen(
+                  data: (data) {
+                    if (data == null) return const SizedBox.shrink();
+                    final displayName = (data['name'] as String?) ?? 'İsimsiz Savaşçı';
+                    return UserModerationMenu(
+                      targetUserId: widget.userId,
+                      targetUserName: displayName,
+                      onBlocked: () {
+                        // Engelleme sonrası ana ekrana dön
+                        Navigator.of(context).pop();
+                      },
+                    );
+                  },
+                  orElse: () => const SizedBox.shrink(),
+                );
+              },
+            ),
           IconButton(
             tooltip: _sharing ? 'Hazırlanıyor...' : 'Paylaş',
             onPressed: _sharing ? null : () { HapticFeedback.selectionClick(); _shareProfileImage(); },

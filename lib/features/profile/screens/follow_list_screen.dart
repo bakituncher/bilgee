@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
+import 'package:taktik/features/profile/widgets/user_moderation_menu.dart';
 
 class FollowListScreen extends ConsumerWidget {
   final String mode; // 'followers' | 'following'
@@ -172,6 +173,17 @@ class _FollowListTileState extends ConsumerState<_FollowListTile> {
                     ),
                   ),
                   const SizedBox(width: 8),
+                  // Moderasyon menüsü
+                  UserModerationMenu(
+                    targetUserId: widget.targetUserId,
+                    targetUserName: displayName,
+                    onBlocked: () {
+                      // Engelleme sonrası listeyi yenile
+                      ref.invalidate(followerIdsProvider(me!.uid));
+                      ref.invalidate(followingIdsProvider(me!.uid));
+                    },
+                  ),
+                  const SizedBox(width: 4),
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 180),
                     switchInCurve: Curves.easeOut,

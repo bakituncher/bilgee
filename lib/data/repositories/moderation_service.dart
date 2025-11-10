@@ -103,11 +103,13 @@ class ModerationService {
     } on FirebaseFunctionsException catch (e) {
       if (kDebugMode) {
         debugPrint('[ModerationService] Report error: ${e.code} - ${e.message}');
+        debugPrint('[ModerationService] Report error details: ${e.details}');
       }
       throw _handleFunctionsError(e);
     } catch (e) {
       if (kDebugMode) {
         debugPrint('[ModerationService] Unexpected error: $e');
+        debugPrint('[ModerationService] Error type: ${e.runtimeType}');
       }
       rethrow;
     }

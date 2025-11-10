@@ -79,7 +79,7 @@ class BlockedUsersScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(16),
               itemCount: blockedUsers.length,
               itemBuilder: (context, index) {
-                final blockedUser = blockedUsers[index];
+                final blockedUser = Map<String, dynamic>.from(blockedUsers[index]);
                 return _BlockedUserCard(
                   userId: blockedUser['userId'] as String,
                   name: blockedUser['name'] as String? ?? 'İsimsiz Kullanıcı',
