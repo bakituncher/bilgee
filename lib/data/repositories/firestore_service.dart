@@ -1287,4 +1287,60 @@ class FirestoreService {
       rethrow;
     }
   }
+
+  // --- USER BLOCK & REPORT ---
+
+  /// Blocks a user.
+  Future<void> blockUser(String userIdToBlock) async {
+    try {
+      final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
+      final callable = functions.httpsCallable('social-blockUser');
+      await callable.call({'userIdToBlock': userIdToBlock});
+    } on FirebaseFunctionsException catch (e) {
+      print("Engelleme hatası: ${e.message}");
+      rethrow;
+    }
+  }
+
+  /// Unblocks a user.
+  Future<void> unblockUser(String userIdToUnblock) async {
+    try {
+      final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
+      final callable = functions.httpsCallable('social-unblockUser');
+      await callable.call({'userIdToUnblock': userIdToUnblock});
+    } on FirebaseFunctionsException catch (e) {
+      print("Engeli kaldırma hatası: ${e.message}");
+      rethrow;
+    }
+  }
+
+  /// Reports a user.
+  Future<void> reportUser({required String reportedUserId, required String reason}) async {
+    try {
+      final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
+      final callable = functions.httpsCallable('social-reportUser');
+      await callable.call({
+        'reportedUserId': reportedUserId,
+        'reason': reason,
+      });
+    } on FirebaseFunctionsException catch (e) {
+      print("Raporlama hatası: ${e.message}");
+      rethrow;
+    }
+  }
+
+  /// Updates the status of a user report (admin only).
+  Future<void> updateReportStatus({required String reportId, required String newStatus}) async {
+    try {
+      final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
+      final callable = functions.httpsCallable('social-updateReportStatus');
+      await callable.call({
+        'reportId': reportId,
+        'newStatus': newStatus,
+      });
+    } on FirebaseFunctionsException catch (e) {
+      print("Rapor durumu güncelleme hatası: ${e.message}");
+      rethrow;
+    }
+  }
 }

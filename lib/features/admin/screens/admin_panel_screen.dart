@@ -69,6 +69,14 @@ class AdminPanelScreen extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/admin/reports'),
           ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.report_gmailerrorred_rounded),
+            title: const Text('Kullanıcı Raporları'),
+            subtitle: const Text('Uygunsuz davranışları incele'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/admin/user-reports'),
+          ),
         ],
       ),
     );

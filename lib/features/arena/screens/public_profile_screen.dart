@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:taktik/features/profile/logic/rank_service.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
+import 'package:taktik/features/profile/application/profile_controller.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/rendering.dart';
 import 'package:taktik/shared/widgets/app_loader.dart';
@@ -139,6 +140,44 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
     );
   }
 
+  Future<bool> _showConfirmationDialog(BuildContext context, String title, String content) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(title),
+        content: Text(content),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('İptal')),
+          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Onayla')),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
+
+  Future<String?> _showReportDialog(BuildContext context) async {
+    final TextEditingController controller = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Kullanıcıyı Rapor Et'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(hintText: 'Rapor nedeninizi buraya yazın...'),
+          autofocus: true,
+          maxLines: 3,
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('İptal')),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(controller.text),
+            child: const Text('Gönder'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _kv(String k, String v, BuildContext ctx) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 4.0),
     child: Row(children: [
@@ -159,6 +198,11 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
     final followCountsAsync = ref.watch(followCountsProvider(widget.userId));
     final isFollowingAsync = ref.watch(isFollowingProvider(widget.userId));
     final me = ref.watch(authControllerProvider).value;
+    final blockedUsers = ref.watch(blockedUsersProvider).value ?? [];
+    final isBlocked = blockedUsers.contains(widget.userId);
+
+    // Mevcut kullanıcı kendi profilinde ise menüyü gösterme
+    final bool isMyProfile = me?.uid == widget.userId;
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -172,6 +216,55 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
             onPressed: _sharing ? null : () { HapticFeedback.selectionClick(); _shareProfileImage(); },
             icon: Icon(Icons.ios_share_rounded, color: Theme.of(context).colorScheme.primary),
           ),
+          if (!isMyProfile)
+            PopupMenuButton<String>(
+              onSelected: (value) async {
+                switch (value) {
+                  case 'block':
+                    final confirmed = await _showConfirmationDialog(
+                      context,
+                      'Kullanıcıyı Engelle',
+                      'Bu kullanıcıyı engellemek istediğinizden emin misiniz? Engellediğinizde, bu kullanıcının içeriklerini görmeyeceksiniz.',
+                    );
+                    if (confirmed) {
+                      await ref.read(profileControllerProvider.notifier).blockUser(widget.userId);
+                    }
+                    break;
+                  case 'unblock':
+                    final confirmed = await _showConfirmationDialog(
+                      context,
+                      'Engeli Kaldır',
+                      'Bu kullanıcının engelini kaldırmak istediğinizden emin misiniz?',
+                    );
+                    if (confirmed) {
+                      await ref.read(profileControllerProvider.notifier).unblockUser(widget.userId);
+                    }
+                    break;
+                  case 'report':
+                    final reason = await _showReportDialog(context);
+                    if (reason != null && reason.isNotEmpty) {
+                      await ref.read(profileControllerProvider.notifier).reportUser(
+                        reportedUserId: widget.userId,
+                        reason: reason,
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Kullanıcı rapor edildi. Teşekkürler.')),
+                      );
+                    }
+                    break;
+                }
+              },
+              itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                PopupMenuItem<String>(
+                  value: isBlocked ? 'unblock' : 'block',
+                  child: Text(isBlocked ? 'Engeli Kaldır' : 'Engelle'),
+                ),
+                const PopupMenuItem<String>(
+                  value: 'report',
+                  child: Text('Rapor Et'),
+                ),
+              ],
+            ),
         ],
       ),
       body: userProfileAsync.when(

@@ -70,6 +70,9 @@ class UserModel {
   // Premium Durumu
   final bool isPremium;
 
+  // Sosyal
+  final List<String> blockedUsers;
+
   UserModel({
     required this.id,
     required this.email,
@@ -120,6 +123,7 @@ class UserModel {
     this.followerCount,
     this.followingCount,
     this.isPremium = false,
+    this.blockedUsers = const [],
   });
 
   UserModel copyWith({
@@ -170,6 +174,7 @@ class UserModel {
     int? followerCount,
     int? followingCount,
     bool? isPremium,
+    List<String>? blockedUsers,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -219,6 +224,7 @@ class UserModel {
       followerCount: followerCount ?? this.followerCount,
       followingCount: followingCount ?? this.followingCount,
       isPremium: isPremium ?? this.isPremium,
+      blockedUsers: blockedUsers ?? this.blockedUsers,
     );
   }
 
@@ -311,6 +317,7 @@ class UserModel {
       followerCount: data['followerCount'] as int?,
       followingCount: data['followingCount'] as int?,
       isPremium: data['isPremium'] ?? false,
+      blockedUsers: List<String>.from(data['blockedUsers'] ?? []),
     );
   }
 
@@ -379,6 +386,7 @@ class UserModel {
       'followerCount': followerCount,
       'followingCount': followingCount,
       'isPremium': isPremium,
+      'blockedUsers': blockedUsers,
     };
   }
 

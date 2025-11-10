@@ -14,6 +14,7 @@ const reports = require("./src/reports");
 const tests = require("./src/tests");
 const users = require("./src/users");
 const premium = require("./src/premium");
+const social = require("./src/social");
 
 exports.admin = admin;
 exports.ai = ai;
@@ -26,3 +27,4 @@ exports.quests = quests;
 exports.reports = reports;
 exports.tests = tests;
 exports.premium = premium;
+exports.social = social;

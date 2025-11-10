@@ -372,6 +372,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             subtitle: 'Güvenliğiniz için şifrenizi güncelleyin',
             onTap: () => _showChangePasswordDialog(context, ref),
           ),
+          SettingsTile(
+            icon: Icons.block_rounded,
+            title: 'Engellenen Kullanıcılar',
+            subtitle: 'Engellediğiniz kullanıcıları yönetin',
+            onTap: () => context.push(AppRoutes.blockedUsers),
+          ),
           const SettingsSection(title: "Sınav ve Planlama"),
           SettingsTile(
             icon: Icons.school_outlined,
