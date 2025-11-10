@@ -212,19 +212,26 @@ exports.reportUser = onCall({
   region: "us-central1",
   enforceAppCheck: true,
 }, async (request) => {
+  logger.info("reportUser function called", { auth: !!request.auth });
+
   if (!request.auth) {
+    logger.error("reportUser: unauthenticated");
     throw new HttpsError("unauthenticated", "Kullanıcı giriş yapmamış");
   }
 
   const reporterId = request.auth.uid;
   const { reportedUserId, reason, details } = request.data;
 
+  logger.info("reportUser parameters", { reporterId, reportedUserId, reason });
+
   // Parametrelerin varlığı ve geçerliliği
   if (!reportedUserId || typeof reportedUserId !== "string") {
+    logger.error("reportUser: invalid reportedUserId");
     throw new HttpsError("invalid-argument", "Geçersiz kullanıcı ID");
   }
 
   if (!reason || typeof reason !== "string") {
+    logger.error("reportUser: invalid reason");
     throw new HttpsError("invalid-argument", "Raporlama nedeni gerekli");
   }
 
@@ -240,21 +247,26 @@ exports.reportUser = onCall({
   ];
 
   if (!validReasons.includes(reason)) {
+    logger.error("reportUser: invalid reason value", { reason });
     throw new HttpsError("invalid-argument", "Geçersiz raporlama nedeni");
   }
 
   // Kendi kendini raporlayamaz
   if (reporterId === reportedUserId) {
+    logger.error("reportUser: self-report attempt");
     throw new HttpsError("invalid-argument", "Kendinizi raporlayamazsınız");
   }
 
-  // Rate limiting (saatte 10 raporlama - daha esnek)
-  if (checkRateLimit(reporterId, "report", 10, 3600000)) {
+  // Rate limiting (saatte 20 raporlama - çok esnek)
+  if (checkRateLimit(reporterId, "report", 20, 3600000)) {
+    logger.warn("reportUser: rate limit exceeded", { reporterId });
     throw new HttpsError(
       "resource-exhausted",
       "Çok fazla raporlama isteği. Lütfen bir süre bekleyin."
     );
   }
+
+  logger.info("reportUser: validation passed, starting report creation");
 
   try {
     // Hedef kullanıcının var olduğunu doğrula - public_profiles'dan kontrol et
@@ -267,28 +279,10 @@ exports.reportUser = onCall({
       }
     }
 
-    // Aynı kullanıcıyı son 24 saatte raporlamış mı kontrol et
-    try {
-      const oneDayAgo = admin.firestore.Timestamp.fromMillis(Date.now() - 86400000);
-      const recentReports = await db.collection("user_reports")
-        .where("reporterUserId", "==", reporterId)
-        .where("reportedUserId", "==", reportedUserId)
-        .where("createdAt", ">", oneDayAgo)
-        .limit(1)
-        .get();
+    logger.info("reportUser: user exists, creating report (duplicate check disabled due to index issues)");
 
-      if (!recentReports.empty) {
-        throw new HttpsError(
-          "already-exists",
-          "Bu kullanıcıyı son 24 saat içinde zaten raporladınız"
-        );
-      }
-    } catch (err) {
-      // Firestore sorgusu hatası - index yoksa raporu yine de oluştur
-      logger.warn("Could not check recent reports, continuing anyway", {
-        error: String(err),
-      });
-    }
+    // NOT: Duplicate check kaldırıldı - Firestore composite index sorunu çıkarıyordu.
+    // Rate limiting zaten abuse'i önlüyor (20 report/saat limit var).
 
     // Rapor oluştur
     const reportRef = db.collection("user_reports").doc();
@@ -305,7 +299,7 @@ exports.reportUser = onCall({
     };
 
     await reportRef.set(reportData);
-    logger.info("Report document created", { reportId: reportRef.id });
+    logger.info("Report document created successfully", { reportId: reportRef.id });
 
     // Rapor indeksini güncelle (moderasyon için) - hata olsa bile devam et
     try {

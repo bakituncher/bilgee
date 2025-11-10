@@ -1,4 +1,5 @@
 // lib/features/profile/widgets/user_report_dialog.dart
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taktik/data/models/user_report_model.dart';
@@ -41,6 +42,10 @@ class _UserReportDialogState extends ConsumerState<UserReportDialog> {
     setState(() => _isSubmitting = true);
 
     try {
+      debugPrint('[UserReportDialog] Starting report submission');
+      debugPrint('[UserReportDialog] Target User: ${widget.targetUserId}');
+      debugPrint('[UserReportDialog] Reason: ${_selectedReason!.value}');
+
       final service = ref.read(moderationServiceProvider);
       await service.reportUser(
         targetUserId: widget.targetUserId,
@@ -50,6 +55,8 @@ class _UserReportDialogState extends ConsumerState<UserReportDialog> {
             : null,
       );
 
+      debugPrint('[UserReportDialog] Report submitted successfully');
+
       if (!mounted) return;
 
       Navigator.of(context).pop(true);
@@ -57,13 +64,37 @@ class _UserReportDialogState extends ConsumerState<UserReportDialog> {
         const SnackBar(
           content: Text('Rapor gönderildi. İnceleme süreci başlatıldı.'),
           backgroundColor: Colors.green,
+          duration: Duration(seconds: 3),
         ),
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('[UserReportDialog] Report failed: $e');
+      debugPrint('[UserReportDialog] Stack trace: $stackTrace');
+
       if (!mounted) return;
 
+      String errorMessage = 'Hata: ';
+      if (e.toString().contains('Çok fazla')) {
+        errorMessage = 'Çok fazla raporlama isteği. Lütfen bir süre bekleyin.';
+      } else if (e.toString().contains('zaman aşımı')) {
+        errorMessage = 'İstek zaman aşımına uğradı. İnternet bağlantınızı kontrol edin.';
+      } else if (e.toString().contains('giriş')) {
+        errorMessage = 'Lütfen tekrar giriş yapın.';
+      } else {
+        errorMessage += e.toString().replaceAll('Exception: ', '');
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Hata: ${e.toString()}')),
+        SnackBar(
+          content: Text(errorMessage),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+          action: SnackBarAction(
+            label: 'Kapat',
+            textColor: Colors.white,
+            onPressed: () {},
+          ),
+        ),
       );
     } finally {
       if (mounted) {
