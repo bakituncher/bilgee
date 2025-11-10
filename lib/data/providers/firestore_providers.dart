@@ -15,6 +15,7 @@ import 'package:cloud_functions/cloud_functions.dart'; // SUNUCU GÖREVLERİ İ�
 import 'package:taktik/shared/notifications/in_app_notification_model.dart';
 import 'package:taktik/data/models/user_stats_model.dart';
 import 'package:taktik/data/models/focus_session_model.dart';
+import 'package:taktik/data/providers/moderation_providers.dart';
 
 final firestoreProvider = Provider<FirebaseFirestore>((ref) => FirebaseFirestore.instance);
 
@@ -203,10 +204,19 @@ final userSearchQueryProvider = StateProvider<String>((ref) => '');
 // YENİ: Arama tipi provider'ı
 final searchTypeProvider = StateProvider<SearchType>((ref) => SearchType.name);
 
-// YENİ: Arama sonuçlarını reaktif olarak getiren provider
+// YENİ: Arama sonuçlarını reaktif olarak getiren provider (engellenen kullanıcılar filtrelenmiş)
 final searchResultsProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
   final query = ref.watch(userSearchQueryProvider);
-  final searchType = ref.watch(searchTypeProvider);
   if (query.trim().isEmpty) return [];
-  return ref.watch(userSearchProvider(query).future);
+
+  final svc = ref.watch(firestoreServiceProvider);
+  final searchType = ref.watch(searchTypeProvider);
+  final results = await svc.searchUsersByName(query, searchType: searchType);
+
+  // Engellenen kullanıcıları filtrele
+  final moderationService = ref.watch(moderationServiceProvider);
+  return await moderationService.filterBlockedUsers(
+    results,
+    (result) => result['userId'] as String,
+  );
 });

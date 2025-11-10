@@ -255,11 +255,47 @@ service cloud.firestore {
     }
 
     // =====================================================================
+    // KULLANICI ENGELLEME SİSTEMİ
+    // =====================================================================
+    // users/{userId}/blocked_users/{blockedUserId}
+    match /users/{userId}/blocked_users/{blockedUserId} {
+      // Kullanıcı kendi engelleme listesini okuyabilir
+      allow read, list: if request.auth != null && request.auth.uid == userId;
+      // Kullanıcı başka birini engelleyebilir (cloud function üzerinden)
+      allow create: if false; // Cloud function kullanılmalı
+      // Kullanıcı engelini kaldırabilir
+      allow delete: if request.auth != null && request.auth.uid == userId;
+      allow update: if false;
+    }
+
+    // =====================================================================
+    // KULLANICI RAPORLAMA SİSTEMİ
+    // =====================================================================
+    match /user_reports/{reportId} {
+      // GÜVENLIK: Raporlar sadece cloud function üzerinden oluşturulabilir
+      // Rate limiting ve abuse prevention için
+      allow create: if false;
+      // Admin okuma/güncelleme/silme yetkileri
+      allow read, update, delete: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    // Raporlama indeksi (moderasyon için)
+    match /user_report_index/{userId} {
+      allow read: if request.auth != null && request.auth.token.admin == true;
+      allow write: if false;
+    }
+
+    // =====================================================================
     // COLLECTION GROUP QUERIES
     // =====================================================================
     match /{path=**}/completed_tasks/{taskId} {
       // Kullanıcının kendi tamamladığı görevleri okumasına izin ver.
       allow read: if request.auth.uid == resource.data.userId;
+    }
+
+    match /{path=**}/blocked_users/{blockedUserId} {
+      // Kullanıcının kendi engellediklerini collection group query ile okuyabilir
+      allow read: if request.auth != null;
     }
   }
 }

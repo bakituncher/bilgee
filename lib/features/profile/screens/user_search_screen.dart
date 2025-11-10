@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
+import 'package:taktik/features/profile/widgets/user_moderation_menu.dart';
 
 enum SearchType { name, username }
 
@@ -492,7 +493,19 @@ class _UserSearchTileState extends ConsumerState<_UserSearchTile> {
                     ],
                   ),
                 ),
+                const SizedBox(width: 8),
 
+                // Moderasyon menüsü
+                UserModerationMenu(
+                  targetUserId: widget.userId,
+                  targetUserName: displayName,
+                  onBlocked: () {
+                    // Engelleme sonrası arama sonuçlarını yenile
+                    ref.invalidate(searchResultsProvider);
+                  },
+                ),
+
+                const SizedBox(width: 4),
                 const SizedBox(width: 12),
 
                 // Takip butonu

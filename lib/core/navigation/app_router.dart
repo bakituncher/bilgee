@@ -24,8 +24,11 @@ import 'package:taktik/features/admin/screens/question_report_detail_screen.dart
 import 'package:taktik/features/admin/screens/push_composer_screen.dart';
 import 'package:taktik/features/admin/screens/admin_panel_screen.dart';
 import 'package:taktik/features/admin/screens/user_management_screen.dart';
+import 'package:taktik/features/admin/screens/user_reports_screen.dart';
 import 'package:taktik/shared/notifications/notification_center_screen.dart';
+import 'package:taktik/features/profile/screens/blocked_users_screen.dart';
 import 'package:taktik/features/profile/screens/user_search_screen.dart';
+import 'package:taktik/features/profile/screens/blocked_users_screen.dart';
 import 'package:taktik/shared/widgets/splash_screen.dart';
 import 'package:taktik/data/providers/admin_providers.dart';
 import 'transition_utils.dart';
@@ -256,6 +259,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
+        path: '/admin/user-reports',
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) => buildPageWithFadeTransition(
+          context: context,
+          state: state,
+          child: const UserReportsScreen(),
+        ),
+      ),
+      GoRoute(
         path: '/admin/reports',
         parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) => buildPageWithFadeTransition(
@@ -313,6 +325,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           context: context,
           state: state,
           child: const UserSearchScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/blocked-users',
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) => buildPageWithFadeTransition(
+          context: context,
+          state: state,
+          child: const BlockedUsersScreen(),
         ),
       ),
       ...authRoutes,
