@@ -58,12 +58,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   Future<void> _selectDate(BuildContext context) async {
     final now = DateTime.now();
-    final eighteenYearsAgo = DateTime(now.year - 18, now.month, now.day);
+    final thirteenYearsAgo = DateTime(now.year - 13, now.month, now.day);
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: _selectedDate ?? eighteenYearsAgo,
+      initialDate: _selectedDate ?? thirteenYearsAgo,
       firstDate: DateTime(1920),
-      lastDate: eighteenYearsAgo,
+      lastDate: thirteenYearsAgo,
     );
     if (picked != null && picked != _selectedDate) {
       setState(() {
@@ -83,10 +83,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
     if (_formKey.currentState!.validate()) {
       final now = DateTime.now();
-      final eighteenYearsAgo = DateTime(now.year - 18, now.month, now.day);
-      if (_selectedDate != null && _selectedDate!.isAfter(eighteenYearsAgo)) {
+      final thirteenYearsAgo = DateTime(now.year - 13, now.month, now.day);
+      if (_selectedDate != null && _selectedDate!.isAfter(thirteenYearsAgo)) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Kayıt olmak için 18 yaşından büyük olmalısınız.')),
+          const SnackBar(content: Text('Kayıt olmak için 13 yaşından büyük olmalısınız.')),
         );
         return;
       }

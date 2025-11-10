@@ -44,10 +44,10 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
 
     if (_formKey.currentState!.validate()) {
       final now = DateTime.now();
-      final eighteenYearsAgo = DateTime(now.year - 18, now.month, now.day);
-      if (_dateOfBirth != null && _dateOfBirth!.isAfter(eighteenYearsAgo)) {
+      final thirteenYearsAgo = DateTime(now.year - 13, now.month, now.day);
+      if (_dateOfBirth != null && _dateOfBirth!.isAfter(thirteenYearsAgo)) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Kayıt olmak için 18 yaşından büyük olmalısınız.')),
+          const SnackBar(content: Text('Kayıt olmak için 13 yaşından büyük olmalısınız.')),
         );
         return;
       }
@@ -91,12 +91,12 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
 
   Future<void> _selectDate(BuildContext context) async {
     final now = DateTime.now();
-    final eighteenYearsAgo = DateTime(now.year - 18, now.month, now.day);
+    final thirteenYearsAgo = DateTime(now.year - 13, now.month, now.day);
     final pickedDate = await showDatePicker(
       context: context,
-      initialDate: _dateOfBirth ?? eighteenYearsAgo,
+      initialDate: _dateOfBirth ?? thirteenYearsAgo,
       firstDate: DateTime(1950),
-      lastDate: eighteenYearsAgo,
+      lastDate: thirteenYearsAgo,
       helpText: 'Doğum Tarihini Seç',
       cancelText: 'İptal',
       confirmText: 'Tamam',
