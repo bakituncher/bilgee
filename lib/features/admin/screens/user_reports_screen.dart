@@ -44,7 +44,15 @@ class _UserReportsScreenState extends ConsumerState<UserReportsScreen> {
       if (data != null && data['success'] == true) {
         final reports = data['reports'] as List<dynamic>?;
         setState(() {
-          _reports = reports?.cast<Map<String, dynamic>>() ?? [];
+          // Cast yerine map kullan - Firebase'den gelen Map tipini düzgün dönüştür
+          _reports = reports?.map((report) {
+            if (report is Map<String, dynamic>) {
+              return report;
+            } else if (report is Map) {
+              return Map<String, dynamic>.from(report);
+            }
+            return <String, dynamic>{};
+          }).toList() ?? [];
           _isLoading = false;
         });
       } else {
