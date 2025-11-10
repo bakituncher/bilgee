@@ -99,9 +99,10 @@ class _FollowListTileState extends ConsumerState<_FollowListTile> {
   }
 
   String _safeDisplayName(Map<String, dynamic>? data) {
-    final raw = (data?['name'] as String?)?.trim() ?? '';
-    if (raw.isEmpty || _looksLikeId(raw)) return 'İsimsiz Savaşçı';
-    return raw;
+    // GÜVENLİK: Gerçek isim yerine username (13-17 yaş koruması)
+    final username = (data?['username'] as String?)?.trim() ?? '';
+    if (username.isNotEmpty) return '@$username';
+    return 'İsimsiz Savaşçı';
   }
 
   @override
@@ -141,7 +142,9 @@ class _FollowListTileState extends ConsumerState<_FollowListTile> {
                               placeholderBuilder: (_) => const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2)),
                             )
                           : Text(
-                              displayName.substring(0, 1).toUpperCase(),
+                              displayName.startsWith('@') && displayName.length > 1
+                                  ? displayName.substring(1, 2).toUpperCase()
+                                  : displayName.substring(0, 1).toUpperCase(),
                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                             ),
                     ),

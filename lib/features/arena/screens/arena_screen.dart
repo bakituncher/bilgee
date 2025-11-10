@@ -294,10 +294,8 @@ class _CurrentUserCard extends StatelessWidget {
                                   'https://api.dicebear.com/9.x/${entry.avatarStyle}/svg?seed=${entry.avatarSeed}',
                                   fit: BoxFit.cover)
                                   : Text(
-                                  entry.userName.isNotEmpty
-                                      ? entry.userName
-                                      .substring(0, 1)
-                                      .toUpperCase()
+                                  entry.username != null && entry.username!.isNotEmpty
+                                      ? entry.username!.substring(0, 1).toUpperCase()
                                       : '?',
                                   style: textTheme.titleMedium),
                             ),
@@ -307,9 +305,9 @@ class _CurrentUserCard extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Ad Soyad - pixel perfect
+                                // GÜVENLİK: Sadece kullanıcı adı gösteriliyor (13-17 yaş koruması)
                                 Text(
-                                  entry.userName.isNotEmpty ? entry.userName : 'İsimsiz Kullanıcı',
+                                  getUsernameDisplay(),
                                   style: textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.w600,
                                     fontSize: 13,
@@ -319,9 +317,9 @@ class _CurrentUserCard extends StatelessWidget {
                                   overflow: TextOverflow.ellipsis,
                                   maxLines: 1,
                                 ),
-                                // Kullanıcı adı - gerçek profil verilerinden
+                                // İkinci satır: Sıralama bilgisi
                                 Text(
-                                  getUsernameDisplay(),
+                                  '${entry.testCount} Test',
                                   style: textTheme.bodySmall?.copyWith(
                                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                                     fontSize: 11,
@@ -569,8 +567,8 @@ class _RankCard extends ConsumerWidget {
                         ),
                         child: Center(
                           child: Text(
-                            entry.userName.isNotEmpty
-                                ? entry.userName.substring(0, 1).toUpperCase()
+                            entry.username != null && entry.username!.isNotEmpty
+                                ? entry.username!.substring(0, 1).toUpperCase()
                                 : '?',
                             style: textTheme.titleMedium?.copyWith(
                               color: colorScheme.onSurface,
@@ -591,9 +589,9 @@ class _RankCard extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Ad Soyad (üstte) - Optimize edilmiş
+                      // GÜVENLİK: Sadece kullanıcı adı (13-17 yaş koruması)
                       Text(
-                        entry.userName.isNotEmpty ? entry.userName : 'İsimsiz Kullanıcı',
+                        getUsernameDisplay(),
                         style: textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w600,
                           color: colorScheme.onSurface,
@@ -605,9 +603,9 @@ class _RankCard extends ConsumerWidget {
                         maxLines: 1,
                       ),
 
-                      // Kullanıcı adı (altta) - Gerçek verilerden
+                      // Test sayısı bilgisi
                       Text(
-                        getUsernameDisplay(),
+                        '${entry.testCount} Test',
                         style: textTheme.bodySmall?.copyWith(
                           color: colorScheme.onSurfaceVariant.withOpacity(0.8),
                           fontSize: 11,

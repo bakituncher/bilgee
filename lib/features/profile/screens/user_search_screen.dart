@@ -332,7 +332,9 @@ class _UserSearchTileState extends ConsumerState<_UserSearchTile> {
                             ),
                           )
                         : Text(
-                            displayName.substring(0, 1).toUpperCase(),
+                            username.isNotEmpty
+                                ? username.substring(0, 1).toUpperCase()
+                                : '?',
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 18,
@@ -342,14 +344,14 @@ class _UserSearchTileState extends ConsumerState<_UserSearchTile> {
                 ),
                 const SizedBox(width: 16),
 
-                // Kullanıcı bilgileri
+                // Kullanıcı bilgileri - GÜVENLİK: Sadece username (13-17 yaş koruması)
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        displayName,
+                        username.isNotEmpty ? '@$username' : 'İsimsiz Kullanıcı',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -357,17 +359,6 @@ class _UserSearchTileState extends ConsumerState<_UserSearchTile> {
                               color: Theme.of(context).colorScheme.onSurface,
                             ),
                       ),
-                      if (username.isNotEmpty) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          '@$username',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                              ),
-                        ),
-                      ],
                       const SizedBox(height: 4),
                       countsAsync.when(
                         data: (counts) => Text(

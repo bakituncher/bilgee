@@ -175,7 +175,9 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                 return userProfileAsync.maybeWhen(
                   data: (data) {
                     if (data == null) return const SizedBox.shrink();
-                    final displayName = (data['name'] as String?) ?? 'İsimsiz Savaşçı';
+                    // GÜVENLİK: Username kullan
+                    final username = (data['username'] as String?) ?? '';
+                    final displayName = username.isNotEmpty ? '@$username' : 'İsimsiz Savaşçı';
                     return UserModerationMenu(
                       targetUserId: widget.userId,
                       targetUserName: displayName,
@@ -201,7 +203,9 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
           if (data == null) {
             return const Center(child: Text('Savaşçı bulunamadı.'));
           }
-          final String displayName = (data['name'] as String?) ?? 'İsimsiz Savaşçı';
+          // GÜVENLİK: Gerçek isim yerine kullanıcı adı (13-17 yaş koruması)
+          final String username = (data['username'] as String?) ?? '';
+          final String displayName = username.isNotEmpty ? '@$username' : 'İsimsiz Savaşçı';
           final int testCount = (data['testCount'] as num?)?.toInt() ?? 0;
           final double totalNetSum = (data['totalNetSum'] as num?)?.toDouble() ?? 0.0;
           final double avgNet = testCount > 0 ? totalNetSum / testCount : 0.0;
@@ -546,7 +550,10 @@ class _AvatarHalo extends StatelessWidget {
                   fit: BoxFit.cover,
                 )
                     : Text(
-                  (displayName.isNotEmpty ? displayName[0] : 'T').toUpperCase(),
+                  // @ işaretini atla, username'in ilk harfini al
+                  (displayName.isNotEmpty && displayName.startsWith('@')
+                      ? displayName.substring(1, displayName.length > 1 ? 2 : 1)
+                      : displayName.isNotEmpty ? displayName[0] : 'T').toUpperCase(),
                   style: Theme.of(context)
                       .textTheme
                       .displayMedium
