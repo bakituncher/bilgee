@@ -19,6 +19,7 @@ import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:taktik/features/weakness_workshop/logic/quiz_quality_guard.dart';
+import 'package:taktik/features/weakness_workshop/logic/cevher_quality_logger.dart';
 import 'package:confetti/confetti.dart';
 import 'package:lottie/lottie.dart';
 
@@ -44,7 +45,7 @@ final workshopSessionProvider = FutureProvider.autoDispose<StudyGuideAndQuiz>((r
     return Future.error("Analiz için kullanıcı, test veya performans verisi bulunamadı.");
   }
 
-  Future<StudyGuideAndQuiz> attempt({double? temperature}) async {
+  Future<StudyGuideAndQuiz> attempt({double? temperature, int attemptNumber = 1}) async {
     final jsonString = await ref.read(aiServiceProvider).generateStudyGuideAndQuiz(
       user,
       tests,
@@ -63,19 +64,53 @@ final workshopSessionProvider = FutureProvider.autoDispose<StudyGuideAndQuiz>((r
       throw Exception(decodedJson['error']);
     }
     final raw = StudyGuideAndQuiz.fromJson(decodedJson);
+    
     // Soru kalite güvencesi uygula (yetersizse hata fırlatır)
-    final guarded = QuizQualityGuard.apply(raw).material;
-    return guarded;
+    final guardResult = QuizQualityGuard.apply(raw);
+    
+    // Log quality metrics for monitoring (non-blocking)
+    final logger = CevherQualityLogger(FirebaseFirestore.instance);
+    logger.logWorkshopQuality(
+      userId: user.id,
+      subject: selectedTopic['subject']!,
+      topic: selectedTopic['topic']!,
+      guardResult: guardResult,
+      difficulty: difficultyInfo.$1,
+      attemptCount: difficultyInfo.$2,
+    ).catchError((e) {
+      // Logging failure should not block the main flow
+      print('Quality logging failed: $e');
+    });
+    
+    return guardResult.material;
   }
 
   // 1) Varsayılan sıcaklıkla dene -> 2) 0.35 -> 3) 0.25
   final attempts = <double?>[null, 0.35, 0.25];
   Exception? lastErr;
+  int attemptNum = 1;
+  
   for (final t in attempts) {
     try {
-      return await attempt(temperature: t);
+      return await attempt(temperature: t, attemptNumber: attemptNum);
     } catch (e) {
       lastErr = Exception(e.toString());
+      
+      // Log validation failure for analysis
+      if (attemptNum == attempts.length) {
+        // Only log on final failure
+        final logger = CevherQualityLogger(FirebaseFirestore.instance);
+        logger.logValidationFailure(
+          userId: user.id,
+          subject: selectedTopic['subject']!,
+          topic: selectedTopic['topic']!,
+          difficulty: difficultyInfo.$1,
+          issues: [e.toString()],
+          attemptNumber: attemptNum,
+        ).catchError((_) {});
+      }
+      
+      attemptNum++;
       // denemeye devam
     }
   }
