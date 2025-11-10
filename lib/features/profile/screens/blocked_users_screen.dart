@@ -1,4 +1,5 @@
 // lib/features/profile/screens/blocked_users_screen.dart
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -202,9 +203,42 @@ class _BlockedUserCardState extends ConsumerState<_BlockedUserCard> {
       DateTime date;
       if (timestamp is DateTime) {
         date = timestamp;
-      } else if (timestamp.runtimeType.toString().contains('Timestamp')) {
+      } else if (timestamp is Timestamp) {
         // Firebase Timestamp
-        date = (timestamp as dynamic).toDate();
+        date = timestamp.toDate();
+      } else if (timestamp.runtimeType.toString().contains('Timestamp') ||
+                 timestamp.runtimeType.toString().contains('_Timestamp')) {
+        // Firebase Timestamp (dinamik tip)
+        try {
+          date = (timestamp as dynamic).toDate();
+        } catch (e) {
+          return 'Bilinmiyor';
+        }
+      } else if (timestamp is Map) {
+        // Map formatında Timestamp
+        try {
+          final seconds = timestamp['_seconds'] ?? timestamp['seconds'];
+          final nanoseconds = timestamp['_nanoseconds'] ?? timestamp['nanoseconds'] ?? 0;
+          if (seconds != null) {
+            date = DateTime.fromMillisecondsSinceEpoch(
+              seconds * 1000 + (nanoseconds / 1000000).round()
+            );
+          } else {
+            return 'Bilinmiyor';
+          }
+        } catch (e) {
+          return 'Bilinmiyor';
+        }
+      } else if (timestamp is int) {
+        // Unix timestamp (milisaniye)
+        date = DateTime.fromMillisecondsSinceEpoch(timestamp);
+      } else if (timestamp is String) {
+        // ISO 8601 string
+        try {
+          date = DateTime.parse(timestamp);
+        } catch (e) {
+          return 'Bilinmiyor';
+        }
       } else {
         return 'Bilinmiyor';
       }
@@ -224,6 +258,7 @@ class _BlockedUserCardState extends ConsumerState<_BlockedUserCard> {
         return 'Az önce';
       }
     } catch (e) {
+      debugPrint('[BlockedUsersScreen] Error formatting date: $e, timestamp: $timestamp');
       return 'Bilinmiyor';
     }
   }

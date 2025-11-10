@@ -248,8 +248,8 @@ exports.reportUser = onCall({
     throw new HttpsError("invalid-argument", "Kendinizi raporlayamazsınız");
   }
 
-  // Rate limiting (saatte 3 raporlama)
-  if (checkRateLimit(reporterId, "report", 3, 3600000)) {
+  // Rate limiting (saatte 10 raporlama - daha esnek)
+  if (checkRateLimit(reporterId, "report", 10, 3600000)) {
     throw new HttpsError(
       "resource-exhausted",
       "Çok fazla raporlama isteği. Lütfen bir süre bekleyin."
@@ -257,31 +257,42 @@ exports.reportUser = onCall({
   }
 
   try {
-    // Hedef kullanıcının var olduğunu doğrula
-    const reportedUserDoc = await db.collection("users").doc(reportedUserId).get();
+    // Hedef kullanıcının var olduğunu doğrula - public_profiles'dan kontrol et
+    const reportedUserDoc = await db.collection("public_profiles").doc(reportedUserId).get();
     if (!reportedUserDoc.exists) {
-      throw new HttpsError("not-found", "Kullanıcı bulunamadı");
+      // public_profiles'da yoksa users'dan kontrol et
+      const userDoc = await db.collection("users").doc(reportedUserId).get();
+      if (!userDoc.exists) {
+        throw new HttpsError("not-found", "Kullanıcı bulunamadı");
+      }
     }
 
     // Aynı kullanıcıyı son 24 saatte raporlamış mı kontrol et
-    const oneDayAgo = admin.firestore.Timestamp.fromMillis(Date.now() - 86400000);
-    const recentReports = await db.collection("user_reports")
-      .where("reporterUserId", "==", reporterId)
-      .where("reportedUserId", "==", reportedUserId)
-      .where("createdAt", ">", oneDayAgo)
-      .limit(1)
-      .get();
+    try {
+      const oneDayAgo = admin.firestore.Timestamp.fromMillis(Date.now() - 86400000);
+      const recentReports = await db.collection("user_reports")
+        .where("reporterUserId", "==", reporterId)
+        .where("reportedUserId", "==", reportedUserId)
+        .where("createdAt", ">", oneDayAgo)
+        .limit(1)
+        .get();
 
-    if (!recentReports.empty) {
-      throw new HttpsError(
-        "already-exists",
-        "Bu kullanıcıyı son 24 saat içinde zaten raporladınız"
-      );
+      if (!recentReports.empty) {
+        throw new HttpsError(
+          "already-exists",
+          "Bu kullanıcıyı son 24 saat içinde zaten raporladınız"
+        );
+      }
+    } catch (err) {
+      // Firestore sorgusu hatası - index yoksa raporu yine de oluştur
+      logger.warn("Could not check recent reports, continuing anyway", {
+        error: String(err),
+      });
     }
 
     // Rapor oluştur
     const reportRef = db.collection("user_reports").doc();
-    await reportRef.set({
+    const reportData = {
       reportedUserId,
       reporterUserId: reporterId,
       reason,
@@ -291,16 +302,25 @@ exports.reportUser = onCall({
       adminNotes: null,
       reviewedAt: null,
       reviewedBy: null,
-    });
+    };
 
-    // Rapor indeksini güncelle (moderasyon için)
-    const indexRef = db.collection("user_report_index").doc(reportedUserId);
-    await indexRef.set({
-      reportedUserId,
-      reportCount: admin.firestore.FieldValue.increment(1),
-      lastReportedAt: admin.firestore.FieldValue.serverTimestamp(),
-      reasons: admin.firestore.FieldValue.arrayUnion(reason),
-    }, { merge: true });
+    await reportRef.set(reportData);
+    logger.info("Report document created", { reportId: reportRef.id });
+
+    // Rapor indeksini güncelle (moderasyon için) - hata olsa bile devam et
+    try {
+      const indexRef = db.collection("user_report_index").doc(reportedUserId);
+      await indexRef.set({
+        reportedUserId,
+        reportCount: admin.firestore.FieldValue.increment(1),
+        lastReportedAt: admin.firestore.FieldValue.serverTimestamp(),
+        reasons: admin.firestore.FieldValue.arrayUnion(reason),
+      }, { merge: true });
+    } catch (indexError) {
+      logger.warn("Could not update report index, continuing anyway", {
+        error: String(indexError),
+      });
+    }
 
     logger.info("User reported successfully", {
       reporter: reporterId,
@@ -320,8 +340,9 @@ exports.reportUser = onCall({
       reporterId,
       reportedUserId,
       error: String(error),
+      errorStack: error.stack,
     });
-    throw new HttpsError("internal", "Raporlama sırasında bir hata oluştu");
+    throw new HttpsError("internal", "Raporlama sırasında bir hata oluştu: " + error.message);
   }
 });
 
@@ -350,28 +371,64 @@ exports.getBlockedUsers = onCall({
       const blockData = doc.data();
       const blockedUserId = doc.id;
 
-      // Engellenen kullanıcının temel bilgilerini al
-      const userDoc = await db.collection("public_profiles").doc(blockedUserId).get();
-      const userData = userDoc.exists ? userDoc.data() : {};
+      try {
+        // Engellenen kullanıcının temel bilgilerini al
+        const userDoc = await db.collection("public_profiles").doc(blockedUserId).get();
 
-      blockedUsers.push({
-        userId: blockedUserId,
-        blockedAt: blockData.blockedAt,
-        reason: blockData.reason,
-        name: userData.name || "İsimsiz Kullanıcı",
-        username: userData.username || "",
-        avatarStyle: userData.avatarStyle,
-        avatarSeed: userData.avatarSeed,
-      });
+        if (userDoc.exists) {
+          const userData = userDoc.data();
+          blockedUsers.push({
+            userId: blockedUserId,
+            blockedAt: blockData.blockedAt,
+            reason: blockData.reason || null,
+            name: userData.name || "İsimsiz Kullanıcı",
+            username: userData.username || "",
+            avatarStyle: userData.avatarStyle || null,
+            avatarSeed: userData.avatarSeed || null,
+          });
+        } else {
+          // Kullanıcı profili bulunamadı, yine de engel bilgisini göster
+          blockedUsers.push({
+            userId: blockedUserId,
+            blockedAt: blockData.blockedAt,
+            reason: blockData.reason || null,
+            name: "Kullanıcı Bulunamadı",
+            username: "",
+            avatarStyle: null,
+            avatarSeed: null,
+          });
+        }
+      } catch (userError) {
+        // Kullanıcı bilgisi alınırken hata olsa bile devam et
+        logger.warn("Could not fetch user data for blocked user", {
+          blockedUserId,
+          error: String(userError),
+        });
+        blockedUsers.push({
+          userId: blockedUserId,
+          blockedAt: blockData.blockedAt,
+          reason: blockData.reason || null,
+          name: "Kullanıcı Bilgisi Yok",
+          username: "",
+          avatarStyle: null,
+          avatarSeed: null,
+        });
+      }
     }
+
+    logger.info("Retrieved blocked users", { userId, count: blockedUsers.length });
 
     return {
       success: true,
       blockedUsers,
     };
   } catch (error) {
-    logger.error("Error getting blocked users", { userId, error: String(error) });
-    throw new HttpsError("internal", "Engellenen kullanıcılar getirilirken hata oluştu");
+    logger.error("Error getting blocked users", {
+      userId,
+      error: String(error),
+      errorStack: error.stack,
+    });
+    throw new HttpsError("internal", "Engellenen kullanıcılar getirilirken hata oluştu: " + error.message);
   }
 });
 

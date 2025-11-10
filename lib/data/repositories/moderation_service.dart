@@ -1,4 +1,5 @@
 // lib/data/repositories/moderation_service.dart
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -91,11 +92,18 @@ class ModerationService {
 
     try {
       final callable = _functions.httpsCallable('moderation-reportUser');
+
+      // Timeout ekle - 30 saniye
       final result = await callable.call<Map<String, dynamic>>({
         'reportedUserId': targetUserId,
         'reason': reason.value,
         'details': details,
-      });
+      }).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          throw Exception('İstek zaman aşımına uğradı. Lütfen tekrar deneyin.');
+        },
+      );
 
       if (kDebugMode) {
         debugPrint('[ModerationService] Report successful: ${result.data}');
@@ -106,12 +114,21 @@ class ModerationService {
         debugPrint('[ModerationService] Report error details: ${e.details}');
       }
       throw _handleFunctionsError(e);
+    } on TimeoutException catch (e) {
+      if (kDebugMode) {
+        debugPrint('[ModerationService] Timeout error: $e');
+      }
+      throw Exception('İstek zaman aşımına uğradı. Lütfen tekrar deneyin.');
     } catch (e) {
       if (kDebugMode) {
         debugPrint('[ModerationService] Unexpected error: $e');
         debugPrint('[ModerationService] Error type: ${e.runtimeType}');
       }
-      rethrow;
+      // Genel hata mesajı yerine daha spesifik hata ver
+      if (e is Exception) {
+        rethrow;
+      }
+      throw Exception('Raporlama sırasında beklenmeyen bir hata oluştu: $e');
     }
   }
 
@@ -142,13 +159,31 @@ class ModerationService {
 
     try {
       final callable = _functions.httpsCallable('moderation-getBlockedUsers');
-      final result = await callable.call<Map<String, dynamic>>();
+
+      // Timeout ekle - 30 saniye
+      final result = await callable.call<Map<String, dynamic>>().timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          throw Exception('İstek zaman aşımına uğradı. Lütfen tekrar deneyin.');
+        },
+      );
+
+      if (kDebugMode) {
+        debugPrint('[ModerationService] getBlockedUsers result: ${result.data}');
+      }
 
       final data = result.data;
       if (data != null && data['success'] == true) {
         final blockedUsers = data['blockedUsers'] as List<dynamic>?;
         if (blockedUsers != null) {
-          return blockedUsers.cast<Map<String, dynamic>>();
+          return blockedUsers.map((user) {
+            if (user is Map<String, dynamic>) {
+              return user;
+            } else if (user is Map) {
+              return Map<String, dynamic>.from(user);
+            }
+            return <String, dynamic>{};
+          }).toList();
         }
       }
 
@@ -158,11 +193,19 @@ class ModerationService {
         debugPrint('[ModerationService] Get blocked users error: ${e.code} - ${e.message}');
       }
       throw _handleFunctionsError(e);
+    } on TimeoutException catch (e) {
+      if (kDebugMode) {
+        debugPrint('[ModerationService] Timeout error: $e');
+      }
+      throw Exception('İstek zaman aşımına uğradı. Lütfen tekrar deneyin.');
     } catch (e) {
       if (kDebugMode) {
         debugPrint('[ModerationService] Unexpected error: $e');
       }
-      rethrow;
+      if (e is Exception) {
+        rethrow;
+      }
+      throw Exception('Engellenen kullanıcılar alınırken hata oluştu: $e');
     }
   }
 
