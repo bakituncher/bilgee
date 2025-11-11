@@ -1,18 +1,13 @@
 // lib/features/home/screens/dashboard_screen.dart
-// Gerekli importlar (temizlenmiş)
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-// import 'package:taktik/data/models/test_model.dart'; // KALDIRILDI
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/home/widgets/todays_plan.dart';
 import 'package:taktik/features/onboarding/providers/tutorial_provider.dart';
 import 'package:taktik/features/home/widgets/hero_header.dart';
-// import 'package:taktik/features/home/widgets/performance_momentum_card.dart'; // KALDIRILDI: Ayrı kart istenmiyor
-// import 'package:taktik/features/home/widgets/performance_cluster.dart'; // KALDIRILDI
-// import 'package:taktik/features/home/widgets/adaptive_action_center.dart'; // KALDIRILDI: tekrar eden üçlü kart
 import 'package:taktik/shared/constants/highlight_keys.dart';
 import 'package:taktik/features/home/providers/home_providers.dart';
 import 'package:taktik/features/home/widgets/focus_hub_card.dart';
@@ -23,12 +18,9 @@ import 'package:taktik/shared/widgets/logo_loader.dart';
 import 'package:taktik/data/models/plan_model.dart';
 import 'package:taktik/data/providers/shared_prefs_provider.dart';
 
-// Widget'ları vurgulamak için GlobalKey'ler artik highlight_keys.dart'tan geliyor, burada TANIM YOK.
-
-// KUTLAMA TARİHLERİ: static yerine Riverpod state
 final celebratedDatesProvider = StateProvider<Set<String>>((ref) => <String>{});
 final expiredPlanDialogShownProvider = StateProvider<bool>((ref) => false);
-const _weeklyPlanNudgeIntervalHours = 18; // tekrar gösterim aralığı
+const _weeklyPlanNudgeIntervalHours = 18;
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});

@@ -121,13 +121,6 @@ class _CompactPlanContent extends ConsumerWidget {
               : Theme.of(context).colorScheme.primary.withOpacity(0.2),
           width: 1.5,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark ? Colors.black.withOpacity(.4) : Colors.black.withOpacity(.12),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          )
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -146,13 +139,6 @@ class _CompactPlanContent extends ConsumerWidget {
                     ],
                   ),
                   borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: (ratio >= 0.75 ? Colors.green : Theme.of(context).colorScheme.primary).withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
                 ),
                 child: const Icon(
                   Icons.calendar_today_rounded,
@@ -328,13 +314,6 @@ class _CompactPlanContent extends ConsumerWidget {
                 ],
               ),
               borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
             ),
             child: Material(
               color: Colors.transparent,
@@ -413,13 +392,6 @@ class _EmptyPlanCard extends StatelessWidget {
                 ],
               ),
               shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
             ),
             child: const Icon(Icons.auto_awesome, color: Colors.white, size: 24),
           ),
@@ -448,13 +420,6 @@ class _EmptyPlanCard extends StatelessWidget {
                 ],
               ),
               borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
             ),
             child: Material(
               color: Colors.transparent,

@@ -122,13 +122,6 @@ class MissionCard extends ConsumerWidget {
                         ],
                       ),
                       borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
                     ),
                     child: Icon(icon, size: 20, color: Colors.white),
                   ),
@@ -195,13 +188,6 @@ class MissionCard extends ConsumerWidget {
                         ],
                       ),
                       borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
                     ),
                     child: Material(
                       color: Colors.transparent,
