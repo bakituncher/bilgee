@@ -1,10 +1,8 @@
-// lib/features/coach/screens/ai_hub_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
-import 'package:taktik/core/safety/ai_content_safety.dart';
 import 'dart:math';
 import 'dart:ui';
 
@@ -28,21 +26,8 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
   @override
   void initState() {
     super.initState();
-    // Pil tasarrufu için: repeat() yerine sadece bir kez çalıştır
     _pulse = AnimationController(vsync: this, duration: const Duration(seconds: 5))..forward();
     _glow = CurvedAnimation(parent: _pulse, curve: Curves.easeInOut);
-
-    // AI güvenlik kontrolü
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final hasAccepted = await AiContentSafety.hasUserAcceptedTerms();
-      if (!hasAccepted && mounted) {
-        final accepted = await AiContentSafety.showSafetyDialog(context);
-        if (!accepted && mounted) {
-          // Kullanıcı kabul etmediyse geri dön
-          Navigator.of(context).pop();
-        }
-      }
-    });
   }
 
   @override
@@ -67,6 +52,8 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
         color: theme.colorScheme.secondary,
         heroTag: 'strategic-core',
         chip: 'Odak',
+        marketingTitle: 'Kişisel Başarı Yol Haritanız',
+        marketingSubtitle: 'Yapay zeka, sınav hedeflerinize ve takviminize göre size özel, dinamik bir haftalık çalışma planı oluşturur. Ne zaman ne çalışacağınızı öğrenin.',
       ),
       _AiTool(
         key: weaknessWorkshopKey,
@@ -74,19 +61,23 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
         subtitle: 'En zayıf konunu, kişisel çalışma kartı ve özel test ile işle.',
         icon: Icons.construction_rounded,
         route: '/ai-hub/weakness-workshop',
-        color: theme.colorScheme.secondary, // Assuming success is secondary
+        color: theme.colorScheme.secondary,
         heroTag: 'weakness-core',
         chip: 'Gelişim',
+        marketingTitle: 'Zayıf Noktalarınızı Güce Dönüştürün',
+        marketingSubtitle: 'En çok zorlandığınız konuları tespit edin ve AI destekli özel çalışma materyalleri ile zayıf yanlarınızı güçlü yanlara çevirin.',
       ),
       _AiTool(
         key: analysisStrategyKey,
         title: 'Analiz & Strateji',
-        subtitle: 'Deneme değerlendirme ve strateji danışmayı tek panelden yönet.',
+        subtitle: 'Deneme değerlendirme ve strateji danışmanı tek panelden yönet.',
         icon: Icons.dashboard_customize_rounded,
         route: '/ai-hub/analysis-strategy',
         color: Colors.amberAccent,
         heroTag: 'analysis-strategy-core',
         chip: 'Suite',
+        marketingTitle: 'Akıllı Deneme Analizi',
+        marketingSubtitle: 'Deneme sınavlarınızı yapay zeka ile derinlemesine analiz edin. Hangi konulara odaklanmanız gerektiğini öğrenin, her zaman zirvede kalın.',
       ),
       _AiTool(
         key: motivationChatKey,
@@ -97,6 +88,8 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
         color: Colors.pinkAccent,
         heroTag: 'motivation-core',
         chip: 'Destek',
+        marketingTitle: 'Sınav Sürecindeki En Yakın Dostunuz',
+        marketingSubtitle: 'Stresli veya motivasyonsuz hissettiğinizde, yapay zeka koçunuzla sohbet edin. Size özel tavsiyeler ve destekle mental olarak her zaman daha iyi olacağınızı öğrenin.',
       ),
     ];
 
@@ -118,7 +111,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
                 toolbarHeight: kToolbarHeight,
                 title: Text(
                   'TaktikAI Çekirdeği',
-                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                  style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.w700),
                 ),
                 flexibleSpace: ClipRect(
                   child: BackdropFilter(
@@ -130,13 +123,13 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
                           end: Alignment.bottomCenter,
                           colors: isDark
                               ? [
-                            Theme.of(context).scaffoldBackgroundColor.withOpacity(0.9),
-                            Theme.of(context).scaffoldBackgroundColor.withOpacity(0.7),
-                          ]
+                                  theme.scaffoldBackgroundColor.withOpacity(0.9),
+                                  theme.scaffoldBackgroundColor.withOpacity(0.7),
+                                ]
                               : [
-                            Theme.of(context).scaffoldBackgroundColor.withOpacity(0.9),
-                            Theme.of(context).scaffoldBackgroundColor.withOpacity(0.75),
-                          ],
+                                  theme.scaffoldBackgroundColor.withOpacity(0.9),
+                                  theme.scaffoldBackgroundColor.withOpacity(0.75),
+                                ],
                         ),
                         border: const Border(
                           bottom: BorderSide(
@@ -156,20 +149,70 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _CoreVisual(glow: _glow),
-                      const SizedBox(height: 16),
-                      // AI güvenlik rozeti ve uyarı
-                      Center(child: AiContentSafety.buildAiBadge(context)),
-                      const SizedBox(height: 8),
-                      AiContentSafety.buildDisclaimerBanner(
-                        context,
-                        customMessage: 'Bu araçlar yapay zeka ile çalışır. İçerikler eğitim amaçlıdır. Lütfen sonuçları dikkatle değerlendirin.',
+                      const SizedBox(height: 24),
+
+                      // Sorumluluk reddi - kısa ve öz
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          gradient: LinearGradient(
+                            colors: [
+                              theme.colorScheme.primary.withOpacity(0.08),
+                              theme.colorScheme.secondary.withOpacity(0.05),
+                            ],
+                          ),
+                          border: Border.all(
+                            color: theme.colorScheme.primary.withOpacity(0.2),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(
+                                Icons.info_outline_rounded,
+                                color: theme.colorScheme.primary,
+                                size: 22,
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Sorumluluk Reddi',
+                                    style: theme.textTheme.titleSmall?.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      color: theme.colorScheme.primary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'TaktikAI, bir yapay zeka asistanıdır. Psikolojik danışmanlık hizmeti sunmaz.',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 16),
+
+                      const SizedBox(height: 24),
                       Row(
                         children: [
                           Text(
                             'Yapay Zeka Araçları',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
                           ),
                           if (!isPremium) ...[
                             const SizedBox(width: 8),
@@ -199,7 +242,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
                                   const SizedBox(width: 4),
                                   Text(
                                     'Premium Gerektirir',
-                                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    style: theme.textTheme.labelSmall?.copyWith(
                                       color: theme.colorScheme.primary,
                                       fontWeight: FontWeight.w700,
                                     ),
@@ -225,27 +268,8 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
                     mainAxisExtent: 168,
                   ),
                   delegate: SliverChildBuilderDelegate(
-                        (context, index) {
+                    (context, index) {
                       final tool = tools[index];
-                      final marketingMap = {
-                        'Haftalık Planlama': {
-                          'title': 'Kişisel Başarı Yol Haritanız',
-                          'subtitle': 'Yapay zeka, sınav hedeflerinize ve takviminize göre size özel, dinamik bir haftalık çalışma planı oluşturur. Ne zaman ne çalışacağınızı bilerek, stresi azaltın ve verimliliği en üst düzeye çıkarın.',
-                        },
-                        'Cevher Atölyesi': {
-                          'title': 'Zayıflıkları Güce Dönüştürün',
-                          'subtitle': 'En zayıf olduğunuz konuları tespit edip, onlara özel çalışma kartları ve mini testlerle nokta atışı yapın. Her bir eksiğinizi kalıcı olarak kapatarak netlerinizi artırın.',
-                        },
-                        'Analiz & Strateji': {
-                          'title': 'Her Denemeden Ders Çıkarın',
-                          'subtitle': 'Deneme sonuçlarınızı saniyeler içinde analiz edin ve bir sonraki adımınız için stratejik öneriler alın. Nerede yanlış yaptığınızı değil, nasıl daha iyi olacağınızı öğrenin.',
-                        },
-                        'Motivasyon Sohbeti': {
-                          'title': 'Sınav Sürecindeki En Yakın Dostunuz',
-                          'subtitle': 'Stresli veya motivasyonsuz hissettiğinizde, yapay zeka koçunuzla sohbet edin. Size özel tavsiyeler ve Dostça destekle mental olarak her zaman zirvede kalın.',
-                        },
-                      };
-
                       return _AiToolTile(
                         tool: tool,
                         onTap: () {
@@ -260,9 +284,9 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
                                 'icon': tool.icon,
                                 'color': tool.color,
                                 'heroTag': tool.heroTag,
-                                'marketingTitle': marketingMap[tool.title]!['title']!,
-                                'marketingSubtitle': marketingMap[tool.title]!['subtitle']!,
-                                'redirectRoute': tool.route, // satın alma sonrası hedef
+                                'marketingTitle': tool.marketingTitle,
+                                'marketingSubtitle': tool.marketingSubtitle,
+                                'redirectRoute': tool.route,
                               },
                             );
                           }
@@ -270,18 +294,6 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
                       );
                     },
                     childCount: tools.length,
-                  ),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-                  child: Text(
-                    'Taktik AI Koçu yalnızca akademik strateji ve motivasyon aracıdır. Tıbbi veya psikolojik teşhis/tedavi amaçlı tasarlanmamıştır. Sağlık sorunları için lütfen lisanslı bir uzmana başvurun.',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.7),
-                    ),
                   ),
                 ),
               ),
@@ -297,6 +309,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
 class _CoreVisual extends StatelessWidget {
   const _CoreVisual({required this.glow});
   final Animation<double> glow;
+
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -382,12 +395,27 @@ class _AiTool {
   final Color color;
   final String heroTag;
   final String chip;
-  _AiTool({required this.key, required this.title, required this.subtitle, required this.icon, required this.route, required this.color, required this.heroTag, required this.chip});
+  final String marketingTitle;
+  final String marketingSubtitle;
+
+  _AiTool({
+    required this.key,
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.route,
+    required this.color,
+    required this.heroTag,
+    required this.chip,
+    required this.marketingTitle,
+    required this.marketingSubtitle,
+  });
 }
 
 class _AnimatedBackground extends StatelessWidget {
   const _AnimatedBackground({required this.glow});
   final Animation<double> glow;
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -402,15 +430,15 @@ class _AnimatedBackground extends StatelessWidget {
               end: Alignment.bottomRight,
               colors: isDark
                   ? [
-                Theme.of(context).scaffoldBackgroundColor,
-                Theme.of(context).scaffoldBackgroundColor.blend(Theme.of(context).colorScheme.primary.withOpacity(.15), .08 + g * .1),
-                Theme.of(context).scaffoldBackgroundColor.blend(Theme.of(context).colorScheme.secondary.withOpacity(.12), .05 + g * .08),
-              ]
+                      Theme.of(context).scaffoldBackgroundColor,
+                      Theme.of(context).scaffoldBackgroundColor.blend(Theme.of(context).colorScheme.primary.withOpacity(.15), .08 + g * .1),
+                      Theme.of(context).scaffoldBackgroundColor.blend(Theme.of(context).colorScheme.secondary.withOpacity(.12), .05 + g * .08),
+                    ]
                   : [
-                Theme.of(context).scaffoldBackgroundColor,
-                Theme.of(context).scaffoldBackgroundColor.blend(Theme.of(context).colorScheme.primary.withOpacity(.15), .03 + g * .05),
-                Theme.of(context).scaffoldBackgroundColor.blend(Theme.of(context).colorScheme.primary.withOpacity(.1), .02 + g * .04),
-              ],
+                      Theme.of(context).scaffoldBackgroundColor,
+                      Theme.of(context).scaffoldBackgroundColor.blend(Theme.of(context).colorScheme.primary.withOpacity(.15), .03 + g * .05),
+                      Theme.of(context).scaffoldBackgroundColor.blend(Theme.of(context).colorScheme.primary.withOpacity(.1), .02 + g * .04),
+                    ],
             ),
           ),
           child: CustomPaint(
@@ -431,6 +459,7 @@ class _ParticlePainter extends CustomPainter {
   final double progress;
   final bool isDark;
   final int count = 22;
+
   @override
   void paint(Canvas canvas, Size size) {
     final rnd = Random(42);
@@ -446,6 +475,7 @@ class _ParticlePainter extends CustomPainter {
       canvas.drawCircle(Offset(dx, dy), radius, paint);
     }
   }
+
   @override
   bool shouldRepaint(covariant _ParticlePainter oldDelegate) =>
       oldDelegate.progress != progress || oldDelegate.isDark != isDark;
@@ -493,13 +523,13 @@ class _AiToolTile extends StatelessWidget {
                         end: Alignment.bottomRight,
                         colors: isDark
                             ? [
-                          Theme.of(context).colorScheme.surfaceContainer.withOpacity(.85),
-                          Theme.of(context).cardColor.withOpacity(.9),
-                        ]
+                                Theme.of(context).colorScheme.surfaceContainer.withOpacity(.85),
+                                Theme.of(context).cardColor.withOpacity(.9),
+                              ]
                             : [
-                          Theme.of(context).cardColor.withOpacity(.98),
-                          Theme.of(context).cardColor.withOpacity(.92),
-                        ],
+                                Theme.of(context).cardColor.withOpacity(.98),
+                                Theme.of(context).cardColor.withOpacity(.92),
+                              ],
                       ),
                       border: Border.all(
                         color: isDark
@@ -556,9 +586,9 @@ class _AiToolTile extends StatelessWidget {
                             Text(
                               'Hızlı başla',
                               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                color: tool.color.withOpacity(.9),
-                                fontWeight: FontWeight.w700,
-                              ),
+                                    color: tool.color.withOpacity(.9),
+                                    fontWeight: FontWeight.w700,
+                                  ),
                             ),
                             const Spacer(),
                             Icon(Icons.arrow_forward_rounded, size: 20, color: Theme.of(context).colorScheme.onSurface.withOpacity(.9)),
@@ -579,7 +609,9 @@ class _AiToolTile extends StatelessWidget {
 
 class _IconOrb extends StatelessWidget {
   const _IconOrb({required this.icon, required this.color});
-  final IconData icon; final Color color;
+  final IconData icon;
+  final Color color;
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -597,7 +629,9 @@ class _IconOrb extends StatelessWidget {
 
 class _Badge extends StatelessWidget {
   const _Badge({required this.label, required this.color});
-  final String label; final Color color;
+  final String label;
+  final Color color;
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -610,13 +644,12 @@ class _Badge extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          fontWeight: FontWeight.w800,
-          color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.white
-              : Theme.of(context).colorScheme.onSurface,
-          letterSpacing: .2,
-        ),
+              color: color,
+              fontWeight: FontWeight.w700,
+              fontSize: 11,
+            ),
       ),
     );
   }
 }
+
