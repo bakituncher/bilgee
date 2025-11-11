@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:taktik/data/models/user_model.dart';
 import 'package:taktik/data/models/test_model.dart';
 import 'package:taktik/data/models/exam_model.dart';
@@ -1055,7 +1056,9 @@ class FirestoreService {
       return {'success': true};
 
     } catch (e) {
-      print('Soru raporlama hatası: $e');
+      if (kDebugMode) {
+        print('Soru raporlama hatası: $e');
+      }
 
       if (e is FirebaseFunctionsException) {
         if (e.code == 'resource-exhausted') {

@@ -21,7 +21,7 @@ import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:taktik/features/weakness_workshop/logic/quiz_quality_guard.dart';
 import 'package:confetti/confetti.dart';
 import 'package:lottie/lottie.dart';
-
+import 'package:taktik/core/safety/ai_content_safety.dart';
 
 enum WorkshopStep { briefing, study, quiz, results }
 
@@ -247,6 +247,12 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
                 onSaved: () => context.push('/ai-hub/weakness-workshop/${AppRoutes.savedWorkshops}'),
                 title: 'Cevher Atölyesi',
               ),
+              // AI güvenlik uyarısı
+              if (_currentStep != WorkshopStep.briefing)
+                AiContentSafety.buildDisclaimerBanner(
+                  context,
+                  customMessage: 'Çalışma kartı ve sorular AI ile üretilmiştir. Hata tespit ederseniz bildirim yapın.',
+                ),
               Expanded(
                 child: AnimatedSwitcher(
                   duration: 300.ms,

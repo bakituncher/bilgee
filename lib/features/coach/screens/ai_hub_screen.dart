@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
+import 'package:taktik/core/safety/ai_content_safety.dart';
 import 'dart:math';
 import 'dart:ui';
 
@@ -30,6 +31,18 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
     // Pil tasarrufu için: repeat() yerine sadece bir kez çalıştır
     _pulse = AnimationController(vsync: this, duration: const Duration(seconds: 5))..forward();
     _glow = CurvedAnimation(parent: _pulse, curve: Curves.easeInOut);
+
+    // AI güvenlik kontrolü
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final hasAccepted = await AiContentSafety.hasUserAcceptedTerms();
+      if (!hasAccepted && mounted) {
+        final accepted = await AiContentSafety.showSafetyDialog(context);
+        if (!accepted && mounted) {
+          // Kullanıcı kabul etmediyse geri dön
+          Navigator.of(context).pop();
+        }
+      }
+    });
   }
 
   @override
@@ -143,7 +156,15 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _CoreVisual(glow: _glow),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
+                      // AI güvenlik rozeti ve uyarı
+                      Center(child: AiContentSafety.buildAiBadge(context)),
+                      const SizedBox(height: 8),
+                      AiContentSafety.buildDisclaimerBanner(
+                        context,
+                        customMessage: 'Bu araçlar yapay zeka ile çalışır. İçerikler eğitim amaçlıdır. Lütfen sonuçları dikkatle değerlendirin.',
+                      ),
+                      const SizedBox(height: 16),
                       Row(
                         children: [
                           Text(

@@ -5,6 +5,52 @@ const { defineSecret } = require("firebase-functions/params");
 const { enforceRateLimit, getClientIpFromRawRequest, dayKeyIstanbul } = require("./utils");
 const GEMINI_API_KEY = defineSecret("GEMINI_API_KEY");
 
+// İçerik moderasyon fonksiyonları - Google Play ve App Store uyumluluk için
+function containsInappropriateContent(text) {
+  if (!text || typeof text !== 'string') return false;
+
+  const lowerText = text.toLowerCase();
+
+  // Yasaklı kelime listesi (Türkçe ve İngilizce)
+  const blockedPatterns = [
+    // Şiddet ve zarar içerikli
+    /\b(öldür|intihar|zarar ver|kes|yak)\b/gi,
+    /\b(kill|suicide|harm|hurt|violence)\b/gi,
+    // Cinsel içerik
+    /\b(seks|porno|cinsel|sex|porn|sexual)\b/gi,
+    // Nefret söylemi
+    /\b(ırkçı|racist|nefret|hate)\b/gi,
+    // Uyuşturucu ve yasal olmayan içerik
+    /\b(uyuşturucu|esrar|kokain|eroin|drug|cocaine|heroin)\b/gi,
+    /\b(kumar|bahis|gambl)\b/gi,
+    // Silah ve tehlikeli materyaller
+    /\b(silah|bomba|patlayıcı|weapon|bomb|explosive)\b/gi,
+  ];
+
+  for (const pattern of blockedPatterns) {
+    if (pattern.test(text)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function sanitizeOutput(text) {
+  if (!text || typeof text !== 'string') return text;
+
+  // Telefon numaralarını maskele
+  let sanitized = text.replace(/\b0?\d{3}[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}\b/g, '***-***-**-**');
+
+  // E-posta adreslerini maskele
+  sanitized = sanitized.replace(/\b[\w\.-]+@[\w\.-]+\.\w{2,4}\b/g, '***@***.***');
+
+  // 11 haneli TC kimlik benzeri sayıları maskele
+  sanitized = sanitized.replace(/\b\d{11}\b/g, '***********');
+
+  return sanitized;
+}
+
 // Güvenlik ve kötüye kullanım önleme ayarları
 // Varsayılanlar maliyeti düşürecek şekilde daraltıldı; env ile aşılabilir.
 const GEMINI_PROMPT_MAX_CHARS = parseInt(process.env.GEMINI_PROMPT_MAX_CHARS || "20000", 10);
@@ -56,6 +102,18 @@ exports.generateGemini = onCall(
     }
     if (prompt.length > GEMINI_PROMPT_MAX_CHARS) {
       throw new HttpsError("invalid-argument", `Prompt çok uzun (>${GEMINI_PROMPT_MAX_CHARS}).`);
+    }
+
+    // İçerik moderasyonu - uygunsuz içerik kontrolü
+    if (containsInappropriateContent(prompt)) {
+      logger.warn("Inappropriate content detected in prompt", {
+        uid: request.auth.uid.substring(0, 6) + "***",
+        promptLength: prompt.length
+      });
+      throw new HttpsError(
+        "invalid-argument",
+        "İsteğiniz uygunsuz içerik barındırıyor. Lütfen eğitim ve motivasyon odaklı sorular sorun."
+      );
     }
 
     const normalizedPrompt = prompt.replace(/\s+/g, " ").trim();
@@ -151,7 +209,37 @@ exports.generateGemini = onCall(
         throw new HttpsError("internal", `Gemini isteği başarısız (${resp.status}).`);
       }
       const data = await resp.json();
-      const candidate = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+      // Güvenlik filtreleme kontrolü
+      const finishReason = data?.candidates?.[0]?.finishReason;
+      if (finishReason === 'SAFETY') {
+        logger.warn("Gemini response blocked by safety filters", {
+          uid: request.auth.uid.substring(0, 6) + "***",
+          modelId
+        });
+        throw new HttpsError(
+          "failed-precondition",
+          "AI yanıtı güvenlik filtreleri tarafından engellendi. Lütfen farklı bir şekilde deneyin."
+        );
+      }
+
+      const rawCandidate = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+      // Output sanitizasyonu - hassas bilgileri maskele
+      const candidate = sanitizeOutput(rawCandidate);
+
+      // Çıktıda uygunsuz içerik kontrolü (ek güvenlik katmanı)
+      if (containsInappropriateContent(candidate)) {
+        logger.warn("Inappropriate content detected in AI response", {
+          uid: request.auth.uid.substring(0, 6) + "***",
+          modelId
+        });
+        throw new HttpsError(
+          "failed-precondition",
+          "AI yanıtı uygun olmayan içerik barındırıyor. Lütfen tekrar deneyin."
+        );
+      }
+
       const usage = data?.usageMetadata || {};
       // Bazı sürümlerde usageMetadata alanları: promptTokenCount, candidatesTokenCount, totalTokenCount
       const tokensUsed = Number(usage.totalTokenCount || 0);

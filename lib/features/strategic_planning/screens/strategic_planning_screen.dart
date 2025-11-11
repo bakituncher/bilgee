@@ -12,7 +12,7 @@ import 'package:intl/intl.dart';
 import 'package:taktik/data/models/plan_model.dart';
 import 'package:taktik/data/models/plan_document.dart';
 import 'package:lottie/lottie.dart';
-
+import 'package:taktik/core/safety/ai_content_safety.dart';
 
 enum Pacing { relaxed, moderate, intense }
 enum PlanningStep { dataCheck, confirmation, pacing, loading }
@@ -288,85 +288,96 @@ class StrategicPlanningScreen extends ConsumerWidget {
             stops: const [0.0, 0.7],
           ),
         ),
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 520),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Card(
-                    elevation: 0,
-                    clipBehavior: Clip.antiAlias,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 28.0, horizontal: 24.0),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
-                              shape: BoxShape.circle,
+        child: Column(
+          children: [
+            // AI güvenlik uyarısı
+            AiContentSafety.buildDisclaimerBanner(
+              context,
+              customMessage: 'Bu plan AI tarafından kişiselleştirilmiştir. Kendi durumunuza göre ayarlayabilirsiniz.',
+            ),
+            Expanded(
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24.0),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 520),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Card(
+                          elevation: 0,
+                          clipBehavior: Clip.antiAlias,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 28.0, horizontal: 24.0),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(Icons.calendar_month_rounded, size: 40, color: Theme.of(context).colorScheme.primary),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  "Stratejik Plan Hazır",
+                                  textAlign: TextAlign.center,
+                                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  "Bu haftanın odağı",
+                                  style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                                ),
+                                const SizedBox(height: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)),
+                                  ),
+                                  child: Text(
+                                    weeklyPlan.strategyFocus,
+                                    textAlign: TextAlign.center,
+                                    style: Theme.of(context).textTheme.titleMedium,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  "Oluşturulma: ${DateFormat.yMMMMd('tr').format(weeklyPlan.creationDate)}",
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                                ),
+                              ],
                             ),
-                            child: Icon(Icons.calendar_month_rounded, size: 40, color: Theme.of(context).colorScheme.primary),
                           ),
-                          const SizedBox(height: 16),
-                          Text(
-                            "Stratejik Plan Hazır",
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            "Bu haftanın odağı",
-                            style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                          ),
-                          const SizedBox(height: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)),
-                            ),
-                            child: Text(
-                              weeklyPlan.strategyFocus,
-                              textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            "Oluşturulma: ${DateFormat.yMMMMd('tr').format(weeklyPlan.creationDate)}",
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                          ),
-                        ],
-                      ),
+                        ).animate().fadeIn(duration: 300.ms).scale(begin: const Offset(0.98, 0.98), curve: Curves.easeOut),
+
+                        const SizedBox(height: 20),
+
+                        ElevatedButton.icon(
+                          onPressed: () => context.push('/home/weekly-plan'),
+                          icon: const Icon(Icons.playlist_add_check_rounded),
+                          label: const Text("Haftalık Planı Aç"),
+                        ),
+                        const SizedBox(height: 12),
+                        OutlinedButton.icon(
+                          onPressed: () {
+                            ref.read(planningStepProvider.notifier).state = PlanningStep.confirmation;
+                          },
+                          icon: const Icon(Icons.auto_awesome),
+                          label: const Text("Yeni Strateji Oluştur"),
+                        ),
+                      ],
                     ),
-                  ).animate().fadeIn(duration: 300.ms).scale(begin: const Offset(0.98, 0.98), curve: Curves.easeOut),
-
-                  const SizedBox(height: 20),
-
-                  ElevatedButton.icon(
-                    onPressed: () => context.push('/home/weekly-plan'),
-                    icon: const Icon(Icons.playlist_add_check_rounded),
-                    label: const Text("Haftalık Planı Aç"),
                   ),
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      ref.read(planningStepProvider.notifier).state = PlanningStep.confirmation;
-                    },
-                    icon: const Icon(Icons.auto_awesome),
-                    label: const Text("Yeni Strateji Oluştur"),
-                  ),
-                ],
+                ),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );

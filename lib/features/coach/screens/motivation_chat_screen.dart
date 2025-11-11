@@ -5,7 +5,7 @@ import 'package:taktik/data/repositories/ai_service.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:flutter/services.dart';
-
+import 'package:taktik/core/safety/ai_content_safety.dart';
 
 // RUH HALİ SEÇENEKLERİ
 enum Mood { focused, neutral, tired, stressed, badResult, goodResult, workshop }
@@ -239,6 +239,9 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
           children: [
             Column(
               children: [
+                // AI içerik uyarısı
+                if (selectedMood != null)
+                  AiContentSafety.buildDisclaimerBanner(context),
                 Expanded(
                   child: AnimatedSwitcher(
                     duration: 200.ms,
