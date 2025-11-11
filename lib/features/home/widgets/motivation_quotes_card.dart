@@ -1,8 +1,10 @@
 // lib/features/home/widgets/motivation_quotes_card.dart
 import 'dart:async';
+import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:taktik/data/motivation_quotes_data.dart';
 
 class MotivationQuotesCard extends StatefulWidget {
   const MotivationQuotesCard({super.key});
@@ -15,19 +17,24 @@ class _MotivationQuotesCardState extends State<MotivationQuotesCard> {
   late final PageController _controller;
   Timer? _timer;
   int _index = 0;
-  final _quotes = const [
-    ('Zorluklar, fırsatların gizli kapılarıdır.', 'Albert Einstein'),
-    ('Hayal gücü bilgiden daha önemlidir.', 'Albert Einstein'),
-    ('Başarı, hazırlık ile fırsatın buluştuğu noktadır.', 'Bobby Unser'),
-    ('Kendine inan, her şey mümkün.', 'Audrey Hepburn'),
-    ('Yapabileceğin en büyük hata, hata yapmaktan korkmaktır.', 'Elbert Hubbard'),
-    ('Düşünmeden konuşmak, nişan almadan ateş etmektir.', 'Miguel de Cervantes'),
-    ('Başarı, azimle beslenen bir yolculuktur.', 'Zig Ziglar'),
-  ];
+  late List<(String, String)> _dailyQuotes;
+
+  /// Her gün için rastgele 5 söz seçer (günlük seed ile)
+  List<(String, String)> _selectDailyQuotes() {
+    final now = DateTime.now();
+    final daysSinceEpoch = now.millisecondsSinceEpoch ~/ (1000 * 60 * 60 * 24);
+    final random = Random(daysSinceEpoch);
+
+    final allQuotes = List<(String, String)>.from(MotivationQuotesData.quotes);
+    allQuotes.shuffle(random);
+
+    return allQuotes.take(5).toList();
+  }
 
   @override
   void initState() {
     super.initState();
+    _dailyQuotes = _selectDailyQuotes();
     _controller = PageController(viewportFraction: 1);
     _startAuto();
   }
@@ -38,7 +45,7 @@ class _MotivationQuotesCardState extends State<MotivationQuotesCard> {
       if (!mounted) return;
       final next = (_controller.page?.round() ?? _index) + 1;
       _controller.animateToPage(
-        next % _quotes.length,
+        next % _dailyQuotes.length,
         duration: const Duration(milliseconds: 550),
         curve: Curves.easeOutCubic,
       );
@@ -55,7 +62,7 @@ class _MotivationQuotesCardState extends State<MotivationQuotesCard> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    const height = 168.0;
+    const height = 180.0;
 
     return Card(
       elevation: isDark ? 8 : 10,
@@ -116,9 +123,9 @@ class _MotivationQuotesCardState extends State<MotivationQuotesCard> {
                   setState(() => _index = i);
                   _startAuto();
                 },
-                itemCount: _quotes.length,
+                itemCount: _dailyQuotes.length,
                 itemBuilder: (context, i) {
-                  final (text, author) = _quotes[i];
+                  final (text, author) = _dailyQuotes[i];
                   return Padding(
                     padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
                     child: Column(
@@ -139,8 +146,12 @@ class _MotivationQuotesCardState extends State<MotivationQuotesCard> {
                             Expanded(
                               child: Text(
                                 text,
-                                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800, height: 1.15),
-                                maxLines: 3,
+                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  height: 1.2,
+                                  fontSize: 15,
+                                ),
+                                maxLines: 4,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
@@ -159,7 +170,7 @@ class _MotivationQuotesCardState extends State<MotivationQuotesCard> {
                               child: Text('— $author', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                             ),
                             const Spacer(),
-                            _Dots(count: _quotes.length, index: i),
+                            _Dots(count: _dailyQuotes.length, index: i),
                           ],
                         ),
                       ],
