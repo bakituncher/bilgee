@@ -8,7 +8,7 @@ import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
 
 import 'dashboard_cards/mission_card.dart';
-import 'dashboard_cards/weekly_plan_card.dart';
+import 'dashboard_cards/weekly_plan_card_compact.dart';
 
 
 class TodaysPlan extends ConsumerStatefulWidget {
@@ -91,7 +91,7 @@ class _TodaysPlanState extends ConsumerState<TodaysPlan> {
 
     List<Widget> pages = [
       const MissionCard(),
-      const WeeklyPlanCard(),
+      const WeeklyPlanCardCompact(),
     ];
 
     if (isPlanBehind) {
@@ -102,14 +102,14 @@ class _TodaysPlanState extends ConsumerState<TodaysPlan> {
     return Column(
       children: [
         SizedBox(
-          height: 400,
+          height: 180,
           child: PageView(
             controller: _pageController,
             padEnds: false,
             children: pages,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 6),
         _buildPageIndicator(pages.length),
       ],
     );
@@ -121,12 +121,12 @@ class _TodaysPlanState extends ConsumerState<TodaysPlan> {
       children: List.generate(count, (index) {
         return AnimatedContainer(
           duration: 300.ms,
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          height: 8,
-          width: _currentPage == index ? 24 : 8,
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          height: 6,
+          width: _currentPage == index ? 18 : 6,
           decoration: BoxDecoration(
             color: _currentPage == index ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(3),
           ),
         );
       }),
@@ -158,32 +158,32 @@ class _NewPlanPromptCard extends StatelessWidget {
           ),
         ),
         child: Container(
-          height: 400,
-          padding: const EdgeInsets.symmetric(vertical: 32.0, horizontal: 24.0),
+          height: 180,
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Icon(Icons.auto_awesome, color: Theme.of(context).colorScheme.primary, size: 48),
-              const SizedBox(height: 16),
+              Icon(Icons.auto_awesome, color: Theme.of(context).colorScheme.primary, size: 32),
+              const SizedBox(height: 8),
               Text(
-                'Yeni Bir Hafta, Yeni Bir Strateji!',
+                'Yeni Hafta, Yeni Strateji!',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 6),
               Text(
-                'Geçen haftanın planı tamamlandı. Performansını güncelleyerek bu hafta için yeni bir zafer yolu çizelim.',
+                'Bu hafta için taze bir plan çıkaralım.',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.5),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.3, fontSize: 11),
               ),
               const Spacer(),
               ElevatedButton.icon(
                 onPressed: () => context.go('${AppRoutes.aiHub}/${AppRoutes.strategicPlanning}'),
-                icon: const Icon(Icons.insights_rounded),
-                label: const Text('Yeni Stratejini Oluştur'),
+                icon: const Icon(Icons.insights_rounded, size: 18),
+                label: const Text('Plan Oluştur', style: TextStyle(fontSize: 12)),
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
                 ),
               )
             ],

@@ -73,7 +73,7 @@ class FocusHubCard extends ConsumerWidget {
         onTap: primary,
         borderRadius: BorderRadius.circular(24),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -83,39 +83,39 @@ class FocusHubCard extends ConsumerWidget {
                   Container(
                     decoration: BoxDecoration(
                       color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.6)),
                     ),
-                    padding: const EdgeInsets.all(10),
-                    child: Icon(icon, color: Theme.of(context).colorScheme.primary),
+                    padding: const EdgeInsets.all(8),
+                    child: Icon(icon, color: Theme.of(context).colorScheme.primary, size: 20),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+                        Text(title, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
                         const SizedBox(height: 2),
-                        Text(subtitle, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                        Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 11)),
                       ],
                     ),
                   ),
-                  Icon(Icons.chevron_right_rounded, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  Icon(Icons.chevron_right_rounded, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 20),
                 ],
               ),
 
-              const SizedBox(height: 14),
+              const SizedBox(height: 10),
               // Ayrıştırıcı çizgi
               Divider(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35), height: 1),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
 
               // Hızlı İşlemler
               Row(
                 children: actions
-                    .map((a) => Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: a)))
+                    .map((a) => Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 3), child: a)))
                     .toList(),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
             ],
           ),
         ),
@@ -164,13 +164,13 @@ class _QuickAction extends StatelessWidget {
                 : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.45),
           ),
         ),
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.symmetric(vertical: 8),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: Theme.of(context).colorScheme.primary),
-            const SizedBox(height: 6),
-            Text(label, style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600)),
+            Icon(icon, color: Theme.of(context).colorScheme.primary, size: 20),
+            const SizedBox(height: 4),
+            Text(label, style: Theme.of(context).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w600, fontSize: 11)),
           ],
         ),
       ),

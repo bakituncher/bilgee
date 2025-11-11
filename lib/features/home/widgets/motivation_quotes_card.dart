@@ -62,7 +62,7 @@ class _MotivationQuotesCardState extends State<MotivationQuotesCard> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    const height = 180.0;
+    const height = 160.0;
 
     return Card(
       elevation: isDark ? 8 : 10,
@@ -127,7 +127,7 @@ class _MotivationQuotesCardState extends State<MotivationQuotesCard> {
                 itemBuilder: (context, i) {
                   final (text, author) = _dailyQuotes[i];
                   return Padding(
-                    padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -136,22 +136,22 @@ class _MotivationQuotesCardState extends State<MotivationQuotesCard> {
                             Container(
                               decoration: BoxDecoration(
                                 color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(10),
                                 border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.6)),
                               ),
-                              padding: const EdgeInsets.all(10),
-                              child: Icon(Icons.format_quote_rounded, color: Theme.of(context).colorScheme.primary),
+                              padding: const EdgeInsets.all(8),
+                              child: Icon(Icons.format_quote_rounded, color: Theme.of(context).colorScheme.primary, size: 18),
                             ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
                                 text,
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                style: Theme.of(context).textTheme.titleSmall?.copyWith(
                                   fontWeight: FontWeight.w700,
                                   height: 1.2,
-                                  fontSize: 15,
+                                  fontSize: 13,
                                 ),
-                                maxLines: 4,
+                                maxLines: 3,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
@@ -161,13 +161,13 @@ class _MotivationQuotesCardState extends State<MotivationQuotesCard> {
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
+                                borderRadius: BorderRadius.circular(16),
                                 color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25),
                                 border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.45)),
                               ),
-                              child: Text('— $author', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                              child: Text('— $author', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 10)),
                             ),
                             const Spacer(),
                             _Dots(count: _dailyQuotes.length, index: i),

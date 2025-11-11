@@ -120,9 +120,9 @@ class _PlanView extends ConsumerWidget {
               ? const _RestDay()
               : ListView.separated(
                   key: PageStorageKey<String>(dayName),
-                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+                  padding: const EdgeInsets.fromLTRB(12, 2, 12, 12),
                   itemCount: dailyPlan.schedule.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  separatorBuilder: (_, __) => const SizedBox(height: 6),
                   itemBuilder: (context, index) {
                     final scheduleItem = dailyPlan.schedule[index];
                     return _TaskTile(
@@ -163,7 +163,7 @@ class _HeaderBar extends ConsumerWidget {
     }
     final double ratio = total==0?0.0: done/total;
     return Container(
-      padding: const EdgeInsets.fromLTRB(20,18,20,16),
+      padding: const EdgeInsets.fromLTRB(12,10,12,8),
       decoration: BoxDecoration(
         borderRadius: const BorderRadius.only(topLeft: Radius.circular(28), topRight: Radius.circular(28)),
         gradient: LinearGradient(
@@ -182,27 +182,26 @@ class _HeaderBar extends ConsumerWidget {
       ),
       child: Row(crossAxisAlignment: CrossAxisAlignment.center, children:[
         Stack(alignment: Alignment.center, children:[
-          SizedBox(height:58,width:58,child:CircularProgressIndicator(strokeWidth:6,value:_clamp01(ratio),backgroundColor:Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(.35),valueColor:AlwaysStoppedAnimation(ratio>=.75?Colors.green:Theme.of(context).colorScheme.primary)) ),
+          SizedBox(height:42,width:42,child:CircularProgressIndicator(strokeWidth:4,value:_clamp01(ratio),backgroundColor:Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(.35),valueColor:AlwaysStoppedAnimation(ratio>=.75?Colors.green:Theme.of(context).colorScheme.primary)) ),
           Column(mainAxisSize: MainAxisSize.min,children:[
-            Text('${(ratio*100).round()}%',style: TextStyle(fontWeight: FontWeight.bold,fontSize:14,color:Theme.of(context).colorScheme.onSurface)), 
-            Text('Hafta',style: TextStyle(fontSize:10,color:Theme.of(context).colorScheme.onSurfaceVariant))
+            Text('${(ratio*100).round()}%',style: TextStyle(fontWeight: FontWeight.bold,fontSize:11,color:Theme.of(context).colorScheme.onSurface)),
           ])
         ]),
-        const SizedBox(width:16),
+        const SizedBox(width:10),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children:[
-          Text('Haftalık Plan', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+          Text('Haftalık Plan', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800, fontSize: 13)),
+          const SizedBox(height:2),
+          Text(DateFormat('d MMM', 'tr').format(dateForTab), style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 9)),
           const SizedBox(height:4),
-          Text(DateFormat.yMMMMd('tr').format(dateForTab), style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-          const SizedBox(height:6),
-          ClipRRect(borderRadius: BorderRadius.circular(6), child: LinearProgressIndicator(minHeight:6,value:_clamp01(ratio),backgroundColor:Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(.25), valueColor:AlwaysStoppedAnimation(ratio>=.75?Colors.green:Theme.of(context).colorScheme.primary)))
+          ClipRRect(borderRadius: BorderRadius.circular(4), child: LinearProgressIndicator(minHeight:4,value:_clamp01(ratio),backgroundColor:Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(.25), valueColor:AlwaysStoppedAnimation(ratio>=.75?Colors.green:Theme.of(context).colorScheme.primary)))
         ])),
-        IconButton(tooltip:'Planı Aç', onPressed: ()=> context.go('/home/weekly-plan'), icon: Icon(Icons.open_in_new_rounded,color:Theme.of(context).colorScheme.primary))
+        IconButton(tooltip:'Planı Aç', padding: EdgeInsets.zero, constraints: const BoxConstraints(minWidth: 32, minHeight: 32), onPressed: ()=> context.go('/home/weekly-plan'), icon: Icon(Icons.open_in_new_rounded,color:Theme.of(context).colorScheme.primary, size: 18))
       ]),
     );
   }
 }
 
-class _RestDay extends StatelessWidget { const _RestDay(); @override Widget build(BuildContext context){ return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children:[ Icon(Icons.self_improvement_rounded,size:48,color:Theme.of(context).colorScheme.primary), const SizedBox(height:12), Text('Dinlenme Günü', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)), const SizedBox(height:6), Text('Zihinsel depoları doldur – yarın yeniden hücum.', textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)) ]).animate().fadeIn(duration: 400.ms)); } }
+class _RestDay extends StatelessWidget { const _RestDay(); @override Widget build(BuildContext context){ return Center(child: Padding(padding: const EdgeInsets.all(16), child: Column(mainAxisAlignment: MainAxisAlignment.center, children:[ Icon(Icons.self_improvement_rounded,size:32,color:Theme.of(context).colorScheme.primary), const SizedBox(height:6), Text('Dinlenme Günü', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, fontSize: 12)), const SizedBox(height:4), Text('Zihinsel depoları doldur.', textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 10)) ])).animate().fadeIn(duration: 400.ms)); } }
 
 class _DaySelector extends ConsumerWidget {
   final List<String> days;
@@ -214,7 +213,7 @@ class _DaySelector extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: FittedBox(
         fit: BoxFit.scaleDown,
         child: Row(
@@ -226,15 +225,15 @@ class _DaySelector extends ConsumerWidget {
               child: AnimatedContainer(
                 duration: 250.ms,
                 curve: Curves.easeInOut,
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                margin: const EdgeInsets.symmetric(horizontal: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                 decoration: BoxDecoration(
                   color: isSelected 
                       ? Theme.of(context).colorScheme.primary 
                       : (isDark
                           ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25)
                           : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.4)),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(8),
                   border: !isSelected
                       ? Border.all(
                           color: isDark
@@ -248,8 +247,8 @@ class _DaySelector extends ConsumerWidget {
                   days[index],
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    fontSize: isSelected ? 13 : 12.5,
-                    color: isSelected 
+                    fontSize: isSelected ? 10.5 : 10,
+                    color: isSelected
                         ? (isDark ? Theme.of(context).colorScheme.onPrimary : Colors.black)
                         : Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -377,17 +376,19 @@ class _TaskTile extends ConsumerWidget {
                     ),
                   ],
           ),
-          padding: const EdgeInsets.fromLTRB(14,12,6,12),
+          padding: const EdgeInsets.fromLTRB(10,8,2,8),
           child: Row(children:[
-            Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(shape: BoxShape.circle, color: (isCompleted? Colors.green: Theme.of(context).colorScheme.primary).withOpacity(.18)), child: Animate(target: isCompleted?1:0, effects:[ScaleEffect(duration:300.ms, curve: Curves.easeOutBack)], child: Icon(_getIconForTaskType(item.type), color: isCompleted? Colors.green: Theme.of(context).colorScheme.primary))),
-            const SizedBox(width:14),
+            Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(shape: BoxShape.circle, color: (isCompleted? Colors.green: Theme.of(context).colorScheme.primary).withOpacity(.18)), child: Animate(target: isCompleted?1:0, effects:[ScaleEffect(duration:300.ms, curve: Curves.easeOutBack)], child: Icon(_getIconForTaskType(item.type), color: isCompleted? Colors.green: Theme.of(context).colorScheme.primary, size: 16))),
+            const SizedBox(width:8),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children:[
-              Text(item.activity, maxLines:2, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize:15,fontWeight:FontWeight.w600,letterSpacing:.3,color: isCompleted? Theme.of(context).colorScheme.onSurfaceVariant: Theme.of(context).colorScheme.onSurface, decoration: isCompleted? TextDecoration.lineThrough: TextDecoration.none, decorationColor: Theme.of(context).colorScheme.onSurfaceVariant)),
-              const SizedBox(height:4),
-              Row(children:[ Icon(Icons.schedule,size:13,color:Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(.9)), const SizedBox(width:4), Text(item.time, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant,fontSize:11)) ])
+              Text(item.activity, maxLines:1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize:11,fontWeight:FontWeight.w600,letterSpacing:.1,color: isCompleted? Theme.of(context).colorScheme.onSurfaceVariant: Theme.of(context).colorScheme.onSurface, decoration: isCompleted? TextDecoration.lineThrough: TextDecoration.none, decorationColor: Theme.of(context).colorScheme.onSurfaceVariant)),
+              const SizedBox(height:2),
+              Row(children:[ Icon(Icons.schedule,size:10,color:Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(.9)), const SizedBox(width:2), Text(item.time, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant,fontSize:9)) ])
             ])),
             IconButton(
-              icon: AnimatedSwitcher(duration:250.ms, switchInCurve: Curves.elasticOut, child: Icon(isCompleted? Icons.check_circle_rounded: Icons.radio_button_unchecked_rounded, key: ValueKey<bool>(isCompleted), color: isCompleted? Colors.green: Theme.of(context).colorScheme.surfaceContainerHighest, size:30)),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              icon: AnimatedSwitcher(duration:250.ms, switchInCurve: Curves.elasticOut, child: Icon(isCompleted? Icons.check_circle_rounded: Icons.radio_button_unchecked_rounded, key: ValueKey<bool>(isCompleted), color: isCompleted? Colors.green: Theme.of(context).colorScheme.surfaceContainerHighest, size:24)),
               onPressed: () async {
                 // Eğer görev tamamlanmamışsa önce aksiyon sor
                 if (!isCompleted) {
@@ -442,22 +443,26 @@ class _EmptyStateCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 32.0, horizontal: 16.0),
+      padding: const EdgeInsets.all(16.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.auto_awesome, color: Theme.of(context).colorScheme.primary, size: 40),
-          const SizedBox(height: 16),
-          Text('Kader parşömenin mühürlenmeyi bekliyor.',
-              textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleLarge),
+          Icon(Icons.auto_awesome, color: Theme.of(context).colorScheme.primary, size: 28),
           const SizedBox(height: 8),
-          Text('Stratejik planını oluşturarak görevlerini buraya yazdır.',
+          Text('Planın Hazır mı?',
+              textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleSmall),
+          const SizedBox(height: 4),
+          Text('Stratejik planını oluştur.',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-          const SizedBox(height: 24),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 10)),
+          const SizedBox(height: 12),
           ElevatedButton(
             onPressed: () => context.go('${AppRoutes.aiHub}/${AppRoutes.strategicPlanning}'),
-            child: const Text('Stratejini Oluştur'),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              minimumSize: Size.zero,
+            ),
+            child: const Text('Plan Oluştur', style: TextStyle(fontSize: 11)),
           )
         ],
       ),

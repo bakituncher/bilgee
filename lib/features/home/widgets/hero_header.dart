@@ -61,7 +61,7 @@ class HeroHeader extends ConsumerWidget {
         final isDark = Theme.of(context).brightness == Brightness.dark;
 
         return Container(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
             gradient: LinearGradient(
@@ -148,30 +148,30 @@ class HeroHeader extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   const _ArchiveButton(),
                 ],
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 10),
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: LinearProgressIndicator(
                   value: progress,
-                  minHeight: 8,
+                  minHeight: 6,
                   backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25),
                   valueColor: AlwaysStoppedAnimation(Theme.of(context).colorScheme.primary),
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               Row(
                 children: [
-                  Text('BP ${user.engagementScore}', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                  Text('BP ${user.engagementScore}', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 11)),
                   const SizedBox(width: 6),
-                  Text('%${(progress*100).toStringAsFixed(0)} rütbe ilerleme', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                  Text('%${(progress*100).toStringAsFixed(0)} rütbe', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 11)),
                 ],
               ),
-              const SizedBox(height: 4),
-              Text(lastInfo, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.85))),
+              const SizedBox(height: 2),
+              Text(lastInfo, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.85), fontSize: 10)),
             ],
           ),
         );

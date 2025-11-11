@@ -83,42 +83,152 @@ class MissionCard extends ConsumerWidget {
 
         return Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(16.0),
           decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: isDark
                     ? [
-                        Theme.of(context).colorScheme.primary.withOpacity(0.08),
-                        Theme.of(context).colorScheme.surfaceContainer.withOpacity(0.6),
-                        Theme.of(context).cardColor.withOpacity(0.9),
+                        Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                        Theme.of(context).colorScheme.surfaceContainer.withOpacity(0.7),
+                        Theme.of(context).cardColor.withOpacity(0.95),
                       ]
                     : [
-                        Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                        Theme.of(context).cardColor,
+                        Theme.of(context).colorScheme.primary.withOpacity(0.15),
+                        Theme.of(context).cardColor.withOpacity(0.98),
+                        Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
                       ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              )),
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              border: Border.all(
+                color: isDark
+                    ? Theme.of(context).colorScheme.primary.withOpacity(0.3)
+                    : Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                width: 1.5,
+              ),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Row(
                 children: [
-                  Icon(icon, size: 28, color: Theme.of(context).colorScheme.primary),
-                  const SizedBox(width: 12),
-                  Text(title, style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Theme.of(context).colorScheme.primary,
+                          Theme.of(context).colorScheme.primary.withOpacity(0.7),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Icon(icon, size: 20, color: Colors.white),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 14,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                        Container(
+                          margin: const EdgeInsets.only(top: 2),
+                          height: 2,
+                          width: 30,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Theme.of(context).colorScheme.primary,
+                                Theme.of(context).colorScheme.primary.withOpacity(0),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(1),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
-              const Spacer(),
-              _buildRichTextFromMarkdown(subtitle,
-                  baseStyle: textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.5),
-                  boldStyle: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
-              const Spacer(),
+              const SizedBox(height: 10),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: _buildRichTextFromMarkdown(subtitle,
+                      baseStyle: textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        height: 1.35,
+                        fontSize: 11,
+                      ),
+                      boldStyle: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontSize: 11,
+                      )),
+                ),
+              ),
+              const SizedBox(height: 10),
               if (onTap != null)
                 Align(
-                  alignment: Alignment.bottomRight,
-                  child: ElevatedButton(onPressed: onTap, child: Text(buttonText)),
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Theme.of(context).colorScheme.primary,
+                          Theme.of(context).colorScheme.primary.withOpacity(0.8),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: onTap,
+                        borderRadius: BorderRadius.circular(12),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                buttonText,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 14),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 )
             ],
           ),

@@ -289,23 +289,27 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               ),
 
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(_hPad, 8, _hPad, 8),
+                padding: const EdgeInsets.fromLTRB(_hPad, 4, _hPad, 4),
                 sliver: SliverList.separated(
                   itemCount: sections.length,
                   itemBuilder: (c, i) {
-                    final w = i == 0 ? sections[i] : Padding(padding: const EdgeInsets.only(top: 4), child: sections[i]);
+                    final w = i == 0 ? sections[i] : Padding(padding: const EdgeInsets.only(top: 2), child: sections[i]);
                     return _animatedSection(w, i);
                   },
                   separatorBuilder: (_, i) {
                     // Sıra: Hero -> Focus -> (PageView kartları) -> Motivasyon
-                    if (i == 0) return const SizedBox(height: 12); // Hero sonrası
-                    if (i == 1) return const SizedBox(height: 16); // Focus sonrası
-                    if (i == 2) return const SizedBox(height: 18); // PageView sonrası
-                    return const SizedBox(height: 12);
+                    if (i == 0) return const SizedBox(height: 8); // Hero sonrası
+                    if (i == 1) return const SizedBox(height: 10); // Focus sonrası
+                    if (i == 2) return const SizedBox(height: 10); // PageView sonrası
+                    return const SizedBox(height: 8);
                   },
                 ),
               ),
-              const SliverToBoxAdapter(child: SizedBox(height: 64)),
+              SliverToBoxAdapter(
+                child: SizedBox(
+                  height: MediaQuery.of(context).padding.bottom + 80,
+                ),
+              ),
             ],
           ),
         );
