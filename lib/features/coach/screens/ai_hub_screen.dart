@@ -144,70 +144,13 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
               ),
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      const SizedBox(height: 8),
                       _CoreVisual(glow: _glow),
-                      const SizedBox(height: 24),
-
-                      // Sorumluluk reddi - kısa ve öz
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          gradient: LinearGradient(
-                            colors: [
-                              theme.colorScheme.primary.withOpacity(0.08),
-                              theme.colorScheme.secondary.withOpacity(0.05),
-                            ],
-                          ),
-                          border: Border.all(
-                            color: theme.colorScheme.primary.withOpacity(0.2),
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.primary.withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Icon(
-                                Icons.info_outline_rounded,
-                                color: theme.colorScheme.primary,
-                                size: 22,
-                              ),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Sorumluluk Reddi',
-                                    style: theme.textTheme.titleSmall?.copyWith(
-                                      fontWeight: FontWeight.w700,
-                                      color: theme.colorScheme.primary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'TaktikAI, bir yapay zeka asistanıdır. Psikolojik danışmanlık hizmeti sunmaz.',
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: theme.colorScheme.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
                       Row(
                         children: [
                           Text(
@@ -253,13 +196,13 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
                           ],
                         ],
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
                     ],
                   ),
                 ),
               ),
               SliverPadding(
-                padding: EdgeInsets.fromLTRB(16, 0, 16, bottomInset + 24),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                 sliver: SliverGrid(
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
@@ -297,7 +240,71 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
                   ),
                 ),
               ),
-              SliverToBoxAdapter(child: SizedBox(height: bottomInset + 24)),
+
+              // Sorumluluk Reddi - Alt kısımda şık yerleşim
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(20, 8, 20, bottomInset + 16),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      gradient: LinearGradient(
+                        colors: [
+                          theme.colorScheme.primary.withOpacity(0.06),
+                          theme.colorScheme.secondary.withOpacity(0.04),
+                        ],
+                      ),
+                      border: Border.all(
+                        color: theme.colorScheme.primary.withOpacity(0.15),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.info_outline_rounded,
+                            color: theme.colorScheme.primary,
+                            size: 18,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Sorumluluk Reddi',
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: theme.colorScheme.primary,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'TaktikAI, bir yapay zeka asistanıdır. Psikolojik danışmanlık hizmeti sunmaz.',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                  height: 1.4,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ],
@@ -314,8 +321,8 @@ class _CoreVisual extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: SizedBox(
-        width: 200,
-        height: 200,
+        width: 140,
+        height: 140,
         child: AnimatedBuilder(
           animation: glow,
           builder: (context, _) {
@@ -336,15 +343,15 @@ class _CoreVisual extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  width: 164 + g * 6,
-                  height: 164 + g * 6,
+                  width: 114 + g * 4,
+                  height: 114 + g * 4,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(.15 + g * .25),
-                        blurRadius: 50 + g * 30,
-                        spreadRadius: 8 + g * 8,
+                        color: Theme.of(context).colorScheme.primary.withOpacity(.12 + g * .18),
+                        blurRadius: 30 + g * 20,
+                        spreadRadius: 5 + g * 5,
                       ),
                     ],
                     gradient: SweepGradient(
@@ -372,7 +379,7 @@ class _CoreVisual extends StatelessWidget {
                     ),
                     child: Icon(
                       Icons.auto_awesome,
-                      size: 60 + g * 6,
+                      size: 42 + g * 4,
                       color: Theme.of(context).colorScheme.primary.withOpacity(.92),
                     ),
                   ),
