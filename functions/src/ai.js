@@ -57,12 +57,44 @@ const GEMINI_PROMPT_MAX_CHARS = parseInt(process.env.GEMINI_PROMPT_MAX_CHARS || 
 const DEFAULT_JSON_TOKENS = parseInt(process.env.GEMINI_MAX_OUTPUT_TOKENS_JSON || "4096", 10);
 const DEFAULT_TEXT_TOKENS = parseInt(process.env.GEMINI_MAX_OUTPUT_TOKENS_TEXT || "512", 10);
 const GEMINI_RATE_LIMIT_WINDOW_SEC = parseInt(process.env.GEMINI_RATE_LIMIT_WINDOW_SEC || "60", 10);
-const GEMINI_RATE_LIMIT_MAX = parseInt(process.env.GEMINI_RATE_LIMIT_MAX || "5", 10);
-const GEMINI_RATE_LIMIT_IP_MAX = parseInt(process.env.GEMINI_RATE_LIMIT_IP_MAX || "20", 10);
+const GEMINI_RATE_LIMIT_MAX = parseInt(process.env.GEMINI_RATE_LIMIT_MAX || "12", 10); // 5 -> 12 (60 saniyede 12 istek, Gemini free tier: 15/min)
+const GEMINI_RATE_LIMIT_IP_MAX = parseInt(process.env.GEMINI_RATE_LIMIT_IP_MAX || "30", 10); // 20 -> 30
 
 // Premium kullanıcılar için ek rate limit ayarları (Cüzdan DoS koruması)
-const PREMIUM_RATE_LIMIT_PER_MINUTE = parseInt(process.env.PREMIUM_RATE_LIMIT_PER_MINUTE || "10", 10);
-const PREMIUM_RATE_LIMIT_PER_HOUR = parseInt(process.env.PREMIUM_RATE_LIMIT_PER_HOUR || "100", 10);
+const PREMIUM_RATE_LIMIT_PER_MINUTE = parseInt(process.env.PREMIUM_RATE_LIMIT_PER_MINUTE || "14", 10); // 10 -> 14 (Gemini: 15/min, buffer bırak)
+const PREMIUM_RATE_LIMIT_PER_HOUR = parseInt(process.env.PREMIUM_RATE_LIMIT_PER_HOUR || "500", 10); // 100 -> 500 (Gemini: 1500/day, saatlik ~60 beklenen)
+
+// Retry mekanizması için ayarlar
+const MAX_RETRY_ATTEMPTS = 3;
+const RETRY_DELAY_MS = 2000; // 2 saniye
+
+// Exponential backoff ile retry helper
+async function retryWithBackoff(fn, maxAttempts = MAX_RETRY_ATTEMPTS, baseDelay = RETRY_DELAY_MS) {
+  let lastError;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      // 429 (rate limit) veya 503 (service unavailable) hataları için retry yap
+      const status = error?.response?.status || error?.status;
+      const is429 = status === 429 || (error.message && error.message.includes('429'));
+      const is503 = status === 503 || (error.message && error.message.includes('503'));
+
+      if ((is429 || is503) && attempt < maxAttempts) {
+        const delay = baseDelay * Math.pow(2, attempt - 1); // Exponential backoff: 2s, 4s, 8s
+        logger.warn(`Retry attempt ${attempt}/${maxAttempts} after ${delay}ms`, {
+          error: error.message,
+          status
+        });
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw lastError;
+}
 
 exports.generateGemini = onCall(
   { region: "us-central1", timeoutSeconds: 60, memory: "256MiB", secrets: [GEMINI_API_KEY], enforceAppCheck: true, maxInstances: 20, concurrency: 10 },
@@ -193,22 +225,44 @@ exports.generateGemini = onCall(
 
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${GEMINI_API_KEY.value()}`;
 
-      // Zaman aşımı kontrolü (55s):
-      const ac = new AbortController();
-      const t = setTimeout(() => ac.abort(), 55_000);
+      // Retry mekanizması ile Gemini API çağrısı
+      const { resp, data } = await retryWithBackoff(async () => {
+        // Zaman aşımı kontrolü (55s):
+        const ac = new AbortController();
+        const t = setTimeout(() => ac.abort(), 55_000);
 
-      const resp = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-        signal: ac.signal,
-      }).finally(() => clearTimeout(t));
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+          signal: ac.signal,
+        }).finally(() => clearTimeout(t));
 
-      if (!resp.ok) {
-        logger.warn("Gemini response not ok", { status: resp.status, modelId });
-        throw new HttpsError("internal", `Gemini isteği başarısız (${resp.status}).`);
-      }
-      const data = await resp.json();
+        // 429 hatası için özel işlem
+        if (response.status === 429) {
+          const errorBody = await response.text().catch(() => '');
+          logger.warn("Gemini API rate limit (429)", {
+            modelId,
+            uid: request.auth.uid.substring(0, 6) + "***",
+            errorBody: errorBody.substring(0, 200)
+          });
+          const error = new Error("Rate limit exceeded");
+          error.status = 429;
+          error.response = { status: 429 };
+          throw error;
+        }
+
+        if (!response.ok) {
+          logger.warn("Gemini response not ok", { status: response.status, modelId });
+          const error = new Error(`Gemini request failed with status ${response.status}`);
+          error.status = response.status;
+          error.response = { status: response.status };
+          throw error;
+        }
+
+        const responseData = await response.json();
+        return { resp: response, data: responseData };
+      });
 
       // Güvenlik filtreleme kontrolü
       const finishReason = data?.candidates?.[0]?.finishReason;
@@ -274,11 +328,23 @@ exports.generateGemini = onCall(
     } catch (e) {
       logger.error("Gemini çağrısı hata", { error: String(e), modelId });
       if (e instanceof HttpsError) throw e;
+
+      // 429 Rate Limit hatası için özel mesaj
+      const is429 = (e && typeof e === 'object' && 'status' in e && e.status === 429) ||
+                     (e && e.message && e.message.includes('429'));
+      if (is429) {
+        throw new HttpsError(
+          "resource-exhausted",
+          "AI sistemi şu anda çok yoğun. Lütfen birkaç saniye bekleyip tekrar deneyin. ⏱️"
+        );
+      }
+
       // Abort durumunda kullanıcı dostu mesaj
       if ((e && typeof e === 'object' && 'name' in e && e.name === 'AbortError')) {
-        throw new HttpsError("deadline-exceeded", "Gemini isteği zaman aşımına uğradı");
+        throw new HttpsError("deadline-exceeded", "AI yanıtı çok uzun sürdü, lütfen tekrar deneyin.");
       }
-      throw new HttpsError("internal", "Gemini isteği sırasında hata oluştu");
+
+      throw new HttpsError("internal", "AI sistemi geçici olarak ulaşılamıyor. Lütfen tekrar deneyin.");
     }
   },
 );

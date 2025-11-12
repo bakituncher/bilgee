@@ -195,7 +195,8 @@ class AiService {
   String _yyyyMmDd(DateTime d) =>
       '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
-  Future<String> _callGemini(String prompt, {bool expectJson = false, double? temperature, String? model}) async {
+  Future<String> _callGemini(String prompt, {bool expectJson = false, double? temperature, String? model, int retryCount = 0}) async {
+    const int maxRetries = 3;
     try {
       final callable = FirebaseFunctions.instanceFor(region: 'us-central1').httpsCallable('ai-generateGemini');
       final payload = {
@@ -223,10 +224,41 @@ class AiService {
       final guarded = _enforceToneGuard(plain);
       return guarded.isNotEmpty ? guarded : _enforceToneGuard(_sanitizePlainText(rawResponse));
     } on FirebaseFunctionsException catch (e) {
-      final msg = 'Sunucu hata: ${e.code} ${e.message ?? ''}'.trim();
+      // 429 (rate limit) veya resource-exhausted hatası - retry yap
+      final isRateLimit = e.code == 'resource-exhausted' ||
+                          e.code == 'unavailable' ||
+                          (e.message?.contains('429') ?? false) ||
+                          (e.message?.contains('yoğun') ?? false);
+
+      if (isRateLimit && retryCount < maxRetries) {
+        // Exponential backoff: 2s, 4s, 8s
+        final delaySeconds = (retryCount + 1) * 2;
+        await Future.delayed(Duration(seconds: delaySeconds));
+        return _callGemini(prompt, expectJson: expectJson, temperature: temperature, model: model, retryCount: retryCount + 1);
+      }
+
+      // Kullanıcı dostu hata mesajları
+      String msg;
+      if (isRateLimit) {
+        msg = 'AI sistemi çok yoğun. Lütfen birkaç saniye bekleyip tekrar deneyin.';
+      } else if (e.code == 'unauthenticated') {
+        msg = 'Oturum süresi doldu. Lütfen tekrar giriş yapın.';
+      } else if (e.code == 'permission-denied') {
+        msg = e.message ?? 'Bu özelliğe erişim izniniz yok.';
+      } else {
+        msg = 'AI hizmeti geçici olarak ulaşılamıyor. Lütfen tekrar deneyin.';
+      }
+      return expectJson ? jsonEncode({'error': msg}) : 'Hata: $msg';
+    } on TimeoutException {
+      if (retryCount < maxRetries) {
+        final delaySeconds = (retryCount + 1) * 2;
+        await Future.delayed(Duration(seconds: delaySeconds));
+        return _callGemini(prompt, expectJson: expectJson, temperature: temperature, model: model, retryCount: retryCount + 1);
+      }
+      final msg = 'AI yanıtı çok uzun sürdü. Lütfen tekrar deneyin.';
       return expectJson ? jsonEncode({'error': msg}) : 'Hata: $msg';
     } catch (e) {
-      final msg = 'Sunucuya erişilemedi: ${e.toString()}';
+      final msg = 'Bağlantı hatası. İnternet bağlantınızı kontrol edin.';
       return expectJson ? jsonEncode({'error': msg}) : 'Hata: $msg';
     }
   }
