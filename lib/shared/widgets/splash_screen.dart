@@ -25,40 +25,14 @@ class SplashScreen extends ConsumerWidget {
 
         // Eğer kullanıcı giriş yapmış ve email doğrulanmışsa
         if (hasSeen && isLoggedIn && isEmailVerified) {
-          // User profile'ın yüklenmesini bekle
-          return userProfileAsync.when(
-            data: (userProfile) {
-              // Profile yüklendikten sonra premium durumuna göre yönlendir
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                final isPremium = userProfile?.isPremium ?? false;
+          // Direkt olarak ana sayfaya yönlendir
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            context.go(AppRoutes.home);
+          });
 
-                if (isPremium) {
-                  context.go(AppRoutes.home);
-                } else {
-                  context.go('/premium');
-                }
-              });
-
-              return Scaffold(
-                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                body: const LogoLoader(),
-              );
-            },
-            loading: () => Scaffold(
-              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-              body: const LogoLoader(),
-            ),
-            error: (err, stack) {
-              // Hata durumunda premium ekranına yönlendir
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                context.go('/premium');
-              });
-
-              return Scaffold(
-                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                body: const LogoLoader(),
-              );
-            },
+          return Scaffold(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            body: const LogoLoader(),
           );
         }
 
