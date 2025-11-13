@@ -175,7 +175,7 @@ exports.generateGemini = onCall(
       });
       throw new HttpsError(
         "resource-exhausted",
-        "Çok fazla istek gönderdiniz. Lütfen bir süre bekleyip tekrar deneyin. (Dakikada maksimum 10, saatte maksimum 100 istek)"
+        `Çok fazla istek gönderdiniz. Lütfen bir süre bekleyip tekrar deneyin. (Dakikada maksimum ${PREMIUM_RATE_LIMIT_PER_MINUTE}, saatte maksimum ${PREMIUM_RATE_LIMIT_PER_HOUR} istek)`
       );
     }
 
