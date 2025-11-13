@@ -665,7 +665,7 @@ class AiService {
       prompt,
       expectJson: false,
       temperature: 0.4,
-      // Model sunucu tarafında politika gereği gemini-2.0-flash-lite-001 olarak zorunlu kılınıyor.
+      // Model sunucu tarafında politika gereği gemini-2.0-flash olarak zorunlu kılınıyor.
       // Bu nedenle burada model parametresi gönderilmiyor.
     );
 

@@ -124,10 +124,10 @@ exports.generateGemini = onCall(
 
     // Model seçimi: Politika gereği tüm çağrılar sabit model kullanır
     const requestedModel = typeof request.data?.model === "string" ? String(request.data.model).trim() : null;
-    if (requestedModel && requestedModel.toLowerCase() !== "gemini-2.0-flash-lite-001") {
-      logger.info("Model override enforced", { requestedModel, enforced: "gemini-2.0-flash-lite-001" });
+    if (requestedModel && requestedModel.toLowerCase() !== "gemini-2.0-flash") {
+      logger.info("Model override enforced", { requestedModel, enforced: "gemini-2.0-flash" });
     }
-    const modelId = "gemini-2.0-flash-lite-001";
+    const modelId = "gemini-2.0-flash";
 
     if (typeof prompt !== "string" || !prompt.trim()) {
       throw new HttpsError("invalid-argument", "Geçerli bir prompt gerekli");
