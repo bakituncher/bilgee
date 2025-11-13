@@ -224,23 +224,12 @@ class AiService {
       final guarded = _enforceToneGuard(plain);
       return guarded.isNotEmpty ? guarded : _enforceToneGuard(_sanitizePlainText(rawResponse));
     } on FirebaseFunctionsException catch (e) {
-      // 429 (rate limit) veya resource-exhausted hatası - retry yap
-      final isRateLimit = e.code == 'resource-exhausted' ||
-                          e.code == 'unavailable' ||
-                          (e.message?.contains('429') ?? false) ||
-                          (e.message?.contains('yoğun') ?? false);
-
-      if (isRateLimit && retryCount < maxRetries) {
-        // Exponential backoff: 2s, 4s, 8s
-        final delaySeconds = (retryCount + 1) * 2;
-        await Future.delayed(Duration(seconds: delaySeconds));
-        return _callGemini(prompt, expectJson: expectJson, temperature: temperature, model: model, retryCount: retryCount + 1);
-      }
-
-      // Kullanıcı dostu hata mesajları
+      // İstemci tarafı retry mekanizması KALDIRILDI. Sunucu zaten kendi içinde backoff ile deniyor.
+      // Hata doğrudan kullanıcıya gösterilir.
       String msg;
-      if (isRateLimit) {
-        msg = 'AI sistemi çok yoğun. Lütfen birkaç saniye bekleyip tekrar deneyin.';
+      if (e.code == 'resource-exhausted') {
+        // Sunucudan gelen rate limit mesajını doğrudan kullan
+        msg = e.message ?? 'AI sistemi şu anda çok yoğun. Lütfen bir süre bekleyip tekrar deneyin.';
       } else if (e.code == 'unauthenticated') {
         msg = 'Oturum süresi doldu. Lütfen tekrar giriş yapın.';
       } else if (e.code == 'permission-denied') {
@@ -250,11 +239,7 @@ class AiService {
       }
       return expectJson ? jsonEncode({'error': msg}) : 'Hata: $msg';
     } on TimeoutException {
-      if (retryCount < maxRetries) {
-        final delaySeconds = (retryCount + 1) * 2;
-        await Future.delayed(Duration(seconds: delaySeconds));
-        return _callGemini(prompt, expectJson: expectJson, temperature: temperature, model: model, retryCount: retryCount + 1);
-      }
+      // Timeout için de retry KALDIRILDI.
       final msg = 'AI yanıtı çok uzun sürdü. Lütfen tekrar deneyin.';
       return expectJson ? jsonEncode({'error': msg}) : 'Hata: $msg';
     } catch (e) {
