@@ -57,12 +57,12 @@ const GEMINI_PROMPT_MAX_CHARS = parseInt(process.env.GEMINI_PROMPT_MAX_CHARS || 
 const DEFAULT_JSON_TOKENS = parseInt(process.env.GEMINI_MAX_OUTPUT_TOKENS_JSON || "4096", 10);
 const DEFAULT_TEXT_TOKENS = parseInt(process.env.GEMINI_MAX_OUTPUT_TOKENS_TEXT || "512", 10);
 const GEMINI_RATE_LIMIT_WINDOW_SEC = parseInt(process.env.GEMINI_RATE_LIMIT_WINDOW_SEC || "60", 10);
-const GEMINI_RATE_LIMIT_MAX = parseInt(process.env.GEMINI_RATE_LIMIT_MAX || "12", 10); // 5 -> 12 (60 saniyede 12 istek, Gemini free tier: 15/min)
+const GEMINI_RATE_LIMIT_MAX = parseInt(process.env.GEMINI_RATE_LIMIT_MAX || "14", 10); // 12 -> 14, premium limitle tutarlı hale getirildi
 const GEMINI_RATE_LIMIT_IP_MAX = parseInt(process.env.GEMINI_RATE_LIMIT_IP_MAX || "30", 10); // 20 -> 30
 
 // Premium kullanıcılar için ek rate limit ayarları (Cüzdan DoS koruması)
 const PREMIUM_RATE_LIMIT_PER_MINUTE = parseInt(process.env.PREMIUM_RATE_LIMIT_PER_MINUTE || "14", 10); // 10 -> 14 (Gemini: 15/min, buffer bırak)
-const PREMIUM_RATE_LIMIT_PER_HOUR = parseInt(process.env.PREMIUM_RATE_LIMIT_PER_HOUR || "500", 10); // 100 -> 500 (Gemini: 1500/day, saatlik ~60 beklenen)
+const PREMIUM_RATE_LIMIT_PER_HOUR = parseInt(process.env.PREMIUM_RATE_LIMIT_PER_HOUR || "600", 10); // 500 -> 600, esnekliği artırmak için
 
 // Retry mekanizması için ayarlar
 const MAX_RETRY_ATTEMPTS = 3;
@@ -175,7 +175,7 @@ exports.generateGemini = onCall(
       });
       throw new HttpsError(
         "resource-exhausted",
-        "Çok fazla istek gönderdiniz. Lütfen bir süre bekleyip tekrar deneyin. (Dakikada maksimum 10, saatte maksimum 100 istek)"
+        `Çok fazla istek gönderdiniz. Lütfen bir süre bekleyip tekrar deneyin. (Dakikada maksimum ${PREMIUM_RATE_LIMIT_PER_MINUTE}, saatte maksimum ${PREMIUM_RATE_LIMIT_PER_HOUR} istek)`
       );
     }
 
