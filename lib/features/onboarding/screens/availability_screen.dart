@@ -83,7 +83,14 @@ class AvailabilityScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Zaman Haritası"),
-        automaticallyImplyLeading: context.canPop(),
+        leading: context.canPop()
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_rounded),
+                onPressed: () => context.pop(),
+                tooltip: 'Geri',
+              )
+            : null,
+        automaticallyImplyLeading: false,
         actions: [
           if (clipboard != null)
             TextButton.icon(

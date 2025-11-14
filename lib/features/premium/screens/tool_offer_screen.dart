@@ -241,11 +241,11 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
           ),
           SafeArea(
             bottom: false,
-            child: Column(
-              children: [
-                _buildCustomHeader(context),
-                Expanded(
-                  child: SingleChildScrollView(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  _buildCustomHeader(context),
+                  Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24.0),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -267,9 +267,9 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
                       ],
                     ),
                   ),
-                ),
-                _buildPurchaseSection(offeringsAsyncValue, bottomInset),
-              ],
+                  _buildPurchaseSection(offeringsAsyncValue, bottomInset),
+                ],
+              ),
             ),
           ),
         ],
