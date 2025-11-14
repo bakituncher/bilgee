@@ -9,8 +9,9 @@ import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:taktik/features/stats/widgets/fortress_tab_selector.dart';
 import 'package:taktik/features/stats/widgets/cached_analysis_view.dart';
-import 'package:taktik/features/quests/logic/quest_notifier.dart';
-import 'package:taktik/shared/widgets/logo_loader.dart';
+import 'package.taktik/features/quests/logic/quest_notifier.dart';
+import 'package.taktik/shared/widgets/logo_loader.dart';
+import 'package:taktik/features/stats/logic/stats_report_notifier.dart';
 
 final selectedTabIndexProvider = StateProvider<int>((ref) => 0);
 
@@ -28,15 +29,6 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
   void initState() {
     super.initState();
     _pageController = PageController();
-    // --- KALICI ÇÖZÜM ---
-    // Ekran açılır açılmaz "engagement" kategorisindeki görevleri tetikle.
-    // Bu, "Komutanın Raporu" görevinin tamamlanmasını sağlar.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        ref.read(questNotifierProvider.notifier).userViewedStatsReport();
-      }
-    });
-    // --- BİTTİ ---
   }
 
   @override
@@ -147,6 +139,17 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
         body: Center(child: LogoLoader()),
       );
     }
+
+    // --- OPTIMIZATION: Rapor görüntülemeyi sadece premium ve zaman aşımı dolduğunda tetikle ---
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final statsNotifier = ref.read(statsReportNotifierProvider.notifier);
+        if (statsNotifier.shouldReportView()) {
+          ref.read(questNotifierProvider.notifier).userViewedStatsReport();
+          statsNotifier.reportViewed();
+        }
+      }
+    });
 
     final testsAsyncValue = ref.watch(testsProvider);
     final userAsyncValue = ref.watch(userProfileProvider);

@@ -5,6 +5,8 @@ import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/profile/application/profile_controller.dart';
 import 'package:intl/intl.dart';
 
+final isProfileFormDirtyProvider = StateProvider.autoDispose<bool>((ref) => false);
+
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
 
@@ -21,6 +23,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   String? _selectedGender;
   DateTime? _selectedDate;
+  UserModel? _initialUser;
 
   @override
   void initState() {
@@ -33,6 +36,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   @override
   void dispose() {
+    _firstNameController.removeListener(_checkIfDirty);
+    _lastNameController.removeListener(_checkIfDirty);
+    _usernameController.removeListener(_checkIfDirty);
     _firstNameController.dispose();
     _lastNameController.dispose();
     _usernameController.dispose();
@@ -40,7 +46,24 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     super.dispose();
   }
 
+  void _checkIfDirty() {
+    if (_initialUser == null) return;
+    final isDirty = _firstNameController.text != _initialUser!.firstName ||
+        _lastNameController.text != _initialUser!.lastName ||
+        _usernameController.text != _initialUser!.username ||
+        _selectedGender != _initialUser!.gender ||
+        _selectedDate != _initialUser!.dateOfBirth;
+    ref.read(isProfileFormDirtyProvider.notifier).state = isDirty;
+  }
+
+  void _setupListeners() {
+    _firstNameController.addListener(_checkIfDirty);
+    _lastNameController.addListener(_checkIfDirty);
+    _usernameController.addListener(_checkIfDirty);
+  }
+
   void _loadUserData(UserModel user) {
+    _initialUser = user;
     _firstNameController.text = user.firstName;
     _lastNameController.text = user.lastName;
     _usernameController.text = user.username;
@@ -49,6 +72,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     if (user.dateOfBirth != null) {
       _dateOfBirthController.text = DateFormat('dd/MM/yyyy').format(user.dateOfBirth!);
     }
+    _setupListeners();
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -62,6 +86,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       setState(() {
         _selectedDate = picked;
         _dateOfBirthController.text = DateFormat('dd/MM/yyyy').format(picked);
+        _checkIfDirty();
       });
     }
   }
@@ -75,6 +100,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         dateOfBirth: _selectedDate,
         username: _usernameController.text.trim(),
       );
+      ref.read(isProfileFormDirtyProvider.notifier).state = false;
     }
   }
 
@@ -99,6 +125,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
     final userProfileAsync = ref.watch(userProfileProvider);
     final profileUpdateState = ref.watch(profileControllerProvider);
+    final isFormDirty = ref.watch(isProfileFormDirtyProvider);
     final isLoading = profileUpdateState is AsyncLoading;
 
     return Scaffold(
@@ -107,7 +134,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.save),
-            onPressed: isLoading ? null : _submit,
+            onPressed: isLoading || !isFormDirty ? null : _submit,
           ),
         ],
       ),
@@ -116,8 +143,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           if (user == null) {
             return const Center(child: Text("Kullanıcı bulunamadı."));
           }
-          // This ensures that the text fields are not re-initialized on every build
-          if (_firstNameController.text.isEmpty && _lastNameController.text.isEmpty) {
+          if (_initialUser == null) {
             _loadUserData(user);
           }
 
@@ -179,7 +205,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     children: [
                       Expanded(
                         child: DropdownButtonFormField<String>(
-                          initialValue: _selectedGender,
+                          value: _selectedGender,
                           isExpanded: true,
                           decoration: const InputDecoration(
                             labelText: 'Cinsiyet',
@@ -194,6 +220,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           onChanged: (value) {
                             setState(() {
                               _selectedGender = value;
+                              _checkIfDirty();
                             });
                           },
                           validator: (value) {
@@ -226,7 +253,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   ),
                   const SizedBox(height: 32),
                   ElevatedButton(
-                    onPressed: isLoading ? null : _submit,
+                    onPressed: isLoading || !isFormDirty ? null : _submit,
                     child: isLoading
                         ? const CircularProgressIndicator()
                         : const Text('Değişiklikleri Kaydet'),

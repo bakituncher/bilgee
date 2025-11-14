@@ -437,11 +437,13 @@ class _TaskTile extends ConsumerWidget {
 
 enum _DashTaskAction { startPomodoro, completeNow }
 
-class _EmptyStateCard extends StatelessWidget {
+import 'package:taktik/data/providers/premium_provider.dart';
+
+class _EmptyStateCard extends ConsumerWidget {
   const _EmptyStateCard();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -457,7 +459,14 @@ class _EmptyStateCard extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 10)),
           const SizedBox(height: 12),
           ElevatedButton(
-            onPressed: () => context.go('${AppRoutes.aiHub}/${AppRoutes.strategicPlanning}'),
+            onPressed: () {
+              final isPremium = ref.read(premiumStatusProvider);
+              if (isPremium) {
+                context.go('${AppRoutes.aiHub}/${AppRoutes.strategicPlanning}');
+              } else {
+                context.push(AppRoutes.aiToolsOffer);
+              }
+            },
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               minimumSize: Size.zero,
