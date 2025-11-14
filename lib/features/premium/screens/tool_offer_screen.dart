@@ -239,14 +239,19 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
             filter: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0),
             child: Container(color: isDark ? Colors.black.withOpacity(0.5) : Colors.white.withOpacity(0.5)),
           ),
+          // ÇÖZÜM: SafeArea ve SingleChildScrollView ile tüm body'yi sarmala
           SafeArea(
-            bottom: false,
             child: Column(
               children: [
                 _buildCustomHeader(context),
+                // ÇÖZÜM: Expanded içinde SingleChildScrollView ile scrollable content
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    padding: EdgeInsets.only(
+                      left: 24,
+                      right: 24,
+                      bottom: MediaQuery.of(context).padding.bottom + 16,
+                    ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -264,11 +269,13 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
                           subtitle: widget.marketingSubtitle,
                         ),
                         const SizedBox(height: 20),
+                        // ÇÖZÜM: Purchase section burada, scroll edilebilir
+                        _buildPurchaseSectionContent(offeringsAsyncValue),
+                        const SizedBox(height: 20),
                       ],
                     ),
                   ),
                 ),
-                _buildPurchaseSection(offeringsAsyncValue, bottomInset),
               ],
             ),
           ),
@@ -276,6 +283,83 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
       ),
     );
   }
+
+  /// ÇÖZÜM: Purchase section içeriğini ayrı method'a çıkar (scroll içinde olacak)
+  Widget _buildPurchaseSectionContent(AsyncValue<Offerings?> offeringsAsyncValue) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: isDark
+            ? Theme.of(context).scaffoldBackgroundColor.withOpacity(0.8)
+            : Theme.of(context).cardColor.withOpacity(0.95),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(
+          color: isDark 
+              ? Colors.white.withOpacity(0.1) 
+              : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? Colors.black.withOpacity(0.5) : Colors.black.withOpacity(0.15),
+            spreadRadius: isDark ? 5 : 2,
+            blurRadius: isDark ? 25 : 15,
+          ),
+        ],
+      ),
+      child: offeringsAsyncValue.when(
+        data: (offerings) {
+          return Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildPurchaseOptions(context, ref, offerings),
+                const SizedBox(height: 12),
+                _buildPurchaseButton(),
+                const SizedBox(height: 10),
+                const _TrustBadges(),
+                const SizedBox(height: 4),
+                const _LegalFooter(),
+              ],
+            ),
+          );
+        },
+        loading: () => const Padding(
+          padding: EdgeInsets.all(40.0),
+          child: Center(
+            child: CircularProgressIndicator(strokeWidth: 3),
+          ),
+        ),
+        error: (error, stack) => Padding(
+          padding: const EdgeInsets.all(40.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.error_outline_rounded,
+                color: Theme.of(context).colorScheme.error,
+                size: 40,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Paketler yüklenemedi',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                error.toString(),
+                style: Theme.of(context).textTheme.bodySmall,
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ESKİ _buildPurchaseSection method'unu kaldır, artık kullanılmıyor
 
   Widget _buildCustomHeader(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -330,98 +414,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
     );
   }
 
-  Widget _buildPurchaseSection(
-      AsyncValue<Offerings?> offeringsAsyncValue,
-      double bottomInset,
-      ) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: isDark
-            ? Theme.of(context).scaffoldBackgroundColor.withOpacity(0.8)
-            : Theme.of(context).cardColor.withOpacity(0.95),
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(30),
-          topRight: Radius.circular(30),
-        ),
-        border: Border.all(
-          color: isDark 
-              ? Colors.white.withOpacity(0.1) 
-              : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark ? Colors.black.withOpacity(0.5) : Colors.black.withOpacity(0.15),
-            spreadRadius: isDark ? 5 : 2,
-            blurRadius: isDark ? 25 : 15,
-          ),
-        ],
-      ),
-      child: offeringsAsyncValue.when(
-        data: (offerings) {
-          return Padding(
-            padding: EdgeInsets.only(
-              bottom: bottomInset > 0 ? bottomInset + 8 : 12,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildPurchaseOptions(context, ref, offerings),
-                const SizedBox(height: 12),
-                _buildPurchaseButton(),
-                const SizedBox(height: 10),
-                const _TrustBadges(),
-                const SizedBox(height: 4),
-                const _LegalFooter(),
-                const SizedBox(height: 4),
-              ],
-            ),
-          );
-        },
-        loading: () => Padding(
-          padding: const EdgeInsets.all(40.0),
-          child: Center(
-            child: CircularProgressIndicator(
-              strokeWidth: 3,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
-        ),
-        error: (error, stack) => Padding(
-          padding: const EdgeInsets.all(40.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.error_outline_rounded,
-                color: Theme.of(context).colorScheme.error,
-                size: 40,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Paketler yüklenemedi',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'İnternet bağlantınızı kontrol edin',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  fontSize: 12,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+
 
   Widget _buildPurchaseOptions(
       BuildContext context,

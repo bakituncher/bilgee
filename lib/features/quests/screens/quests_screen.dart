@@ -200,7 +200,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> with SingleTickerPr
   }
 }
 
-class GamifiedQuestCard extends ConsumerWidget {
+class GamifiedQuestCard extends ConsumerStatefulWidget {
   final Quest quest;
   final String userId;
 
@@ -210,11 +210,23 @@ class GamifiedQuestCard extends ConsumerWidget {
     required this.userId,
   });
 
-  void _handleQuestTap(BuildContext context, WidgetRef ref) {
-    ref.read(analyticsLoggerProvider).logQuestEvent(userId: userId, event: 'quest_tap', data: {'questId': quest.id, 'category': quest.category.name});
-    String targetRoute = quest.actionRoute;
+  @override
+  ConsumerState<GamifiedQuestCard> createState() => _GamifiedQuestCardState();
+}
+
+class _GamifiedQuestCardState extends ConsumerState<GamifiedQuestCard> {
+  // ÇÖZÜM: Race condition önleme için loading state
+  bool _isClaimingReward = false;
+
+  void _handleQuestTap(BuildContext context) {
+    ref.read(analyticsLoggerProvider).logQuestEvent(
+      userId: widget.userId,
+      event: 'quest_tap',
+      data: {'questId': widget.quest.id, 'category': widget.quest.category.name}
+    );
+    String targetRoute = widget.quest.actionRoute;
     if (targetRoute == '/coach') {
-      final subjectTag = quest.tags.firstWhere((t) => t.startsWith('subject:'), orElse: () => '');
+      final subjectTag = widget.quest.tags.firstWhere((t) => t.startsWith('subject:'), orElse: () => '');
       if (subjectTag.isNotEmpty) {
         final subject = subjectTag.split(':').sublist(1).join(':');
         targetRoute = Uri(path: '/coach', queryParameters: {'subject': subject}).toString();
@@ -223,41 +235,57 @@ class GamifiedQuestCard extends ConsumerWidget {
     context.go(targetRoute);
   }
 
-  Future<void> _handleClaimReward(BuildContext context, WidgetRef ref) async {
-    final questService = ref.read(questServiceProvider);
-    final success = await questService.claimReward(userId, quest.id);
+  Future<void> _handleClaimReward(BuildContext context) async {
+    // ÇÖZÜM: Zaten işlem yapılıyorsa, tekrar izin verme
+    if (_isClaimingReward) return;
 
-    if (success && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${quest.reward} BP kazandın!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      ref.invalidate(optimizedQuestsProvider);
-    } else if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Ödül alınırken bir hata oluştu.'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
+    setState(() => _isClaimingReward = true);
+
+    try {
+      final questService = ref.read(questServiceProvider);
+      final success = await questService.claimReward(widget.userId, widget.quest.id);
+
+      if (!mounted) return;
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${widget.quest.reward} BP kazandın!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        ref.invalidate(optimizedQuestsProvider);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Ödül alınırken bir hata oluştu.'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isClaimingReward = false);
+      }
     }
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final progress = quest.goalValue > 0 ? (quest.currentProgress / quest.goalValue).clamp(0.0, 1.0) : (quest.isCompleted ? 1.0 : 0.0);
-    final isCompleted = quest.isCompleted;
-    final isClaimable = isCompleted && !quest.rewardClaimed;
+  Widget build(BuildContext context) {
+    final progress = widget.quest.goalValue > 0
+        ? (widget.quest.currentProgress / widget.quest.goalValue).clamp(0.0, 1.0)
+        : (widget.quest.isCompleted ? 1.0 : 0.0);
+    final isCompleted = widget.quest.isCompleted;
+    final isClaimable = isCompleted && !widget.quest.rewardClaimed;
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     VoidCallback? onTapAction;
-    if (isClaimable) {
-      onTapAction = () => _handleClaimReward(context, ref);
-    } else if (!isCompleted) {
-      onTapAction = () => _handleQuestTap(context, ref);
+    // ÇÖZÜM: Loading sırasında butonu disable et
+    if (isClaimable && !_isClaimingReward) {
+      onTapAction = () => _handleClaimReward(context);
+    } else if (!isCompleted && !_isClaimingReward) {
+      onTapAction = () => _handleQuestTap(context);
     }
 
     return GestureDetector(
@@ -297,7 +325,7 @@ class GamifiedQuestCard extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        quest.title,
+                        widget.quest.title,
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -306,7 +334,7 @@ class GamifiedQuestCard extends ConsumerWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        quest.description,
+                        widget.quest.description,
                         style: TextStyle(
                           fontSize: 14,
                           color: colorScheme.onSurfaceVariant,
@@ -315,7 +343,14 @@ class GamifiedQuestCard extends ConsumerWidget {
                     ],
                   ),
                 ),
-                _buildRewardChip(isClaimable),
+                // ÇÖZÜM: Loading sırasında indicator göster
+                _isClaimingReward
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : _buildRewardChip(isClaimable),
               ],
             ),
             if (!isCompleted || isClaimable) ...[
@@ -342,7 +377,7 @@ class GamifiedQuestCard extends ConsumerWidget {
       icon = Icons.check_circle_rounded;
       color = Colors.green;
     } else {
-      switch (quest.category) {
+      switch (widget.quest.category) {
         case QuestCategory.study: icon = Icons.menu_book_rounded; color = Colors.blueAccent; break;
         case QuestCategory.practice: icon = Icons.edit_note_rounded; color = Colors.greenAccent; break;
         case QuestCategory.engagement: icon = Icons.auto_awesome_rounded; color = Colors.purpleAccent; break;
@@ -378,7 +413,7 @@ class GamifiedQuestCard extends ConsumerWidget {
           Icon(isClaimable ? Icons.military_tech_rounded : Icons.star_rounded, color: Colors.amber, size: 18),
           const SizedBox(width: 6),
           Text(
-            '+${quest.reward}',
+            '+${widget.quest.reward}',
             style: const TextStyle(color: Colors.amber, fontSize: 16, fontWeight: FontWeight.bold),
           ),
         ],
@@ -387,6 +422,32 @@ class GamifiedQuestCard extends ConsumerWidget {
   }
 
   Widget _buildClaimRewardPrompt() {
+    // ÇÖZÜM: Loading sırasında farklı mesaj göster
+    if (_isClaimingReward) {
+      return const Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.amber),
+            ),
+          ),
+          SizedBox(width: 12),
+          Text(
+            'Ödül toplanıyor...',
+            style: TextStyle(
+              color: Colors.amber,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+        ],
+      );
+    }
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -436,7 +497,7 @@ class GamifiedQuestCard extends ConsumerWidget {
         ),
         const SizedBox(width: 12),
         Text(
-          '${quest.currentProgress} / ${quest.goalValue}',
+          '${widget.quest.currentProgress} / ${widget.quest.goalValue}',
           style: TextStyle(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
             fontWeight: FontWeight.bold,

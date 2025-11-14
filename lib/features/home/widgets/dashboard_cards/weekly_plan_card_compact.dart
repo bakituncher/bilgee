@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:taktik/data/models/plan_model.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
 
 double _clamp01(num v) {
@@ -349,13 +350,13 @@ class _CompactPlanContent extends ConsumerWidget {
   }
 }
 
-class _EmptyPlanCard extends StatelessWidget {
+class _EmptyPlanCard extends ConsumerWidget {
   final bool isDark;
 
   const _EmptyPlanCard({required this.isDark});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8),
       padding: const EdgeInsets.all(20),
@@ -424,7 +425,15 @@ class _EmptyPlanCard extends StatelessWidget {
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: () => context.go('${AppRoutes.aiHub}/${AppRoutes.strategicPlanning}'),
+                // ÇÖZÜM: Premium gate kontrolü
+                onTap: () {
+                  final isPremium = ref.read(premiumStatusProvider);
+                  if (isPremium) {
+                    context.go('${AppRoutes.aiHub}/${AppRoutes.strategicPlanning}');
+                  } else {
+                    context.go(AppRoutes.aiToolsOffer);
+                  }
+                },
                 borderRadius: BorderRadius.circular(12),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

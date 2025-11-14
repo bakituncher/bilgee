@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taktik/data/models/plan_model.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
 
 import 'dashboard_cards/mission_card.dart';
@@ -134,11 +135,11 @@ class _TodaysPlanState extends ConsumerState<TodaysPlan> {
   }
 }
 
-class _NewPlanPromptCard extends StatelessWidget {
+class _NewPlanPromptCard extends ConsumerWidget {
   const _NewPlanPromptCard();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Padding(
@@ -179,7 +180,16 @@ class _NewPlanPromptCard extends StatelessWidget {
               ),
               const Spacer(),
               ElevatedButton.icon(
-                onPressed: () => context.go('${AppRoutes.aiHub}/${AppRoutes.strategicPlanning}'),
+                // ÇÖZÜM: Premium gate - önce premium kontrolü yap
+                onPressed: () {
+                  final isPremium = ref.read(premiumStatusProvider);
+                  if (isPremium) {
+                    context.go('${AppRoutes.aiHub}/${AppRoutes.strategicPlanning}');
+                  } else {
+                    // Premium değilse tool offer ekranına yönlendir
+                    context.go(AppRoutes.aiToolsOffer);
+                  }
+                },
                 icon: const Icon(Icons.insights_rounded, size: 18),
                 label: const Text('Plan Oluştur', style: TextStyle(fontSize: 12)),
                 style: ElevatedButton.styleFrom(

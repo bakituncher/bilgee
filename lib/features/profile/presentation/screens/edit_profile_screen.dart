@@ -22,6 +22,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   String? _selectedGender;
   DateTime? _selectedDate;
 
+  // ÇÖZÜM: Original değerleri sakla (form dirty check için)
+  String? _originalFirstName;
+  String? _originalLastName;
+  String? _originalUsername;
+  String? _originalGender;
+  DateTime? _originalDateOfBirth;
+  bool _formIsDirty = false;
+
   @override
   void initState() {
     super.initState();
@@ -29,6 +37,26 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _lastNameController = TextEditingController();
     _usernameController = TextEditingController();
     _dateOfBirthController = TextEditingController();
+
+    // Listener'lar ekle - form değişikliklerini izle
+    _firstNameController.addListener(_checkFormDirty);
+    _lastNameController.addListener(_checkFormDirty);
+    _usernameController.addListener(_checkFormDirty);
+  }
+
+  /// ÇÖZÜM: Form'un değişip değişmediğini kontrol et
+  void _checkFormDirty() {
+    final isDirty = _firstNameController.text.trim() != (_originalFirstName ?? '') ||
+        _lastNameController.text.trim() != (_originalLastName ?? '') ||
+        _usernameController.text.trim() != (_originalUsername ?? '') ||
+        _selectedGender != _originalGender ||
+        _selectedDate != _originalDateOfBirth;
+
+    if (isDirty != _formIsDirty) {
+      setState(() {
+        _formIsDirty = isDirty;
+      });
+    }
   }
 
   @override
@@ -49,6 +77,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     if (user.dateOfBirth != null) {
       _dateOfBirthController.text = DateFormat('dd/MM/yyyy').format(user.dateOfBirth!);
     }
+
+    // ÇÖZÜM: Original değerleri kaydet
+    _originalFirstName = user.firstName;
+    _originalLastName = user.lastName;
+    _originalUsername = user.username;
+    _originalGender = user.gender;
+    _originalDateOfBirth = user.dateOfBirth;
+    _formIsDirty = false;
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -63,6 +99,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         _selectedDate = picked;
         _dateOfBirthController.text = DateFormat('dd/MM/yyyy').format(picked);
       });
+      _checkFormDirty(); // ÇÖZÜM: Tarih değiştiğinde dirty check yap
     }
   }
 
@@ -107,7 +144,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.save),
-            onPressed: isLoading ? null : _submit,
+            // ÇÖZÜM: Sadece form dirty ve loading değilse aktif
+            onPressed: (isLoading || !_formIsDirty) ? null : _submit,
+            tooltip: _formIsDirty ? 'Değişiklikleri Kaydet' : 'Değişiklik yapılmadı',
           ),
         ],
       ),
@@ -195,6 +234,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                             setState(() {
                               _selectedGender = value;
                             });
+                            _checkFormDirty(); // ÇÖZÜM: Cinsiyet değiştiğinde dirty check
                           },
                           validator: (value) {
                             if (value == null) {
@@ -226,11 +266,27 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   ),
                   const SizedBox(height: 32),
                   ElevatedButton(
-                    onPressed: isLoading ? null : _submit,
+                    // ÇÖZÜM: Sadece form dirty ve loading değilse aktif
+                    onPressed: (isLoading || !_formIsDirty) ? null : _submit,
                     child: isLoading
-                        ? const CircularProgressIndicator()
-                        : const Text('Değişiklikleri Kaydet'),
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text(_formIsDirty ? 'Değişiklikleri Kaydet' : 'Değişiklik Yapılmadı'),
                   ),
+                  if (!_formIsDirty && !isLoading)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        'Değişiklik yapmadan kaydedemezsiniz',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
