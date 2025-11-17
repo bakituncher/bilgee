@@ -129,6 +129,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Profil başarıyla güncellendi!')),
             );
+            // Profil ekranına geri dön
+            Navigator.pop(context);
           }
         },
       );
