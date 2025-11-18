@@ -6,6 +6,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:flutter/services.dart';
 import 'package:taktik/core/safety/ai_content_safety.dart';
+import 'package:taktik/features/quests/logic/quest_notifier.dart';
 
 // RUH HALİ SEÇENEKLERİ
 enum Mood { focused, neutral, tired, stressed, badResult, goodResult, workshop }
@@ -132,6 +133,9 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
     final user = ref.read(userProfileProvider).value!;
     final tests = ref.read(testsProvider).value!;
     final performance = ref.read(performanceProvider).value!;
+
+    // Motivasyon chat görevini kaydet (ilk kullanımda)
+    ref.read(questNotifierProvider.notifier).userUsedMotivationChat();
 
     // Seçilen modun hafızasını temizle
     await aiService.clearChatMemory(user.id, moodType);

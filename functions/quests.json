@@ -126,6 +126,7 @@
     "category": "study",
     "reward": 120,
     "goalValue": 90,
+    "actionRoute": "/home/pomodoro",
     "tags": ["intensive", "productivity"]
   },
   {

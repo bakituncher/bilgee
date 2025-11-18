@@ -106,11 +106,20 @@ class QuestNotifier extends StateNotifier<bool> {
   void userCompletedPomodoroSession(int focusSeconds) {
     final int minutes = focusSeconds ~/ 60;
     if (minutes > 0) {
+      // Focus kategorisi görevlerini güncelle
       _reportAction(
         QuestCategory.focus,
         amount: minutes,
         route: QuestRoute.pomodoro,
         tags: ['pomodoro', 'deep_work'],
+      );
+
+      // Study kategorisi görevlerini de güncelle (comprehensive study gibi)
+      _reportAction(
+        QuestCategory.study,
+        amount: minutes,
+        route: QuestRoute.pomodoro,
+        tags: ['intensive', 'productivity'],
       );
     }
     _updateUserFeatureUsage('pomodoro');
@@ -236,6 +245,38 @@ class QuestNotifier extends StateNotifier<bool> {
       tags: ['stats', 'analysis'],
     );
     _updateUserFeatureUsage('stats');
+  }
+
+  /// Kullanıcı avatarını özelleştirdiğinde
+  void userCustomizedAvatar() {
+    _reportAction(
+      QuestCategory.engagement,
+      amount: 1,
+      route: QuestRoute.avatar,
+      tags: ['profile', 'customization'],
+    );
+    _updateUserFeatureUsage('avatar');
+  }
+
+  /// Kullanıcı motivasyon chat'i kullandığında
+  void userUsedMotivationChat() {
+    _reportAction(
+      QuestCategory.engagement,
+      amount: 1,
+      route: QuestRoute.motivationChat,
+      tags: ['ai_feature', 'wellness'],
+    );
+    _updateUserFeatureUsage('motivationChat');
+  }
+
+  /// Kullanıcı profil ekranını ziyaret ettiğinde
+  void userVisitedProfile() {
+    _reportAction(
+      QuestCategory.engagement,
+      amount: 1,
+      route: QuestRoute.home,
+      tags: ['profile', 'discovery'],
+    );
   }
 
   /// Legacy metod - geriye dönük uyumluluk için

@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
+import 'package:taktik/features/quests/logic/quest_notifier.dart';
 
 // Mevcut ve kilidi açılabilir avatar stilleri
 const List<String> defaultAvatarStyles = [
@@ -50,6 +52,10 @@ class AvatarSelectionScreen extends ConsumerWidget {
                     style: selectedStyle,
                     seed: avatarSeed,
                   );
+
+              // Avatar özelleştirme görevini tamamla
+              ref.read(questNotifierProvider.notifier).userCustomizedAvatar();
+
               if (context.mounted) {
                 context.pop();
               }
