@@ -178,38 +178,83 @@ async function computeInactivityHours(userRef) {
   }
 }
 
-async function selectAudienceUids(audience) {
-  let query = db.collection("users");
+/**
+ * Kullanıcıları 1000'erli gruplar halinde çeker ve işleyici fonksiyonuna gönderir.
+ * Bu yöntem OOM (Bellek Taşması) hatasını önler.
+ *
+ * @param {Object} audience - Hedef kitle kriterleri
+ * @param {Function} batchCallback - Her 1000 kişilik UID grubu için çalışacak asenkron fonksiyon
+ */
+async function processAudienceInBatches(audience, batchCallback) {
+  const BATCH_SIZE = 1000;
+  // Sadece ID ve filtreleme alanlarını çekerek veriyi küçültüyoruz
+  let query = db.collection("users").select("selectedExam");
+
+  // --- Filtreleme Mantığı ---
   const lc = (s) => (typeof s === "string" ? s.toLowerCase() : s);
+
+  // 1. Tekil Sınav Filtresi
   if (audience && audience.type === "exam" && audience.examType) {
     const exam = lc(audience.examType);
     query = query.where("selectedExam", "==", exam);
-    const snap = await query.select().limit(20000).get();
-    return snap.docs.map((d) => d.id);
   }
-  if (audience && audience.type === "exams" && Array.isArray(audience.exams) && audience.exams.length > 0) {
+
+  // 2. Çoğul Sınav Filtresi
+  else if (audience && audience.type === "exams" && Array.isArray(audience.exams)) {
     const exams = audience.exams.filter((x) => typeof x === "string").map((s) => s.toLowerCase());
-    if (exams.length === 0) {
-      const snap = await db.collection("users").select().limit(20000).get();
-      return snap.docs.map((d) => d.id);
+    if (exams.length > 0 && exams.length <= 10) {
+      query = query.where("selectedExam", "in", exams);
     }
-    if (exams.length <= 10) {
-      const snap = await db.collection("users").where("selectedExam", "in", exams).select().limit(20000).get();
-      return snap.docs.map((d) => d.id);
+    // Not: 10'dan fazla sınav türü varsa 'in' sorgusu çalışmaz,
+    // bu durumda client-side filtreleme veya batchCallback içinde kontrol gerekir.
+  }
+  // 3. Özel UID Listesi (Database sorgusu gerektirmez)
+  else if (audience && audience.type === "uids" && Array.isArray(audience.uids)) {
+    const cleanUids = audience.uids.filter((x) => typeof x === "string");
+    for (let i = 0; i < cleanUids.length; i += BATCH_SIZE) {
+      await batchCallback(cleanUids.slice(i, i + BATCH_SIZE));
     }
-    // 10'dan fazlaysa basit filtreleme (tüm kullanıcıları çekip bellekte filtreleyin)
-    const all = await db.collection("users").select("selectedExam").limit(20000).get();
-    return all.docs.filter((d) => exams.includes((d.data() || {}).selectedExam)).map((d) => d.id);
+    return;
   }
-  if (audience && audience.type === "uids" && Array.isArray(audience.uids)) {
-    return audience.uids.filter((x) => typeof x === "string");
+
+  // --- Batch (Sayfalama) Döngüsü ---
+  let lastDoc = null;
+  let totalProcessed = 0;
+
+  while (true) {
+    let currentQuery = query.limit(BATCH_SIZE);
+
+    // Bir önceki sayfanın son dökümanından sonrasını getir
+    if (lastDoc) {
+      currentQuery = currentQuery.startAfter(lastDoc);
+    }
+
+    const snapshot = await currentQuery.get();
+
+    if (snapshot.empty) {
+      break; // Veri bitti
+    }
+
+    // UID listesini oluştur
+    const uids = snapshot.docs.map((doc) => doc.id);
+
+    // İşleyiciye (callback) gönder (Örn: Push bildirimi at)
+    if (uids.length > 0) {
+      await batchCallback(uids);
+    }
+
+    totalProcessed += uids.length;
+    lastDoc = snapshot.docs[snapshot.docs.length - 1];
+
+    // İşlemciyi boğmamak için kısa bir bekleme (Throttling)
+    await new Promise((resolve) => setTimeout(resolve, 50));
   }
-  const snap = await query.select().limit(20000).get();
-  return snap.docs.map((d) => d.id);
+
+  console.log(`Batch işlemi tamamlandı. Toplam işlenen kullanıcı: ${totalProcessed}`);
 }
 
 module.exports = {
   computeInactivityHours,
-  selectAudienceUids,
+  processAudienceInBatches,
   resetUserDataForNewExam,
 };
