@@ -150,7 +150,7 @@ class _PomodoroStatsViewState extends ConsumerState<PomodoroStatsView> {
                   ).animate().fadeIn().slideY(begin: 0.1),
                   const SizedBox(height: 8),
                   userStatsAsync.when(
-                    data: (stats) => (stats == null) ? const SizedBox.shrink() : Align(
+                    data: (stats) => Align(
                       alignment: Alignment.centerLeft,
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -163,7 +163,7 @@ class _PomodoroStatsViewState extends ConsumerState<PomodoroStatsView> {
                           Icon(Icons.star_rounded, color: Theme.of(context).colorScheme.tertiary),
                           const SizedBox(width: 8),
                           Text(
-                            'Pomodoro BP: ${stats.pomodoroBp}',
+                            'Pomodoro BP: ${stats?.pomodoroBp ?? 0}',
                             style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontWeight: FontWeight.w700),
                           ),
                         ]),
@@ -175,13 +175,13 @@ class _PomodoroStatsViewState extends ConsumerState<PomodoroStatsView> {
                   const SizedBox(height: 20),
                   userStatsAsync.when(
                     data: (stats) {
-                      if (stats == null) return const SizedBox();
-                      final totalSeconds = stats.totalFocusSeconds;
-                      final count = stats.pomodoroSessions;
+                      // Stats null ise varsayılan/boş değerleri kullan, gizleme yapma
+                      final totalSeconds = stats?.totalFocusSeconds ?? 0;
+                      final count = stats?.pomodoroSessions ?? 0;
                       final avg = count > 0 ? totalSeconds / count : 0;
                       final now = DateTime.now();
                       final todayKey = DateFormat('yyyy-MM-dd').format(DateTime(now.year, now.month, now.day));
-                      final todayMinutes = stats.focusRollup30[todayKey] ?? 0;
+                      final todayMinutes = stats?.focusRollup30[todayKey] ?? 0;
 
                       return Column(
                         children: [
