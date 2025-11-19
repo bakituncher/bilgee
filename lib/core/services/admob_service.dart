@@ -144,9 +144,16 @@ class AdMobService {
   }
 
   /// Interstitial reklamı göster
-  Future<void> showInterstitialAd({bool isUnder18 = false}) async {
+  /// [isPremium] true ise reklam gösterilmez
+  Future<void> showInterstitialAd({bool isUnder18 = false, bool isPremium = false}) async {
     if (!_initialized) {
       debugPrint('⚠️ AdMob not initialized');
+      return;
+    }
+
+    // Premium kullanıcılara reklam gösterme
+    if (isPremium) {
+      debugPrint('ℹ️ Skipping ad for premium user');
       return;
     }
 

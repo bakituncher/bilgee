@@ -31,12 +31,13 @@ class _GeneralOverviewScreenState extends ConsumerState<GeneralOverviewScreen> {
   @override
   void initState() {
     super.initState();
-    // Show interstitial ad on screen entry
+    // Show interstitial ad on screen entry (only for non-premium users)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final user = ref.read(userProfileProvider).value;
       if (user != null) {
         final isUnder18 = AgeHelper.isUnder18(user.dateOfBirth);
-        AdMobService().showInterstitialAd(isUnder18: isUnder18);
+        final isPremium = user.isPremium;
+        AdMobService().showInterstitialAd(isUnder18: isUnder18, isPremium: isPremium);
       }
     });
   }

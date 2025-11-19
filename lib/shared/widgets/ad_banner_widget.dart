@@ -5,12 +5,15 @@ import 'package:taktik/core/services/admob_service.dart';
 
 /// Banner reklam widget'ı
 /// Yaşa göre kişiselleştirilmiş/kişiselleştirilmemiş reklam gösterir
+/// Premium kullanıcılara reklam gösterilmez
 class AdBannerWidget extends StatefulWidget {
   final bool isUnder18;
+  final bool isPremium;
 
   const AdBannerWidget({
     super.key,
     required this.isUnder18,
+    this.isPremium = false,
   });
 
   @override
@@ -24,7 +27,10 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
   @override
   void initState() {
     super.initState();
-    _loadAd();
+    // Premium kullanıcılara reklam yükleme
+    if (!widget.isPremium) {
+      _loadAd();
+    }
   }
 
   void _loadAd() {
@@ -61,6 +67,11 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
 
   @override
   Widget build(BuildContext context) {
+    // Premium kullanıcılara hiç reklam gösterme
+    if (widget.isPremium) {
+      return const SizedBox.shrink();
+    }
+
     if (!_isAdLoaded || _bannerAd == null) {
       // Reklam yüklenene kadar boş alan
       return const SizedBox.shrink();

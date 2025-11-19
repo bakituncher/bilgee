@@ -147,11 +147,12 @@ class _LeaderboardView extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(14, 16, 14, 36),
                 itemCount: itemCount,
                 itemBuilder: (context, index) {
-                  // Banner at the top
+                  // Banner at the top (hidden for premium users)
                   if (index == 0) {
+                    final isPremium = currentUser?.isPremium ?? false;
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12.0),
-                      child: AdBannerWidget(isUnder18: isUnder18),
+                      child: AdBannerWidget(isUnder18: isUnder18, isPremium: isPremium),
                     );
                   }
 
