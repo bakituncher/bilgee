@@ -4,17 +4,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:confetti/confetti.dart';
 import 'dart:ui' as ui;
+import 'package:taktik/core/services/admob_service.dart';
+import 'package:taktik/data/providers/premium_provider.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
 import '../logic/pomodoro_notifier.dart';
 
-class PomodoroCompletedView extends StatefulWidget {
+class PomodoroCompletedView extends ConsumerStatefulWidget {
   final FocusSessionResult result;
   const PomodoroCompletedView({super.key, required this.result});
 
   @override
-  State<PomodoroCompletedView> createState() => _PomodoroCompletedViewState();
+  ConsumerState<PomodoroCompletedView> createState() => _PomodoroCompletedViewState();
 }
 
-class _PomodoroCompletedViewState extends State<PomodoroCompletedView> {
+class _PomodoroCompletedViewState extends ConsumerState<PomodoroCompletedView> {
   late final ConfettiController _confettiController;
 
   @override
@@ -23,7 +26,32 @@ class _PomodoroCompletedViewState extends State<PomodoroCompletedView> {
     _confettiController = ConfettiController(duration: const Duration(seconds: 1));
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _confettiController.play();
+      // Geçiş reklamını göster (biraz gecikmeyle)
+      _showInterstitialAdIfNeeded();
     });
+  }
+
+  void _showInterstitialAdIfNeeded() async {
+    // Context mounted kontrolü
+    if (!mounted) return;
+
+    await Future.delayed(const Duration(milliseconds: 1500));
+    if (!mounted) return;
+
+    // Premium ve yaş kontrolü
+    final isPremium = ref.read(premiumStatusProvider);
+    if (isPremium) return; // Premium kullanıcıya reklam gösterme
+
+    final userProfile = ref.read(userProfileProvider).value;
+    final isUnder18 = userProfile?.dateOfBirth != null
+        ? DateTime.now().difference(userProfile!.dateOfBirth!).inDays < 6570 // 18 yaş = 6570 gün
+        : false;
+
+    // Geçiş reklamını göster
+    await AdMobService().showInterstitialAd(
+      isUnder18: isUnder18,
+      isPremium: isPremium,
+    );
   }
 
   @override
@@ -35,18 +63,16 @@ class _PomodoroCompletedViewState extends State<PomodoroCompletedView> {
   @override
   Widget build(BuildContext context) {
     final earnedMinutes = (widget.result.totalFocusSeconds / 60).floor();
-    return Consumer(
-      builder: (context, ref, child) {
-        final notifier = ref.read(pomodoroProvider.notifier);
-        final pomodoro = ref.watch(pomodoroProvider);
+    final notifier = ref.read(pomodoroProvider.notifier);
+    final pomodoro = ref.watch(pomodoroProvider);
 
-        // DÜZELTME: 'longBreakInterval' sıfır olabileceğinden, crash'i önlemek için kontrol eklendi.
-        final isLongBreakTime = pomodoro.longBreakInterval > 0
-            ? (widget.result.roundsCompleted % pomodoro.longBreakInterval == 0)
-            : false;
-        final breakDuration = isLongBreakTime ? pomodoro.longBreakDuration : pomodoro.shortBreakDuration;
+    // DÜZELTME: 'longBreakInterval' sıfır olabileceğinden, crash'i önlemek için kontrol eklendi.
+    final isLongBreakTime = pomodoro.longBreakInterval > 0
+        ? (widget.result.roundsCompleted % pomodoro.longBreakInterval == 0)
+        : false;
+    final breakDuration = isLongBreakTime ? pomodoro.longBreakDuration : pomodoro.shortBreakDuration;
 
-        return Stack(
+    return Stack(
           alignment: Alignment.topCenter,
           children: [
             // Cam panel içinde içerik
@@ -124,8 +150,6 @@ class _PomodoroCompletedViewState extends State<PomodoroCompletedView> {
             ),
           ],
         );
-      },
-    );
   }
 }
 
