@@ -17,6 +17,8 @@ import 'package:taktik/features/quests/logic/optimized_quests_provider.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
 import 'package:taktik/data/models/plan_model.dart';
 import 'package:taktik/data/providers/shared_prefs_provider.dart';
+import 'package:taktik/shared/widgets/ad_banner_widget.dart';
+import 'package:taktik/utils/age_helper.dart';
 
 final celebratedDatesProvider = StateProvider<Set<String>>((ref) => <String>{});
 final expiredPlanDialogShownProvider = StateProvider<bool>((ref) => false);
@@ -215,11 +217,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       data: (user) {
         if (user == null) return const Center(child: Text('Kullanıcı verisi yüklenemedi.'));
         // final tests = testsAsync.valueOrNull ?? <TestModel>[]; // KALDIRILDI
+        final isUnder18 = AgeHelper.isUnder18(user.dateOfBirth);
 
         // Hiyerarşik bölümler (YENİ AKIŞ) — ağır widget'ları izole etmek için RepaintBoundary
         final sections = <Widget>[
           const RepaintBoundary(child: HeroHeader()),
           const RepaintBoundary(child: FocusHubCard()),
+          // AdMob Banner
+          RepaintBoundary(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: AdBannerWidget(isUnder18: isUnder18),
+            ),
+          ),
           RepaintBoundary(child: Container(key: todaysPlanKey, child: const TodaysPlan())), // Kaydırılan kartlar burada
           const RepaintBoundary(child: MotivationQuotesCard()),
         ];

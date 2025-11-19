@@ -25,6 +25,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:taktik/core/services/admob_service.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -96,6 +97,16 @@ void main() async {
     } catch (e) {
       if (kDebugMode) {
         debugPrint('[RevenueCat] Initialization failed: $e');
+      }
+    }
+
+    // Initialize AdMob
+    try {
+      final admobService = AdMobService();
+      await admobService.initialize();
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[AdMob] Initialization failed: $e');
       }
     }
 
