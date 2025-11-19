@@ -198,19 +198,19 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                 // 2. PAZARLAMA ALANI
                 // Başlıklar
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   child: _AnimatedHeader(
                     slideController: _headerSlideController,
                     fadeController: _fadeController,
                   ),
                 ),
-                const SizedBox(height: 15),
+                const SizedBox(height: 10),
                 // PageView (Özellik Carousel - DYNAMIC)
                 _buildMarketingCarousel(marketingSlides),
-                const SizedBox(height: 15),
+                const SizedBox(height: 8),
                 // Page Indicator
                 _buildPageIndicator(marketingSlides),
-                const SizedBox(height: 20),
+                const SizedBox(height: 12),
 
                 // 3. FİYATLANDIRMA ALANI (Artık kaydırılabilir)
                 Container(
@@ -240,7 +240,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                               const _TrustBadges(),
                               const _PriceTransparencyFooter(),
                               Padding(
-                                padding: EdgeInsets.only(bottom: bottomInset > 0 ? bottomInset + 4 : 10),
+                                padding: EdgeInsets.only(bottom: bottomInset > 0 ? bottomInset + 2 : 8),
                                 child: const _LegalFooter(isCompact: true),
                               ),
                             ],
@@ -328,7 +328,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     return FadeTransition(
       opacity: _fadeController,
       child: Container(
-        height: 180,
+        height: 145,
         margin: const EdgeInsets.symmetric(horizontal: 10),
         child: PageView.builder(
           controller: _pageController,
@@ -355,19 +355,19 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
         return Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(marketingSlides.length, (index) {
-            final double scale = 1.0 - (index - currentPage).abs().clamp(0.0, 1.0) * 0.4;
+            final double scale = 1.0 - (index - currentPage).abs().clamp(0.0, 1.0) * 0.3;
 
             return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+              padding: const EdgeInsets.symmetric(horizontal: 3.0),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 150),
-                width: 8.0 * scale.clamp(0.6, 1.0),
-                height: 8.0 * scale.clamp(0.6, 1.0),
+                width: 6.0 * scale.clamp(0.7, 1.0),
+                height: 6.0 * scale.clamp(0.7, 1.0),
                 decoration: BoxDecoration(
                   color: index == currentPage.round()
                       ? Theme.of(context).colorScheme.secondary
                       : Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(3),
                 ),
               ),
             );
@@ -408,7 +408,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     return FadeTransition(
       opacity: _fadeController,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 15),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         child: Column(
           children: [
             if (yearly != null)
@@ -424,7 +424,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                 onTap: () => _purchasePackage(context, ref, yearly!),
               ),
             if (yearly != null && monthly != null)
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
             if (monthly != null)
               _PurchaseOptionCard(
                 animationController: _cardPopController,
@@ -536,10 +536,10 @@ class _PriceTransparencyFooter extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final textColor = theme.colorScheme.onSurface.withOpacity(0.6);
-    final textStyle = theme.textTheme.bodySmall?.copyWith(color: textColor, height: 1.4);
+    final textStyle = theme.textTheme.bodySmall?.copyWith(color: textColor, height: 1.3, fontSize: 10);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
       child: Text(
         'Abonelik, siz iptal edene kadar seçtiğiniz tarife (aylık/yıllık) üzerinden otomatik olarak yenilenir. '
             'Ücretsiz deneme süresi (varsa) sonunda ücretlendirme başlar. '
@@ -562,6 +562,7 @@ class _AnimatedHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Column(
       children: [
         SlideTransition(
@@ -569,27 +570,66 @@ class _AnimatedHeader extends StatelessWidget {
               .animate(CurvedAnimation(parent: slideController, curve: Curves.easeOutCubic)),
           child: FadeTransition(
             opacity: fadeController,
-            child: Icon(Icons.workspace_premium_rounded, size: 55, color: Theme.of(context).colorScheme.tertiary),
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    colorScheme.tertiary.withOpacity(0.15),
+                    colorScheme.tertiary.withOpacity(0.05),
+                    Colors.transparent,
+                  ],
+                  stops: const [0.0, 0.5, 1.0],
+                ),
+              ),
+              child: Icon(
+                Icons.workspace_premium_rounded,
+                size: 42,
+                color: colorScheme.tertiary,
+                shadows: [
+                  Shadow(
+                    color: colorScheme.tertiary.withOpacity(0.5),
+                    blurRadius: 20,
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         SlideTransition(
           position: Tween<Offset>(begin: const Offset(0, 0.4), end: Offset.zero)
               .animate(CurvedAnimation(parent: slideController, curve: const Interval(0.2, 1, curve: Curves.easeOutCubic))),
           child: FadeTransition(
             opacity: CurvedAnimation(parent: fadeController, curve: const Interval(0.2, 1)),
-            child: Text(
-              'TaktikAI Premium',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w900,
-                color: Theme.of(context).colorScheme.onSurface,
-                letterSpacing: 1.5,
+            child: ShaderMask(
+              shaderCallback: (bounds) => LinearGradient(
+                colors: [
+                  colorScheme.onSurface,
+                  Color.lerp(colorScheme.onSurface, colorScheme.tertiary, 0.3)!,
+                ],
+              ).createShader(bounds),
+              child: Text(
+                'TaktikAI Premium',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                  letterSpacing: 1.2,
+                  shadows: [
+                    Shadow(
+                      color: colorScheme.tertiary.withOpacity(0.3),
+                      offset: const Offset(0, 2),
+                      blurRadius: 8,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 2),
         SlideTransition(
           position: Tween<Offset>(begin: const Offset(0, 0.4), end: Offset.zero)
               .animate(CurvedAnimation(parent: slideController, curve: const Interval(0.4, 1, curve: Curves.easeOutCubic))),
@@ -598,10 +638,10 @@ class _AnimatedHeader extends StatelessWidget {
             child: Text(
               'Sınırları kaldır, rekabette öne geç.',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                 fontWeight: FontWeight.w500,
-                height: 1.4,
+                height: 1.3,
               ),
             ),
           ),
@@ -629,20 +669,45 @@ class _MarketingSlideCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
-      padding: const EdgeInsets.all(25),
+      padding: const EdgeInsets.all(16),
       margin: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(25),
-          border: Border.all(color: colorScheme.surfaceContainerHighest.withOpacity(0.5), width: 1.5),
-          // Pazarlamayı kuvvetlendirmek için hafif bir iç gölge efekti (Inner Glow Simulation)
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isDark
+                ? [
+                    colorScheme.surface,
+                    Color.lerp(colorScheme.surface, color, 0.03)!,
+                  ]
+                : [
+                    colorScheme.surface,
+                    Color.lerp(colorScheme.surface, color, 0.05)!,
+                  ],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: color.withOpacity(isDark ? 0.3 : 0.2),
+            width: 1.5,
+          ),
           boxShadow: [
             BoxShadow(
-              color: color.withOpacity(0.1),
-              blurRadius: 10,
-              spreadRadius: 1,
-            )
+              color: color.withOpacity(0.15),
+              blurRadius: 12,
+              spreadRadius: 0,
+              offset: const Offset(0, 4),
+            ),
+            BoxShadow(
+              color: isDark
+                  ? Colors.black.withOpacity(0.2)
+                  : Colors.white.withOpacity(0.5),
+              blurRadius: 8,
+              spreadRadius: -2,
+              offset: const Offset(0, -2),
+            ),
           ]),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -651,35 +716,57 @@ class _MarketingSlideCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 40,
-                height: 40,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: color.withOpacity(0.18),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      color.withOpacity(0.3),
+                      color.withOpacity(0.15),
+                    ],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withOpacity(0.3),
+                      blurRadius: 8,
+                      spreadRadius: 0,
+                    ),
+                  ],
                 ),
-                child: Icon(icon, color: color, size: 25),
+                child: Icon(icon, color: color, size: 20),
               ),
-              const SizedBox(width: 15),
+              const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   title,
-                  style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                  style: Theme.of(context).textTheme.titleSmall!.copyWith(
                     fontWeight: FontWeight.w900,
                     color: colorScheme.onSurface,
-                    letterSpacing: 0.5,
+                    letterSpacing: 0.3,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black.withOpacity(0.1),
+                        offset: const Offset(0, 1),
+                        blurRadius: 2,
+                      ),
+                    ],
                   ),
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Text(
             subtitle,
-            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-              color: colorScheme.onSurface.withOpacity(0.7),
-              height: 1.3,
+            style: Theme.of(context).textTheme.bodySmall!.copyWith(
+              color: colorScheme.onSurface.withOpacity(0.75),
+              height: 1.35,
+              letterSpacing: 0.1,
             ),
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
@@ -785,37 +872,66 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
             onTap: _onTap,
             child: Container(
               decoration: BoxDecoration(
-                color: backgroundColor,
+                gradient: widget.highlight
+                    ? LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          colorScheme.secondary.withOpacity(0.25),
+                          colorScheme.secondary.withOpacity(0.15),
+                        ],
+                      )
+                    : null,
+                color: widget.highlight ? null : backgroundColor,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: borderColor, width: widget.highlight ? 3.0 : 1.5),
+                border: Border.all(
+                  color: borderColor,
+                  width: widget.highlight ? 2.5 : 1.5,
+                ),
                 boxShadow: widget.highlight
                     ? [
                   BoxShadow(
-                    color: colorScheme.secondary.withOpacity(0.3),
-                    blurRadius: 10,
-                    spreadRadius: 2,
+                    color: colorScheme.secondary.withOpacity(0.4),
+                    blurRadius: 20,
+                    spreadRadius: 0,
+                    offset: const Offset(0, 8),
                   ),
                   BoxShadow(
-                    color: colorScheme.tertiary.withOpacity(0.15),
-                    blurRadius: 15,
-                    spreadRadius: 2,
-                  )
+                    color: colorScheme.secondary.withOpacity(0.2),
+                    blurRadius: 40,
+                    spreadRadius: 0,
+                    offset: const Offset(0, 12),
+                  ),
+                  BoxShadow(
+                    color: Colors.white.withOpacity(isDark ? 0.05 : 0.3),
+                    blurRadius: 10,
+                    spreadRadius: -5,
+                    offset: const Offset(0, -4),
+                  ),
                 ]
                     : [
                   BoxShadow(
                     color: isDark
-                        ? Colors.black.withOpacity(0.2)
-                        : Colors.black.withOpacity(0.08),
-                    blurRadius: 5,
-                    offset: const Offset(0, 3),
-                  )
+                        ? Colors.black.withOpacity(0.3)
+                        : Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                  BoxShadow(
+                    color: isDark
+                        ? Colors.white.withOpacity(0.02)
+                        : Colors.white.withOpacity(0.5),
+                    blurRadius: 8,
+                    spreadRadius: -3,
+                    offset: const Offset(0, -2),
+                  ),
                 ],
               ),
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -823,32 +939,32 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                           widget.title,
                           style: TextStyle(
                             fontWeight: FontWeight.w900,
-                            fontSize: 20,
+                            fontSize: 17,
                             color: colorScheme.onSurface,
                           ),
                         ),
                         // ÜCRETSİZ DENEME VURGUSU
                         if (hasFreeTrial && !widget.highlight)
                           Padding(
-                            padding: const EdgeInsets.only(top: 8),
+                            padding: const EdgeInsets.only(top: 6),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
                                   color: colorScheme.primary.withOpacity(0.15),
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(6),
                                   border: Border.all(color: colorScheme.primary.withOpacity(0.5))),
                               child: Text(
                                 'İLK 7 GÜN ÜCRETSİZ DENE',
                                 style: TextStyle(
                                   color: colorScheme.primary,
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 12,
+                                  fontSize: 11,
                                 ),
                               ),
                             ),
                           )
                         else
-                          const SizedBox(height: 5), // Eğer deneme yoksa boşluk ekle
+                          const SizedBox(height: 4), // Eğer deneme yoksa boşluk ekle
 
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -857,7 +973,7 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                             Text(
                               widget.price,
                               style: TextStyle(
-                                fontSize: 26,
+                                fontSize: 24,
                                 fontWeight: FontWeight.w900,
                                 color: widget.highlight ? colorScheme.secondary : colorScheme.onSurface,
                               ),
@@ -866,30 +982,68 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                             Text(
                               widget.billingPeriod,
                               style: TextStyle(
-                                fontSize: 14,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w600,
                                 color: colorScheme.onSurface.withOpacity(0.7),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 10),
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           decoration: BoxDecoration(
-                            color:
-                            widget.highlight ? colorScheme.secondary : colorScheme.onSurface.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(10),
+                            gradient: widget.highlight
+                                ? LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      colorScheme.secondary,
+                                      Color.lerp(colorScheme.secondary, colorScheme.tertiary, 0.3)!,
+                                    ],
+                                  )
+                                : LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      colorScheme.onSurface.withOpacity(0.15),
+                                      colorScheme.onSurface.withOpacity(0.12),
+                                    ],
+                                  ),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: widget.highlight
+                                ? [
+                                    BoxShadow(
+                                      color: colorScheme.secondary.withOpacity(0.4),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ]
+                                : null,
                           ),
                           child: Center(
-                            child: Text(
-                              widget.highlight ? 'Fırsatı Yakala' : 'AYLIK ABONE OL',
-                              style: TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.w900,
-                                color: widget.highlight ? colorScheme.onSecondary : colorScheme.onSurface,
-                              ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  widget.highlight ? 'Fırsatı Yakala' : 'AYLIK ABONE OL',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w900,
+                                    color: widget.highlight ? colorScheme.onSecondary : colorScheme.onSurface,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                                if (widget.highlight) ...[
+                                  const SizedBox(width: 8),
+                                  Icon(
+                                    Icons.arrow_forward_rounded,
+                                    color: colorScheme.onSecondary,
+                                    size: 20,
+                                  ),
+                                ],
+                              ],
                             ),
                           ),
                         ),
@@ -949,12 +1103,12 @@ class _TrustBadges extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+      padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 6.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _TrustRow(icon: Icons.lock_rounded, text: 'Google ile Güvenli Ödeme'),
-          SizedBox(width: 20),
+          _TrustRow(icon: Icons.lock_rounded, text: 'Güvenli Ödeme'),
+          SizedBox(width: 16),
           _TrustRow(icon: Icons.cancel_schedule_send_rounded, text: 'Kolay İptal'),
         ],
       ),
@@ -972,11 +1126,11 @@ class _TrustRow extends StatelessWidget {
     final color = Theme.of(context).colorScheme.onSurface.withOpacity(0.7);
     return Row(
       children: [
-        Icon(icon, color: color, size: 16),
-        const SizedBox(width: 6),
+        Icon(icon, color: color, size: 14),
+        const SizedBox(width: 4),
         Text(
           text,
-          style: TextStyle(color: color, fontWeight: FontWeight.w500, fontSize: 13),
+          style: TextStyle(color: color, fontWeight: FontWeight.w500, fontSize: 11),
         ),
       ],
     );
@@ -990,16 +1144,16 @@ class _LegalFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 0.0),
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 4.0),
       child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const _FooterLink(text: 'Kullanım Şartları', targetRoute: AppRoutes.settings),
-              const SizedBox(width: 10),
-              Text('|', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.38), fontSize: 11)),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
+              Text('|', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.38), fontSize: 10)),
+              const SizedBox(width: 8),
               const _FooterLink(text: 'Gizlilik Politikası', targetRoute: AppRoutes.settings),
             ],
           ),
@@ -1029,7 +1183,7 @@ class _FooterLink extends StatelessWidget {
         text,
         style: TextStyle(
           color: color,
-          fontSize: 11,
+          fontSize: 10,
           fontWeight: FontWeight.w600,
           decoration: TextDecoration.underline,
           decorationColor: color,
