@@ -11,6 +11,7 @@ class MonetizationManager {
 
   // Keys
   static const String _testSubmissionCountKey = 'monetization_test_count';
+  static const String _lessonNetSubmissionCountKey = 'monetization_lesson_net_count';
   static const String _lastAdShowTimeKey = 'monetization_last_ad_time';
   static const String _lastPaywallShowTimeKey = 'monetization_last_paywall_time';
   static const String _paywallShowCountKey = 'monetization_paywall_count';
@@ -70,6 +71,51 @@ class MonetizationManager {
     _prefs.setInt(_testSubmissionCountKey, count);
   }
 
+  /// Ders neti eklendikten sonra ne gösterileceğine karar verir
+  MonetizationAction getActionAfterLessonNetSubmission() {
+    final count = _getLessonNetSubmissionCount();
+    final newCount = count + 1;
+
+    // Sayacı güncelle
+    _setLessonNetSubmissionCount(newCount);
+
+    // Her 5. ders neti paywall göster
+    if (newCount % _cycleLength == 0) {
+      // Paywall için minimum süre kontrolü
+      if (_canShowPaywall()) {
+        _recordPaywallShow();
+        debugPrint('💰 Monetization: Showing PAYWALL (lesson net #$newCount)');
+        return MonetizationAction.showPaywall;
+      } else {
+        // Paywall çok yakın zamanda gösterildi, reklam göster
+        debugPrint('⏰ Monetization: Paywall cooldown active, showing AD instead');
+        _recordAdShow();
+        return MonetizationAction.showAd;
+      }
+    } else {
+      // Diğer ders netlerinde reklam göster
+      if (_canShowAd()) {
+        _recordAdShow();
+        debugPrint('📺 Monetization: Showing AD (lesson net #$newCount)');
+        return MonetizationAction.showAd;
+      } else {
+        // Reklam çok yakın zamanda gösterildi, hiçbir şey gösterme
+        debugPrint('⏰ Monetization: Ad cooldown active, skipping');
+        return MonetizationAction.showNothing;
+      }
+    }
+  }
+
+  /// Ders neti ekleme sayacını al
+  int _getLessonNetSubmissionCount() {
+    return _prefs.getInt(_lessonNetSubmissionCountKey) ?? 0;
+  }
+
+  /// Ders neti ekleme sayacını güncelle
+  void _setLessonNetSubmissionCount(int count) {
+    _prefs.setInt(_lessonNetSubmissionCountKey, count);
+  }
+
   /// Reklam gösterilebilir mi kontrol et
   bool _canShowAd() {
     final lastShowTime = _prefs.getInt(_lastAdShowTimeKey);
@@ -116,6 +162,7 @@ class MonetizationManager {
   MonetizationStats getStats() {
     return MonetizationStats(
       totalTests: _getTestSubmissionCount(),
+      totalLessonNets: _getLessonNetSubmissionCount(),
       adsShown: _prefs.getInt(_adShowCountKey) ?? 0,
       paywallsShown: _prefs.getInt(_paywallShowCountKey) ?? 0,
       lastAdTime: _prefs.getInt(_lastAdShowTimeKey) != null
@@ -130,6 +177,7 @@ class MonetizationManager {
   /// Sayaçları sıfırla (test için)
   Future<void> reset() async {
     await _prefs.remove(_testSubmissionCountKey);
+    await _prefs.remove(_lessonNetSubmissionCountKey);
     await _prefs.remove(_lastAdShowTimeKey);
     await _prefs.remove(_lastPaywallShowTimeKey);
     await _prefs.remove(_paywallShowCountKey);
@@ -148,6 +196,7 @@ enum MonetizationAction {
 /// Monetizasyon istatistikleri
 class MonetizationStats {
   final int totalTests;
+  final int totalLessonNets;
   final int adsShown;
   final int paywallsShown;
   final DateTime? lastAdTime;
@@ -155,6 +204,7 @@ class MonetizationStats {
 
   MonetizationStats({
     required this.totalTests,
+    required this.totalLessonNets,
     required this.adsShown,
     required this.paywallsShown,
     this.lastAdTime,
@@ -163,7 +213,7 @@ class MonetizationStats {
 
   @override
   String toString() {
-    return 'MonetizationStats(tests: $totalTests, ads: $adsShown, paywalls: $paywallsShown)';
+    return 'MonetizationStats(tests: $totalTests, lessonNets: $totalLessonNets, ads: $adsShown, paywalls: $paywallsShown)';
   }
 }
 

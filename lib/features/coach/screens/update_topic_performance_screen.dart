@@ -10,9 +10,12 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:taktik/shared/widgets/score_slider.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:lottie/lottie.dart';
-import 'package:taktik/data/providers/activity_tracker_provider.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
+import 'package:taktik/data/providers/monetization_provider.dart';
+import 'package:taktik/core/services/monetization_manager.dart';
+import 'package:taktik/core/services/admob_service.dart';
+import 'package:taktik/utils/age_helper.dart';
 
 final _updateModeProvider = StateProvider.autoDispose<bool>((ref) => true);
 final _sessionQuestionCountProvider = StateProvider.autoDispose<int>((ref) => 20);
@@ -338,23 +341,34 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
                 ref.invalidate(performanceProvider);
                 ref.read(questNotifierProvider.notifier).userUpdatedTopicPerformance(subject, topic, sessionQuestions);
 
-                // Aktivite takibi: Ders neti sayısını artır
-                await ref.read(activityTrackerProvider).incrementLessonNetCount();
-
                 if (context.mounted) {
                   HapticFeedback.mediumImpact();
                   // Başarı Lottie diyaloğunu göster
                   await _showSuccessDialog(context);
 
-                  // Her 2 ders neti güncellemesinde AI Tools Offer göster (sadece premium olmayan kullanıcılara, 1 saat içinde max 5 kez)
+                  // Akıllı monetizasyon sistemi: Her 5 ders netinin 4'ü reklam, 1'i paywall
                   final isPremium = ref.read(premiumStatusProvider);
-                  final shouldShowOffer = !isPremium && ref.read(activityTrackerProvider).shouldShowToolOfferForLessonNet();
 
-                  if (shouldShowOffer && context.mounted) {
-                    await ref.read(activityTrackerProvider).markToolOfferShown();
-                    // Ders neti sayacını sıfırla
-                    await ref.read(activityTrackerProvider).resetLessonNetCount();
-                    await context.push(AppRoutes.aiToolsOffer);
+                  if (!isPremium && context.mounted) {
+                    // Premium değilse, akıllı sistem karar verir
+                    final monetizationManager = ref.read(monetizationManagerProvider);
+                    final action = monetizationManager.getActionAfterLessonNetSubmission();
+                    final userProfile = ref.read(userProfileProvider).value;
+                    final isUnder18 = userProfile != null ? AgeHelper.isUnder18(userProfile.dateOfBirth) : false;
+
+                    switch (action) {
+                      case MonetizationAction.showPaywall:
+                        // Paywall göster
+                        await context.push(AppRoutes.aiToolsOffer);
+                        break;
+                      case MonetizationAction.showAd:
+                        // Reklam göster
+                        await AdMobService().showInterstitialAd(isUnder18: isUnder18, isPremium: isPremium);
+                        break;
+                      case MonetizationAction.showNothing:
+                        // Hiçbir şey gösterme (cooldown aktif)
+                        break;
+                    }
                   }
 
                   if (context.mounted) context.pop();
