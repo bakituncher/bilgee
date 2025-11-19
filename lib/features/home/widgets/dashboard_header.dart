@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
+import 'package:taktik/data/providers/temporary_access_provider.dart';
 
 class DashboardHeader extends ConsumerWidget {
   const DashboardHeader({
@@ -17,6 +18,7 @@ class DashboardHeader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isPremium = ref.watch(premiumStatusProvider);
+    final hasTemporaryAccess = ref.watch(hasArchiveAccessProvider);
     final textTheme = Theme.of(context).textTheme;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -32,7 +34,7 @@ class DashboardHeader extends ConsumerWidget {
           icon: Icon(Icons.history_edu_rounded, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 28),
           tooltip: 'Deneme Arşivi',
           onPressed: () {
-            if (isPremium) {
+            if (isPremium || hasTemporaryAccess) {
               context.go('/library');
             } else {
               context.push('/stats-premium-offer?source=archive');

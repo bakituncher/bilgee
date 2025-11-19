@@ -461,23 +461,23 @@ class _StatsPremiumOfferScreenState extends ConsumerState<StatsPremiumOfferScree
                                         debugPrint('🔍 Reward earned result: $rewardEarned');
 
                                         if (rewardEarned) {
-                                          // Geçici erişim ver
+                                          // Premium features'a geçici erişim ver (Stats + Archive)
                                           final tempAccess = ref.read(temporaryAccessProvider);
-                                          if (widget.source == 'archive') {
-                                            await tempAccess.grantArchiveAccess();
-                                            debugPrint('✅ Archive access granted');
-                                          } else {
-                                            await tempAccess.grantStatsAccess();
-                                            debugPrint('✅ Stats access granted');
-                                          }
+                                          await tempAccess.grantPremiumFeaturesAccess();
+                                          debugPrint('✅ Premium features access granted (Stats + Archive)');
 
                                           // Erişim kontrolü
-                                          final hasAccess = widget.source == 'archive'
-                                            ? tempAccess.hasArchiveAccess()
-                                            : tempAccess.hasStatsAccess();
+                                          final hasAccess = tempAccess.hasPremiumFeaturesAccess();
                                           debugPrint('🔍 Access verification: $hasAccess');
 
-                                          // Başarı mesajı ve yönlendirme
+                                          // Önce offer ekranını kapat
+                                          if (!context.mounted) return;
+                                          Navigator.of(context).pop();
+
+                                          // Ekranın tamamen kapanmasını bekle
+                                          await Future.delayed(const Duration(milliseconds: 300));
+
+                                          // Başarı mesajı göster
                                           if (!context.mounted) return;
                                           ScaffoldMessenger.of(context).showSnackBar(
                                             SnackBar(
@@ -487,8 +487,8 @@ class _StatsPremiumOfferScreenState extends ConsumerState<StatsPremiumOfferScree
                                             ),
                                           );
 
-                                          // Widget tree'nin stabil olmasını bekle
-                                          await Future.delayed(const Duration(milliseconds: 500));
+                                          // Biraz daha bekle
+                                          await Future.delayed(const Duration(milliseconds: 200));
 
                                           if (!context.mounted) return;
 

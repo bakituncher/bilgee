@@ -4,68 +4,70 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:taktik/data/providers/shared_prefs_provider.dart';
 
 /// Geçici erişim yöneticisi
-/// Kullanıcılar ödüllü reklam izleyerek 1 saatlik premium özelliklere erişim kazanır
+/// Kullanıcılar ödüllü reklam izleyerek premium özelliklere geçici erişim kazanır
+/// Stats ve Archive için tek bir ortak erişim anahtarı kullanılır
 class TemporaryAccessManager {
   final SharedPreferences _prefs;
 
   TemporaryAccessManager(this._prefs);
 
-  static const String _statsAccessKey = 'temp_stats_access_expiry';
-  static const String _archiveAccessKey = 'temp_archive_access_expiry';
+  // Tek bir premium features erişim anahtarı (Stats + Archive)
+  static const String _premiumFeaturesAccessKey = 'temp_premium_features_access_expiry';
   static const Duration _accessDuration = Duration(hours: 1);
 
-  /// Stats'e geçici erişim ver
+  /// Premium özelliklere geçici erişim ver (Stats + Archive)
+  Future<void> grantPremiumFeaturesAccess() async {
+    final expiry = DateTime.now().add(_accessDuration).millisecondsSinceEpoch;
+    await _prefs.setInt(_premiumFeaturesAccessKey, expiry);
+  }
+
+  /// Premium özelliklere erişimi var mı?
+  bool hasPremiumFeaturesAccess() {
+    final expiry = _prefs.getInt(_premiumFeaturesAccessKey);
+    if (expiry == null) return false;
+
+    final expiryDate = DateTime.fromMillisecondsSinceEpoch(expiry);
+    final now = DateTime.now();
+
+    return now.isBefore(expiryDate);
+  }
+
+  /// Premium features erişimi ne zaman sona eriyor?
+  DateTime? getPremiumFeaturesAccessExpiry() {
+    final expiry = _prefs.getInt(_premiumFeaturesAccessKey);
+    if (expiry == null) return null;
+    return DateTime.fromMillisecondsSinceEpoch(expiry);
+  }
+
+  // Geriye dönük uyumluluk için wrapper metodlar
+
+  /// Stats'e geçici erişim ver (artık premium features erişimi veriyor)
+  @Deprecated('Use grantPremiumFeaturesAccess instead')
   Future<void> grantStatsAccess() async {
-    final expiry = DateTime.now().add(_accessDuration).millisecondsSinceEpoch;
-    await _prefs.setInt(_statsAccessKey, expiry);
+    await grantPremiumFeaturesAccess();
   }
 
-  /// Archive'e geçici erişim ver
+  /// Archive'e geçici erişim ver (artık premium features erişimi veriyor)
+  @Deprecated('Use grantPremiumFeaturesAccess instead')
   Future<void> grantArchiveAccess() async {
-    final expiry = DateTime.now().add(_accessDuration).millisecondsSinceEpoch;
-    await _prefs.setInt(_archiveAccessKey, expiry);
+    await grantPremiumFeaturesAccess();
   }
 
-  /// Stats'e erişimi var mı?
+  /// Stats'e erişimi var mı? (premium features erişimini kontrol eder)
+  @Deprecated('Use hasPremiumFeaturesAccess instead')
   bool hasStatsAccess() {
-    final expiry = _prefs.getInt(_statsAccessKey);
-    if (expiry == null) return false;
-
-    final expiryDate = DateTime.fromMillisecondsSinceEpoch(expiry);
-    final now = DateTime.now();
-
-    return now.isBefore(expiryDate);
+    return hasPremiumFeaturesAccess();
   }
 
-  /// Archive'e erişimi var mı?
+  /// Archive'e erişimi var mı? (premium features erişimini kontrol eder)
+  @Deprecated('Use hasPremiumFeaturesAccess instead')
   bool hasArchiveAccess() {
-    final expiry = _prefs.getInt(_archiveAccessKey);
-    if (expiry == null) return false;
-
-    final expiryDate = DateTime.fromMillisecondsSinceEpoch(expiry);
-    final now = DateTime.now();
-
-    return now.isBefore(expiryDate);
-  }
-
-  /// Stats erişimi ne zaman sona eriyor?
-  DateTime? getStatsAccessExpiry() {
-    final expiry = _prefs.getInt(_statsAccessKey);
-    if (expiry == null) return null;
-    return DateTime.fromMillisecondsSinceEpoch(expiry);
-  }
-
-  /// Archive erişimi ne zaman sona eriyor?
-  DateTime? getArchiveAccessExpiry() {
-    final expiry = _prefs.getInt(_archiveAccessKey);
-    if (expiry == null) return null;
-    return DateTime.fromMillisecondsSinceEpoch(expiry);
+    return hasPremiumFeaturesAccess();
   }
 
   /// Tüm geçici erişimleri temizle
   Future<void> clearAllAccess() async {
-    await _prefs.remove(_statsAccessKey);
-    await _prefs.remove(_archiveAccessKey);
+    await _prefs.remove(_premiumFeaturesAccessKey);
   }
 }
 
@@ -74,15 +76,22 @@ final temporaryAccessProvider = Provider<TemporaryAccessManager>((ref) {
   return TemporaryAccessManager(prefs);
 });
 
-/// Stats erişim durumu provider'ı
-final hasStatsAccessProvider = Provider<bool>((ref) {
+/// Premium features erişim durumu provider'ı (Stats + Archive)
+final hasPremiumFeaturesAccessProvider = Provider<bool>((ref) {
   final tempAccess = ref.watch(temporaryAccessProvider);
-  return tempAccess.hasStatsAccess();
+  return tempAccess.hasPremiumFeaturesAccess();
 });
 
-/// Archive erişim durumu provider'ı
+// Geriye dönük uyumluluk için wrapper provider'lar
+/// Stats erişim durumu provider'ı (artık premium features erişimini kontrol eder)
+@Deprecated('Use hasPremiumFeaturesAccessProvider instead')
+final hasStatsAccessProvider = Provider<bool>((ref) {
+  return ref.watch(hasPremiumFeaturesAccessProvider);
+});
+
+/// Archive erişim durumu provider'ı (artık premium features erişimini kontrol eder)
+@Deprecated('Use hasPremiumFeaturesAccessProvider instead')
 final hasArchiveAccessProvider = Provider<bool>((ref) {
-  final tempAccess = ref.watch(temporaryAccessProvider);
-  return tempAccess.hasArchiveAccess();
+  return ref.watch(hasPremiumFeaturesAccessProvider);
 });
 
