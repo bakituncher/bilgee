@@ -1,4 +1,5 @@
 // lib/core/services/admob_service.dart
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -14,6 +15,8 @@ class AdMobService {
   bool _initialized = false;
   InterstitialAd? _interstitialAd;
   bool _isInterstitialAdLoading = false;
+  RewardedAd? _rewardedAd;
+  bool _isRewardedAdLoading = false;
 
   /// AdMob'u başlat
   Future<void> initialize() async {
@@ -23,8 +26,9 @@ class AdMobService {
       await MobileAds.instance.initialize();
       _initialized = true;
 
-      // İlk interstitial reklamı yükle
+      // İlk interstitial ve rewarded reklamları yükle
       _loadInterstitialAd();
+      _loadRewardedAd();
 
       debugPrint('✅ AdMob initialized successfully');
     } catch (e) {
@@ -63,6 +67,21 @@ class AdMobService {
     return Platform.isAndroid
         ? 'ca-app-pub-XXXXXXXXXXXXXXXX/ZZZZZZZZZZ' // Android interstitial - DEĞİŞTİRİLMELİ
         : 'ca-app-pub-XXXXXXXXXXXXXXXX/ZZZZZZZZZZ'; // iOS interstitial - DEĞİŞTİRİLMELİ
+  }
+
+  /// Rewarded Ad ID'leri
+  String get rewardedAdUnitId {
+    if (isTestMode) {
+      // Test Ad Unit IDs
+      return Platform.isAndroid
+          ? 'ca-app-pub-3940256099942544/5224354917' // Android test rewarded
+          : 'ca-app-pub-3940256099942544/1712485313'; // iOS test rewarded
+    }
+
+    // Gerçek Ad Unit IDs - Bunları AdMob konsolundan almalısın
+    return Platform.isAndroid
+        ? 'ca-app-pub-XXXXXXXXXXXXXXXX/WWWWWWWWWW' // Android rewarded - DEĞİŞTİRİLMELİ
+        : 'ca-app-pub-XXXXXXXXXXXXXXXX/WWWWWWWWWW'; // iOS rewarded - DEĞİŞTİRİLMELİ
   }
 
   /// Yaşa göre reklam isteği oluştur
@@ -165,10 +184,124 @@ class AdMobService {
     }
   }
 
+  /// Rewarded (ödüllü) reklam yükle
+  void _loadRewardedAd({bool isUnder18 = false}) {
+    if (_isRewardedAdLoading || _rewardedAd != null) return;
+
+    _isRewardedAdLoading = true;
+
+    RewardedAd.load(
+      adUnitId: rewardedAdUnitId,
+      request: createAdRequest(isUnder18: isUnder18),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (ad) {
+          debugPrint('✅ Rewarded ad loaded');
+          _rewardedAd = ad;
+          _isRewardedAdLoading = false;
+          // Callback'ler show() metodunda ayarlanacak
+        },
+        onAdFailedToLoad: (error) {
+          debugPrint('❌ Rewarded ad failed to load: $error');
+          _isRewardedAdLoading = false;
+          _rewardedAd = null;
+        },
+      ),
+    );
+  }
+
+  /// Rewarded reklamı göster ve ödül ver
+  /// Returns: Kullanıcı reklamı tamamladıysa true, aksi halde false
+  Future<bool> showRewardedAd({bool isUnder18 = false}) async {
+    if (!_initialized) {
+      debugPrint('⚠️ AdMob not initialized');
+      return false;
+    }
+
+    if (_rewardedAd == null) {
+      debugPrint('⚠️ Rewarded ad not ready, loading...');
+      _loadRewardedAd(isUnder18: isUnder18);
+      return false;
+    }
+
+    bool rewardEarned = false;
+    final completer = Completer<bool>();
+
+    // Ad callback'lerini ayarla
+    _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+      onAdShowedFullScreenContent: (ad) {
+        debugPrint('🎬 Rewarded ad showed');
+      },
+      onAdDismissedFullScreenContent: (ad) {
+        debugPrint('✅ Rewarded ad dismissed - Reward earned: $rewardEarned');
+
+        // Cleanup
+        ad.dispose();
+        _rewardedAd = null;
+
+        // Completer'ı tamamla
+        if (!completer.isCompleted) {
+          completer.complete(rewardEarned);
+        }
+
+        // Yeni reklam yükle (background)
+        Future.delayed(const Duration(milliseconds: 500), () {
+          _loadRewardedAd(isUnder18: isUnder18);
+        });
+      },
+      onAdFailedToShowFullScreenContent: (ad, error) {
+        debugPrint('❌ Rewarded ad failed to show: $error');
+
+        // Cleanup
+        ad.dispose();
+        _rewardedAd = null;
+
+        // Completer'ı tamamla
+        if (!completer.isCompleted) {
+          completer.complete(false);
+        }
+
+        // Yeni reklam yükle (background)
+        Future.delayed(const Duration(milliseconds: 500), () {
+          _loadRewardedAd(isUnder18: isUnder18);
+        });
+      },
+    );
+
+    // Reklamı göster
+    try {
+      await _rewardedAd!.show(
+        onUserEarnedReward: (ad, reward) {
+          debugPrint('🎁 User earned reward: ${reward.amount} ${reward.type}');
+          rewardEarned = true;
+        },
+      );
+    } catch (e) {
+      debugPrint('❌ Error showing rewarded ad: $e');
+      if (!completer.isCompleted) {
+        completer.complete(false);
+      }
+    }
+
+    return completer.future;
+  }
+
+  /// Rewarded ad hazır mı?
+  bool get isRewardedAdReady => _rewardedAd != null;
+
+  /// Rewarded ad yükleniyor mu?
+  bool get isRewardedAdLoading => _isRewardedAdLoading;
+
+  /// Rewarded ad'ı önceden yükle
+  void preloadRewardedAd({bool isUnder18 = false}) {
+    _loadRewardedAd(isUnder18: isUnder18);
+  }
+
   /// Servisi temizle
   void dispose() {
     _interstitialAd?.dispose();
     _interstitialAd = null;
+    _rewardedAd?.dispose();
+    _rewardedAd = null;
   }
 }
 
