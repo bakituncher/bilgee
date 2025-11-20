@@ -377,8 +377,8 @@ class FirestoreService {
       dateOfBirth: dateOfBirth,
       profileCompleted: profileCompleted,
       tutorialCompleted: false,
-      avatarStyle: 'avataaars',
-      avatarSeed: user.uid, // Benzersiz avatar için user ID kullanılır
+      avatarStyle: gender == 'male' ? 'avataaars' : 'female',
+      avatarSeed: user.uid,
     );
     await usersCollection.doc(user.uid).set(userProfile.toJson());
 
@@ -902,7 +902,6 @@ class FirestoreService {
     return Stream<UserModel>.multi((controller) {
       UserModel? lastUser;
       Map<String, dynamic>? lastStats;
-      bool avatarChecked = false;
 
       void emitIfReady() {
         if (lastUser == null) return;
@@ -924,17 +923,6 @@ class FirestoreService {
       final userSub = usersCollection.doc(userId).snapshots().listen((snap) {
         if (snap.exists) {
           lastUser = UserModel.fromSnapshot(snap);
-
-          // Eski kullanıcılara avatar yoksa otomatik ata (bir kez)
-          if (!avatarChecked && (lastUser!.avatarStyle == null || lastUser!.avatarSeed == null)) {
-            avatarChecked = true;
-            usersCollection.doc(userId).update({
-              'avatarStyle': 'avataaars',
-              'avatarSeed': userId,
-            }).catchError((e) {
-              if (kDebugMode) print('Avatar atama hatası: $e');
-            });
-          }
 
           emitIfReady();
         }
