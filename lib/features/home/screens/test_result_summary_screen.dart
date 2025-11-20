@@ -11,8 +11,9 @@ import 'package:taktik/features/auth/application/auth_controller.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:intl/intl.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
+import 'package:taktik/data/providers/premium_provider.dart';
 
-class TestResultSummaryScreen extends StatelessWidget {
+class TestResultSummaryScreen extends ConsumerWidget {
   final TestModel test;
 
   const TestResultSummaryScreen({super.key, required this.test});
@@ -27,7 +28,7 @@ class TestResultSummaryScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final wisdomScore = test.wisdomScore;
     final verdict = test.expertVerdict;
     final keySubjects = test.findKeySubjects();
@@ -35,6 +36,7 @@ class TestResultSummaryScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
+    final isPremium = ref.watch(premiumStatusProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -193,8 +195,23 @@ class TestResultSummaryScreen extends StatelessWidget {
                       side: BorderSide(color: isGoodResult ? colorScheme.secondary : colorScheme.primary),
                     ),
                     onPressed: () {
-                      final prompt = isGoodResult ? 'new_test_good' : 'new_test_bad';
-                      context.push('${AppRoutes.aiHub}/${AppRoutes.motivationChat}', extra: prompt);
+                      if (isPremium) {
+                        // Premium kullanıcı - AI sohbete yönlendir
+                        final prompt = isGoodResult ? 'new_test_good' : 'new_test_bad';
+                        context.push('${AppRoutes.aiHub}/${AppRoutes.motivationChat}', extra: prompt);
+                      } else {
+                        // Premium olmayan kullanıcı - Tool Offer Screen'e yönlendir (Analiz & Strateji)
+                        context.push('/ai-hub/offer', extra: {
+                          'title': 'Analiz & Strateji',
+                          'subtitle': 'Deneme değerlendirme ve strateji danışmanı',
+                          'icon': Icons.dashboard_customize_rounded,
+                          'color': Colors.amberAccent,
+                          'heroTag': 'analysis-strategy-offer',
+                          'marketingTitle': 'Akıllı Deneme Analizi',
+                          'marketingSubtitle': 'Deneme sınavlarınızı yapay zeka ile derinlemesine analiz edin. Hangi konulara odaklanmanız gerektiğini öğrenin, her zaman zirvede kalın.',
+                          'redirectRoute': '/ai-hub/analysis-strategy',
+                        });
+                      }
                     },
                   ),
                 ),
