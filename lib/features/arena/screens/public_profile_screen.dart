@@ -257,18 +257,26 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          // Takipçi ve Takip sayaçları - ortalanmış
-                          followCountsAsync.when(
-                            data: (counts) => Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                _CountPill(label: 'Takipçi', value: counts.$1),
-                                const SizedBox(width: 16),
-                                _CountPill(label: 'Takip', value: counts.$2),
-                              ],
-                            ),
-                            loading: () => const LinearProgressIndicator(minHeight: 2),
-                            error: (e, s) => const SizedBox.shrink(),
+                          // Takipçi/Takip ve Takip butonu - aynı satırda
+                          Row(
+                            children: [
+                              Expanded(
+                                child: followCountsAsync.when(
+                                  data: (counts) => Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      _CountPill(label: 'Takipçi', value: counts.$1),
+                                      _CountPill(label: 'Takip', value: counts.$2),
+                                    ],
+                                  ),
+                                  loading: () => const LinearProgressIndicator(minHeight: 2),
+                                  error: (e, s) => const SizedBox.shrink(),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              if (me?.uid != widget.userId)
+                                _FollowButton(targetUserId: widget.userId),
+                            ],
                           ),
                           const SizedBox(height: 8),
                           if (updatedAt != null)
@@ -280,34 +288,20 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                               ),
                             ),
                           const SizedBox(height: 16),
-                          // Takip butonu - üstte, ortalı
-                          if (me?.uid != widget.userId)
-                            Center(
-                              child: SizedBox(
-                                width: MediaQuery.of(context).size.width * 0.5,
-                                child: _FollowButton(targetUserId: widget.userId),
-                              ),
-                            ),
-                          const SizedBox(height: 24),
-                          // Başarılar butonu - ortalı
-                          Center(
-                            child: SizedBox(
-                              width: MediaQuery.of(context).size.width * 0.5,
-                              child: _ActionTile(
-                                icon: Icons.emoji_events_outlined,
-                                label: 'Başarılar',
-                                onTap: () {
-                                  HapticFeedback.selectionClick();
-                                  _showPublicAchievements(context,
-                                    displayName: displayName,
-                                    testCount: testCount,
-                                    avgNet: avgNet,
-                                    streak: streak,
-                                    engagement: engagement,
-                                  );
-                                }
-                              ),
-                            ),
+                          // Başarılar butonu - tam genişlikte
+                          _ActionTile(
+                            icon: Icons.emoji_events_outlined,
+                            label: 'Başarılar',
+                            onTap: () {
+                              HapticFeedback.selectionClick();
+                              _showPublicAchievements(context,
+                                displayName: displayName,
+                                testCount: testCount,
+                                avgNet: avgNet,
+                                streak: streak,
+                                engagement: engagement,
+                              );
+                            }
                           ),
                           const SizedBox(height: 20),
                         ],
@@ -395,37 +389,19 @@ class _CountPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
     return Container(
-      constraints: const BoxConstraints(minWidth: 86, minHeight: 72),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         color: colorScheme.onSurface.withOpacity(0.06),
         border: Border.all(color: colorScheme.onSurface.withOpacity(0.12)),
       ),
-      child: Column(
+      child: Row(
         mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          FittedBox(
-            child: Text(
-              value.toString(),
-              style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-              maxLines: 1,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Flexible(
-            child: FittedBox(
-              child: Text(
-                label,
-                style: textTheme.labelMedium?.copyWith(color: colorScheme.onSurface.withOpacity(0.7)),
-                maxLines: 1,
-              ),
-            ),
-          ),
+          Text(value.toString(), style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+          const SizedBox(width: 6),
+          Text(label, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: colorScheme.onSurface.withOpacity(0.7))),
         ],
       ),
     );
