@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// AdMob reklam servisi
 /// - Yaşa göre kişiselleştirilmiş/kişiselleştirilmemiş reklamlar
@@ -59,14 +60,14 @@ class AdMobService {
     if (isTestMode) {
       // Test Ad Unit IDs
       return Platform.isAndroid
-          ? 'ca-app-pub-3940256099942544/6300978111' // Android test banner
-          : 'ca-app-pub-3940256099942544/2934735716'; // iOS test banner
+          ? dotenv.get('ANDROID_BANNER_TEST_ID', fallback: 'ca-app-pub-3940256099942544/6300978111')
+          : dotenv.get('IOS_BANNER_TEST_ID', fallback: 'ca-app-pub-3940256099942544/2934735716');
     }
 
-    // Gerçek Ad Unit IDs - Bunları AdMob konsolundan almalısın
+    // Gerçek Ad Unit IDs - .env dosyasından yüklenir
     return Platform.isAndroid
-        ? 'ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY' // Android banner - DEĞİŞTİRİLMELİ
-        : 'ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY'; // iOS banner - DEĞİŞTİRİLMELİ
+        ? dotenv.get('ANDROID_BANNER_AD_ID', fallback: 'ca-app-pub-3940256099942544/6300978111')
+        : dotenv.get('IOS_BANNER_AD_ID', fallback: 'ca-app-pub-3940256099942544/2934735716');
   }
 
   /// Interstitial Ad ID'leri
@@ -74,14 +75,14 @@ class AdMobService {
     if (isTestMode) {
       // Test Ad Unit IDs
       return Platform.isAndroid
-          ? 'ca-app-pub-3940256099942544/1033173712' // Android test interstitial
-          : 'ca-app-pub-3940256099942544/4411468910'; // iOS test interstitial
+          ? dotenv.get('ANDROID_INTERSTITIAL_TEST_ID', fallback: 'ca-app-pub-3940256099942544/1033173712')
+          : dotenv.get('IOS_INTERSTITIAL_TEST_ID', fallback: 'ca-app-pub-3940256099942544/4411468910');
     }
 
-    // Gerçek Ad Unit IDs - Bunları AdMob konsolundan almalısın
+    // Gerçek Ad Unit IDs - .env dosyasından yüklenir
     return Platform.isAndroid
-        ? 'ca-app-pub-XXXXXXXXXXXXXXXX/ZZZZZZZZZZ' // Android interstitial - DEĞİŞTİRİLMELİ
-        : 'ca-app-pub-XXXXXXXXXXXXXXXX/ZZZZZZZZZZ'; // iOS interstitial - DEĞİŞTİRİLMELİ
+        ? dotenv.get('ANDROID_INTERSTITIAL_AD_ID', fallback: 'ca-app-pub-3940256099942544/1033173712')
+        : dotenv.get('IOS_INTERSTITIAL_AD_ID', fallback: 'ca-app-pub-3940256099942544/4411468910');
   }
 
   /// Rewarded Ad ID'leri
@@ -89,14 +90,14 @@ class AdMobService {
     if (isTestMode) {
       // Test Ad Unit IDs
       return Platform.isAndroid
-          ? 'ca-app-pub-3940256099942544/5224354917' // Android test rewarded
-          : 'ca-app-pub-3940256099942544/1712485313'; // iOS test rewarded
+          ? dotenv.get('ANDROID_REWARDED_TEST_ID', fallback: 'ca-app-pub-3940256099942544/5224354917')
+          : dotenv.get('IOS_REWARDED_TEST_ID', fallback: 'ca-app-pub-3940256099942544/1712485313');
     }
 
-    // Gerçek Ad Unit IDs - Bunları AdMob konsolundan almalısın
+    // Gerçek Ad Unit IDs - .env dosyasından yüklenir
     return Platform.isAndroid
-        ? 'ca-app-pub-XXXXXXXXXXXXXXXX/WWWWWWWWWW' // Android rewarded - DEĞİŞTİRİLMELİ
-        : 'ca-app-pub-XXXXXXXXXXXXXXXX/WWWWWWWWWW'; // iOS rewarded - DEĞİŞTİRİLMELİ
+        ? dotenv.get('ANDROID_REWARDED_AD_ID', fallback: 'ca-app-pub-3940256099942544/5224354917')
+        : dotenv.get('IOS_REWARDED_AD_ID', fallback: 'ca-app-pub-3940256099942544/1712485313');
   }
 
   /// Yaşa göre reklam isteği oluştur
