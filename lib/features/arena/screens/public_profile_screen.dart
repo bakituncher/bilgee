@@ -74,7 +74,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
             children: [
               Center(child: Container(width: 36, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(4)))),
               const SizedBox(height: 12),
-              Text('$displayName — Rütbe Puanı', style: Theme.of(ctx).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+              Text('$displayName — Taktik Puanı', style: Theme.of(ctx).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
               const SizedBox(height: 20),
               Center(
                 child: Container(
@@ -104,7 +104,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Rütbe Puanı',
+                        'Taktik Puanı',
                         style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
                           color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                         ),
@@ -134,7 +134,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
             _kv('Deneme', testCount.toString(), ctx),
             _kv('Ortalama Net', avgNet.toStringAsFixed(1), ctx),
             _kv('Günlük Seri', streak.toString(), ctx),
-            _kv('Rütbe Puanı', engagement.toString(), ctx),
+            _kv('Taktik Puanı', engagement.toString(), ctx),
           ],
         ),
         actions: [TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Kapat'))],
