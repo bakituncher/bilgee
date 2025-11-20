@@ -66,12 +66,6 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
       backgroundColor: Theme.of(context).cardColor,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) {
-        final items = [
-          {'icon': Icons.flag, 'title': 'Denemeler', 'value': testCount.toString()},
-          {'icon': Icons.track_changes_rounded, 'title': 'Ortalama Net', 'value': avgNet.toStringAsFixed(1)},
-          {'icon': Icons.local_fire_department_rounded, 'title': 'Günlük Seri', 'value': streak.toString()},
-          {'icon': Icons.flash_on_rounded, 'title': 'Rütbe Puanı', 'value': engagement.toString()},
-        ];
         return Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           child: Column(
@@ -80,36 +74,44 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
             children: [
               Center(child: Container(width: 36, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(4)))),
               const SizedBox(height: 12),
-              Text('$displayName — Başarılar', style: Theme.of(ctx).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
-              const SizedBox(height: 12),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: items.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 12, crossAxisSpacing: 12, childAspectRatio: 2.6),
-                itemBuilder: (_, i) {
-                  final it = items[i];
-                  return Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Theme.of(context).colorScheme.surface.withOpacity(0.5),
-                            Theme.of(context).colorScheme.surface.withOpacity(0.2)
-                          ]),
-                      border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)),
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    child: Row(children: [
-                      Icon(it['icon'] as IconData, color: Theme.of(context).colorScheme.primary),
-                      const SizedBox(width: 8),
-                      Expanded(child: Text(it['title'] as String, style: Theme.of(ctx).textTheme.labelLarge)),
-                      Text(it['value'] as String, style: Theme.of(ctx).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                    ]),
-                  );
-                },
+              Text('$displayName — Rütbe Puanı', style: Theme.of(ctx).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+              const SizedBox(height: 20),
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Theme.of(context).colorScheme.surface.withOpacity(0.5),
+                          Theme.of(context).colorScheme.surface.withOpacity(0.2)
+                        ]),
+                    border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.flash_on_rounded, color: Theme.of(context).colorScheme.primary, size: 48),
+                      const SizedBox(height: 12),
+                      Text(
+                        engagement.toString(),
+                        style: Theme.of(ctx).textTheme.displaySmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Rütbe Puanı',
+                        style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
@@ -158,7 +160,6 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
     final userProfileAsync = ref.watch(publicUserProfileProvider(widget.userId));
     final statsAsync = ref.watch(userStatsForUserProvider(widget.userId));
     final followCountsAsync = ref.watch(followCountsProvider(widget.userId));
-    final isFollowingAsync = ref.watch(isFollowingProvider(widget.userId));
     final me = ref.watch(authControllerProvider).value;
 
     return Scaffold(
@@ -256,26 +257,18 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          // Takip arayüzü ve sayaçlar
-                          Row(
-                            children: [
-                              Expanded(
-                                child: followCountsAsync.when(
-                                  data: (counts) => Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                    children: [
-                                      _CountPill(label: 'Takipçi', value: counts.$1),
-                                      _CountPill(label: 'Takip', value: counts.$2),
-                                    ],
-                                  ),
-                                  loading: () => const LinearProgressIndicator(minHeight: 2),
-                                  error: (e, s) => const SizedBox.shrink(),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              if (me?.uid != widget.userId)
-                                _FollowButton(targetUserId: widget.userId),
-                            ],
+                          // Takipçi ve Takip sayaçları - ortalanmış
+                          followCountsAsync.when(
+                            data: (counts) => Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                _CountPill(label: 'Takipçi', value: counts.$1),
+                                const SizedBox(width: 16),
+                                _CountPill(label: 'Takip', value: counts.$2),
+                              ],
+                            ),
+                            loading: () => const LinearProgressIndicator(minHeight: 2),
+                            error: (e, s) => const SizedBox.shrink(),
                           ),
                           const SizedBox(height: 8),
                           if (updatedAt != null)
@@ -287,45 +280,34 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                               ),
                             ),
                           const SizedBox(height: 16),
-                          // 4'lü eylem kartları — geri eklendi
-                          GridView.count(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 14,
-                            mainAxisSpacing: 14,
-                            childAspectRatio: 2.8,
-                            physics: const NeverScrollableScrollPhysics(),
-                            shrinkWrap: true,
-                            children: [
-                              _ActionTile(icon: Icons.emoji_events_outlined, label: 'Başarılar', onTap: () {
-                                HapticFeedback.selectionClick();
-                                _showPublicAchievements(context,
-                                  displayName: displayName,
-                                  testCount: testCount,
-                                  avgNet: avgNet,
-                                  streak: streak,
-                                  engagement: engagement,
-                                );
-                              }),
-                              _ActionTile(icon: Icons.timeline_rounded, label: 'İlerleme', onTap: () {
-                                HapticFeedback.selectionClick();
-                                _showPublicProgress(context, testCount: testCount, avgNet: avgNet, streak: streak, engagement: engagement);
-                              }),
-                              _ActionTile(icon: Icons.people_alt_rounded, label: 'Takip', onTap: () async {
-                                HapticFeedback.selectionClick();
-                                final svc = ref.read(firestoreServiceProvider);
-                                final isFollowingNow = isFollowingAsync.valueOrNull ?? false;
-                                if (me?.uid == null || me!.uid == widget.userId) return;
-                                if (isFollowingNow) {
-                                  await svc.unfollowUser(currentUserId: me.uid, targetUserId: widget.userId);
-                                } else {
-                                  await svc.followUser(currentUserId: me.uid, targetUserId: widget.userId);
+                          // Takip butonu - üstte, ortalı
+                          if (me?.uid != widget.userId)
+                            Center(
+                              child: SizedBox(
+                                width: MediaQuery.of(context).size.width * 0.5,
+                                child: _FollowButton(targetUserId: widget.userId),
+                              ),
+                            ),
+                          const SizedBox(height: 24),
+                          // Başarılar butonu - ortalı
+                          Center(
+                            child: SizedBox(
+                              width: MediaQuery.of(context).size.width * 0.5,
+                              child: _ActionTile(
+                                icon: Icons.emoji_events_outlined,
+                                label: 'Başarılar',
+                                onTap: () {
+                                  HapticFeedback.selectionClick();
+                                  _showPublicAchievements(context,
+                                    displayName: displayName,
+                                    testCount: testCount,
+                                    avgNet: avgNet,
+                                    streak: streak,
+                                    engagement: engagement,
+                                  );
                                 }
-                              }),
-                              _ActionTile(icon: Icons.share_rounded, label: 'Paylaş', onTap: () {
-                                HapticFeedback.selectionClick();
-                                _shareProfileImage();
-                              }),
-                            ],
+                              ),
+                            ),
                           ),
                           const SizedBox(height: 20),
                         ],
@@ -406,22 +388,44 @@ class _ShareableProfileCard extends StatelessWidget {
 }
 
 class _CountPill extends StatelessWidget {
-  final String label; final int value; const _CountPill({required this.label, required this.value});
+  final String label;
+  final int value;
+  const _CountPill({required this.label, required this.value});
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      constraints: const BoxConstraints(minWidth: 86, minHeight: 72),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         color: colorScheme.onSurface.withOpacity(0.06),
         border: Border.all(color: colorScheme.onSurface.withOpacity(0.12)),
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(value.toString(), style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-          const SizedBox(width: 6),
-          Text(label, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: colorScheme.onSurface.withOpacity(0.7))),
+          FittedBox(
+            child: Text(
+              value.toString(),
+              style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+              maxLines: 1,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Flexible(
+            child: FittedBox(
+              child: Text(
+                label,
+                style: textTheme.labelMedium?.copyWith(color: colorScheme.onSurface.withOpacity(0.7)),
+                maxLines: 1,
+              ),
+            ),
+          ),
         ],
       ),
     );
