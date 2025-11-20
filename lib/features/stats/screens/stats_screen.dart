@@ -191,7 +191,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
   @override
   Widget build(BuildContext context) {
     final isPremium = ref.watch(premiumStatusProvider);
-    final hasTemporaryAccess = ref.watch(hasStatsAccessProvider);
+    final hasTemporaryAccess = ref.watch(hasPremiumFeaturesAccessProvider);
 
     // Premium ve geçici erişim kontrolü - ikisi de yoksa teklif ekranına yönlendir
     if (!isPremium && !hasTemporaryAccess) {

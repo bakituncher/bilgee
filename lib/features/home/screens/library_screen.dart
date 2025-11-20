@@ -443,7 +443,7 @@ class _ArchiveListTile extends ConsumerWidget {
     final acc = _accuracy(test);
     final isDark = theme.brightness == Brightness.dark;
     final isPremium = ref.watch(premiumStatusProvider);
-    final hasTemporaryAccess = ref.watch(hasArchiveAccessProvider);
+    final hasTemporaryAccess = ref.watch(hasPremiumFeaturesAccessProvider);
 
     return Container(
       decoration: BoxDecoration(
