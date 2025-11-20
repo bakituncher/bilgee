@@ -6,6 +6,8 @@ import 'package:taktik/features/profile/logic/rank_service.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taktik/features/home/providers/home_providers.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
+import 'package:taktik/data/providers/premium_provider.dart';
+import 'package:taktik/data/providers/temporary_access_provider.dart';
 
 class HeroHeader extends ConsumerWidget {
   const HeroHeader({super.key});
@@ -182,12 +184,21 @@ class HeroHeader extends ConsumerWidget {
   }
 }
 
-class _ArchiveButton extends StatelessWidget {
+class _ArchiveButton extends ConsumerWidget {
   const _ArchiveButton();
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isPremium = ref.watch(premiumStatusProvider);
+    final hasTemporaryAccess = ref.watch(hasArchiveAccessProvider);
+
     return InkWell(
-      onTap: () => context.go('/library'),
+      onTap: () {
+        if (isPremium || hasTemporaryAccess) {
+          context.go('/library');
+        } else {
+          context.push('/stats-premium-offer?source=archive');
+        }
+      },
       borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),

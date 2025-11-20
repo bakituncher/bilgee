@@ -11,6 +11,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
 import 'package:taktik/core/theme/app_theme.dart';
 import 'package:intl/intl.dart';
+import 'package:taktik/core/services/admob_service.dart';
+import 'package:taktik/utils/age_helper.dart';
 
 // Constants
 const int _maxRecentTests = 8;
@@ -18,8 +20,27 @@ const int _daysToShowVisits = 30;
 
 /// Redesigned General Overview Screen with sector-level education analytics
 /// Features: Modern design, comprehensive metrics, interactive charts, elegant UI
-class GeneralOverviewScreen extends ConsumerWidget {
+class GeneralOverviewScreen extends ConsumerStatefulWidget {
   const GeneralOverviewScreen({super.key});
+
+  @override
+  ConsumerState<GeneralOverviewScreen> createState() => _GeneralOverviewScreenState();
+}
+
+class _GeneralOverviewScreenState extends ConsumerState<GeneralOverviewScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Show interstitial ad on screen entry (only for non-premium users)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final user = ref.read(userProfileProvider).value;
+      if (user != null) {
+        final isUnder18 = AgeHelper.isUnder18(user.dateOfBirth);
+        final isPremium = user.isPremium;
+        AdMobService().showInterstitialAd(isUnder18: isUnder18, isPremium: isPremium);
+      }
+    });
+  }
 
   Future<void> _handleBack(BuildContext context) async {
     if (Navigator.of(context).canPop()) {
@@ -30,7 +51,7 @@ class GeneralOverviewScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final userAsync = ref.watch(userProfileProvider);
     final testsAsync = ref.watch(testsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;

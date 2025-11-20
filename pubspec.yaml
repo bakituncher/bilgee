@@ -30,6 +30,8 @@ dependencies:
   cloud_functions: ^5.0.1
   firebase_app_check: ^0.3.1+2  # SafetyNet'ten Play Integrity'ye geçiş için güncellenmiş sürüm
   firebase_messaging: ^15.0.3
+  firebase_crashlytics: ^4.1.3
+  firebase_analytics: ^11.3.3
 
   # Bildirimlerin foreground'da gösterimi için
   flutter_local_notifications: ^17.2.1
@@ -75,6 +77,9 @@ dependencies:
 
   # Environment variables for secure API key management
   flutter_dotenv: ^5.1.0
+
+  # Google AdMob
+  google_mobile_ads: ^5.2.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

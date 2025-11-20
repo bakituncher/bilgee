@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:taktik/data/providers/activity_tracker_provider.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
 
@@ -30,10 +29,6 @@ class _AIToolsOfferScreenState extends ConsumerState<AIToolsOfferScreen> with Ti
       curve: Curves.easeOut,
     );
     _fadeController.forward();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(activityTrackerProvider).markToolOfferShown();
-    });
   }
 
   @override

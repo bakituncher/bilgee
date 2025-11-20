@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:taktik/data/models/test_model.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
+import 'package:taktik/data/providers/temporary_access_provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
@@ -442,6 +443,7 @@ class _ArchiveListTile extends ConsumerWidget {
     final acc = _accuracy(test);
     final isDark = theme.brightness == Brightness.dark;
     final isPremium = ref.watch(premiumStatusProvider);
+    final hasTemporaryAccess = ref.watch(hasArchiveAccessProvider);
 
     return Container(
       decoration: BoxDecoration(
@@ -468,7 +470,7 @@ class _ArchiveListTile extends ConsumerWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
           onTap: () {
-            if (isPremium) {
+            if (isPremium || hasTemporaryAccess) {
               context.push('/home/test-result-summary', extra: test);
             } else {
               context.push('/stats-premium-offer?source=archive');

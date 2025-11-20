@@ -10,9 +10,12 @@ import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:taktik/features/stats/logic/stats_analysis.dart';
 import 'package:lottie/lottie.dart';
-import 'package:taktik/data/providers/activity_tracker_provider.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
+import 'package:taktik/core/services/admob_service.dart';
+import 'package:taktik/utils/age_helper.dart';
+import 'package:taktik/data/providers/monetization_provider.dart';
+import 'package:taktik/core/services/monetization_manager.dart';
 
 class Step3Summary extends ConsumerWidget {
   const Step3Summary({super.key});
@@ -106,13 +109,28 @@ class Step3Summary extends ConsumerWidget {
                   await _showSuccessDialog(context);
                 }
 
-                // Her deneme eklendiğinde AI Tools Offer göster (sadece premium olmayan kullanıcılara, 1 saat içinde max 5 kez)
+                // Akıllı monetizasyon sistemi: Her 5 testin 4'ü reklam, 1'i paywall
                 final isPremium = ref.read(premiumStatusProvider);
-                final shouldShowOffer = !isPremium && ref.read(activityTrackerProvider).shouldShowToolOfferForTest();
 
-                if (shouldShowOffer && context.mounted) {
-                  await ref.read(activityTrackerProvider).markToolOfferShown();
-                  await context.push(AppRoutes.aiToolsOffer);
+                if (!isPremium && context.mounted) {
+                  // Premium değilse, akıllı sistem karar verir
+                  final monetizationManager = ref.read(monetizationManagerProvider);
+                  final action = monetizationManager.getActionAfterTestSubmission();
+                  final isUnder18 = AgeHelper.isUnder18(user.dateOfBirth);
+
+                  switch (action) {
+                    case MonetizationAction.showPaywall:
+                      // Paywall göster
+                      await context.push(AppRoutes.aiToolsOffer);
+                      break;
+                    case MonetizationAction.showAd:
+                      // Reklam göster
+                      await AdMobService().showInterstitialAd(isUnder18: isUnder18, isPremium: isPremium);
+                      break;
+                    case MonetizationAction.showNothing:
+                      // Hiçbir şey gösterme (cooldown aktif)
+                      break;
+                  }
                 }
 
                 if (context.mounted) {

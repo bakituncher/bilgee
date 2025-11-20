@@ -5,6 +5,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taktik/data/models/plan_model.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/data/providers/premium_provider.dart';
+import 'package:taktik/shared/widgets/ad_banner_widget.dart';
 import 'package:intl/intl.dart';
 import '../logic/pomodoro_notifier.dart';
 
@@ -144,6 +146,22 @@ class PomodoroTimerView extends ConsumerWidget {
         Text(
           'İpucu: Zamanlayıcıya çift dokunarak başlat/duraklat, uzun basarak ayarlara aç.',
           style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+        ),
+        const SizedBox(height: 16),
+        // Banner Reklam
+        Consumer(
+          builder: (context, ref, _) {
+            final isPremium = ref.watch(premiumStatusProvider);
+            final userProfile = ref.watch(userProfileProvider).value;
+            final isUnder18 = userProfile?.dateOfBirth != null
+                ? DateTime.now().difference(userProfile!.dateOfBirth!).inDays < 6570 // 18 yaş = 6570 gün
+                : false;
+
+            return AdBannerWidget(
+              isUnder18: isUnder18,
+              isPremium: isPremium,
+            );
+          },
         ),
       ],
     ).animate().fadeIn(duration: 500.ms);

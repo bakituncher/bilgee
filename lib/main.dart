@@ -2,11 +2,14 @@
 //Rahman ve Rahim olan Allah'ın adıyla
 //Bismilahirrahmanirrahim
 import 'dart:async';
+import 'dart:ui';
 import 'package:taktik/core/navigation/app_router.dart';
 import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/core/theme/theme_provider.dart'; // EKLENDİ
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/foundation.dart'; // kDebugMode için bu import gerekli
 import 'package:flutter/material.dart';
 // SystemChrome için gerekli
@@ -22,6 +25,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:taktik/core/services/admob_service.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -40,6 +44,14 @@ void main() async {
       debugPrint('[FlutterError] ${details.exceptionAsString()}');
       debugPrint(details.stack?.toString());
     }
+    // Firebase Crashlytics'e hata gönder
+    FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+  };
+
+  // Asenkron hatalar için de Crashlytics'e gönder
+  PlatformDispatcher.instance.onError = (error, stack) {
+    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    return true;
   };
 
   await runZonedGuarded(() async {
@@ -72,12 +84,29 @@ void main() async {
       return;
     }
 
+    // Firebase Crashlytics'i yapılandır
+    // Debug modunda Crashlytics'i etkinleştir (isteğe bağlı)
+    await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(!kDebugMode);
+
+    // Firebase Analytics'i yapılandır - AD_ID kullanmadan
+    await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(true);
+
     // Initialize RevenueCat
     try {
       await RevenueCatService.init();
     } catch (e) {
       if (kDebugMode) {
         debugPrint('[RevenueCat] Initialization failed: $e');
+      }
+    }
+
+    // Initialize AdMob
+    try {
+      final admobService = AdMobService();
+      await admobService.initialize();
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[AdMob] Initialization failed: $e');
       }
     }
 
@@ -156,6 +185,8 @@ void main() async {
       debugPrint('[Zoned] Yakalanmamış hata: $error');
       debugPrint(stack.toString());
     }
+    // Firebase Crashlytics'e hata gönder
+    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
   });
 }
 

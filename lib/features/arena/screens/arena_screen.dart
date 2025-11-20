@@ -12,6 +12,8 @@ import 'package:flutter/services.dart';
 import 'dart:ui';
 import 'package:taktik/shared/widgets/logo_loader.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
+import 'package:taktik/shared/widgets/ad_banner_widget.dart';
+import 'package:taktik/utils/age_helper.dart';
 
 class ArenaScreen extends ConsumerStatefulWidget {
   const ArenaScreen({super.key});
@@ -86,13 +88,15 @@ class _LeaderboardView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentUserId = ref.watch(authControllerProvider).value?.uid;
-    final currentUserExam = ref.watch(userProfileProvider).value?.selectedExam;
+    final currentUser = ref.watch(userProfileProvider).value;
+    final currentUserExam = currentUser?.selectedExam;
 
     if (currentUserExam == null) return const SizedBox.shrink();
     final leaderboardAsync = period == 'weekly'
         ? ref.watch(leaderboardWeeklyProvider(currentUserExam))
         : ref.watch(leaderboardDailyProvider(currentUserExam));
     final colorScheme = Theme.of(context).colorScheme;
+    final isUnder18 = AgeHelper.isUnder18(currentUser?.dateOfBirth);
 
     return RefreshIndicator(
       color: colorScheme.secondary,
@@ -136,21 +140,31 @@ class _LeaderboardView extends ConsumerWidget {
                   : 1;
 
               final displayList = fullList.take(20).toList();
-              final itemCount = displayList.length + (showCurrentUserAtBottom ? 1 : 0);
+              final itemCount = displayList.length + (showCurrentUserAtBottom ? 1 : 0) + 1; // +1 for banner
 
               return ListView.builder(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(14, 16, 14, 36),
                 itemCount: itemCount,
                 itemBuilder: (context, index) {
-                  if (showCurrentUserAtBottom && index == itemCount - 1) {
+                  // Banner at the top (hidden for premium users)
+                  if (index == 0) {
+                    final isPremium = currentUser?.isPremium ?? false;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12.0),
+                      child: AdBannerWidget(isUnder18: isUnder18, isPremium: isPremium),
+                    );
+                  }
+
+                  final adjustedIndex = index - 1; // Adjust for banner
+                  if (showCurrentUserAtBottom && adjustedIndex == displayList.length) {
                     return Padding(
                       padding: const EdgeInsets.only(top: 20.0),
                       child: _CurrentUserCard(entry: currentUserEntry),
                     );
                   }
 
-                  final entry = displayList[index];
+                  final entry = displayList[adjustedIndex];
                   return GestureDetector(
                     onTap: () {
                       HapticFeedback.selectionClick();

@@ -1,8 +1,13 @@
 // lib/features/stats/screens/stats_premium_offer_screen.dart
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
+import 'package:taktik/core/services/admob_service.dart';
+import 'package:taktik/data/providers/temporary_access_provider.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/utils/age_helper.dart';
 
 class StatsPremiumOfferScreen extends ConsumerStatefulWidget {
   final String? source; // 'archive' veya 'stats'
@@ -389,50 +394,174 @@ class _StatsPremiumOfferScreenState extends ConsumerState<StatsPremiumOfferScree
                                 ),
                               ),
 
-                              // CTA
+                              // CTA Buttons
                               Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
+                                  // Reklam İzle Butonu
                                   SizedBox(
                                     width: double.infinity,
                                     child: ElevatedButton(
-                                      onPressed: () => context.go('/premium'),
+                                      onPressed: () async {
+                                        final userProfile = ref.read(userProfileProvider).value;
+                                        final isUnder18 = userProfile != null ? AgeHelper.isUnder18(userProfile.dateOfBirth) : false;
+
+                                        // Rewarded ad'ı önceden yükle
+                                        AdMobService().preloadRewardedAd(isUnder18: isUnder18);
+
+                                        // Loading dialog göster
+                                        if (!context.mounted) return;
+                                        showDialog(
+                                          context: context,
+                                          barrierDismissible: false,
+                                          builder: (ctx) => Center(
+                                            child: Container(
+                                              padding: const EdgeInsets.all(24),
+                                              decoration: BoxDecoration(
+                                                color: theme.scaffoldBackgroundColor,
+                                                borderRadius: BorderRadius.circular(16),
+                                              ),
+                                              child: Column(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  const CircularProgressIndicator(),
+                                                  const SizedBox(height: 16),
+                                                  Text('Reklam yükleniyor...',
+                                                      style: theme.textTheme.bodyMedium),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        );
+
+                                        // Reklam hazır olana kadar bekle (max 5 saniye)
+                                        int waitCount = 0;
+                                        while (!AdMobService().isRewardedAdReady && waitCount < 50) {
+                                          await Future.delayed(const Duration(milliseconds: 100));
+                                          waitCount++;
+                                        }
+
+                                        if (!context.mounted) return;
+                                        Navigator.of(context).pop(); // Loading dialog'u kapat
+
+                                        if (!AdMobService().isRewardedAdReady) {
+                                          if (!context.mounted) return;
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(
+                                              content: Text('Reklam yüklenemedi. Lütfen internet bağlantınızı kontrol edin.'),
+                                              backgroundColor: Colors.red,
+                                            ),
+                                          );
+                                          return;
+                                        }
+
+                                        // Reklamı göster
+                                        final rewardEarned = await AdMobService().showRewardedAd(isUnder18: isUnder18);
+
+                                        debugPrint('🔍 Reward earned result: $rewardEarned');
+
+                                        if (rewardEarned) {
+                                          // Premium features'a geçici erişim ver (Stats + Archive)
+                                          final tempAccess = ref.read(temporaryAccessProvider);
+                                          await tempAccess.grantPremiumFeaturesAccess();
+                                          debugPrint('✅ Premium features access granted (Stats + Archive)');
+
+                                          // Erişim kontrolü
+                                          final hasAccess = tempAccess.hasPremiumFeaturesAccess();
+                                          debugPrint('🔍 Access verification: $hasAccess');
+
+                                          // Önce offer ekranını kapat
+                                          if (!context.mounted) return;
+                                          Navigator.of(context).pop();
+
+                                          // Ekranın tamamen kapanmasını bekle
+                                          await Future.delayed(const Duration(milliseconds: 300));
+
+                                          // Başarı mesajı göster
+                                          if (!context.mounted) return;
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text('🎉 Erişim kazandınız!'),
+                                              backgroundColor: colorScheme.secondary,
+                                              duration: const Duration(seconds: 2),
+                                            ),
+                                          );
+
+                                          // Biraz daha bekle
+                                          await Future.delayed(const Duration(milliseconds: 200));
+
+                                          if (!context.mounted) return;
+
+                                          // Ekrana yönlendir
+                                          if (widget.source == 'archive') {
+                                            context.go('/library');
+                                          } else {
+                                            context.go('/home/stats');
+                                          }
+                                        } else {
+                                          debugPrint('❌ Reward not earned');
+                                          if (!context.mounted) return;
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(
+                                              content: Text('Reklamı tamamlamalısınız'),
+                                              backgroundColor: Colors.orange,
+                                            ),
+                                          );
+                                        }
+                                      },
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: colorScheme.primary,
-                                        foregroundColor: Colors.white,
+                                        backgroundColor: colorScheme.secondary,
+                                        foregroundColor: Colors.black,
                                         padding: const EdgeInsets.symmetric(vertical: 14),
                                         shape: RoundedRectangleBorder(
                                             borderRadius: BorderRadius.circular(12)),
+                                        elevation: 2,
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          const Icon(Icons.play_circle_outline_rounded, size: 22),
+                                          const SizedBox(width: 8),
+                                          Text('Reklam İzle',
+                                              style: theme.textTheme.titleSmall?.copyWith(
+                                                  color: Colors.black, fontWeight: FontWeight.bold)),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  // Premium'a Geç Butonu
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: OutlinedButton(
+                                      onPressed: () => context.go('/premium'),
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: colorScheme.primary,
+                                        padding: const EdgeInsets.symmetric(vertical: 14),
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(12)),
+                                        side: BorderSide(color: colorScheme.primary, width: 2),
                                       ),
                                       child: Row(
                                         mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
                                           const Icon(Icons.workspace_premium_rounded, size: 20),
                                           const SizedBox(width: 8),
-                                          Text('Premium\'a Yükselt',
+                                          Text('Premium\'a Geç',
                                               style: theme.textTheme.titleSmall?.copyWith(
-                                                  color: Colors.white, fontWeight: FontWeight.bold)),
+                                                  color: colorScheme.primary, fontWeight: FontWeight.bold)),
                                         ],
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(height: 6),
-                                  TextButton(
-                                    onPressed: () {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                            content: Text('Satın alımlar kontrol ediliyor...')),
-                                      );
-                                    },
-                                    style: TextButton.styleFrom(
-                                      minimumSize: const Size(0, 28),
-                                      padding: EdgeInsets.zero,
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Reklamla geçici erişim, Premium ile sınırsız!',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+                                      fontSize: 11,
                                     ),
-                                    child: Text('Satın alımları geri yükle',
-                                        style: theme.textTheme.bodySmall?.copyWith(
-                                          color: colorScheme.onSurfaceVariant.withOpacity(0.6),
-                                          fontSize: 10,
-                                        )),
+                                    textAlign: TextAlign.center,
                                   ),
                                 ],
                               ),

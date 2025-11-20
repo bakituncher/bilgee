@@ -41,6 +41,17 @@
 -keep class com.google.firebase.messaging.** { *; }
 -keep class com.google.firebase.iid.** { *; }
 
+# Firebase Crashlytics kuralları
+-keep class com.google.firebase.crashlytics.** { *; }
+-keep class com.google.firebase.crashlytics.internal.** { *; }
+-dontwarn com.google.firebase.crashlytics.**
+-keepattributes SourceFile,LineNumberTable
+
+# Firebase Analytics kuralları
+-keep class com.google.firebase.analytics.** { *; }
+-keep class com.google.android.gms.measurement.** { *; }
+-dontwarn com.google.firebase.analytics.**
+
 # Google Sign In kuralları
 -keep class com.google.android.gms.auth.** { *; }
 -keep class com.google.android.gms.common.** { *; }
