@@ -1,6 +1,5 @@
 // lib/features/home/screens/test_result_summary_screen.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taktik/data/models/test_model.dart';
 import 'package:taktik/features/home/widgets/summary_widgets/verdict_card.dart';
@@ -42,6 +41,7 @@ class TestResultSummaryScreen extends StatelessWidget {
         title: const Text("Savaş Raporu"),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        automaticallyImplyLeading: false,
       ),
       backgroundColor: theme.scaffoldBackgroundColor,
       body: Container(
@@ -62,6 +62,7 @@ class TestResultSummaryScreen extends StatelessWidget {
         ),
         child: ListView(
           padding: const EdgeInsets.all(16.0),
+          physics: const BouncingScrollPhysics(),
           children: [
             // Compact header card
             Container(
@@ -181,7 +182,7 @@ class TestResultSummaryScreen extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: OutlinedButton.icon(
-                    icon: Icon(Icons.forum_rounded, size: 18),
+                    icon: const Icon(Icons.forum_rounded, size: 18),
                     label: Text(
                       isGoodResult ? "Zaferi Kutla!" : "Değerlendir",
                       style: const TextStyle(fontSize: 13),
@@ -198,8 +199,8 @@ class TestResultSummaryScreen extends StatelessWidget {
                   ),
                 ),
               ],
-            ).animate().fadeIn(duration: 300.ms, delay: 80.ms).slideY(begin: 0.1),
-          ].animate(interval: 80.ms).fadeIn(duration: 400.ms).slideY(begin: 0.15),
+            ),
+          ],
         ),
       ),
       bottomNavigationBar: Padding(
