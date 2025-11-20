@@ -438,7 +438,41 @@ class _StatChip extends StatelessWidget {
 }
 
 class _GalaxyToolbar extends StatelessWidget {
-  final TextEditingController controller; final ValueChanged<String> onChanged; final GalaxyViewMode currentMode; final ValueChanged<GalaxyViewMode> onModeChanged; const _GalaxyToolbar({required this.controller, required this.onChanged, required this.currentMode, required this.onModeChanged});
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+  final GalaxyViewMode currentMode;
+  final ValueChanged<GalaxyViewMode> onModeChanged;
+
+  const _GalaxyToolbar({
+    required this.controller,
+    required this.onChanged,
+    required this.currentMode,
+    required this.onModeChanged
+  });
+
+  double _calculateFontSize(BuildContext context, String text, double maxWidth) {
+    const minFontSize = 11.0;
+    const maxFontSize = 14.0;
+
+    // TextPainter ile metin genişliğini hesapla
+    for (double fontSize = maxFontSize; fontSize >= minFontSize; fontSize -= 0.5) {
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: text,
+          style: TextStyle(fontSize: fontSize),
+        ),
+        maxLines: 1,
+        textDirection: TextDirection.ltr,
+      )..layout();
+
+      if (textPainter.width <= maxWidth) {
+        return fontSize;
+      }
+    }
+
+    return minFontSize;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -483,38 +517,51 @@ class _GalaxyToolbar extends StatelessWidget {
     }
     return Row(children:[
       Expanded(
-        child: TextField(
-          controller: controller,
-          onChanged: onChanged,
-          decoration: InputDecoration(
-            isDense:true,
-            hintText:'Konu Ara...',
-            filled:true,
-            fillColor: isDark 
-              ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)
-              : Colors.white,
-            prefixIcon: Icon(Icons.search, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
-            hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16), 
-              borderSide: BorderSide(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(isDark ? 0.1 : 0.2),
-                width: isDark ? 1 : 1.5
-              )
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16), 
-              borderSide: BorderSide(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(isDark ? 0.1 : 0.2),
-                width: isDark ? 1 : 1.5
-              )
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16), 
-              borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2)
-            ),
-          ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // Dinamik hint text boyutu hesaplama
+            final availableWidth = constraints.maxWidth - 70; // prefixIcon + padding için alan
+            final hintText = 'Konu Ara...';
+            final fontSize = _calculateFontSize(context, hintText, availableWidth);
+
+            return TextField(
+              controller: controller,
+              onChanged: onChanged,
+              style: TextStyle(fontSize: fontSize),
+              decoration: InputDecoration(
+                isDense:true,
+                hintText: hintText,
+                filled:true,
+                fillColor: isDark
+                  ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)
+                  : Colors.white,
+                prefixIcon: Icon(Icons.search, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                hintStyle: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: fontSize,
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(isDark ? 0.1 : 0.2),
+                    width: isDark ? 1 : 1.5
+                  )
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(isDark ? 0.1 : 0.2),
+                    width: isDark ? 1 : 1.5
+                  )
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2)
+                ),
+              ),
+            );
+          }
         ),
       ),
       const SizedBox(width:12),

@@ -377,6 +377,8 @@ class FirestoreService {
       dateOfBirth: dateOfBirth,
       profileCompleted: profileCompleted,
       tutorialCompleted: false,
+      avatarStyle: gender == 'male' ? 'avataaars' : 'female',
+      avatarSeed: user.uid,
     );
     await usersCollection.doc(user.uid).set(userProfile.toJson());
 
@@ -921,6 +923,7 @@ class FirestoreService {
       final userSub = usersCollection.doc(userId).snapshots().listen((snap) {
         if (snap.exists) {
           lastUser = UserModel.fromSnapshot(snap);
+
           emitIfReady();
         }
       }, onError: controller.addError);

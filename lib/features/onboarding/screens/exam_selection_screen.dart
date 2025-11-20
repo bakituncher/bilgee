@@ -11,6 +11,46 @@ import 'package:taktik/core/navigation/app_routes.dart';
 class ExamSelectionScreen extends ConsumerWidget {
   const ExamSelectionScreen({super.key});
 
+  Future<bool> _confirmInitialExamSelection(
+    BuildContext context, {
+    required String examDisplayName,
+    String? sectionDisplayName,
+  }) async {
+    final theme = Theme.of(context);
+    final fullName =
+        sectionDisplayName == null ? examDisplayName : '$examDisplayName - $sectionDisplayName';
+
+    return await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Row(
+              children: [
+                Icon(Icons.help_outline, color: theme.colorScheme.primary),
+                const SizedBox(width: 8),
+                const Text('Seçimini Onayla'),
+              ],
+            ),
+            content: Text(
+              '$fullName sınavını seçmek üzeresin. Emin misin?',
+              style: theme.textTheme.bodyMedium,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Vazgeç'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('Evet, Devam Et'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
   Widget _header(BuildContext context, {double progress = 2 / 3}) {
     final theme = Theme.of(context);
     return Column(
@@ -79,6 +119,7 @@ class ExamSelectionScreen extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       builder: (ctx) {
+        final theme = Theme.of(context);
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -88,7 +129,7 @@ class ExamSelectionScreen extends ConsumerWidget {
               children: [
                 Text(
                   'Hangi KPSS türüne hazırlanıyorsun?',
-                  style: Theme.of(context).textTheme.headlineSmall,
+                  style: theme.textTheme.headlineSmall,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
@@ -99,7 +140,7 @@ class ExamSelectionScreen extends ConsumerWidget {
                       Navigator.pop(ctx);
                       _onExamTypeSelected(context, ref, ExamType.kpssLisans);
                     },
-                    child: const Text("Lisans"),
+                    child: const Text('KPSS Lisans'),
                   ),
                 ),
                 Padding(
@@ -109,7 +150,7 @@ class ExamSelectionScreen extends ConsumerWidget {
                       Navigator.pop(ctx);
                       _onExamTypeSelected(context, ref, ExamType.kpssOnlisans);
                     },
-                    child: const Text("Önlisans"),
+                    child: const Text('KPSS Önlisans'),
                   ),
                 ),
                 Padding(
@@ -119,7 +160,7 @@ class ExamSelectionScreen extends ConsumerWidget {
                       Navigator.pop(ctx);
                       _onExamTypeSelected(context, ref, ExamType.kpssOrtaogretim);
                     },
-                    child: const Text("Ortaöğretim"),
+                    child: const Text('KPSS Ortaöğretim'),
                   ),
                 ),
               ],
@@ -135,27 +176,41 @@ class ExamSelectionScreen extends ConsumerWidget {
     final userId = ref.read(authControllerProvider).value!.uid;
     final firestoreService = ref.read(firestoreServiceProvider);
 
-    final proceed = await _confirmResetIfNeeded(context);
-    if (!proceed) return;
+    final isChangeFlow = context.canPop();
 
-    // Eğer değişim akışı ise önce verileri temizle
-    if (context.canPop()) {
+    // Çok bölümlü sınavlarda (YKS) onayı burada değil, alt seçimden sonra alacağız.
+    final isMultiSection = exam.sections.length > 1 && examType != ExamType.lgs;
+
+    if (isChangeFlow) {
+      final proceed = await _confirmResetIfNeeded(context);
+      if (!proceed) return;
       await firestoreService.resetUserDataForNewExam();
     }
 
-    // LGS ve tek bölümlü sınavlar için (KPSS gibi)
-    if (exam.sections.length == 1 || examType == ExamType.lgs) {
-      await _handleSelection(context, ref, () =>
-          firestoreService.saveExamSelection(
-            userId: userId,
-            examType: examType,
-            sectionName: exam.sections.first.name,
-          ),
+    // Tek bölümlü sınavlar (LGS, KPSS alt türleri vb.)
+    if (!isMultiSection) {
+      if (!isChangeFlow) {
+        // KPSS alt türleri için displayName zaten "KPSS Lisans" vb. döndürüyor.
+        final ok = await _confirmInitialExamSelection(
+          context,
+          examDisplayName: examType.displayName,
+        );
+        if (!ok) return;
+      }
+
+      await _handleSelection(
+        context,
+        ref,
+        () => firestoreService.saveExamSelection(
+          userId: userId,
+          examType: examType,
+          sectionName: exam.sections.first.name,
+        ),
       );
       return;
     }
 
-    // YKS gibi çok bölümlü sınavlar için
+    // YKS gibi çok bölümlü sınavlarda önce alan/bölüm seçtir, onayı sonra al.
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -177,24 +232,34 @@ class ExamSelectionScreen extends ConsumerWidget {
                     .where((section) => section.name != 'TYT')
                     .map(
                       (section) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        // Önce modal'ı kapat
-                        Navigator.pop(ctx);
-                        // Sonra seçimi işle
-                        await _handleSelection(context, ref, () =>
-                            firestoreService.saveExamSelection(
-                              userId: userId,
-                              examType: examType,
-                              sectionName: section.name,
-                            ),
-                        );
-                      },
-                      child: Text(section.name),
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            Navigator.pop(ctx);
+
+                            if (!isChangeFlow) {
+                              final ok = await _confirmInitialExamSelection(
+                                context,
+                                examDisplayName: exam.name,
+                                sectionDisplayName: section.name,
+                              );
+                              if (!ok) return;
+                            }
+
+                            await _handleSelection(
+                              context,
+                              ref,
+                              () => firestoreService.saveExamSelection(
+                                userId: userId,
+                                examType: examType,
+                                sectionName: section.name,
+                              ),
+                            );
+                          },
+                          child: Text(section.name),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
               ],
             ),
           ),
@@ -279,3 +344,4 @@ class ExamSelectionScreen extends ConsumerWidget {
     );
   }
 }
+

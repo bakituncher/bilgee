@@ -143,14 +143,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profilimi Düzenle'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.save),
-            // ÇÖZÜM: Sadece form dirty ve loading değilse aktif
-            onPressed: (isLoading || !_formIsDirty) ? null : _submit,
-            tooltip: _formIsDirty ? 'Değişiklikleri Kaydet' : 'Değişiklik yapılmadı',
-          ),
-        ],
       ),
       body: userProfileAsync.when(
         data: (user) {

@@ -364,14 +364,6 @@ class _ProfileView extends ConsumerWidget {
                         ],
                       ),
                       const SizedBox(height: 8),
-                      if (statsUpdatedAt != null)
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: Text(
-                            'Son güncelleme: ${DateFormat('dd MMM yyyy HH:mm', 'tr_TR').format(statsUpdatedAt)}',
-                            style: theme.textTheme.labelSmall?.copyWith(color: colorScheme.onSurface.withOpacity(0.7)),
-                          ),
-                        ),
                       const SizedBox(height: 12),
                       _NeoXpBar(
                         currentXp: user.engagementScore,
@@ -889,7 +881,7 @@ class _NeoXpBar extends StatelessWidget {
             Icon(Icons.flash_on_rounded, size: 16, color: accentProfile2),
             const SizedBox(width: 4),
             Text(
-              'Rütbe Puanı',
+              'Taktik Puanı',
               style: theme.textTheme.labelMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 fontSize: 12,
