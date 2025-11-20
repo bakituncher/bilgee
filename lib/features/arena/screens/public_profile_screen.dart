@@ -622,7 +622,6 @@ class _StatCard extends StatelessWidget {
     return Semantics(
       label: '$label istatistiği: $value',
       child: Container(
-        height: 80,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(18),
           gradient: LinearGradient(
@@ -632,18 +631,26 @@ class _StatCard extends StatelessWidget {
           border: Border.all(color: colorScheme.onSurface.withOpacity(0.12), width: 1),
         ),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Icon(icon, size: 20, color: colorScheme.secondary),
-              const Spacer(),
-              Text(value, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+              const SizedBox(height: 8),
+              Text(value,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
               Text(label,
-                  style: Theme.of(context)
-                      .textTheme
-                      .labelSmall
-                      ?.copyWith(color: colorScheme.onSurface.withOpacity(0.7))),
+                style: Theme.of(context)
+                    .textTheme
+                    .labelSmall
+                    ?.copyWith(color: colorScheme.onSurface.withOpacity(0.7)),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ],
           ),
         ),

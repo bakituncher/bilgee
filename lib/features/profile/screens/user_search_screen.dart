@@ -371,7 +371,7 @@ class _UserSearchTileState extends ConsumerState<_UserSearchTile> {
                         ),
                         loading: () => Container(
                           height: 14,
-                          width: 120,
+                          width: 80,
                           decoration: BoxDecoration(
                             color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(7),
@@ -394,14 +394,13 @@ class _UserSearchTileState extends ConsumerState<_UserSearchTile> {
                   },
                 ),
 
-                const SizedBox(width: 4),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
 
-                // Takip butonu
+                // Takip butonu - sadece ikon
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 200),
                   child: isFollowing
-                      ? OutlinedButton.icon(
+                      ? IconButton.outlined(
                           key: const ValueKey('unfollow'),
                           onPressed: () async {
                             HapticFeedback.lightImpact();
@@ -425,22 +424,14 @@ class _UserSearchTileState extends ConsumerState<_UserSearchTile> {
                               if (mounted) setState(() => _optimistic = null);
                             }
                           },
-                          style: OutlinedButton.styleFrom(
+                          style: IconButton.styleFrom(
                             foregroundColor: Theme.of(context).colorScheme.error,
                             side: BorderSide(color: Theme.of(context).colorScheme.error),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 10,
-                            ),
-                            minimumSize: const Size(0, 40),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
                           ),
-                          icon: const Icon(Icons.person_remove_alt_1, size: 18),
-                          label: const Text('Takipten Çıkar'),
+                          icon: const Icon(Icons.person_remove_alt_1, size: 20),
+                          tooltip: 'Takipten Çıkar',
                         )
-                      : FilledButton.tonalIcon(
+                      : IconButton.filledTonal(
                           key: const ValueKey('follow'),
                           onPressed: () async {
                             HapticFeedback.lightImpact();
@@ -472,20 +463,12 @@ class _UserSearchTileState extends ConsumerState<_UserSearchTile> {
                               if (mounted) setState(() => _optimistic = null);
                             }
                           },
-                          style: FilledButton.styleFrom(
+                          style: IconButton.styleFrom(
                             backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.18),
                             foregroundColor: Theme.of(context).colorScheme.primary,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 10,
-                            ),
-                            minimumSize: const Size(0, 40),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
                           ),
-                          icon: const Icon(Icons.person_add_alt_1, size: 18),
-                          label: const Text('Takip Et'),
+                          icon: const Icon(Icons.person_add_alt_1, size: 20),
+                          tooltip: 'Takip Et',
                         ),
                 ),
               ],
