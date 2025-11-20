@@ -24,11 +24,26 @@ class AdMobService {
 
     try {
       await MobileAds.instance.initialize();
+
+      // --- EKLENECEK KISIM BAŞLANGICI ---
+      // Aile politikası için genel yapılandırma.
+      // Bu ayar, uygulamanın varsayılan olarak "Genel İzleyici (G)" kitlesine uygun reklamlar almasını garantiye alır.
+      // Yetişkin içerikli reklamların yanlışlıkla bile olsa gösterilmesini engeller.
+      RequestConfiguration configuration = RequestConfiguration(
+        maxAdContentRating: MaxAdContentRating.g, // Sadece G (General) dereceli reklamlar
+        tagForChildDirectedTreatment: TagForChildDirectedTreatment.yes, // COPPA uyumluluğu için
+        tagForUnderAgeOfConsent: TagForUnderAgeOfConsent.yes, // GDPR uyumluluğu için (Avrupa)
+      );
+
+      await MobileAds.instance.updateRequestConfiguration(configuration);
+      // --- EKLENECEK KISIM SONU ---
+
       _initialized = true;
 
       // İlk interstitial ve rewarded reklamları yükle
-      _loadInterstitialAd();
-      _loadRewardedAd();
+      // Not: Başlangıçta kullanıcının yaşını bilmiyorsanız varsayılan olarak isUnder18: true kabul etmek en güvenlisidir.
+      _loadInterstitialAd(isUnder18: true);
+      _loadRewardedAd(isUnder18: true);
 
       debugPrint('✅ AdMob initialized successfully');
     } catch (e) {
