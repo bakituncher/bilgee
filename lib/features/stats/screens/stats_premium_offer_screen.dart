@@ -466,33 +466,28 @@ class _StatsPremiumOfferScreenState extends ConsumerState<StatsPremiumOfferScree
                                           await tempAccess.grantPremiumFeaturesAccess();
                                           debugPrint('✅ Premium features access granted (Stats + Archive)');
 
+                                          // Provider'ı invalidate et - state'i yenile
+                                          ref.invalidate(hasPremiumFeaturesAccessProvider);
+
+                                          // State güncellenmesini bekle
+                                          await Future.delayed(const Duration(milliseconds: 100));
+
                                           // Erişim kontrolü
-                                          final hasAccess = tempAccess.hasPremiumFeaturesAccess();
-                                          debugPrint('🔍 Access verification: $hasAccess');
+                                          final hasAccess = ref.read(hasPremiumFeaturesAccessProvider);
+                                          debugPrint('🔍 Access verification after invalidate: $hasAccess');
 
-                                          // Önce offer ekranını kapat
                                           if (!context.mounted) return;
-                                          Navigator.of(context).pop();
-
-                                          // Ekranın tamamen kapanmasını bekle
-                                          await Future.delayed(const Duration(milliseconds: 300));
 
                                           // Başarı mesajı göster
-                                          if (!context.mounted) return;
                                           ScaffoldMessenger.of(context).showSnackBar(
                                             SnackBar(
-                                              content: Text('🎉 Erişim kazandınız!'),
+                                              content: const Text('🎉 Erişim kazandınız!'),
                                               backgroundColor: colorScheme.secondary,
                                               duration: const Duration(seconds: 2),
                                             ),
                                           );
 
-                                          // Biraz daha bekle
-                                          await Future.delayed(const Duration(milliseconds: 200));
-
-                                          if (!context.mounted) return;
-
-                                          // Ekrana yönlendir
+                                          // Ekrana yönlendir - context.go direkt olarak kullan (pop'a gerek yok)
                                           if (widget.source == 'archive') {
                                             context.go('/library');
                                           } else {

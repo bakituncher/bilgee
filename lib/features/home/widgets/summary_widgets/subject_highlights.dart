@@ -15,7 +15,7 @@ class SubjectHighlights extends StatelessWidget {
               child: _HighlightCard(
                 icon: Icons.shield_rounded,
                 iconColor: Colors.green,
-                title: "Kal'en (En Güçlü Alan)",
+                title: "Kalen (En Güçlü Alan)",
                 subject: keySubjects['strongest']!.key,
                 net: keySubjects['strongest']!.value,
               ),

@@ -1,6 +1,5 @@
 // lib/features/home/screens/test_result_summary_screen.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taktik/data/models/test_model.dart';
 import 'package:taktik/features/home/widgets/summary_widgets/verdict_card.dart';
@@ -12,8 +11,9 @@ import 'package:taktik/features/auth/application/auth_controller.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:intl/intl.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
+import 'package:taktik/data/providers/premium_provider.dart';
 
-class TestResultSummaryScreen extends StatelessWidget {
+class TestResultSummaryScreen extends ConsumerWidget {
   final TestModel test;
 
   const TestResultSummaryScreen({super.key, required this.test});
@@ -28,7 +28,7 @@ class TestResultSummaryScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final wisdomScore = test.wisdomScore;
     final verdict = test.expertVerdict;
     final keySubjects = test.findKeySubjects();
@@ -36,12 +36,14 @@ class TestResultSummaryScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
+    final isPremium = ref.watch(premiumStatusProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text("Savaş Raporu"),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        automaticallyImplyLeading: false,
       ),
       backgroundColor: theme.scaffoldBackgroundColor,
       body: Container(
@@ -62,6 +64,7 @@ class TestResultSummaryScreen extends StatelessWidget {
         ),
         child: ListView(
           padding: const EdgeInsets.all(16.0),
+          physics: const BouncingScrollPhysics(),
           children: [
             // Compact header card
             Container(
@@ -181,7 +184,7 @@ class TestResultSummaryScreen extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: OutlinedButton.icon(
-                    icon: Icon(Icons.forum_rounded, size: 18),
+                    icon: const Icon(Icons.forum_rounded, size: 18),
                     label: Text(
                       isGoodResult ? "Zaferi Kutla!" : "Değerlendir",
                       style: const TextStyle(fontSize: 13),
@@ -192,14 +195,29 @@ class TestResultSummaryScreen extends StatelessWidget {
                       side: BorderSide(color: isGoodResult ? colorScheme.secondary : colorScheme.primary),
                     ),
                     onPressed: () {
-                      final prompt = isGoodResult ? 'new_test_good' : 'new_test_bad';
-                      context.push('${AppRoutes.aiHub}/${AppRoutes.motivationChat}', extra: prompt);
+                      if (isPremium) {
+                        // Premium kullanıcı - AI sohbete yönlendir
+                        final prompt = isGoodResult ? 'new_test_good' : 'new_test_bad';
+                        context.push('${AppRoutes.aiHub}/${AppRoutes.motivationChat}', extra: prompt);
+                      } else {
+                        // Premium olmayan kullanıcı - Tool Offer Screen'e yönlendir (Analiz & Strateji)
+                        context.push('/ai-hub/offer', extra: {
+                          'title': 'Analiz & Strateji',
+                          'subtitle': 'Deneme değerlendirme ve strateji danışmanı',
+                          'icon': Icons.dashboard_customize_rounded,
+                          'color': Colors.amberAccent,
+                          'heroTag': 'analysis-strategy-offer',
+                          'marketingTitle': 'Akıllı Deneme Analizi',
+                          'marketingSubtitle': 'Deneme sınavlarınızı yapay zeka ile derinlemesine analiz edin. Hangi konulara odaklanmanız gerektiğini öğrenin, her zaman zirvede kalın.',
+                          'redirectRoute': '/ai-hub/analysis-strategy',
+                        });
+                      }
                     },
                   ),
                 ),
               ],
-            ).animate().fadeIn(duration: 300.ms, delay: 80.ms).slideY(begin: 0.1),
-          ].animate(interval: 80.ms).fadeIn(duration: 400.ms).slideY(begin: 0.15),
+            ),
+          ],
         ),
       ),
       bottomNavigationBar: Padding(

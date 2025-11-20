@@ -189,7 +189,7 @@ class _ArchiveButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isPremium = ref.watch(premiumStatusProvider);
-    final hasTemporaryAccess = ref.watch(hasArchiveAccessProvider);
+    final hasTemporaryAccess = ref.watch(hasPremiumFeaturesAccessProvider);
 
     return InkWell(
       onTap: () {

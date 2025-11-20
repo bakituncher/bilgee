@@ -15,11 +15,22 @@ class Step2ScoreEntry extends ConsumerStatefulWidget {
 
 class _Step2ScoreEntryState extends ConsumerState<Step2ScoreEntry> {
   late PageController _pageController;
+  int _currentPage = 0;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
+    _pageController.addListener(_onPageChanged);
+  }
+
+  void _onPageChanged() {
+    final page = _pageController.page?.round() ?? 0;
+    if (page != _currentPage) {
+      setState(() {
+        _currentPage = page;
+      });
+    }
   }
 
   @override
@@ -45,24 +56,19 @@ class _Step2ScoreEntryState extends ConsumerState<Step2ScoreEntry> {
             itemBuilder: (context, index) {
               final subjectEntry = subjects[index];
               return _SubjectScoreCard(
-                key: ValueKey(subjectEntry.key), // Hata buradaydı, key geri eklendi.
+                key: ValueKey(subjectEntry.key),
                 subjectName: subjectEntry.key,
                 details: subjectEntry.value,
                 isFirst: index == 0,
                 isLast: index == subjects.length - 1,
+                currentPage: _currentPage,
+                totalPages: subjects.length,
                 onNext: () => _pageController.nextPage(duration: 300.ms, curve: Curves.easeOut),
                 onPrevious: () => _pageController.previousPage(duration: 300.ms, curve: Curves.easeOut),
               );
             },
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: ElevatedButton(
-            onPressed: () => ref.read(addTestProvider.notifier).nextStep(),
-            child: const Text('Özeti Görüntüle'),
-          ),
-        )
       ],
     );
   }
@@ -72,15 +78,17 @@ class _SubjectScoreCard extends ConsumerWidget {
   final String subjectName;
   final SubjectDetails details;
   final bool isFirst, isLast;
+  final int currentPage, totalPages;
   final VoidCallback onNext, onPrevious;
 
-  // DÜZELTİLDİ: Key parametresi tekrar eklendi.
   const _SubjectScoreCard({
     super.key,
     required this.subjectName,
     required this.details,
     required this.isFirst,
     required this.isLast,
+    required this.currentPage,
+    required this.totalPages,
     required this.onNext,
     required this.onPrevious,
   });
@@ -137,15 +145,57 @@ class _SubjectScoreCard extends ConsumerWidget {
             ],
           ),
           const Spacer(),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              if (!isFirst) IconButton(icon: const Icon(Icons.arrow_back_ios), onPressed: onPrevious),
-              if (isFirst) const Spacer(),
-              if (!isLast) IconButton(icon: const Icon(Icons.arrow_forward_ios), onPressed: onNext),
-              if (isLast) const Spacer(),
-            ],
-          )
+          // Sabit yükseklikte alan - "Özeti Görüntüle" butonu için
+          SizedBox(
+            height: 80,
+            child: isLast
+                ? Center(
+                    child: ElevatedButton.icon(
+                      onPressed: () => notifier.nextStep(),
+                      icon: const Icon(Icons.summarize),
+                      label: const Text('Özeti Görüntüle'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                      ),
+                    ),
+                  )
+                : null,
+          ),
+          const SizedBox(height: 16),
+          // Navigation butonları - her zaman aynı yerde
+          SizedBox(
+            height: 48,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                SizedBox(
+                  width: 48,
+                  child: !isFirst
+                      ? IconButton(
+                          icon: const Icon(Icons.arrow_back_ios),
+                          onPressed: onPrevious,
+                        )
+                      : null,
+                ),
+                // Ortada sayfa göstergesi
+                Text(
+                  '${currentPage + 1} / $totalPages',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
+                SizedBox(
+                  width: 48,
+                  child: !isLast
+                      ? IconButton(
+                          icon: const Icon(Icons.arrow_forward_ios),
+                          onPressed: onNext,
+                        )
+                      : null,
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
