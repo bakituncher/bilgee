@@ -1,6 +1,5 @@
 // lib/shared/widgets/side_panel_drawer.dart
 import 'package:taktik/data/providers/firestore_providers.dart';
-import 'package:taktik/data/providers/admin_providers.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:flutter/material.dart';
@@ -8,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taktik/features/profile/logic/rank_service.dart';
-import 'package:taktik/shared/widgets/premium_badge.dart';
 
 class SidePanelDrawer extends ConsumerStatefulWidget {
   const SidePanelDrawer({super.key});
@@ -56,16 +54,16 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Header (sade)
+                // Header - Büyük ve Şık
                 InkWell(
                   onTap: () { Navigator.of(context).pop(); context.go('/profile'); },
                   child: Container(
-                    margin: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+                    margin: const EdgeInsets.fromLTRB(12, 12, 12, 10),
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
-                      color: colorScheme.surfaceContainerHighest.withOpacity(.18),
-                      border: Border.all(color: colorScheme.surfaceContainerHighest.withOpacity(.28)),
+                      color: colorScheme.surfaceContainerHighest.withOpacity(.15),
+                      border: Border.all(color: colorScheme.surfaceContainerHighest.withOpacity(.25)),
                     ),
                     child: Row(
                       children: [
@@ -74,56 +72,52 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
                                 user?.name ?? 'Gezgin',
-                                style: theme.textTheme.titleLarge,
+                                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 3),
                               Row(
                                 children: [
-                                  Icon(Icons.workspace_premium_rounded, size: 16, color: colorScheme.primary),
-                                  const SizedBox(width: 6),
+                                  Icon(Icons.workspace_premium_rounded, size: 14, color: colorScheme.primary),
+                                  const SizedBox(width: 5),
                                   Expanded(
                                     child: Text(
                                       rankInfo.current.name,
-                                      style: theme.textTheme.titleMedium?.copyWith(color: colorScheme.primary, fontWeight: FontWeight.w700),
+                                      style: theme.textTheme.labelMedium?.copyWith(color: colorScheme.primary, fontWeight: FontWeight.w600),
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
+                                  const SizedBox(width: 6),
+                                  Text('${user?.engagementScore ?? 0} BP', style: theme.textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant.withOpacity(.7))),
                                 ],
                               ),
-                              const SizedBox(height: 6),
+                              const SizedBox(height: 5),
                               ClipRRect(
-                                borderRadius: BorderRadius.circular(6),
+                                borderRadius: BorderRadius.circular(4),
                                 child: LinearProgressIndicator(
                                   value: rankInfo.progress,
-                                  minHeight: 6,
+                                  minHeight: 5,
                                   backgroundColor: colorScheme.surfaceContainerHighest.withOpacity(.25),
                                   valueColor: AlwaysStoppedAnimation(colorScheme.primary),
                                 ),
                               ),
-                              const SizedBox(height: 4),
-                              Text('BP ${user?.engagementScore ?? 0}', style: theme.textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant)),
                             ],
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Icon(Icons.chevron_right_rounded, color: colorScheme.onSurfaceVariant),
+                        Icon(Icons.chevron_right_rounded, size: 20, color: colorScheme.onSurfaceVariant.withOpacity(.6)),
                       ],
                     ),
                   ),
                 ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: _SectionLabel('Genel'),
-                ),
-                const SizedBox(height: 4),
-                // Navigation items
+                // Navigation items - Tam Ekran Kullanımı
                 Expanded(
                   child: ListView(
-                    padding: EdgeInsets.zero,
+                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
                     children: [
                       _navTile(context, currentLocation: location, icon: Icons.dashboard_rounded, title: 'Ana Panel', route: '/home'),
                       _navTile(context, currentLocation: location, icon: Icons.bar_chart_rounded, title: 'Deneme Gelişimi', route: '/home/stats'),
@@ -131,75 +125,59 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                       _navTile(context, currentLocation: location, icon: Icons.shield_moon_rounded, title: 'Günlük Görevler', route: '/home/quests'),
                       _navTile(context, currentLocation: location, icon: Icons.inventory_2_outlined, title: 'Deneme Arşivi', route: '/library'),
                       _navTile(context, currentLocation: location, icon: Icons.article_rounded, title: 'Taktik Blog', route: '/blog'),
-                      const SizedBox(height: 12),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16),
-                        child: _SectionLabel('Öne Çıkan'),
-                      ),
-                      const SizedBox(height: 8),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        child: isPremium
-                            ? const PremiumBadge()
-                            : Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _PremiumButton(onTap: () { Navigator.of(context).pop(); context.go('/premium'); }),
-                            const SizedBox(height: 6),
-                            Text(
-                              'Premium avantajlarını keşfet',
-                              textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Consumer(builder: (context, ref, _) {
-                        final isAdminAsync = ref.watch(adminClaimProvider);
-                        return isAdminAsync.maybeWhen(
-                          data: (isAdmin) {
-                            if (!isAdmin) return const SizedBox.shrink();
-                            return const Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 16),
-                                  child: _SectionLabel('Yönetim'),
-                                ),
-                                SizedBox(height: 8),
-                              ],
-                            );
-                          },
-                          orElse: () => const SizedBox.shrink(),
-                        );
-                      }),
                     ],
                   ),
                 ),
-                const Divider(height: 1),
-                // Footer actions
+                // Premium Button - En Altta Sabit
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Column(
+                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                  child: isPremium
+                      ? Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(colors: [colorScheme.primary.withOpacity(.15), Colors.amber.withOpacity(.12)]),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: colorScheme.primary.withOpacity(.35), width: 1.5),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.workspace_premium_rounded, size: 22, color: colorScheme.primary),
+                              const SizedBox(width: 10),
+                              Text('Premium Aktif', style: theme.textTheme.titleMedium?.copyWith(color: colorScheme.primary, fontWeight: FontWeight.w800)),
+                            ],
+                          ),
+                        )
+                      : _PremiumButton(onTap: () { Navigator.of(context).pop(); context.go('/premium'); }),
+                ),
+                const Divider(height: 1),
+                // Footer actions - Büyük ve Belirgin
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 12, 8, 12),
+                  child: Row(
                     children: [
-                      _actionTile(
-                        context,
-                        icon: Icons.settings_rounded,
-                        title: 'Ayarlar',
-                        onTap: () { Navigator.of(context).pop(); context.go('/settings'); },
+                      Expanded(
+                        child: _actionTileCompact(
+                          context,
+                          icon: Icons.settings_rounded,
+                          title: 'Ayarlar',
+                          onTap: () { Navigator.of(context).pop(); context.go('/settings'); },
+                        ),
                       ),
-                      _actionTile(
-                        context,
-                        icon: Icons.logout_rounded,
-                        title: 'Çıkış Yap',
-                        iconColor: Theme.of(context).colorScheme.error,
-                        onTap: () async {
-                          Navigator.of(context).pop();
-                          await fb.FirebaseAuth.instance.signOut();
-                          if (context.mounted) context.go('/');
-                        },
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _actionTileCompact(
+                          context,
+                          icon: Icons.logout_rounded,
+                          title: 'Çıkış',
+                          iconColor: colorScheme.error,
+                          onTap: () async {
+                            Navigator.of(context).pop();
+                            await fb.FirebaseAuth.instance.signOut();
+                            if (context.mounted) context.go('/');
+                          },
+                        ),
                       ),
-                      const SizedBox(height: 6),
                     ],
                   ),
                 ),
@@ -226,9 +204,9 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
     final userIsPremium = ref.watch(premiumStatusProvider);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         onTap: () {
           Navigator.of(context).pop();
           if (isPremium && !userIsPremium) {
@@ -243,62 +221,61 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
           }
         },
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
+          duration: const Duration(milliseconds: 180),
           curve: Curves.easeOut,
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            color: selected ? colorScheme.surfaceContainerHighest.withOpacity(.30) : Colors.transparent,
-            border: Border.all(
-              color: colorScheme.surfaceContainerHighest.withOpacity(selected ? .45 : .20),
-            ),
+            borderRadius: BorderRadius.circular(14),
+            color: selected ? colorScheme.primary.withOpacity(.12) : Colors.transparent,
+            border: selected ? Border.all(color: colorScheme.primary.withOpacity(.3), width: 1.5) : null,
           ),
           child: Row(
             children: [
-              _IconCapsule(icon: icon, selected: selected),
-              const SizedBox(width: 12),
+              Icon(
+                icon,
+                size: 24,
+                color: selected ? colorScheme.primary : colorScheme.onSurfaceVariant.withOpacity(.85),
+              ),
+              const SizedBox(width: 14),
               Expanded(
                 child: Text(
                   title,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
                     color: selected ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
                   ),
                 ),
               ),
               if (showPremiumBadge) ...[
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [colorScheme.primary.withOpacity(0.2), Colors.amber.withOpacity(0.2)],
                     ),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: colorScheme.primary.withOpacity(0.3), width: 1),
+                    border: Border.all(color: colorScheme.primary.withOpacity(0.35), width: 1),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.workspace_premium_rounded, size: 12, color: colorScheme.primary),
-                      const SizedBox(width: 2),
+                      const SizedBox(width: 4),
                       Text(
                         'PRO',
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: colorScheme.primary,
                           fontWeight: FontWeight.w800,
-                          fontSize: 10,
+                          fontSize: 11,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 6),
               ],
-              AnimatedOpacity(
-                opacity: selected ? 1 : 0,
-                duration: const Duration(milliseconds: 180),
-                child: Icon(Icons.chevron_right_rounded, color: colorScheme.onSurfaceVariant.withOpacity(0.7)),
-              ),
+              if (selected)
+                Icon(Icons.chevron_right_rounded, size: 20, color: colorScheme.primary.withOpacity(0.7)),
             ],
           ),
         ),
@@ -306,18 +283,39 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
     );
   }
 
-  Widget _actionTile(
+  Widget _actionTileCompact(
       BuildContext context, {
         required IconData icon,
         required String title,
         Color? iconColor,
         required VoidCallback onTap,
       }) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-      leading: Icon(icon, color: iconColor ?? Theme.of(context).colorScheme.onSurfaceVariant),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
       onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          color: colorScheme.surfaceContainerHighest.withOpacity(.2),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 22, color: iconColor ?? colorScheme.onSurfaceVariant),
+            const SizedBox(width: 10),
+            Text(
+              title,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: iconColor ?? colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -331,13 +329,16 @@ class _Avatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final url = _buildSvgUrl();
-    const radius = 28.0;
+    const radius = 26.0;
     if (url == null) {
       final initials = (userName ?? 'G').trim();
       return CircleAvatar(
         radius: radius,
         backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-        child: Text(initials.isEmpty ? 'G' : initials.characters.first.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold)),
+        child: Text(
+          initials.isEmpty ? 'G' : initials.characters.first.toUpperCase(),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
       );
     }
     return CircleAvatar(
@@ -349,7 +350,7 @@ class _Avatar extends StatelessWidget {
           width: radius * 2,
           height: radius * 2,
           fit: BoxFit.cover,
-          placeholderBuilder: (_) => Icon(Icons.person, color: Theme.of(context).colorScheme.onSurfaceVariant),
+          placeholderBuilder: (_) => Icon(Icons.person, size: 24, color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
       ),
     );
@@ -375,75 +376,25 @@ class _PremiumButton extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         gradient: LinearGradient(colors: [colorScheme.primary, Colors.amber]),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.amber.withOpacity(.25), blurRadius: 18, offset: const Offset(0, 8)),
+          BoxShadow(color: Colors.amber.withOpacity(.3), blurRadius: 16, offset: const Offset(0, 6)),
         ],
       ),
       child: ElevatedButton.icon(
         onPressed: onTap,
-        icon: Icon(Icons.workspace_premium_rounded, color: colorScheme.onPrimary, size: 26),
-        label: Text('Premium Ol', style: TextStyle(color: colorScheme.onPrimary, fontWeight: FontWeight.w800)),
+        icon: Icon(Icons.workspace_premium_rounded, color: colorScheme.onPrimary, size: 24),
+        label: Text('Premium Ol', style: TextStyle(color: colorScheme.onPrimary, fontWeight: FontWeight.w900, fontSize: 17)),
         style: ElevatedButton.styleFrom(
           elevation: 0,
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
           minimumSize: const Size(double.infinity, 56),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
       ),
     );
   }
 }
 
-class _IconCapsule extends StatelessWidget {
-  final IconData icon;
-  final bool selected;
-  const _IconCapsule({required this.icon, required this.selected});
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: selected
-            ? colorScheme.primary.withOpacity(.20)
-            : colorScheme.surfaceContainerHighest.withOpacity(.25),
-        border: Border.all(
-          color: selected
-              ? colorScheme.primary.withOpacity(.35)
-              : colorScheme.surfaceContainerHighest.withOpacity(.25),
-        ),
-      ),
-      child: Icon(
-        icon,
-        size: 20,
-        color: selected ? colorScheme.primary : colorScheme.onSurfaceVariant,
-      ),
-    );
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  final String text;
-  const _SectionLabel(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 8, bottom: 6),
-      child: Text(
-        text.toUpperCase(),
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          letterSpacing: 1.1,
-          color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(.8),
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-}

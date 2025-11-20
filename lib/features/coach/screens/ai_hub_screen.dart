@@ -153,47 +153,58 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
                       const SizedBox(height: 16),
                       Row(
                         children: [
-                          Text(
-                            'Yapay Zeka Araçları',
-                            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
-                          ),
-                          if (!isPremium) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    theme.colorScheme.primary.withOpacity(0.15),
-                                    theme.colorScheme.secondary.withOpacity(0.15),
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: theme.colorScheme.primary.withOpacity(0.3),
-                                  width: 1,
-                                ),
-                              ),
+                          Expanded(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(
-                                    Icons.workspace_premium_rounded,
-                                    size: 16,
-                                    color: theme.colorScheme.primary,
-                                  ),
-                                  const SizedBox(width: 4),
                                   Text(
-                                    'Premium Gerektirir',
-                                    style: theme.textTheme.labelSmall?.copyWith(
-                                      color: theme.colorScheme.primary,
-                                      fontWeight: FontWeight.w700,
-                                    ),
+                                    'Yapay Zeka Araçları',
+                                    style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
                                   ),
+                                  if (!isPremium) ...[
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            theme.colorScheme.primary.withOpacity(0.15),
+                                            theme.colorScheme.secondary.withOpacity(0.15),
+                                          ],
+                                        ),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: theme.colorScheme.primary.withOpacity(0.3),
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.workspace_premium_rounded,
+                                            size: 16,
+                                            color: theme.colorScheme.primary,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            'Premium Gerektirir',
+                                            style: theme.textTheme.labelSmall?.copyWith(
+                                              color: theme.colorScheme.primary,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ],
                               ),
                             ),
-                          ],
+                          ),
                         ],
                       ),
                       const SizedBox(height: 8),
