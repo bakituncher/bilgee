@@ -167,7 +167,7 @@ class HeroHeader extends ConsumerWidget {
               const SizedBox(height: 4),
               Row(
                 children: [
-                  Text('BP ${user.engagementScore}', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 11)),
+                  Text('TP ${user.engagementScore}', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 11)),
                   const SizedBox(width: 6),
                   Text('%${(progress*100).toStringAsFixed(0)} rütbe', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 11)),
                 ],

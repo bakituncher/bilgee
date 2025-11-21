@@ -365,10 +365,10 @@ class _SmartBriefingView extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const SizedBox(height: 4),
-                  CircleAvatar(
-                    backgroundColor: Theme.of(context).colorScheme.secondary,
+                  const CircleAvatar(
+                    backgroundColor: Colors.transparent,
                     radius: 42,
-                    child: Icon(Icons.auto_awesome, size: 42, color: Theme.of(context).primaryColor),
+                    backgroundImage: AssetImage('assets/images/bunnyy.png'),
                   ).animate().fadeIn(delay: 180.ms).scale(),
                   const SizedBox(height: 24),
                   Text('Motivasyon Sohbeti', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700))
@@ -533,11 +533,10 @@ class _MessageBubble extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             if (!isUser)
-              CircleAvatar(
-                backgroundColor: colorScheme.secondary,
-                foregroundColor: Colors.black,
+              const CircleAvatar(
+                backgroundColor: Colors.transparent,
                 radius: 14,
-                child: const Icon(Icons.auto_awesome, size: 16),
+                backgroundImage: AssetImage('assets/images/bunnyy.png'),
               ),
             if (!isUser) const SizedBox(width: 8),
             Flexible(
@@ -588,8 +587,10 @@ class _TypingBubble extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            CircleAvatar(backgroundColor: Theme.of(context).colorScheme.secondary, radius: 16,
-                child: Icon(Icons.auto_awesome, size: 20, color: Theme.of(context).primaryColor)),
+            const CircleAvatar(
+                backgroundColor: Colors.transparent,
+                radius: 16,
+                backgroundImage: AssetImage('assets/images/bunnyy.png')),
             const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.all(12),
