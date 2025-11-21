@@ -521,7 +521,7 @@ class _GalaxyToolbar extends StatelessWidget {
           builder: (context, constraints) {
             // Dinamik hint text boyutu hesaplama
             final availableWidth = constraints.maxWidth - 70; // prefixIcon + padding için alan
-            final hintText = 'Konu Ara...';
+            final hintText = 'Ara...';
             final fontSize = _calculateFontSize(context, hintText, availableWidth);
 
             return TextField(
