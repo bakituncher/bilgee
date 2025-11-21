@@ -403,11 +403,8 @@ class _StatsPremiumOfferScreenState extends ConsumerState<StatsPremiumOfferScree
                                     width: double.infinity,
                                     child: ElevatedButton(
                                       onPressed: () async {
-                                        final userProfile = ref.read(userProfileProvider).value;
-                                        final isUnder18 = userProfile != null ? AgeHelper.isUnder18(userProfile.dateOfBirth) : false;
-
                                         // Rewarded ad'ı önceden yükle
-                                        AdMobService().preloadRewardedAd(isUnder18: isUnder18);
+                                        AdMobService().preloadRewardedAd();
 
                                         // Loading dialog göster
                                         if (!context.mounted) return;
@@ -456,7 +453,7 @@ class _StatsPremiumOfferScreenState extends ConsumerState<StatsPremiumOfferScree
                                         }
 
                                         // Reklamı göster
-                                        final rewardEarned = await AdMobService().showRewardedAd(isUnder18: isUnder18);
+                                        final rewardEarned = await AdMobService().showRewardedAd();
 
                                         debugPrint('🔍 Reward earned result: $rewardEarned');
 

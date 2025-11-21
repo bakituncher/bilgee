@@ -13,7 +13,6 @@ import 'package:lottie/lottie.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:taktik/core/services/admob_service.dart';
-import 'package:taktik/utils/age_helper.dart';
 import 'package:taktik/data/providers/monetization_provider.dart';
 import 'package:taktik/core/services/monetization_manager.dart';
 
@@ -116,7 +115,6 @@ class Step3Summary extends ConsumerWidget {
                   // Premium değilse, akıllı sistem karar verir
                   final monetizationManager = ref.read(monetizationManagerProvider);
                   final action = monetizationManager.getActionAfterTestSubmission();
-                  final isUnder18 = AgeHelper.isUnder18(user.dateOfBirth);
 
                   switch (action) {
                     case MonetizationAction.showPaywall:
@@ -125,7 +123,7 @@ class Step3Summary extends ConsumerWidget {
                       break;
                     case MonetizationAction.showAd:
                       // Reklam göster
-                      await AdMobService().showInterstitialAd(isUnder18: isUnder18, isPremium: isPremium);
+                      await AdMobService().showInterstitialAd(isPremium: isPremium);
                       break;
                     case MonetizationAction.showNothing:
                       // Hiçbir şey gösterme (cooldown aktif)

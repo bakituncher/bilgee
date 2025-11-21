@@ -4,15 +4,12 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:taktik/core/services/admob_service.dart';
 
 /// Banner reklam widget'ı
-/// Yaşa göre kişiselleştirilmiş/kişiselleştirilmemiş reklam gösterir
 /// Premium kullanıcılara reklam gösterilmez
 class AdBannerWidget extends StatefulWidget {
-  final bool isUnder18;
   final bool isPremium;
 
   const AdBannerWidget({
     super.key,
-    required this.isUnder18,
     this.isPremium = false,
   });
 
@@ -35,7 +32,6 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
 
   void _loadAd() {
     _bannerAd = AdMobService().createBannerAd(
-      isUnder18: widget.isUnder18,
       onAdLoaded: (ad) {
         debugPrint('✅ Banner ad loaded');
         if (mounted) {
