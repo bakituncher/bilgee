@@ -52,9 +52,8 @@
             android:value="${admobAppId}"/>
     </application>
 
-    <!-- AD_ID iznini açıkça reddet -->
-    <uses-permission android:name="com.google.android.gms.permission.AD_ID"
-        tools:node="remove" />
+    <!-- AD_ID izni - AdMob için gerekli (COPPA uyumlu yaş kontrolü ile kullanılır) -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>
 
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

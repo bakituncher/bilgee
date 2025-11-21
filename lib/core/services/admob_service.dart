@@ -5,9 +5,11 @@ import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-/// AdMob reklam servisi
-/// - Yaşa göre kişiselleştirilmiş/kişiselleştirilmemiş reklamlar
-/// - Banner ve Interstitial reklam desteği
+/// AdMob reklam servisi - COPPA ve GDPR uyumlu
+/// - Doğum tarihine göre otomatik yaş kontrolü
+/// - 18 yaş altı: Çocuk odaklı reklamlar (COPPA uyumlu)
+/// - 18 yaş üstü: Normal reklamlar
+/// - Google Aile Politikası uyumlu
 class AdMobService {
   static final AdMobService _instance = AdMobService._internal();
   factory AdMobService() => _instance;
@@ -19,40 +21,100 @@ class AdMobService {
   RewardedAd? _rewardedAd;
   bool _isRewardedAdLoading = false;
 
-  /// AdMob'u başlat
+  /// AdMob'u başlat - Varsayılan olarak güvenli mod (çocuk modu)
   Future<void> initialize() async {
     if (_initialized) return;
 
     try {
-      // --- DÜZELTME 1: KONFİGÜRASYON ÖNCE YAPILIYOR ---
-      // AdMob SDK başlatılmadan önce test cihazı ayarlarını veriyoruz.
-      // Böylece SDK "uyanır uyanmaz" test modunda olduğunu biliyor.
-      RequestConfiguration configuration = RequestConfiguration(
-        maxAdContentRating: MaxAdContentRating.g,
-        tagForChildDirectedTreatment: TagForChildDirectedTreatment.yes,
-        tagForUnderAgeOfConsent: TagForUnderAgeOfConsent.yes,
-        testDeviceIds: [
-          'F9742A37C96523F237FE85385A67842F', // ✅ Sizin Test Cihazınız (MD5 Hash)
-          'BD3C30521D0B02B7473439F1BD0D2868',    // ⚠️ Diğer cihazınızın Logcat'teki kodu
-        ],
-      );
+      // Varsayılan konfigürasyon: Güvenli mod (çocuk odaklı)
+      // Kullanıcının yaşı belirlendikten sonra updateConfigurationByAge() ile güncellenecek
+      await _applyConfiguration(isUnder18: true);
 
-      await MobileAds.instance.updateRequestConfiguration(configuration);
-
-      // --- DÜZELTME 2: SDK ŞİMDİ BAŞLATILIYOR ---
-      // Artık ayarları bildiği için güvenle başlayabilir.
+      // AdMob SDK'yı başlat
       await MobileAds.instance.initialize();
 
       _initialized = true;
 
-      // Test reklamlarını yükle
+      // İlk reklamları yükle (güvenli mod)
       _loadInterstitialAd(isUnder18: true);
       _loadRewardedAd(isUnder18: true);
 
-      debugPrint('✅ AdMob initialized successfully (Test Device Mode Active)');
+      debugPrint('✅ AdMob initialized successfully (Safe Mode - Child-Directed Content)');
     } catch (e) {
       debugPrint('❌ AdMob initialization failed: $e');
     }
+  }
+
+  /// Doğum tarihine göre AdMob konfigürasyonunu güncelle
+  /// Bu metod kullanıcının yaşı belirlendiğinde çağrılmalıdır
+  ///
+  /// [dateOfBirth] Kullanıcının doğum tarihi
+  ///
+  /// Google Aile Politikası Uyumluluğu:
+  /// - 18 yaş altı: tagForChildDirectedTreatment = YES (COPPA uyumlu)
+  /// - 18 yaş üstü: tagForChildDirectedTreatment = NO (Normal reklamlar)
+  Future<void> updateConfigurationByAge(DateTime? dateOfBirth) async {
+    if (!_initialized) {
+      debugPrint('⚠️ AdMob not initialized yet');
+      return;
+    }
+
+    final isUnder18 = _calculateIsUnder18(dateOfBirth);
+    await _applyConfiguration(isUnder18: isUnder18);
+
+    debugPrint('✅ AdMob configuration updated - Age restricted: $isUnder18');
+  }
+
+  /// Yaş hesaplama (null-safe)
+  bool _calculateIsUnder18(DateTime? dateOfBirth) {
+    if (dateOfBirth == null) {
+      // Yaş bilgisi yoksa güvenli tarafta kal (çocuk modu)
+      return true;
+    }
+
+    final now = DateTime.now();
+    int age = now.year - dateOfBirth.year;
+
+    // Doğum günü henüz gelmemişse bir yaş düşür
+    if (now.month < dateOfBirth.month ||
+        (now.month == dateOfBirth.month && now.day < dateOfBirth.day)) {
+      age--;
+    }
+
+    return age < 18;
+  }
+
+  /// Yaşa göre AdMob konfigürasyonunu uygula
+  Future<void> _applyConfiguration({required bool isUnder18}) async {
+    final RequestConfiguration configuration;
+
+    if (isUnder18) {
+      // 18 yaş altı: COPPA uyumlu konfigürasyon
+      configuration = RequestConfiguration(
+        maxAdContentRating: MaxAdContentRating.g, // Genel izleyici (en güvenli)
+        tagForChildDirectedTreatment: TagForChildDirectedTreatment.yes, // Çocuk odaklı içerik
+        tagForUnderAgeOfConsent: TagForUnderAgeOfConsent.yes, // GDPR yaş onayı altında
+        testDeviceIds: kDebugMode ? [
+          'F9742A37C96523F237FE85385A67842F',
+          'BD3C30521D0B02B7473439F1BD0D2868',
+        ] : [],
+      );
+      debugPrint('🛡️ AdMob: Child-Directed Treatment ENABLED (COPPA Compliant)');
+    } else {
+      // 18 yaş üstü: Normal konfigürasyon
+      configuration = RequestConfiguration(
+        maxAdContentRating: MaxAdContentRating.pg, // Genel izleyici + (biraz daha geniş)
+        tagForChildDirectedTreatment: TagForChildDirectedTreatment.no, // Yetişkin içerik izni
+        tagForUnderAgeOfConsent: TagForUnderAgeOfConsent.no, // GDPR yaş onayı üstünde
+        testDeviceIds: kDebugMode ? [
+          'F9742A37C96523F237FE85385A67842F',
+          'BD3C30521D0B02B7473439F1BD0D2868',
+        ] : [],
+      );
+      debugPrint('✅ AdMob: Standard Treatment (18+ years old)');
+    }
+
+    await MobileAds.instance.updateRequestConfiguration(configuration);
   }
 
   /// Test modunda mı?
@@ -103,20 +165,31 @@ class AdMobService {
         : dotenv.get('IOS_REWARDED_AD_ID', fallback: 'ca-app-pub-3940256099942544/1712485313');
   }
 
-  /// Yaşa göre reklam isteği oluştur
-  /// - 18 yaş altı: Kişiselleştirilmemiş reklamlar (COPPA uyumlu)
-  /// - 18 yaş ve üstü: Kişiselleştirilmiş reklamlar
+  /// Yaşa göre reklam isteği oluştur (COPPA ve Google Aile Politikası uyumlu)
+  ///
+  /// [isUnder18] Kullanıcı 18 yaşından küçük mü?
+  ///
+  /// Google Aile Politikası Gereksinimleri:
+  /// - 18 yaş altı: Kişiselleştirilmemiş, çocuk-güvenli reklamlar
+  /// - 18 yaş üstü: Standart reklamlar (kişiselleştirme izni ile)
+  ///
+  /// Not: RequestConfiguration ile birlikte çalışır
   AdRequest createAdRequest({required bool isUnder18}) {
     if (isUnder18) {
-      // 18 yaş altı için kişiselleştirilmemiş reklamlar
+      // 18 yaş altı: COPPA uyumlu reklamlar
+      // - nonPersonalizedAds: Kullanıcı verilerine göre kişiselleştirme yapılmaz
+      // - keywords: Sadece eğitim odaklı, çocuk-güvenli içerik
       return const AdRequest(
-        keywords: ['education', 'study', 'learning', 'student'],
-        nonPersonalizedAds: true, // Kişiselleştirilmemiş reklamlar
+        keywords: ['education', 'study', 'learning', 'student', 'school'],
+        nonPersonalizedAds: true, // COPPA gereksinimi
       );
     } else {
-      // 18 yaş ve üstü için normal reklamlar
+      // 18 yaş üstü: Standart reklamlar
+      // - Kişiselleştirme izin verilebilir
+      // - Daha geniş anahtar kelime seti
       return const AdRequest(
-        keywords: ['education', 'study', 'learning', 'student', 'exam'],
+        keywords: ['education', 'study', 'learning', 'student', 'exam', 'university', 'career'],
+        // nonPersonalizedAds belirtilmediğinde kullanıcı tercihine göre kişiselleştirme yapılabilir
       );
     }
   }
