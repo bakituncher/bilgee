@@ -32,7 +32,7 @@ class SubjectStatsScreen extends StatelessWidget {
             physics: const NeverScrollableScrollPhysics(),
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
-            childAspectRatio: 2.5,
+            childAspectRatio: 1.8,
             children: [
               _StatTile(label: 'Ortalama Net', value: analysis.averageNet.toStringAsFixed(2)),
               _StatTile(label: 'En Yüksek Net', value: analysis.bestNet.toStringAsFixed(2)),
@@ -70,19 +70,19 @@ class SubjectStatsScreen extends StatelessWidget {
         gradient: LinearGradient(
           colors: [
             Theme.of(context).cardColor,
-            Theme.of(context).cardColor.withOpacity(0.95),
+            Theme.of(context).cardColor.withValues(alpha: 0.95),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).colorScheme.surface.withOpacity(0.08),
+            color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.08),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -100,7 +100,7 @@ class SubjectStatsScreen extends StatelessWidget {
                 show: true,
                 drawVerticalLine: false,
                 getDrawingHorizontalLine: (value) => FlLine(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25),
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.25),
                   strokeWidth: 1,
                 ),
               ),
@@ -174,7 +174,7 @@ class SubjectStatsScreen extends StatelessWidget {
                   fitInsideVertically: true,
                   tooltipRoundedRadius: 12,
                   tooltipPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  getTooltipColor: (spot) => Theme.of(context).colorScheme.surface.withOpacity(0.96),
+                  getTooltipColor: (spot) => Theme.of(context).colorScheme.surface.withValues(alpha: 0.96),
                   getTooltipItems: (spots) => spots.map((spot) {
                     final test = analysis.subjectTests[spot.spotIndex];
                     final scores = test.scores[subjectName]!;
@@ -204,7 +204,7 @@ class SubjectStatsScreen extends StatelessWidget {
                   gradient: LinearGradient(
                     colors: [
                       Colors.green,
-                      Theme.of(context).colorScheme.primary.withOpacity(0.95),
+                      Theme.of(context).colorScheme.primary.withValues(alpha: 0.95),
                     ],
                   ),
                   barWidth: testCount > 50 ? 2.5 : 3,
@@ -224,8 +224,8 @@ class SubjectStatsScreen extends StatelessWidget {
                     show: true,
                     gradient: LinearGradient(
                       colors: [
-                        Theme.of(context).colorScheme.primary.withOpacity(0.20),
-                        Theme.of(context).colorScheme.primary.withOpacity(0.04),
+                        Theme.of(context).colorScheme.primary.withValues(alpha: 0.20),
+                        Theme.of(context).colorScheme.primary.withValues(alpha: 0.04),
                       ],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
