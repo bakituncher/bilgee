@@ -66,7 +66,6 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
   }
 
   Widget _buildBody(BuildContext context, StatsAnalysis analysis) {
-    final selectedTab = ref.watch(_selectedAnalysisTabProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Column(
@@ -78,12 +77,12 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
             gradient: LinearGradient(
               colors: isDark
                   ? [
-                      Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
-                      Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25),
+                      Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                      Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.25),
                     ]
                   : [
-                      Theme.of(context).cardColor.withOpacity(0.95),
-                      Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                      Theme.of(context).cardColor.withValues(alpha: 0.95),
+                      Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                     ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -91,15 +90,15 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: isDark
-                  ? Theme.of(context).colorScheme.secondary.withOpacity(0.15)
-                  : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                  ? Theme.of(context).colorScheme.secondary.withValues(alpha: 0.15)
+                  : Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
                 color: isDark 
-                    ? Theme.of(context).colorScheme.primary.withOpacity(0.06)
-                    : Colors.black.withOpacity(0.08),
+                    ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.06)
+                    : Colors.black.withValues(alpha: 0.08),
                 blurRadius: 10,
                 offset: const Offset(0, 2),
               ),
@@ -111,20 +110,20 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
               gradient: LinearGradient(
                 colors: isDark
                     ? [
-                        Theme.of(context).colorScheme.primary.withOpacity(0.9),
-                        Theme.of(context).colorScheme.primary.withOpacity(0.75),
+                        Theme.of(context).colorScheme.primary.withValues(alpha: 0.9),
+                        Theme.of(context).colorScheme.primary.withValues(alpha: 0.75),
                       ]
                     : [
                         Theme.of(context).colorScheme.secondary,
-                        Theme.of(context).colorScheme.secondary.withOpacity(0.88),
+                        Theme.of(context).colorScheme.secondary.withValues(alpha: 0.88),
                       ],
               ),
               borderRadius: BorderRadius.circular(11),
               boxShadow: [
                 BoxShadow(
                   color: isDark
-                      ? Theme.of(context).colorScheme.primary.withOpacity(0.4)
-                      : Theme.of(context).colorScheme.secondary.withOpacity(0.35),
+                      ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.4)
+                      : Theme.of(context).colorScheme.secondary.withValues(alpha: 0.35),
                   blurRadius: 10,
                   offset: const Offset(0, 3),
                 ),
@@ -136,7 +135,7 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
                 ? Colors.black
                 : Colors.black,
             unselectedLabelColor: isDark
-                ? Theme.of(context).colorScheme.onSurface.withOpacity(0.7)
+                ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)
                 : Theme.of(context).colorScheme.onSurfaceVariant,
             labelStyle: const TextStyle(
               fontWeight: FontWeight.bold,
@@ -219,12 +218,12 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
             .animate()
             .fadeIn(delay: 100.ms, duration: 400.ms)
             .slideY(begin: 0.05, end: 0),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
         const TitleWidget(
           title: 'Zafer Anıtları',
           subtitle: 'Genel performans metriklerin',
         ).animate().fadeIn(delay: 150.ms, duration: 300.ms),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         KeyStatsGrid(analysis: analysis)
             .animate()
             .fadeIn(delay: 200.ms, duration: 400.ms)
