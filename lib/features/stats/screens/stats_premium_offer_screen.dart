@@ -403,8 +403,10 @@ class _StatsPremiumOfferScreenState extends ConsumerState<StatsPremiumOfferScree
                                     width: double.infinity,
                                     child: ElevatedButton(
                                       onPressed: () async {
+                                        final user = ref.read(userProfileProvider).value;
+
                                         // Rewarded ad'ı önceden yükle
-                                        AdMobService().preloadRewardedAd();
+                                        AdMobService().preloadRewardedAd(dateOfBirth: user?.dateOfBirth);
 
                                         // Loading dialog göster
                                         if (!context.mounted) return;
@@ -453,7 +455,9 @@ class _StatsPremiumOfferScreenState extends ConsumerState<StatsPremiumOfferScree
                                         }
 
                                         // Reklamı göster
-                                        final rewardEarned = await AdMobService().showRewardedAd();
+                                        final rewardEarned = await AdMobService().showRewardedAd(
+                                          dateOfBirth: user?.dateOfBirth,
+                                        );
 
                                         debugPrint('🔍 Reward earned result: $rewardEarned');
 

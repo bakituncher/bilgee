@@ -65,6 +65,19 @@ class AuthController extends StreamNotifier<User?> {
         }
       });
 
+      // --- AdMob COPPA KONFİGÜRASYONU: Kullanıcı yaşına göre güncelle ---
+      Future.delayed(const Duration(milliseconds: 500), () async {
+        try {
+          final userProfile = await ref.read(userProfileProvider.future);
+          if (userProfile != null) {
+            await AdMobService().updateUserAgeConfiguration(
+              dateOfBirth: userProfile.dateOfBirth,
+            );
+          }
+        } catch (e) {
+          print("AdMob configuration update failed (safe to ignore): $e");
+        }
+      });
 
       // --- ZİYARET KAYDI: user_activity aylık dokümanına yaz ---
       Future.delayed(const Duration(seconds: 2), () async {

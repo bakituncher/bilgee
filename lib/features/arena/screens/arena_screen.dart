@@ -150,7 +150,10 @@ class _LeaderboardView extends ConsumerWidget {
                     final isPremium = currentUser?.isPremium ?? false;
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12.0),
-                      child: AdBannerWidget(isPremium: isPremium),
+                      child: AdBannerWidget(
+                        isPremium: isPremium,
+                        dateOfBirth: currentUser?.dateOfBirth,
+                      ),
                     );
                   }
 

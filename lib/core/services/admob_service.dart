@@ -22,13 +22,47 @@ class AdMobService {
     if (_initialized) return;
 
     try {
+      // RequestConfiguration ayarları
+      await MobileAds.instance.updateRequestConfiguration(
+        RequestConfiguration(
+          maxAdContentRating: MaxAdContentRating.g, // Genel izleyici için
+          tagForChildDirectedTreatment: TagForChildDirectedTreatment.unspecified,
+          tagForUnderAgeOfConsent: TagForUnderAgeOfConsent.unspecified,
+        ),
+      );
+
       await MobileAds.instance.initialize();
       _initialized = true;
+      // İlk yüklemede yaş bilgisi olmadığı için güvenli modda başlatıyoruz
       _loadInterstitialAd();
       _loadRewardedAd();
-      debugPrint('✅ AdMob initialized');
+      debugPrint('✅ AdMob initialized with COPPA compliance');
     } catch (e) {
       debugPrint('❌ AdMob initialization failed: $e');
+    }
+  }
+
+  /// Kullanıcı yaşına göre AdMob konfigürasyonunu güncelle
+  Future<void> updateUserAgeConfiguration({DateTime? dateOfBirth}) async {
+    if (!_initialized) return;
+
+    final isUnder18 = _isUserUnder18(dateOfBirth);
+
+    try {
+      await MobileAds.instance.updateRequestConfiguration(
+        RequestConfiguration(
+          maxAdContentRating: isUnder18 ? MaxAdContentRating.g : MaxAdContentRating.t,
+          tagForChildDirectedTreatment: isUnder18
+              ? TagForChildDirectedTreatment.yes
+              : TagForChildDirectedTreatment.no,
+          tagForUnderAgeOfConsent: isUnder18
+              ? TagForUnderAgeOfConsent.yes
+              : TagForUnderAgeOfConsent.no,
+        ),
+      );
+      debugPrint('✅ AdMob configuration updated for ${isUnder18 ? "child" : "adult"} user');
+    } catch (e) {
+      debugPrint('❌ Failed to update AdMob configuration: $e');
     }
   }
 
@@ -71,15 +105,59 @@ class AdMobService {
         : dotenv.get('IOS_REWARDED_AD_ID', fallback: 'ca-app-pub-3940256099942544/1712485313');
   }
 
+  /// Kullanıcının yaşına göre AdRequest oluştur
+  /// 18 yaşından küçükler için COPPA uyumlu reklam
+  AdRequest _buildAdRequest({DateTime? dateOfBirth}) {
+    final isUnder18 = _isUserUnder18(dateOfBirth);
+
+    if (isUnder18) {
+      // 18 yaşından küçükler için COPPA uyumlu ayarlar
+      return const AdRequest(
+        extras: {
+          'npa': '1', // Non-Personalized Ads
+          'tag_for_child_directed_treatment': '1', // COPPA - Child Directed
+          'max_ad_content_rating': 'G', // Genel izleyici (Everyone)
+        },
+      );
+    }
+
+    // 18 yaş ve üzeri için normal reklam
+    return const AdRequest(
+      extras: {
+        'tag_for_child_directed_treatment': '0', // Yetişkin içerik
+      },
+    );
+  }
+
+  /// Kullanıcı 18 yaşından küçük mü kontrol et
+  bool _isUserUnder18(DateTime? dateOfBirth) {
+    if (dateOfBirth == null) {
+      // Yaş bilgisi yoksa güvenli tarafta olalım
+      return true;
+    }
+
+    final today = DateTime.now();
+    var age = today.year - dateOfBirth.year;
+
+    // Doğum günü bu yıl henüz gelmemişse yaşı bir azalt
+    if (today.month < dateOfBirth.month ||
+        (today.month == dateOfBirth.month && today.day < dateOfBirth.day)) {
+      age--;
+    }
+
+    return age < 18;
+  }
+
   /// Banner reklam oluştur
   BannerAd createBannerAd({
     required Function(Ad) onAdLoaded,
     required Function(Ad, LoadAdError) onAdFailedToLoad,
+    DateTime? dateOfBirth,
   }) {
     return BannerAd(
       adUnitId: bannerAdUnitId,
       size: AdSize.banner,
-      request: const AdRequest(),
+      request: _buildAdRequest(dateOfBirth: dateOfBirth),
       listener: BannerAdListener(
         onAdLoaded: onAdLoaded,
         onAdFailedToLoad: onAdFailedToLoad,
@@ -88,14 +166,14 @@ class AdMobService {
   }
 
   /// Interstitial reklam yükle
-  void _loadInterstitialAd() {
+  void _loadInterstitialAd({DateTime? dateOfBirth}) {
     if (_isInterstitialAdLoading || _interstitialAd != null) return;
 
     _isInterstitialAdLoading = true;
 
     InterstitialAd.load(
       adUnitId: interstitialAdUnitId,
-      request: const AdRequest(),
+      request: _buildAdRequest(dateOfBirth: dateOfBirth),
       adLoadCallback: InterstitialAdLoadCallback(
         onAdLoaded: (ad) {
           _interstitialAd = ad;
@@ -105,12 +183,12 @@ class AdMobService {
             onAdDismissedFullScreenContent: (ad) {
               ad.dispose();
               _interstitialAd = null;
-              _loadInterstitialAd();
+              _loadInterstitialAd(dateOfBirth: dateOfBirth);
             },
             onAdFailedToShowFullScreenContent: (ad, error) {
               ad.dispose();
               _interstitialAd = null;
-              _loadInterstitialAd();
+              _loadInterstitialAd(dateOfBirth: dateOfBirth);
             },
           );
         },
@@ -123,25 +201,28 @@ class AdMobService {
   }
 
   /// Interstitial reklamı göster
-  Future<void> showInterstitialAd({bool isPremium = false}) async {
+  Future<void> showInterstitialAd({
+    bool isPremium = false,
+    DateTime? dateOfBirth,
+  }) async {
     if (!_initialized || isPremium) return;
 
     if (_interstitialAd != null) {
       await _interstitialAd!.show();
     } else {
-      _loadInterstitialAd();
+      _loadInterstitialAd(dateOfBirth: dateOfBirth);
     }
   }
 
   /// Rewarded reklam yükle
-  void _loadRewardedAd() {
+  void _loadRewardedAd({DateTime? dateOfBirth}) {
     if (_isRewardedAdLoading || _rewardedAd != null) return;
 
     _isRewardedAdLoading = true;
 
     RewardedAd.load(
       adUnitId: rewardedAdUnitId,
-      request: const AdRequest(),
+      request: _buildAdRequest(dateOfBirth: dateOfBirth),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (ad) {
           _rewardedAd = ad;
@@ -156,9 +237,9 @@ class AdMobService {
   }
 
   /// Rewarded reklamı göster
-  Future<bool> showRewardedAd() async {
+  Future<bool> showRewardedAd({DateTime? dateOfBirth}) async {
     if (!_initialized || _rewardedAd == null) {
-      _loadRewardedAd();
+      _loadRewardedAd(dateOfBirth: dateOfBirth);
       return false;
     }
 
@@ -170,13 +251,13 @@ class AdMobService {
         ad.dispose();
         _rewardedAd = null;
         if (!completer.isCompleted) completer.complete(rewardEarned);
-        Future.delayed(const Duration(milliseconds: 500), _loadRewardedAd);
+        Future.delayed(const Duration(milliseconds: 500), () => _loadRewardedAd(dateOfBirth: dateOfBirth));
       },
       onAdFailedToShowFullScreenContent: (ad, error) {
         ad.dispose();
         _rewardedAd = null;
         if (!completer.isCompleted) completer.complete(false);
-        Future.delayed(const Duration(milliseconds: 500), _loadRewardedAd);
+        Future.delayed(const Duration(milliseconds: 500), () => _loadRewardedAd(dateOfBirth: dateOfBirth));
       },
     );
 
@@ -198,7 +279,7 @@ class AdMobService {
   bool get isRewardedAdLoading => _isRewardedAdLoading;
 
   /// Rewarded ad'ı önceden yükle
-  void preloadRewardedAd() => _loadRewardedAd();
+  void preloadRewardedAd({DateTime? dateOfBirth}) => _loadRewardedAd(dateOfBirth: dateOfBirth);
 
   /// Servisi temizle
   void dispose() {
