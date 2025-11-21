@@ -93,7 +93,7 @@ class _PomodoroCompletedViewState extends ConsumerState<PomodoroCompletedView> {
                               .animate().scale(duration: 600.ms, curve: Curves.elasticOut),
                           const SizedBox(height: 16),
                           Text(
-                            "Yaratım Tamamlandı!",
+                            "Seans Tamamlandı!",
                             style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
                             textAlign: TextAlign.center,
                           ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.5),
@@ -131,7 +131,7 @@ class _PomodoroCompletedViewState extends ConsumerState<PomodoroCompletedView> {
                           ),
                           TextButton(
                             onPressed: notifier.reset,
-                            child: const Text("Mabedi Terk Et"),
+                            child: const Text("Ana Sayfaya Dön"),
                           ),
                           const SizedBox(height: 8),
                         ],

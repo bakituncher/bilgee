@@ -413,7 +413,7 @@ class _AnimatedBunnyButtonState extends State<_AnimatedBunnyButton> with SingleT
               ),
               child: ClipOval(
                 child: Image.asset(
-                  'assets/images/bunny.png',
+                  'assets/images/bunnyy.png',
                   fit: BoxFit.cover,
                 ),
               ),
