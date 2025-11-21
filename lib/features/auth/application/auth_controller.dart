@@ -9,6 +9,7 @@ import 'package:taktik/features/auth/data/auth_repository.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:flutter/foundation.dart'; // kDebugMode ve debugPrint için
 import '../../../shared/notifications/notification_service.dart';
+import '../../../core/services/admob_service.dart';
 
 final authControllerProvider = StreamNotifierProvider<AuthController, User?>(() {
   return AuthController();
@@ -63,6 +64,26 @@ class AuthController extends StreamNotifier<User?> {
           print("Bildirim token yenileme hatası (güvenli): $e");
         }
       });
+
+      // --- AdMob KONFİGÜRASYONU: Doğum tarihine göre güncelle (COPPA uyumlu) ---
+      Future.delayed(const Duration(milliseconds: 500), () async {
+        try {
+          final firestoreService = ref.read(firestoreServiceProvider);
+          final userProfile = await firestoreService.getUserProfile(user.uid).first;
+
+          // Kullanıcının doğum tarihine göre AdMob konfigürasyonunu güncelle
+          await AdMobService().updateConfigurationByAge(userProfile.dateOfBirth);
+
+          if (kDebugMode) {
+            debugPrint('✅ AdMob configuration updated for user age');
+          }
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint('⚠️ AdMob configuration update failed (safe to ignore): $e');
+          }
+        }
+      });
+      // ---------------------------------------------------------------------------
 
       // --- ZİYARET KAYDI: user_activity aylık dokümanına yaz ---
       Future.delayed(const Duration(seconds: 2), () async {
