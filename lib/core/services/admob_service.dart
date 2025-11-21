@@ -94,10 +94,6 @@ class AdMobService {
         maxAdContentRating: MaxAdContentRating.g, // Genel izleyici (en güvenli)
         tagForChildDirectedTreatment: TagForChildDirectedTreatment.yes, // Çocuk odaklı içerik
         tagForUnderAgeOfConsent: TagForUnderAgeOfConsent.yes, // GDPR yaş onayı altında
-        testDeviceIds: kDebugMode ? [
-          'F9742A37C96523F237FE85385A67842F',
-          'BD3C30521D0B02B7473439F1BD0D2868',
-        ] : [],
       );
       debugPrint('🛡️ AdMob: Child-Directed Treatment ENABLED (COPPA Compliant)');
     } else {
@@ -106,10 +102,6 @@ class AdMobService {
         maxAdContentRating: MaxAdContentRating.pg, // Genel izleyici + (biraz daha geniş)
         tagForChildDirectedTreatment: TagForChildDirectedTreatment.no, // Yetişkin içerik izni
         tagForUnderAgeOfConsent: TagForUnderAgeOfConsent.no, // GDPR yaş onayı üstünde
-        testDeviceIds: kDebugMode ? [
-          'F9742A37C96523F237FE85385A67842F',
-          'BD3C30521D0B02B7473439F1BD0D2868',
-        ] : [],
       );
       debugPrint('✅ AdMob: Standard Treatment (18+ years old)');
     }
