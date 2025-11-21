@@ -44,9 +44,24 @@ class EnhancedSubjectBreakdown extends StatelessWidget {
     }
 
     final sortedSubjects = subjectStats.values.toList()
-      ..sort((a, b) => b.net.compareTo(a.net));
+      ..sort((a, b) {
+        // Toplam soru sayısına göre performans yüzdesi
+        final aTotal = a.totalCorrect + a.totalWrong + a.totalBlank;
+        final bTotal = b.totalCorrect + b.totalWrong + b.totalBlank;
+        final aPerformance = aTotal > 0 ? (a.net / aTotal) : 0.0;
+        final bPerformance = bTotal > 0 ? (b.net / bTotal) : 0.0;
+        return bPerformance.compareTo(aPerformance);
+      });
 
     final topSubjects = sortedSubjects.take(6).toList();
+
+    // En yüksek performans yüzdesini bul (progress bar için)
+    final maxPerformance = topSubjects.isEmpty ? 1.0 : () {
+      final firstTotal = topSubjects.first.totalCorrect +
+                        topSubjects.first.totalWrong +
+                        topSubjects.first.totalBlank;
+      return firstTotal > 0 ? (topSubjects.first.net / firstTotal) : 0.0;
+    }();
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -125,7 +140,7 @@ class EnhancedSubjectBreakdown extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'En yüksek net ortalamaları',
+                      'Başarı ortalamlarına göre sıralandı',
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
@@ -149,7 +164,7 @@ class EnhancedSubjectBreakdown extends StatelessWidget {
                 stat: stat,
                 isDark: isDark,
                 rank: index + 1,
-                maxNet: sortedSubjects.first.net,
+                maxPerformance: maxPerformance,
               ),
             );
           }),
@@ -164,20 +179,26 @@ class EnhancedSubjectRow extends StatelessWidget {
   final SubjectStats stat;
   final bool isDark;
   final int rank;
-  final double maxNet;
+  final double maxPerformance;
 
   const EnhancedSubjectRow({
     super.key,
     required this.stat,
     required this.isDark,
     required this.rank,
-    required this.maxNet,
+    required this.maxPerformance,
   });
 
   @override
   Widget build(BuildContext context) {
-    final percentage = maxNet > 0 ? (stat.net / maxNet) : 0.0;
-    final color = _getColorForRank(rank);
+    // Mutlak performans (toplam soru sayısına göre)
+    final totalQuestions = stat.totalCorrect + stat.totalWrong + stat.totalBlank;
+    final absolutePerformance = totalQuestions > 0 ? (stat.net / totalQuestions) : 0.0;
+
+    // Progress bar için göreceli yüzde (en iyi performansa göre)
+    final relativePercentage = maxPerformance > 0 ? (absolutePerformance / maxPerformance) : 0.0;
+
+    final color = _getColorForPerformance(absolutePerformance);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -234,7 +255,7 @@ class EnhancedSubjectRow extends StatelessWidget {
                 ),
               ),
               child: Text(
-                '${stat.net.toStringAsFixed(1)}',
+                '%${(absolutePerformance * 100).toStringAsFixed(0)}',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w900,
@@ -257,7 +278,7 @@ class EnhancedSubjectRow extends StatelessWidget {
               ),
             ),
             FractionallySizedBox(
-              widthFactor: percentage.clamp(0.0, 1.0),
+              widthFactor: relativePercentage.clamp(0.0, 1.0),
               child: Container(
                 height: 8,
                 decoration: BoxDecoration(
@@ -300,29 +321,29 @@ class EnhancedSubjectRow extends StatelessWidget {
               color: isDark ? Colors.white.withOpacity(0.3) : Colors.black.withOpacity(0.3),
               isDark: isDark,
             ),
-            const Spacer(),
-            Text(
-              '${(stat.accuracy * 100).toStringAsFixed(0)}% doğru',
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: isDark
-                    ? Colors.white.withOpacity(0.5)
-                    : Colors.black.withOpacity(0.5),
-              ),
-            ),
           ],
         ),
       ],
     );
   }
 
-  Color _getColorForRank(int rank) {
-    switch (rank) {
-      case 1: return const Color(0xFFF59E0B); // Altın
-      case 2: return const Color(0xFF94A3B8); // Gümüş
-      case 3: return const Color(0xFFF97316); // Bronz
-      default: return AppTheme.primaryBrandColor;
+  Color _getColorForPerformance(double percentage) {
+    // Performansa göre yeşilden kırmızıya gradient
+    if (percentage >= 0.8) {
+      // En iyi: Yeşil
+      return const Color(0xFF10B981);
+    } else if (percentage >= 0.6) {
+      // İyi: Açık Yeşil
+      return const Color(0xFF22C55E);
+    } else if (percentage >= 0.4) {
+      // Orta: Sarı
+      return const Color(0xFFFBBF24);
+    } else if (percentage >= 0.2) {
+      // Zayıf: Turuncu
+      return const Color(0xFFF97316);
+    } else {
+      // En kötü: Kırmızı
+      return const Color(0xFFEF4444);
     }
   }
 }
