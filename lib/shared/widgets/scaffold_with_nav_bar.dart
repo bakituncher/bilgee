@@ -146,15 +146,10 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                   drawer: const SidePanelDrawer(),
                   drawerScrimColor: Theme.of(context).colorScheme.surface.withOpacity(0.6),
                   drawerEdgeDragWidth: 48,
-                  floatingActionButton: FloatingActionButton(
+                  floatingActionButton: _AnimatedBunnyButton(
                     key: aiHubFabKey,
-                    heroTag: 'main_fab',
-                    onPressed: () => _onTap(2, ref, tutorialSteps),
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    elevation: 4.0,
-                    shape: const CircleBorder(),
-                    child: Icon(Icons.auto_awesome, color: Theme.of(context).colorScheme.onPrimary, size: 28),
-                  ).animate().scale(delay: 500.ms),
+                    onTap: () => _onTap(2, ref, tutorialSteps),
+                  ).animate().scale(delay: 500.ms, curve: Curves.easeOutBack),
                   floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
                   bottomNavigationBar: BottomAppBar(
                     // shape: const CircularNotchedRectangle(),
@@ -343,6 +338,88 @@ class _WeeklyPlanVictoryOverlay extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _AnimatedBunnyButton extends StatefulWidget {
+  final VoidCallback onTap;
+
+  const _AnimatedBunnyButton({super.key, required this.onTap});
+
+  @override
+  State<_AnimatedBunnyButton> createState() => _AnimatedBunnyButtonState();
+}
+
+class _AnimatedBunnyButtonState extends State<_AnimatedBunnyButton> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 50),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.85).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _handleTapDown(TapDownDetails details) {
+    _controller.forward();
+  }
+
+  void _handleTapUp(TapUpDetails details) {
+    _controller.reverse();
+    widget.onTap();
+  }
+
+  void _handleTapCancel() {
+    _controller.reverse();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: _handleTapDown,
+      onTapUp: _handleTapUp,
+      onTapCancel: _handleTapCancel,
+      child: AnimatedBuilder(
+        animation: _scaleAnimation,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _scaleAnimation.value,
+            child: Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/images/bunny.png',
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

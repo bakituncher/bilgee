@@ -92,7 +92,7 @@ class SmartPerformanceCharts extends StatelessWidget {
       } else {
         chartDataList.add(ChartData(
           tests: tests,
-          title: examType,
+          title: examType.toUpperCase(),
           subtitle: 'Genel Performans',
           icon: Icons.trending_up_rounded,
           baseColor: AppTheme.successBrandColor,
