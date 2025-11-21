@@ -7,6 +7,7 @@ import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/gestures.dart';
+import 'package:taktik/shared/widgets/custom_date_picker.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -59,9 +60,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Future<void> _selectDate(BuildContext context) async {
     final now = DateTime.now();
     final thirteenYearsAgo = DateTime(now.year - 13, now.month, now.day);
-    final DateTime? picked = await showDatePicker(
+    final DateTime? picked = await CustomDatePicker.show(
       context: context,
-      initialDate: _selectedDate ?? thirteenYearsAgo,
+      initialDate: _selectedDate,
       firstDate: DateTime(1920),
       lastDate: thirteenYearsAgo,
     );

@@ -5,6 +5,7 @@ import 'package:taktik/features/auth/application/auth_controller.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/gestures.dart';
+import 'package:taktik/shared/widgets/custom_date_picker.dart';
 
 class ProfileCompletionScreen extends ConsumerStatefulWidget {
   const ProfileCompletionScreen({super.key});
@@ -92,14 +93,11 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
   Future<void> _selectDate(BuildContext context) async {
     final now = DateTime.now();
     final thirteenYearsAgo = DateTime(now.year - 13, now.month, now.day);
-    final pickedDate = await showDatePicker(
+    final pickedDate = await CustomDatePicker.show(
       context: context,
-      initialDate: _dateOfBirth ?? thirteenYearsAgo,
+      initialDate: _dateOfBirth,
       firstDate: DateTime(1950),
       lastDate: thirteenYearsAgo,
-      helpText: 'Doğum Tarihini Seç',
-      cancelText: 'İptal',
-      confirmText: 'Tamam',
     );
     if (pickedDate != null && pickedDate != _dateOfBirth) {
       setState(() {
