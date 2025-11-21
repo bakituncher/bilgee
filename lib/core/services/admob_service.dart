@@ -24,33 +24,32 @@ class AdMobService {
     if (_initialized) return;
 
     try {
-      await MobileAds.instance.initialize();
-
-      // --- EKLENECEK KISIM BAŞLANGICI ---
-      // Aile politikası için genel yapılandırma.
-      // Bu ayar, uygulamanın varsayılan olarak "Genel İzleyici (G)" kitlesine uygun reklamlar almasını garantiye alır.
-      // Yetişkin içerikli reklamların yanlışlıkla bile olsa gösterilmesini engeller.
+      // --- DÜZELTME 1: KONFİGÜRASYON ÖNCE YAPILIYOR ---
+      // AdMob SDK başlatılmadan önce test cihazı ayarlarını veriyoruz.
+      // Böylece SDK "uyanır uyanmaz" test modunda olduğunu biliyor.
       RequestConfiguration configuration = RequestConfiguration(
-        maxAdContentRating: MaxAdContentRating.g, // Sadece G (General) dereceli reklamlar
-        tagForChildDirectedTreatment: TagForChildDirectedTreatment.yes, // COPPA uyumluluğu için
-        tagForUnderAgeOfConsent: TagForUnderAgeOfConsent.yes, // GDPR uyumluluğu için (Avrupa)
+        maxAdContentRating: MaxAdContentRating.g,
+        tagForChildDirectedTreatment: TagForChildDirectedTreatment.yes,
+        tagForUnderAgeOfConsent: TagForUnderAgeOfConsent.yes,
         testDeviceIds: [
-          '3c0d363a-76cc-4bc7-8d4d-ec4aca4c7849', // Test cihazı 1
-          '1b4349c5-a298-4bbe-abb5-ab3975d63f7d', // Test cihazı 2
+          'BCF3B4664E529BDE4CC3E6B2CB090F7B', // ✅ Sizin Test Cihazınız (MD5 Hash)
+          'BD3C30521D0B02B7473439F1BD0D2868',    // ⚠️ Diğer cihazınızın Logcat'teki kodu
         ],
       );
 
       await MobileAds.instance.updateRequestConfiguration(configuration);
-      // --- EKLENECEK KISIM SONU ---
+
+      // --- DÜZELTME 2: SDK ŞİMDİ BAŞLATILIYOR ---
+      // Artık ayarları bildiği için güvenle başlayabilir.
+      await MobileAds.instance.initialize();
 
       _initialized = true;
 
-      // İlk interstitial ve rewarded reklamları yükle
-      // Not: Başlangıçta kullanıcının yaşını bilmiyorsanız varsayılan olarak isUnder18: true kabul etmek en güvenlisidir.
+      // Test reklamlarını yükle
       _loadInterstitialAd(isUnder18: true);
       _loadRewardedAd(isUnder18: true);
 
-      debugPrint('✅ AdMob initialized successfully');
+      debugPrint('✅ AdMob initialized successfully (Test Device Mode Active)');
     } catch (e) {
       debugPrint('❌ AdMob initialization failed: $e');
     }
