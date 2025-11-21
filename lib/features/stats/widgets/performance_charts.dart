@@ -100,22 +100,28 @@ class SmartPerformanceCharts extends StatelessWidget {
       }
     }
 
-    return ListView.builder(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: chartDataList.length,
-      itemBuilder: (context, index) {
-        final data = chartDataList[index];
-        return Padding(
-          padding: EdgeInsets.only(right: index < chartDataList.length - 1 ? 10 : 0),
-          child: SwipeablePerformanceCard(
-            data: data,
-            isDark: isDark,
-          ).animate(delay: (200 + index * 50).ms)
-            .fadeIn(duration: 250.ms)
-            .slideX(begin: 0.1),
-        );
-      },
+    return SizedBox(
+      height: 300,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: chartDataList.length,
+        itemBuilder: (context, index) {
+          final data = chartDataList[index];
+          return Padding(
+            padding: EdgeInsets.only(right: index < chartDataList.length - 1 ? 16 : 0),
+            child: SizedBox(
+              width: MediaQuery.of(context).size.width - 32,
+              child: SwipeablePerformanceCard(
+                data: data,
+                isDark: isDark,
+              ).animate(delay: (200 + index * 50).ms)
+                .fadeIn(duration: 250.ms)
+                .slideX(begin: 0.1),
+            ),
+          );
+        },
+      ),
     );
   }
 }
