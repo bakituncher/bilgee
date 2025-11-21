@@ -32,7 +32,7 @@ class AdMobService {
         tagForChildDirectedTreatment: TagForChildDirectedTreatment.yes,
         tagForUnderAgeOfConsent: TagForUnderAgeOfConsent.yes,
         testDeviceIds: [
-          'BCF3B4664E529BDE4CC3E6B2CB090F7B', // ✅ Sizin Test Cihazınız (MD5 Hash)
+          'F9742A37C96523F237FE85385A67842F', // ✅ Sizin Test Cihazınız (MD5 Hash)
           'BD3C30521D0B02B7473439F1BD0D2868',    // ⚠️ Diğer cihazınızın Logcat'teki kodu
         ],
       );
