@@ -169,27 +169,26 @@ class AdMobService {
   ///
   /// [isUnder18] Kullanıcı 18 yaşından küçük mü?
   ///
-  /// Google Aile Politikası Gereksinimleri:
-  /// - 18 yaş altı: Kişiselleştirilmemiş, çocuk-güvenli reklamlar
-  /// - 18 yaş üstü: Standart reklamlar (kişiselleştirme izni ile)
+  /// GÜVENLİK: 18 yaş altı için ÇİFTE KORUMA
+  /// 1. RequestConfiguration: tagForChildDirectedTreatment = YES
+  /// 2. AdRequest: nonPersonalizedAds = true
   ///
-  /// Not: RequestConfiguration ile birlikte çalışır
+  /// Bu iki katman birlikte, 18 yaş altı kullanıcılara KESİNLİKLE
+  /// kişiselleştirilmiş reklam gösterilmemesini garanti eder.
   AdRequest createAdRequest({required bool isUnder18}) {
     if (isUnder18) {
-      // 18 yaş altı: COPPA uyumlu reklamlar
-      // - nonPersonalizedAds: Kullanıcı verilerine göre kişiselleştirme yapılmaz
-      // - keywords: Sadece eğitim odaklı, çocuk-güvenli içerik
+      // 18 yaş altı: ÇİFTE GÜVENLİK
+      // - RequestConfiguration'da tagForChildDirectedTreatment: YES (zaten ayarlanmış)
+      // - AdRequest'te nonPersonalizedAds: true (ekstra koruma)
       return const AdRequest(
-        keywords: ['education', 'study', 'learning', 'student', 'school'],
-        nonPersonalizedAds: true, // COPPA gereksinimi
+        nonPersonalizedAds: true, // KESİNLİKLE kişiselleştirilmemiş reklamlar
       );
     } else {
-      // 18 yaş üstü: Standart reklamlar
-      // - Kişiselleştirme izin verilebilir
-      // - Daha geniş anahtar kelime seti
+      // 18 yaş üstü: Serbest
+      // AdMob kendi algoritmalarını kullanır
+      // Kullanıcı tercihine göre kişiselleştirme yapılabilir
       return const AdRequest(
-        keywords: ['education', 'study', 'learning', 'student', 'exam', 'university', 'career'],
-        // nonPersonalizedAds belirtilmediğinde kullanıcı tercihine göre kişiselleştirme yapılabilir
+        // nonPersonalizedAds belirtilmez - kullanıcı tercihine göre
       );
     }
   }
