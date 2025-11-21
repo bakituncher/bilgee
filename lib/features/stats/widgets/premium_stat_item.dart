@@ -78,13 +78,17 @@ class PremiumStatItem extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontSize: 9,
+              fontSize: 8.5,
               fontWeight: FontWeight.w700,
               color: isDark
                   ? Colors.white.withOpacity(0.5)
                   : Colors.black.withOpacity(0.4),
-              letterSpacing: 0.3,
+              letterSpacing: 0.2,
+              height: 1.1,
             ),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

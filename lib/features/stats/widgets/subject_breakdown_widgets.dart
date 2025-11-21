@@ -49,30 +49,35 @@ class EnhancedSubjectBreakdown extends StatelessWidget {
     final topSubjects = sortedSubjects.take(6).toList();
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            AppTheme.goldBrandColor.withOpacity(0.08),
-            AppTheme.successBrandColor.withOpacity(0.04),
-          ],
+          colors: isDark
+              ? [
+                  const Color(0xFF1E293B),
+                  const Color(0xFF0F172A),
+                ]
+              : [
+                  Colors.white,
+                  const Color(0xFFFAFAFA),
+                ],
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isDark
-              ? Colors.white.withOpacity(0.08)
-              : Colors.black.withOpacity(0.06),
-          width: 1,
+              ? Colors.white.withOpacity(0.1)
+              : Colors.black.withOpacity(0.08),
+          width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
             color: isDark
-                ? Colors.black.withOpacity(0.2)
-                : Colors.black.withOpacity(0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
+                ? Colors.black.withOpacity(0.3)
+                : AppTheme.primaryBrandColor.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
           ),
         ],
       ),

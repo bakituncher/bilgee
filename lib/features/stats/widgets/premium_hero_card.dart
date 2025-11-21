@@ -140,7 +140,7 @@ class PremiumHeroCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Hoşgeldin, ${user.firstName.isNotEmpty ? user.firstName : 'Öğrenci'}',
+                              'Hoş Geldin, ${user.firstName.isNotEmpty ? user.firstName : 'Öğrenci'}',
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
@@ -244,7 +244,7 @@ class PremiumHeroCard extends StatelessWidget {
                       Expanded(
                         child: PremiumStatItem(
                           icon: Icons.emoji_events_rounded,
-                          label: 'Puan',
+                          label: 'Taktik Puanı',
                           value: '${user.engagementScore ?? 0}',
                           color: AppTheme.goldBrandColor,
                           isDark: isDark,
