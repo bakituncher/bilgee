@@ -46,30 +46,35 @@ class EnhancedActivityCard extends StatelessWidget {
     final maxStreak = _calculateMaxStreak(dailyTests, sortedDates);
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            AppTheme.primaryBrandColor.withOpacity(0.08),
-            AppTheme.secondaryBrandColor.withOpacity(0.04),
-          ],
+          colors: isDark
+              ? [
+                  const Color(0xFF1E293B),
+                  const Color(0xFF0F172A),
+                ]
+              : [
+                  Colors.white,
+                  const Color(0xFFFAFAFA),
+                ],
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isDark
-              ? Colors.white.withOpacity(0.08)
-              : Colors.black.withOpacity(0.06),
-          width: 1,
+              ? Colors.white.withOpacity(0.1)
+              : Colors.black.withOpacity(0.08),
+          width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
             color: isDark
-                ? Colors.black.withOpacity(0.2)
-                : Colors.black.withOpacity(0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
+                ? Colors.black.withOpacity(0.3)
+                : AppTheme.primaryBrandColor.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -79,27 +84,29 @@ class EnhancedActivityCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(7),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                     colors: [
                       AppTheme.primaryBrandColor,
-                      AppTheme.primaryBrandColor.withOpacity(0.7),
+                      AppTheme.secondaryBrandColor,
                     ],
                   ),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: AppTheme.primaryBrandColor.withOpacity(0.3),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
+                      color: AppTheme.primaryBrandColor.withOpacity(0.4),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
                     ),
                   ],
                 ),
                 child: const Icon(
-                  Icons.calendar_month_rounded,
+                  Icons.grid_4x4_rounded,
                   color: Colors.white,
-                  size: 16,
+                  size: 18,
                 ),
               ),
               const SizedBox(width: 10),
@@ -110,92 +117,111 @@ class EnhancedActivityCard extends StatelessWidget {
                     Text(
                       'Aktivite Haritası',
                       style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w900,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
                         color: isDark ? Colors.white : const Color(0xFF0F172A),
-                        letterSpacing: -0.5,
+                        letterSpacing: -0.3,
                       ),
                     ),
+                    const SizedBox(height: 2),
                     Text(
-                      'Son 30 günlük çalışma geçmişin',
+                      'Son 30 günlük çalışma ritmin',
                       style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
                         color: isDark
-                            ? Colors.white.withOpacity(0.5)
-                            : Colors.black.withOpacity(0.45),
+                            ? Colors.white.withOpacity(0.6)
+                            : Colors.black.withOpacity(0.5),
                       ),
                     ),
                   ],
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
+                  gradient: const LinearGradient(
                     colors: [
                       AppTheme.successBrandColor,
-                      AppTheme.successBrandColor.withOpacity(0.8),
+                      Color(0xFF10B981),
                     ],
                   ),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(10),
                   boxShadow: [
                     BoxShadow(
-                      color: AppTheme.successBrandColor.withOpacity(0.25),
-                      blurRadius: 6,
+                      color: AppTheme.successBrandColor.withOpacity(0.3),
+                      blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
                   ],
                 ),
-                child: Text(
-                  '$activeDays/$daysToShowVisits',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.check_circle_rounded,
+                      color: Colors.white,
+                      size: 14,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '$activeDays/$daysToShowVisits',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           _buildEnhancedActivityGrid(dailyTests, sortedDates),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
                 children: [
-                  _buildLegendItem('Az', AppTheme.primaryBrandColor.withOpacity(0.2)),
-                  const SizedBox(width: 8),
-                  _buildLegendItem('Orta', AppTheme.primaryBrandColor.withOpacity(0.5)),
-                  const SizedBox(width: 8),
-                  _buildLegendItem('Çok', AppTheme.primaryBrandColor),
+                  _buildLegendItem('Az', AppTheme.successBrandColor.withOpacity(isDark ? 0.35 : 0.3)),
+                  const SizedBox(width: 6),
+                  _buildLegendItem('Orta', AppTheme.successBrandColor.withOpacity(isDark ? 0.65 : 0.6)),
+                  const SizedBox(width: 6),
+                  _buildLegendItem('Çok', AppTheme.successBrandColor),
                 ],
               ),
               if (maxStreak > 0)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: Colors.deepOrange.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(8),
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.deepOrange.withOpacity(0.2),
+                        Colors.deepOrange.withOpacity(0.1),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: Colors.deepOrange.withOpacity(0.3),
-                      width: 1,
+                      color: Colors.deepOrange.withOpacity(0.4),
+                      width: 1.5,
                     ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(Icons.local_fire_department_rounded,
-                        color: Colors.deepOrange, size: 14),
-                      const SizedBox(width: 4),
+                        color: Colors.deepOrange, size: 16),
+                      const SizedBox(width: 5),
                       Text(
-                        'Rekor: $maxStreak gün',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.deepOrange,
+                        '$maxStreak gün',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? Colors.deepOrange.shade300 : Colors.deepOrange.shade700,
+                          letterSpacing: 0.3,
                         ),
                       ),
                     ],
@@ -210,13 +236,13 @@ class EnhancedActivityCard extends StatelessWidget {
 
   Widget _buildEnhancedActivityGrid(Map<String, int> dailyTests, List<String> sortedDates) {
     return SizedBox(
-      height: 70,
+      height: 80,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final cellSize = (constraints.maxWidth / 30).clamp(8.0, 11.0);
+          final cellSize = (constraints.maxWidth / 30).clamp(9.0, 12.0);
           return Wrap(
-            spacing: 3,
-            runSpacing: 3,
+            spacing: 4,
+            runSpacing: 4,
             children: sortedDates.map((dateKey) {
               final count = dailyTests[dateKey] ?? 0;
               return _buildEnhancedActivityCell(count, cellSize);
@@ -230,25 +256,40 @@ class EnhancedActivityCard extends StatelessWidget {
   Widget _buildEnhancedActivityCell(int count, double size) {
     Color color;
     if (count == 0) {
-      color = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+      color = isDark
+          ? const Color(0xFF334155).withOpacity(0.5)
+          : const Color(0xFFE2E8F0);
     } else if (count == 1) {
-      color = AppTheme.primaryBrandColor.withOpacity(0.3);
+      color = isDark
+          ? AppTheme.successBrandColor.withOpacity(0.35)
+          : AppTheme.successBrandColor.withOpacity(0.3);
     } else if (count == 2) {
-      color = AppTheme.primaryBrandColor.withOpacity(0.6);
+      color = isDark
+          ? AppTheme.successBrandColor.withOpacity(0.65)
+          : AppTheme.successBrandColor.withOpacity(0.6);
     } else {
-      color = AppTheme.primaryBrandColor;
+      color = isDark
+          ? AppTheme.successBrandColor
+          : AppTheme.successBrandColor;
     }
 
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
       width: size,
       height: size,
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(3),
+        borderRadius: BorderRadius.circular(4),
+        border: count > 0 && isDark
+            ? Border.all(
+                color: Colors.white.withOpacity(0.15),
+                width: 0.5,
+              )
+            : null,
         boxShadow: count > 0 ? [
           BoxShadow(
-            color: color.withOpacity(0.4),
-            blurRadius: 4,
+            color: color.withOpacity(isDark ? 0.5 : 0.3),
+            blurRadius: count > 2 ? 6 : 3,
             offset: const Offset(0, 2),
           ),
         ] : null,
@@ -257,29 +298,51 @@ class EnhancedActivityCard extends StatelessWidget {
   }
 
   Widget _buildLegendItem(String label, Color color) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(3),
-          ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withOpacity(0.05)
+            : Colors.black.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withOpacity(0.1)
+              : Colors.black.withOpacity(0.08),
+          width: 1,
         ),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w600,
-            color: isDark
-                ? Colors.white.withOpacity(0.5)
-                : Colors.black.withOpacity(0.5),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(3),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withOpacity(0.4),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: isDark
+                  ? Colors.white.withOpacity(0.7)
+                  : Colors.black.withOpacity(0.6),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
