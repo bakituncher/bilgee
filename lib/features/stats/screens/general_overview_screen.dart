@@ -25,7 +25,10 @@ class _GeneralOverviewScreenState extends ConsumerState<GeneralOverviewScreen> {
       final user = ref.read(userProfileProvider).value;
       if (user != null) {
         final isPremium = user.isPremium;
-        AdMobService().showInterstitialAd(isPremium: isPremium);
+        AdMobService().showInterstitialAd(
+          isPremium: isPremium,
+          dateOfBirth: user.dateOfBirth,
+        );
       }
     });
   }

@@ -224,7 +224,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           RepaintBoundary(
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: AdBannerWidget(isPremium: user.isPremium),
+              child: AdBannerWidget(
+                isPremium: user.isPremium,
+                dateOfBirth: user.dateOfBirth,
+              ),
             ),
           ),
           RepaintBoundary(child: Container(key: todaysPlanKey, child: const TodaysPlan())), // Kaydırılan kartlar burada

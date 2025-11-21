@@ -38,12 +38,17 @@ class _PomodoroCompletedViewState extends ConsumerState<PomodoroCompletedView> {
     await Future.delayed(const Duration(milliseconds: 1500));
     if (!mounted) return;
 
-    // Premium kontrolü
+    // Premium kontrolü ve kullanıcı bilgisi
     final isPremium = ref.read(premiumStatusProvider);
     if (isPremium) return; // Premium kullanıcıya reklam gösterme
 
+    final user = ref.read(userProfileProvider).value;
+
     // Geçiş reklamını göster
-    await AdMobService().showInterstitialAd(isPremium: isPremium);
+    await AdMobService().showInterstitialAd(
+      isPremium: isPremium,
+      dateOfBirth: user?.dateOfBirth,
+    );
   }
 
   @override

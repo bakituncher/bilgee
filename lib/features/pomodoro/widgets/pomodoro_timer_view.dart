@@ -152,9 +152,11 @@ class PomodoroTimerView extends ConsumerWidget {
         Consumer(
           builder: (context, ref, _) {
             final isPremium = ref.watch(premiumStatusProvider);
+            final user = ref.watch(userProfileProvider).value;
 
             return AdBannerWidget(
               isPremium: isPremium,
+              dateOfBirth: user?.dateOfBirth,
             );
           },
         ),

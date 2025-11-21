@@ -5,12 +5,15 @@ import 'package:taktik/core/services/admob_service.dart';
 
 /// Banner reklam widget'ı
 /// Premium kullanıcılara reklam gösterilmez
+/// 18 yaşından küçüklere kişiselleştirilmemiş reklam gösterilir
 class AdBannerWidget extends StatefulWidget {
   final bool isPremium;
+  final DateTime? dateOfBirth;
 
   const AdBannerWidget({
     super.key,
     this.isPremium = false,
+    this.dateOfBirth,
   });
 
   @override
@@ -50,6 +53,7 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
           });
         }
       },
+      dateOfBirth: widget.dateOfBirth,
     );
 
     _bannerAd?.load();

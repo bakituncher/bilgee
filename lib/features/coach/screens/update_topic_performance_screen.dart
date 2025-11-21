@@ -352,6 +352,7 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
                     // Premium değilse, akıllı sistem karar verir
                     final monetizationManager = ref.read(monetizationManagerProvider);
                     final action = monetizationManager.getActionAfterLessonNetSubmission();
+                    final user = ref.read(userProfileProvider).value;
 
                     switch (action) {
                       case MonetizationAction.showPaywall:
@@ -360,7 +361,10 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
                         break;
                       case MonetizationAction.showAd:
                         // Reklam göster
-                        await AdMobService().showInterstitialAd(isPremium: isPremium);
+                        await AdMobService().showInterstitialAd(
+                          isPremium: isPremium,
+                          dateOfBirth: user?.dateOfBirth,
+                        );
                         break;
                       case MonetizationAction.showNothing:
                         // Hiçbir şey gösterme (cooldown aktif)
