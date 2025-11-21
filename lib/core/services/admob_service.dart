@@ -34,6 +34,10 @@ class AdMobService {
         maxAdContentRating: MaxAdContentRating.g, // Sadece G (General) dereceli reklamlar
         tagForChildDirectedTreatment: TagForChildDirectedTreatment.yes, // COPPA uyumluluğu için
         tagForUnderAgeOfConsent: TagForUnderAgeOfConsent.yes, // GDPR uyumluluğu için (Avrupa)
+        testDeviceIds: [
+          '3c0d363a-76cc-4bc7-8d4d-ec4aca4c7849', // Test cihazı 1
+          '1b4349c5-a298-4bbe-abb5-ab3975d63f7d', // Test cihazı 2
+        ],
       );
 
       await MobileAds.instance.updateRequestConfiguration(configuration);
