@@ -152,11 +152,11 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             colors: isDark
                 ? [
                     theme.scaffoldBackgroundColor,
-                    theme.cardColor.withOpacity(0.5),
+                    theme.cardColor.withValues(alpha: 0.5),
                   ]
                 : [
                     theme.scaffoldBackgroundColor,
-                    theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                    theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                   ],
           ),
         ),
@@ -206,9 +206,11 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   }
 
   double _accuracy(TestModel t) {
-    final attempted = t.totalCorrect + t.totalWrong;
-    if (attempted == 0) return 0.0;
-    return (t.totalCorrect / attempted) * 100.0;
+    // Doğruluk: boş sorular da yüzdelik hesabında paydada yer almalı.
+    // Önceki hali: correct/(correct+wrong) -> boşlar %'yi şişiriyordu.
+    final total = t.totalCorrect + t.totalWrong + t.totalBlank;
+    if (total == 0) return 0.0; // Hiç soru yoksa 0%
+    return (t.totalCorrect / total) * 100.0;
   }
 
   // YENI: Mevcut bölümler
@@ -318,15 +320,15 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: isDark
-                        ? colorScheme.surfaceContainerHighest.withOpacity(0.3)
-                        : colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                        ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3)
+                        : colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                     width: 1,
                   ),
                   boxShadow: isDark
                       ? []
                       : [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.03),
+                            color: Colors.black.withValues(alpha: 0.03),
                             blurRadius: 6,
                             offset: const Offset(0, 2),
                           ),
@@ -364,12 +366,12 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                         selected: selected,
                         onSelected: (_) => setState(() => _selectedSection = s),
                         backgroundColor: theme.cardColor,
-                        selectedColor: colorScheme.primary.withOpacity(0.15),
+                        selectedColor: colorScheme.primary.withValues(alpha: 0.15),
                         checkmarkColor: colorScheme.primary,
                         side: BorderSide(
                           color: selected
-                              ? colorScheme.primary.withOpacity(0.5)
-                              : colorScheme.surfaceContainerHighest.withOpacity(0.4),
+                              ? colorScheme.primary.withValues(alpha: 0.5)
+                              : colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
                           width: 1,
                         ),
                         labelStyle: TextStyle(
@@ -430,9 +432,10 @@ class _ArchiveListTile extends ConsumerWidget {
   const _ArchiveListTile({required this.test});
 
   double _accuracy(TestModel t) {
-    final attempted = t.totalCorrect + t.totalWrong;
-    if (attempted == 0) return 0.0;
-    return (t.totalCorrect / attempted) * 100.0;
+    // Doğruluk: boş sorular da yüzdelik hesabında paydada yer almalı.
+    final total = t.totalCorrect + t.totalWrong + t.totalBlank;
+    if (total == 0) return 0.0;
+    return (t.totalCorrect / total) * 100.0;
   }
 
   @override
@@ -451,15 +454,15 @@ class _ArchiveListTile extends ConsumerWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isDark
-              ? colorScheme.surfaceContainerHighest.withOpacity(0.3)
-              : colorScheme.surfaceContainerHighest.withOpacity(0.6),
+              ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3)
+              : colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
           width: 1.5,
         ),
         boxShadow: isDark
             ? []
             : [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: Colors.black.withValues(alpha: 0.04),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -491,12 +494,12 @@ class _ArchiveListTile extends ConsumerWidget {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        colorScheme.primary.withOpacity(0.15),
-                        colorScheme.secondary.withOpacity(0.1),
+                        colorScheme.primary.withValues(alpha: 0.15),
+                        colorScheme.secondary.withValues(alpha: 0.1),
                       ],
                     ),
                     border: Border.all(
-                      color: colorScheme.primary.withOpacity(0.2),
+                      color: colorScheme.primary.withValues(alpha: 0.2),
                       width: 1,
                     ),
                   ),
@@ -547,10 +550,10 @@ class _ArchiveListTile extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: colorScheme.secondary.withOpacity(0.1),
+                    color: colorScheme.secondary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: colorScheme.secondary.withOpacity(0.3),
+                      color: colorScheme.secondary.withValues(alpha: 0.3),
                       width: 1,
                     ),
                   ),

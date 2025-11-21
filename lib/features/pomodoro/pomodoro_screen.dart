@@ -89,7 +89,7 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen> with TickerProv
       child: Scaffold(
         extendBodyBehindAppBar: true,
         appBar: AppBar(
-          title: const Text('Zihinsel Gözlemevi'),
+          title: const Text('Pomodoro'),
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,

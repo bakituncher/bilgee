@@ -86,23 +86,6 @@ class _PomodoroStatsViewState extends ConsumerState<PomodoroStatsView> {
                       Icon(Icons.bar_chart_rounded, color: Theme.of(context).colorScheme.secondary),
                       const SizedBox(width: 8),
                       const Text('Odak İstatistikleri', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.tertiary.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Theme.of(context).colorScheme.tertiary.withOpacity(0.3)),
-                        ),
-                        child: Row(children: [
-                          Icon(Icons.star_rounded, color: Theme.of(context).colorScheme.tertiary, size: 18),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Pomodoro BP: ${userStats.pomodoroBp}',
-                            style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontWeight: FontWeight.w700),
-                          ),
-                        ]),
-                      )
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -152,23 +135,23 @@ class _PomodoroStatsViewState extends ConsumerState<PomodoroStatsView> {
                   ).animate().fadeIn().slideY(begin: 0.1),
                   const SizedBox(height: 8),
                   userStatsAsync.when(
-                    data: (stats) => Align(
-                      alignment: Alignment.centerLeft,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).cardColor.withOpacity(0.7),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Theme.of(context).colorScheme.tertiary.withOpacity(0.35)),
-                        ),
-                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    data: (stats) => Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).cardColor.withOpacity(0.7),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Theme.of(context).colorScheme.tertiary.withOpacity(0.35)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
                           Icon(Icons.star_rounded, color: Theme.of(context).colorScheme.tertiary),
                           const SizedBox(width: 8),
                           Text(
-                            'Pomodoro BP: ${stats?.pomodoroBp ?? 0}',
+                            'Pomodoro TP: ${stats?.pomodoroBp ?? 0}',
                             style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontWeight: FontWeight.w700),
                           ),
-                        ]),
+                        ],
                       ),
                     ),
                     loading: () => const SizedBox.shrink(),
@@ -217,17 +200,9 @@ class _PomodoroStatsViewState extends ConsumerState<PomodoroStatsView> {
                   ElevatedButton.icon(
                     onPressed: () => ref.read(pomodoroProvider.notifier).prepareForWork(),
                     icon: const Icon(Icons.rocket_launch_rounded),
-                    label: const Text('Mabedi Harekete Geçir'),
+                    label: const Text('Odaklanmaya Başla'),
                     style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14)),
                   ).animate().fadeIn(delay: 600.ms),
-                  const SizedBox(height: 6),
-                  Align(
-                    alignment: Alignment.center,
-                    child: Text(
-                      'Odaklanmaya başla.',
-                      style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12),
-                    ),
-                  ),
                   const SizedBox(height: 16),
                   // Banner Reklam
                   Consumer(

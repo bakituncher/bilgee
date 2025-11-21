@@ -24,20 +24,10 @@ class AnalysisStrategyScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [
-                      colorScheme.primary.withOpacity(0.15),
-                      colorScheme.secondary.withOpacity(0.15),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-                child: Icon(Icons.auto_awesome, size: 42, color: colorScheme.primary),
+              const CircleAvatar(
+                backgroundColor: Colors.transparent,
+                radius: 42,
+                backgroundImage: AssetImage('assets/images/bunnyy.png'),
               ).animate().fadeIn(duration: 220.ms).scale(),
               const SizedBox(height: 20),
               Text(

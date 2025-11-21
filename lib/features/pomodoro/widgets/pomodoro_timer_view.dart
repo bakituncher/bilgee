@@ -20,10 +20,10 @@ class PomodoroTimerView extends ConsumerWidget {
 
     final colorScheme = Theme.of(context).colorScheme;
     final (title, progressColor, message) = switch (pomodoro.sessionState) {
-      PomodoroSessionState.work => ("Odaklanma Modu", colorScheme.secondary, "Yaratım anındasın. Evren sessiz."),
-      PomodoroSessionState.shortBreak => ("Kısa Mola", colorScheme.primary, "Nefes al. Zihnin berraklaşsın."),
-      PomodoroSessionState.longBreak => ("Uzun Mola", colorScheme.primary, "Harika iş! Zihinsel bir yolculuğa çık."),
-      _ => ("Beklemede", colorScheme.surfaceContainerHighest, "Mabet seni bekliyor."),
+      PomodoroSessionState.work => ("Odaklanma Zamanı", colorScheme.secondary, "Çalışma seansın devam ediyor."),
+      PomodoroSessionState.shortBreak => ("Kısa Mola", colorScheme.primary, "Biraz dinlen ve devam et."),
+      PomodoroSessionState.longBreak => ("Uzun Mola", colorScheme.primary, "Uzun bir mola zamanı, iyice dinlen."),
+      _ => ("Beklemede", colorScheme.surfaceContainerHighest, "Başlamak için hazırsın."),
     };
 
     return Padding(
