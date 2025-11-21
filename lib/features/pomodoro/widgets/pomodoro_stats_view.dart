@@ -208,13 +208,8 @@ class _PomodoroStatsViewState extends ConsumerState<PomodoroStatsView> {
                   Consumer(
                     builder: (context, ref, _) {
                       final isPremium = ref.watch(premiumStatusProvider);
-                      final userProfile = ref.watch(userProfileProvider).value;
-                      final isUnder18 = userProfile?.dateOfBirth != null
-                          ? DateTime.now().difference(userProfile!.dateOfBirth!).inDays < 6570 // 18 yaş = 6570 gün
-                          : false;
 
                       return AdBannerWidget(
-                        isUnder18: isUnder18,
                         isPremium: isPremium,
                       );
                     },

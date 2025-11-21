@@ -13,7 +13,6 @@ import 'dart:ui';
 import 'package:taktik/shared/widgets/logo_loader.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:taktik/shared/widgets/ad_banner_widget.dart';
-import 'package:taktik/utils/age_helper.dart';
 
 class ArenaScreen extends ConsumerStatefulWidget {
   const ArenaScreen({super.key});
@@ -96,7 +95,6 @@ class _LeaderboardView extends ConsumerWidget {
         ? ref.watch(leaderboardWeeklyProvider(currentUserExam))
         : ref.watch(leaderboardDailyProvider(currentUserExam));
     final colorScheme = Theme.of(context).colorScheme;
-    final isUnder18 = AgeHelper.isUnder18(currentUser?.dateOfBirth);
 
     return RefreshIndicator(
       color: colorScheme.secondary,
@@ -152,7 +150,7 @@ class _LeaderboardView extends ConsumerWidget {
                     final isPremium = currentUser?.isPremium ?? false;
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12.0),
-                      child: AdBannerWidget(isUnder18: isUnder18, isPremium: isPremium),
+                      child: AdBannerWidget(isPremium: isPremium),
                     );
                   }
 

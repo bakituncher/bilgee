@@ -15,7 +15,6 @@ import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:taktik/data/providers/monetization_provider.dart';
 import 'package:taktik/core/services/monetization_manager.dart';
 import 'package:taktik/core/services/admob_service.dart';
-import 'package:taktik/utils/age_helper.dart';
 
 final _updateModeProvider = StateProvider.autoDispose<bool>((ref) => true);
 final _sessionQuestionCountProvider = StateProvider.autoDispose<int>((ref) => 20);
@@ -353,8 +352,6 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
                     // Premium değilse, akıllı sistem karar verir
                     final monetizationManager = ref.read(monetizationManagerProvider);
                     final action = monetizationManager.getActionAfterLessonNetSubmission();
-                    final userProfile = ref.read(userProfileProvider).value;
-                    final isUnder18 = userProfile != null ? AgeHelper.isUnder18(userProfile.dateOfBirth) : false;
 
                     switch (action) {
                       case MonetizationAction.showPaywall:
@@ -363,7 +360,7 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
                         break;
                       case MonetizationAction.showAd:
                         // Reklam göster
-                        await AdMobService().showInterstitialAd(isUnder18: isUnder18, isPremium: isPremium);
+                        await AdMobService().showInterstitialAd(isPremium: isPremium);
                         break;
                       case MonetizationAction.showNothing:
                         // Hiçbir şey gösterme (cooldown aktif)

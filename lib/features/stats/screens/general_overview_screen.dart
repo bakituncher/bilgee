@@ -6,7 +6,6 @@ import 'package:taktik/core/services/admob_service.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/stats/widgets/overview_content.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
-import 'package:taktik/utils/age_helper.dart';
 
 /// Redesigned General Overview Screen with sector-level education analytics
 /// Features: Modern design, comprehensive metrics, interactive charts, elegant UI
@@ -25,9 +24,8 @@ class _GeneralOverviewScreenState extends ConsumerState<GeneralOverviewScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final user = ref.read(userProfileProvider).value;
       if (user != null) {
-        final isUnder18 = AgeHelper.isUnder18(user.dateOfBirth);
         final isPremium = user.isPremium;
-        AdMobService().showInterstitialAd(isUnder18: isUnder18, isPremium: isPremium);
+        AdMobService().showInterstitialAd(isPremium: isPremium);
       }
     });
   }
