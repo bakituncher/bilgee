@@ -31,12 +31,16 @@ class PremiumHeroCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: const Color(0xFF10B981),
+          width: 2.0,
+        ),
         boxShadow: [
           BoxShadow(
-            color: motivationColor.withOpacity(0.3),
-            blurRadius: 32,
-            offset: const Offset(0, 12),
-            spreadRadius: -8,
+            color: const Color(0xFF10B981).withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+            spreadRadius: -2,
           ),
         ],
       ),
@@ -97,18 +101,21 @@ class PremiumHeroCard extends StatelessWidget {
             ),
 
             // İçerik
-            Container(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Üst kısım - Karşılama ve durum
-                  Row(
+            SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Üst kısım - Karşılama ve durum
+                    Row(
                     children: [
                       // Avatar
                       Container(
-                        width: 56,
-                        height: 56,
+                        width: 48,
+                        height: 48,
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topLeft,
@@ -128,13 +135,23 @@ class PremiumHeroCard extends StatelessWidget {
                             ),
                           ],
                         ),
-                        child: Icon(
-                          _getMotivationIcon(),
-                          color: Colors.white,
-                          size: 28,
-                        ),
+                        child: _getMotivationIcon() == Icons.rocket_launch_rounded
+                            ? ClipOval(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(6.0),
+                                  child: Image.asset(
+                                    'assets/images/bunnyy.png',
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                              )
+                            : Icon(
+                                _getMotivationIcon(),
+                                color: Colors.white,
+                                size: 24,
+                              ),
                       ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -142,7 +159,7 @@ class PremiumHeroCard extends StatelessWidget {
                             Text(
                               'Hoş Geldin, ${user.firstName.isNotEmpty ? user.firstName : 'Öğrenci'}',
                               style: TextStyle(
-                                fontSize: 13,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w600,
                                 color: isDark
                                     ? Colors.white.withOpacity(0.6)
@@ -154,7 +171,7 @@ class PremiumHeroCard extends StatelessWidget {
                             Text(
                               motivationMessage,
                               style: TextStyle(
-                                fontSize: 18,
+                                fontSize: 16,
                                 fontWeight: FontWeight.w900,
                                 color: isDark ? Colors.white : const Color(0xFF0F172A),
                                 height: 1.2,
@@ -204,56 +221,59 @@ class PremiumHeroCard extends StatelessWidget {
                     ],
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
 
                   // İstatistik kartları - Grid
-                  Row(
-                    children: [
-                      Expanded(
-                        child: PremiumStatItem(
-                          icon: Icons.assignment_turned_in_rounded,
-                          label: 'Deneme',
-                          value: '${user.testCount ?? 0}',
-                          color: const Color(0xFF8B5CF6),
-                          isDark: isDark,
+                  IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: PremiumStatItem(
+                            icon: Icons.assignment_turned_in_rounded,
+                            label: 'Deneme',
+                            value: '${user.testCount ?? 0}',
+                            color: const Color(0xFF8B5CF6),
+                            isDark: isDark,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: PremiumStatItem(
-                          icon: Icons.trending_up_rounded,
-                          label: 'Ort. Net',
-                          value: avgNet,
-                          color: const Color(0xFF10B981),
-                          isDark: isDark,
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: PremiumStatItem(
+                            icon: Icons.trending_up_rounded,
+                            label: 'Ort. Net',
+                            value: avgNet,
+                            color: const Color(0xFF10B981),
+                            isDark: isDark,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: PremiumStatItem(
-                          icon: Icons.local_fire_department_rounded,
-                          label: 'Seri',
-                          value: '$streak',
-                          suffix: 'gün',
-                          color: const Color(0xFFEF4444),
-                          isDark: isDark,
-                          isHighlight: streak >= 3,
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: PremiumStatItem(
+                            icon: Icons.local_fire_department_rounded,
+                            label: 'Seri',
+                            value: '$streak',
+                            suffix: 'gün',
+                            color: const Color(0xFFEF4444),
+                            isDark: isDark,
+                            isHighlight: streak >= 3,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: PremiumStatItem(
-                          icon: Icons.emoji_events_rounded,
-                          label: 'Taktik Puanı',
-                          value: '${user.engagementScore ?? 0}',
-                          color: AppTheme.goldBrandColor,
-                          isDark: isDark,
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: PremiumStatItem(
+                            icon: Icons.emoji_events_rounded,
+                            label: 'Taktik Puanı',
+                            value: '${user.engagementScore ?? 0}',
+                            color: AppTheme.goldBrandColor,
+                            isDark: isDark,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
 
                   // İlerleme barı
                   Column(
@@ -283,7 +303,7 @@ class PremiumHeroCard extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       Stack(
                         children: [
                           Container(
@@ -324,9 +344,10 @@ class PremiumHeroCard extends StatelessWidget {
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
+    ),
     );
   }
 

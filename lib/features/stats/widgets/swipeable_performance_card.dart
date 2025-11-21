@@ -71,10 +71,6 @@ class SwipeablePerformanceCard extends StatelessWidget {
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: trendColor.withOpacity(0.3),
-          width: 1.5,
-        ),
         boxShadow: [
           BoxShadow(
             color: trendColor.withOpacity(0.12),
