@@ -4,6 +4,7 @@ import 'package:taktik/data/models/user_model.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/profile/application/profile_controller.dart';
 import 'package:intl/intl.dart';
+import 'package:taktik/shared/widgets/custom_date_picker.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -88,11 +89,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
+    final now = DateTime.now();
+    final DateTime? picked = await CustomDatePicker.show(
       context: context,
-      initialDate: _selectedDate ?? DateTime.now(),
+      initialDate: _selectedDate,
       firstDate: DateTime(1920),
-      lastDate: DateTime.now(),
+      lastDate: now,
     );
     if (picked != null && picked != _selectedDate) {
       setState(() {

@@ -46,15 +46,14 @@
             android:name="google_analytics_default_allow_ad_personalization_signals"
             android:value="false" />
 
-        <!-- AdMob App ID - Test mode için sample ID, production'da değiştirilmeli -->
+        <!-- AdMob App ID - local.properties dosyasından yüklenir -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713"/>
+            android:value="${admobAppId}"/>
     </application>
 
-    <!-- AD_ID iznini açıkça reddet -->
-    <uses-permission android:name="com.google.android.gms.permission.AD_ID"
-        tools:node="remove" />
+    <!-- AD_ID izni - AdMob için gerekli (COPPA uyumlu yaş kontrolü ile kullanılır) -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>
 
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
