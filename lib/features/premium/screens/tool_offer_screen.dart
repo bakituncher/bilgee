@@ -476,7 +476,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Devrime Katıl',
+              'Sınırları Kaldır',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w900,
                 color: Theme.of(context).colorScheme.onSurface,
