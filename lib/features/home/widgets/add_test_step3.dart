@@ -124,7 +124,6 @@ class Step3Summary extends ConsumerWidget {
                     case MonetizationAction.showAd:
                       // Reklam göster
                       await AdMobService().showInterstitialAd(
-                        isPremium: isPremium,
                         dateOfBirth: user?.dateOfBirth,
                       );
                       break;

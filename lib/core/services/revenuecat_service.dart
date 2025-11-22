@@ -1,4 +1,5 @@
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -36,8 +37,8 @@ class RevenueCatService {
     await Purchases.configure(configuration);
   }
 
-  static bool get isAndroid => TargetPlatform.android == defaultTargetPlatform;
-  static bool get isIOS => TargetPlatform.iOS == defaultTargetPlatform;
+  static bool get isAndroid => defaultTargetPlatform == TargetPlatform.android;
+  static bool get isIOS => defaultTargetPlatform == TargetPlatform.iOS;
 
   static Future<Offerings> getOfferings() async {
     try {
@@ -79,8 +80,3 @@ class RevenueCatService {
     }
   }
 }
-
-// A simple way to check the platform without needing a BuildContext
-bool get isAndroid => defaultTargetPlatform == TargetPlatform.android;
-bool get isIOS => defaultTargetPlatform == TargetPlatform.iOS;
-const defaultTargetPlatform = TargetPlatform.android; // Or TargetPlatform.iOS

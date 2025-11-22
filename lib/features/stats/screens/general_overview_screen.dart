@@ -24,9 +24,8 @@ class _GeneralOverviewScreenState extends ConsumerState<GeneralOverviewScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final user = ref.read(userProfileProvider).value;
       if (user != null) {
-        final isPremium = user.isPremium;
+        // isPremium check is now handled internally by AdMobService
         AdMobService().showInterstitialAd(
-          isPremium: isPremium,
           dateOfBirth: user.dateOfBirth,
         );
       }

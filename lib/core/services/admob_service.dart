@@ -12,6 +12,8 @@ class AdMobService {
   AdMobService._internal();
 
   bool _initialized = false;
+  bool _isPremium = false;
+
   InterstitialAd? _interstitialAd;
   bool _isInterstitialAdLoading = false;
   RewardedAd? _rewardedAd;
@@ -22,9 +24,34 @@ class AdMobService {
   // Son yüklenen reklamların çocuk (under 18) modunda olup olmadığı
   bool? _lastIsUnder18;
 
+  /// Servisi tamamen sıfırla (Logout durumunda kullanılır)
+  /// Tüm state'i temizler ve reklamları yok eder.
+  void reset() {
+    debugPrint('🔄 AdMobService is being reset (Logout/Cleanup)');
+    dispose();
+    _initialized = false;
+    _isPremium = false;
+    _userDateOfBirth = null;
+    _lastIsUnder18 = null;
+  }
+
   /// AdMob'u başlat
-  Future<void> initialize() async {
-    if (_initialized) return;
+  /// [isPremium] true ise AdMob SDK başlatılmaz, kaynak tüketilmez.
+  Future<void> initialize({bool isPremium = false}) async {
+    // Eğer daha önce initialize edilmişse ve premium durumu değişmediyse çık
+    // Ancak reset sonrası _initialized false olacağı için tekrar çalışır.
+    if (_initialized && _isPremium == isPremium) return;
+
+    _isPremium = isPremium;
+
+    // Eğer premium ise ve daha önce init edilmişse, kaynakları temizle
+    // ve init edilmiş gibi işaretle
+    if (_isPremium) {
+      dispose();
+      debugPrint('✅ AdMob skipped initialization for Premium user');
+      _initialized = true; // İşaretliyoruz ki tekrar tekrar denemesin
+      return;
+    }
 
     try {
       // RequestConfiguration ayarları
@@ -48,11 +75,40 @@ class AdMobService {
     }
   }
 
+  /// Premium durumunu günceller.
+  /// Kullanıcı premium satın alırsa veya aboneliği biterse çağrılır.
+  Future<void> updatePremiumStatus(bool isPremium) async {
+    if (_isPremium == isPremium) return;
+
+    _isPremium = isPremium;
+    debugPrint('ℹ️ AdMob premium status updated: $_isPremium');
+
+    if (_isPremium) {
+      // Premium olduysa tüm reklamları temizle ve belleği boşalt
+      dispose();
+    } else {
+      // Premium bittiyse:
+      // Eğer daha önce "skipped init" yapıldıysa (_initialized=true ama SDK çalışmadı),
+      // şimdi gerçekten init etmeliyiz.
+      // Veya hiç init edilmediyse init etmeliyiz.
+
+      // _initialized=true olması, MobileAds.initialize çağrıldığı anlamına gelmez (premium skip durumu).
+      // Bu yüzden sadece _initialized kontrolü yetersiz olabilir, ama initialize() metodunu
+      // isPremium=false ile çağırmak güvenlidir.
+      await initialize(isPremium: false);
+
+      // initialize() içinde zaten yükleme çağrılıyor ama asenkron olduğu için
+      // garanti olsun diye yüklemeyi tetikle.
+      if (_interstitialAd == null) _loadInterstitialAd(dateOfBirth: _userDateOfBirth);
+      if (_rewardedAd == null) _loadRewardedAd(dateOfBirth: _userDateOfBirth);
+    }
+  }
+
   /// Kullanıcı yaşına göre AdMob konfigürasyonunu güncelle
   /// Bu metot aynı zamanda yaş durumundaki değişiklik sonrası (özellikle çocuk -> yetişkin)
   /// interstitial ve rewarded reklamları yeniden yükler ki test cihazı kimliği alınabilsin.
   Future<void> updateUserAgeConfiguration({DateTime? dateOfBirth}) async {
-    if (!_initialized) return;
+    if (!_initialized || _isPremium) return;
 
     _userDateOfBirth = dateOfBirth; // Yaş bilgisini sakla
     final isUnder18 = _isUserUnder18(dateOfBirth);
@@ -85,6 +141,8 @@ class AdMobService {
 
   /// Yaşa bağlı reklamları yeniden yükler (interstitial & rewarded)
   void _reloadAgeSensitiveAds({DateTime? dateOfBirth}) {
+    if (_isPremium) return;
+
     // Mevcut reklamları dispose edip null'lıyoruz ki yeni konfig ile yeniden yüklensinler
     _interstitialAd?.dispose();
     _interstitialAd = null;
@@ -185,11 +243,16 @@ class AdMobService {
   }
 
   /// Banner reklam oluştur
-  BannerAd createBannerAd({
+  BannerAd? createBannerAd({
     required Function(Ad) onAdLoaded,
     required Function(Ad, LoadAdError) onAdFailedToLoad,
     DateTime? dateOfBirth,
   }) {
+    if (_isPremium) {
+      debugPrint('🚫 Banner ad creation blocked for Premium user');
+      return null;
+    }
+
     return BannerAd(
       adUnitId: bannerAdUnitId,
       size: AdSize.banner,
@@ -203,6 +266,7 @@ class AdMobService {
 
   /// Interstitial reklam yükle
   void _loadInterstitialAd({DateTime? dateOfBirth}) {
+    if (_isPremium) return;
     if (_isInterstitialAdLoading || _interstitialAd != null) return;
 
     _isInterstitialAdLoading = true;
@@ -237,11 +301,18 @@ class AdMobService {
   }
 
   /// Interstitial reklamı göster
-  Future<void> showInterstitialAd({
-    bool isPremium = false,
-    DateTime? dateOfBirth,
-  }) async {
-    if (!_initialized || isPremium) return;
+  Future<void> showInterstitialAd({DateTime? dateOfBirth}) async {
+    if (_isPremium) {
+      debugPrint('🚫 Interstitial ad skipped for Premium user');
+      return;
+    }
+
+    if (!_initialized) {
+      // Henüz initialize olmadıysa (belki gecikmeli init), başlatmayı dene
+      // ama bu noktada kullanıcı premium değilse init çalışmalıydı.
+      debugPrint('⚠️ AdMob not initialized, skipping interstitial show');
+      return;
+    }
 
     // Gösterimden önce varsa kullanıcı yaşını güncellemek için parametreyi saklanan değere aktaralım
     if (dateOfBirth != null && dateOfBirth != _userDateOfBirth) {
@@ -258,6 +329,7 @@ class AdMobService {
 
   /// Rewarded reklam yükle
   void _loadRewardedAd({DateTime? dateOfBirth}) {
+    if (_isPremium) return;
     if (_isRewardedAdLoading || _rewardedAd != null) return;
 
     _isRewardedAdLoading = true;
@@ -279,7 +351,13 @@ class AdMobService {
   }
 
   /// Rewarded reklamı göster
+  /// Premium kullanıcılar için otomatik olarak true döner.
   Future<bool> showRewardedAd({DateTime? dateOfBirth}) async {
+    if (_isPremium) {
+      debugPrint('🎁 Premium user auto-rewarded without ad');
+      return true;
+    }
+
     if (dateOfBirth != null && dateOfBirth != _userDateOfBirth) {
       await updateUserAgeConfiguration(dateOfBirth: dateOfBirth);
     }
@@ -325,14 +403,22 @@ class AdMobService {
   bool get isRewardedAdLoading => _isRewardedAdLoading;
 
   /// Rewarded ad'ı önceden yükle
-  void preloadRewardedAd({DateTime? dateOfBirth}) => _loadRewardedAd(dateOfBirth: dateOfBirth ?? _userDateOfBirth);
+  void preloadRewardedAd({DateTime? dateOfBirth}) {
+    if (!_isPremium) {
+      _loadRewardedAd(dateOfBirth: dateOfBirth ?? _userDateOfBirth);
+    }
+  }
 
   /// Servisi temizle
+  /// Premium olduğunda tüm reklamları bellekten siler.
   void dispose() {
+    debugPrint('🗑️ Disposing all ads (Premium or cleanup)');
     _interstitialAd?.dispose();
     _interstitialAd = null;
+    _isInterstitialAdLoading = false;
+
     _rewardedAd?.dispose();
     _rewardedAd = null;
+    _isRewardedAdLoading = false;
   }
 }
-

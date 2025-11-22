@@ -39,14 +39,13 @@ class _PomodoroCompletedViewState extends ConsumerState<PomodoroCompletedView> {
     if (!mounted) return;
 
     // Premium kontrolü ve kullanıcı bilgisi
-    final isPremium = ref.read(premiumStatusProvider);
-    if (isPremium) return; // Premium kullanıcıya reklam gösterme
-
+    // Artık isPremium kontrolü AdMobService içinde yapılıyor.
+    // Ancak gereksiz async bekleme yapmamak için burada da erken çıkış yapabiliriz.
+    // Yine de servis üzerinden geçmesi daha güvenli (state sync açısından).
     final user = ref.read(userProfileProvider).value;
 
     // Geçiş reklamını göster
     await AdMobService().showInterstitialAd(
-      isPremium: isPremium,
       dateOfBirth: user?.dateOfBirth,
     );
   }
