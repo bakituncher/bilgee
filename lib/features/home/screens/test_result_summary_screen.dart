@@ -22,9 +22,10 @@ class TestResultSummaryScreen extends ConsumerWidget {
   double _subjectAcc(Map<String, int> s) {
     final d = (s['dogru'] ?? 0);
     final y = (s['yanlis'] ?? 0);
-    final attempted = d + y;
-    if (attempted == 0) return 0.0;
-    return (d / attempted) * 100.0;
+    final b = (s['bos'] ?? 0);
+    final totalQuestions = d + y + b;
+    if (totalQuestions == 0) return 0.0;
+    return (d / totalQuestions) * 100.0;
   }
 
   @override

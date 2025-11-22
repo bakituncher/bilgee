@@ -90,7 +90,7 @@ class TestManagementCard extends ConsumerWidget {
                   child: _ActionButton(
                     icon: Icons.add_chart_rounded,
                     label: 'Deneme Ekle',
-                    color: colorScheme.primary,
+                    color: colorScheme.secondary,
                     onTap: () => context.push('/home/add-test'),
                   ),
                 ),

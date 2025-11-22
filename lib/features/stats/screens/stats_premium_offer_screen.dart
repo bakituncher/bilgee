@@ -346,17 +346,17 @@ class _StatsPremiumOfferScreenState extends ConsumerState<StatsPremiumOfferScree
                                   _CompactFeature(
                                       icon: Icons.analytics_rounded,
                                       title: 'Detaylı\nAnaliz',
-                                      color: colorScheme.primary),
+                                      color: colorScheme.tertiary),
                                   const SizedBox(width: 8),
                                   _CompactFeature(
                                       icon: Icons.psychology_rounded,
                                       title: 'AI\nÖnerileri',
-                                      color: Colors.purple),
+                                      color: colorScheme.tertiary),
                                   const SizedBox(width: 8),
                                   _CompactFeature(
                                       icon: Icons.show_chart_rounded,
                                       title: 'Gelişim\nTakibi',
-                                      color: colorScheme.secondary),
+                                      color: colorScheme.tertiary),
                                 ],
                               ),
 
