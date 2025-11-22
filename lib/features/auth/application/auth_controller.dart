@@ -39,6 +39,10 @@ class AuthController extends StreamNotifier<User?> {
       final isPremium = info.entitlements.active.isNotEmpty;
       if (isPremium) {
         AdMobService().updatePremiumStatus(true);
+      } else {
+        // Eğer premium değilse (süresi bittiyse veya iptal edildiyse)
+        // Reklamları geri yükle.
+        AdMobService().updatePremiumStatus(false);
       }
 
       // Kullanıcı profilini yenileyerek genel state'in de güncellenmesini sağla
@@ -230,6 +234,12 @@ class AuthController extends StreamNotifier<User?> {
   }
 
   Future<void> signOut() async {
+    // Çıkış yaparken reklam servisini sıfırla.
+    // Bu, bir sonraki kullanıcının (veya aynı kullanıcının tekrar girişinin)
+    // temiz bir durumla başlamasını sağlar ve önceki kullanıcının premium/yaş
+    // verilerinin sızmasını engeller.
+    AdMobService().reset();
+
     await _logOutFromRevenueCat();
     final authRepository = ref.read(authRepositoryProvider);
     await authRepository.signOut();

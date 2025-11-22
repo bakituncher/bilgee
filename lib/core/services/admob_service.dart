@@ -24,13 +24,30 @@ class AdMobService {
   // Son yüklenen reklamların çocuk (under 18) modunda olup olmadığı
   bool? _lastIsUnder18;
 
+  /// Servisi tamamen sıfırla (Logout durumunda kullanılır)
+  /// Tüm state'i temizler ve reklamları yok eder.
+  void reset() {
+    debugPrint('🔄 AdMobService is being reset (Logout/Cleanup)');
+    dispose();
+    _initialized = false;
+    _isPremium = false;
+    _userDateOfBirth = null;
+    _lastIsUnder18 = null;
+  }
+
   /// AdMob'u başlat
   /// [isPremium] true ise AdMob SDK başlatılmaz, kaynak tüketilmez.
   Future<void> initialize({bool isPremium = false}) async {
-    if (_initialized) return;
+    // Eğer daha önce initialize edilmişse ve premium durumu değişmediyse çık
+    // Ancak reset sonrası _initialized false olacağı için tekrar çalışır.
+    if (_initialized && _isPremium == isPremium) return;
 
     _isPremium = isPremium;
+
+    // Eğer premium ise ve daha önce init edilmişse, kaynakları temizle
+    // ve init edilmiş gibi işaretle
     if (_isPremium) {
+      dispose();
       debugPrint('✅ AdMob skipped initialization for Premium user');
       _initialized = true; // İşaretliyoruz ki tekrar tekrar denemesin
       return;
@@ -70,20 +87,20 @@ class AdMobService {
       // Premium olduysa tüm reklamları temizle ve belleği boşalt
       dispose();
     } else {
-      // Premium bittiyse ve SDK henüz gerçek anlamda başlamadıysa başlat
-      if (!_initialized || (await MobileAds.instance.getVersionString()).isEmpty) {
-        // Basit bir kontrolle SDK'nın hazır olup olmadığını anlamaya çalışıyoruz
-        // _initialized flag'i yukarıda premium için true yapılmış olabilir,
-        // bu yüzden tekrar initialize çağırmak yerine load logic'i tetiklemeliyiz.
-        // Ancak MobileAds.instance.initialize() safe to call multiple times.
-        // Yine de temiz bir başlangıç yapalım:
-        _initialized = false; // Reset flag to force real init
-        await initialize(isPremium: false);
-      } else {
-        // SDK zaten açıksa sadece reklamları yükle
-        _loadInterstitialAd(dateOfBirth: _userDateOfBirth);
-        _loadRewardedAd(dateOfBirth: _userDateOfBirth);
-      }
+      // Premium bittiyse:
+      // Eğer daha önce "skipped init" yapıldıysa (_initialized=true ama SDK çalışmadı),
+      // şimdi gerçekten init etmeliyiz.
+      // Veya hiç init edilmediyse init etmeliyiz.
+
+      // _initialized=true olması, MobileAds.initialize çağrıldığı anlamına gelmez (premium skip durumu).
+      // Bu yüzden sadece _initialized kontrolü yetersiz olabilir, ama initialize() metodunu
+      // isPremium=false ile çağırmak güvenlidir.
+      await initialize(isPremium: false);
+
+      // initialize() içinde zaten yükleme çağrılıyor ama asenkron olduğu için
+      // garanti olsun diye yüklemeyi tetikle.
+      if (_interstitialAd == null) _loadInterstitialAd(dateOfBirth: _userDateOfBirth);
+      if (_rewardedAd == null) _loadRewardedAd(dateOfBirth: _userDateOfBirth);
     }
   }
 
