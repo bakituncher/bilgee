@@ -45,13 +45,6 @@ class AuthController extends StreamNotifier<User?> {
       ref.invalidate(userProfileProvider);
     });
 
-    // Kullanıcı profili değişikliklerini dinleyerek AdMob durumunu güncelle
-    // Bu sayede satın alma anında isPremium true olduğunda reklamlar silinir.
-    // Not: FutureProvider olduğu için listen yerine watch/refresh tetiklemesi kullanılıyor,
-    // ancak burada state dışı side-effect yönetimi için manuel takip gerekebilir.
-    // Şimdilik _onUserActivity içindeki periyodik/event bazlı kontroller ve
-    // Purchases listener'daki invalidate yeterli olacaktır.
-
     ref.onDispose(() {
       authSubscription.cancel();
     });
@@ -76,7 +69,8 @@ class AuthController extends StreamNotifier<User?> {
       _updateAdminClaim(user);
 
       // Yeni giriş için bildirim token'ını yenile
-      Future.delayed(const Duration(seconds: 1), () async {
+      // Microtask ile UI thread'i bloklamadan çalıştır
+      Future.microtask(() async {
         try {
           await NotificationService.instance.refreshTokenOnLogin();
         } catch (e) {
@@ -85,9 +79,12 @@ class AuthController extends StreamNotifier<User?> {
       });
 
       // --- AdMob & Profil Konfigürasyonu ---
-      Future.delayed(const Duration(milliseconds: 500), () async {
+      // Gecikme (delay) kaldırıldı. Yerine profilin yüklenmesini bekleyen sağlam yapı kuruldu.
+      Future.microtask(() async {
         try {
           // Kullanıcı profilini çek
+          // Bu işlem asenkrondur ve tamamlanana kadar bekleriz.
+          // Böylece isPremium flag'inin doğru olduğundan emin oluruz.
           final userProfile = await ref.read(userProfileProvider.future);
 
           if (userProfile != null) {
@@ -103,7 +100,10 @@ class AuthController extends StreamNotifier<User?> {
             // initialize fonksiyonu içeride isPremium kontrolü yapıyor zaten.
             await AdMobService().initialize(isPremium: userProfile.isPremium);
           } else {
-            // Profil yoksa varsayılan olarak başlat (reklam göster)
+            // Profil yoksa (nadir durum), varsayılan olarak güvenli modda başlat
+            // Ancak premium olup olmadığını bilmediğimiz için reklam göstermeye çalışabilir
+            // Profil yüklenince zaten tekrar güncellenecektir.
+            print("⚠️ Kullanıcı profili null döndü, AdMob varsayılan başlatılıyor.");
             await AdMobService().initialize(isPremium: false);
           }
         } catch (e) {
