@@ -30,7 +30,7 @@ class CoachScreen extends ConsumerStatefulWidget {
 class _CoachScreenState extends ConsumerState<CoachScreen>
     with TickerProviderStateMixin {
   TabController? _tabController;
-  bool _appliedInitialSubject = false;
+  String? _lastAppliedSubject;
 
   Map<String, List<SubjectTopic>> _getRelevantSubjects(
       UserModel user, Exam exam) {
@@ -42,6 +42,23 @@ class _CoachScreenState extends ConsumerState<CoachScreen>
       });
     }
     return subjects;
+  }
+
+  String _normalize(String v) {
+    final lower = v.trim().toLowerCase();
+    return lower
+        .replaceAll('ı', 'i')
+        .replaceAll('İ', 'i')
+        .replaceAll('ö', 'o')
+        .replaceAll('Ö', 'o')
+        .replaceAll('ü', 'u')
+        .replaceAll('Ü', 'u')
+        .replaceAll('ş', 's')
+        .replaceAll('Ş', 's')
+        .replaceAll('ğ', 'g')
+        .replaceAll('Ğ', 'g')
+        .replaceAll('ç', 'c')
+        .replaceAll('Ç', 'c');
   }
 
   void _setupTabController(int length) {
@@ -63,6 +80,26 @@ class _CoachScreenState extends ConsumerState<CoachScreen>
   void dispose() {
     _tabController?.dispose();
     super.dispose();
+  }
+
+  void _applyInitialSubjectIfNeeded(List<String> keys) {
+    final incoming = widget.initialSubject;
+    if (incoming == null || incoming.trim().isEmpty || _tabController == null) return;
+    final normalizedIncoming = _normalize(incoming);
+    // Eğer aynı subject zaten uygulanmışsa tekrar deneme
+    if (_lastAppliedSubject != null && _normalize(_lastAppliedSubject!) == normalizedIncoming) return;
+
+    final idx = keys.indexWhere((s) => _normalize(s) == normalizedIncoming);
+    if (idx != -1 && idx < _tabController!.length) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _tabController == null) return;
+        _tabController!.index = idx;
+        ref.read(coachScreenTabProvider.notifier).state = idx; // provider senkron
+        _lastAppliedSubject = incoming; // kaydet
+      });
+    } else {
+      _lastAppliedSubject = incoming; // başarısız da olsa kaydediyoruz, tekrar denemesin
+    }
   }
 
   @override
@@ -116,20 +153,10 @@ class _CoachScreenState extends ConsumerState<CoachScreen>
             if (_tabController == null ||
                 _tabController!.length != subjects.length) {
               _setupTabController(subjects.length);
-              _appliedInitialSubject = false;
+              _lastAppliedSubject = null; // uzunluk değiştiğinde yeni subject uygulanabilir
             }
-            if (!_appliedInitialSubject && widget.initialSubject != null && widget.initialSubject!.trim().isNotEmpty && _tabController != null) {
-              final keys = subjects.keys.toList();
-              final idx = keys.indexWhere((s) => s.toLowerCase() == widget.initialSubject!.toLowerCase());
-              if (idx != -1 && idx < _tabController!.length) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (mounted && _tabController != null) {
-                    _tabController!.index = idx;
-                  }
-                });
-              }
-              _appliedInitialSubject = true;
-            }
+            final keys = subjects.keys.toList();
+            _applyInitialSubjectIfNeeded(keys);
             return Scaffold(
                 appBar: AppBar(
                   title: const Text('Ders Netlerim'),
@@ -631,3 +658,4 @@ class _MasteryPill extends StatelessWidget {
     );
   }
 }
+

@@ -28,34 +28,6 @@ class HeroHeader extends ConsumerWidget {
         final current = info.current;
         final progress = info.progress; // 0..1
         final plan = ref.watch(planProgressProvider);
-        final lastTests = ref.watch(lastTestsSummaryProvider); // YENİ
-        final lastDate = lastTests.lastDate;
-        final lastNet = lastTests.lastNet;
-        final prevNet = lastTests.prevNet;
-        String lastInfo = 'Henüz deneme yok';
-        if (lastDate != null) {
-          final diff = DateTime.now().difference(lastDate);
-          final days = diff.inDays;
-          final hours = diff.inHours;
-          String when;
-          if (days > 0) {
-            when = days == 1 ? '1 gün önce' : '$days gün önce';
-          } else if (hours > 0) {
-            when = '$hours sa önce';
-          } else {
-            final mins = diff.inMinutes;
-            when = mins <= 1 ? 'az önce' : '$mins dk önce';
-          }
-          String delta = '';
-          if (lastNet != null && prevNet != null) {
-            final d = lastNet - prevNet;
-            if (d.abs() >= 0.05) {
-              delta = (d>0? '+':'') + d.toStringAsFixed(1);
-            }
-          }
-          lastInfo = 'Son deneme: $when';
-          if (delta.isNotEmpty) lastInfo += ' • Net farkı: $delta';
-        }
 
         final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -167,8 +139,6 @@ class HeroHeader extends ConsumerWidget {
                   Text('%${(progress*100).toStringAsFixed(0)} rütbe', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 11)),
                 ],
               ),
-              const SizedBox(height: 2),
-              Text(lastInfo, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.85), fontSize: 10)),
             ],
           ),
         );
