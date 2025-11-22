@@ -339,6 +339,28 @@ class _ProfileView extends ConsumerWidget {
                                   Expanded(child: _ProfileStatCard(label: 'Seri', value: user.streak.toString(), icon: Icons.local_fire_department_rounded, delay: 0.ms)),
                                 ],
                               ),
+                              const SizedBox(height: 12),
+                              // Takipçi / Takip alanı dashboard içinde
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Expanded(
+                                    child: _FollowCount(
+                                      label: 'Takipçi',
+                                      value: followCounts.$1,
+                                      onTap: () => context.push('/profile/follow-list?mode=followers')
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _FollowCount(
+                                      label: 'Takip',
+                                      value: followCounts.$2,
+                                      onTap: () => context.push('/profile/follow-list?mode=following')
+                                    ),
+                                  ),
+                                ],
+                              ),
                               const SizedBox(height: 10),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -351,17 +373,6 @@ class _ProfileView extends ConsumerWidget {
                             ],
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      // Takipçi / Takip alanı: Row -> Wrap (overflow engelleme)
-                      Wrap(
-                        alignment: WrapAlignment.center,
-                        spacing: 18,
-                        runSpacing: 8,
-                        children: [
-                          _FollowCount(label: 'Takipçi', value: followCounts.$1, onTap: () => context.push('/profile/follow-list?mode=followers')),
-                          _FollowCount(label: 'Takip', value: followCounts.$2, onTap: () => context.push('/profile/follow-list?mode=following')),
-                        ],
                       ),
                       const SizedBox(height: 8),
                       const SizedBox(height: 12),
