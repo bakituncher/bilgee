@@ -366,7 +366,14 @@ class FirestoreService {
     String? gender,
     DateTime? dateOfBirth,
     bool profileCompleted = false,
+    String avatarStyle = 'bottts',
+    String? avatarSeed,
   }) async {
+    // KRİTİK DÜZELTME: 'female' stili geçersizdir, 'avataaars' kullan
+    if (avatarStyle == 'female') {
+      avatarStyle = 'avataaars';
+    }
+
     final userProfile = UserModel(
       id: user.uid,
       email: user.email!,
@@ -377,8 +384,8 @@ class FirestoreService {
       dateOfBirth: dateOfBirth,
       profileCompleted: profileCompleted,
       tutorialCompleted: false,
-      avatarStyle: gender == 'male' ? 'avataaars' : 'female',
-      avatarSeed: user.uid,
+      avatarStyle: avatarStyle,
+      avatarSeed: avatarSeed ?? user.uid,
     );
     await usersCollection.doc(user.uid).set(userProfile.toJson());
 

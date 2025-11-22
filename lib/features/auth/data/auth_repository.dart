@@ -42,6 +42,15 @@ class AuthRepository {
         // Send verification email
         await userCredential.user!.sendEmailVerification();
 
+        // Varsayılan Avatar Belirleme
+        String defaultStyle = 'bottts';
+        if (gender == 'Kadın') {
+          defaultStyle = 'avataaars';
+        } else if (gender == 'Erkek') {
+          defaultStyle = 'avataaars';
+        }
+        final defaultSeed = username.isNotEmpty ? username : userCredential.user!.uid;
+
         // Create user profile in Firestore
         await _firestoreService.createUserProfile(
           user: userCredential.user!,
@@ -51,6 +60,8 @@ class AuthRepository {
           gender: gender,
           dateOfBirth: dateOfBirth,
           profileCompleted: true,
+          avatarStyle: defaultStyle,
+          avatarSeed: defaultSeed,
         );
       }
     } on FirebaseAuthException catch (e) {
@@ -166,11 +177,16 @@ class AuthRepository {
           final nameParts = user.displayName?.split(' ') ?? [''];
           final firstName = nameParts.isNotEmpty ? nameParts.first : '';
           final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+          final generatedUsername = user.email!.split('@').first;
+
+          // Google kullanıcıları için varsayılan avatar
           await _firestoreService.createUserProfile(
             user: user,
             firstName: firstName,
             lastName: lastName,
-            username: user.email!.split('@').first, // or some other logic for username
+            username: generatedUsername,
+            avatarStyle: 'bottts',
+            avatarSeed: generatedUsername,
           );
         }
       }
