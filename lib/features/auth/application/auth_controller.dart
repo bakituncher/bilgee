@@ -27,10 +27,30 @@ class AuthController extends StreamNotifier<User?> {
     // RevenueCat müşteri bilgisi dinleyicisini ayarla
     // Bu dinleyici, uygulama içindeki satın almalar veya sunucu tarafındaki
     // değişiklikler (örn. abonelik yenileme) sonrası tetiklenir.
-    Purchases.addCustomerInfoUpdateListener((_) {
+    Purchases.addCustomerInfoUpdateListener((info) {
       // Değişiklik olduğunda, rate-limit korumalı sunucu senkronunu tetikle.
       _triggerServerSideSync();
+
+      // --- AdMob "Kill Switch" ---
+      // Kullanıcı premium satın aldığı anda, backend veya UI güncellemesini beklemeden
+      // reklamları anında temizle. Bu, "instant gratification" için kritiktir.
+      // Entitlement kontrolü basitçe yapılır (detaylı kontrol backend'de olsa da, buradaki
+      // amaç UI'ı anında temizlemektir).
+      final isPremium = info.entitlements.active.isNotEmpty;
+      if (isPremium) {
+        AdMobService().updatePremiumStatus(true);
+      }
+
+      // Kullanıcı profilini yenileyerek genel state'in de güncellenmesini sağla
+      ref.invalidate(userProfileProvider);
     });
+
+    // Kullanıcı profili değişikliklerini dinleyerek AdMob durumunu güncelle
+    // Bu sayede satın alma anında isPremium true olduğunda reklamlar silinir.
+    // Not: FutureProvider olduğu için listen yerine watch/refresh tetiklemesi kullanılıyor,
+    // ancak burada state dışı side-effect yönetimi için manuel takip gerekebilir.
+    // Şimdilik _onUserActivity içindeki periyodik/event bazlı kontroller ve
+    // Purchases listener'daki invalidate yeterli olacaktır.
 
     ref.onDispose(() {
       authSubscription.cancel();
@@ -51,7 +71,6 @@ class AuthController extends StreamNotifier<User?> {
       // engellemez (ateşle ve unut).
       _triggerServerSideSync();
 
-
       // Oturum açan kullanıcının admin yetkisini kontrol et ve ayarla.
       // Bu işlem arka planda sessizce yapılır.
       _updateAdminClaim(user);
@@ -65,17 +84,32 @@ class AuthController extends StreamNotifier<User?> {
         }
       });
 
-      // --- AdMob COPPA KONFİGÜRASYONU: Kullanıcı yaşına göre güncelle ---
+      // --- AdMob & Profil Konfigürasyonu ---
       Future.delayed(const Duration(milliseconds: 500), () async {
         try {
+          // Kullanıcı profilini çek
           final userProfile = await ref.read(userProfileProvider.future);
+
           if (userProfile != null) {
+            // 1. AdMob Premium Durumunu Güncelle (Reklamları aç/kapa)
+            await AdMobService().updatePremiumStatus(userProfile.isPremium);
+
+            // 2. AdMob Yaş Konfigürasyonunu Güncelle
             await AdMobService().updateUserAgeConfiguration(
               dateOfBirth: userProfile.dateOfBirth,
             );
+
+            // Eğer kullanıcı premium değilse ve AdMob hiç başlatılmadıysa başlat.
+            // initialize fonksiyonu içeride isPremium kontrolü yapıyor zaten.
+            await AdMobService().initialize(isPremium: userProfile.isPremium);
+          } else {
+            // Profil yoksa varsayılan olarak başlat (reklam göster)
+            await AdMobService().initialize(isPremium: false);
           }
         } catch (e) {
           print("AdMob configuration update failed (safe to ignore): $e");
+          // Hata durumunda bile varsayılan reklamları yüklemeyi dene
+          AdMobService().initialize(isPremium: false);
         }
       });
 
@@ -93,6 +127,10 @@ class AuthController extends StreamNotifier<User?> {
         }
       });
       // ------------------------------------
+    } else {
+      // Kullanıcı oturumu kapalıysa (veya çıkış yaptıysa)
+      // Anonim kullanıcı varsayımıyla reklamları yükle
+      AdMobService().initialize(isPremium: false);
     }
   }
 

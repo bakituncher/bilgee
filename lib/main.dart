@@ -100,15 +100,10 @@ void main() async {
       }
     }
 
-    // Initialize AdMob
-    try {
-      final admobService = AdMobService();
-      await admobService.initialize();
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('[AdMob] Initialization failed: $e');
-      }
-    }
+    // Initialize AdMob - KALDIRILDI
+    // AdMob artık AuthController içinde kullanıcı premium durumuna göre
+    // başlatılıyor veya engelleniyor (kaynak tasarrufu).
+    // Eski kod: await AdMobService().initialize();
 
     // App Check'i başlat ve güvenlik sağlayıcılarını aktive et.
     // SafetyNet yerine Play Integrity API kullanımı (Android 15+ uyumluluk)

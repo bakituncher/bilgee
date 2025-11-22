@@ -34,7 +34,8 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
   }
 
   void _loadAd() {
-    _bannerAd = AdMobService().createBannerAd(
+    // Service artık premium kontrolünü kendi içinde de yapıyor ve null dönüyor
+    final ad = AdMobService().createBannerAd(
       onAdLoaded: (ad) {
         debugPrint('✅ Banner ad loaded');
         if (mounted) {
@@ -56,7 +57,10 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
       dateOfBirth: widget.dateOfBirth,
     );
 
-    _bannerAd?.load();
+    if (ad != null) {
+      _bannerAd = ad;
+      _bannerAd?.load();
+    }
   }
 
   @override
