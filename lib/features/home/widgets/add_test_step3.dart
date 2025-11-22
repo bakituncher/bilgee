@@ -123,7 +123,10 @@ class Step3Summary extends ConsumerWidget {
                       break;
                     case MonetizationAction.showAd:
                       // Reklam göster
-                      await AdMobService().showInterstitialAd(isPremium: isPremium);
+                      await AdMobService().showInterstitialAd(
+                        isPremium: isPremium,
+                        dateOfBirth: user?.dateOfBirth,
+                      );
                       break;
                     case MonetizationAction.showNothing:
                       // Hiçbir şey gösterme (cooldown aktif)
