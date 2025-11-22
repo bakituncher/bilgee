@@ -4,8 +4,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
-import 'package:taktik/data/models/exam_model.dart';
-import 'package:taktik/core/utils/exam_utils.dart';
 
 class TestManagementCard extends ConsumerWidget {
   const TestManagementCard({super.key});
@@ -20,50 +18,8 @@ class TestManagementCard extends ConsumerWidget {
       }
       return;
     }
-
-    try {
-      final examType = ExamType.values.byName(user.selectedExam!);
-      final exam = await ExamData.getExamByType(examType);
-
-      // İlgili (CoachScreen ile aynı) section'lardaki dersleri topla
-      final relevantSections = ExamUtils.getRelevantSectionsForUser(user, exam);
-      final Map<String, SubjectDetails> relevantSubjectsMap = {};
-      for (final section in relevantSections) {
-        for (final entry in section.subjects.entries) {
-          // Aynı isimli ders varsa son section'ın verisi ile güncellenir (CoachScreen mantığına paralel)
-          relevantSubjectsMap[entry.key] = entry.value;
-        }
-      }
-      final subjects = relevantSubjectsMap.keys.toList(); // kaldırıldı: ..sort() — sınav tanım sırası korunur
-
-      if (!context.mounted) return;
-
-      await showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Theme.of(context).cardColor.withOpacity(0.98),
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        builder: (sheetCtx) {
-          return _SubjectPickerSheet(
-            subjects: subjects,
-            subjectsMap: relevantSubjectsMap,
-            onSelect: (subject) {
-              Navigator.of(sheetCtx).pop();
-              final route = Uri(path: '/coach', queryParameters: {'subject': subject.trim()}).toString();
-              context.go(route);
-            },
-          );
-        },
-      );
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Dersler yüklenemedi: $e')),
-        );
-      }
-    }
+    // Tam ekran ders seçimi için push kullan (stack'e ekle)
+    context.push('/coach/select-subject');
   }
 
   @override
@@ -169,6 +125,27 @@ class _ActionButton extends StatelessWidget {
     required this.onTap,
   });
 
+  double _calculateFontSize(BuildContext context, String text, double maxWidth) {
+    const minFontSize = 11.0;
+    const maxFontSize = 14.0;
+
+    for (double fontSize = maxFontSize; fontSize >= minFontSize; fontSize -= 0.5) {
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: text,
+          style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w700),
+        ),
+        maxLines: 1,
+        textDirection: TextDirection.ltr,
+      )..layout();
+
+      if (textPainter.width <= maxWidth) {
+        return fontSize;
+      }
+    }
+    return minFontSize;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -201,173 +178,34 @@ class _ActionButton extends StatelessWidget {
           ),
         ),
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color, size: 22),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                label,
-                style: theme.textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: colorScheme.onSurface,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final availableWidth = constraints.maxWidth - 40; // icon + spacing için alan
+            final fontSize = _calculateFontSize(context, label, availableWidth);
+
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: color, size: 20),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    label,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: colorScheme.onSurface,
+                      fontSize: fontSize,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
+              ],
+            );
+          },
         ),
       ),
     ).animate().scale(duration: 120.ms, curve: Curves.easeOut);
-  }
-}
-
-class _SubjectPickerSheet extends StatefulWidget {
-  final List<String> subjects;
-  final Map<String, SubjectDetails> subjectsMap;
-  final ValueChanged<String> onSelect;
-  const _SubjectPickerSheet({required this.subjects, required this.subjectsMap, required this.onSelect});
-  @override
-  State<_SubjectPickerSheet> createState() => _SubjectPickerSheetState();
-}
-
-class _SubjectPickerSheetState extends State<_SubjectPickerSheet> {
-  final TextEditingController _searchCtrl = TextEditingController();
-  @override
-  void dispose(){ _searchCtrl.dispose(); super.dispose(); }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final query = _searchCtrl.text.trim().toLowerCase();
-    final filtered = widget.subjects.where((s)=> query.isEmpty || s.toLowerCase().contains(query)).toList();
-
-    return SafeArea(
-      child: SizedBox(
-        height: MediaQuery.of(context).size.height * 0.9, // daha fazla alan
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-              child: Row(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: colorScheme.primary.withOpacity(.15),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: colorScheme.primary.withOpacity(.5)),
-                    ),
-                    padding: const EdgeInsets.all(10),
-                    child: Icon(Icons.library_books_rounded, color: colorScheme.primary, size: 22),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text('Test eklemek istediğin dersi seç',
-                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-                      maxLines: 2,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close_rounded),
-                    onPressed: ()=> Navigator.of(context).pop(),
-                    tooltip: 'Kapat',
-                  )
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-              child: TextField(
-                controller: _searchCtrl,
-                onChanged: (_)=> setState((){}),
-                decoration: InputDecoration(
-                  hintText: 'Ders ara...',
-                  prefixIcon: const Icon(Icons.search_rounded),
-                  isDense: true,
-                  filled: true,
-                  fillColor: colorScheme.surfaceContainerHighest.withOpacity(.15),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: colorScheme.surfaceContainerHighest.withOpacity(.3)),
-                  ),
-                ),
-              ),
-            ),
-            Expanded(
-              child: filtered.isEmpty ? Center(
-                child: Text('Hiç ders bulunamadı', style: theme.textTheme.labelLarge?.copyWith(color: colorScheme.onSurfaceVariant)),
-              ) : ListView.separated(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
-                itemCount: filtered.length,
-                separatorBuilder: (_, __)=> const SizedBox(height: 10),
-                itemBuilder: (ctx, i) {
-                  final subject = filtered[i];
-                  final details = widget.subjectsMap[subject];
-                  return _SubjectTile(
-                    subject: subject,
-                    onTap: ()=> widget.onSelect(subject),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SubjectTile extends StatelessWidget {
-  final String subject;
-  final VoidCallback onTap;
-
-  const _SubjectTile({
-    required this.subject,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: colorScheme.surfaceContainerHighest.withOpacity(0.35),
-          ),
-          color: colorScheme.surfaceContainer.withOpacity(0.25),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.book_rounded, color: colorScheme.primary, size: 18),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                subject,
-                style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            Icon(
-              Icons.arrow_forward_ios_rounded,
-              color: colorScheme.onSurfaceVariant.withOpacity(.7),
-              size: 14,
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }

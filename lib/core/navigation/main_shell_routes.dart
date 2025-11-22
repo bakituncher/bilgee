@@ -9,6 +9,7 @@ import 'package:taktik/features/coach/screens/ai_hub_screen.dart';
 import 'package:taktik/features/coach/screens/analysis_strategy_screen.dart'; // YENİ: Analiz & Strateji ekranı
 import 'package:taktik/features/coach/screens/coach_screen.dart';
 import 'package:taktik/features/coach/screens/motivation_chat_screen.dart';
+import 'package:taktik/features/coach/screens/select_subject_screen.dart';
 import 'package:taktik/features/coach/screens/update_topic_performance_screen.dart';
 import 'package:taktik/features/home/screens/add_test_screen.dart';
 import 'package:taktik/features/home/screens/dashboard_screen.dart';
@@ -97,6 +98,11 @@ StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
             path: AppRoutes.coach,
             pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: CoachScreen(initialSubject: state.uri.queryParameters['subject'])),
             routes: [
+              GoRoute(
+                path: AppRoutes.selectSubject,
+                parentNavigatorKey: rootNavigatorKey,
+                pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: const SelectSubjectScreen()),
+              ),
               GoRoute(
                 path: AppRoutes.updateTopicPerformance,
                 parentNavigatorKey: rootNavigatorKey,

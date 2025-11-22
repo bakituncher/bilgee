@@ -33,4 +33,5 @@ class AppRoutes {
   static const String analysisStrategy = 'analysis-strategy'; // YENİ: Analiz & Strateji birleşik ekran
   static const String premium = '/premium'; // Premium ekranı
   static const String aiToolsOffer = '/ai-tools-offer'; // AI araçları tanıtım ekranı
+  static const String selectSubject = 'select-subject';
 }
