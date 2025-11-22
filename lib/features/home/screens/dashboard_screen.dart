@@ -11,6 +11,7 @@ import 'package:taktik/features/home/widgets/hero_header.dart';
 import 'package:taktik/shared/constants/highlight_keys.dart';
 import 'package:taktik/features/home/providers/home_providers.dart';
 import 'package:taktik/features/home/widgets/focus_hub_card.dart';
+import 'package:taktik/features/home/widgets/test_management_card.dart';
 import 'package:taktik/shared/widgets/scaffold_with_nav_bar.dart' show rootScaffoldKey;
 import 'package:taktik/features/home/widgets/motivation_quotes_card.dart';
 import 'package:taktik/features/quests/logic/optimized_quests_provider.dart';
@@ -220,6 +221,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         final sections = <Widget>[
           const RepaintBoundary(child: HeroHeader()),
           const RepaintBoundary(child: FocusHubCard()),
+          const RepaintBoundary(child: TestManagementCard()),
           // AdMob Banner
           RepaintBoundary(
             child: Padding(

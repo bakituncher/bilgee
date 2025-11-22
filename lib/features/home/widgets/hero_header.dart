@@ -3,11 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/profile/logic/rank_service.dart';
-import 'package:go_router/go_router.dart';
 import 'package:taktik/features/home/providers/home_providers.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
-import 'package:taktik/data/providers/premium_provider.dart';
-import 'package:taktik/data/providers/temporary_access_provider.dart';
 
 class HeroHeader extends ConsumerWidget {
   const HeroHeader({super.key});
@@ -150,8 +147,6 @@ class HeroHeader extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  const _ArchiveButton(),
                 ],
               ),
               const SizedBox(height: 10),
@@ -184,38 +179,3 @@ class HeroHeader extends ConsumerWidget {
   }
 }
 
-class _ArchiveButton extends ConsumerWidget {
-  const _ArchiveButton();
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isPremium = ref.watch(premiumStatusProvider);
-    final hasTemporaryAccess = ref.watch(hasPremiumFeaturesAccessProvider);
-
-    return InkWell(
-      onTap: () {
-        if (isPremium || hasTemporaryAccess) {
-          context.go('/library');
-        } else {
-          context.push('/stats-premium-offer?source=archive');
-        }
-      },
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.7), width: 1.2),
-          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.history_edu_rounded, size: 18, color: Theme.of(context).colorScheme.primary),
-            const SizedBox(width: 6),
-            Text('Arşiv', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w600)),
-          ],
-        ),
-      ),
-    );
-  }
-}
