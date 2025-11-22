@@ -224,7 +224,12 @@ class _SubjectGalaxyViewState extends ConsumerState<_SubjectGalaxyView> {
       ..sort((a,b)=> (a.mastery<0?2:a.mastery).compareTo(b.mastery<0?2:b.mastery));
 
     Widget buildGrid()=> LayoutBuilder(builder:(c,constraints){
-      final crossAxisCount = (constraints.maxWidth/170).floor().clamp(1,6);
+      // Minimum 2 kolon, maksimum kart genişliği 160px
+      final crossAxisCount = (constraints.maxWidth / 160).floor().clamp(2, 6);
+      // Dinamik aspect ratio hesaplama - kart yüksekliği yaklaşık 55-60px olacak şekilde
+      final itemWidth = (constraints.maxWidth - (16 * (crossAxisCount - 1))) / crossAxisCount;
+      final childAspectRatio = (itemWidth / 58).clamp(2.2, 3.5);
+
       return GridView.builder(
         physics: const NeverScrollableScrollPhysics(),
         shrinkWrap: true,
@@ -232,7 +237,7 @@ class _SubjectGalaxyViewState extends ConsumerState<_SubjectGalaxyView> {
           crossAxisCount: crossAxisCount,
           mainAxisSpacing: 16,
           crossAxisSpacing: 16,
-          childAspectRatio: 2.8,
+          childAspectRatio: childAspectRatio,
         ),
         itemCount: processed.length,
         itemBuilder:(c,i){ final e=processed[i]; return MasteryTopicBubble(
@@ -257,8 +262,7 @@ class _SubjectGalaxyViewState extends ConsumerState<_SubjectGalaxyView> {
         separatorBuilder: (_,__)=> const SizedBox(height:12),
         itemBuilder: (c,i){ 
           final e=processed[i]; 
-          final masteryPercent = e.mastery<0 ? '—' : '%${(e.mastery*100).toStringAsFixed(0)}';
-          
+
           return InkWell(
             onTap: ()=> context.go('/coach/update-topic-performance', extra:{'subject': subjectName,'topic': e.topic.name,'performance': e.performance}),
             onLongPress: ()=> _showTopicStats(e),
@@ -287,8 +291,6 @@ class _SubjectGalaxyViewState extends ConsumerState<_SubjectGalaxyView> {
               child: Row(children:[ 
                 Expanded(child: Text(e.topic.name, style: const TextStyle(fontWeight: FontWeight.w600))), 
                 _MasteryPill(mastery: e.mastery), 
-                const SizedBox(width:12), 
-                Text(masteryPercent, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)) 
               ]),
             ),
           );
@@ -602,6 +604,7 @@ class _MasteryPill extends StatelessWidget {
     }
 
     return Container(
+      constraints: const BoxConstraints(minWidth: 85),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(30),
@@ -612,10 +615,17 @@ class _MasteryPill extends StatelessWidget {
         ),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(txt, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: c)),
           const SizedBox(height: 2),
-          Text(level, style: TextStyle(fontSize: 10, color: c.withOpacity(0.9))),
+          Text(
+            level,
+            style: TextStyle(fontSize: 10, color: c.withOpacity(0.9)),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );

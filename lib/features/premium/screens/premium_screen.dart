@@ -32,6 +32,9 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
   // State to prevent multiple purchase clicks
   bool _isPurchasing = false;
 
+  // State to track selected package
+  Package? _selectedPackage;
+
   // --- INITIALIZATION & DISPOSAL ---
 
   @override
@@ -152,28 +155,34 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     final colorScheme = Theme.of(context).colorScheme;
     final marketingSlides = [
       (
-      title: 'Sınırsız TaktikAI Koçu Erişimi',
-      subtitle: 'Sadece limitleri kaldırmakla kalmayın, Yapay Zeka Koçunuzla sınırsız strateji, motivasyon ve ders desteği alın. Daima bir adım öndesiniz.',
+      title: 'Sınırsız TaktikAI Koçu',
+      subtitle: 'Yapay zeka koçunuzla sınırsız strateji ve ders desteği.',
       icon: Icons.rocket_launch_rounded,
       color: const Color(0xFF5b3d88)
       ),
       (
-      title: 'Dinamik, Kişiselleştirilmiş Yol Haritası',
-      subtitle: 'Hedeflerinize göre otomatik ayarlanan haftalık planlama. Eksiklerinize ve sınav tarihlerinize göre rotanızı yeniden çiziyoruz.',
-      icon: Icons.lightbulb_outline_rounded,
+      title: 'Reklamlardan Arındırılmış Deneyim',
+      subtitle: 'Hiç reklam olmadan kesintisiz çalışma ve odaklanma.',
+      icon: Icons.block_rounded,
+      color: const Color(0xFFE63946)
+      ),
+      (
+      title: 'Kişiselleştirilmiş Yol Haritası',
+      subtitle: 'Hedeflerinize göre otomatik ayarlanan haftalık plan.',
+      icon: Icons.map_rounded,
       color: Theme.of(context).colorScheme.secondary
       ),
       (
       title: 'Cevher Atölyesi Full Erişim',
-      subtitle: 'Derinlemesine hata analizi, zayıf konulara özel ders notları ve testler. Her yanlış cevabınızı bir öğrenme zaferine dönüştürün.',
+      subtitle: 'Hata analizi, özel ders notları ve testler.',
       icon: Icons.diamond_outlined,
       color: const Color(0xFFFFB020)
       ),
       (
-      title: 'Kapsamlı Test Analizi Raporları',
-      subtitle: 'Gelişmiş metrikler ve yapay zeka yorumlarıyla test sonuçlarınızı en ince detayına kadar inceleyin. Performansınızı şansa bırakmayın.',
+      title: 'Gelişmiş Test Analizi',
+      subtitle: 'Yapay zeka yorumlarıyla detaylı performans raporları.',
       icon: Icons.analytics_rounded,
-      color: Theme.of(context).colorScheme.secondary
+      color: Theme.of(context).colorScheme.tertiary
       ),
     ];
 
@@ -198,19 +207,19 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                 // 2. PAZARLAMA ALANI
                 // Başlıklar
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                   child: _AnimatedHeader(
                     slideController: _headerSlideController,
                     fadeController: _fadeController,
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 // PageView (Özellik Carousel - DYNAMIC)
                 _buildMarketingCarousel(marketingSlides),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 // Page Indicator
                 _buildPageIndicator(marketingSlides),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
 
                 // 3. FİYATLANDIRMA ALANI (Artık kaydırılabilir)
                 Container(
@@ -328,7 +337,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     return FadeTransition(
       opacity: _fadeController,
       child: Container(
-        height: 145,
+        height: 110,
         margin: const EdgeInsets.symmetric(horizontal: 10),
         child: PageView.builder(
           controller: _pageController,
@@ -405,10 +414,13 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     }
     // --- END OF PACKAGE EXTRACTION ---
 
+    // Eğer hiç seçim yapılmadıysa, yıllık planı varsayılan olarak seç
+    _selectedPackage ??= yearly;
+
     return FadeTransition(
       opacity: _fadeController,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         child: Column(
           children: [
             if (yearly != null)
@@ -419,9 +431,12 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                 price: yearly.storeProduct.priceString,
                 billingPeriod: '/ yıl',
                 tag: savePercent != null ? '%${savePercent.toStringAsFixed(0)} İNDİRİM' : 'EN POPÜLER',
-                highlight: true,
+                highlight: _selectedPackage?.identifier == yearly.identifier,
                 delay: const Duration(milliseconds: 0),
-                onTap: () => _purchasePackage(context, ref, yearly!),
+                onTap: () {
+                  setState(() => _selectedPackage = yearly);
+                  _purchasePackage(context, ref, yearly!);
+                },
               ),
             if (yearly != null && monthly != null)
               const SizedBox(height: 10),
@@ -432,10 +447,13 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                 title: 'Aylık Premium Plan',
                 price: monthly.storeProduct.priceString,
                 billingPeriod: '/ ay',
-                tag: 'Sana Özel',
-                highlight: false,
+                tag: 'ESNEKLİK',
+                highlight: _selectedPackage?.identifier == monthly.identifier,
                 delay: const Duration(milliseconds: 100),
-                onTap: () => _purchasePackage(context, ref, monthly!),
+                onTap: () {
+                  setState(() => _selectedPackage = monthly);
+                  _purchasePackage(context, ref, monthly!);
+                },
               ),
           ],
         ),
@@ -571,7 +589,7 @@ class _AnimatedHeader extends StatelessWidget {
           child: FadeTransition(
             opacity: fadeController,
             child: Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
@@ -585,7 +603,7 @@ class _AnimatedHeader extends StatelessWidget {
               ),
               child: Icon(
                 Icons.workspace_premium_rounded,
-                size: 42,
+                size: 36,
                 color: colorScheme.tertiary,
                 shadows: [
                   Shadow(
@@ -597,7 +615,7 @@ class _AnimatedHeader extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         SlideTransition(
           position: Tween<Offset>(begin: const Offset(0, 0.4), end: Offset.zero)
               .animate(CurvedAnimation(parent: slideController, curve: const Interval(0.2, 1, curve: Curves.easeOutCubic))),
@@ -629,7 +647,7 @@ class _AnimatedHeader extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 4),
         SlideTransition(
           position: Tween<Offset>(begin: const Offset(0, 0.4), end: Offset.zero)
               .animate(CurvedAnimation(parent: slideController, curve: const Interval(0.4, 1, curve: Curves.easeOutCubic))),
@@ -672,7 +690,7 @@ class _MarketingSlideCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       margin: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -688,7 +706,7 @@ class _MarketingSlideCard extends StatelessWidget {
                     Color.lerp(colorScheme.surface, color, 0.05)!,
                   ],
           ),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: color.withOpacity(isDark ? 0.3 : 0.2),
             width: 1.5,
@@ -716,8 +734,8 @@ class _MarketingSlideCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 36,
-                height: 36,
+                width: 32,
+                height: 32,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
@@ -736,15 +754,16 @@ class _MarketingSlideCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: Icon(icon, color: color, size: 20),
+                child: Icon(icon, color: color, size: 18),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   title,
                   style: Theme.of(context).textTheme.titleSmall!.copyWith(
                     fontWeight: FontWeight.w900,
                     color: colorScheme.onSurface,
+                    fontSize: 14,
                     letterSpacing: 0.3,
                     shadows: [
                       Shadow(
@@ -760,15 +779,16 @@ class _MarketingSlideCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
             subtitle,
             style: Theme.of(context).textTheme.bodySmall!.copyWith(
               color: colorScheme.onSurface.withOpacity(0.75),
-              height: 1.35,
+              fontSize: 11,
+              height: 1.3,
               letterSpacing: 0.1,
             ),
-            maxLines: 3,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
         ],
@@ -931,7 +951,7 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                 clipBehavior: Clip.none,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -939,16 +959,16 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                           widget.title,
                           style: TextStyle(
                             fontWeight: FontWeight.w900,
-                            fontSize: 17,
+                            fontSize: 16,
                             color: colorScheme.onSurface,
                           ),
                         ),
                         // ÜCRETSİZ DENEME VURGUSU
                         if (hasFreeTrial && !widget.highlight)
                           Padding(
-                            padding: const EdgeInsets.only(top: 6),
+                            padding: const EdgeInsets.only(top: 4),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
                                   color: colorScheme.primary.withOpacity(0.15),
                                   borderRadius: BorderRadius.circular(6),
@@ -958,7 +978,7 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                                 style: TextStyle(
                                   color: colorScheme.primary,
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 11,
+                                  fontSize: 10,
                                 ),
                               ),
                             ),
@@ -973,7 +993,7 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                             Text(
                               widget.price,
                               style: TextStyle(
-                                fontSize: 24,
+                                fontSize: 22,
                                 fontWeight: FontWeight.w900,
                                 color: widget.highlight ? colorScheme.secondary : colorScheme.onSurface,
                               ),
@@ -982,17 +1002,17 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                             Text(
                               widget.billingPeriod,
                               style: TextStyle(
-                                fontSize: 13,
+                                fontSize: 12,
                                 fontWeight: FontWeight.w600,
                                 color: colorScheme.onSurface.withOpacity(0.7),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 8),
                         Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
                           decoration: BoxDecoration(
                             gradient: widget.highlight
                                 ? LinearGradient(
