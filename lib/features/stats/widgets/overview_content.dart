@@ -2,9 +2,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:lottie/lottie.dart';
 import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/models/test_model.dart';
 import 'package:taktik/data/models/user_model.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/stats/utils/stats_calculator.dart';
 import 'package:taktik/features/stats/widgets/enhanced_activity_card.dart';
 import 'package:taktik/features/stats/widgets/motivational_footer.dart';
@@ -27,6 +30,11 @@ class OverviewContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Eğer kullanıcının hiç testi yoksa boş durum ekranı göster
+    if (tests.isEmpty) {
+      return _buildEmptyState(context, ref);
+    }
+
     final streak = StatsCalculator.calculateStreak(tests);
     final avgNet = StatsCalculator.calculateAvgNet(user, tests);
 
@@ -167,6 +175,262 @@ class OverviewContent extends ConsumerWidget {
         // Bottom spacing
         const SliverToBoxAdapter(child: SizedBox(height: 12)),
       ],
+    );
+  }
+
+  /// Test ekleme sayfasına yönlendir
+  void _handleTestAdd(BuildContext context, WidgetRef ref) async {
+    final user = ref.read(userProfileProvider).value;
+    if (user == null || user.selectedExam == null) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Lütfen önce bir sınav türü seçin')),
+        );
+      }
+      return;
+    }
+    // Test ekleme sayfasına yönlendir
+    context.push('/coach/select-subject');
+  }
+
+  /// Deneme ekleme sayfasına yönlendir
+  void _handleTrialAdd(BuildContext context, WidgetRef ref) {
+    context.push('/home/add-test');
+  }
+
+  /// Boş durum ekranı - Kullanıcının analiz edilecek verisi olmadığında gösterilir
+  Widget _buildEmptyState(BuildContext context, WidgetRef ref) {
+    return Center(
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Lottie Animasyonu
+              Container(
+                constraints: const BoxConstraints(
+                  maxWidth: 320,
+                  maxHeight: 320,
+                ),
+                child: Lottie.asset(
+                  'assets/lotties/Data Analysis.json',
+                  fit: BoxFit.contain,
+                  repeat: true,
+                ),
+              ).animate()
+                .fadeIn(duration: 500.ms)
+                .scale(begin: const Offset(0.8, 0.8), duration: 600.ms, curve: Curves.easeOutBack),
+
+              const SizedBox(height: 24),
+
+              // Başlık
+              Text(
+                'Henüz Analiz Verisi Yok',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  letterSpacing: -0.5,
+                ),
+                textAlign: TextAlign.center,
+              ).animate(delay: 200.ms)
+                .fadeIn(duration: 400.ms)
+                .slideY(begin: 0.1, duration: 500.ms),
+
+              const SizedBox(height: 12),
+
+              // Açıklama
+              Text(
+                'İstatistiklerini ve performans analizini görmek için test veya deneme ekle, Taktik senin için analiz etsin.',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: isDark
+                    ? Colors.white.withOpacity(0.6)
+                    : Colors.black.withOpacity(0.5),
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ).animate(delay: 300.ms)
+                .fadeIn(duration: 400.ms)
+                .slideY(begin: 0.1, duration: 500.ms),
+
+              const SizedBox(height: 32),
+
+              // Aksiyon Butonları
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildActionButton(
+                      context: context,
+                      icon: Icons.library_books_rounded,
+                      label: 'Test Ekle',
+                      description: 'Çözdüğün testleri kaydet',
+                      isDark: isDark,
+                      onTap: () => _handleTestAdd(context, ref),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildActionButton(
+                      context: context,
+                      icon: Icons.add_chart_rounded,
+                      label: 'Deneme Ekle',
+                      description: 'Çözdüğün denemeleri kaydet',
+                      isDark: isDark,
+                      onTap: () => _handleTrialAdd(context, ref),
+                    ),
+                  ),
+                ],
+              ).animate(delay: 400.ms)
+                .fadeIn(duration: 500.ms)
+                .slideY(begin: 0.15, duration: 600.ms, curve: Curves.easeOutCubic)
+                .shimmer(delay: 800.ms, duration: 1500.ms),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Dinamik font boyutu hesaplama
+  double _calculateFontSize(String text, double maxWidth, {
+    double minFontSize = 11.0,
+    double maxFontSize = 15.0,
+    FontWeight fontWeight = FontWeight.w800,
+  }) {
+    for (double fontSize = maxFontSize; fontSize >= minFontSize; fontSize -= 0.5) {
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: text,
+          style: TextStyle(
+            fontSize: fontSize,
+            fontWeight: fontWeight,
+            letterSpacing: -0.3,
+          ),
+        ),
+        maxLines: 1,
+        textDirection: TextDirection.ltr,
+      )..layout();
+
+      if (textPainter.width <= maxWidth) {
+        return fontSize;
+      }
+    }
+    return minFontSize;
+  }
+
+  /// Aksiyon butonu widget'ı
+  Widget _buildActionButton({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required String description,
+    required bool isDark,
+    required VoidCallback onTap,
+  }) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxWidth = constraints.maxWidth - 32; // padding için
+        final labelFontSize = _calculateFontSize(
+          label,
+          maxWidth,
+          maxFontSize: 15.0,
+          minFontSize: 12.0,
+        );
+        final descFontSize = _calculateFontSize(
+          description,
+          maxWidth,
+          maxFontSize: 12.0,
+          minFontSize: 10.0,
+          fontWeight: FontWeight.w500,
+        );
+
+        // Ekran boyutuna göre padding ve icon size ayarla
+        final isSmallScreen = constraints.maxWidth < 160;
+        final iconSize = isSmallScreen ? 24.0 : 28.0;
+        final iconPadding = isSmallScreen ? 10.0 : 12.0;
+        final verticalPadding = isSmallScreen ? 12.0 : 16.0;
+        final spaceBetween = isSmallScreen ? 8.0 : 12.0;
+
+        return InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: verticalPadding,
+            ),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDark
+                    ? [
+                        AppTheme.primaryBrandColor.withOpacity(0.2),
+                        AppTheme.secondaryBrandColor.withOpacity(0.15),
+                      ]
+                    : [
+                        AppTheme.primaryBrandColor.withOpacity(0.1),
+                        AppTheme.secondaryBrandColor.withOpacity(0.05),
+                      ],
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: AppTheme.primaryBrandColor.withOpacity(0.3),
+                width: 1.5,
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: EdgeInsets.all(iconPadding),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryBrandColor.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    icon,
+                    color: AppTheme.primaryBrandColor,
+                    size: iconSize,
+                  ),
+                ),
+                SizedBox(height: spaceBetween),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: labelFontSize,
+                    fontWeight: FontWeight.w800,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    letterSpacing: -0.3,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: descFontSize,
+                    fontWeight: FontWeight.w500,
+                    color: isDark
+                        ? Colors.white.withOpacity(0.6)
+                        : Colors.black.withOpacity(0.5),
+                    height: 1.3,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
