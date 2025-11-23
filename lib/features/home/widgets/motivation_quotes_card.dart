@@ -62,7 +62,7 @@ class _MotivationQuotesCardState extends State<MotivationQuotesCard> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    const height = 160.0;
+    const height = 95.0;
 
     return Card(
       elevation: isDark ? 8 : 10,
@@ -70,7 +70,7 @@ class _MotivationQuotesCardState extends State<MotivationQuotesCard> {
           ? Colors.black.withOpacity(0.4)
           : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.45),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         side: BorderSide(
           color: isDark
               ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
@@ -78,7 +78,7 @@ class _MotivationQuotesCardState extends State<MotivationQuotesCard> {
         ),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         child: SizedBox(
           height: height,
           child: Stack(
@@ -104,10 +104,10 @@ class _MotivationQuotesCardState extends State<MotivationQuotesCard> {
               ),
               // Dekoratif parlama daireleri
               Positioned(
-                left: -30, top: -20, child: _glowCircle(color: Theme.of(context).colorScheme.primary.withOpacity(0.18), size: 140),
+                left: -30, top: -20, child: _glowCircle(color: Theme.of(context).colorScheme.primary.withOpacity(0.18), size: 100),
               ),
               Positioned(
-                right: -24, bottom: -18, child: _glowCircle(color: Colors.green.withOpacity(0.16), size: 120),
+                right: -24, bottom: -18, child: _glowCircle(color: Colors.green.withOpacity(0.16), size: 80),
               ),
               // İç blur ile yumuşatma
               BackdropFilter(
@@ -127,7 +127,7 @@ class _MotivationQuotesCardState extends State<MotivationQuotesCard> {
                 itemBuilder: (context, i) {
                   final (text, author) = _dailyQuotes[i];
                   return Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                    padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -136,22 +136,22 @@ class _MotivationQuotesCardState extends State<MotivationQuotesCard> {
                             Container(
                               decoration: BoxDecoration(
                                 color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(8),
                                 border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.6)),
                               ),
-                              padding: const EdgeInsets.all(8),
-                              child: Icon(Icons.format_quote_rounded, color: Theme.of(context).colorScheme.primary, size: 18),
+                              padding: const EdgeInsets.all(5),
+                              child: Icon(Icons.format_quote_rounded, color: Theme.of(context).colorScheme.primary, size: 12),
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 6),
                             Expanded(
                               child: Text(
                                 text,
                                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                                   fontWeight: FontWeight.w700,
-                                  height: 1.2,
-                                  fontSize: 13,
+                                  height: 1.15,
+                                  fontSize: 11,
                                 ),
-                                maxLines: 3,
+                                maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
@@ -161,13 +161,13 @@ class _MotivationQuotesCardState extends State<MotivationQuotesCard> {
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(12),
                                 color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25),
                                 border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.45)),
                               ),
-                              child: Text('— $author', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 10)),
+                              child: Text('— $author', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 8.5)),
                             ),
                             const Spacer(),
                             _Dots(count: _dailyQuotes.length, index: i),
@@ -208,12 +208,12 @@ class _Dots extends StatelessWidget {
         return AnimatedContainer(
           duration: const Duration(milliseconds: 250),
           curve: Curves.easeOut,
-          margin: const EdgeInsets.symmetric(horizontal: 3),
-          width: active ? 18 : 8,
-          height: 8,
+          margin: const EdgeInsets.symmetric(horizontal: 2),
+          width: active ? 14 : 6,
+          height: 6,
           decoration: BoxDecoration(
             color: active ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.5),
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(4),
           ),
         );
       }),

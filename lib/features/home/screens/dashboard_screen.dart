@@ -4,17 +4,13 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
-import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/home/widgets/todays_plan.dart';
 import 'package:taktik/features/onboarding/providers/tutorial_provider.dart';
 import 'package:taktik/features/home/widgets/hero_header.dart';
 import 'package:taktik/shared/constants/highlight_keys.dart';
-import 'package:taktik/features/home/providers/home_providers.dart';
-import 'package:taktik/features/home/widgets/focus_hub_card.dart';
 import 'package:taktik/features/home/widgets/test_management_card.dart';
 import 'package:taktik/shared/widgets/scaffold_with_nav_bar.dart' show rootScaffoldKey;
 import 'package:taktik/features/home/widgets/motivation_quotes_card.dart';
-import 'package:taktik/features/quests/logic/optimized_quests_provider.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
 import 'package:taktik/data/models/plan_model.dart';
 import 'package:taktik/data/providers/shared_prefs_provider.dart';
@@ -220,12 +216,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         // Hiyerarşik bölümler (YENİ AKIŞ) — ağır widget'ları izole etmek için RepaintBoundary
         final sections = <Widget>[
           const RepaintBoundary(child: HeroHeader()),
-          const RepaintBoundary(child: FocusHubCard()),
           const RepaintBoundary(child: TestManagementCard()),
           // AdMob Banner
           RepaintBoundary(
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              padding: const EdgeInsets.symmetric(vertical: 4.0),
               child: AdBannerWidget(
                 isPremium: user.isPremium,
                 dateOfBirth: user.dateOfBirth,
@@ -293,25 +288,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               ),
 
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(_hPad, 4, _hPad, 4),
+                padding: const EdgeInsets.fromLTRB(_hPad, 0, _hPad, 4),
                 sliver: SliverList.separated(
                   itemCount: sections.length,
                   itemBuilder: (c, i) {
-                    final w = i == 0 ? sections[i] : Padding(padding: const EdgeInsets.only(top: 2), child: sections[i]);
-                    return _animatedSection(w, i);
+                    return _animatedSection(sections[i], i);
                   },
                   separatorBuilder: (_, i) {
-                    // Sıra: Hero -> Focus -> (PageView kartları) -> Motivasyon
-                    if (i == 0) return const SizedBox(height: 8); // Hero sonrası
-                    if (i == 1) return const SizedBox(height: 10); // Focus sonrası
-                    if (i == 2) return const SizedBox(height: 10); // PageView sonrası
-                    return const SizedBox(height: 8);
+                    // Sıra: Hero -> TestManagement -> AdBanner -> TodaysPlan -> Motivation
+                    return const SizedBox(height: 6);
                   },
                 ),
               ),
               SliverToBoxAdapter(
                 child: SizedBox(
-                  height: MediaQuery.of(context).padding.bottom + 80,
+                  height: MediaQuery.of(context).padding.bottom + 60,
                 ),
               ),
             ],
@@ -324,77 +315,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 }
 
-// --- GÜNLÜK GÖREVLER KARTI (zenginleştirildi) ---
-class _DailyQuestsCard extends ConsumerWidget {
-  const _DailyQuestsCard();
-  String _formatRemaining(Duration d) { final h = d.inHours; final m = d.inMinutes.remainder(60); if (h == 0) return '${m}dk'; return '${h}sa ${m}dk'; }
-  Color _progressColor(BuildContext context, double p) {
-    final colorScheme = Theme.of(context).colorScheme;
-    if (p >= .999) return Colors.greenAccent;
-    if (p >= .85) return Colors.greenAccent.withOpacity(.9);
-    if (p >= .5) return colorScheme.primary;
-    return colorScheme.surfaceContainerHighest.withOpacity(.9);
-  }
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final user = ref.watch(userProfileProvider).value; if (user == null) return const SizedBox.shrink();
-    final questProg = ref.watch(dailyQuestsProgressProvider);
-    final hasClaimable = ref.watch(hasClaimableQuestsProvider);
-    final total = questProg.total; final completed = questProg.completed; final progress = questProg.progress; final remaining = questProg.remaining;
-
-    // Riverpod üzerinden kutlama tarihlerini al
-    final celebratedDates = ref.watch(celebratedDatesProvider);
-
-    if (progress >= 1.0 && !hasClaimable) {
-      final todayKey = DateTime.now().toIso8601String().substring(0,10);
-      if (!celebratedDates.contains(todayKey)) {
-        // Set'i immutably güncelle
-        ref.read(celebratedDatesProvider.notifier).update((s) => {...s, todayKey});
-        WidgetsBinding.instance.addPostFrameCallback((_){ if (context.mounted) { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Row(children: [Icon(Icons.celebration_rounded, color: Colors.greenAccent), SizedBox(width: 8), Expanded(child: Text('Tüm Günlük Görevler tamamlandı! 🔥')),],),)); }});
-      }
-    }
-
-    final card = Card(
-      clipBehavior: Clip.antiAlias,
-      elevation: progress >= 1.0 ? 10 : 6,
-      shadowColor: hasClaimable ? AppTheme.goldBrandColor.withOpacity(0.7) : (progress >= 1.0 ? AppTheme.successBrandColor.withOpacity(.6) : colorScheme.surfaceContainerHighest.withOpacity(.35)),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24), side: BorderSide(color: hasClaimable ? AppTheme.goldBrandColor : _progressColor(context, progress), width: 2)),
-      child: InkWell(
-        onTap: () => context.go('/home/quests'),
-        child: Container(
-          padding: const EdgeInsets.all(20.0),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [ (hasClaimable ? AppTheme.goldBrandColor : _progressColor(context, progress)).withOpacity(0.18), theme.cardColor.withOpacity(0.55), ],
-              begin: Alignment.topLeft, end: Alignment.bottomRight,
-            ),
-          ),
-          child: Row(children: [
-            Stack(alignment: Alignment.center, children: [
-              SizedBox(height: 56, width: 56, child: CircularProgressIndicator(value: progress == 0 ? null : progress, strokeWidth: 6, backgroundColor: colorScheme.surfaceContainerHighest.withOpacity(.25), valueColor: AlwaysStoppedAnimation(hasClaimable ? AppTheme.goldBrandColor : _progressColor(context, progress)),)),
-              Icon(hasClaimable ? Icons.military_tech_rounded : (progress >=1 ? Icons.emoji_events_rounded : Icons.shield_moon_rounded), size: 28, color: hasClaimable ? AppTheme.goldBrandColor : _progressColor(context, progress)),
-            ]),
-            const SizedBox(width: 16),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-              Text(hasClaimable ? "Ödül Zamanı!" : (progress >=1 ? "Zafer!" : "Günlük Görevler"), style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: colorScheme.onSurface)),
-              const SizedBox(height: 4),
-              Text(total == 0 ? 'Bugün görev yok' : '$completed / $total tamamlandı • Kalan ${_formatRemaining(remaining)}', style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
-              const SizedBox(height: 6),
-              ClipRRect(borderRadius: BorderRadius.circular(6), child: LinearProgressIndicator(value: progress.clamp(0,1), minHeight: 6, backgroundColor: colorScheme.surfaceContainerHighest.withOpacity(.25), valueColor: AlwaysStoppedAnimation(hasClaimable ? AppTheme.goldBrandColor : _progressColor(context, progress)),)),
-            ])),
-            const SizedBox(width: 8),
-            Icon(Icons.arrow_forward_ios_rounded, color: colorScheme.onSurfaceVariant, size: 18),
-          ]),
-        ),
-      ),
-    );
-    if (!hasClaimable) return card;
-    return Animate(onPlay: (c)=> c.repeat(reverse: true), effects: [ShimmerEffect(duration: 1500.ms, color: AppTheme.goldBrandColor.withOpacity(0.5))], child: card);
-  }
-}
-// ------------------------------------------
 
 class _NotificationBell extends ConsumerWidget {
   @override

@@ -29,12 +29,12 @@ class TestManagementCard extends ConsumerWidget {
     final colorScheme = theme.colorScheme;
 
     return Card(
-      elevation: isDark ? 8 : 10,
+      elevation: isDark ? 6 : 8,
       shadowColor: isDark
           ? Colors.black.withOpacity(0.4)
           : colorScheme.surfaceContainerHighest.withOpacity(0.45),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(18),
         side: BorderSide(
           color: isDark
               ? colorScheme.primary.withOpacity(0.2)
@@ -42,7 +42,7 @@ class TestManagementCard extends ConsumerWidget {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -52,13 +52,13 @@ class TestManagementCard extends ConsumerWidget {
                 Container(
                   decoration: BoxDecoration(
                     color: colorScheme.primary.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: colorScheme.primary.withOpacity(0.6)),
                   ),
-                  padding: const EdgeInsets.all(8),
-                  child: Icon(Icons.assignment_rounded, color: colorScheme.primary, size: 20),
+                  padding: const EdgeInsets.all(6),
+                  child: Icon(Icons.assignment_rounded, color: colorScheme.primary, size: 18),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -67,14 +67,13 @@ class TestManagementCard extends ConsumerWidget {
                         'Sınav Yönetimi',
                         style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
                       ),
-                      const SizedBox(height: 2),
                       Text(
                         'Deneme ve test sonuçlarını ekle',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: colorScheme.onSurfaceVariant,
-                          fontSize: 11,
+                          fontSize: 10.5,
                         ),
                       ),
                     ],
@@ -82,7 +81,7 @@ class TestManagementCard extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
             // İki buton yan yana
             Row(
               children: [
@@ -94,7 +93,7 @@ class TestManagementCard extends ConsumerWidget {
                     onTap: () => context.push('/home/add-test'),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 Expanded(
                   child: _ActionButton(
                     icon: Icons.library_books_rounded,
@@ -154,10 +153,10 @@ class _ActionButton extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(12),
       child: Ink(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           gradient: LinearGradient(
             colors: isDark
                 ? [
@@ -177,17 +176,17 @@ class _ActionButton extends StatelessWidget {
                 : colorScheme.surfaceContainerHighest.withOpacity(0.45),
           ),
         ),
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final availableWidth = constraints.maxWidth - 40; // icon + spacing için alan
+            final availableWidth = constraints.maxWidth - 32; // icon + spacing için alan
             final fontSize = _calculateFontSize(context, label, availableWidth);
 
             return Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, color: color, size: 20),
-                const SizedBox(width: 6),
+                Icon(icon, color: color, size: 18),
+                const SizedBox(width: 5),
                 Flexible(
                   child: Text(
                     label,
