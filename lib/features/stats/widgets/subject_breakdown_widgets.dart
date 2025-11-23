@@ -140,7 +140,7 @@ class EnhancedSubjectBreakdown extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'Başarı ortalamlarına göre sıralandı',
+                      'Başarı ortalamalarına göre sıralandı',
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,

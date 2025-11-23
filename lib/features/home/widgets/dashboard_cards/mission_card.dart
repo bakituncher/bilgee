@@ -11,6 +11,7 @@ import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:taktik/data/models/performance_summary.dart';
 import 'package:taktik/features/stats/logic/stats_analysis_provider.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
+import 'package:taktik/data/providers/premium_provider.dart';
 
 class MissionCard extends ConsumerWidget {
   const MissionCard({super.key});
@@ -48,12 +49,14 @@ class MissionCard extends ConsumerWidget {
     if (user.selectedExam == null) return const SizedBox.shrink();
 
     final analysisAsync = ref.watch(overallStatsAnalysisProvider);
+    final isPremium = ref.watch(premiumStatusProvider);
 
     return analysisAsync.when(
       loading: () => const LogoLoader(size: 60),
       error: (e, st) => Center(child: Padding(padding: const EdgeInsets.all(24), child: Text('Analiz yüklenemedi: $e'))),
       data: (analysis) {
         final textTheme = Theme.of(context).textTheme;
+        final theme = Theme.of(context);
         IconData icon;
         String title;
         String subtitle;
@@ -73,7 +76,26 @@ class MissionCard extends ConsumerWidget {
               ? 'TaktikAI, en zayıf noktanın **\'${weakestTopicInfo['subject']}\'** dersindeki **\'${weakestTopicInfo['topic']}\'** konusu olduğunu tespit etti. Bu cevheri işlemeye hazır mısın?'
               : 'Harika gidiyorsun! Şu an belirgin bir zayıf noktan tespit edilmedi. Yeni konu verileri girerek analizi derinleştirebilirsin.';
           onTap = weakestTopicInfo != null
-              ? () => context.push('${AppRoutes.aiHub}/${AppRoutes.weaknessWorkshop}')
+              ? () {
+                  if (isPremium) {
+                    context.push('${AppRoutes.aiHub}/${AppRoutes.weaknessWorkshop}');
+                  } else {
+                    // Premium olmayan kullanıcılar için tool offer screen'e yönlendir
+                    context.go(
+                      '/ai-hub/offer',
+                      extra: {
+                        'title': 'Cevher Atölyesi',
+                        'subtitle': 'En zayıf konunu, kişisel çalışma kartı ve özel test ile işle.',
+                        'icon': Icons.construction_rounded,
+                        'color': theme.colorScheme.secondary,
+                        'heroTag': 'weakness-core',
+                        'marketingTitle': 'Zayıf Noktalarınızı Güce Dönüştürün',
+                        'marketingSubtitle': 'En çok zorlandığınız konuları tespit edin ve AI destekli özel çalışma materyalleri ile zayıf yanlarınızı güçlü yanlara çevirin.',
+                        'redirectRoute': '/ai-hub/weakness-workshop',
+                      },
+                    );
+                  }
+                }
               : null;
           buttonText = 'Cevher Atölyesine Git';
           icon = Icons.construction_rounded;

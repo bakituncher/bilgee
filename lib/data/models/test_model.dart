@@ -129,7 +129,7 @@ extension TestModelSummaryX on TestModel {
     }
   }
 
-  // En güçlü ve en zayıf dersleri bulan fonksiyon
+  // En güçlü ve en zayıf dersleri bulan fonksiyon (yüzdeye göre)
   Map<String, MapEntry<String, double>> findKeySubjects() {
     if (scores.isEmpty) {
       return {};
@@ -138,21 +138,32 @@ extension TestModelSummaryX on TestModel {
     MapEntry<String, double>? strongest;
     MapEntry<String, double>? weakest;
 
-    scores.forEach((subject, scoresMap) {
-      final net = (scoresMap['dogru'] ?? 0) - ((scoresMap['yanlis'] ?? 0) * penaltyCoefficient);
-      if (strongest == null || net > strongest!.value) {
-        strongest = MapEntry(subject, net.toDouble());
+    for (final entry in scores.entries) {
+      final subject = entry.key;
+      final scoresMap = entry.value;
+
+      final d = scoresMap['dogru'] ?? 0;
+      final y = scoresMap['yanlis'] ?? 0;
+      final b = scoresMap['bos'] ?? 0;
+      final totalQuestions = d + y + b;
+
+      if (totalQuestions == 0) continue; // Bu dersi atla
+
+      final accuracy = (d / totalQuestions) * 100.0;
+
+      if (strongest == null || accuracy > strongest.value) {
+        strongest = MapEntry(subject, accuracy);
       }
-      if (weakest == null || net < weakest!.value) {
-        weakest = MapEntry(subject, net.toDouble());
+      if (weakest == null || accuracy < weakest.value) {
+        weakest = MapEntry(subject, accuracy);
       }
-    });
+    }
 
     if (strongest == null || weakest == null) return {};
 
     return {
-      'strongest': strongest!,
-      'weakest': weakest!,
+      'strongest': strongest,
+      'weakest': weakest,
     };
   }
 }

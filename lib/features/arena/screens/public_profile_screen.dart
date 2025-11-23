@@ -257,27 +257,25 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          // Takipçi/Takip ve Takip butonu - aynı satırda
-                          Row(
-                            children: [
-                              Expanded(
-                                child: followCountsAsync.when(
-                                  data: (counts) => Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                    children: [
-                                      _CountPill(label: 'Takipçi', value: counts.$1),
-                                      _CountPill(label: 'Takip', value: counts.$2),
-                                    ],
-                                  ),
-                                  loading: () => const LinearProgressIndicator(minHeight: 2),
-                                  error: (e, s) => const SizedBox.shrink(),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              if (me?.uid != widget.userId)
-                                _FollowButton(targetUserId: widget.userId),
-                            ],
+                          // Takipçi/Takip sayıları
+                          followCountsAsync.when(
+                            data: (counts) => Row(
+                              children: [
+                                Expanded(child: _CountPill(label: 'Takipçi', value: counts.$1)),
+                                const SizedBox(width: 12),
+                                Expanded(child: _CountPill(label: 'Takip', value: counts.$2)),
+                              ],
+                            ),
+                            loading: () => const LinearProgressIndicator(minHeight: 2),
+                            error: (e, s) => const SizedBox.shrink(),
                           ),
+                          const SizedBox(height: 12),
+                          // Takip Et butonu - tam genişlikte
+                          if (me?.uid != widget.userId)
+                            SizedBox(
+                              width: double.infinity,
+                              child: _FollowButton(targetUserId: widget.userId),
+                            ),
                           const SizedBox(height: 8),
                           if (updatedAt != null)
                             Align(
@@ -390,18 +388,24 @@ class _CountPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
+      width: double.infinity, // Tam genişlik
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         color: colorScheme.onSurface.withOpacity(0.06),
         border: Border.all(color: colorScheme.onSurface.withOpacity(0.12)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(value.toString(), style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            value.toString(),
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+          ),
           const SizedBox(width: 6),
-          Text(label, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: colorScheme.onSurface.withOpacity(0.7))),
+          Text(label, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: colorScheme.onSurface.withOpacity(0.7))),
         ],
       ),
     );
@@ -434,55 +438,55 @@ class _FollowButtonState extends ConsumerState<_FollowButton> {
     final label = isFollowing ? 'Takipten Çık' : 'Takip Et';
 
     return ElevatedButton.icon(
-      onPressed: _busy || me?.uid == null || me!.uid == widget.targetUserId
-          ? null
-          : () async {
-        HapticFeedback.selectionClick();
-        setState(() {
-          _busy = true;
-          _optimistic = !isFollowing;
-        });
-        try {
-          final svc = ref.read(firestoreServiceProvider);
-          if (isFollowing) {
-            await svc.unfollowUser(currentUserId: me.uid, targetUserId: widget.targetUserId);
-          } else {
-            await svc.followUser(currentUserId: me.uid, targetUserId: widget.targetUserId);
+        onPressed: _busy || me?.uid == null || me!.uid == widget.targetUserId
+            ? null
+            : () async {
+          HapticFeedback.selectionClick();
+          setState(() {
+            _busy = true;
+            _optimistic = !isFollowing;
+          });
+          try {
+            final svc = ref.read(firestoreServiceProvider);
+            if (isFollowing) {
+              await svc.unfollowUser(currentUserId: me.uid, targetUserId: widget.targetUserId);
+            } else {
+              await svc.followUser(currentUserId: me.uid, targetUserId: widget.targetUserId);
+            }
+          } catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('İşlem başarısız: $e')));
+              setState(() {
+                _optimistic = null;
+              });
+            }
+          } finally {
+            if (mounted) {
+              setState(() {
+                _busy = false;
+                _optimistic = null;
+              });
+            }
           }
-        } catch (e) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('İşlem başarısız: $e')));
-            setState(() {
-              _optimistic = null;
-            });
-          }
-        } finally {
-          if (mounted) {
-            setState(() {
-              _busy = false;
-              _optimistic = null;
-            });
-          }
-        }
-      },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: bg,
-        foregroundColor: fg,
-        elevation: 0,
-        side: BorderSide(color: colorScheme.secondary.withOpacity(0.8)),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-        minimumSize: const Size(0, 40),
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      ),
-      icon: (loading == true && _optimistic == null) || _busy
-          ? SizedBox(
-          width: 16,
-          height: 16,
-          child: CircularProgressIndicator(strokeWidth: 2, color: colorScheme.secondary))
-          : Icon(icon),
-      label: Text(label),
-    );
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: bg,
+          foregroundColor: fg,
+          elevation: 0,
+          side: BorderSide(color: colorScheme.secondary.withOpacity(0.8)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+          minimumSize: const Size(0, 40),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        ),
+        icon: (loading == true && _optimistic == null) || _busy
+            ? SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2, color: colorScheme.secondary))
+            : Icon(icon, size: 18),
+        label: Text(label, style: const TextStyle(fontSize: 13)),
+      );
   }
 }
 

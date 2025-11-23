@@ -179,7 +179,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
             key: const ValueKey('loading'),
             child: Container(
               constraints: const BoxConstraints(maxWidth: 400),
-              padding: const EdgeInsets.symmetric(horizontal: 32.0),
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -196,12 +196,12 @@ class StrategicPlanningScreen extends ConsumerWidget {
                     ],
                     child: Lottie.asset(
                       'assets/lotties/Data Analysis.json',
-                      width: 280,
-                      height: 280,
+                      width: 220,
+                      height: 220,
                       fit: BoxFit.contain,
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
                   // Başlık
                   Animate(
                     effects: const [
@@ -213,12 +213,12 @@ class StrategicPlanningScreen extends ConsumerWidget {
                     child: Text(
                       "Strateji Oluşturuluyor",
                       textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   // Alt metin
                   Animate(
                     effects: const [
@@ -232,12 +232,12 @@ class StrategicPlanningScreen extends ConsumerWidget {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontSize: 15,
-                        height: 1.5,
+                        fontSize: 14,
+                        height: 1.4,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 24),
                   // İlerleme çubuğu
                   Animate(
                     onPlay: (controller) => controller.repeat(),
@@ -257,7 +257,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
                         backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
                         valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
                         borderRadius: BorderRadius.circular(8),
-                        minHeight: 6,
+                        minHeight: 5,
                       ),
                     ),
                   ),
@@ -298,7 +298,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
             Expanded(
               child: Center(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24.0),
+                  padding: const EdgeInsets.all(16.0),
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 520),
                     child: Column(
@@ -309,44 +309,44 @@ class StrategicPlanningScreen extends ConsumerWidget {
                           elevation: 0,
                           clipBehavior: Clip.antiAlias,
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 28.0, horizontal: 24.0),
+                            padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 16.0),
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.all(16),
+                                  padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
                                     color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
                                     shape: BoxShape.circle,
                                   ),
-                                  child: Icon(Icons.calendar_month_rounded, size: 40, color: Theme.of(context).colorScheme.primary),
+                                  child: Icon(Icons.calendar_month_rounded, size: 32, color: Theme.of(context).colorScheme.primary),
                                 ),
-                                const SizedBox(height: 16),
+                                const SizedBox(height: 12),
                                 Text(
                                   "Stratejik Plan Hazır",
                                   textAlign: TextAlign.center,
-                                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                                 ),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 6),
                                 Text(
                                   "Bu haftanın odağı",
-                                  style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                                  style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                                 ),
                                 const SizedBox(height: 6),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
                                   decoration: BoxDecoration(
                                     color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35),
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(10),
                                     border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)),
                                   ),
                                   child: Text(
                                     weeklyPlan.strategyFocus,
                                     textAlign: TextAlign.center,
-                                    style: Theme.of(context).textTheme.titleMedium,
+                                    style: Theme.of(context).textTheme.bodyLarge,
                                   ),
                                 ),
-                                const SizedBox(height: 16),
+                                const SizedBox(height: 12),
                                 Text(
                                   "Oluşturulma: ${DateFormat.yMMMMd('tr').format(weeklyPlan.creationDate)}",
                                   style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
@@ -356,20 +356,26 @@ class StrategicPlanningScreen extends ConsumerWidget {
                           ),
                         ).animate().fadeIn(duration: 300.ms).scale(begin: const Offset(0.98, 0.98), curve: Curves.easeOut),
 
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 16),
 
                         ElevatedButton.icon(
                           onPressed: () => context.push('/home/weekly-plan'),
-                          icon: const Icon(Icons.playlist_add_check_rounded),
+                          icon: const Icon(Icons.playlist_add_check_rounded, size: 20),
                           label: const Text("Haftalık Planı Aç"),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 10),
                         OutlinedButton.icon(
                           onPressed: () {
                             ref.read(planningStepProvider.notifier).state = PlanningStep.confirmation;
                           },
-                          icon: const Icon(Icons.auto_awesome),
+                          icon: const Icon(Icons.auto_awesome, size: 20),
                           label: const Text("Yeni Strateji Oluştur"),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
                         ),
                       ],
                     ),
@@ -484,24 +490,24 @@ class StrategicPlanningScreen extends ConsumerWidget {
   Widget _buildDataMissingView(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32.0),
+        padding: const EdgeInsets.all(24.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.report_problem_outlined, color: Theme.of(context).colorScheme.primary, size: 64),
-            const SizedBox(height: 24),
+            Icon(Icons.report_problem_outlined, color: Theme.of(context).colorScheme.primary, size: 56),
+            const SizedBox(height: 20),
             Text(
               "Strateji İçin Veri Gerekli",
-              style: Theme.of(context).textTheme.headlineSmall,
+              style: Theme.of(context).textTheme.titleLarge,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Text(
               "Sana özel bir strateji oluşturabilmem için önce düşmanı tanımam gerek. Lütfen en az bir deneme sonucu ekle.",
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: () => context.push('/home/add-test'),
               icon: const Icon(Icons.add_chart_rounded),
@@ -548,20 +554,30 @@ class StrategicPlanningScreen extends ConsumerWidget {
       children: [
         Expanded(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  "Harekat Öncesi Son Kontrol",
-                  style: Theme.of(context).textTheme.headlineMedium,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    "Harekat Öncesi Son Kontrol",
+                    style: Theme.of(context).textTheme.headlineSmall,
+                    maxLines: 1,
+                  ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  "En isabetli strateji için tüm verilerinin güncel olduğundan emin olalım.",
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                const SizedBox(height: 6),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    "Tüm verilerin güncel olduğundan emin olalım.",
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    maxLines: 1,
+                  ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 20),
 
                 _ChecklistItemCard(
                   icon: Icons.map_rounded,
@@ -601,7 +617,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(16.0),
           child: ElevatedButton(
             onPressed: () {
               ref.read(planningStepProvider.notifier).state = PlanningStep.pacing;
@@ -618,22 +634,30 @@ class StrategicPlanningScreen extends ConsumerWidget {
       children: [
         Expanded(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.all(20.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  "Haftalık Taarruz Temponu Seç",
-                  style: Theme.of(context).textTheme.headlineMedium,
-                  textAlign: TextAlign.center,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    "Haftalık Taarruz Temponu Seç",
+                    style: Theme.of(context).textTheme.headlineSmall,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                  ),
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  "Planın yoğunluğu, seçtiğin tempoya göre ayarlanacak.",
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                  textAlign: TextAlign.center,
+                const SizedBox(height: 8),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    "Planın yoğunluğu, seçtiğin tempoya göre ayarlanacak.",
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                  ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
                 _PacingCard(
                   pacing: Pacing.relaxed,
                   icon: Icons.directions_walk_rounded,
@@ -663,7 +687,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(20.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -710,38 +734,38 @@ class _ChecklistItemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return Card(
-      margin: const EdgeInsets.only(bottom: 20),
+      margin: const EdgeInsets.only(bottom: 8),
       child: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(12.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(icon, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 28),
-                const SizedBox(width: 16),
+                Icon(icon, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 22),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title, style: textTheme.titleLarge),
-                      const SizedBox(height: 4),
+                      Text(title, style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 2),
                       Text(
                         description,
-                        style: textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.4),
+                        style: textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.2, fontSize: 12),
                       ),
                     ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 8),
             Container(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(10.0),
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
                 children: [
@@ -752,7 +776,7 @@ class _ChecklistItemCard extends StatelessWidget {
                       children: [
                         Text(
                           statusText,
-                          style: textTheme.headlineSmall?.copyWith(
+                          style: textTheme.titleSmall?.copyWith(
                             color: statusColor,
                             fontWeight: FontWeight.bold,
                           ),
@@ -760,22 +784,22 @@ class _ChecklistItemCard extends StatelessWidget {
                         ),
                         Text(
                           statusDescription,
-                          style: textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                          style: textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 11),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 8),
                   Expanded(
                     flex: 2,
                     child: TextButton(
                       onPressed: onTap,
                       style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        padding: const EdgeInsets.symmetric(vertical: 6),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
-                      child: Text(buttonText),
+                      child: Text(buttonText, style: const TextStyle(fontSize: 12)),
                     ),
                   ),
                 ],
@@ -808,7 +832,7 @@ class _PacingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 12),
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
@@ -820,35 +844,35 @@ class _PacingCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(20.0),
+          padding: const EdgeInsets.all(16.0),
           child: Row(
             children: [
-              Icon(icon, size: 32, color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant),
-              const SizedBox(width: 16),
+              Icon(icon, size: 28, color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       title,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               AnimatedOpacity(
                 opacity: isSelected ? 1.0 : 0.0,
                 duration: 200.ms,
-                child: Icon(Icons.check_circle_rounded, color: Theme.of(context).colorScheme.primary),
+                child: Icon(Icons.check_circle_rounded, color: Theme.of(context).colorScheme.primary, size: 24),
               ),
             ],
           ),

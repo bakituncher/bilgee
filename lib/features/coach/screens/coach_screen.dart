@@ -30,7 +30,7 @@ class CoachScreen extends ConsumerStatefulWidget {
 class _CoachScreenState extends ConsumerState<CoachScreen>
     with TickerProviderStateMixin {
   TabController? _tabController;
-  bool _appliedInitialSubject = false;
+  String? _lastAppliedSubject;
 
   Map<String, List<SubjectTopic>> _getRelevantSubjects(
       UserModel user, Exam exam) {
@@ -42,6 +42,23 @@ class _CoachScreenState extends ConsumerState<CoachScreen>
       });
     }
     return subjects;
+  }
+
+  String _normalize(String v) {
+    final lower = v.trim().toLowerCase();
+    return lower
+        .replaceAll('ı', 'i')
+        .replaceAll('İ', 'i')
+        .replaceAll('ö', 'o')
+        .replaceAll('Ö', 'o')
+        .replaceAll('ü', 'u')
+        .replaceAll('Ü', 'u')
+        .replaceAll('ş', 's')
+        .replaceAll('Ş', 's')
+        .replaceAll('ğ', 'g')
+        .replaceAll('Ğ', 'g')
+        .replaceAll('ç', 'c')
+        .replaceAll('Ç', 'c');
   }
 
   void _setupTabController(int length) {
@@ -63,6 +80,26 @@ class _CoachScreenState extends ConsumerState<CoachScreen>
   void dispose() {
     _tabController?.dispose();
     super.dispose();
+  }
+
+  void _applyInitialSubjectIfNeeded(List<String> keys) {
+    final incoming = widget.initialSubject;
+    if (incoming == null || incoming.trim().isEmpty || _tabController == null) return;
+    final normalizedIncoming = _normalize(incoming);
+    // Eğer aynı subject zaten uygulanmışsa tekrar deneme
+    if (_lastAppliedSubject != null && _normalize(_lastAppliedSubject!) == normalizedIncoming) return;
+
+    final idx = keys.indexWhere((s) => _normalize(s) == normalizedIncoming);
+    if (idx != -1 && idx < _tabController!.length) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _tabController == null) return;
+        _tabController!.index = idx;
+        ref.read(coachScreenTabProvider.notifier).state = idx; // provider senkron
+        _lastAppliedSubject = incoming; // kaydet
+      });
+    } else {
+      _lastAppliedSubject = incoming; // başarısız da olsa kaydediyoruz, tekrar denemesin
+    }
   }
 
   @override
@@ -116,20 +153,10 @@ class _CoachScreenState extends ConsumerState<CoachScreen>
             if (_tabController == null ||
                 _tabController!.length != subjects.length) {
               _setupTabController(subjects.length);
-              _appliedInitialSubject = false;
+              _lastAppliedSubject = null; // uzunluk değiştiğinde yeni subject uygulanabilir
             }
-            if (!_appliedInitialSubject && widget.initialSubject != null && widget.initialSubject!.trim().isNotEmpty && _tabController != null) {
-              final keys = subjects.keys.toList();
-              final idx = keys.indexWhere((s) => s.toLowerCase() == widget.initialSubject!.toLowerCase());
-              if (idx != -1 && idx < _tabController!.length) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (mounted && _tabController != null) {
-                    _tabController!.index = idx;
-                  }
-                });
-              }
-              _appliedInitialSubject = true;
-            }
+            final keys = subjects.keys.toList();
+            _applyInitialSubjectIfNeeded(keys);
             return Scaffold(
                 appBar: AppBar(
                   title: const Text('Ders Netlerim'),
@@ -289,8 +316,8 @@ class _SubjectGalaxyViewState extends ConsumerState<_SubjectGalaxyView> {
                 ],
               ),
               child: Row(children:[ 
-                Expanded(child: Text(e.topic.name, style: const TextStyle(fontWeight: FontWeight.w600))), 
-                _MasteryPill(mastery: e.mastery), 
+                Expanded(child: Text(e.topic.name, style: const TextStyle(fontWeight: FontWeight.w600))),
+                _MasteryPill(mastery: e.mastery),
               ]),
             ),
           );
@@ -307,7 +334,9 @@ class _SubjectGalaxyViewState extends ConsumerState<_SubjectGalaxyView> {
         padding: const EdgeInsets.fromLTRB(20,20,20,110),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children:[
           _SubjectStatsCard(subjectName: subjectName, overallMastery: overallMastery, totalQuestions: totalQuestions, totalCorrect: totalCorrect, totalWrong: totalWrong),
-          const SizedBox(height:24),
+          const SizedBox(height:20),
+          _InstructionBanner(),
+          const SizedBox(height:20),
           _GalaxyToolbar(controller: _searchCtrl, onChanged: (v)=> ref.read(subjectFilterProvider(subjectName).notifier).state = v, currentMode: viewMode, onModeChanged: (m)=> ref.read(subjectViewModeProvider(subjectName).notifier).state = m),
           const SizedBox(height:24),
           content.animate().fadeIn(duration:500.ms, delay:200.ms),
@@ -322,6 +351,61 @@ class _SubjectGalaxyViewState extends ConsumerState<_SubjectGalaxyView> {
 }
 
 class _TopicBundle { final SubjectTopic topic; final TopicPerformanceModel performance; final double mastery; _TopicBundle({required this.topic, required this.performance, required this.mastery}); }
+
+class _InstructionBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        gradient: LinearGradient(
+          colors: isDark
+              ? [
+                  colorScheme.primaryContainer.withOpacity(0.25),
+                  colorScheme.secondaryContainer.withOpacity(0.15),
+                ]
+              : [
+                  colorScheme.primaryContainer.withOpacity(0.35),
+                  colorScheme.secondaryContainer.withOpacity(0.25),
+                ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(
+          color: colorScheme.primary.withOpacity(isDark ? 0.25 : 0.35),
+          width: 1.2,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.touch_app_rounded,
+            color: colorScheme.primary,
+            size: 16,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Test eklemek istediğiniz konuyu seçin',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurface,
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class _SubjectStatsCard extends StatelessWidget {
   final String subjectName; final double overallMastery; final int totalQuestions; final int totalCorrect; final int totalWrong;
@@ -580,54 +664,46 @@ class _MasteryPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String txt;
     Color c;
     String level;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (mastery < 0) {
-      txt = 'N/A';
       level = 'Veri Yok';
       c = Theme.of(context).colorScheme.surfaceContainerHighest;
     } else if (mastery < 0.4) {
-      txt = '%${(mastery * 100).toStringAsFixed(0)}';
       level = 'Zayıf';
       c = Theme.of(context).colorScheme.error;
     } else if (mastery < 0.7) {
-      txt = '%${(mastery * 100).toStringAsFixed(0)}';
       level = 'Gelişiyor';
       c = Theme.of(context).colorScheme.primary;
     } else {
-      txt = '%${(mastery * 100).toStringAsFixed(0)}';
       level = 'Güçlü';
       c = Colors.green;
     }
 
     return Container(
-      constraints: const BoxConstraints(minWidth: 85),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      constraints: const BoxConstraints(minWidth: 75),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(20),
         color: c.withOpacity(isDark ? 0.15 : 0.12),
         border: Border.all(
-          color: c.withOpacity(isDark ? 0.7 : 0.8), 
+          color: c.withOpacity(isDark ? 0.7 : 0.8),
           width: isDark ? 1 : 1.5
         ),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(txt, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: c)),
-          const SizedBox(height: 2),
-          Text(
-            level,
-            style: TextStyle(fontSize: 10, color: c.withOpacity(0.9)),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-          ),
-        ],
+      child: Text(
+        level,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: c,
+          letterSpacing: 0.2,
+        ),
+        textAlign: TextAlign.center,
       ),
     );
   }
 }
+
