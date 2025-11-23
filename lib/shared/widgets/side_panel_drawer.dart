@@ -92,7 +92,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                                     ),
                                   ),
                                   const SizedBox(width: 6),
-                                  Text('${user?.engagementScore ?? 0} BP', style: theme.textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant.withOpacity(.7))),
+                                  Text('${user?.engagementScore ?? 0} TP', style: theme.textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant.withOpacity(.7))),
                                 ],
                               ),
                               const SizedBox(height: 5),
