@@ -162,26 +162,44 @@ class _StrategyReviewScreenState extends ConsumerState<StrategyReviewScreen> {
                   child: Row(
                     children: [
                       Expanded(
-                        child: OutlinedButton.icon(
-                          icon: const Icon(Icons.edit_note_rounded),
-                          label: const Text("Revizyon İste"),
+                        child: OutlinedButton(
                           onPressed: _openRevisionWorkshop,
                           style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
                             side: BorderSide(color: Theme.of(context).colorScheme.primary),
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16)),
+                          ),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: const [
+                                Icon(Icons.edit_note_rounded),
+                                SizedBox(width: 8),
+                                Text("Revizyon İste"),
+                              ],
+                            ),
                           ),
                         ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
-                        child: ElevatedButton.icon(
-                          icon: const Icon(Icons.check_circle_outline_rounded),
-                          label: const Text("Onayla ve Başla"),
+                        child: ElevatedButton(
                           onPressed: _approvePlan,
                           style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                          ),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: const [
+                                Icon(Icons.check_circle_outline_rounded),
+                                SizedBox(width: 8),
+                                Text("Onayla ve Başla"),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -356,34 +374,59 @@ class _RevisionWorkshopState extends State<RevisionWorkshop> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
-            Wrap(
-              spacing: 8.0,
-              runSpacing: 8.0,
-              alignment: WrapAlignment.center,
+            Column(
               children: _quickFeedbacks.map((feedback) {
                 final isSelected = _selectedFeedbacks.contains(feedback);
-                return FilterChip(
-                  label: Text(feedback),
-                  selected: isSelected,
-                  onSelected: (selected) {
-                    setState(() {
-                      if (selected) {
-                        _selectedFeedbacks.add(feedback);
-                      } else {
-                        _selectedFeedbacks.remove(feedback);
-                      }
-                    });
-                  },
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: FilterChip(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      label: SizedBox(
+                        width: double.infinity,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            feedback,
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                          ),
+                        ),
+                      ),
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        setState(() {
+                          if (selected) {
+                            _selectedFeedbacks.add(feedback);
+                          } else {
+                            _selectedFeedbacks.remove(feedback);
+                          }
+                        });
+                      },
+                    ),
+                  ),
                 );
               }).toList(),
             ),
             const SizedBox(height: 16),
-            TextField(
-              controller: _textController,
-              maxLines: 3,
-              decoration: const InputDecoration(
-                hintText: "Eklemek istediğin özel bir not var mı?",
-              ),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                return TextField(
+                  controller: _textController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    label: SizedBox(
+                      width: constraints.maxWidth - 32,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: const Text("Eklemek istediğin özel bir not var mı?"),
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 24),
             ElevatedButton(
