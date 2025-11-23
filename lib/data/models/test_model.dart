@@ -138,29 +138,32 @@ extension TestModelSummaryX on TestModel {
     MapEntry<String, double>? strongest;
     MapEntry<String, double>? weakest;
 
-    scores.forEach((subject, scoresMap) {
-      final d = (scoresMap['dogru'] ?? 0);
-      final y = (scoresMap['yanlis'] ?? 0);
-      final b = (scoresMap['bos'] ?? 0);
+    for (final entry in scores.entries) {
+      final subject = entry.key;
+      final scoresMap = entry.value;
+
+      final d = scoresMap['dogru'] ?? 0;
+      final y = scoresMap['yanlis'] ?? 0;
+      final b = scoresMap['bos'] ?? 0;
       final totalQuestions = d + y + b;
 
-      if (totalQuestions == 0) return; // Bu dersi atla
+      if (totalQuestions == 0) continue; // Bu dersi atla
 
       final accuracy = (d / totalQuestions) * 100.0;
 
-      if (strongest == null || accuracy > strongest!.value) {
+      if (strongest == null || accuracy > strongest.value) {
         strongest = MapEntry(subject, accuracy);
       }
-      if (weakest == null || accuracy < weakest!.value) {
+      if (weakest == null || accuracy < weakest.value) {
         weakest = MapEntry(subject, accuracy);
       }
-    });
+    }
 
     if (strongest == null || weakest == null) return {};
 
     return {
-      'strongest': strongest!,
-      'weakest': weakest!,
+      'strongest': strongest,
+      'weakest': weakest,
     };
   }
 }

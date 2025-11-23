@@ -21,11 +21,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'shared/notifications/notification_service.dart';
 import 'package:taktik/core/prompts/prompt_remote.dart';
 import 'package:taktik/core/services/revenuecat_service.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:cloud_functions/cloud_functions.dart';
-import 'package:taktik/core/services/admob_service.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -58,22 +54,29 @@ void main() async {
     // Binding ve runApp aynı zone'da olmalı
     WidgetsFlutterBinding.ensureInitialized();
 
-    // Environment variables'ı yükle
+    // KRİTİK: Environment variables'ı yükle (timeout ile)
     try {
-      await dotenv.load(fileName: ".env");
+      await dotenv.load(fileName: ".env").timeout(
+        const Duration(seconds: 2),
+        onTimeout: () {
+          if (kDebugMode) debugPrint('[Init] .env yükleme timeout');
+        },
+      );
     } catch (e) {
       if (kDebugMode) {
         debugPrint('[Init] .env dosyası yüklenemedi: $e');
       }
     }
 
-    // Android 15+ SDK 35 için zorunlu edge-to-edge ayarları - öncelik sırası önemli
-    // Artık main'de değil, tema değişimine duyarlı olarak BilgeAiApp içinde yapılacak.
-    // AppTheme.configureSystemUI();
-
+    // KRİTİK: Firebase başlatma (timeout ile)
     try {
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
+      ).timeout(
+        const Duration(seconds: 3),
+        onTimeout: () {
+          throw TimeoutException('Firebase initialization timeout');
+        },
       );
     } catch (e, st) {
       if (kDebugMode) {
@@ -84,90 +87,113 @@ void main() async {
       return;
     }
 
-    // Firebase Crashlytics'i yapılandır
-    // Debug modunda Crashlytics'i etkinleştir (isteğe bağlı)
-    await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(!kDebugMode);
+    // Firebase Crashlytics'i yapılandır (non-blocking)
+    FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(!kDebugMode);
 
-    // Firebase Analytics'i yapılandır - AD_ID kullanmadan
-    await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(true);
+    // Firebase Analytics'i yapılandır (non-blocking)
+    FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(true);
 
-    // Initialize RevenueCat
-    try {
-      await RevenueCatService.init();
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('[RevenueCat] Initialization failed: $e');
+    // UYGULAMAYI HEMEN BAŞLAT - Diğer servisler arka planda yüklenecek
+    runApp(const ProviderScope(child: BilgeAiApp()));
+
+    // NON-KRİTİK: RevenueCat'i arka planda başlat
+    Future.microtask(() async {
+      try {
+        await RevenueCatService.init().timeout(
+          const Duration(seconds: 5),
+          onTimeout: () {
+            if (kDebugMode) debugPrint('[RevenueCat] Initialization timeout');
+          },
+        );
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('[RevenueCat] Initialization failed: $e');
+        }
       }
-    }
+    });
 
-    // Initialize AdMob - KALDIRILDI
-    // AdMob artık AuthController içinde kullanıcı premium durumuna göre
-    // başlatılıyor veya engelleniyor (kaynak tasarrufu).
-    // Eski kod: await AdMobService().initialize();
 
-    // App Check'i başlat ve güvenlik sağlayıcılarını aktive et.
-    // SafetyNet yerine Play Integrity API kullanımı (Android 15+ uyumluluk)
-    try {
-      await FirebaseAppCheck.instance.activate(
-        androidProvider: kDebugMode
-            ? AndroidProvider.debug
-            : AndroidProvider.playIntegrity, // SafetyNet yerine Play Integrity
-        appleProvider: kDebugMode
-            ? AppleProvider.debug
-            : AppleProvider.appAttest,
-      );
-    } catch (e) {
-      // iOS'ta App Attest desteklenmiyorsa DeviceCheck'e düş
+    // NON-KRİTİK: App Check'i arka planda başlat
+    Future.microtask(() async {
       try {
         await FirebaseAppCheck.instance.activate(
           androidProvider: kDebugMode
               ? AndroidProvider.debug
-              : AndroidProvider.playIntegrity, // Fallback'te de Play Integrity
+              : AndroidProvider.playIntegrity,
           appleProvider: kDebugMode
               ? AppleProvider.debug
-              : AppleProvider.deviceCheck,
+              : AppleProvider.appAttest,
+        ).timeout(
+          const Duration(seconds: 5),
+          onTimeout: () {
+            if (kDebugMode) debugPrint('[AppCheck] Activation timeout');
+          },
         );
-      } catch (e2) {
-        if (kDebugMode) {
-          debugPrint('[AppCheck] Play Integrity aktivasyon başarısız: $e | DeviceCheck fallback hata: $e2');
-        }
-      }
-    }
-
-    // App Check tokenlarını otomatik yenile
-    try {
-      await FirebaseAppCheck.instance.setTokenAutoRefreshEnabled(true);
-      // İlk çağrılarda boş token durumlarını azaltmak için token üretimini tetikle
-      try {
-        await FirebaseAppCheck.instance.getToken();
       } catch (e) {
-        if (kDebugMode) {
-          debugPrint('[AppCheck] İlk token alınamadı: $e');
+        // iOS'ta App Attest desteklenmiyorsa DeviceCheck'e düş
+        try {
+          await FirebaseAppCheck.instance.activate(
+            androidProvider: kDebugMode
+                ? AndroidProvider.debug
+                : AndroidProvider.playIntegrity,
+            appleProvider: kDebugMode
+                ? AppleProvider.debug
+                : AppleProvider.deviceCheck,
+          ).timeout(const Duration(seconds: 5));
+        } catch (e2) {
+          if (kDebugMode) {
+            debugPrint('[AppCheck] Play Integrity aktivasyon başarısız: $e | DeviceCheck fallback hata: $e2');
+          }
         }
       }
-    } catch (_) {}
 
-    // FCM background handler
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+      // App Check tokenlarını otomatik yenile
+      try {
+        await FirebaseAppCheck.instance.setTokenAutoRefreshEnabled(true);
+        try {
+          await FirebaseAppCheck.instance.getToken().timeout(const Duration(seconds: 3));
+        } catch (e) {
+          if (kDebugMode) debugPrint('[AppCheck] İlk token alınamadı: $e');
+        }
+      } catch (_) {}
+    });
 
-    // Tarih yerelleştirme (hata olursa uygulamayı engellemesin)
-    try {
-      await initializeDateFormatting('tr_TR', null);
-    } catch (e) {
-      if (kDebugMode) debugPrint('[Intl] Tarih format başlatılamadı: $e');
-    }
+    // NON-KRİTİK: FCM background handler'ı kaydet
+    Future.microtask(() {
+      try {
+        FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+      } catch (e) {
+        if (kDebugMode) debugPrint('[FCM] Background handler kaydedilemedi: $e');
+      }
+    });
 
-    // Uygulamayı hızlıca ayağa kaldır
-    runApp(const ProviderScope(child: BilgeAiApp()));
+    // NON-KRİTİK: Tarih yerelleştirme
+    Future.microtask(() async {
+      try {
+        await initializeDateFormatting('tr_TR', null).timeout(
+          const Duration(seconds: 2),
+          onTimeout: () {
+            if (kDebugMode) debugPrint('[Intl] Tarih format timeout');
+          },
+        );
+      } catch (e) {
+        if (kDebugMode) debugPrint('[Intl] Tarih format başlatılamadı: $e');
+      }
+    });
 
-    // Ağ bağımlı preload işleri uygulamayı bloklamasın
-    // RemotePrompts, StrategyPrompts ve QuestArmory eşzamanlı ve hata yalıtımlı
+    // NON-KRİTİK: Ağ bağımlı preload işleri uygulamayı bloklamasın
     Future.microtask(() async {
       try {
         await Future.wait([
           RemotePrompts.preloadAndWatch(),
           StrategyPrompts.preload(),
-        ]);
+        ]).timeout(
+          const Duration(seconds: 10),
+          onTimeout: () {
+            if (kDebugMode) debugPrint('[Preload] Timeout - devam ediyor');
+            return <void>[];
+          },
+        );
       } catch (e, st) {
         if (kDebugMode) {
           debugPrint('[Preload] Hata: $e');
