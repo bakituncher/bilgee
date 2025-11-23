@@ -52,17 +52,17 @@ class HeroHeader extends ConsumerWidget {
         String? examLabel;
 
         if (selectedExamSection != null) {
-          final section = selectedExamSection.toLowerCase();
-          if (section.contains('lisans') && !section.contains('ön')) {
-            examDate = DateTime(2026, 9, 6);
-            examLabel = 'Lisans';
-          } else if (section.contains('önlisans') || section.contains('ön lisans')) {
-            examDate = DateTime(2026, 10, 4);
-            examLabel = 'Önlisans';
-          } else if (section.contains('ortaöğretim') || section.contains('orta')) {
-            examDate = DateTime(2026, 10, 25);
-            examLabel = 'Ortaöğretim';
-          }
+            final section = selectedExamSection.toLowerCase();
+            if (section.contains('lisans') && !section.contains('ön')) {
+              examDate = DateTime(2026, 9, 6);
+              examLabel = 'Lisans';
+            } else if (section.contains('önlisans') || section.contains('ön lisans')) {
+              examDate = DateTime(2026, 10, 4);
+              examLabel = 'Önlisans';
+            } else if (section.contains('ortaöğretim') || section.contains('orta')) {
+              examDate = DateTime(2026, 10, 25);
+              examLabel = 'Ortaöğretim';
+            }
         }
 
         examDate ??= DateTime(2026, 9, 6);
@@ -93,15 +93,16 @@ class HeroHeader extends ConsumerWidget {
         final isDark = theme.brightness == Brightness.dark;
 
         return Container(
-          padding: const EdgeInsets.all(16),
+          // Daha kompakt padding
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             color: theme.cardColor,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16), // biraz küçültüldü
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.06),
-                blurRadius: 20,
-                offset: const Offset(0, 4),
+                color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
+                blurRadius: 14, // daha düşük blur
+                offset: const Offset(0, 3),
               ),
             ],
           ),
@@ -111,15 +112,15 @@ class HeroHeader extends ConsumerWidget {
               // Greeting & User Name
               Text(
                 '${_getGreeting()}, ${user.firstName}',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.5,
+                style: theme.textTheme.titleMedium?.copyWith( // daha küçük tipografi
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.3,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 8), // azaltıldı
 
               // Stats Row
               Row(
@@ -137,7 +138,7 @@ class HeroHeader extends ConsumerWidget {
                   ),
 
                   if (planProgress.total > 0) ...[
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 8), // azaltıldı
                     Expanded(
                       child: _StatCard(
                         icon: Icons.track_changes_rounded,
@@ -155,8 +156,8 @@ class HeroHeader extends ConsumerWidget {
         );
       },
       loading: () => const SizedBox(
-        height: 140,
-        child: Center(child: LogoLoader(size: 50)),
+        height: 120, // biraz daha az yükseklik
+        child: Center(child: LogoLoader(size: 42)),
       ),
       error: (_, __) => const SizedBox.shrink(),
     );
@@ -185,12 +186,12 @@ class _StatCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8), // azaltıldı
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(16),
+        color: color.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(12), // küçültüldü
         border: Border.all(
-          color: color.withValues(alpha: 0.2),
+          color: color.withValues(alpha: 0.18),
           width: 1,
         ),
       ),
@@ -198,63 +199,66 @@ class _StatCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, size: 16, color: color),
-              const SizedBox(width: 6),
+              Icon(icon, size: 14, color: color), // daha küçük
+              const SizedBox(width: 4),
               Expanded(
                 child: Text(
                   label,
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     fontWeight: FontWeight.w600,
-                    fontSize: 10,
+                    fontSize: 9, // küçültüldü
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              // Exam Countdowns in top right corner
               if (examCountdowns != null && examCountdowns!.isNotEmpty)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisSize: MainAxisSize.min,
-                  children: examCountdowns!.map((countdown) => Padding(
-                    padding: const EdgeInsets.only(left: 4, bottom: 2),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.secondary,
-                        borderRadius: BorderRadius.circular(8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.secondary,
+                    borderRadius: BorderRadius.circular(6),
+                    boxShadow: [
+                      BoxShadow(
+                        color: theme.colorScheme.secondary.withValues(alpha: 0.3),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
                       ),
-                      child: Text(
-                        '${countdown['label']} | ${countdown['days']} gün',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 9,
-                        ),
-                      ),
+                    ],
+                  ),
+                  child: Text(
+                    examCountdowns!
+                        .map((countdown) => '${countdown['label']} | ${countdown['days']} gün')
+                        .join(' • '),
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 9,
                     ),
-                  )).toList(),
+                  ),
                 ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6), // azaltıldı
           Text(
             value,
-            style: theme.textTheme.titleMedium?.copyWith(
+            style: theme.textTheme.titleSmall?.copyWith( // daha küçük
               color: color,
               fontWeight: FontWeight.w800,
-              fontSize: 18,
+              fontSize: 16,
+              letterSpacing: -0.2,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6), // azaltıldı
           ClipRRect(
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(3),
             child: LinearProgressIndicator(
               value: progress,
-              minHeight: 4,
-              backgroundColor: color.withValues(alpha: 0.15),
+              minHeight: 3, // azaltıldı
+              backgroundColor: color.withValues(alpha: 0.12),
               valueColor: AlwaysStoppedAnimation(color),
             ),
           ),
@@ -263,5 +267,3 @@ class _StatCard extends StatelessWidget {
     );
   }
 }
-
-
