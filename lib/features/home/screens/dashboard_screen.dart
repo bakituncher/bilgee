@@ -355,8 +355,45 @@ class _NotificationBell extends ConsumerWidget {
   }
 }
 
-class _RatingStarButton extends StatelessWidget {
-  Future<void> _requestReview(BuildContext context) async {
+// Rating visibility state provider
+final _ratingVisibilityProvider = StateProvider<bool>((ref) => true);
+
+class _RatingStarButton extends ConsumerWidget {
+  // Test için 3 dakika, production'da 3 gün olmalı
+  static const _reminderDelayMinutes = 4320; // Production: 3 * 24 * 60 = 4320
+  static const _prefs_key_last_dismissed = 'rating_last_dismissed_timestamp';
+
+  Future<bool> _shouldShowRating(WidgetRef ref) async {
+    try {
+      final prefs = await ref.read(sharedPreferencesProvider.future);
+      final lastDismissed = prefs.getInt(_prefs_key_last_dismissed);
+
+      if (lastDismissed == null) return true;
+
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final diffMinutes = (now - lastDismissed) / (1000 * 60);
+
+      return diffMinutes >= _reminderDelayMinutes;
+    } catch (e) {
+      return true; // Hata durumunda göster
+    }
+  }
+
+  Future<void> _saveDismissTime(WidgetRef ref) async {
+    try {
+      final prefs = await ref.read(sharedPreferencesProvider.future);
+      await prefs.setInt(_prefs_key_last_dismissed, DateTime.now().millisecondsSinceEpoch);
+    } catch (e) {
+      debugPrint('Could not save dismiss time: $e');
+    }
+  }
+
+  Future<void> _requestReview(BuildContext context, WidgetRef ref) async {
+    // Gösterilme zamanı kontrolü
+    if (!await _shouldShowRating(ref)) {
+      return; // Henüz gösterme zamanı gelmedi
+    }
+
     final inAppReview = InAppReview.instance;
 
     try {
@@ -539,7 +576,13 @@ class _RatingStarButton extends StatelessWidget {
                         ),
                         const SizedBox(height: 12),
                         TextButton(
-                          onPressed: () => Navigator.of(context).pop(false),
+                          onPressed: () async {
+                            await _saveDismissTime(ref);
+                            ref.read(_ratingVisibilityProvider.notifier).state = false;
+                            if (context.mounted) {
+                              Navigator.of(context).pop(false);
+                            }
+                          },
                           style: TextButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16),
                           ),
@@ -580,40 +623,41 @@ class _RatingStarButton extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return IconButton(
-      tooltip: 'Bizi Değerlendirin',
-      onPressed: () => _requestReview(context),
-      icon: Icon(
-        Icons.star_rounded,
-        color: Colors.amber.shade600,
-        size: 28,
-      ),
-    )
-        .animate(onPlay: (controller) => controller.repeat(reverse: true))
-        .scale(
-          duration: const Duration(milliseconds: 1000),
-          begin: const Offset(1.0, 1.0),
-          end: const Offset(1.12, 1.12),
-          curve: Curves.easeInOut,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isVisible = ref.watch(_ratingVisibilityProvider);
+
+    // State provider false ise direkt gizle
+    if (!isVisible) {
+      return const SizedBox.shrink();
+    }
+
+    return FutureBuilder<bool>(
+      future: _shouldShowRating(ref),
+      builder: (context, snapshot) {
+        // Yükleniyor veya gösterilmemeli
+        if (!snapshot.hasData || snapshot.data == false) {
+          return const SizedBox.shrink(); // İkonu tamamen gizle
+        }
+
+        // Gösterilmeli
+        return IconButton(
+          tooltip: 'Bizi Değerlendirin',
+          onPressed: () => _requestReview(context, ref),
+          icon: Icon(
+            Icons.star_rounded,
+            color: Colors.amber.shade600,
+            size: 28,
+          ),
         )
-        .animate(onPlay: (controller) => controller.repeat())
-        .shimmer(
-          duration: const Duration(milliseconds: 2500),
-          delay: const Duration(milliseconds: 1000),
-          color: Colors.white,
-          size: 0.8,
-        )
-        .animate(onPlay: (controller) => controller.repeat(reverse: true))
-        .then(delay: const Duration(milliseconds: 800))
-        .fadeIn(
-          duration: const Duration(milliseconds: 400),
-          begin: 0.6,
-        )
-        .fadeOut(
-          duration: const Duration(milliseconds: 400),
-          begin: 1.0,
-        );
+            .animate(onPlay: (controller) => controller.repeat())
+            .shimmer(
+              duration: const Duration(milliseconds: 4000),
+              delay: const Duration(milliseconds: 50),
+              color: Colors.white.withOpacity(0.4),
+              size: 0.5,
+            );
+      },
+    );
   }
 }
 
