@@ -50,8 +50,9 @@ service cloud.firestore {
 
       match /state/{docId} {
         allow read: if request.auth.uid == userId;
-        // Puanlar SADECE sunucu tarafından güncellenebilir
-        allow write: if false;
+        // ai_memory belgesi kullanıcı tarafından yazılabilir (AI sohbet hafızası için)
+        // points belgesi SADECE sunucu tarafından yazılabilir
+        allow write: if request.auth.uid == userId && docId == 'ai_memory';
       }
 
       match /plans/{docId} {
