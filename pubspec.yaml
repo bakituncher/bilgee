@@ -80,6 +80,9 @@ dependencies:
 
   # Google AdMob
   google_mobile_ads: ^6.0.0
+
+  # In-App Review
+  in_app_review: ^2.0.10
 dev_dependencies:
   flutter_test:
     sdk: flutter

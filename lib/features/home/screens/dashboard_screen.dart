@@ -15,6 +15,7 @@ import 'package:taktik/shared/widgets/logo_loader.dart';
 import 'package:taktik/data/models/plan_model.dart';
 import 'package:taktik/data/providers/shared_prefs_provider.dart';
 import 'package:taktik/shared/widgets/ad_banner_widget.dart';
+import 'package:in_app_review/in_app_review.dart';
 
 final celebratedDatesProvider = StateProvider<Set<String>>((ref) => <String>{});
 final expiredPlanDialogShownProvider = StateProvider<bool>((ref) => false);
@@ -255,10 +256,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 title: AnimatedOpacity(
                   duration: 200.ms,
                   opacity: _appBarOpacity.clamp(0, 1),
-                  child: const Text('Komuta Merkezi'),
+                  child: const Text('Ana Panel'),
                 ),
                 centerTitle: true,
                 actions: [
+                  _RatingStarButton(),
+                  const SizedBox(width: 4),
                   _NotificationBell(),
                   const SizedBox(width: 4),
                 ],
@@ -347,6 +350,357 @@ class _NotificationBell extends ConsumerWidget {
               ),
             ),
           ),
+      ],
+    );
+  }
+}
+
+// Rating visibility state provider
+final _ratingVisibilityProvider = StateProvider<bool>((ref) => true);
+
+class _RatingStarButton extends ConsumerWidget {
+  // Test için 3 dakika, production'da 3 gün olmalı
+  static const _reminderDelayMinutes = 4320; // Production: 3 * 24 * 60 = 4320
+  static const _prefs_key_last_dismissed = 'rating_last_dismissed_timestamp';
+
+  Future<bool> _shouldShowRating(WidgetRef ref) async {
+    try {
+      final prefs = await ref.read(sharedPreferencesProvider.future);
+      final lastDismissed = prefs.getInt(_prefs_key_last_dismissed);
+
+      if (lastDismissed == null) return true;
+
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final diffMinutes = (now - lastDismissed) / (1000 * 60);
+
+      return diffMinutes >= _reminderDelayMinutes;
+    } catch (e) {
+      return true; // Hata durumunda göster
+    }
+  }
+
+  Future<void> _saveDismissTime(WidgetRef ref) async {
+    try {
+      final prefs = await ref.read(sharedPreferencesProvider.future);
+      await prefs.setInt(_prefs_key_last_dismissed, DateTime.now().millisecondsSinceEpoch);
+    } catch (e) {
+      debugPrint('Could not save dismiss time: $e');
+    }
+  }
+
+  Future<void> _requestReview(BuildContext context, WidgetRef ref) async {
+    // Gösterilme zamanı kontrolü
+    if (!await _shouldShowRating(ref)) {
+      return; // Henüz gösterme zamanı gelmedi
+    }
+
+    final inAppReview = InAppReview.instance;
+
+    try {
+      // Modern bottom sheet ile destek isteme ekranı
+      final shouldContinue = await showModalBottomSheet<bool>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (BuildContext context) {
+          final theme = Theme.of(context);
+          final colorScheme = theme.colorScheme;
+          final isDark = theme.brightness == Brightness.dark;
+
+          return Container(
+            decoration: BoxDecoration(
+              color: isDark
+                  ? colorScheme.surface
+                  : colorScheme.surface,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 24,
+                  offset: const Offset(0, -8),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Drag handle
+                    Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: colorScheme.onSurfaceVariant.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Animated star icon
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.amber.shade400,
+                            Colors.amber.shade700,
+                          ],
+                        ),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.amber.withOpacity(0.4),
+                            blurRadius: 20,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.star_rounded,
+                        size: 48,
+                        color: Colors.white,
+                      ),
+                    ).animate(onPlay: (controller) => controller.repeat()).shimmer(
+                          duration: const Duration(seconds: 2),
+                          color: Colors.white.withOpacity(0.3),
+                        ),
+                    const SizedBox(height: 24),
+
+                    // Title
+                    Text(
+                      'Desteğiniz Bizim İçin Çok Değerli! 💫',
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Subtitle
+                    Text(
+                      'Hedeflerinize ulaşma yolculuğunuzda size yardımcı olabildiysek, bizi değerlendirerek destekleyebilir misiniz?',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        height: 1.5,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 28),
+
+                    // Features
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? colorScheme.surfaceContainerHighest
+                            : colorScheme.primaryContainer.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: colorScheme.primary.withOpacity(0.3),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          _RatingFeature(
+                            icon: Icons.favorite_rounded,
+                            text: 'Bizi motive eder',
+                            color: Colors.pink,
+                          ),
+                          const SizedBox(height: 12),
+                          _RatingFeature(
+                            icon: Icons.trending_up_rounded,
+                            text: 'Daha fazla kişiye ulaşmamızı sağlar',
+                            color: Colors.green,
+                          ),
+                          const SizedBox(height: 12),
+                          _RatingFeature(
+                            icon: Icons.auto_awesome_rounded,
+                            text: 'Uygulamayı geliştirmemize yardımcı olur',
+                            color: Colors.amber,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Action buttons
+                    Column(
+                      children: [
+                        SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: ElevatedButton(
+                            onPressed: () => Navigator.of(context).pop(true),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: colorScheme.primary,
+                              foregroundColor: colorScheme.onPrimary,
+                              elevation: 4,
+                              shadowColor: colorScheme.primary.withOpacity(0.4),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.star_rounded,
+                                  size: 24,
+                                  color: Colors.amber.shade300,
+                                ),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  'Değerlendir',
+                                  style: TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.3,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Icon(
+                                  Icons.star_rounded,
+                                  size: 24,
+                                  color: Colors.amber.shade300,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextButton(
+                          onPressed: () async {
+                            await _saveDismissTime(ref);
+                            ref.read(_ratingVisibilityProvider.notifier).state = false;
+                            if (context.mounted) {
+                              Navigator.of(context).pop(false);
+                            }
+                          },
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                          child: Text(
+                            'Sonra Hatırlat',
+                            style: TextStyle(
+                              color: colorScheme.onSurfaceVariant,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      );
+
+      if (shouldContinue == true) {
+        // Play Store rating'e yönlendir
+        if (await inAppReview.isAvailable()) {
+          await inAppReview.requestReview();
+        } else {
+          // Eğer in-app review mevcut değilse, direkt Play Store'a yönlendir
+          await inAppReview.openStoreListing(
+            appStoreId: 'com.codenzi.taktik',
+          );
+        }
+      }
+    } catch (e) {
+      // Hata durumunda sessizce geç
+      debugPrint('Rating request error: $e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isVisible = ref.watch(_ratingVisibilityProvider);
+
+    // State provider false ise direkt gizle
+    if (!isVisible) {
+      return const SizedBox.shrink();
+    }
+
+    return FutureBuilder<bool>(
+      future: _shouldShowRating(ref),
+      builder: (context, snapshot) {
+        // Yükleniyor veya gösterilmemeli
+        if (!snapshot.hasData || snapshot.data == false) {
+          return const SizedBox.shrink(); // İkonu tamamen gizle
+        }
+
+        // Gösterilmeli
+        return IconButton(
+          tooltip: 'Bizi Değerlendirin',
+          onPressed: () => _requestReview(context, ref),
+          icon: Icon(
+            Icons.star_rounded,
+            color: Colors.amber.shade600,
+            size: 28,
+          ),
+        )
+            .animate(onPlay: (controller) => controller.repeat())
+            .shimmer(
+              duration: const Duration(milliseconds: 4000),
+              delay: const Duration(milliseconds: 50),
+              color: Colors.white.withOpacity(0.4),
+              size: 0.5,
+            );
+      },
+    );
+  }
+}
+
+
+class _RatingFeature extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final Color color;
+
+  const _RatingFeature({
+    required this.icon,
+    required this.text,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: isDark ? color.withOpacity(0.25) : color.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            icon,
+            size: 20,
+            color: color,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            text,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w500,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+        ),
       ],
     );
   }

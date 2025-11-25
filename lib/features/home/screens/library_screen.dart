@@ -11,6 +11,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
+import 'package:lottie/lottie.dart';
 
 class LibraryScreen extends ConsumerStatefulWidget {
   const LibraryScreen({super.key});
@@ -162,11 +163,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
         ),
         child: _buildBody(textTheme),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push('/home/add-test'),
-        icon: const Icon(Icons.add_chart_rounded),
-        label: const Text('Deneme Ekle'),
-      ),
     );
   }
 
@@ -275,28 +271,136 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     }
     if (_tests.isEmpty) {
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.inventory_2_outlined, size: 80, color: Theme.of(context).colorScheme.onSurfaceVariant),
-            const SizedBox(height: 16),
-            Text('Arşivin Henüz Boş', style: textTheme.headlineSmall),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32.0),
-              child: Text(
-                'Her deneme, gelecekteki başarın için bir kanıtıdır. İlk kanıtı arşive ekle.',
-                textAlign: TextAlign.center,
-                style: textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-              ),
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Padding(
+            padding: const EdgeInsets.all(32.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Lottie Animasyonu
+                Container(
+                  constraints: const BoxConstraints(
+                    maxWidth: 280,
+                    maxHeight: 280,
+                  ),
+                  child: Lottie.asset(
+                    'assets/lotties/empty.json',
+                    fit: BoxFit.contain,
+                    repeat: true,
+                  ),
+                ).animate()
+                  .fadeIn(duration: 500.ms)
+                  .scale(begin: const Offset(0.8, 0.8), duration: 600.ms, curve: Curves.easeOutBack),
+
+                const SizedBox(height: 24),
+
+                // Başlık
+                Text(
+                  'Arşivin Henüz Boş',
+                  style: textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 24,
+                    letterSpacing: -0.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ).animate(delay: 200.ms)
+                  .fadeIn(duration: 400.ms)
+                  .slideY(begin: 0.1, duration: 500.ms),
+
+                const SizedBox(height: 12),
+
+                // Açıklama
+                Text(
+                  'Her deneme, gelecekteki başarın için bir kanıtıdır. İlk kaydını ekleyerek yolculuğuna başla ve gelişimini takip et.',
+                  textAlign: TextAlign.center,
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    height: 1.5,
+                    fontSize: 15,
+                  ),
+                ).animate(delay: 300.ms)
+                  .fadeIn(duration: 400.ms)
+                  .slideY(begin: 0.1, duration: 500.ms),
+
+                const SizedBox(height: 32),
+
+                // Deneme Ekle Butonu
+                InkWell(
+                  onTap: () => context.push('/home/add-test'),
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
+                    constraints: const BoxConstraints(maxWidth: 320),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                          Theme.of(context).colorScheme.secondary.withValues(alpha: 0.15),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                        width: 2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.add_chart_rounded,
+                            color: Theme.of(context).colorScheme.primary,
+                            size: 32,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'İlk Denemeni Ekle',
+                          style: textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 18,
+                            letterSpacing: -0.3,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Başarı yolculuğunu arşivlemeye başla',
+                          style: textTheme.bodySmall?.copyWith(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 13,
+                            height: 1.3,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                ).animate(delay: 400.ms)
+                  .fadeIn(duration: 500.ms)
+                  .slideY(begin: 0.15, duration: 600.ms, curve: Curves.easeOutCubic)
+                  .shimmer(delay: 800.ms, duration: 1500.ms),
+              ],
             ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () => context.push('/home/add-test'),
-              child: const Text("İlk Kaydı Ekle"),
-            )
-          ],
-        ).animate().fadeIn(duration: 800.ms),
+          ),
+        ),
       );
     }
 
