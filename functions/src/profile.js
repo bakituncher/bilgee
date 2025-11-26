@@ -9,7 +9,13 @@ async function updatePublicProfile(uid, options = {}) {
       userRef.get(),
       userRef.collection("state").doc("stats").get(),
     ]);
-    if (!userSnap.exists) return;
+
+    // RACE CONDITION GÜVENLİĞİ: Kullanıcı silinmişse güncelleme yapma
+    if (!userSnap.exists) {
+      logger.info(`User ${uid} not found in updatePublicProfile (likely deleted). Skipping.`);
+      return;
+    }
+
     const u = userSnap.data() || {};
     const s = statsSnap.exists ? (statsSnap.data() || {}) : {};
     const publicDoc = {
@@ -35,22 +41,37 @@ async function updatePublicProfile(uid, options = {}) {
 }
 
 // GÜVENLİK GÜNCELLEMESİ: Takipçi sayıları artık /users koleksiyonu üzerinde atomik olarak güncellenir.
+// RACE CONDITION GÜVENLİĞİ: Kullanıcı silinmişse zombi belge oluşturulmaz.
 async function adjustUserFollowCounts(uid, { followersDelta = 0, followingDelta = 0 }) {
   if (!uid) return;
+
   const ref = db.collection("users").doc(uid);
   const dataToUpdate = {};
+
   if (followersDelta !== 0) {
     dataToUpdate.followerCount = admin.firestore.FieldValue.increment(followersDelta);
   }
   if (followingDelta !== 0) {
     dataToUpdate.followingCount = admin.firestore.FieldValue.increment(followingDelta);
   }
+
   if (Object.keys(dataToUpdate).length > 0) {
     dataToUpdate.updatedAt = admin.firestore.FieldValue.serverTimestamp();
-    // Sayıların negatif olmasını engellemek için transaction kullanılabilir,
-    // ancak increment'in doğası ve akış mantığı bunu büyük ölçüde gereksiz kılar.
-    // Şimdilik basit bir update yeterlidir.
-    await ref.set(dataToUpdate, { merge: true });
+
+    // KRİTİK: set({ merge: true }) yerine update() kullanıyoruz
+    // update() metodu, belge yoksa hata fırlatır (zombi belge oluşturmaz)
+    // set({ merge: true }) ise belge yoksa YENİ BELGE OLUŞTURUR (race condition!)
+    try {
+      await ref.update(dataToUpdate);
+    } catch (error) {
+      // Belge bulunamadı hatası (kullanıcı silinmiş) - sessizce logla
+      if (error.code === 'not-found') {
+        logger.info(`User ${uid} not found during follow count adjustment (likely deleted). Skipping.`);
+      } else {
+        // Diğer hatalar için yeniden fırlat
+        throw error;
+      }
+    }
   }
 }
 
