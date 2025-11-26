@@ -278,6 +278,9 @@ class PomodoroNotifier extends StateNotifier<PomodoroModel> {
   void _startTimer() {
     _timer?.cancel();
     final baseline = state.timeRemaining;
+    final startTime = DateTime.now();
+    final initialSeconds = baseline;
+
     state = state.copyWith(isPaused: false);
     _applyWakelock();
     _persistRunStart(baselineRemaining: baseline);
@@ -285,15 +288,18 @@ class PomodoroNotifier extends StateNotifier<PomodoroModel> {
     // Başlatma geri bildirimi
     try { HapticFeedback.selectionClick(); } catch (_) {}
 
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (state.timeRemaining > 0) {
-        final nextRemaining = state.timeRemaining - 1;
+    // Timer drift'i önlemek için başlangıç zamanına göre hesapla
+    _timer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
+      final elapsed = DateTime.now().difference(startTime).inSeconds;
+      final remaining = (initialSeconds - elapsed).clamp(0, initialSeconds);
+
+      if (remaining > 0) {
         // Bitime 10 sn kala uyarı (yalnızca bir kez tetiklenir)
-        if (nextRemaining == 10) {
+        if (remaining == 10 && state.timeRemaining != 10) {
           _notify('Birazdan bitiyor', 'Hazırlan: 10 saniye kaldı.');
           try { HapticFeedback.lightImpact(); } catch (_) {}
         }
-        state = state.copyWith(timeRemaining: nextRemaining);
+        state = state.copyWith(timeRemaining: remaining);
       } else {
         _timer?.cancel();
         _clearRunStart();
@@ -474,26 +480,39 @@ class PomodoroNotifier extends StateNotifier<PomodoroModel> {
     _persistState();
   }
 
-  void markTaskAsCompleted() async {
+  Future<void> markTaskAsCompleted() async {
     if (state.currentTaskIdentifier == null) return;
     final userId = _ref.read(authControllerProvider).value?.uid;
     if (userId == null) return;
-    // Görev hangi güne aitse onu kullan; yoksa bugünü al.
-    final date = DateTime.tryParse(state.currentTaskDateKey ?? '') ?? DateTime.now();
-    final dateKey = DateFormat('yyyy-MM-dd').format(date);
-    await _ref.read(firestoreServiceProvider).updateDailyTaskCompletion(
-      userId: userId,
-      dateKey: dateKey,
-      task: state.currentTaskIdentifier!,
-      isCompleted: true,
-    );
-    // Haftalık ve günlük sağlayıcıları yenile
-    final day0 = DateTime(date.year, date.month, date.day);
-    final startOfWeek = day0.subtract(Duration(days: day0.weekday - 1));
+
     try {
-      await _ref.refresh(completedTasksForWeekProvider(startOfWeek).future);
-    } catch (_) {}
-    _ref.invalidate(completedTasksForDateProvider(day0));
+      // Görev hangi güne aitse onu kullan; yoksa bugünü al.
+      final date = DateTime.tryParse(state.currentTaskDateKey ?? '') ?? DateTime.now();
+      final dateKey = DateFormat('yyyy-MM-dd').format(date);
+
+      await _ref.read(firestoreServiceProvider).updateDailyTaskCompletion(
+        userId: userId,
+        dateKey: dateKey,
+        task: state.currentTaskIdentifier!,
+        isCompleted: true,
+      );
+
+      // Haftalık ve günlük sağlayıcıları yenile
+      final day0 = DateTime(date.year, date.month, date.day);
+      final startOfWeek = day0.subtract(Duration(days: day0.weekday - 1));
+
+      try {
+        await _ref.refresh(completedTasksForWeekProvider(startOfWeek).future);
+      } catch (_) {
+        // Provider refresh hatası - önemli değil
+      }
+
+      _ref.invalidate(completedTasksForDateProvider(day0));
+    } catch (e) {
+      // Görev tamamlama hatası - loglayalım ama kullanıcıya bildirmeyelim
+      // Kullanıcı arayüzünde zaten snackbar gösteriliyor
+      print('⚠️ Task completion failed: $e');
+    }
   }
 
   void updateSettings({int? work, int? short, int? long, int? interval, bool applyToCurrent = false}) {

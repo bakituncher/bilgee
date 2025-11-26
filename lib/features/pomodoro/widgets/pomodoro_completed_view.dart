@@ -35,7 +35,8 @@ class _PomodoroCompletedViewState extends ConsumerState<PomodoroCompletedView> {
     // Context mounted kontrolü
     if (!mounted) return;
 
-    await Future.delayed(const Duration(milliseconds: 1500));
+    // Kullanıcının tamamlama ekranını görmesi için yeterli süre bekle
+    await Future.delayed(const Duration(milliseconds: 2500));
     if (!mounted) return;
 
     // Premium kontrolü ve kullanıcı bilgisi
@@ -68,70 +69,189 @@ class _PomodoroCompletedViewState extends ConsumerState<PomodoroCompletedView> {
         : false;
     final breakDuration = isLongBreakTime ? pomodoro.longBreakDuration : pomodoro.shortBreakDuration;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Stack(
           alignment: Alignment.topCenter,
           children: [
-            // Cam panel içinde içerik
+            // Modern gradient container
             Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 640),
-                child: Padding(
+                child: SingleChildScrollView(
                   padding: const EdgeInsets.all(24.0),
-                  child: _GlassPanel(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
+                  child: Container(
+                    padding: const EdgeInsets.all(24.0),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: isDark
+                            ? [
+                                Colors.white.withOpacity(0.1),
+                                Colors.white.withOpacity(0.05),
+                              ]
+                            : [
+                                Colors.white.withOpacity(0.95),
+                                Colors.white.withOpacity(0.85),
+                              ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(32),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(isDark ? 0.2 : 0.4),
+                        width: 2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(isDark ? 0.4 : 0.15),
+                          blurRadius: 32,
+                          offset: const Offset(0, 16),
+                          spreadRadius: -4,
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
                           const SizedBox(height: 12),
-                          const Icon(Icons.check_circle_outline_rounded, size: 80, color: Colors.green)
-                              .animate().scale(duration: 600.ms, curve: Curves.elasticOut),
-                          const SizedBox(height: 16),
-                          Text(
-                            "Seans Tamamlandı!",
-                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
-                            textAlign: TextAlign.center,
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF10B981), Color(0xFF3B82F6)],
+                              ),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF10B981).withOpacity(0.5),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 8),
+                                ),
+                              ],
+                            ),
+                            child: const Icon(Icons.check_circle_outline_rounded, size: 64, color: Colors.white),
+                          ).animate().scale(duration: 600.ms, curve: Curves.elasticOut),
+                          const SizedBox(height: 20),
+                          ShaderMask(
+                            shaderCallback: (bounds) => const LinearGradient(
+                              colors: [Color(0xFF10B981), Color(0xFF3B82F6)],
+                            ).createShader(bounds),
+                            child: Text(
+                              "Seans Tamamlandı!",
+                              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
                           ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.5),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 8),
                           Text(
                             "'${widget.result.task}' görevine $earnedMinutes dakika odaklandın.",
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: isDark
+                                  ? Colors.white.withOpacity(0.85)
+                                  : Colors.black.withOpacity(0.7),
+                              fontWeight: FontWeight.w600,
+                            ),
                             textAlign: TextAlign.center,
                           ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.5),
-                          const SizedBox(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.star_rounded, color: Colors.amber),
-                              const SizedBox(width: 8),
-                              Text("+$earnedMinutes Taktik Puanı", style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold)),
-                            ],
-                          ).animate().fadeIn(delay: 400.ms).shake(),
-                          const SizedBox(height: 24),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: ElevatedButton.icon(
-                                  icon: Icon(isLongBreakTime ? Icons.bedtime_rounded : Icons.coffee_rounded),
-                                  label: Text("${(breakDuration/60).round()} Dakika Mola Ver"),
-                                  onPressed: notifier.startNextSession,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.green,
-                                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                                    padding: const EdgeInsets.symmetric(vertical: 14),
+                          const SizedBox(height: 20),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFFFFD700).withOpacity(0.4),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.3),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.star_rounded, color: Colors.white, size: 20),
+                                ),
+                                const SizedBox(width: 10),
+                                Text(
+                                  "+$earnedMinutes Taktik Puanı",
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 16,
                                   ),
                                 ),
+                              ],
+                            ),
+                          ).animate().fadeIn(delay: 400.ms).shake(),
+                          const SizedBox(height: 24),
+                          Container(
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF10B981), Color(0xFF3B82F6)],
                               ),
-                            ],
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF10B981).withOpacity(0.4),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 8),
+                                ),
+                              ],
+                            ),
+                            child: ElevatedButton.icon(
+                              icon: Icon(isLongBreakTime ? Icons.bedtime_rounded : Icons.coffee_rounded, color: Colors.white),
+                              label: Text(
+                                "${(breakDuration/60).round()} Dakika Mola Ver",
+                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900),
+                              ),
+                              onPressed: notifier.startNextSession,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                shadowColor: Colors.transparent,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                              ),
+                            ),
                           ),
-                          TextButton(
-                            onPressed: notifier.reset,
-                            child: const Text("Ana Sayfaya Dön"),
+                          Container(
+                            margin: const EdgeInsets.only(top: 8),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.white.withOpacity(0.15),
+                                  Colors.white.withOpacity(0.1),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(isDark ? 0.2 : 0.3),
+                              ),
+                            ),
+                            child: TextButton(
+                              onPressed: notifier.reset,
+                              child: Text(
+                                "Ana Sayfaya Dön",
+                                style: TextStyle(
+                                  color: isDark ? Colors.white : const Color(0xFF2E3192),
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
                           ),
-                          const SizedBox(height: 8),
-                        ],
-                      ),
+                        const SizedBox(height: 8),
+                      ],
                     ),
                   ),
                 ),
@@ -149,28 +269,3 @@ class _PomodoroCompletedViewState extends ConsumerState<PomodoroCompletedView> {
   }
 }
 
-class _GlassPanel extends StatelessWidget {
-  final Widget child;
-  const _GlassPanel({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.06),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.08)),
-            boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 20, spreadRadius: 2),
-            ],
-          ),
-          child: child,
-        ),
-      ),
-    );
-  }
-}

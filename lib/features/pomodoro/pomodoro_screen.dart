@@ -108,10 +108,7 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen> with TickerProv
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [
-                _getBackgroundColor(pomodoro.sessionState).withOpacity(0.9),
-                Theme.of(context).colorScheme.surface,
-              ],
+              colors: _getGradientColors(pomodoro.sessionState, context),
             ),
           ),
           child: Stack(
@@ -129,15 +126,15 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen> with TickerProv
                       return Stack(children: [
                         Align(
                           alignment: Alignment(-0.9 + 0.2 * (t - 0.5), -1.1),
-                          child: _Blob(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05), size: 280),
+                          child: _Blob(color: Colors.white.withOpacity(0.08), size: 280),
                         ),
                         Align(
                           alignment: Alignment(1.1, -0.3 + 0.2 * (0.5 - t)),
-                          child: _Blob(color: Theme.of(context).colorScheme.primary.withOpacity(0.12), size: 220),
+                          child: _Blob(color: const Color(0xFF1BFFFF).withOpacity(0.15), size: 220),
                         ),
                         Align(
                           alignment: Alignment(0.8 * (0.5 - t), 1.1),
-                          child: _Blob(color: Colors.green.withOpacity(0.08), size: 260),
+                          child: _Blob(color: const Color(0xFF2E3192).withOpacity(0.12), size: 260),
                         ),
                       ]);
                     },
@@ -184,13 +181,36 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen> with TickerProv
     }
   }
 
-  Color _getBackgroundColor(PomodoroSessionState currentState) {
+  List<Color> _getGradientColors(PomodoroSessionState currentState, BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     switch (currentState) {
-      case PomodoroSessionState.work: return Theme.of(context).colorScheme.primary;
+      case PomodoroSessionState.work:
+        return [
+          const Color(0xFF2E3192), // Mavi
+          const Color(0xFF1BFFFF), // Turkuaz
+        ];
       case PomodoroSessionState.shortBreak:
-      case PomodoroSessionState.longBreak: return Colors.green;
-      case PomodoroSessionState.completed: return Colors.purple.shade300;
-      case PomodoroSessionState.idle: return Theme.of(context).colorScheme.surfaceContainerHighest;
+        return [
+          const Color(0xFF10B981), // Yeşil
+          const Color(0xFF3B82F6), // Mavi
+        ];
+      case PomodoroSessionState.longBreak:
+        return [
+          const Color(0xFF1BFFFF), // Turkuaz
+          const Color(0xFF8B5CF6), // Mor
+        ];
+      case PomodoroSessionState.completed:
+        return [
+          const Color(0xFF8B5CF6), // Mor
+          const Color(0xFFEC4899), // Pembe
+        ];
+      case PomodoroSessionState.idle:
+        return [
+          isDark
+              ? Theme.of(context).colorScheme.surface
+              : Theme.of(context).colorScheme.surfaceContainerHighest,
+          Theme.of(context).colorScheme.surface,
+        ];
     }
   }
 }
@@ -230,8 +250,15 @@ class _StarsBackground extends ConsumerWidget {
           width: size,
           height: size,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.3 + ((index * 5) % 7) / 10),
+            color: Colors.white.withOpacity(0.5 + ((index * 5) % 7) / 15),
             shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.white.withOpacity(0.3),
+                blurRadius: 2,
+                spreadRadius: 0.5,
+              ),
+            ],
           ),
         ),
       );
@@ -253,9 +280,25 @@ class _Blob extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: color,
+        gradient: RadialGradient(
+          colors: [
+            color,
+            color.withOpacity(0.5),
+            color.withOpacity(0.0),
+          ],
+          stops: const [0.0, 0.5, 1.0],
+        ),
         boxShadow: [
-          BoxShadow(color: color, blurRadius: 60, spreadRadius: 10),
+          BoxShadow(
+            color: color.withOpacity(0.8),
+            blurRadius: 80,
+            spreadRadius: 20,
+          ),
+          BoxShadow(
+            color: color.withOpacity(0.4),
+            blurRadius: 120,
+            spreadRadius: 40,
+          ),
         ],
       ),
     );

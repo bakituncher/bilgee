@@ -54,32 +54,60 @@ class PomodoroTimerView extends ConsumerWidget {
 
     return Column(
       children: [
-        // Başlık ve alt mesaj
-        Text(title, style: textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800)),
-        const SizedBox(height: 4),
-        Text(
-          message,
-          style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontStyle: FontStyle.italic),
+        // Başlık - Gradient Text
+        ShaderMask(
+          shaderCallback: (bounds) => const LinearGradient(
+            colors: [Colors.white, Color(0xFFE0E0E0)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ).createShader(bounds),
+          child: Text(
+            title,
+            style: textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+              letterSpacing: -0.5,
+            ),
+          ),
         ),
-        const SizedBox(height: 12),
-        // Bilgi chipleri
+        const SizedBox(height: 6),
+        // Alt mesaj
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withOpacity(0.2)),
+          ),
+          child: Text(
+            message,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.95),
+              fontStyle: FontStyle.italic,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        // Modern Bilgi Chip'leri
         Wrap(
           alignment: WrapAlignment.center,
-          spacing: 8,
-          runSpacing: 8,
+          spacing: 10,
+          runSpacing: 10,
           children: [
-            ActionChip(
-              avatar: const Icon(Icons.assignment_outlined, size: 18),
-              label: Text(pomodoro.currentTask, overflow: TextOverflow.ellipsis),
-              onPressed: () => _showTaskSelectionSheet(context, ref),
+            _PremiumChip(
+              icon: Icons.assignment_outlined,
+              label: pomodoro.currentTask,
+              onTap: () => _showTaskSelectionSheet(context, ref),
             ),
-            Chip(
-              avatar: const Icon(Icons.schedule_rounded, size: 18),
-              label: Text("Bitiş: $endStr"),
+            _PremiumChip(
+              icon: Icons.schedule_rounded,
+              label: "Bitiş: $endStr",
             ),
-            Chip(
-              avatar: const Icon(Icons.flag_rounded, size: 18),
-              label: Text("Tur: ${pomodoro.currentRound} / ${pomodoro.longBreakInterval}"),
+            _PremiumChip(
+              icon: Icons.flag_rounded,
+              label: "Tur: ${pomodoro.currentRound} / ${pomodoro.longBreakInterval}",
             ),
           ],
         ).animate().fadeIn(duration: 500.ms),
@@ -95,38 +123,124 @@ class PomodoroTimerView extends ConsumerWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            IconButton.filled(
-              onPressed: () => _showSettingsSheet(context, ref),
-              icon: const Icon(Icons.settings),
-              style: IconButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)),
+            // Settings Button
+            Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.white.withOpacity(0.2),
+                    Colors.white.withOpacity(0.1),
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: IconButton.filled(
+                onPressed: () => _showSettingsSheet(context, ref),
+                icon: const Icon(Icons.settings, color: Colors.white),
+                style: IconButton.styleFrom(backgroundColor: Colors.transparent),
+              ),
             ),
-            const SizedBox(width: 20),
-            IconButton.filled(
-              iconSize: 56,
-              onPressed: pomodoro.isPaused ? notifier.start : notifier.pause,
-              icon: Icon(pomodoro.isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded),
+            const SizedBox(width: 24),
+            // Play/Pause Button - Main Action
+            Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const LinearGradient(
+                  colors: [Colors.white, Color(0xFFE0E0E0)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 16,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: IconButton.filled(
+                iconSize: 56,
+                onPressed: pomodoro.isPaused ? notifier.start : notifier.pause,
+                icon: Icon(
+                  pomodoro.isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
+                  color: const Color(0xFF2E3192),
+                ),
+                style: IconButton.styleFrom(backgroundColor: Colors.transparent),
+              ),
             ),
-            const SizedBox(width: 20),
-            IconButton.filled(
-              onPressed: () => _confirmAndReset(context, notifier, prompt: canPromptReset),
-              icon: const Icon(Icons.replay_rounded),
-              style: IconButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)),
+            const SizedBox(width: 24),
+            // Reset Button
+            Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.white.withOpacity(0.2),
+                    Colors.white.withOpacity(0.1),
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: IconButton.filled(
+                onPressed: () => _confirmAndReset(context, notifier, prompt: canPromptReset),
+                icon: const Icon(Icons.replay_rounded, color: Colors.white),
+                style: IconButton.styleFrom(backgroundColor: Colors.transparent),
+              ),
             ),
           ],
         ),
         if (onBreak)
           Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: TextButton.icon(
-              onPressed: notifier.skipBreakAndStartWork,
-              icon: Icon(Icons.skip_next_rounded, color: Theme.of(context).colorScheme.secondary),
-              label: Text("Molayı atla ve çalışmaya başla", style: TextStyle(color: Theme.of(context).colorScheme.secondary)),
+            padding: const EdgeInsets.only(top: 12.0),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.white.withOpacity(0.15),
+                    Colors.white.withOpacity(0.1),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withOpacity(0.25)),
+              ),
+              child: TextButton.icon(
+                onPressed: notifier.skipBreakAndStartWork,
+                icon: const Icon(Icons.skip_next_rounded, color: Colors.white),
+                label: const Text(
+                  "Molayı atla ve çalışmaya başla",
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                ),
+              ),
             ),
           ),
         if (pomodoro.sessionState == PomodoroSessionState.work && pomodoro.currentTaskIdentifier != null)
           Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: TextButton.icon(
+            padding: const EdgeInsets.only(top: 12.0),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.white.withOpacity(0.15),
+                    Colors.white.withOpacity(0.1),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withOpacity(0.25)),
+              ),
+              child: TextButton.icon(
                 onPressed: () {
                   notifier.markTaskAsCompleted();
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -136,16 +250,45 @@ class PomodoroTimerView extends ConsumerWidget {
                     ),
                   );
                 },
-                icon: Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary),
+                icon: const Icon(Icons.check_circle, color: Colors.white),
                 label: Text(
                   "'${pomodoro.currentTask}' görevini tamamla",
-                  style: TextStyle(color: Theme.of(context).colorScheme.primary),
-                )),
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
           ),
-        const SizedBox(height: 8),
-        Text(
-          'İpucu: Zamanlayıcıya çift dokunarak başlat/duraklat, uzun basarak ayarlara aç.',
-          style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.white.withOpacity(0.12),
+                Colors.white.withOpacity(0.08),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white.withOpacity(0.2)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.lightbulb_outline_rounded, size: 16, color: Colors.white.withOpacity(0.9)),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  'Çift dokun: Başlat/Duraklat • Uzun bas: Ayarlar',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white.withOpacity(0.9),
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 16),
         // Banner Reklam
@@ -504,6 +647,69 @@ class _DialPainter extends CustomPainter {
 }
 
 
+// Premium Chip Widget
+class _PremiumChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+
+  const _PremiumChip({
+    required this.icon,
+    required this.label,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Colors.white.withOpacity(0.25),
+              Colors.white.withOpacity(0.15),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.15),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 18, color: Colors.white),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (onTap != null) ...[
+              const SizedBox(width: 4),
+              Icon(Icons.edit, size: 14, color: Colors.white.withOpacity(0.8)),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class PomodoroSettingsSheet extends ConsumerStatefulWidget {
   const PomodoroSettingsSheet({super.key});
 
@@ -642,14 +848,54 @@ class _PomodoroSettingsSheetState extends ConsumerState<PomodoroSettingsSheet> {
                       width: double.infinity,
                       child: FilledButton.icon(
                         icon: const Icon(Icons.check_rounded),
-                        onPressed: (){
+                        onPressed: () async {
+                          final pomodoro = ref.read(pomodoroProvider);
+                          final isActiveSession = !pomodoro.isPaused &&
+                              (pomodoro.sessionState == PomodoroSessionState.work ||
+                               pomodoro.sessionState == PomodoroSessionState.shortBreak ||
+                               pomodoro.sessionState == PomodoroSessionState.longBreak);
+
+                          // Aktif seans varsa kullanıcıyı uyar
+                          if (isActiveSession) {
+                            final shouldApply = await showDialog<bool>(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: const Text('Mevcut Oturuma Uygula?'),
+                                content: const Text(
+                                  'Aktif bir seans var. Yeni ayarlar uygulanırsa mevcut süre sıfırlanacak ve yeni süreyle baştan başlayacak.\n\nDevam etmek istiyor musun?',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx, false),
+                                    child: const Text('İptal'),
+                                  ),
+                                  FilledButton(
+                                    onPressed: () => Navigator.pop(ctx, true),
+                                    child: const Text('Uygula'),
+                                  ),
+                                ],
+                              ),
+                            );
+
+                            if (shouldApply != true) return;
+                          }
+
                           ref.read(pomodoroProvider.notifier).updateSettings(
-                            work: _work.toInt(), short: _short.toInt(), long: _long.toInt(), interval: _interval.toInt(), applyToCurrent: true,
+                            work: _work.toInt(),
+                            short: _short.toInt(),
+                            long: _long.toInt(),
+                            interval: _interval.toInt(),
+                            applyToCurrent: true,
                           );
                           ref.read(pomodoroProvider.notifier).updatePreferences(
-                            autoStartBreaks: _autoStartBreaks, autoStartWork: _autoStartWork, keepScreenOn: _keepScreenOn,
+                            autoStartBreaks: _autoStartBreaks,
+                            autoStartWork: _autoStartWork,
+                            keepScreenOn: _keepScreenOn,
                           );
-                          Navigator.pop(context);
+
+                          if (context.mounted) {
+                            Navigator.pop(context);
+                          }
                         },
                         label: const Text('Kaydet'),
                       ),
