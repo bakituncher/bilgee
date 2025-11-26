@@ -248,7 +248,7 @@ class ExamSelectionScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: canPop ? const Text("Sınavı Değiştir") : const Text('Sınav Seçimi'),
+        title: const Text('Sınav Seçimi'),
         automaticallyImplyLeading: canPop,
       ),
       body: SafeArea(
@@ -260,9 +260,7 @@ class ExamSelectionScreen extends ConsumerWidget {
               _header(context),
               const SizedBox(height: 12),
               Text(
-                canPop
-                    ? 'Stratejilerin ve analizlerin bu seçime göre güncellenecek.'
-                    : 'Hazırlanacağın sınavı seçerek yolculuğuna devam et.',
+                'Hazırlanacağın sınavı seçerek yolculuğuna devam et.',
                 style: textTheme.titleMedium,
               ),
               const SizedBox(height: 24),
