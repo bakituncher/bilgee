@@ -1,5 +1,6 @@
 const { onCall } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
+const { logger } = require("firebase-functions");
 const { db } = require("./init");
 const { dayKeyIstanbul, nowIstanbul, enforceRateLimit, enforceDailyQuota, getClientIpFromRawRequest } = require("./utils");
 
@@ -144,37 +145,58 @@ const resetUserDataForNewExam = onCall({ region: "us-central1", timeoutSeconds: 
 });
 
 async function computeInactivityHours(userRef) {
-  // user_activity bugun ve dunden kontrol edilir; yoksa app_state.lastActiveTs kullan
+  // Önce app_state.lastActiveTs'ye bak (en güvenilir kaynak)
+  // Yoksa user_activity bugün ve dünü kontrol et
   try {
     const now = nowIstanbul();
-    const ids = [];
-    const today = dayKeyIstanbul(now);
-    const y = new Date(now);
-    y.setDate(now.getDate() - 1);
-    const yesterday = dayKeyIstanbul(y);
-    ids.push(today, yesterday);
     let lastTs = 0;
-    for (const id of ids) {
-      const snap = await userRef.collection("user_activity").doc(id).get();
-      if (snap.exists) {
-        const data = snap.data() || {};
-        const visits = Array.isArray(data.visits) ? data.visits : [];
-        for (const v of visits) {
-          const t = typeof v === "number" ? v : (v && (v.ts || v.t)) || 0;
-          if (typeof t === "number" && t > lastTs) lastTs = t;
+
+    // 1. Öncelik: app_state.lastActiveTs (Flutter tarafında her ziyarette güncelleniyor)
+    const appStateSnap = await userRef.collection("state").doc("app_state").get();
+    if (appStateSnap.exists) {
+      const appData = appStateSnap.data() || {};
+      const t = typeof appData.lastActiveTs === "number" ? appData.lastActiveTs : 0;
+      if (t > 0) lastTs = t;
+    }
+
+    // 2. Yedek: user_activity/visits alt koleksiyonuna bak (bugün ve dün)
+    if (lastTs === 0) {
+      const today = dayKeyIstanbul(now);
+      const y = new Date(now);
+      y.setDate(now.getDate() - 1);
+      const yesterday = dayKeyIstanbul(y);
+
+      for (const dayId of [today, yesterday]) {
+        // visits alt koleksiyonundan son ziyareti oku
+        const visitsSnap = await userRef
+          .collection("user_activity")
+          .doc(dayId)
+          .collection("visits")
+          .orderBy("visitTime", "desc")
+          .limit(1)
+          .get();
+
+        if (!visitsSnap.empty) {
+          const visitDoc = visitsSnap.docs[0];
+          const visitData = visitDoc.data() || {};
+          const vt = visitData.visitTime;
+          // Firestore Timestamp veya number olabilir
+          const t = typeof vt === "object" && vt._seconds
+            ? vt._seconds * 1000
+            : typeof vt === "number" ? vt : 0;
+          if (t > lastTs) lastTs = t;
         }
       }
     }
-    if (lastTs === 0) {
-      const app = await userRef.collection("state").doc("app_state").get();
-      const t = app.exists ? (app.data() || {}).lastActiveTs : 0;
-      if (typeof t === "number") lastTs = t;
-    }
-    if (lastTs === 0) return 1e6; // bilinmiyorsa çok uzun kabul et
+
+    // 3. Hiçbir kayıt bulunamadıysa çok uzun süre inaktif kabul et
+    if (lastTs === 0) return 999999; // ~114 yıl (çok uzun süre)
+
     const diffMs = now.getTime() - lastTs;
     return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60)));
-  } catch (_) {
-    return 1e6;
+  } catch (err) {
+    logger.error("computeInactivityHours failed", { error: String(err) });
+    return 999999;
   }
 }
 

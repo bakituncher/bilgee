@@ -148,11 +148,11 @@ exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => 
     return String(examType).toUpperCase();
   }
 
-  // Çeşitli bildirim şablonları - samimi ve gençlere hitap eden
+  // Çeşitli bildirim şablonları - samimi, motive edici ve gençlere hitap eden
   function buildInactivityTemplate(inactHours, examType) {
     const exam = formatExamName(examType);
 
-    // 72+ saat (3+ gün) - Uzun süre inaktif
+    // 72+ saat (3+ gün) - Uzun süre inaktif - 15 farklı mesaj
     if (inactHours >= 72) {
       const templates = [
         {
@@ -180,11 +180,61 @@ exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => 
           body: exam ? `${exam} için her gün önemli. 3 günlük aradan sonra bugün küçük bir zaferle dön!` : 'Başarı düzenli çalışmadan gelir. Bugün sadece 1 görevle ritme geri dön! 💫',
           route: '/home/quests',
         },
+        {
+          title: 'Seni bekliyoruz! 🌟',
+          body: exam ? `${exam} için hazırladığın stratejiler duruyor. Planını hayata geçirme vakti geldi!` : '3 gün bize uğramadın. Acaba bugün ne kadar çalışacaksın? Hedefini belirle! 📋',
+          route: '/home/weekly-plan',
+        },
+        {
+          title: 'Rakipler seni geçiyor! 🏃',
+          body: exam ? `${exam} Arena'sında liderlik yarışı devam ediyor. Sen de yarışa katıl, yerini al!` : 'Zafer Panteonu\'nda yeni şampiyonlar belirleniyor. Geri dön, mücadele et! 🏆',
+          route: '/arena',
+        },
+        {
+          title: 'Cevher Atölyesi seni çağırıyor! 💎',
+          body: exam ? `${exam} konularında eksik kalan yerler var mı? Atölyeye gel, zayıf konuları güçlendir!` : 'Zayıf konularını güçlendirmek için 3 gündür bekliyoruz. Hadi gel! ⚒️',
+          route: '/ai-hub/weakness-workshop',
+        },
+        {
+          title: 'Haftalık planın kaybolmasın! 📆',
+          body: exam ? `${exam} için haftalık stratejini kontrol et. Bu hafta hangi konuları bitirmeliydin?` : 'Planladığın çalışmaları gözden geçir, ne kadar ilerlediğini gör! 📊',
+          route: '/home/weekly-plan',
+        },
+        {
+          title: 'AI Koçun merak ediyor! 🤖',
+          body: exam ? `${exam} hazırlığında nasıl gidiyor? Koçunla stratejini güncelle, yeni hedefler koy!` : 'Çalışma planını gözden geçirme zamanı. TaktikAI koçunla yeniden buluş! 🎓',
+          route: '/ai-hub',
+        },
+        {
+          title: 'Motivasyon düşüklüğü mü? 💪',
+          body: exam ? `${exam} yolunda bazen motivasyon düşer, bu normal. Ama 3 gün çok uzun! Geri gel!` : 'Sıkıldın mı? AI koçunla konuş, yeniden enerjilendir kendini! ✨',
+          route: '/ai-hub/motivation-chat',
+        },
+        {
+          title: 'Test sonuçların bekliyor! 📈',
+          body: exam ? `${exam} denemeni girmeyi unutma. İstatistiklerin güncel olsun, ilerlemeni takip et!` : 'Son denemen ne zaman? Test sonuçlarını kaydet, grafiklerini incele! 📉',
+          route: '/home/add-test',
+        },
+        {
+          title: 'Günlük görevler birikti! 📝',
+          body: exam ? `${exam} için günlük görevlerin 3 gündür bekliyor. Bugün hepsini temizle, XP kazan!` : 'Görev listesi doldu. Kolaylardan başla, ritmi yakala! 🎯',
+          route: '/home/quests',
+        },
+        {
+          title: 'Pomodoro tekniğini özledin mi? 🍅',
+          body: exam ? `${exam} çalışmalarında Pomodoro tekniğiyle odaklanmaya ne dersin? 25 dakika yeter!` : 'Uzun araları Pomodoro ile böl. 25 dakika odaklan, 5 dakika dinlen! ⏱️',
+          route: '/home/pomodoro',
+        },
+        {
+          title: 'Başarı seninle başlar! 🌈',
+          body: exam ? `${exam} hedefine ulaşmak için her gün bir adım atmalısın. Bugün geri dön, devam et!` : '3 günlük ara bitti. Şimdi yeniden başla, hedefe odaklan! 🎯',
+          route: '/home',
+        },
       ];
       return templates[Math.floor(Math.random() * templates.length)];
     }
 
-    // 24-72 saat arası (1-3 gün)
+    // 24-72 saat arası (1-3 gün) - 18 farklı mesaj
     if (inactHours >= 24) {
       const templates = [
         {
@@ -210,18 +260,78 @@ exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => 
         {
           title: 'Motivasyon düştü mü? 💬',
           body: exam ? `${exam} yolunda bazen mola gerekir ama çok uzatma. Koçunla konuş, moralini topla!` : 'Sıkıldın mı? AI koçunla sohbet et, yeni bir bakış açısı kazan! 🌈',
-          route: '/ai-hub/motivation',
+          route: '/ai-hub/motivation-chat',
         },
         {
           title: 'Rakiplerin çalışıyor! 👀',
           body: exam ? `${exam} için Arena'da liderlik yarışı kızışıyor. Sen de bugün katıl, sıralamaya gir!` : 'Zafer Panteonu\'nda yeni rekorlar kırılıyor. Sen neredesin? 🏆',
           route: '/arena',
         },
+        {
+          title: 'Haftalık strateji zamanı! 📅',
+          body: exam ? `${exam} planını gözden geçir. Bu hafta hangi konuları bitirmelisin?` : 'Haftalık hedeflerini kontrol et. Planında ilerleme kaydet! 📊',
+          route: '/home/weekly-plan',
+        },
+        {
+          title: 'Zayıf konularını yok et! 💎',
+          body: exam ? `${exam} için Cevher Atölyesi'nde en zor konunu seç, ustalaş!` : 'Hangi konu seni en çok zorluyor? Atölyeye gel, o konuyu fethet! ⚒️',
+          route: '/ai-hub/weakness-workshop',
+        },
+        {
+          title: 'Test istatistiklerin eksik! 📊',
+          body: exam ? `${exam} denemeni gir, netlerini takip et. İlerlemen grafikte görünsün!` : 'Son test sonucunu kaydet, performansını analiz et! 📈',
+          route: '/home/add-test',
+        },
+        {
+          title: 'Günlük görevler seni bekliyor! 📋',
+          body: exam ? `${exam} için bugünkü görevlerini tamamla, XP kazan, sıralamada yüksel!` : 'Görev listene göz at. Her görev tamamlandıkça daha güçleneceksin! 💪',
+          route: '/home/quests',
+        },
+        {
+          title: 'AI analizi hazır! 🔍',
+          body: exam ? `${exam} için güçlü ve zayıf yanlarını gör, stratejini optimize et!` : 'Son performansını analiz ettik. Sonuçlara bakmaya ne dersin? 📉',
+          route: '/ai-hub/analysis-strategy',
+        },
+        {
+          title: 'Odaklanma zamanı! 🧘',
+          body: exam ? `${exam} çalışması için bugün 1 Pomodoro yap, dikkatini topla!` : 'Dağılmış zihnini topla. 25 dakikalık Pomodoro ile başla! 🍅',
+          route: '/home/pomodoro',
+        },
+        {
+          title: 'Yeni hafta, yeni hedefler! 🌅',
+          body: exam ? `${exam} için bu hafta neleri başaracaksın? Planını yeniden düzenle!` : 'Haftalık çalışma programını kontrol et, güncelle! 📆',
+          route: '/home/weekly-plan',
+        },
+        {
+          title: 'Koçun seninle gurur duymak istiyor! 🏅',
+          body: exam ? `${exam} yolculuğunda duraklamak yok. Bugün küçük bir adım at!` : 'Her gün küçük bir ilerleme büyük başarı getirir. Başla! 🚀',
+          route: '/home',
+        },
+        {
+          title: 'Arena liderlik tablosu güncellendi! 📊',
+          body: exam ? `${exam} için yeni liderler belirlendi. Sen kaçıncı sıradasın?` : 'Zafer Panteonu\'nda sıralaman değişti mi? Kontrol et! 🏆',
+          route: '/arena',
+        },
+        {
+          title: 'Strateji güncellemesi gerekli! 🗺️',
+          body: exam ? `${exam} için strateji danışmanına git, yeni yol haritası çiz!` : 'Çalışma stratejini yenile, daha verimli ol! 💡',
+          route: '/ai-hub/strategic-planning',
+        },
+        {
+          title: 'Konularında ustalaş! 🎯',
+          body: exam ? `${exam} konularını tek tek fethet. Bugün hangisine odaklanacaksın?` : 'Her konu bir beceri. Bugün yeni bir konuyu öğren! 📚',
+          route: '/coach',
+        },
+        {
+          title: 'Deneme analizi bekliyor! 📝',
+          body: exam ? `${exam} denemeni gir, AI koçun analiz etsin, eksiklerini bul!` : 'Test sonuçlarını kaydet, detaylı analiz al! 🔍',
+          route: '/ai-hub/analysis-strategy',
+        },
       ];
       return templates[Math.floor(Math.random() * templates.length)];
     }
 
-    // 3-24 saat arası - Hafif hatırlatma
+    // 3-24 saat arası - Hafif hatırlatma - 24 farklı mesaj
     if (inactHours >= 3) {
       const templates = [
         {
@@ -263,6 +373,86 @@ exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => 
           title: 'Mini motivasyon dozu! ✨',
           body: exam ? `${exam} yolculuğunda her küçük adım sayılır. Bugün ne yapacaksın?` : 'Bugün kendine bir görev ver ve onu tamamla. Küçük zaferler büyük başarı getirir! 🌟',
           route: '/home',
+        },
+        {
+          title: 'Streak devam ediyor! 🔥',
+          body: exam ? `${exam} için günlük serini koru. Bugün en az 1 görev tamamla!` : 'Günlük çalışma alışkanlığını sürdür, başarı yakın! 💪',
+          route: '/home/quests',
+        },
+        {
+          title: 'Arena\'da yüksel! 🏆',
+          body: exam ? `${exam} liderlik tablosunda yerini koru. Bugün puan kazan!` : 'Zafer Panteonu\'nda sıralaman nasıl? Kontrol et, rakiplerini geç! 🥇',
+          route: '/arena',
+        },
+        {
+          title: 'Stratejik planlama vakti! 🗺️',
+          body: exam ? `${exam} için haftalık çalışma planını oluştur, hedeflerini belirle!` : 'AI ile kişisel haftalık planını hazırla, verimli çalış! 📊',
+          route: '/ai-hub/strategic-planning',
+        },
+        {
+          title: 'Konu performansını yükselt! 📚',
+          body: exam ? `${exam} konularında hangileri zayıf? Onlara bugün odaklan!` : 'Zayıf konularını güçlendir, ustalaşmış konularını pekiştir! 💡',
+          route: '/coach',
+        },
+        {
+          title: 'Deneme analizi al! 🔍',
+          body: exam ? `${exam} için AI ile deneme analizi yap, güçlü/zayıf yanlarını gör!` : 'Test sonuçlarını analiz et, neleri geliştirmelisin öğren! 📉',
+          route: '/ai-hub/analysis-strategy',
+        },
+        {
+          title: 'Odaklanma gücünü artır! 🎯',
+          body: exam ? `${exam} çalışması için Pomodoro tekniğini dene, dikkatini topla!` : '25 dakikalık derin odaklanma ile maksimum verim al! 🍅',
+          route: '/home/pomodoro',
+        },
+        {
+          title: 'Bugünün kazananı sen ol! 🏅',
+          body: exam ? `${exam} için bugün kendine küçük bir hedef koy ve onu tamamla!` : 'Günlük hedefini belirle, akşam mutlu uyu! 😴',
+          route: '/home/quests',
+        },
+        {
+          title: 'Motivasyon yükleniyor... 💪',
+          body: exam ? `${exam} yolunda motivasyona ihtiyacın var mı? AI koçunla konuş!` : 'Moralsiz hissediyorsan sohbet et, enerjilendir kendini! 🌈',
+          route: '/ai-hub/motivation-chat',
+        },
+        {
+          title: 'Haftalık hedeflerini gözden geçir! 📆',
+          body: exam ? `${exam} için bu hafta ne kadar çalıştın? Planı kontrol et!` : 'Haftalık ilerlemeni takip et, eksik kalan konuları tamamla! 📊',
+          route: '/home/weekly-plan',
+        },
+        {
+          title: 'Atölye çağrısı! 🔨',
+          body: exam ? `${exam} için Cevher Atölyesi'nde yeni çalışma kartları hazır!` : 'Zayıf konuların için özel çalışma materyalleri seni bekliyor! 💎',
+          route: '/ai-hub/weakness-workshop',
+        },
+        {
+          title: 'Test sonuçları eksik! 📝',
+          body: exam ? `${exam} son denemeni ne zaman girdin? Performansını takip et!` : 'Test sonuçlarını düzenli kaydet, ilerlemeyi gör! 📈',
+          route: '/home/add-test',
+        },
+        {
+          title: 'Günlük rutin devam! 🔄',
+          body: exam ? `${exam} için günlük çalışma rutinini sürdür, başarı yakın!` : 'Her gün biraz çalışmak, ara sıra çok çalışmaktan iyidir! 🎯',
+          route: '/home',
+        },
+        {
+          title: 'Liderlik yarışı! 🏃‍♂️',
+          body: exam ? `${exam} Arena'sında kim önde? Sıralamayı kontrol et, yarışa katıl!` : 'Zafer Panteonu güncellendi. Sıralaman değişti mi? 🏆',
+          route: '/arena',
+        },
+        {
+          title: 'AI koçundan öneriler! 🤖',
+          body: exam ? `${exam} stratejini AI koçunla konuş, kişisel önerilerin hazır!` : 'Çalışma planını optimize et, AI koçun yardımcı olsun! 💡',
+          route: '/ai-hub',
+        },
+        {
+          title: 'Kısa ve verimli çalışma! ⚡',
+          body: exam ? `${exam} için bugün 15 dakika yeter. Bir görev tamamla, ilerle!` : 'Zamanın az mı? 15 dakikalık odaklanmayla büyük fark yarat! ⏱️',
+          route: '/home/quests',
+        },
+        {
+          title: 'Konular seni bekliyor! 📖',
+          body: exam ? `${exam} müfredatında hangi konuyu bugün çalışacaksın?` : 'Konu havuzunda yüzlerce konu var. Bugün hangisine dalacaksın? 🤿',
+          route: '/coach',
         },
       ];
       return templates[Math.floor(Math.random() * templates.length)];
