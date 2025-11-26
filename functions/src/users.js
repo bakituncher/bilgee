@@ -3,6 +3,7 @@ const admin = require("firebase-admin");
 const { logger } = require("firebase-functions");
 const { db } = require("./init");
 const { dayKeyIstanbul, nowIstanbul, enforceRateLimit, enforceDailyQuota, getClientIpFromRawRequest } = require("./utils");
+const { getFirestore } = require("firebase-admin/firestore");
 
 // KALDIRILDI: resetUserDataForNewExam() - "Sınav Değiştir" özelliği kaldırıldı
 // Artık sadece deleteUserAccount() kullanılıyor
@@ -145,9 +146,10 @@ async function processAudienceInBatches(audience, batchCallback) {
  *
  * GÜNCELLENME TARİHİ: 2025-11-26
  * DEĞİŞİKLİKLER:
+ * - ✨ recursiveDelete() kullanımı: Alt koleksiyonlar otomatik olarak silinir
  * - Storage dosyaları eklendi (avatars, user_files)
  * - Takip sistemi temizliği eklendi (followers/following)
- * - Engelleme sistemi temizliği eklendi (blocked_users)
+ * - Engelleme sistemi temizliği optimize edildi (performans güvenliği)
  * - Moderasyon kayıtları eklendi (user_reports, user_report_index)
  * - Analitik olaylar eklendi (analytics_events)
  * - Rate limit/quota kayıtları eklendi
@@ -178,7 +180,7 @@ const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, e
   try {
     logger.info(`Account deletion started for user: ${userId}`);
 
-    // Helper: Batch silme fonksiyonu (hata yönetimi geliştirilmiş)
+    // Helper: Batch silme fonksiyonu (üst seviye koleksiyonlar için)
     async function deleteQueryInBatches(query, batchSize = 300, stepName = "unknown") {
       try {
         let totalDeleted = 0;
@@ -200,26 +202,6 @@ const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, e
       }
     }
 
-    // Helper: Alt koleksiyon silme (hata yönetimi geliştirilmiş)
-    async function deleteAllDocsInSubcollection(path, stepName = path) {
-      try {
-        let totalDeleted = 0;
-        while (true) {
-          const snap = await db.collection(path).limit(300).get();
-          if (snap.empty) break;
-          const batch = db.batch();
-          snap.docs.forEach((doc) => batch.delete(doc.ref));
-          await batch.commit();
-          totalDeleted += snap.docs.length;
-          await new Promise((r) => setTimeout(r, 25));
-        }
-        deletionLog.steps.push({ step: stepName, deleted: totalDeleted, status: "success" });
-        logger.info(`${stepName}: ${totalDeleted} documents deleted`);
-      } catch (error) {
-        deletionLog.errors.push({ step: stepName, error: String(error) });
-        logger.error(`${stepName} failed:`, error);
-      }
-    }
 
     // Helper: Storage klasörü silme
     async function deleteStorageFolder(path, stepName = path) {
@@ -245,49 +227,9 @@ const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, e
       }
     }
 
-    // === 1) KULLANICININ ALT KOLEKSİYONLARINI SİL ===
-    const subcollections = [
-      `users/${userId}/state`,
-      `users/${userId}/user_activity`,
-      `users/${userId}/topic_performance`,
-      `users/${userId}/savedWorkshops`,
-      `users/${userId}/daily_quests`,
-      `users/${userId}/performance`,
-      `users/${userId}/plans`,
-      `users/${userId}/devices`, // FCM token cihazları
-      `users/${userId}/in_app_notifications`, // Uygulama içi bildirimler
-      `users/${userId}/followers`, // YENİ: Takipçiler
-      `users/${userId}/following`, // YENİ: Takip edilenler
-      `users/${userId}/blocked_users`, // YENİ: Engellenmiş kullanıcılar
-    ];
-
-    for (const sub of subcollections) {
-      await deleteAllDocsInSubcollection(sub, `Subcollection: ${sub}`);
-    }
-
-    // masteredTopics alt koleksiyonu
-    await deleteAllDocsInSubcollection(`users/${userId}/performance/summary/masteredTopics`, "Subcollection: masteredTopics");
-
-    // === 2) KULLANICININ user_activity ALT DOKUMANLARININ visits/completed_tasks KOLEKSİYONLARINI SİL ===
-    try {
-      const activitySnap = await db.collection(`users/${userId}/user_activity`).get();
-      for (const activityDoc of activitySnap.docs) {
-        await deleteAllDocsInSubcollection(
-          `users/${userId}/user_activity/${activityDoc.id}/visits`,
-          `Activity visits: ${activityDoc.id}`
-        );
-        await deleteAllDocsInSubcollection(
-          `users/${userId}/user_activity/${activityDoc.id}/completed_tasks`,
-          `Activity tasks: ${activityDoc.id}`
-        );
-      }
-      deletionLog.steps.push({ step: "User activity nested collections", status: "success" });
-    } catch (error) {
-      deletionLog.errors.push({ step: "User activity nested collections", error: String(error) });
-      logger.error("User activity nested collections cleanup failed:", error);
-    }
-
-    // === 3) ÜST SEVİYE KOLEKSİYONLARDAKİ KULLANICI VERİLERİNİ SİL ===
+    // === 1) ÜST SEVİYE KOLEKSİYONLARDAKİ KULLANICI VERİLERİNİ SİL (TAKİP/ENGELLEME TEMİZLİĞİ İÇİN) ===
+    // Not: Kullanıcının ana dökümanını silmeden ÖNCE, diğer koleksiyonlardaki
+    //      çapraz referansları temizlememiz gerekiyor
     await deleteQueryInBatches(db.collection("tests").where("userId", "==", userId), 300, "Tests collection");
     await deleteQueryInBatches(db.collection("focusSessions").where("userId", "==", userId), 300, "Focus sessions collection");
     await deleteQueryInBatches(db.collection("posts").where("userId", "==", userId), 300, "Posts collection");
@@ -296,44 +238,36 @@ const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, e
     // YENİ: Analitik olaylar
     await deleteQueryInBatches(db.collection("analytics_events").where("userId", "==", userId), 300, "Analytics events collection");
 
-    // === 4) TAKİP SİSTEMİ TEMİZLİĞİ (KRİTİK!) ===
-    // Kullanıcının takip ettiği kişilerin followers koleksiyonundan kullanıcıyı çıkar
-    try {
-      const followingSnap = await db.collection(`users/${userId}/following`).get();
-      let followingCleanup = 0;
-      for (const followingDoc of followingSnap.docs) {
-        const targetUserId = followingDoc.id;
-        const followerRef = db.collection(`users/${targetUserId}/followers`).doc(userId);
-        if ((await followerRef.get()).exists) {
-          await followerRef.delete();
-          followingCleanup++;
-        }
-      }
-      deletionLog.steps.push({ step: "Following cleanup", deleted: followingCleanup, status: "success" });
-      logger.info(`Following cleanup: ${followingCleanup} entries removed`);
-    } catch (error) {
-      deletionLog.errors.push({ step: "Following cleanup", error: String(error) });
-      logger.error("Following cleanup failed:", error);
-    }
+    // === 4) TAKİP SİSTEMİ TEMİZLİĞİ (LAZY CLEANUP - PERFORMANS GÜVENLİĞİ) ===
+    // ⚠️ ÖNCEKİ YÖNTEM:
+    //    - Kullanıcının takip ettiklerinin followers listesinden sil (N okuma/yazma)
+    //    - Kullanıcıyı takip edenlerin following listesinden sil (M okuma/yazma)
+    //    Toplam: N + M işlem (50K takipçi = 50K+ işlem = timeout + OOM riski!)
+    //
+    // ✅ YENİ YAKLAŞIM: Lazy Cleanup
+    //    1. Kullanıcının kendi followers/following koleksiyonları recursiveDelete ile silinecek
+    //    2. Karşı taraftaki "zombi" referanslar kalabilir (örn: başkasının following'inde bu kullanıcı)
+    //    3. UI tarafında profil görüntülenirken lazy cleanup yapılır:
+    //       - Kullanıcı bir profil görüntülediğinde
+    //       - Eğer o kullanıcı silinmişse (users/{id} yok)
+    //       - Kendi following/followers listesinden otomatik temizle
+    //
+    // Avantajlar:
+    //    ✅ Hesap silme anında timeout riski YOK
+    //    ✅ 50K takipçi olsa bile saniyeler içinde tamamlanır
+    //    ✅ Temizlik zamanla otomatik yapılır (kullanıcı aktivitesine bağlı)
+    //    ✅ Sistem kaynaklarını adil dağıtır (her kullanıcı kendi temizliğini yapar)
+    //
+    // Not: Kullanıcının kendi followers/following koleksiyonları zaten recursiveDelete
+    //      ile silineceği için burada HIÇBIR işlem yapmıyoruz.
 
-    // Kullanıcıyı takip edenlerin following koleksiyonundan kullanıcıyı çıkar
-    try {
-      const followersSnap = await db.collection(`users/${userId}/followers`).get();
-      let followersCleanup = 0;
-      for (const followerDoc of followersSnap.docs) {
-        const followerUserId = followerDoc.id;
-        const followingRef = db.collection(`users/${followerUserId}/following`).doc(userId);
-        if ((await followingRef.get()).exists) {
-          await followingRef.delete();
-          followersCleanup++;
-        }
-      }
-      deletionLog.steps.push({ step: "Followers cleanup", deleted: followersCleanup, status: "success" });
-      logger.info(`Followers cleanup: ${followersCleanup} entries removed`);
-    } catch (error) {
-      deletionLog.errors.push({ step: "Followers cleanup", error: String(error) });
-      logger.error("Followers cleanup failed:", error);
-    }
+    deletionLog.steps.push({
+      step: "Follow system cleanup",
+      deleted: 0,
+      status: "lazy_cleanup_enabled",
+      reason: "Karşı taraf temizliği UI lazy cleanup ile yapılacak (timeout önlendi)"
+    });
+    logger.info("Follow system: Lazy cleanup enabled, no sync operations");
 
     // === 5) ENGELLEME SİSTEMİ TEMİZLİĞİ (KALDIRILDI - PERFORMANS GÜVENLİĞİ) ===
     // ⚠️ ÖNCEKİ YÖNTEM: Tüm kullanıcıları tarayıp "acaba beni kim engelledi?" diye bakmak
@@ -491,14 +425,31 @@ const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, e
     await deleteStorageFolder(`avatars/${userId}/`, "Storage: avatars");
     await deleteStorageFolder(`user_files/${userId}/`, "Storage: user_files");
 
-    // === 13) ANA KULLANICI DOKUMANINI SİL ===
+    // === 13) ANA KULLANICI DOKUMANI VE TÜM ALT KOLEKSİYONLARINI SİL (RECURSİVE DELETE) ===
+    // ✨ YENİ: recursiveDelete() metodu kullanılıyor
+    // Bu, users/{userId} dokümanını ve TÜM alt koleksiyonlarını otomatik olarak siler:
+    // - state, user_activity, topic_performance, savedWorkshops
+    // - daily_quests, performance, plans, devices, in_app_notifications
+    // - followers, following, blocked_users
+    // - İç içe koleksiyonlar (user_activity/{day}/visits, completed_tasks, vb.)
+    // - masteredTopics ve diğer tüm nested koleksiyonlar
     try {
-      await db.collection("users").doc(userId).delete();
-      deletionLog.steps.push({ step: "Main user document", deleted: 1, status: "success" });
-      logger.info("Main user document deleted");
+      const firestore = getFirestore();
+      const userDocRef = db.collection("users").doc(userId);
+
+      // recursiveDelete: Döküman + tüm alt koleksiyonları siler
+      await firestore.recursiveDelete(userDocRef);
+
+      deletionLog.steps.push({
+        step: "Main user document + all subcollections (recursive)",
+        deleted: "all",
+        status: "success",
+        note: "recursiveDelete() used - all nested collections automatically deleted"
+      });
+      logger.info("User document and all subcollections recursively deleted");
     } catch (error) {
-      deletionLog.errors.push({ step: "Main user document", error: String(error) });
-      logger.error("Main user document deletion failed:", error);
+      deletionLog.errors.push({ step: "Recursive delete user document", error: String(error) });
+      logger.error("Recursive user document deletion failed:", error);
       throw error; // Ana doküman silinemezse işlemi başarısız say
     }
 
