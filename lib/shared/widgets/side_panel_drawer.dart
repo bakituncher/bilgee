@@ -128,27 +128,19 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                     ],
                   ),
                 ),
-                // Premium Button - En Altta Sabit
+                // Premium Section - Sektör Seviyesinde Şık Tasarım
                 Padding(
                   padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
                   child: isPremium
-                      ? Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(colors: [colorScheme.primary.withOpacity(.15), Colors.amber.withOpacity(.12)]),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: colorScheme.primary.withOpacity(.35), width: 1.5),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.workspace_premium_rounded, size: 22, color: colorScheme.primary),
-                              const SizedBox(width: 10),
-                              Text('Premium Aktif', style: theme.textTheme.titleMedium?.copyWith(color: colorScheme.primary, fontWeight: FontWeight.w800)),
-                            ],
-                          ),
-                        )
-                      : _PremiumButton(onTap: () { Navigator.of(context).pop(); context.go('/premium'); }),
+                      ? _PremiumActiveCard(colorScheme: colorScheme, theme: theme)
+                      : _PremiumOfferCard(
+                          onTap: () {
+                            Navigator.of(context).pop();
+                            context.go('/premium');
+                          },
+                          colorScheme: colorScheme,
+                          theme: theme,
+                        ),
                 ),
                 const Divider(height: 1),
                 // Footer actions - Büyük ve Belirgin
@@ -364,36 +356,334 @@ class _Avatar extends StatelessWidget {
   }
 }
 
-class _PremiumButton extends StatelessWidget {
+// Premium Offer Card - Satın Almayı Teşvik Eden Tasarım
+class _PremiumOfferCard extends StatelessWidget {
   final VoidCallback onTap;
-  const _PremiumButton({required this.onTap});
+  final ColorScheme colorScheme;
+  final ThemeData theme;
+
+  const _PremiumOfferCard({
+    required this.onTap,
+    required this.colorScheme,
+    required this.theme,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [colorScheme.primary, Colors.amber]),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: Colors.amber.withOpacity(.3), blurRadius: 16, offset: const Offset(0, 6)),
-        ],
-      ),
-      child: ElevatedButton.icon(
-        onPressed: onTap,
-        icon: Icon(Icons.workspace_premium_rounded, color: colorScheme.onPrimary, size: 24),
-        label: Text('Premium Ol', style: TextStyle(color: colorScheme.onPrimary, fontWeight: FontWeight.w900, fontSize: 17)),
-        style: ElevatedButton.styleFrom(
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          minimumSize: const Size(double.infinity, 56),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              colorScheme.primary.withOpacity(0.95),
+              Colors.amber.shade600.withOpacity(0.95),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: colorScheme.primary.withOpacity(0.4),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+              spreadRadius: -2,
+            ),
+          ],
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.25),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      Icons.workspace_premium_rounded,
+                      color: Colors.white,
+                      size: 26,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Premium\'a Yükselt',
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 19,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        Text(
+                          'Sınırsız öğrenmenin tadını çıkar',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: Colors.white.withOpacity(0.9),
+                            fontWeight: FontWeight.w500,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              ..._buildBenefitsList(),
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.rocket_launch_rounded,
+                      color: colorScheme.primary,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Hemen Başla',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: colorScheme.primary,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  List<Widget> _buildBenefitsList() {
+    final benefits = [
+      {'icon': Icons.bar_chart_rounded, 'text': 'Sınırsız Detaylı İstatistikler'},
+      {'icon': Icons.inventory_2_outlined, 'text': 'Tüm Denemelere Erişim'},
+      {'icon': Icons.auto_awesome_rounded, 'text': 'Yapay Zeka Analizi'},
+      {'icon': Icons.history_rounded, 'text': 'Sınırsız Deneme Arşivi'},
+    ];
+
+    return benefits.map((benefit) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                benefit['icon'] as IconData,
+                color: Colors.white,
+                size: 16,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                benefit['text'] as String,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                  height: 1.2,
+                ),
+              ),
+            ),
+            Icon(
+              Icons.check_circle_rounded,
+              color: Colors.white.withOpacity(0.9),
+              size: 18,
+            ),
+          ],
+        ),
+      );
+    }).toList();
+  }
+}
+
+// Premium Active Card - Premium Kullanıcılar İçin Özel Tasarım
+class _PremiumActiveCard extends StatelessWidget {
+  final ColorScheme colorScheme;
+  final ThemeData theme;
+
+  const _PremiumActiveCard({
+    required this.colorScheme,
+    required this.theme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            colorScheme.primary.withOpacity(0.12),
+            Colors.amber.shade100.withOpacity(0.15),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: colorScheme.primary.withOpacity(0.4),
+          width: 2,
+        ),
+      ),
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      colorScheme.primary.withOpacity(0.2),
+                      Colors.amber.withOpacity(0.2),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: colorScheme.primary.withOpacity(0.4),
+                    width: 1.5,
+                  ),
+                ),
+                child: Icon(
+                  Icons.workspace_premium_rounded,
+                  color: colorScheme.primary,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          'Premium',
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            color: colorScheme.primary,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 18,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: Colors.green.withOpacity(0.4),
+                              width: 1,
+                            ),
+                          ),
+                          child: Text(
+                            'AKTİF',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: Colors.green.shade700,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 10,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Text(
+                      'Tüm özelliklere erişim',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ..._buildActiveBenefitsList(),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _buildActiveBenefitsList() {
+    final benefits = [
+      {'icon': Icons.check_circle_rounded, 'text': 'Sınırsız İstatistikler', 'color': Colors.green},
+      {'icon': Icons.check_circle_rounded, 'text': 'Tüm Deneme Arşivi', 'color': Colors.green},
+      {'icon': Icons.check_circle_rounded, 'text': 'Yapay Zeka Analizi', 'color': Colors.green},
+      {'icon': Icons.check_circle_rounded, 'text': 'Öncelikli Destek', 'color': Colors.green},
+    ];
+
+    return benefits.map((benefit) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Row(
+          children: [
+            Icon(
+              benefit['icon'] as IconData,
+              color: (benefit['color'] as Color).withOpacity(0.8),
+              size: 18,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                benefit['text'] as String,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurface.withOpacity(0.85),
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                  height: 1.2,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }).toList();
   }
 }
 
