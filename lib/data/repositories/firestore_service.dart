@@ -1271,13 +1271,5 @@ class FirestoreService {
     }
   }
 
-  Future<void> resetUserDataForNewExam() async {
-    try {
-      final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
-      final callable = functions.httpsCallable('users-resetUserDataForNewExam');
-      await callable.call(<String, dynamic>{});
-    } catch (e) {
-      rethrow;
-    }
-  }
+  // KALDIRILDI: resetUserDataForNewExam() - Artık kullanılmıyor
 }

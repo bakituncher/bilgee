@@ -275,8 +275,125 @@ async function processAudienceInBatches(audience, batchCallback) {
   console.log(`Batch işlemi tamamlandı. Toplam işlenen kullanıcı: ${totalProcessed}`);
 }
 
+/**
+ * Kullanıcı hesabını kalıcı olarak siler.
+ * TÜM Firestore verilerini ve Firebase Authentication kaydını siler.
+ * Bu işlem GERİ ALINAMAZ!
+ */
+const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, enforceAppCheck: true, maxInstances: 5 }, async (request) => {
+  if (!request.auth) {
+    throw new Error("The function must be called while authenticated.");
+  }
+  const userId = request.auth.uid;
+
+  // Rate limit: Hesap silme için daha sıkı kontrol
+  const ip = getClientIpFromRawRequest(request.rawRequest) || "unknown";
+  await Promise.all([
+    enforceRateLimit(`delete_account_uid_${userId}`, 3600, 1), // Saatte 1 kez
+    enforceRateLimit(`delete_account_ip_${ip}`, 3600, 3), // IP başına saatte 3 kez
+  ]);
+
+  try {
+    logger.info(`Account deletion started for user: ${userId}`);
+
+    // Helper: Batch silme fonksiyonu
+    async function deleteQueryInBatches(query, batchSize = 300) {
+      while (true) {
+        const snap = await query.limit(batchSize).get();
+        if (snap.empty) break;
+        const batch = db.batch();
+        snap.docs.forEach((doc) => batch.delete(doc.ref));
+        await batch.commit();
+        await new Promise((r) => setTimeout(r, 25));
+      }
+    }
+
+    // Helper: Alt koleksiyon silme
+    async function deleteAllDocsInSubcollection(path) {
+      while (true) {
+        const snap = await db.collection(path).limit(300).get();
+        if (snap.empty) break;
+        const batch = db.batch();
+        snap.docs.forEach((doc) => batch.delete(doc.ref));
+        await batch.commit();
+        await new Promise((r) => setTimeout(r, 25));
+      }
+    }
+
+    // 1) Kullanıcının alt koleksiyonlarını sil
+    const subcollections = [
+      `users/${userId}/state`,
+      `users/${userId}/user_activity`,
+      `users/${userId}/topic_performance`,
+      `users/${userId}/savedWorkshops`,
+      `users/${userId}/daily_quests`,
+      `users/${userId}/performance`,
+      `users/${userId}/plans`,
+      `users/${userId}/devices`, // FCM token cihazları
+      `users/${userId}/in_app_notifications`, // Uygulama içi bildirimler
+    ];
+
+    for (const sub of subcollections) {
+      await deleteAllDocsInSubcollection(sub);
+    }
+
+    // masteredTopics alt koleksiyonu
+    await deleteAllDocsInSubcollection(`users/${userId}/performance/summary/masteredTopics`);
+
+    // 2) Kullanıcının user_activity alt dokümanlarının visits koleksiyonlarını sil
+    const activitySnap = await db.collection(`users/${userId}/user_activity`).get();
+    for (const activityDoc of activitySnap.docs) {
+      await deleteAllDocsInSubcollection(`users/${userId}/user_activity/${activityDoc.id}/visits`);
+    }
+
+    // 3) Üst seviye koleksiyonlardaki kullanıcı verilerini sil
+    await deleteQueryInBatches(db.collection("tests").where("userId", "==", userId));
+    await deleteQueryInBatches(db.collection("focusSessions").where("userId", "==", userId));
+    await deleteQueryInBatches(db.collection("posts").where("userId", "==", userId));
+    await deleteQueryInBatches(db.collection("questionReports").where("userId", "==", userId));
+
+    // 4) Liderlik tablolarından kullanıcıyı temizle
+    const leaderboardsSnap = await db.collection("leaderboards").get();
+    for (const leaderboardDoc of leaderboardsSnap.docs) {
+      const userLeaderboardRef = leaderboardDoc.ref.collection("users").doc(userId);
+      if ((await userLeaderboardRef.get()).exists) {
+        await userLeaderboardRef.delete();
+      }
+    }
+
+    // 5) Public profile'ı sil
+    const publicProfileRef = db.collection("public_profiles").doc(userId);
+    if ((await publicProfileRef.get()).exists) {
+      await publicProfileRef.delete();
+    }
+
+    // 6) Reset ve deletion loglarını sil
+    const resetLogRef = db.collection("reset_logs").doc(userId);
+    if ((await resetLogRef.get()).exists) {
+      await resetLogRef.delete();
+    }
+
+    // 7) Ana kullanıcı dokümanını sil
+    await db.collection("users").doc(userId).delete();
+
+    // 8) Firebase Authentication kaydını sil (EN SON ADIM)
+    await admin.auth().deleteUser(userId);
+
+    logger.info(`Account deletion completed successfully for user: ${userId}`);
+    return {
+      success: true,
+      message: "Your account has been permanently deleted.",
+      timestamp: Date.now()
+    };
+  } catch (error) {
+    logger.error(`Account deletion failed for user ${userId}:`, error);
+    throw new Error(`Account deletion failed: ${error.message}`);
+  }
+});
+
 module.exports = {
   computeInactivityHours,
   processAudienceInBatches,
   resetUserDataForNewExam,
+  deleteUserAccount,
 };

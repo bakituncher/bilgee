@@ -55,23 +55,23 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     }
   }
 
-  // Veri sıfırlama işlemini yöneten fonksiyon
-  Future<void> resetAccountForNewExam() async {
-    state = state.copyWith(isLoading: true, resetStatus: ResetStatus.initial);
-    final userId = _ref.read(authControllerProvider).value?.uid;
+  // KALDIRILDI: resetAccountForNewExam() - Artık kullanılmıyor
 
-    if (userId == null) {
-      state = state.copyWith(isLoading: false, resetStatus: ResetStatus.failure);
-      return;
-    }
+  // Hesap silme işlemini yöneten fonksiyon
+  Future<void> deleteAccount() async {
+    state = state.copyWith(isLoading: true, resetStatus: ResetStatus.initial);
 
     try {
-      // İstemci tarafı silme işlemi yerine Cloud Function'ı çağır
+      // Cloud Function'ı çağır
       final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
-      final callable = functions.httpsCallable('users-resetUserDataForNewExam');
+      final callable = functions.httpsCallable('users-deleteUserAccount');
       await callable.call();
+
       // İşlem başarılıysa durumu "success" olarak güncelle
       state = state.copyWith(isLoading: false, resetStatus: ResetStatus.success);
+
+      // Kullanıcıyı otomatik olarak çıkış yaptır (hesap zaten silindi)
+      await _ref.read(authControllerProvider.notifier).signOut();
     } catch (e) {
       // Hata olursa durumu "failure" olarak güncelle
       state = state.copyWith(isLoading: false, resetStatus: ResetStatus.failure);
