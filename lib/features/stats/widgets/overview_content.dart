@@ -322,7 +322,7 @@ class OverviewContent extends ConsumerWidget {
     return minFontSize;
   }
 
-  /// Aksiyon butonu widget'ı
+  /// Aksiyon butonu widget'ı - Sektör Seviyesi Tasarım
   Widget _buildActionButton({
     required BuildContext context,
     required IconData icon,
@@ -333,7 +333,7 @@ class OverviewContent extends ConsumerWidget {
   }) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final maxWidth = constraints.maxWidth - 32; // padding için
+        final maxWidth = constraints.maxWidth - 32;
         final labelFontSize = _calculateFontSize(
           label,
           maxWidth,
@@ -348,19 +348,18 @@ class OverviewContent extends ConsumerWidget {
           fontWeight: FontWeight.w500,
         );
 
-        // Ekran boyutuna göre padding ve icon size ayarla
         final isSmallScreen = constraints.maxWidth < 160;
-        final iconSize = isSmallScreen ? 24.0 : 28.0;
-        final iconPadding = isSmallScreen ? 10.0 : 12.0;
-        final verticalPadding = isSmallScreen ? 12.0 : 16.0;
-        final spaceBetween = isSmallScreen ? 8.0 : 12.0;
+        final iconSize = isSmallScreen ? 26.0 : 32.0;
+        final iconPadding = isSmallScreen ? 12.0 : 14.0;
+        final verticalPadding = isSmallScreen ? 16.0 : 20.0;
+        final spaceBetween = isSmallScreen ? 10.0 : 14.0;
 
         return InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           child: Container(
             padding: EdgeInsets.symmetric(
-              horizontal: 12,
+              horizontal: 14,
               vertical: verticalPadding,
             ),
             decoration: BoxDecoration(
@@ -369,57 +368,85 @@ class OverviewContent extends ConsumerWidget {
                 end: Alignment.bottomRight,
                 colors: isDark
                     ? [
-                        AppTheme.primaryBrandColor.withOpacity(0.2),
-                        AppTheme.secondaryBrandColor.withOpacity(0.15),
+                        const Color(0xFF2E3192).withOpacity(0.25),
+                        const Color(0xFF1BFFFF).withOpacity(0.15),
                       ]
                     : [
-                        AppTheme.primaryBrandColor.withOpacity(0.1),
-                        AppTheme.secondaryBrandColor.withOpacity(0.05),
+                        const Color(0xFF2E3192).withOpacity(0.08),
+                        const Color(0xFF1BFFFF).withOpacity(0.05),
                       ],
               ),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: AppTheme.primaryBrandColor.withOpacity(0.3),
+                color: const Color(0xFF2E3192).withOpacity(isDark ? 0.4 : 0.25),
                 width: 1.5,
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF2E3192).withOpacity(isDark ? 0.2 : 0.1),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                  spreadRadius: -2,
+                ),
+              ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Gradient Icon Container
                 Container(
                   padding: EdgeInsets.all(iconPadding),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryBrandColor.withOpacity(0.2),
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF2E3192), Color(0xFF1BFFFF)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                     shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF2E3192).withOpacity(0.4),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: Icon(
                     icon,
-                    color: AppTheme.primaryBrandColor,
+                    color: Colors.white,
                     size: iconSize,
                   ),
                 ),
                 SizedBox(height: spaceBetween),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: labelFontSize,
-                    fontWeight: FontWeight.w800,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
-                    letterSpacing: -0.3,
+                // Gradient Text Label
+                ShaderMask(
+                  shaderCallback: (bounds) => const LinearGradient(
+                    colors: [Color(0xFF2E3192), Color(0xFF1BFFFF)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ).createShader(bounds),
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: labelFontSize,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      letterSpacing: -0.5,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Text(
                   description,
                   style: TextStyle(
                     fontSize: descFontSize,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                     color: isDark
-                        ? Colors.white.withOpacity(0.6)
-                        : Colors.black.withOpacity(0.5),
+                        ? Colors.white.withOpacity(0.7)
+                        : Colors.black.withOpacity(0.6),
                     height: 1.3,
                   ),
                   textAlign: TextAlign.center,

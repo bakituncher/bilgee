@@ -266,6 +266,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   }
 
   Widget _buildBody(TextTheme textTheme) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     if (_tests.isEmpty && _isLoading) {
       return const LogoLoader();
     }
@@ -325,68 +328,127 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
 
                 const SizedBox(height: 32),
 
-                // Deneme Ekle Butonu
+                // Deneme Ekle Butonu - Premium Gradient Design (Dark Mode Optimized)
                 InkWell(
                   onTap: () => context.push('/home/add-test'),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(20),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
-                    constraints: const BoxConstraints(maxWidth: 320),
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+                    constraints: const BoxConstraints(maxWidth: 340),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [
-                          Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
-                          Theme.of(context).colorScheme.secondary.withValues(alpha: 0.15),
-                        ],
+                        colors: isDark
+                            ? [
+                                const Color(0xFF3D4DB7).withOpacity(0.35),
+                                const Color(0xFF1BFFFF).withOpacity(0.25),
+                              ]
+                            : [
+                                const Color(0xFF2E3192).withOpacity(0.08),
+                                const Color(0xFF1BFFFF).withOpacity(0.05),
+                              ],
                       ),
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                        color: isDark
+                            ? const Color(0xFF1BFFFF).withOpacity(0.5)
+                            : const Color(0xFF2E3192).withOpacity(0.25),
                         width: 2,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
+                          color: const Color(0xFF2E3192).withOpacity(isDark ? 0.4 : 0.15),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                          spreadRadius: -2,
+                        ),
+                        BoxShadow(
+                          color: const Color(0xFF1BFFFF).withOpacity(isDark ? 0.35 : 0.2),
+                          blurRadius: 24,
+                          offset: const Offset(0, 12),
+                          spreadRadius: -4,
                         ),
                       ],
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        // Gradient Icon Container
                         Container(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(18),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                            gradient: LinearGradient(
+                              colors: isDark
+                                  ? [
+                                      const Color(0xFF4D5FD1),
+                                      const Color(0xFF1BFFFF),
+                                    ]
+                                  : [
+                                      const Color(0xFF2E3192),
+                                      const Color(0xFF1BFFFF),
+                                    ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
                             shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF2E3192).withOpacity(isDark ? 0.5 : 0.4),
+                                blurRadius: 16,
+                                offset: const Offset(0, 6),
+                              ),
+                              BoxShadow(
+                                color: const Color(0xFF1BFFFF).withOpacity(isDark ? 0.4 : 0.3),
+                                blurRadius: 20,
+                                offset: const Offset(0, 8),
+                                spreadRadius: -4,
+                              ),
+                            ],
                           ),
-                          child: Icon(
+                          child: const Icon(
                             Icons.add_chart_rounded,
-                            color: Theme.of(context).colorScheme.primary,
-                            size: 32,
+                            color: Colors.white,
+                            size: 36,
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'İlk Denemeni Ekle',
-                          style: textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 18,
-                            letterSpacing: -0.3,
+                        const SizedBox(height: 18),
+                        // Gradient Text - Dark mode için daha parlak
+                        ShaderMask(
+                          shaderCallback: (bounds) => LinearGradient(
+                            colors: isDark
+                                ? [
+                                    const Color(0xFF6B7FFF),
+                                    const Color(0xFF1BFFFF),
+                                  ]
+                                : [
+                                    const Color(0xFF2E3192),
+                                    const Color(0xFF1BFFFF),
+                                  ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ).createShader(bounds),
+                          child: Text(
+                            'İlk Denemeni Ekle',
+                            style: textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 22,
+                              letterSpacing: -0.5,
+                              color: Colors.white,
+                            ),
+                            textAlign: TextAlign.center,
                           ),
-                          textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 8),
                         Text(
                           'Başarı yolculuğunu arşivlemeye başla',
-                          style: textTheme.bodySmall?.copyWith(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 13,
-                            height: 1.3,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          style: textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                            height: 1.4,
+                            color: isDark
+                                ? Colors.white.withOpacity(0.85)
+                                : Colors.black.withOpacity(0.6),
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -406,9 +468,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
 
     final filtered = _applyFiltersAndSort();
 
-    final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
 
     return Column(
       children: [
