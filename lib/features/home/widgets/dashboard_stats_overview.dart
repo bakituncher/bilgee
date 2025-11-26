@@ -22,16 +22,18 @@ class DashboardStatsOverview extends ConsumerWidget {
         if (user == null) return const SizedBox.shrink();
 
         final tests = testsAsync.valueOrNull ?? [];
-        if (tests.isEmpty) return const SizedBox.shrink();
 
-        final streak = StatsCalculator.calculateStreak(tests);
-        final avgNet = StatsCalculator.calculateAvgNet(user, tests);
+        // Test yoksa varsayılan değerler
+        final streak = tests.isEmpty ? 0 : StatsCalculator.calculateStreak(tests);
+        final avgNet = tests.isEmpty ? '0.0' : StatsCalculator.calculateAvgNet(user, tests);
         final motivationColor = _getMotivationColor(streak, tests.length);
 
-        // Basit hesaplamalar
-        final sortedTests = [...tests]..sort((a, b) => b.date.compareTo(a.date));
-        final lastTest = sortedTests.first;
-        final bestNet = tests.map((e) => e.totalNet).reduce((a, b) => a > b ? a : b);
+        // Basit hesaplamalar - test yoksa 0 değerleri
+        final lastTestNet = tests.isEmpty ? 0.0 : (() {
+          final sortedTests = [...tests]..sort((a, b) => b.date.compareTo(a.date));
+          return sortedTests.first.totalNet;
+        })();
+        final bestNet = tests.isEmpty ? 0.0 : tests.map((e) => e.totalNet).reduce((a, b) => a > b ? a : b);
 
         return GestureDetector(
           onTap: () => context.push('/stats/overview'),
@@ -134,7 +136,7 @@ class DashboardStatsOverview extends ConsumerWidget {
                       child: _StatItem(
                         icon: Icons.access_time_rounded,
                         label: 'Son',
-                        value: lastTest.totalNet.toStringAsFixed(1),
+                        value: lastTestNet.toStringAsFixed(1),
                         color: const Color(0xFF3B82F6),
                         theme: theme,
                       ),
