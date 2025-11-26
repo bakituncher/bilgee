@@ -12,6 +12,7 @@ import 'package:taktik/features/settings/widgets/settings_tile.dart';
 import 'package:taktik/data/providers/admin_providers.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
 import 'package:taktik/core/theme/theme_provider.dart';
+import 'package:taktik/core/utils/app_info_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -562,7 +563,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               SettingsTile(
                 icon: Icons.shield_outlined,
                 title: 'Şifreyi Değiştir',
-                subtitle: 'Güvenliğiniz için şifrenizi güncelleyin',
+                subtitle: 'Hesap şifrenizi değiştirin',
                 onTap: () => _showChangePasswordDialog(context, ref),
               ),
               const Divider(height: 1, indent: 56),
@@ -631,22 +632,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 onTap: () => _launchURL(context, "https://play.google.com/store/account/subscriptions"),
               ),
               const Divider(height: 1, indent: 56),
-              SettingsTile(
-                icon: Icons.info_outline_rounded,
-                title: "Uygulama Hakkında",
-                subtitle: "Versiyon 1.2.3",
-                onTap: () {
-                  showAboutDialog(
-                    context: context,
-                    applicationName: 'Taktik',
-                    applicationVersion: '1.2.3',
-                    applicationLegalese: '© 2025 Codenzi. Tüm hakları saklıdır.',
-                    children: const [
-                      Padding(
-                        padding: EdgeInsets.only(top: 15),
-                        child: Text('Taktik, kişisel yapay zeka destekli sınav koçunuzdur.'),
-                      )
-                    ],
+              Consumer(
+                builder: (context, ref, child) {
+                  final appVersion = ref.watch(appVersionProvider);
+                  final appFullVersion = ref.watch(appFullVersionProvider);
+
+                  return SettingsTile(
+                    icon: Icons.info_outline_rounded,
+                    title: "Uygulama Hakkında",
+                    subtitle: "Versiyon $appFullVersion",
+                    onTap: () {
+                      showAboutDialog(
+                        context: context,
+                        applicationName: 'Taktik',
+                        applicationVersion: appVersion,
+                        applicationLegalese: '© 2025 Codenzi. Tüm hakları saklıdır.',
+                        children: const [
+                          Padding(
+                            padding: EdgeInsets.only(top: 15),
+                            child: Text('Taktik, kişisel yapay zeka destekli sınav koçunuzdur.'),
+                          )
+                        ],
+                      );
+                    },
                   );
                 },
               ),
