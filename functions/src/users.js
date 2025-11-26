@@ -140,8 +140,20 @@ async function processAudienceInBatches(audience, batchCallback) {
 
 /**
  * Kullanıcı hesabını kalıcı olarak siler.
- * TÜM Firestore verilerini ve Firebase Authentication kaydını siler.
+ * TÜM Firestore verilerini, Storage dosyalarını ve Firebase Authentication kaydını siler.
  * Bu işlem GERİ ALINAMAZ!
+ *
+ * GÜNCELLENME TARİHİ: 2025-11-26
+ * DEĞİŞİKLİKLER:
+ * - Storage dosyaları eklendi (avatars, user_files)
+ * - Takip sistemi temizliği eklendi (followers/following)
+ * - Engelleme sistemi temizliği eklendi (blocked_users)
+ * - Moderasyon kayıtları eklendi (user_reports, user_report_index)
+ * - Analitik olaylar eklendi (analytics_events)
+ * - Rate limit/quota kayıtları eklendi
+ * - Push kampanya logları eklendi
+ * - Geliştirilmiş hata yönetimi
+ * - Detaylı loglama
  */
 const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, enforceAppCheck: true, maxInstances: 5 }, async (request) => {
   if (!request.auth) {
@@ -156,34 +168,84 @@ const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, e
     enforceRateLimit(`delete_account_ip_${ip}`, 3600, 3), // IP başına saatte 3 kez
   ]);
 
+  const deletionLog = {
+    userId,
+    startTime: Date.now(),
+    steps: [],
+    errors: []
+  };
+
   try {
     logger.info(`Account deletion started for user: ${userId}`);
 
-    // Helper: Batch silme fonksiyonu
-    async function deleteQueryInBatches(query, batchSize = 300) {
-      while (true) {
-        const snap = await query.limit(batchSize).get();
-        if (snap.empty) break;
-        const batch = db.batch();
-        snap.docs.forEach((doc) => batch.delete(doc.ref));
-        await batch.commit();
-        await new Promise((r) => setTimeout(r, 25));
+    // Helper: Batch silme fonksiyonu (hata yönetimi geliştirilmiş)
+    async function deleteQueryInBatches(query, batchSize = 300, stepName = "unknown") {
+      try {
+        let totalDeleted = 0;
+        while (true) {
+          const snap = await query.limit(batchSize).get();
+          if (snap.empty) break;
+          const batch = db.batch();
+          snap.docs.forEach((doc) => batch.delete(doc.ref));
+          await batch.commit();
+          totalDeleted += snap.docs.length;
+          await new Promise((r) => setTimeout(r, 25));
+        }
+        deletionLog.steps.push({ step: stepName, deleted: totalDeleted, status: "success" });
+        logger.info(`${stepName}: ${totalDeleted} documents deleted`);
+      } catch (error) {
+        deletionLog.errors.push({ step: stepName, error: String(error) });
+        logger.error(`${stepName} failed:`, error);
+        // Devam et, tüm silme işlemini durdurmayalım
       }
     }
 
-    // Helper: Alt koleksiyon silme
-    async function deleteAllDocsInSubcollection(path) {
-      while (true) {
-        const snap = await db.collection(path).limit(300).get();
-        if (snap.empty) break;
-        const batch = db.batch();
-        snap.docs.forEach((doc) => batch.delete(doc.ref));
-        await batch.commit();
-        await new Promise((r) => setTimeout(r, 25));
+    // Helper: Alt koleksiyon silme (hata yönetimi geliştirilmiş)
+    async function deleteAllDocsInSubcollection(path, stepName = path) {
+      try {
+        let totalDeleted = 0;
+        while (true) {
+          const snap = await db.collection(path).limit(300).get();
+          if (snap.empty) break;
+          const batch = db.batch();
+          snap.docs.forEach((doc) => batch.delete(doc.ref));
+          await batch.commit();
+          totalDeleted += snap.docs.length;
+          await new Promise((r) => setTimeout(r, 25));
+        }
+        deletionLog.steps.push({ step: stepName, deleted: totalDeleted, status: "success" });
+        logger.info(`${stepName}: ${totalDeleted} documents deleted`);
+      } catch (error) {
+        deletionLog.errors.push({ step: stepName, error: String(error) });
+        logger.error(`${stepName} failed:`, error);
       }
     }
 
-    // 1) Kullanıcının alt koleksiyonlarını sil
+    // Helper: Storage klasörü silme
+    async function deleteStorageFolder(path, stepName = path) {
+      try {
+        const bucket = admin.storage().bucket();
+        const [files] = await bucket.getFiles({ prefix: path });
+        let totalDeleted = 0;
+
+        // Batch silme (her seferinde 100 dosya)
+        for (let i = 0; i < files.length; i += 100) {
+          const batch = files.slice(i, i + 100);
+          await Promise.all(batch.map(file => file.delete().catch(e => {
+            logger.warn(`Failed to delete file ${file.name}:`, e);
+          })));
+          totalDeleted += batch.length;
+        }
+
+        deletionLog.steps.push({ step: stepName, deleted: totalDeleted, status: "success" });
+        logger.info(`${stepName}: ${totalDeleted} files deleted`);
+      } catch (error) {
+        deletionLog.errors.push({ step: stepName, error: String(error) });
+        logger.error(`${stepName} failed:`, error);
+      }
+    }
+
+    // === 1) KULLANICININ ALT KOLEKSİYONLARINI SİL ===
     const subcollections = [
       `users/${userId}/state`,
       `users/${userId}/user_activity`,
@@ -194,62 +256,304 @@ const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, e
       `users/${userId}/plans`,
       `users/${userId}/devices`, // FCM token cihazları
       `users/${userId}/in_app_notifications`, // Uygulama içi bildirimler
+      `users/${userId}/followers`, // YENİ: Takipçiler
+      `users/${userId}/following`, // YENİ: Takip edilenler
+      `users/${userId}/blocked_users`, // YENİ: Engellenmiş kullanıcılar
     ];
 
     for (const sub of subcollections) {
-      await deleteAllDocsInSubcollection(sub);
+      await deleteAllDocsInSubcollection(sub, `Subcollection: ${sub}`);
     }
 
     // masteredTopics alt koleksiyonu
-    await deleteAllDocsInSubcollection(`users/${userId}/performance/summary/masteredTopics`);
+    await deleteAllDocsInSubcollection(`users/${userId}/performance/summary/masteredTopics`, "Subcollection: masteredTopics");
 
-    // 2) Kullanıcının user_activity alt dokümanlarının visits koleksiyonlarını sil
-    const activitySnap = await db.collection(`users/${userId}/user_activity`).get();
-    for (const activityDoc of activitySnap.docs) {
-      await deleteAllDocsInSubcollection(`users/${userId}/user_activity/${activityDoc.id}/visits`);
-    }
-
-    // 3) Üst seviye koleksiyonlardaki kullanıcı verilerini sil
-    await deleteQueryInBatches(db.collection("tests").where("userId", "==", userId));
-    await deleteQueryInBatches(db.collection("focusSessions").where("userId", "==", userId));
-    await deleteQueryInBatches(db.collection("posts").where("userId", "==", userId));
-    await deleteQueryInBatches(db.collection("questionReports").where("userId", "==", userId));
-
-    // 4) Liderlik tablolarından kullanıcıyı temizle
-    const leaderboardsSnap = await db.collection("leaderboards").get();
-    for (const leaderboardDoc of leaderboardsSnap.docs) {
-      const userLeaderboardRef = leaderboardDoc.ref.collection("users").doc(userId);
-      if ((await userLeaderboardRef.get()).exists) {
-        await userLeaderboardRef.delete();
+    // === 2) KULLANICININ user_activity ALT DOKUMANLARININ visits/completed_tasks KOLEKSİYONLARINI SİL ===
+    try {
+      const activitySnap = await db.collection(`users/${userId}/user_activity`).get();
+      for (const activityDoc of activitySnap.docs) {
+        await deleteAllDocsInSubcollection(
+          `users/${userId}/user_activity/${activityDoc.id}/visits`,
+          `Activity visits: ${activityDoc.id}`
+        );
+        await deleteAllDocsInSubcollection(
+          `users/${userId}/user_activity/${activityDoc.id}/completed_tasks`,
+          `Activity tasks: ${activityDoc.id}`
+        );
       }
+      deletionLog.steps.push({ step: "User activity nested collections", status: "success" });
+    } catch (error) {
+      deletionLog.errors.push({ step: "User activity nested collections", error: String(error) });
+      logger.error("User activity nested collections cleanup failed:", error);
     }
 
-    // 5) Public profile'ı sil
-    const publicProfileRef = db.collection("public_profiles").doc(userId);
-    if ((await publicProfileRef.get()).exists) {
-      await publicProfileRef.delete();
+    // === 3) ÜST SEVİYE KOLEKSİYONLARDAKİ KULLANICI VERİLERİNİ SİL ===
+    await deleteQueryInBatches(db.collection("tests").where("userId", "==", userId), 300, "Tests collection");
+    await deleteQueryInBatches(db.collection("focusSessions").where("userId", "==", userId), 300, "Focus sessions collection");
+    await deleteQueryInBatches(db.collection("posts").where("userId", "==", userId), 300, "Posts collection");
+    await deleteQueryInBatches(db.collection("questionReports").where("userId", "==", userId), 300, "Question reports collection");
+
+    // YENİ: Analitik olaylar
+    await deleteQueryInBatches(db.collection("analytics_events").where("userId", "==", userId), 300, "Analytics events collection");
+
+    // === 4) TAKİP SİSTEMİ TEMİZLİĞİ (KRİTİK!) ===
+    // Kullanıcının takip ettiği kişilerin followers koleksiyonundan kullanıcıyı çıkar
+    try {
+      const followingSnap = await db.collection(`users/${userId}/following`).get();
+      let followingCleanup = 0;
+      for (const followingDoc of followingSnap.docs) {
+        const targetUserId = followingDoc.id;
+        const followerRef = db.collection(`users/${targetUserId}/followers`).doc(userId);
+        if ((await followerRef.get()).exists) {
+          await followerRef.delete();
+          followingCleanup++;
+        }
+      }
+      deletionLog.steps.push({ step: "Following cleanup", deleted: followingCleanup, status: "success" });
+      logger.info(`Following cleanup: ${followingCleanup} entries removed`);
+    } catch (error) {
+      deletionLog.errors.push({ step: "Following cleanup", error: String(error) });
+      logger.error("Following cleanup failed:", error);
     }
 
-    // 6) Reset ve deletion loglarını sil
-    const resetLogRef = db.collection("reset_logs").doc(userId);
-    if ((await resetLogRef.get()).exists) {
-      await resetLogRef.delete();
+    // Kullanıcıyı takip edenlerin following koleksiyonundan kullanıcıyı çıkar
+    try {
+      const followersSnap = await db.collection(`users/${userId}/followers`).get();
+      let followersCleanup = 0;
+      for (const followerDoc of followersSnap.docs) {
+        const followerUserId = followerDoc.id;
+        const followingRef = db.collection(`users/${followerUserId}/following`).doc(userId);
+        if ((await followingRef.get()).exists) {
+          await followingRef.delete();
+          followersCleanup++;
+        }
+      }
+      deletionLog.steps.push({ step: "Followers cleanup", deleted: followersCleanup, status: "success" });
+      logger.info(`Followers cleanup: ${followersCleanup} entries removed`);
+    } catch (error) {
+      deletionLog.errors.push({ step: "Followers cleanup", error: String(error) });
+      logger.error("Followers cleanup failed:", error);
     }
 
-    // 7) Ana kullanıcı dokümanını sil
-    await db.collection("users").doc(userId).delete();
+    // === 5) ENGELLEME SİSTEMİ TEMİZLİĞİ (KRİTİK!) ===
+    // Başkalarının engellenmiş listesinden kullanıcıyı çıkar
+    try {
+      const allUsersSnap = await db.collection("users").select().get();
+      let blockCleanup = 0;
+      const blockBatch = db.batch();
+      let batchCount = 0;
 
-    // 8) Firebase Authentication kaydını sil (EN SON ADIM)
-    await admin.auth().deleteUser(userId);
+      for (const userDoc of allUsersSnap.docs) {
+        const otherUserId = userDoc.id;
+        if (otherUserId === userId) continue;
 
-    logger.info(`Account deletion completed successfully for user: ${userId}`);
+        const blockRef = db.collection(`users/${otherUserId}/blocked_users`).doc(userId);
+        const blockExists = await blockRef.get();
+        if (blockExists.exists) {
+          blockBatch.delete(blockRef);
+          blockCleanup++;
+          batchCount++;
+
+          // Her 450 işlemde commit yap (Firestore batch limiti 500)
+          if (batchCount >= 450) {
+            await blockBatch.commit();
+            batchCount = 0;
+          }
+        }
+      }
+
+      // Kalan işlemleri commit et
+      if (batchCount > 0) {
+        await blockBatch.commit();
+      }
+
+      deletionLog.steps.push({ step: "Block system cleanup", deleted: blockCleanup, status: "success" });
+      logger.info(`Block system cleanup: ${blockCleanup} entries removed`);
+    } catch (error) {
+      deletionLog.errors.push({ step: "Block system cleanup", error: String(error) });
+      logger.error("Block system cleanup failed:", error);
+    }
+
+    // === 6) MODERASYON SİSTEMİ TEMİZLİĞİ ===
+    // Kullanıcı tarafından yapılan raporlar
+    await deleteQueryInBatches(
+      db.collection("user_reports").where("reporterUserId", "==", userId),
+      300,
+      "User reports (reporter)"
+    );
+
+    // Kullanıcı hakkında yapılan raporlar
+    await deleteQueryInBatches(
+      db.collection("user_reports").where("reportedUserId", "==", userId),
+      300,
+      "User reports (reported)"
+    );
+
+    // Rapor indeksi
+    try {
+      const reportIndexRef = db.collection("user_report_index").doc(userId);
+      if ((await reportIndexRef.get()).exists) {
+        await reportIndexRef.delete();
+        deletionLog.steps.push({ step: "User report index", deleted: 1, status: "success" });
+      }
+    } catch (error) {
+      deletionLog.errors.push({ step: "User report index", error: String(error) });
+      logger.error("User report index cleanup failed:", error);
+    }
+
+    // === 7) RATE LIMIT VE QUOTA KAYITLARI TEMİZLİĞİ ===
+    // Rate limits (userId içeren tüm kayıtlar)
+    try {
+      const rateLimitSnap = await db.collection("rate_limits")
+        .where(admin.firestore.FieldPath.documentId(), ">=", userId)
+        .where(admin.firestore.FieldPath.documentId(), "<=", userId + "\uf8ff")
+        .get();
+      let deleted = 0;
+      const batch = db.batch();
+      rateLimitSnap.docs.forEach(doc => {
+        batch.delete(doc.ref);
+        deleted++;
+      });
+      if (deleted > 0) await batch.commit();
+      deletionLog.steps.push({ step: "Rate limits", deleted, status: "success" });
+    } catch (error) {
+      deletionLog.errors.push({ step: "Rate limits", error: String(error) });
+      logger.error("Rate limits cleanup failed:", error);
+    }
+
+    // Quotas (userId içeren tüm kayıtlar)
+    try {
+      const quotaSnap = await db.collection("quotas")
+        .where(admin.firestore.FieldPath.documentId(), ">=", userId)
+        .where(admin.firestore.FieldPath.documentId(), "<=", userId + "\uf8ff")
+        .get();
+      let deleted = 0;
+      const batch = db.batch();
+      quotaSnap.docs.forEach(doc => {
+        batch.delete(doc.ref);
+        deleted++;
+      });
+      if (deleted > 0) await batch.commit();
+      deletionLog.steps.push({ step: "Quotas", deleted, status: "success" });
+    } catch (error) {
+      deletionLog.errors.push({ step: "Quotas", error: String(error) });
+      logger.error("Quotas cleanup failed:", error);
+    }
+
+    // === 8) PUSH BİLDİRİM KAMPANYA LOGLARI ===
+    try {
+      const campaignsSnap = await db.collection("push_campaigns").get();
+      let logsDeleted = 0;
+      for (const campaign of campaignsSnap.docs) {
+        const logsSnap = await campaign.ref.collection("logs")
+          .where("userId", "==", userId)
+          .get();
+        const batch = db.batch();
+        logsSnap.docs.forEach(doc => {
+          batch.delete(doc.ref);
+          logsDeleted++;
+        });
+        if (logsSnap.docs.length > 0) await batch.commit();
+      }
+      deletionLog.steps.push({ step: "Push campaign logs", deleted: logsDeleted, status: "success" });
+      logger.info(`Push campaign logs: ${logsDeleted} entries deleted`);
+    } catch (error) {
+      deletionLog.errors.push({ step: "Push campaign logs", error: String(error) });
+      logger.error("Push campaign logs cleanup failed:", error);
+    }
+
+    // === 9) LİDERLİK TABLOLARINDAN KULLANICIYI TEMİZLE ===
+    try {
+      const leaderboardsSnap = await db.collection("leaderboards").get();
+      let lbDeleted = 0;
+      for (const leaderboardDoc of leaderboardsSnap.docs) {
+        const userLeaderboardRef = leaderboardDoc.ref.collection("users").doc(userId);
+        if ((await userLeaderboardRef.get()).exists) {
+          await userLeaderboardRef.delete();
+          lbDeleted++;
+        }
+      }
+      deletionLog.steps.push({ step: "Leaderboards", deleted: lbDeleted, status: "success" });
+      logger.info(`Leaderboards: ${lbDeleted} entries deleted`);
+    } catch (error) {
+      deletionLog.errors.push({ step: "Leaderboards", error: String(error) });
+      logger.error("Leaderboards cleanup failed:", error);
+    }
+
+    // === 10) PUBLIC PROFILE'I SİL ===
+    try {
+      const publicProfileRef = db.collection("public_profiles").doc(userId);
+      if ((await publicProfileRef.get()).exists) {
+        await publicProfileRef.delete();
+        deletionLog.steps.push({ step: "Public profile", deleted: 1, status: "success" });
+      }
+    } catch (error) {
+      deletionLog.errors.push({ step: "Public profile", error: String(error) });
+      logger.error("Public profile cleanup failed:", error);
+    }
+
+    // === 11) RESET VE DELETION LOGLARINI SİL ===
+    try {
+      const resetLogRef = db.collection("reset_logs").doc(userId);
+      if ((await resetLogRef.get()).exists) {
+        await resetLogRef.delete();
+        deletionLog.steps.push({ step: "Reset logs", deleted: 1, status: "success" });
+      }
+    } catch (error) {
+      deletionLog.errors.push({ step: "Reset logs", error: String(error) });
+      logger.error("Reset logs cleanup failed:", error);
+    }
+
+    // === 12) STORAGE DOSYALARINI SİL (KRİTİK - GDPR!) ===
+    await deleteStorageFolder(`avatars/${userId}/`, "Storage: avatars");
+    await deleteStorageFolder(`user_files/${userId}/`, "Storage: user_files");
+
+    // === 13) ANA KULLANICI DOKUMANINI SİL ===
+    try {
+      await db.collection("users").doc(userId).delete();
+      deletionLog.steps.push({ step: "Main user document", deleted: 1, status: "success" });
+      logger.info("Main user document deleted");
+    } catch (error) {
+      deletionLog.errors.push({ step: "Main user document", error: String(error) });
+      logger.error("Main user document deletion failed:", error);
+      throw error; // Ana doküman silinemezse işlemi başarısız say
+    }
+
+    // === 14) FIREBASE AUTHENTICATION KAYDINI SİL (EN SON ADIM) ===
+    try {
+      await admin.auth().deleteUser(userId);
+      deletionLog.steps.push({ step: "Firebase Auth", deleted: 1, status: "success" });
+      logger.info("Firebase Auth user deleted");
+    } catch (error) {
+      deletionLog.errors.push({ step: "Firebase Auth", error: String(error) });
+      logger.error("Firebase Auth deletion failed:", error);
+      throw error; // Auth kaydı silinemezse işlemi başarısız say
+    }
+
+    // === BAŞARI LOGU ===
+    deletionLog.endTime = Date.now();
+    deletionLog.duration = deletionLog.endTime - deletionLog.startTime;
+    deletionLog.totalSteps = deletionLog.steps.length;
+    deletionLog.totalErrors = deletionLog.errors.length;
+
+    logger.info(`Account deletion completed for user: ${userId}`, deletionLog);
+
     return {
       success: true,
       message: "Your account has been permanently deleted.",
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      stats: {
+        totalSteps: deletionLog.totalSteps,
+        totalErrors: deletionLog.totalErrors,
+        duration: deletionLog.duration
+      }
     };
   } catch (error) {
-    logger.error(`Account deletion failed for user ${userId}:`, error);
+    deletionLog.endTime = Date.now();
+    deletionLog.duration = deletionLog.endTime - deletionLog.startTime;
+    deletionLog.fatalError = String(error);
+
+    logger.error(`Account deletion FAILED for user ${userId}:`, deletionLog);
     throw new Error(`Account deletion failed: ${error.message}`);
   }
 });
