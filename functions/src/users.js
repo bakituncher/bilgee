@@ -335,44 +335,27 @@ const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, e
       logger.error("Followers cleanup failed:", error);
     }
 
-    // === 5) ENGELLEME SİSTEMİ TEMİZLİĞİ (KRİTİK!) ===
-    // Başkalarının engellenmiş listesinden kullanıcıyı çıkar
-    try {
-      const allUsersSnap = await db.collection("users").select().get();
-      let blockCleanup = 0;
-      const blockBatch = db.batch();
-      let batchCount = 0;
+    // === 5) ENGELLEME SİSTEMİ TEMİZLİĞİ (KALDIRILDI - PERFORMANS GÜVENLİĞİ) ===
+    // ⚠️ ÖNCEKİ YÖNTEM: Tüm kullanıcıları tarayıp "acaba beni kim engelledi?" diye bakmak
+    //    100.000 kullanıcılı sistemde TEK BİR hesap silme işlemi 100.000+ okuma yapardı!
+    //    Bu, fonksiyon timeout'una, OOM hatalarına ve maliyet patlamasına yol açardı.
+    //
+    // ✅ YENİ YAKLAŞIM: Bu taramayı hiç yapmıyoruz.
+    //    - Bir kullanıcının ID'si başkasının blocked_users listesinde kalabilir.
+    //    - UI tarafında zaten o kullanıcı "bulunamadı" olarak görünecektir.
+    //    - Sistem sağlığı ve performans için bu küçük "zombi ID" sorunu kabul edilebilir.
+    //
+    // Not: Eğer gerçekten temizlik yapılması gerekirse, bunu scheduled function
+    //      olarak arka planda yavaşça çalıştırabilirsiniz (günlük/haftalık temizlik)
 
-      for (const userDoc of allUsersSnap.docs) {
-        const otherUserId = userDoc.id;
-        if (otherUserId === userId) continue;
+    deletionLog.steps.push({
+      step: "Block system cleanup",
+      deleted: 0,
+      status: "skipped_for_performance",
+      reason: "Tüm kullanıcıları taramak yerine zombi ID'lere izin veriliyor (UI güvenli)"
+    });
+    logger.info("Block system cleanup: Skipped for performance safety");
 
-        const blockRef = db.collection(`users/${otherUserId}/blocked_users`).doc(userId);
-        const blockExists = await blockRef.get();
-        if (blockExists.exists) {
-          blockBatch.delete(blockRef);
-          blockCleanup++;
-          batchCount++;
-
-          // Her 450 işlemde commit yap (Firestore batch limiti 500)
-          if (batchCount >= 450) {
-            await blockBatch.commit();
-            batchCount = 0;
-          }
-        }
-      }
-
-      // Kalan işlemleri commit et
-      if (batchCount > 0) {
-        await blockBatch.commit();
-      }
-
-      deletionLog.steps.push({ step: "Block system cleanup", deleted: blockCleanup, status: "success" });
-      logger.info(`Block system cleanup: ${blockCleanup} entries removed`);
-    } catch (error) {
-      deletionLog.errors.push({ step: "Block system cleanup", error: String(error) });
-      logger.error("Block system cleanup failed:", error);
-    }
 
     // === 6) MODERASYON SİSTEMİ TEMİZLİĞİ ===
     // Kullanıcı tarafından yapılan raporlar
