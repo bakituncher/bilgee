@@ -53,7 +53,7 @@ class AnalysisStrategyScreen extends StatelessWidget {
                 icon: Icons.flag_circle_rounded,
                 title: 'Deneme Değerlendirme',
                 subtitle: 'Son denemenin güçlü/zayıf yanlarını gör, toparlanma adımları al.',
-                onTap: () => context.go('/ai-hub/motivation-chat', extra: 'trial_review'),
+                onTap: () => context.push('/ai-hub/motivation-chat', extra: 'trial_review'),
                 gradient: const LinearGradient(colors: [Color(0xFFFFE082), Color(0xFFFFF3E0)]),
               ).animate().fadeIn(delay: 240.ms).slideY(begin: 0.25, curve: Curves.easeOutCubic),
 
@@ -61,7 +61,7 @@ class AnalysisStrategyScreen extends StatelessWidget {
                 icon: Icons.track_changes_rounded,
                 title: 'Strateji Danışma',
                 subtitle: 'Haftalık odak, ritim ve takip metrikleri için hızlı koç görüşmesi.',
-                onTap: () => context.go('/ai-hub/motivation-chat', extra: 'strategy_consult'),
+                onTap: () => context.push('/ai-hub/motivation-chat', extra: 'strategy_consult'),
                 gradient: const LinearGradient(colors: [Color(0xFF80D8FF), Color(0xFFE1F5FE)]),
               ).animate().fadeIn(delay: 320.ms).slideY(begin: 0.25, curve: Curves.easeOutCubic),
 
