@@ -9,6 +9,7 @@ import 'package:taktik/features/onboarding/providers/tutorial_provider.dart';
 import 'package:taktik/features/home/widgets/hero_header.dart';
 import 'package:taktik/shared/constants/highlight_keys.dart';
 import 'package:taktik/features/home/widgets/test_management_card.dart';
+import 'package:taktik/features/home/widgets/dashboard_stats_overview.dart';
 import 'package:taktik/shared/widgets/scaffold_with_nav_bar.dart' show rootScaffoldKey;
 import 'package:taktik/features/home/widgets/motivation_quotes_card.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
@@ -217,6 +218,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         // Hiyerarşik bölümler (YENİ AKIŞ) — ağır widget'ları izole etmek için RepaintBoundary
         final sections = <Widget>[
           const RepaintBoundary(child: HeroHeader()),
+          const RepaintBoundary(child: DashboardStatsOverview()),
           const RepaintBoundary(child: TestManagementCard()),
           // AdMob Banner
           RepaintBoundary(
