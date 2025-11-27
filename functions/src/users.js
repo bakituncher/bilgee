@@ -1,180 +1,66 @@
 const { onCall } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
+const { logger } = require("firebase-functions");
 const { db } = require("./init");
 const { dayKeyIstanbul, nowIstanbul, enforceRateLimit, enforceDailyQuota, getClientIpFromRawRequest } = require("./utils");
+const { getFirestore } = require("firebase-admin/firestore");
 
-/**
- * Deletes all data for a user when they reset their profile for a new exam.
- * This is a critical, multi-step operation handled by a callable function
- * to ensure atomicity and prevent data inconsistencies.
- */
-const resetUserDataForNewExam = onCall({ region: "us-central1", timeoutSeconds: 300, enforceAppCheck: true, maxInstances: 10 }, async (request) => {
-  if (!request.auth) {
-    throw new Error("The function must be called while authenticated.");
-  }
-  const userId = request.auth.uid;
-
-  // Rate limit ve günlük kota: suistimali önlemek için
-  const ip = getClientIpFromRawRequest(request.rawRequest) || "unknown";
-  await Promise.all([
-    enforceRateLimit(`reset_user_uid_${userId}`, 60, 2),
-    enforceRateLimit(`reset_user_ip_${ip}`, 60, 10),
-    enforceDailyQuota(`reset_user_daily_${userId}`, 2),
-  ]);
-
-  try {
-    // 0.1) Kullanıcının varlığını kontrol et
-    const userDoc = await db.collection("users").doc(userId).get();
-    if (!userDoc.exists) {
-      throw new Error("User document not found");
-    }
-
-    // 0.2) Rate limiting kontrolü (son 24 saatte kaç kez çağrıldı?)
-    const resetLogRef = db.collection("reset_logs").doc(userId);
-    const resetLog = await resetLogRef.get();
-
-    if (resetLog.exists) {
-      const lastReset = resetLog.data()?.lastReset;
-      if (lastReset && (Date.now() - lastReset.toMillis()) < 24 * 60 * 60 * 1000) {
-        throw new Error("Reset can only be performed once per 24 hours");
-      }
-    }
-
-    // 0.3) Reset log'u güncelle
-    await resetLogRef.set({
-      lastReset: admin.firestore.FieldValue.serverTimestamp(),
-      userId: userId,
-    }, { merge: true });
-
-    // 0) Helper: delete query in batches (top-level collections)
-    async function deleteQueryInBatches(query, batchSize = 300) {
-      // Loop until no docs left
-      // Each iteration loads up to batchSize docs and deletes them in a write batch
-      // to avoid timeouts and write limits.
-
-      while (true) {
-        const snap = await query.limit(batchSize).get();
-        if (snap.empty) break;
-        const batch = db.batch();
-        snap.docs.forEach((doc) => batch.delete(doc.ref));
-        await batch.commit();
-        // Small delay to yield
-        await new Promise((r) => setTimeout(r, 25));
-      }
-    }
-
-    // 1) Reset main user document fields and core state via a batch
-    const userDocRef = db.collection("users").doc(userId);
-    const batch1 = db.batch();
-    batch1.update(userDocRef, {
-      tutorialCompleted: false,
-      selectedExam: null,
-      selectedExamSection: null,
-      weeklyAvailability: {},
-      goal: null,
-      challenges: [],
-      weeklyStudyGoal: null,
-    });
-
-    // 2) Reset stats, performance, and plan documents
-    const statsRef = userDocRef.collection("state").doc("stats");
-    batch1.set(statsRef, {
-      streak: 0,
-      lastStreakUpdate: null,
-      testCount: 0,
-      totalNetSum: 0.0,
-      engagementScore: 0,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    }, { merge: true });
-
-    const performanceDocRef = userDocRef.collection("performance").doc("summary");
-    batch1.set(performanceDocRef, {
-      netGains: {}, lastTenNetAvgs: [], lastTenWarriorScores: [],
-      masteredTopics: [], recentPerformance: {}, strongestSubject: null,
-      strongestTopic: null, totalCorrect: 0, totalIncorrect: 0,
-      totalNet: 0.0, totalTests: 0, weakestSubject: null, weakestTopic: null,
-    }, { merge: true });
-
-    const planDocRef = userDocRef.collection("plans").doc("current_plan");
-    batch1.set(planDocRef, { studyPacing: "balanced", weeklyPlan: {} }, { merge: true });
-
-    // Commit the initial resets (this will also trigger onUserUpdate to clean leaderboards)
-    await batch1.commit();
-
-    // 3) Delete all documents in subcollections under the user (iterate until empty)
-    async function deleteAllDocsInSubcollection(path) {
-      // path example: users/{userId}/topic_performance
-
-      while (true) {
-        const snap = await db.collection(path).limit(300).get();
-        if (snap.empty) break;
-        const batch = db.batch();
-        snap.docs.forEach((doc) => batch.delete(doc.ref));
-        await batch.commit();
-        await new Promise((r) => setTimeout(r, 25));
-      }
-    }
-
-    // These subcollections exist under the user document
-    const subcollections = [
-      `users/${userId}/user_activity`,
-      `users/${userId}/topic_performance`,
-      `users/${userId}/savedWorkshops`,
-      `users/${userId}/daily_quests`, // Görevler sınav değiştiğinde silinir
-    ];
-
-    for (const sub of subcollections) {
-      await deleteAllDocsInSubcollection(sub);
-    }
-
-    // masteredTopics is a subcollection of the performance doc
-    await deleteAllDocsInSubcollection(`users/${userId}/performance/summary/masteredTopics`);
-
-    // 4) Delete top-level collections filtered by userId (true data locations)
-    await deleteQueryInBatches(db.collection("tests").where("userId", "==", userId));
-    await deleteQueryInBatches(db.collection("focusSessions").where("userId", "==", userId));
-
-    // Done - başarı loglaması
-    console.log(`User data reset completed for ${userId}`);
-    return { success: true, message: `User data for ${userId} has been reset.`, timestamp: Date.now() };
-  } catch (error) {
-    console.error(`Reset failed for user ${userId}:`, error);
-    throw new Error(`Reset operation failed: ${error.message}`);
-  }
-});
+// KALDIRILDI: resetUserDataForNewExam() - "Sınav Değiştir" özelliği kaldırıldı
+// Artık sadece deleteUserAccount() kullanılıyor
 
 async function computeInactivityHours(userRef) {
-  // user_activity bugun ve dunden kontrol edilir; yoksa app_state.lastActiveTs kullan
+  // Önce app_state.lastActiveTs'ye bak (en güvenilir kaynak)
+  // Yoksa user_activity bugün ve dünü kontrol et
   try {
     const now = nowIstanbul();
-    const ids = [];
-    const today = dayKeyIstanbul(now);
-    const y = new Date(now);
-    y.setDate(now.getDate() - 1);
-    const yesterday = dayKeyIstanbul(y);
-    ids.push(today, yesterday);
     let lastTs = 0;
-    for (const id of ids) {
-      const snap = await userRef.collection("user_activity").doc(id).get();
-      if (snap.exists) {
-        const data = snap.data() || {};
-        const visits = Array.isArray(data.visits) ? data.visits : [];
-        for (const v of visits) {
-          const t = typeof v === "number" ? v : (v && (v.ts || v.t)) || 0;
-          if (typeof t === "number" && t > lastTs) lastTs = t;
+
+    // 1. Öncelik: app_state.lastActiveTs (Flutter tarafında her ziyarette güncelleniyor)
+    const appStateSnap = await userRef.collection("state").doc("app_state").get();
+    if (appStateSnap.exists) {
+      const appData = appStateSnap.data() || {};
+      const t = typeof appData.lastActiveTs === "number" ? appData.lastActiveTs : 0;
+      if (t > 0) lastTs = t;
+    }
+
+    // 2. Yedek: user_activity/visits alt koleksiyonuna bak (bugün ve dün)
+    if (lastTs === 0) {
+      const today = dayKeyIstanbul(now);
+      const y = new Date(now);
+      y.setDate(now.getDate() - 1);
+      const yesterday = dayKeyIstanbul(y);
+
+      for (const dayId of [today, yesterday]) {
+        // visits alt koleksiyonundan son ziyareti oku
+        const visitsSnap = await userRef
+          .collection("user_activity")
+          .doc(dayId)
+          .collection("visits")
+          .orderBy("visitTime", "desc")
+          .limit(1)
+          .get();
+
+        if (!visitsSnap.empty) {
+          const visitDoc = visitsSnap.docs[0];
+          const visitData = visitDoc.data() || {};
+          const vt = visitData.visitTime;
+          // Firestore Timestamp veya number olabilir
+          const t = typeof vt === "object" && vt._seconds
+            ? vt._seconds * 1000
+            : typeof vt === "number" ? vt : 0;
+          if (t > lastTs) lastTs = t;
         }
       }
     }
-    if (lastTs === 0) {
-      const app = await userRef.collection("state").doc("app_state").get();
-      const t = app.exists ? (app.data() || {}).lastActiveTs : 0;
-      if (typeof t === "number") lastTs = t;
-    }
-    if (lastTs === 0) return 1e6; // bilinmiyorsa çok uzun kabul et
+
+    // 3. Hiçbir kayıt bulunamadıysa çok uzun süre inaktif kabul et
+    if (lastTs === 0) return 999999; // ~114 yıl (çok uzun süre)
+
     const diffMs = now.getTime() - lastTs;
     return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60)));
-  } catch (_) {
-    return 1e6;
+  } catch (err) {
+    logger.error("computeInactivityHours failed", { error: String(err) });
+    return 999999;
   }
 }
 
@@ -253,8 +139,361 @@ async function processAudienceInBatches(audience, batchCallback) {
   console.log(`Batch işlemi tamamlandı. Toplam işlenen kullanıcı: ${totalProcessed}`);
 }
 
+/**
+ * Kullanıcı hesabını kalıcı olarak siler.
+ * TÜM Firestore verilerini, Storage dosyalarını ve Firebase Authentication kaydını siler.
+ * Bu işlem GERİ ALINAMAZ!
+ *
+ * GÜNCELLENME TARİHİ: 2025-11-26
+ * DEĞİŞİKLİKLER:
+ * - ✨ recursiveDelete() kullanımı: Alt koleksiyonlar otomatik olarak silinir
+ * - Storage dosyaları eklendi (avatars, user_files)
+ * - Takip sistemi temizliği eklendi (followers/following)
+ * - Engelleme sistemi temizliği optimize edildi (performans güvenliği)
+ * - Moderasyon kayıtları eklendi (user_reports, user_report_index)
+ * - Analitik olaylar eklendi (analytics_events)
+ * - Rate limit/quota kayıtları eklendi
+ * - Push kampanya logları eklendi
+ * - Geliştirilmiş hata yönetimi
+ * - Detaylı loglama
+ */
+const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, enforceAppCheck: true, maxInstances: 5 }, async (request) => {
+  if (!request.auth) {
+    throw new Error("The function must be called while authenticated.");
+  }
+  const userId = request.auth.uid;
+
+  // Rate limit: Hesap silme için daha sıkı kontrol
+  const ip = getClientIpFromRawRequest(request.rawRequest) || "unknown";
+  await Promise.all([
+    enforceRateLimit(`delete_account_uid_${userId}`, 3600, 1), // Saatte 1 kez
+    enforceRateLimit(`delete_account_ip_${ip}`, 3600, 3), // IP başına saatte 3 kez
+  ]);
+
+  const deletionLog = {
+    userId,
+    startTime: Date.now(),
+    steps: [],
+    errors: []
+  };
+
+  try {
+    logger.info(`Account deletion started for user: ${userId}`);
+
+    // Helper: Batch silme fonksiyonu (üst seviye koleksiyonlar için)
+    async function deleteQueryInBatches(query, batchSize = 300, stepName = "unknown") {
+      try {
+        let totalDeleted = 0;
+        while (true) {
+          const snap = await query.limit(batchSize).get();
+          if (snap.empty) break;
+          const batch = db.batch();
+          snap.docs.forEach((doc) => batch.delete(doc.ref));
+          await batch.commit();
+          totalDeleted += snap.docs.length;
+          await new Promise((r) => setTimeout(r, 25));
+        }
+        deletionLog.steps.push({ step: stepName, deleted: totalDeleted, status: "success" });
+        logger.info(`${stepName}: ${totalDeleted} documents deleted`);
+      } catch (error) {
+        deletionLog.errors.push({ step: stepName, error: String(error) });
+        logger.error(`${stepName} failed:`, error);
+        // Devam et, tüm silme işlemini durdurmayalım
+      }
+    }
+
+
+    // Helper: Storage klasörü silme
+    async function deleteStorageFolder(path, stepName = path) {
+      try {
+        const bucket = admin.storage().bucket();
+        const [files] = await bucket.getFiles({ prefix: path });
+        let totalDeleted = 0;
+
+        // Batch silme (her seferinde 100 dosya)
+        for (let i = 0; i < files.length; i += 100) {
+          const batch = files.slice(i, i + 100);
+          await Promise.all(batch.map(file => file.delete().catch(e => {
+            logger.warn(`Failed to delete file ${file.name}:`, e);
+          })));
+          totalDeleted += batch.length;
+        }
+
+        deletionLog.steps.push({ step: stepName, deleted: totalDeleted, status: "success" });
+        logger.info(`${stepName}: ${totalDeleted} files deleted`);
+      } catch (error) {
+        deletionLog.errors.push({ step: stepName, error: String(error) });
+        logger.error(`${stepName} failed:`, error);
+      }
+    }
+
+    // === 1) ÜST SEVİYE KOLEKSİYONLARDAKİ KULLANICI VERİLERİNİ SİL (TAKİP/ENGELLEME TEMİZLİĞİ İÇİN) ===
+    // Not: Kullanıcının ana dökümanını silmeden ÖNCE, diğer koleksiyonlardaki
+    //      çapraz referansları temizlememiz gerekiyor
+    await deleteQueryInBatches(db.collection("tests").where("userId", "==", userId), 300, "Tests collection");
+    await deleteQueryInBatches(db.collection("focusSessions").where("userId", "==", userId), 300, "Focus sessions collection");
+    await deleteQueryInBatches(db.collection("posts").where("userId", "==", userId), 300, "Posts collection");
+    await deleteQueryInBatches(db.collection("questionReports").where("userId", "==", userId), 300, "Question reports collection");
+
+    // YENİ: Analitik olaylar
+    await deleteQueryInBatches(db.collection("analytics_events").where("userId", "==", userId), 300, "Analytics events collection");
+
+    // === 4) TAKİP SİSTEMİ TEMİZLİĞİ (LAZY CLEANUP - PERFORMANS GÜVENLİĞİ) ===
+    // ⚠️ ÖNCEKİ YÖNTEM:
+    //    - Kullanıcının takip ettiklerinin followers listesinden sil (N okuma/yazma)
+    //    - Kullanıcıyı takip edenlerin following listesinden sil (M okuma/yazma)
+    //    Toplam: N + M işlem (50K takipçi = 50K+ işlem = timeout + OOM riski!)
+    //
+    // ✅ YENİ YAKLAŞIM: Lazy Cleanup
+    //    1. Kullanıcının kendi followers/following koleksiyonları recursiveDelete ile silinecek
+    //    2. Karşı taraftaki "zombi" referanslar kalabilir (örn: başkasının following'inde bu kullanıcı)
+    //    3. UI tarafında profil görüntülenirken lazy cleanup yapılır:
+    //       - Kullanıcı bir profil görüntülediğinde
+    //       - Eğer o kullanıcı silinmişse (users/{id} yok)
+    //       - Kendi following/followers listesinden otomatik temizle
+    //
+    // Avantajlar:
+    //    ✅ Hesap silme anında timeout riski YOK
+    //    ✅ 50K takipçi olsa bile saniyeler içinde tamamlanır
+    //    ✅ Temizlik zamanla otomatik yapılır (kullanıcı aktivitesine bağlı)
+    //    ✅ Sistem kaynaklarını adil dağıtır (her kullanıcı kendi temizliğini yapar)
+    //
+    // Not: Kullanıcının kendi followers/following koleksiyonları zaten recursiveDelete
+    //      ile silineceği için burada HIÇBIR işlem yapmıyoruz.
+
+    deletionLog.steps.push({
+      step: "Follow system cleanup",
+      deleted: 0,
+      status: "lazy_cleanup_enabled",
+      reason: "Karşı taraf temizliği UI lazy cleanup ile yapılacak (timeout önlendi)"
+    });
+    logger.info("Follow system: Lazy cleanup enabled, no sync operations");
+
+    // === 5) ENGELLEME SİSTEMİ TEMİZLİĞİ (KALDIRILDI - PERFORMANS GÜVENLİĞİ) ===
+    // ⚠️ ÖNCEKİ YÖNTEM: Tüm kullanıcıları tarayıp "acaba beni kim engelledi?" diye bakmak
+    //    100.000 kullanıcılı sistemde TEK BİR hesap silme işlemi 100.000+ okuma yapardı!
+    //    Bu, fonksiyon timeout'una, OOM hatalarına ve maliyet patlamasına yol açardı.
+    //
+    // ✅ YENİ YAKLAŞIM: Bu taramayı hiç yapmıyoruz.
+    //    - Bir kullanıcının ID'si başkasının blocked_users listesinde kalabilir.
+    //    - UI tarafında zaten o kullanıcı "bulunamadı" olarak görünecektir.
+    //    - Sistem sağlığı ve performans için bu küçük "zombi ID" sorunu kabul edilebilir.
+    //
+    // Not: Eğer gerçekten temizlik yapılması gerekirse, bunu scheduled function
+    //      olarak arka planda yavaşça çalıştırabilirsiniz (günlük/haftalık temizlik)
+
+    deletionLog.steps.push({
+      step: "Block system cleanup",
+      deleted: 0,
+      status: "skipped_for_performance",
+      reason: "Tüm kullanıcıları taramak yerine zombi ID'lere izin veriliyor (UI güvenli)"
+    });
+    logger.info("Block system cleanup: Skipped for performance safety");
+
+
+    // === 6) MODERASYON SİSTEMİ TEMİZLİĞİ ===
+    // Kullanıcı tarafından yapılan raporlar
+    await deleteQueryInBatches(
+      db.collection("user_reports").where("reporterUserId", "==", userId),
+      300,
+      "User reports (reporter)"
+    );
+
+    // Kullanıcı hakkında yapılan raporlar
+    await deleteQueryInBatches(
+      db.collection("user_reports").where("reportedUserId", "==", userId),
+      300,
+      "User reports (reported)"
+    );
+
+    // Rapor indeksi
+    try {
+      const reportIndexRef = db.collection("user_report_index").doc(userId);
+      if ((await reportIndexRef.get()).exists) {
+        await reportIndexRef.delete();
+        deletionLog.steps.push({ step: "User report index", deleted: 1, status: "success" });
+      }
+    } catch (error) {
+      deletionLog.errors.push({ step: "User report index", error: String(error) });
+      logger.error("User report index cleanup failed:", error);
+    }
+
+    // === 7) RATE LIMIT VE QUOTA KAYITLARI TEMİZLİĞİ ===
+    // Rate limits (userId içeren tüm kayıtlar)
+    try {
+      const rateLimitSnap = await db.collection("rate_limits")
+        .where(admin.firestore.FieldPath.documentId(), ">=", userId)
+        .where(admin.firestore.FieldPath.documentId(), "<=", userId + "\uf8ff")
+        .get();
+      let deleted = 0;
+      const batch = db.batch();
+      rateLimitSnap.docs.forEach(doc => {
+        batch.delete(doc.ref);
+        deleted++;
+      });
+      if (deleted > 0) await batch.commit();
+      deletionLog.steps.push({ step: "Rate limits", deleted, status: "success" });
+    } catch (error) {
+      deletionLog.errors.push({ step: "Rate limits", error: String(error) });
+      logger.error("Rate limits cleanup failed:", error);
+    }
+
+    // Quotas (userId içeren tüm kayıtlar)
+    try {
+      const quotaSnap = await db.collection("quotas")
+        .where(admin.firestore.FieldPath.documentId(), ">=", userId)
+        .where(admin.firestore.FieldPath.documentId(), "<=", userId + "\uf8ff")
+        .get();
+      let deleted = 0;
+      const batch = db.batch();
+      quotaSnap.docs.forEach(doc => {
+        batch.delete(doc.ref);
+        deleted++;
+      });
+      if (deleted > 0) await batch.commit();
+      deletionLog.steps.push({ step: "Quotas", deleted, status: "success" });
+    } catch (error) {
+      deletionLog.errors.push({ step: "Quotas", error: String(error) });
+      logger.error("Quotas cleanup failed:", error);
+    }
+
+    // === 8) PUSH BİLDİRİM KAMPANYA LOGLARI ===
+    try {
+      const campaignsSnap = await db.collection("push_campaigns").get();
+      let logsDeleted = 0;
+      for (const campaign of campaignsSnap.docs) {
+        const logsSnap = await campaign.ref.collection("logs")
+          .where("userId", "==", userId)
+          .get();
+        const batch = db.batch();
+        logsSnap.docs.forEach(doc => {
+          batch.delete(doc.ref);
+          logsDeleted++;
+        });
+        if (logsSnap.docs.length > 0) await batch.commit();
+      }
+      deletionLog.steps.push({ step: "Push campaign logs", deleted: logsDeleted, status: "success" });
+      logger.info(`Push campaign logs: ${logsDeleted} entries deleted`);
+    } catch (error) {
+      deletionLog.errors.push({ step: "Push campaign logs", error: String(error) });
+      logger.error("Push campaign logs cleanup failed:", error);
+    }
+
+    // === 9) LİDERLİK TABLOLARINDAN KULLANICIYI TEMİZLE ===
+    try {
+      const leaderboardsSnap = await db.collection("leaderboards").get();
+      let lbDeleted = 0;
+      for (const leaderboardDoc of leaderboardsSnap.docs) {
+        const userLeaderboardRef = leaderboardDoc.ref.collection("users").doc(userId);
+        if ((await userLeaderboardRef.get()).exists) {
+          await userLeaderboardRef.delete();
+          lbDeleted++;
+        }
+      }
+      deletionLog.steps.push({ step: "Leaderboards", deleted: lbDeleted, status: "success" });
+      logger.info(`Leaderboards: ${lbDeleted} entries deleted`);
+    } catch (error) {
+      deletionLog.errors.push({ step: "Leaderboards", error: String(error) });
+      logger.error("Leaderboards cleanup failed:", error);
+    }
+
+    // === 10) PUBLIC PROFILE'I SİL ===
+    try {
+      const publicProfileRef = db.collection("public_profiles").doc(userId);
+      if ((await publicProfileRef.get()).exists) {
+        await publicProfileRef.delete();
+        deletionLog.steps.push({ step: "Public profile", deleted: 1, status: "success" });
+      }
+    } catch (error) {
+      deletionLog.errors.push({ step: "Public profile", error: String(error) });
+      logger.error("Public profile cleanup failed:", error);
+    }
+
+    // === 11) RESET VE DELETION LOGLARINI SİL ===
+    try {
+      const resetLogRef = db.collection("reset_logs").doc(userId);
+      if ((await resetLogRef.get()).exists) {
+        await resetLogRef.delete();
+        deletionLog.steps.push({ step: "Reset logs", deleted: 1, status: "success" });
+      }
+    } catch (error) {
+      deletionLog.errors.push({ step: "Reset logs", error: String(error) });
+      logger.error("Reset logs cleanup failed:", error);
+    }
+
+    // === 12) STORAGE DOSYALARINI SİL (KRİTİK - GDPR!) ===
+    await deleteStorageFolder(`avatars/${userId}/`, "Storage: avatars");
+    await deleteStorageFolder(`user_files/${userId}/`, "Storage: user_files");
+
+    // === 13) ANA KULLANICI DOKUMANI VE TÜM ALT KOLEKSİYONLARINI SİL (RECURSİVE DELETE) ===
+    // ✨ YENİ: recursiveDelete() metodu kullanılıyor
+    // Bu, users/{userId} dokümanını ve TÜM alt koleksiyonlarını otomatik olarak siler:
+    // - state, user_activity, topic_performance, savedWorkshops
+    // - daily_quests, performance, plans, devices, in_app_notifications
+    // - followers, following, blocked_users
+    // - İç içe koleksiyonlar (user_activity/{day}/visits, completed_tasks, vb.)
+    // - masteredTopics ve diğer tüm nested koleksiyonlar
+    try {
+      const firestore = getFirestore();
+      const userDocRef = db.collection("users").doc(userId);
+
+      // recursiveDelete: Döküman + tüm alt koleksiyonları siler
+      await firestore.recursiveDelete(userDocRef);
+
+      deletionLog.steps.push({
+        step: "Main user document + all subcollections (recursive)",
+        deleted: "all",
+        status: "success",
+        note: "recursiveDelete() used - all nested collections automatically deleted"
+      });
+      logger.info("User document and all subcollections recursively deleted");
+    } catch (error) {
+      deletionLog.errors.push({ step: "Recursive delete user document", error: String(error) });
+      logger.error("Recursive user document deletion failed:", error);
+      throw error; // Ana doküman silinemezse işlemi başarısız say
+    }
+
+    // === 14) FIREBASE AUTHENTICATION KAYDINI SİL (EN SON ADIM) ===
+    try {
+      await admin.auth().deleteUser(userId);
+      deletionLog.steps.push({ step: "Firebase Auth", deleted: 1, status: "success" });
+      logger.info("Firebase Auth user deleted");
+    } catch (error) {
+      deletionLog.errors.push({ step: "Firebase Auth", error: String(error) });
+      logger.error("Firebase Auth deletion failed:", error);
+      throw error; // Auth kaydı silinemezse işlemi başarısız say
+    }
+
+    // === BAŞARI LOGU ===
+    deletionLog.endTime = Date.now();
+    deletionLog.duration = deletionLog.endTime - deletionLog.startTime;
+    deletionLog.totalSteps = deletionLog.steps.length;
+    deletionLog.totalErrors = deletionLog.errors.length;
+
+    logger.info(`Account deletion completed for user: ${userId}`, deletionLog);
+
+    return {
+      success: true,
+      message: "Your account has been permanently deleted.",
+      timestamp: Date.now(),
+      stats: {
+        totalSteps: deletionLog.totalSteps,
+        totalErrors: deletionLog.totalErrors,
+        duration: deletionLog.duration
+      }
+    };
+  } catch (error) {
+    deletionLog.endTime = Date.now();
+    deletionLog.duration = deletionLog.endTime - deletionLog.startTime;
+    deletionLog.fatalError = String(error);
+
+    logger.error(`Account deletion FAILED for user ${userId}:`, deletionLog);
+    throw new Error(`Account deletion failed: ${error.message}`);
+  }
+});
+
 module.exports = {
   computeInactivityHours,
   processAudienceInBatches,
-  resetUserDataForNewExam,
+  deleteUserAccount,
 };

@@ -72,22 +72,7 @@ class ExamSelectionScreen extends ConsumerWidget {
     );
   }
 
-  Future<bool> _confirmResetIfNeeded(BuildContext context) async {
-    // Bu ekran 'Sınavı Değiştir' olarak açıldıysa tüm veriler silinecek.
-    if (!context.canPop()) return true; // onboarding akışı: reset yok, direkt devam
-    return await showDialog<bool>(
-          context: context,
-          barrierDismissible: false,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Tüm Veriler Silinecek'),
-            content: const Text('Sınavı değiştirirsen tüm denemelerin, odak seansların ve performans verilerin kalıcı olarak silinecek. Devam etmek istiyor musun?'),
-            actions: [
-              TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Vazgeç')),
-              ElevatedButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Evet, Sil')),
-            ],
-          ),
-        ) ?? false;
-  }
+  // KALDIRILDI: _confirmResetIfNeeded() - Sınav değiştirme özelliği kaldırıldı
 
   // Bu fonksiyon artık hem seçim sonrası navigasyonu hem de veritabanı kaydını yönetecek.
   Future<void> _handleSelection(BuildContext context, WidgetRef ref, Function saveData) async {
@@ -176,27 +161,17 @@ class ExamSelectionScreen extends ConsumerWidget {
     final userId = ref.read(authControllerProvider).value!.uid;
     final firestoreService = ref.read(firestoreServiceProvider);
 
-    final isChangeFlow = context.canPop();
-
     // Çok bölümlü sınavlarda (YKS) onayı burada değil, alt seçimden sonra alacağız.
     final isMultiSection = exam.sections.length > 1 && examType != ExamType.lgs;
 
-    if (isChangeFlow) {
-      final proceed = await _confirmResetIfNeeded(context);
-      if (!proceed) return;
-      await firestoreService.resetUserDataForNewExam();
-    }
-
     // Tek bölümlü sınavlar (LGS, KPSS alt türleri vb.)
     if (!isMultiSection) {
-      if (!isChangeFlow) {
-        // KPSS alt türleri için displayName zaten "KPSS Lisans" vb. döndürüyor.
-        final ok = await _confirmInitialExamSelection(
-          context,
-          examDisplayName: examType.displayName,
-        );
-        if (!ok) return;
-      }
+      // KPSS alt türleri için displayName zaten "KPSS Lisans" vb. döndürüyor.
+      final ok = await _confirmInitialExamSelection(
+        context,
+        examDisplayName: examType.displayName,
+      );
+      if (!ok) return;
 
       await _handleSelection(
         context,
@@ -237,14 +212,12 @@ class ExamSelectionScreen extends ConsumerWidget {
                           onPressed: () async {
                             Navigator.pop(ctx);
 
-                            if (!isChangeFlow) {
-                              final ok = await _confirmInitialExamSelection(
-                                context,
-                                examDisplayName: exam.name,
-                                sectionDisplayName: section.name,
-                              );
-                              if (!ok) return;
-                            }
+                            final ok = await _confirmInitialExamSelection(
+                              context,
+                              examDisplayName: exam.name,
+                              sectionDisplayName: section.name,
+                            );
+                            if (!ok) return;
 
                             await _handleSelection(
                               context,
@@ -275,7 +248,7 @@ class ExamSelectionScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: canPop ? const Text("Sınavı Değiştir") : const Text('Sınav Seçimi'),
+        title: const Text('Sınav Seçimi'),
         automaticallyImplyLeading: canPop,
       ),
       body: SafeArea(
@@ -287,9 +260,7 @@ class ExamSelectionScreen extends ConsumerWidget {
               _header(context),
               const SizedBox(height: 12),
               Text(
-                canPop
-                    ? 'Stratejilerin ve analizlerin bu seçime göre güncellenecek.'
-                    : 'Hazırlanacağın sınavı seçerek yolculuğuna devam et.',
+                'Hazırlanacağın sınavı seçerek yolculuğuna devam et.',
                 style: textTheme.titleMedium,
               ),
               const SizedBox(height: 24),

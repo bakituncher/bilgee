@@ -261,24 +261,31 @@ class _StatsPremiumOfferScreenState extends ConsumerState<StatsPremiumOfferScree
                                 ],
                               ),
 
-                              // Stats Comparison
+                              // Stats Comparison - Modern Design
                               Container(
-                                padding: const EdgeInsets.all(16),
+                                padding: const EdgeInsets.all(20),
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
                                     colors: isDark
                                         ? [
-                                            colorScheme.surfaceContainer.withOpacity(0.8),
-                                            colorScheme.surfaceContainer.withOpacity(0.6),
+                                            const Color(0xFF1A1F3A).withOpacity(0.8),
+                                            const Color(0xFF0A0E27).withOpacity(0.6),
                                           ]
                                         : [
                                             Colors.white,
-                                            colorScheme.primaryContainer.withOpacity(0.05),
+                                            const Color(0xFF2E3192).withOpacity(0.03),
                                           ],
                                   ),
-                                  borderRadius: BorderRadius.circular(16),
+                                  borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
-                                      color: colorScheme.primary.withOpacity(0.3), width: 2),
+                                      color: const Color(0xFF2E3192).withOpacity(0.3), width: 2),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFF2E3192).withOpacity(0.1),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 8),
+                                    ),
+                                  ],
                                 ),
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
@@ -288,108 +295,180 @@ class _StatsPremiumOfferScreenState extends ConsumerState<StatsPremiumOfferScree
                                         Expanded(
                                           child: Column(
                                             children: [
-                                              Text('ÜCRETSİZ',
-                                                  style: theme.textTheme.labelSmall?.copyWith(
-                                                      color: colorScheme.onSurfaceVariant,
-                                                      fontSize: 9)),
-                                              const SizedBox(height: 4),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                                decoration: BoxDecoration(
+                                                  color: colorScheme.onSurfaceVariant.withOpacity(0.1),
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                child: Text('ÜCRETSİZ',
+                                                    style: theme.textTheme.labelSmall?.copyWith(
+                                                        color: colorScheme.onSurfaceVariant,
+                                                        fontWeight: FontWeight.w800,
+                                                        fontSize: 10,
+                                                        letterSpacing: 0.5)),
+                                              ),
+                                              const SizedBox(height: 8),
                                               Text('45',
                                                   style: TextStyle(
-                                                      fontSize: 28,
+                                                      fontSize: 36,
                                                       fontWeight: FontWeight.w900,
-                                                      color: colorScheme.onSurfaceVariant)),
+                                                      color: colorScheme.onSurfaceVariant.withOpacity(0.6),
+                                                      letterSpacing: -1)),
                                             ],
                                           ),
                                         ),
                                         Container(
-                                            width: 2,
-                                            height: 40,
-                                            color: colorScheme.primary.withOpacity(0.3)),
+                                          width: 3,
+                                          height: 50,
+                                          decoration: BoxDecoration(
+                                            gradient: const LinearGradient(
+                                              colors: [Color(0xFF2E3192), Color(0xFF1BFFFF)],
+                                              begin: Alignment.topCenter,
+                                              end: Alignment.bottomCenter,
+                                            ),
+                                            borderRadius: BorderRadius.circular(2),
+                                          ),
+                                        ),
                                         Expanded(
                                           child: Column(
                                             children: [
-                                              Text('PREMIUM',
-                                                  style: theme.textTheme.labelSmall?.copyWith(
-                                                      color: colorScheme.primary, fontSize: 9)),
-                                              const SizedBox(height: 4),
-                                              Text('78',
-                                                  style: TextStyle(
-                                                      fontSize: 32,
-                                                      fontWeight: FontWeight.w900,
-                                                      color: colorScheme.primary)),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                                decoration: BoxDecoration(
+                                                  gradient: const LinearGradient(
+                                                    colors: [Color(0xFF2E3192), Color(0xFF1BFFFF)],
+                                                  ),
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                child: Text('PREMIUM',
+                                                    style: theme.textTheme.labelSmall?.copyWith(
+                                                        color: Colors.white,
+                                                        fontWeight: FontWeight.w900,
+                                                        fontSize: 10,
+                                                        letterSpacing: 0.5)),
+                                              ),
+                                              const SizedBox(height: 8),
+                                              ShaderMask(
+                                                shaderCallback: (bounds) => const LinearGradient(
+                                                  colors: [Color(0xFF2E3192), Color(0xFF1BFFFF)],
+                                                ).createShader(bounds),
+                                                child: const Text('78',
+                                                    style: TextStyle(
+                                                        fontSize: 40,
+                                                        fontWeight: FontWeight.w900,
+                                                        color: Colors.white,
+                                                        letterSpacing: -1)),
+                                              ),
                                             ],
                                           ),
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 12),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                                       decoration: BoxDecoration(
-                                        color: colorScheme.primary.withOpacity(0.15),
-                                        borderRadius: BorderRadius.circular(8),
+                                        gradient: const LinearGradient(
+                                          colors: [Color(0xFF2E3192), Color(0xFF1BFFFF)],
+                                        ),
+                                        borderRadius: BorderRadius.circular(12),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: const Color(0xFF2E3192).withOpacity(0.4),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
                                       ),
-                                      child: Text('+73% Performans',
-                                          style: theme.textTheme.bodySmall?.copyWith(
-                                            color: colorScheme.primary,
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 11,
-                                          )),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(Icons.trending_up_rounded, color: Colors.white, size: 16),
+                                          const SizedBox(width: 6),
+                                          Text('+73% Performans Artışı',
+                                              style: theme.textTheme.bodySmall?.copyWith(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w900,
+                                                fontSize: 12,
+                                              )),
+                                        ],
+                                      ),
                                     ),
                                   ],
                                 ),
                               ),
 
-                              // Features
+                              // Premium Features Grid
                               Row(
                                 children: [
-                                  _CompactFeature(
+                                  const Expanded(
+                                    child: _CompactFeature(
                                       icon: Icons.analytics_rounded,
                                       title: 'Detaylı\nAnaliz',
-                                      color: colorScheme.tertiary),
-                                  const SizedBox(width: 8),
-                                  _CompactFeature(
+                                      gradient: LinearGradient(
+                                        colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  const Expanded(
+                                    child: _CompactFeature(
                                       icon: Icons.psychology_rounded,
                                       title: 'AI\nÖnerileri',
-                                      color: colorScheme.tertiary),
-                                  const SizedBox(width: 8),
-                                  _CompactFeature(
+                                      gradient: LinearGradient(
+                                        colors: [Color(0xFF2E3192), Color(0xFF1BFFFF)],
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  const Expanded(
+                                    child: _CompactFeature(
                                       icon: Icons.show_chart_rounded,
                                       title: 'Gelişim\nTakibi',
-                                      color: colorScheme.tertiary),
+                                      gradient: LinearGradient(
+                                        colors: [Color(0xFF10B981), Color(0xFF3B82F6)],
+                                      ),
+                                    ),
+                                  ),
                                 ],
                               ),
 
-                              // Feature List
+                              // Premium Benefits List
                               Container(
-                                padding: const EdgeInsets.all(14),
+                                padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
                                     colors: isDark
                                         ? [
-                                            colorScheme.primary.withOpacity(0.15),
-                                            colorScheme.secondary.withOpacity(0.10),
+                                            const Color(0xFF2E3192).withOpacity(0.12),
+                                            const Color(0xFF1BFFFF).withOpacity(0.08),
                                           ]
                                         : [
-                                            colorScheme.primary.withOpacity(0.12),
-                                            colorScheme.secondary.withOpacity(0.08),
+                                            const Color(0xFF2E3192).withOpacity(0.08),
+                                            const Color(0xFF1BFFFF).withOpacity(0.05),
                                           ],
                                   ),
-                                  borderRadius: BorderRadius.circular(14),
+                                  borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                      color: colorScheme.primary.withOpacity(0.3), width: 2),
+                                    color: const Color(0xFF2E3192).withOpacity(0.3),
+                                    width: 1.5,
+                                  ),
                                 ),
                                 child: const Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     _FeatureItem(
-                                        icon: Icons.all_inclusive_rounded, text: 'Sınırsız analiz'),
-                                    SizedBox(height: 6),
+                                        icon: Icons.all_inclusive_rounded,
+                                        text: 'Sınırsız detaylı analiz'),
+                                    SizedBox(height: 8),
                                     _FeatureItem(
-                                        icon: Icons.insights_rounded, text: 'AI destekli öneriler'),
-                                    SizedBox(height: 6),
+                                        icon: Icons.psychology_rounded,
+                                        text: 'AI destekli akıllı öneriler'),
+                                    SizedBox(height: 8),
                                     _FeatureItem(
-                                        icon: Icons.trending_up_rounded, text: 'Gelişim takibi'),
+                                        icon: Icons.trending_up_rounded,
+                                        text: 'Gelişim grafikleri ve takip'),
                                   ],
                                 ),
                               ),
@@ -508,45 +587,68 @@ class _StatsPremiumOfferScreenState extends ConsumerState<StatsPremiumOfferScree
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: colorScheme.secondary,
                                         foregroundColor: Colors.black,
-                                        padding: const EdgeInsets.symmetric(vertical: 14),
+                                        padding: const EdgeInsets.symmetric(vertical: 16),
                                         shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(12)),
-                                        elevation: 2,
+                                            borderRadius: BorderRadius.circular(16)),
+                                        elevation: 4,
+                                        shadowColor: colorScheme.secondary.withOpacity(0.5),
                                       ),
                                       child: Row(
                                         mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
-                                          const Icon(Icons.play_circle_outline_rounded, size: 22),
-                                          const SizedBox(width: 8),
+                                          const Icon(Icons.play_circle_filled_rounded, size: 24),
+                                          const SizedBox(width: 10),
                                           Text('Reklam İzle',
-                                              style: theme.textTheme.titleSmall?.copyWith(
-                                                  color: Colors.black, fontWeight: FontWeight.bold)),
+                                              style: theme.textTheme.titleMedium?.copyWith(
+                                                  color: Colors.black,
+                                                  fontWeight: FontWeight.w900,
+                                                  letterSpacing: 0.5)),
                                         ],
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(height: 10),
-                                  // Premium'a Geç Butonu
-                                  SizedBox(
+                                  const SizedBox(height: 12),
+                                  // Premium'a Geç Butonu - Gradient Border
+                                  Container(
                                     width: double.infinity,
-                                    child: OutlinedButton(
-                                      onPressed: () => context.go('/premium'),
-                                      style: OutlinedButton.styleFrom(
-                                        foregroundColor: colorScheme.primary,
-                                        padding: const EdgeInsets.symmetric(vertical: 14),
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(12)),
-                                        side: BorderSide(color: colorScheme.primary, width: 2),
+                                    padding: const EdgeInsets.all(2),
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [Color(0xFF2E3192), Color(0xFF1BFFFF)],
                                       ),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          const Icon(Icons.workspace_premium_rounded, size: 20),
-                                          const SizedBox(width: 8),
-                                          Text('Premium\'a Geç',
-                                              style: theme.textTheme.titleSmall?.copyWith(
-                                                  color: colorScheme.primary, fontWeight: FontWeight.bold)),
-                                        ],
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: isDark ? const Color(0xFF0A0E27) : colorScheme.surface,
+                                        borderRadius: BorderRadius.circular(14),
+                                      ),
+                                      child: OutlinedButton(
+                                        onPressed: () => context.go('/premium'),
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: const Color(0xFF2E3192),
+                                          padding: const EdgeInsets.symmetric(vertical: 14),
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(14)),
+                                          side: BorderSide.none,
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            const Icon(Icons.diamond_rounded, size: 22),
+                                            const SizedBox(width: 10),
+                                            ShaderMask(
+                                              shaderCallback: (bounds) => const LinearGradient(
+                                                colors: [Color(0xFF2E3192), Color(0xFF1BFFFF)],
+                                              ).createShader(bounds),
+                                              child: Text('Premium\'a Geç',
+                                                  style: theme.textTheme.titleMedium?.copyWith(
+                                                      color: Colors.white,
+                                                      fontWeight: FontWeight.w900,
+                                                      letterSpacing: 0.5)),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -580,32 +682,66 @@ class _StatsPremiumOfferScreenState extends ConsumerState<StatsPremiumOfferScree
 class _CompactFeature extends StatelessWidget {
   final IconData icon;
   final String title;
-  final Color color;
+  final Gradient gradient;
 
-  const _CompactFeature({required this.icon, required this.title, required this.color});
+  const _CompactFeature({required this.icon, required this.title, required this.gradient});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.3)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(height: 6),
-            Text(title,
-                style: theme.textTheme.bodySmall
-                    ?.copyWith(fontWeight: FontWeight.bold, fontSize: 10, height: 1.2),
-                textAlign: TextAlign.center),
+    final isDark = theme.brightness == Brightness.dark;
+
+    // Gradient'ten ilk rengi çıkar
+    final gradientColors = gradient is LinearGradient
+        ? (gradient as LinearGradient).colors
+        : [Colors.blue];
+    final primaryColor = gradientColors.first;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            primaryColor.withOpacity(isDark ? 0.15 : 0.12),
+            primaryColor.withOpacity(isDark ? 0.08 : 0.05),
           ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: primaryColor.withOpacity(isDark ? 0.3 : 0.25),
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              gradient: gradient,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: primaryColor.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Icon(icon, color: Colors.white, size: 20),
+          ),
+          const SizedBox(height: 8),
+          Text(title,
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w900,
+                fontSize: 10.5,
+                height: 1.2,
+                letterSpacing: -0.2,
+              ),
+              textAlign: TextAlign.center),
+        ],
       ),
     );
   }
@@ -623,11 +759,29 @@ class _FeatureItem extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     return Row(
       children: [
-        Icon(icon, size: 16, color: colorScheme.primary),
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF2E3192), Color(0xFF1BFFFF)],
+            ),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Icon(icon, size: 14, color: Colors.white),
+        ),
         const SizedBox(width: 10),
         Expanded(
           child: Text(text,
-              style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600, fontSize: 12)),
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+                height: 1.3,
+              )),
+        ),
+        Icon(
+          Icons.check_circle_rounded,
+          size: 16,
+          color: const Color(0xFF1BFFFF),
         ),
       ],
     );

@@ -89,7 +89,6 @@ class HeroHeader extends ConsumerWidget {
         if (user == null) return const SizedBox.shrink();
 
         final rankInfo = RankService.getRankInfo(user.engagementScore);
-        final planProgress = ref.watch(planProgressProvider);
         final examCountdowns = _getExamCountdowns(user.selectedExam, user.selectedExamSection);
         final theme = Theme.of(context);
         final isDark = theme.brightness == Brightness.dark;
@@ -222,21 +221,6 @@ class HeroHeader extends ConsumerWidget {
                       theme: theme,
                     ),
                   ),
-
-                  if (planProgress.total > 0) ...[
-                    const SizedBox(width: 8),
-                    Expanded(
-                      flex: 2,
-                      child: _StatCard(
-                        icon: Icons.track_changes_rounded,
-                        label: 'Plan',
-                        value: '%${(planProgress.ratio * 100).toInt()}',
-                        color: theme.colorScheme.tertiary,
-                        progress: planProgress.ratio,
-                        theme: theme,
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ],

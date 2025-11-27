@@ -54,7 +54,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Header - Büyük ve Şık
+                // Header - Kullanıcı Profili
                 InkWell(
                   onTap: () { Navigator.of(context).pop(); context.go('/profile'); },
                   child: Container(
@@ -114,7 +114,8 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                     ),
                   ),
                 ),
-                // Navigation items - Tam Ekran Kullanımı
+
+                // Navigation items
                 Expanded(
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
@@ -128,30 +129,25 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                     ],
                   ),
                 ),
-                // Premium Button - En Altta Sabit
+
+                // Premium Section - GÜNCELLENMİŞ PAZARLAMA ALANI
                 Padding(
                   padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
                   child: isPremium
-                      ? Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(colors: [colorScheme.primary.withOpacity(.15), Colors.amber.withOpacity(.12)]),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: colorScheme.primary.withOpacity(.35), width: 1.5),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.workspace_premium_rounded, size: 22, color: colorScheme.primary),
-                              const SizedBox(width: 10),
-                              Text('Premium Aktif', style: theme.textTheme.titleMedium?.copyWith(color: colorScheme.primary, fontWeight: FontWeight.w800)),
-                            ],
-                          ),
-                        )
-                      : _PremiumButton(onTap: () { Navigator.of(context).pop(); context.go('/premium'); }),
+                      ? _PremiumActiveCard(colorScheme: colorScheme, theme: theme)
+                      : _PremiumOfferCard(
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      context.go('/premium');
+                    },
+                    colorScheme: colorScheme,
+                    theme: theme,
+                  ),
                 ),
+
                 const Divider(height: 1),
-                // Footer actions - Büyük ve Belirgin
+
+                // Footer actions
                 Padding(
                   padding: const EdgeInsets.fromLTRB(8, 12, 8, 12),
                   child: Row(
@@ -210,7 +206,6 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
         onTap: () {
           Navigator.of(context).pop();
           if (isPremium && !userIsPremium) {
-            // Deneme Arşivi için source=archive parametresi ekle
             if (route == '/library') {
               context.push('/stats-premium-offer?source=archive');
             } else {
@@ -364,37 +359,292 @@ class _Avatar extends StatelessWidget {
   }
 }
 
-class _PremiumButton extends StatelessWidget {
+// -----------------------------------------------------------------------------
+// PREMIUM PAZARLAMA WIDGETLARI
+// -----------------------------------------------------------------------------
+
+class _PremiumOfferCard extends StatelessWidget {
   final VoidCallback onTap;
-  const _PremiumButton({required this.onTap});
+  final ColorScheme colorScheme;
+  final ThemeData theme;
+
+  const _PremiumOfferCard({
+    required this.onTap,
+    required this.colorScheme,
+    required this.theme,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [colorScheme.primary, Colors.amber]),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: Colors.amber.withOpacity(.3), blurRadius: 16, offset: const Offset(0, 6)),
-        ],
-      ),
-      child: ElevatedButton.icon(
-        onPressed: onTap,
-        icon: Icon(Icons.workspace_premium_rounded, color: colorScheme.onPrimary, size: 24),
-        label: Text('Premium Ol', style: TextStyle(color: colorScheme.onPrimary, fontWeight: FontWeight.w900, fontSize: 17)),
-        style: ElevatedButton.styleFrom(
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          minimumSize: const Size(double.infinity, 56),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              const Color(0xFF2E3192),
+              const Color(0xFF1BFFFF).withOpacity(0.9),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF2E3192).withOpacity(0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+              spreadRadius: -2,
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            Positioned(
+              right: -15,
+              top: -15,
+              child: Icon(
+                Icons.workspace_premium_rounded,
+                size: 90,
+                color: Colors.white.withOpacity(0.05),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.white.withOpacity(0.3)),
+                        ),
+                        child: const Icon(Icons.diamond_rounded, color: Colors.white, size: 20),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Taktik PRO',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 16,
+                                letterSpacing: -0.3,
+                              ),
+                            ),
+                            Text(
+                              'Rakiplerine fark at',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: Colors.white.withOpacity(0.9),
+                                fontWeight: FontWeight.w500,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  ..._buildBenefitsList(),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Zirveye Oyna 🚀',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            color: const Color(0xFF2E3192),
+                            fontWeight: FontWeight.w900,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
+
+  List<Widget> _buildBenefitsList() {
+    final benefits = [
+      {'icon': Icons.block_rounded, 'text': 'Reklamsız Deneyim'},
+      {'icon': Icons.psychology_rounded, 'text': 'TaktikAI Desteği'},
+      {'icon': Icons.radar_rounded, 'text': 'Eksik Analizi'},
+      {'icon': Icons.all_inclusive_rounded, 'text': 'Sınırsız Arşiv'},
+      {'icon': Icons.trending_up_rounded, 'text': 'Detaylı Raporlar'},
+    ];
+
+    return benefits.map((benefit) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Row(
+          children: [
+            Icon(
+              benefit['icon'] as IconData,
+              color: Colors.white.withOpacity(0.85),
+              size: 14,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                benefit['text'] as String,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 11.5,
+                  letterSpacing: -0.1,
+                  height: 1.2,
+                ),
+              ),
+            ),
+            Icon(
+              Icons.check_circle,
+              color: Colors.greenAccent.shade100,
+              size: 14,
+            ),
+          ],
+        ),
+      );
+    }).toList();
+  }
 }
 
+class _PremiumActiveCard extends StatelessWidget {
+  final ColorScheme colorScheme;
+  final ThemeData theme;
 
+  const _PremiumActiveCard({
+    required this.colorScheme,
+    required this.theme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFFFFD700).withOpacity(0.15),
+            colorScheme.primary.withOpacity(0.05),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: const Color(0xFFFFD700).withOpacity(0.4),
+          width: 1.5,
+        ),
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            right: -10,
+            top: -10,
+            child: Icon(
+              Icons.verified_rounded,
+              size: 70,
+              color: Colors.amber.withOpacity(0.08),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          'Taktik PRO',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: colorScheme.onSurface,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        const Icon(Icons.verified, color: Colors.amber, size: 16),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.green.withOpacity(0.3)),
+                      ),
+                      child: Text(
+                        'AKTİF',
+                        style: TextStyle(
+                          color: Colors.green.shade700,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 9,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                _buildActiveFeature(Icons.block_rounded, "Reklamsız"),
+                const SizedBox(height: 6),
+                _buildActiveFeature(Icons.psychology_rounded, "TaktikAI"),
+                const SizedBox(height: 6),
+                _buildActiveFeature(Icons.all_inclusive_rounded, "Sınırsız Arşiv"),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActiveFeature(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, size: 14, color: colorScheme.primary),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: colorScheme.onSurface.withOpacity(0.8),
+              fontSize: 11.5,
+            ),
+          ),
+        ),
+        Icon(Icons.check_circle, size: 13, color: Colors.green.withOpacity(0.7)),
+      ],
+    );
+  }
+}

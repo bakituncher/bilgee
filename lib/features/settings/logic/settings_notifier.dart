@@ -55,26 +55,35 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     }
   }
 
-  // Veri sıfırlama işlemini yöneten fonksiyon
-  Future<void> resetAccountForNewExam() async {
-    state = state.copyWith(isLoading: true, resetStatus: ResetStatus.initial);
-    final userId = _ref.read(authControllerProvider).value?.uid;
+  // KALDIRILDI: resetAccountForNewExam() - Artık kullanılmıyor
 
-    if (userId == null) {
-      state = state.copyWith(isLoading: false, resetStatus: ResetStatus.failure);
-      return;
-    }
+  // Hesap silme işlemini yöneten fonksiyon
+  Future<void> deleteAccount() async {
+    state = state.copyWith(isLoading: true, resetStatus: ResetStatus.initial);
 
     try {
-      // İstemci tarafı silme işlemi yerine Cloud Function'ı çağır
+      // 1. Cloud Function'ı çağır ve bekle
       final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
-      final callable = functions.httpsCallable('users-resetUserDataForNewExam');
+      final callable = functions.httpsCallable('users-deleteUserAccount');
       await callable.call();
-      // İşlem başarılıysa durumu "success" olarak güncelle
+
+      // 2. Buraya gelindiyse işlem BAŞARILIDIR
       state = state.copyWith(isLoading: false, resetStatus: ResetStatus.success);
+
     } catch (e) {
-      // Hata olursa durumu "failure" olarak güncelle
+      // Sadece Cloud Function hata verirse buraya düşer
       state = state.copyWith(isLoading: false, resetStatus: ResetStatus.failure);
+      return; // Hata alındıysa fonksiyondan çık
+    }
+
+    // 3. Çıkış işlemini ana try-catch dışına alıyoruz
+    // Hesap sunucudan silindiği için client tarafında token hatası alınabilir,
+    // ancak bu işlemin başarısız olduğu anlamına gelmez
+    try {
+      await _ref.read(authControllerProvider.notifier).signOut();
+    } catch (e) {
+      // Çıkış yaparken oluşan hataları sessizce yutabiliriz (beklenen bir durum)
+      // Kullanıcı zaten silindiği için token geçersiz olabilir
     }
   }
 

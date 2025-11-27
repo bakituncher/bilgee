@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/data/repositories/firestore_service.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
 import 'package:taktik/features/profile/widgets/user_moderation_menu.dart';
 
@@ -111,9 +112,23 @@ class _FollowListTileState extends ConsumerState<_FollowListTile> {
     final publicAsync = ref.watch(publicProfileRawProvider(widget.targetUserId));
     final isFollowingAsync = ref.watch(isFollowingProvider(widget.targetUserId));
     final countsAsync = ref.watch(followCountsProvider(widget.targetUserId));
+    final firestoreService = ref.watch(firestoreServiceProvider);
 
     return publicAsync.when(
       data: (data) {
+        // LAZY CLEANUP: Kullanıcı silinmişse (data == null) listeden temizle
+        if (data == null && me != null) {
+          // Arka planda sessizce temizle (UI'ı bloke etme)
+          Future.microtask(() {
+            firestoreService.lazyCleanupDeletedUser(
+              currentUserId: me.uid,
+              deletedUserId: widget.targetUserId,
+            );
+          });
+          // UI'da gösterme (zaten silinmiş kullanıcı)
+          return const SizedBox.shrink();
+        }
+
         final displayName = _safeDisplayName(data);
         final avatarStyle = data?['avatarStyle'] as String?;
         final avatarSeed = data?['avatarSeed'] as String?;

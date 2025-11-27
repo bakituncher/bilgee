@@ -220,11 +220,12 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
     // AppTheme odaklı renk paleti
 
     return PopScope(
-      canPop: selectedMood == null,
+      canPop: true,
       onPopInvokedWithResult: (didPop, result) {
-        if (didPop) return;
-        if (ref.read(chatScreenStateProvider) != null) {
-          _exitToSuite();
+        if (didPop && selectedMood != null) {
+          // Sohbetten çıkılırken state'i temizle
+          ref.read(chatScreenStateProvider.notifier).state = null;
+          ref.read(chatHistoryProvider.notifier).state = [];
         }
       },
       child: Scaffold(
@@ -233,10 +234,6 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
           title: const Text('Sohbet'),
           backgroundColor: Theme.of(context).colorScheme.surface,
           elevation: 0,
-          // YENI: Sohbet içindeyken geri ikonunu Süit’e dönecek şekilde özelleştir
-          leading: selectedMood != null
-              ? BackButton(onPressed: _exitToSuite)
-              : null,
         ),
         backgroundColor: Theme.of(context).colorScheme.surface,
         body: Stack(

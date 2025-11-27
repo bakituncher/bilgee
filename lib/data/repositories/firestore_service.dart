@@ -1126,6 +1126,44 @@ class FirestoreService {
         .map((snap) => snap.exists);
   }
 
+  /// LAZY CLEANUP: Silinmiş kullanıcı referanslarını temizle
+  /// Kullanıcı bir profil görüntülediğinde, eğer o kullanıcı silinmişse
+  /// kendi followers/following listesinden otomatik olarak temizler.
+  ///
+  /// Bu sayede hesap silme işlemi timeout olmaz (50K+ takipçi senaryosu)
+  /// ve temizlik kullanıcı aktivitesine bağlı olarak zamanla tamamlanır.
+  Future<void> lazyCleanupDeletedUser({
+    required String currentUserId,
+    required String deletedUserId,
+  }) async {
+    try {
+      // Hedef kullanıcının var olup olmadığını kontrol et
+      final userDoc = await usersCollection.doc(deletedUserId).get();
+
+      // Kullanıcı hala varsa temizlemeye gerek yok
+      if (userDoc.exists) return;
+
+      // Kullanıcı silinmiş, kendi listelerimizden temizle
+      final batch = _firestore.batch();
+
+      // Current user'ın following listesinden sil (eğer varsa)
+      final followingRef = _followingCollection(currentUserId).doc(deletedUserId);
+      batch.delete(followingRef);
+
+      // Current user'ın followers listesinden sil (eğer varsa)
+      final followerRef = _followersCollection(currentUserId).doc(deletedUserId);
+      batch.delete(followerRef);
+
+      await batch.commit();
+
+      // Log (isteğe bağlı - production'da kaldırılabilir)
+      debugPrint('✅ Lazy cleanup: Deleted user $deletedUserId removed from $currentUserId lists');
+    } catch (e) {
+      // Sessizce hata yut - bu bir background cleanup işlemi
+      debugPrint('⚠️ Lazy cleanup failed for $deletedUserId: $e');
+    }
+  }
+
 
   /// Follow a user (adds docs both sides)
   // GÜVENLİK GÜNCELLEMESİ: Sayaç güncellemeleri artık Cloud Function tarafından yapılıyor.
@@ -1271,13 +1309,5 @@ class FirestoreService {
     }
   }
 
-  Future<void> resetUserDataForNewExam() async {
-    try {
-      final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
-      final callable = functions.httpsCallable('users-resetUserDataForNewExam');
-      await callable.call(<String, dynamic>{});
-    } catch (e) {
-      rethrow;
-    }
-  }
+  // KALDIRILDI: resetUserDataForNewExam() - Artık kullanılmıyor
 }
