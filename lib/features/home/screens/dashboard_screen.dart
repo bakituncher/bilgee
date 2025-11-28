@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/home/widgets/todays_plan.dart';
 import 'package:taktik/features/onboarding/providers/tutorial_provider.dart';
@@ -102,6 +103,47 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         // prefs alınamazsa sessiz geç
       }
     });
+  }
+
+  // 18+ kullanıcılar için premium ekranı kontrolü
+  void _checkAndShowPremiumForAdults() async {
+    final user = ref.read(userProfileProvider).value;
+    if (user == null) return;
+
+    // Kullanıcı zaten premium ise kontrol etmeye gerek yok
+    if (user.isPremium) return;
+
+    // Kullanıcının yaşını hesapla
+    if (user.dateOfBirth == null) return;
+
+    final now = DateTime.now();
+    final age = now.year - user.dateOfBirth!.year;
+    final hasHadBirthdayThisYear = now.month > user.dateOfBirth!.month ||
+        (now.month == user.dateOfBirth!.month && now.day >= user.dateOfBirth!.day);
+    final actualAge = hasHadBirthdayThisYear ? age : age - 1;
+
+    // 18 yaşından küçükse kontrol etmeye gerek yok
+    if (actualAge < 18) return;
+
+    try {
+      final prefs = await ref.read(sharedPreferencesProvider.future);
+      final today = DateTime.now().toString().split(' ')[0]; // YYYY-MM-DD formatı
+      final lastShownDate = prefs.getString('premium_screen_last_shown') ?? '';
+
+      // Bugün zaten gösterildiyse tekrar gösterme
+      if (lastShownDate == today) return;
+
+      // Premium ekranını göster ve tarihi kaydet
+      Future.microtask(() async {
+        if (!mounted) return;
+        await prefs.setString('premium_screen_last_shown', today);
+        if (mounted) {
+          context.go(AppRoutes.premium);
+        }
+      });
+    } catch (_) {
+      // prefs alınamazsa sessiz geç
+    }
   }
 
   Future<void> _showExpiredPlanNudge(BuildContext context) async {
@@ -211,6 +253,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Widget build(BuildContext context) {
     final userAsync = ref.watch(userProfileProvider);
     _checkAndShowExpiredPlanDialog();
+    _checkAndShowPremiumForAdults(); // 18+ kullanıcılar için premium ekran kontrolü
 
     return userAsync.when(
       data: (user) {
