@@ -37,6 +37,13 @@ const PREMIUM_RATE_LIMIT_PER_HOUR = parseInt(process.env.PREMIUM_RATE_LIMIT_PER_
 const MAX_RETRY_ATTEMPTS = 3;
 const RETRY_DELAY_MS = 2000; // 2 saniye
 
+// YENİ: Kategori bazlı aylık limitler
+const MONTHLY_LIMITS = {
+  workshop: 350,    // Cevher Atölyesi
+  weekly_plan: 60,  // Haftalık Plan
+  chat: 2000         // Sohbet / Motivasyon
+};
+
 // Exponential backoff ile retry helper
 async function retryWithBackoff(fn, maxAttempts = MAX_RETRY_ATTEMPTS, baseDelay = RETRY_DELAY_MS) {
   let lastError;
@@ -80,6 +87,14 @@ exports.generateGemini = onCall(
 
     const prompt = request.data?.prompt;
     const expectJson = !!request.data?.expectJson;
+
+    // YENİ: İstemciden gelen işlem türünü al, varsayılan 'chat'
+    const requestType = request.data?.requestType || 'chat';
+
+    // Geçersiz tür kontrolü
+    if (!Object.keys(MONTHLY_LIMITS).includes(requestType)) {
+      throw new HttpsError("invalid-argument", "Geçersiz işlem türü.");
+    }
 
     // Sıcaklık aralığını güvenli tut; JSON isteklerinde daha deterministik
     let temperature = 0.7;
@@ -136,24 +151,34 @@ exports.generateGemini = onCall(
       );
     }
 
-    // AYLIK "yıldız" kotası (günlük yerine aylık yenilenir - MALİYET OPTİMİZASYONU)
-    const currentMonth = new Date().toLocaleString('sv-SE', { timeZone: 'Europe/Istanbul' }).substring(0, 7); // Örn: '2025-10'
-    const starRef = db.collection("users").doc(request.auth.uid).collection("stars").doc(currentMonth);
+    // --- YENİ AYLIK KOTA SİSTEMİ ---
+    const currentMonth = new Date().toLocaleString('sv-SE', { timeZone: 'Europe/Istanbul' }).substring(0, 7); // 'YYYY-MM'
+    const usageRef = db.collection("users").doc(request.auth.uid).collection("monthly_usage").doc(currentMonth);
+
     await db.runTransaction(async (tx) => {
-      const starDoc = await tx.get(starRef);
-      if (!starDoc.exists) {
-        // Belge yoksa, varsayılan 1500 aylık yıldızla oluştur ve bu çağrı için 1 düş
-        tx.set(starRef, { balance: 1499, createdAt: new Date() });
-        logger.info(`Monthly star quota initialized for user ${request.auth.uid}`, { month: currentMonth, balance: 1499 });
-      } else {
-        const currentBalance = starDoc.data().balance || 0;
-        if (currentBalance <= 0) {
-          throw new HttpsError("resource-exhausted", "Aylık AI kullanım limitine ulaştınız.");
+      const usageDoc = await tx.get(usageRef);
+      const usageData = usageDoc.exists ? usageDoc.data() : {};
+
+      const currentUsage = usageData[requestType] || 0;
+      const limit = MONTHLY_LIMITS[requestType];
+
+      if (currentUsage >= limit) {
+        let featureName = "";
+        switch(requestType) {
+          case 'workshop': featureName = "Cevher Atölyesi"; break;
+          case 'weekly_plan': featureName = "Haftalık Plan"; break;
+          default: featureName = "Sohbet"; break;
         }
-        tx.update(starRef, { balance: currentBalance - 1 });
-        logger.info(`Star deducted for user ${request.auth.uid}`, { month: currentMonth, newBalance: currentBalance - 1 });
+        throw new HttpsError("resource-exhausted", `Bu ayki ${featureName} limitinize (${limit}) ulaştınız. Limitler her ayın başında yenilenir.`);
       }
+
+      // Kullanımı artır
+      tx.set(usageRef, {
+        [requestType]: admin.firestore.FieldValue.increment(1),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
     });
+    // ----------------------------------
 
     try {
       // İsteğe bağlı maxOutputTokens (güvenli aralıkta kırpılır)
@@ -242,31 +267,25 @@ exports.generateGemini = onCall(
       const usage = data?.usageMetadata || {};
       // Bazı sürümlerde usageMetadata alanları: promptTokenCount, candidatesTokenCount, totalTokenCount
       const tokensUsed = Number(usage.totalTokenCount || 0);
-      logger.info("Gemini call ok", { modelId, tokensUsed, uid: request.auth.uid.substring(0, 6) + "***" });
+      logger.info("Gemini call ok", { modelId, tokensUsed, uid: request.auth.uid.substring(0, 6) + "***", requestType });
 
-      // Günlük kullanım logu (maliyet görünürlüğü için) - NON-BLOCKING FIRE-AND-FORGET
+      // İstatistik loglama (Maliyet takibi için)
       try {
         const day = dayKeyIstanbul();
-        const usageRef = db.collection("ai_usage").doc(`${request.auth.uid}_${day}`);
-        const modelKey = `models.${modelId}`; // Dinamik alan adı için
+        const usageStatsRef = db.collection("ai_usage").doc(`${request.auth.uid}_${day}`);
+        const modelKey = `models.${modelId}`;
+        const typeKey = `types.${requestType}`;
 
-        // 'await' kullanma - arka planda çalışsın, fonksiyon hemen yanıt dönsün
-        usageRef.set({
+        usageStatsRef.set({
           uid: request.auth.uid,
           day,
-          createdAt: admin.firestore.FieldValue.serverTimestamp(), // Sadece ilk oluşturmada set eder
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(), // Her zaman günceller
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
           calls: admin.firestore.FieldValue.increment(1),
           tokensUsedTotal: admin.firestore.FieldValue.increment(tokensUsed),
           [`${modelKey}.calls`]: admin.firestore.FieldValue.increment(1),
-          [`${modelKey}.tokens`]: admin.firestore.FieldValue.increment(tokensUsed),
-        }, { merge: true }).catch((logErr) => {
-          // Başarısız olursa ana çağrıyı engelleme, sadece logla
-          logger.warn("ai_usage log failed (non-blocking)", { error: String(logErr) });
-        });
-      } catch (logErr) {
-        logger.warn("ai_usage log setup failed", { error: String(logErr) });
-      }
+          [`${typeKey}.calls`]: admin.firestore.FieldValue.increment(1),
+        }, { merge: true }).catch(() => {});
+      } catch (e) {}
 
       // Geriye dönük uyumlu alanlar: raw, tokensLimit, modelId
       return { raw: candidate, tokensLimit: effectiveMaxTokens, modelId, tokensUsed };
