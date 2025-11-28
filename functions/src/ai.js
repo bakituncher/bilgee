@@ -97,7 +97,7 @@ exports.generateGemini = onCall(
     }
 
     // Sıcaklık aralığını güvenli tut; JSON isteklerinde daha deterministik
-    let temperature = 0.7;
+    let temperature = 0.5;
     if (typeof request.data?.temperature === "number" && isFinite(request.data.temperature)) {
       temperature = Math.min(1.0, Math.max(0.1, request.data.temperature));
     }
