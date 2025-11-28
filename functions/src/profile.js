@@ -65,7 +65,7 @@ async function adjustUserFollowCounts(uid, { followersDelta = 0, followingDelta 
       await ref.update(dataToUpdate);
     } catch (error) {
       // Belge bulunamadı hatası (kullanıcı silinmiş) - sessizce logla
-      if (error.code === 'not-found') {
+      if (error.code === "not-found") {
         logger.info(`User ${uid} not found during follow count adjustment (likely deleted). Skipping.`);
       } else {
         // Diğer hatalar için yeniden fırlat

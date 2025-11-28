@@ -22,10 +22,10 @@ class QuestService {
   bool _inProgress = false;
 
   /// LAZY LOADING: Kullanıcı uygulamayı açtığında görevlerini kontrol eder.
-  /// Eğer bugün için güncel değilse, backend'de otomatik yeniler.
-  /// Bu yaklaşım sürdürülebilir ve maliyet-efektiftir.
+  /// Backend artık güncel görev listesini de döndürüyor (Double-Read Optimizasyonu).
   Future<List<Quest>> checkAndRefreshQuests(String userId) async {
     if (_inProgress) {
+      // Eğer işlem zaten devam ediyorsa, Firestore'dan mevcut snapshot'ı dönmeyi dene
       return await _ref.read(firestoreServiceProvider).getDailyQuestsOnce(userId);
     }
     _inProgress = true;
@@ -45,7 +45,22 @@ class QuestService {
         }
       }
 
-      // Her iki durumda da (yenilendi ya da zaten güncel) güncel görevleri döndür
+      // OPTİMİZASYON: Backend'den dönen listeyi kullan, tekrar okuma yapma
+      if (data['quests'] != null) {
+        final List<dynamic> rawQuests = data['quests'];
+        final List<Quest> quests = rawQuests.map((q) {
+           // Backend'den gelen veriyi modele çevir
+           // ID alanı 'id' veya 'qid' olarak gelebilir
+           final questData = Map<String, dynamic>.from(q);
+           final id = questData['id'] ?? questData['qid'] ?? '';
+           return Quest.fromMap(questData, id);
+        }).toList();
+
+        _ref.read(questGenerationIssueProvider.notifier).state = false;
+        return quests;
+      }
+
+      // Fallback: Backend liste dönmezse Firestore'dan oku
       final quests = await _ref.read(firestoreServiceProvider).getDailyQuestsOnce(userId);
       _ref.read(questGenerationIssueProvider.notifier).state = false;
       return quests;
@@ -56,7 +71,7 @@ class QuestService {
         debugPrint(st.toString());
       }
       _ref.read(questGenerationIssueProvider.notifier).state = true;
-      // Hata durumunda mevcut görevleri döndür
+      // Hata durumunda mevcut görevleri döndür (Fallback)
       try {
         return await _ref.read(firestoreServiceProvider).getDailyQuestsOnce(userId);
       } catch (_) {
@@ -76,17 +91,19 @@ class QuestService {
       final today = DateTime.now();
       final lastRefresh = user.lastQuestRefreshDate?.toDate();
 
-      // Mevcut görevleri oku
+      // Mevcut görevleri oku (cache kontrolü için)
       List<Quest> existingQuests = [];
       try {
         existingQuests = await _ref.read(firestoreServiceProvider).getDailyQuestsOnce(user.id);
       } on FirebaseException catch (e) {
+         // İzin hatası vb. durumları yönet
         if (e.code == 'permission-denied') {
           if (kDebugMode) debugPrint('[QuestService] daily_quests permission-denied');
           _ref.read(questGenerationIssueProvider.notifier).state = true;
           return [];
         }
-        rethrow;
+        // Diğer hataları yutma
+        if (kDebugMode) debugPrint('[QuestService] read error: $e');
       }
 
       // Bugün zaten üretilmiş ve force değilse direkt dön
@@ -96,26 +113,36 @@ class QuestService {
 
       // Sunucu tarafı yeniden üretim (callable function)
       try {
-        // App Check tokenının hazır olduğundan emin ol
         await ensureAppCheckTokenReady();
         final functions = _ref.read(functionsProvider);
         final callable = functions.httpsCallable('quests-regenerateDailyQuests');
-        await callable.call(); // No more parameters needed
-        // Üretim sonrası tekrar oku
-        final refreshed = await _ref.read(firestoreServiceProvider).getDailyQuestsOnce(user.id);
+        final result = await callable.call();
 
         // ÖNEMLİ: Günlük görevler yenilendiğinde session state'i temizle
         _ref.read(sessionCompletedQuestsProvider.notifier).state = <String>{};
-
         _ref.read(questGenerationIssueProvider.notifier).state = false;
-        return refreshed;
+
+        // OPTİMİZASYON: Backend'den dönen listeyi kullan
+        final data = result.data as Map<String, dynamic>;
+        if (data['quests'] != null) {
+          final List<dynamic> rawQuests = data['quests'];
+          return rawQuests.map((q) {
+             final questData = Map<String, dynamic>.from(q);
+             final id = questData['id'] ?? questData['qid'] ?? '';
+             return Quest.fromMap(questData, id);
+          }).toList();
+        }
+
+        // Fallback
+        return await _ref.read(firestoreServiceProvider).getDailyQuestsOnce(user.id);
+
       } catch (e, st) {
         if (kDebugMode) {
           debugPrint('[QuestService] server generation failed: $e');
           debugPrint(st.toString());
         }
-        // Sunucu başarısızsa mevcutu döner (UX bozulmasın)
         _ref.read(questGenerationIssueProvider.notifier).state = true;
+        // Sunucu başarısızsa mevcutu döner (UX bozulmasın)
         return existingQuests;
       }
     } finally {

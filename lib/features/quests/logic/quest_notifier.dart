@@ -21,25 +21,26 @@ class QuestNotifier extends StateNotifier<bool> {
   final Ref _ref;
 
   QuestNotifier(this._ref) : super(false) {
-    // Pomodoro gibi arkaplan state'lerini dinlemeye devam et.
+    // Pomodoro ve diğer state'leri dinlemeye devam et, ancak
+    // artık backend triggerları ana işi yaptığı için client-side çağrıları azalttık.
     _listenToSystemEvents();
   }
 
-  /// Pomodoro gibi state değişikliklerini dinleyerek görevleri günceller.
   void _listenToSystemEvents() {
     _ref.listen<PomodoroModel>(pomodoroProvider, (previous, next) {
-      // Sadece 'completed' durumuna ilk geçişte tetikle ve henüz ödüllendirilmemişse
+      // Pomodoro tamamlanınca feature usage'ı güncelle, ama görev ilerlemesini backend hallediyor.
       if (previous?.sessionState != PomodoroSessionState.completed &&
           next.sessionState == PomodoroSessionState.completed &&
           next.lastResult != null &&
           !(next.lastResultRewarded)) {
+
         userCompletedPomodoroSession(next.lastResult!.totalFocusSeconds);
         // Tekrarlamayı engelle
         _ref.read(pomodoroProvider.notifier).markLastResultRewarded();
       }
     });
 
-    // Haftalık plan tamamlamalarını dinle ve Study görevlerini ilerlet
+    // Haftalık plan tamamlamalarını dinle
     final today = DateTime.now();
     _ref.listen(completedTasksForDateProvider(today), (prev, next) {
       final int prevCount = prev?.maybeWhen(data: (List<String> l) => l.length, orElse: () => 0) ?? 0;
@@ -52,6 +53,9 @@ class QuestNotifier extends StateNotifier<bool> {
   }
 
   /// Merkezi Eylem Raporlama Fonksiyonu - Sunucu tarafında görev günceller
+  /// GÜVENLİK NOTU: Practice, Study, Focus gibi kategoriler artık backend triggerları
+  /// ile yönetildiği için, bu fonksiyon sadece 'engagement' ve 'consistency' gibi
+  /// soft-actionlar için kullanılmalıdır.
   Future<void> _reportAction(
     QuestCategory category, {
     int amount = 1,
@@ -67,12 +71,10 @@ class QuestNotifier extends StateNotifier<bool> {
         'amount': amount,
       };
 
-      // Route bazlı filtreleme
       if (route != null) {
         params['routeKey'] = route.name;
       }
 
-      // Tag bazlı filtreleme
       if (tags != null && tags.isNotEmpty) {
         params['tags'] = tags;
       }
@@ -90,7 +92,6 @@ class QuestNotifier extends StateNotifier<bool> {
         }
       }
 
-      // Provider'ları yenile
       _ref.invalidate(optimizedQuestsProvider);
 
     } catch (e) {
@@ -102,31 +103,18 @@ class QuestNotifier extends StateNotifier<bool> {
 
   // --- EYLEM BAZLI METOTLAR ---
 
-  /// Kullanıcı bir Pomodoro seansını tamamladığında bu metot çağrılır.
+  /// Kullanıcı bir Pomodoro seansını tamamladığında
   void userCompletedPomodoroSession(int focusSeconds) {
-    final int minutes = focusSeconds ~/ 60;
-    if (minutes > 0) {
-      // Focus kategorisi görevlerini güncelle
-      _reportAction(
-        QuestCategory.focus,
-        amount: minutes,
-        route: QuestRoute.pomodoro,
-        tags: ['pomodoro', 'deep_work'],
-      );
-
-      // Study kategorisi görevlerini de güncelle (comprehensive study gibi)
-      _reportAction(
-        QuestCategory.study,
-        amount: minutes,
-        route: QuestRoute.pomodoro,
-        tags: ['intensive', 'productivity'],
-      );
-    }
+    // GÜVENLİK GÜNCELLEMESİ: Backend Trigger (onFocusSessionCreated) artık görevleri ilerletiyor.
+    // Client sadece 'feature usage' takibi yapıyor.
     _updateUserFeatureUsage('pomodoro');
   }
 
-  /// Haftalık planından bir görev tamamlandığında çağrılır (Planlı Harekât vb.).
+  /// Haftalık planından bir görev tamamlandığında
   void userCompletedWeeklyPlanTask() {
+    // Weekly plan henüz backend trigger'a tam entegre değilse client-side devam edebilir
+    // veya bu da 'study' kategorisine giriyorsa kısıtlanmalı.
+    // Şimdilik engagement olarak bırakıyoruz.
     _reportAction(
       QuestCategory.study,
       amount: 1,
@@ -136,67 +124,49 @@ class QuestNotifier extends StateNotifier<bool> {
     _updateUserFeatureUsage('weeklyPlan');
   }
 
-  /// Kullanıcı "Cevher Atölyesi"nde bir quiz bitirdiğinde bu metot çağrılır.
+  /// Cevher Atölyesi quiz tamamlandı
   void userCompletedWorkshopQuiz(String subject, String topic) {
-    _reportAction(
-      QuestCategory.practice,
-      amount: 1,
-      route: QuestRoute.workshop,
-      tags: ['workshop', subject.toLowerCase()],
-    );
+    // GÜVENLİK GÜNCELLEMESİ: Backend'de 'onTestCreated' trigger'ı bunu yakalamalı
+    // (Workshop quizleri de 'tests' koleksiyonuna yazılıyorsa).
+    // Eğer yazılmıyorsa, workshop için özel trigger gerekecektir.
+    // Varsayım: Workshop sonuçları 'tests'e yazılmıyorsa client-side devam etmeli,
+    // FAKAT backend 'practice' kategorisini blokladığı için bu çağrı başarısız olur.
+    // DOĞRU YOL: Workshop sonuçlarının da bir dokümana yazılmasını sağlamak.
     _updateUserFeatureUsage('workshop');
-    if (kDebugMode) {
-      debugPrint('[QuestNotifier] Atölye quizi tamamlandı - $subject/$topic');
-    }
   }
 
-  /// Kullanıcı yeni bir deneme sonucu eklediğinde bu metot çağrılır.
+  /// Yeni deneme sonucu eklendi
   void userSubmittedTest() {
-    _reportAction(
-      QuestCategory.test_submission,
-      amount: 1,
-      route: QuestRoute.addTest,
-      tags: ['test', 'analysis'],
-    );
+    // GÜVENLİK GÜNCELLEMESİ: Backend Trigger (onTestCreated) hallediyor.
     _updateUserFeatureUsage('testSubmission');
   }
 
-  /// Kullanıcı bir konunun performansını manuel olarak güncellediğinde bu metot çağrılır.
+  /// Konu performansı güncellendi (manuel)
   void userUpdatedTopicPerformance(String subject, String topic, int questionCount) {
-    _reportAction(
-      QuestCategory.practice,
-      amount: questionCount,
-      route: QuestRoute.coach,
-      tags: ['topic_update', subject.toLowerCase()],
-    );
-    _reportAction(
-      QuestCategory.study,
-      amount: 1,
-      tags: ['mastery'],
-    );
+    // Bu manuel bir giriş olduğu için 'practice' sayılmalı mı tartışmalı,
+    // ancak backend blokladığı için client'tan gönderemeyiz.
+    // Kullanıcının manuel veri girişini görev saymak hileye açık olabilir.
+    // Şimdilik sadece usage update.
+    _updateUserFeatureUsage('topicPerformance');
   }
 
-  /// Kullanıcı yeni bir stratejik planı onayladığında bu metot çağrılır.
+  /// Stratejik plan onaylandı
   void userApprovedStrategy() {
     _reportAction(
-      QuestCategory.engagement,
+      QuestCategory.engagement, // Engagement hala açık
       amount: 1,
       route: QuestRoute.strategy,
       tags: ['strategy', 'planning'],
     );
     _updateUserFeatureUsage('strategy');
     _markUserCreatedStrategicPlan();
-    if (kDebugMode) {
-      debugPrint('[QuestNotifier] Stratejik plan onaylandı - görevler güncellendi');
-    }
   }
 
-  /// Kullanıcı giriş yaptığında veya uygulamayı açtığında tutarlılık görevlerini tetikler.
+  /// Giriş yapıldı
   void userLoggedInOrOpenedApp() {
-    // Session state'i temizle - günlük görevler yenilendiğinde eski tamamlanmışları temizlemek için
     _ref.read(sessionCompletedQuestsProvider.notifier).state = <String>{};
     _reportAction(
-      QuestCategory.consistency,
+      QuestCategory.consistency, // Consistency hala açık
       amount: 1,
       tags: ['login', 'daily'],
     );
@@ -204,18 +174,11 @@ class QuestNotifier extends StateNotifier<bool> {
 
   /// Kullanıcı bir soru çözdüğünde (coach'ta)
   void userSolvedQuestions(int questionCount, {String? subject, String? topic}) {
-    final tags = <String>['practice'];
-    if (subject != null) tags.add(subject.toLowerCase());
-
-    _reportAction(
-      QuestCategory.practice,
-      amount: questionCount,
-      route: QuestRoute.coach,
-      tags: tags,
-    );
+    // GÜVENLİK GÜNCELLEMESİ: Test sonucu kaydedilince backend halledecek.
+    // Anlık soru çözümleri (deneme değilse) için backend kaydı şart.
   }
 
-  /// Kullanıcı arena'da yarışmaya katıldığında
+  /// Arena katılımı
   Future<void> userParticipatedInArena() async {
     await _reportAction(
       QuestCategory.engagement,
@@ -226,7 +189,7 @@ class QuestNotifier extends StateNotifier<bool> {
     _updateUserFeatureUsage('arena');
   }
 
-  /// Kullanıcı kütüphaneyi ziyaret ettiğinde
+  /// Kütüphane ziyareti
   Future<void> userVisitedLibrary() async {
     await _reportAction(
       QuestCategory.engagement,
@@ -236,7 +199,7 @@ class QuestNotifier extends StateNotifier<bool> {
     );
   }
 
-  /// Kullanıcı stats raporunu görüntülediğinde
+  /// Stats raporu görüntüleme
   void userViewedStatsReport() {
     _reportAction(
       QuestCategory.engagement,
@@ -247,7 +210,7 @@ class QuestNotifier extends StateNotifier<bool> {
     _updateUserFeatureUsage('stats');
   }
 
-  /// Kullanıcı avatarını özelleştirdiğinde
+  /// Avatar özelleştirme
   void userCustomizedAvatar() {
     _reportAction(
       QuestCategory.engagement,
@@ -258,7 +221,7 @@ class QuestNotifier extends StateNotifier<bool> {
     _updateUserFeatureUsage('avatar');
   }
 
-  /// Kullanıcı motivasyon chat'i kullandığında
+  /// Motivasyon chat kullanımı
   void userUsedMotivationChat() {
     _reportAction(
       QuestCategory.engagement,
@@ -269,7 +232,7 @@ class QuestNotifier extends StateNotifier<bool> {
     _updateUserFeatureUsage('motivationChat');
   }
 
-  /// Kullanıcı profil ekranını ziyaret ettiğinde
+  /// Profil ziyareti
   void userVisitedProfile() {
     _reportAction(
       QuestCategory.engagement,
@@ -279,17 +242,14 @@ class QuestNotifier extends StateNotifier<bool> {
     );
   }
 
-  /// Legacy metod - geriye dönük uyumluluk için
   void updateQuestProgressById(String questId, {int amount = 1}) {
-    // Artık kullanılmıyor - kategori bazlı güncelleme kullanın
     if (kDebugMode) {
-      debugPrint('[QuestNotifier] updateQuestProgressById deprecated - use category-based methods instead');
+      debugPrint('[QuestNotifier] updateQuestProgressById deprecated');
     }
   }
 
   // --- YARDIMCI METOTLAR ---
 
-  /// Kullanıcının bir özelliği kullandığını Firestore'da işaretler
   void _updateUserFeatureUsage(String featureName) {
     final user = _ref.read(userProfileProvider).value;
     if (user == null) return;
@@ -307,7 +267,6 @@ class QuestNotifier extends StateNotifier<bool> {
     }
   }
 
-  /// Kullanıcının stratejik plan oluşturduğunu işaretler
   void _markUserCreatedStrategicPlan() {
     final user = _ref.read(userProfileProvider).value;
     if (user == null) return;
@@ -326,4 +285,3 @@ class QuestNotifier extends StateNotifier<bool> {
     }
   }
 }
-

@@ -45,9 +45,9 @@ async function computeInactivityHours(userRef) {
           const visitData = visitDoc.data() || {};
           const vt = visitData.visitTime;
           // Firestore Timestamp veya number olabilir
-          const t = typeof vt === "object" && vt._seconds
-            ? vt._seconds * 1000
-            : typeof vt === "number" ? vt : 0;
+          const t = typeof vt === "object" && vt._seconds ?
+            vt._seconds * 1000 :
+            typeof vt === "number" ? vt : 0;
           if (t > lastTs) lastTs = t;
         }
       }
@@ -174,7 +174,7 @@ const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, e
     userId,
     startTime: Date.now(),
     steps: [],
-    errors: []
+    errors: [],
   };
 
   try {
@@ -213,7 +213,7 @@ const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, e
         // Batch silme (her seferinde 100 dosya)
         for (let i = 0; i < files.length; i += 100) {
           const batch = files.slice(i, i + 100);
-          await Promise.all(batch.map(file => file.delete().catch(e => {
+          await Promise.all(batch.map((file) => file.delete().catch((e) => {
             logger.warn(`Failed to delete file ${file.name}:`, e);
           })));
           totalDeleted += batch.length;
@@ -265,7 +265,7 @@ const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, e
       step: "Follow system cleanup",
       deleted: 0,
       status: "lazy_cleanup_enabled",
-      reason: "Karşı taraf temizliği UI lazy cleanup ile yapılacak (timeout önlendi)"
+      reason: "Karşı taraf temizliği UI lazy cleanup ile yapılacak (timeout önlendi)",
     });
     logger.info("Follow system: Lazy cleanup enabled, no sync operations");
 
@@ -286,7 +286,7 @@ const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, e
       step: "Block system cleanup",
       deleted: 0,
       status: "skipped_for_performance",
-      reason: "Tüm kullanıcıları taramak yerine zombi ID'lere izin veriliyor (UI güvenli)"
+      reason: "Tüm kullanıcıları taramak yerine zombi ID'lere izin veriliyor (UI güvenli)",
     });
     logger.info("Block system cleanup: Skipped for performance safety");
 
@@ -296,14 +296,14 @@ const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, e
     await deleteQueryInBatches(
       db.collection("user_reports").where("reporterUserId", "==", userId),
       300,
-      "User reports (reporter)"
+      "User reports (reporter)",
     );
 
     // Kullanıcı hakkında yapılan raporlar
     await deleteQueryInBatches(
       db.collection("user_reports").where("reportedUserId", "==", userId),
       300,
-      "User reports (reported)"
+      "User reports (reported)",
     );
 
     // Rapor indeksi
@@ -327,7 +327,7 @@ const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, e
         .get();
       let deleted = 0;
       const batch = db.batch();
-      rateLimitSnap.docs.forEach(doc => {
+      rateLimitSnap.docs.forEach((doc) => {
         batch.delete(doc.ref);
         deleted++;
       });
@@ -346,7 +346,7 @@ const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, e
         .get();
       let deleted = 0;
       const batch = db.batch();
-      quotaSnap.docs.forEach(doc => {
+      quotaSnap.docs.forEach((doc) => {
         batch.delete(doc.ref);
         deleted++;
       });
@@ -366,7 +366,7 @@ const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, e
           .where("userId", "==", userId)
           .get();
         const batch = db.batch();
-        logsSnap.docs.forEach(doc => {
+        logsSnap.docs.forEach((doc) => {
           batch.delete(doc.ref);
           logsDeleted++;
         });
@@ -444,7 +444,7 @@ const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, e
         step: "Main user document + all subcollections (recursive)",
         deleted: "all",
         status: "success",
-        note: "recursiveDelete() used - all nested collections automatically deleted"
+        note: "recursiveDelete() used - all nested collections automatically deleted",
       });
       logger.info("User document and all subcollections recursively deleted");
     } catch (error) {
@@ -479,8 +479,8 @@ const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, e
       stats: {
         totalSteps: deletionLog.totalSteps,
         totalErrors: deletionLog.totalErrors,
-        duration: deletionLog.duration
-      }
+        duration: deletionLog.duration,
+      },
     };
   } catch (error) {
     deletionLog.endTime = Date.now();

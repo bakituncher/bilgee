@@ -25,7 +25,7 @@ function checkRateLimit(userId, action, maxRequests = 10, windowMs = 60000) {
 
   const requests = rateLimitCache.get(key);
   // Eski istekleri temizle
-  const validRequests = requests.filter(timestamp => now - timestamp < windowMs);
+  const validRequests = requests.filter((timestamp) => now - timestamp < windowMs);
 
   if (validRequests.length >= maxRequests) {
     return true; // Rate limit aşıldı
@@ -48,7 +48,7 @@ function checkRateLimit(userId, action, maxRequests = 10, windowMs = 60000) {
 function cleanupRateLimit() {
   const now = Date.now();
   for (const [key, timestamps] of rateLimitCache.entries()) {
-    const valid = timestamps.filter(t => now - t < 300000); // 5 dakika
+    const valid = timestamps.filter((t) => now - t < 300000); // 5 dakika
     if (valid.length === 0) {
       rateLimitCache.delete(key);
     } else {
@@ -87,7 +87,7 @@ exports.blockUser = onCall({
   if (checkRateLimit(userId, "block", 5, 60000)) {
     throw new HttpsError(
       "resource-exhausted",
-      "Çok fazla engelleme isteği. Lütfen bir süre bekleyin."
+      "Çok fazla engelleme isteği. Lütfen bir süre bekleyin.",
     );
   }
 
@@ -262,7 +262,7 @@ exports.reportUser = onCall({
     logger.warn("reportUser: rate limit exceeded", { reporterId });
     throw new HttpsError(
       "resource-exhausted",
-      "Çok fazla raporlama isteği. Lütfen bir süre bekleyin."
+      "Çok fazla raporlama isteği. Lütfen bir süre bekleyin.",
     );
   }
 
@@ -490,7 +490,7 @@ exports.adminListReports = onCall({
       .limit(limit)
       .get();
 
-    const reports = snapshot.docs.map(doc => ({
+    const reports = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     }));

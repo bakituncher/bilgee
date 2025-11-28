@@ -1,12 +1,16 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { onDocumentWritten } = require("firebase-functions/v2/firestore");
-const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions");
 const { db, admin } = require("./init");
 const { nowIstanbul, routeKeyFromPath } = require("./utils");
 const { enforceRateLimit, enforceDailyQuota, getClientIpFromRawRequest } = require("./utils");
 const fs = require("fs");
 const path = require("path");
+
+// Triggerları Dahil Et
+const { onTestCreated, onFocusSessionCreated } = require("./triggers/quest_triggers");
+exports.onTestCreated = onTestCreated;
+exports.onFocusSessionCreated = onFocusSessionCreated;
 
 // Görev şablonları
 const QUEST_TEMPLATES = (() => {
@@ -209,44 +213,6 @@ function pickDailyQuestsForUser(userData, analysis, ctx) {
   return materializeTemplates(tpls, userData, analysis);
 }
 
-async function generateQuestsForAllUsers() {
-  const usersSnap = await db.collection("users").get();
-  const batchPromises = [];
-  let batch = db.batch();
-  let opCount = 0;
-  for (const doc of usersSnap.docs) {
-    const userRef = doc.ref;
-    let analysis = null;
-    let ctx = null;
-    try {
-      const a = await userRef.collection("performance").doc("analysis_summary").get();
-      analysis = a.exists ? a.data() : null;
-    } catch (_) {
-      analysis = null;
-    }
-    ctx = await getUserContext(userRef);
-    const dailyRef = userRef.collection("daily_quests");
-    const daily = pickDailyQuestsForUser(doc.data(), analysis, ctx);
-    const existing = await dailyRef.get();
-    existing.docs.forEach((d) => {
-      batch.delete(d.ref);
-      opCount++;
-    });
-    daily.forEach((q) => {
-      batch.set(dailyRef.doc(q.qid), q, { merge: true });
-      opCount++;
-    });
-    batch.update(userRef, { lastQuestRefreshDate: admin.firestore.FieldValue.serverTimestamp() });
-    if (opCount > 400) {
-      batchPromises.push(batch.commit());
-      batch = db.batch();
-      opCount = 0;
-    }
-  }
-  if (opCount > 0) batchPromises.push(batch.commit());
-  await Promise.all(batchPromises);
-}
-
 // İSTEMCİDEN GÜNLÜK GÖREV YENİLEME (CALLABLE)
 exports.regenerateDailyQuests = onCall({ region: "us-central1", timeoutSeconds: 60, enforceAppCheck: true, maxInstances: 20 }, async (request) => {
   if (!request.auth) {
@@ -292,69 +258,11 @@ exports.regenerateDailyQuests = onCall({ region: "us-central1", timeoutSeconds: 
     batch.update(userRef, { lastQuestRefreshDate: admin.firestore.FieldValue.serverTimestamp() });
     await batch.commit();
 
-    return { ok: true, dailyCount: dailyList.length };
+    return { ok: true, dailyCount: dailyList.length, quests: dailyList }; // Quests listesini de dön
   } catch (e) {
     // Hata durumunda anlamlı bir dönüş
     if (e instanceof HttpsError) throw e;
     throw new HttpsError("internal", `Görev üretimi başarısız: ${String(e)}`);
-  }
-});
-
-// İstemciden görevi TAMAMLAMA (CALLABLE) — isCompleted sadece sunucuda set edilir
-exports.completeQuest = onCall({ region: "us-central1", timeoutSeconds: 30, enforceAppCheck: true, maxInstances: 20 }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "Oturum gerekli");
-  }
-  const uid = request.auth.uid;
-
-  // Rate limit + günlük kota (spam engelleme)
-  const ip = getClientIpFromRawRequest(request.rawRequest) || "unknown";
-  await Promise.all([
-    enforceRateLimit(`quests_complete_uid_${uid}`, 60, 30),
-    enforceRateLimit(`quests_complete_ip_${ip}`, 60, 200),
-    enforceDailyQuota(`quests_complete_daily_${uid}`, 500),
-  ]);
-
-  const questId = String((request.data && request.data.questId) || "").trim();
-  if (!questId) throw new HttpsError("invalid-argument", "questId zorunlu");
-
-  try {
-    const userRef = db.collection("users").doc(uid);
-    const docRef = userRef.collection("daily_quests").doc(questId);
-    const snap = await docRef.get();
-    if (!snap.exists) throw new HttpsError("not-found", "Görev bulunamadı");
-
-    const data = snap.data() || {};
-    if (data.isCompleted === true) {
-      // idempotent: zaten tamamlandı
-      return { ok: true, alreadyCompleted: true };
-    }
-
-    const goal = Number(data.goalValue || 0);
-    const cur = Number(data.currentProgress || 0);
-
-    // Görevin gerçekten tamamlanması için hedefe ulaşıp ulaşmadığını kontrol et
-    if (goal > 0 && cur < goal) {
-      throw new HttpsError("failed-precondition", `Görev henüz tamamlanmadı. İlerleme: ${cur}/${goal}`);
-    }
-
-    const clamped = Math.min(Math.max(cur, 0), goal);
-
-    // Güvenli güncelleme - race condition'ları önle
-    await docRef.update({
-      currentProgress: goal > 0 ? Math.max(clamped, goal) : clamped,
-      isCompleted: true,
-      completionDate: admin.firestore.FieldValue.serverTimestamp(),
-    });
-
-    // Ödül ve puan güncellemesi artık istemci tarafında (claimQuestReward veya _handleQuestCompletion)
-    // 'stats' dokümanındaki 'engagementScore' alanı üzerinden merkezi olarak yapılıyor.
-    // Bu nedenle buradaki 'bilgePoints' güncellemesi kaldırılmıştır.
-
-    return { ok: true };
-  } catch (e) {
-    if (e instanceof HttpsError) throw e;
-    throw new HttpsError("internal", `Tamamlama başarısız: ${String(e)}`);
   }
 });
 
@@ -388,7 +296,8 @@ exports.onDailyQuestProgress = onDocumentWritten({
 
 /**
  * İstemciden gelen eylemleri alır ve ilgili görevleri GÜVENLİ bir şekilde günceller.
- * Bu, istemci tarafındaki 'quest_tracking_service'in yerini alır.
+ * GÜVENLİK YAMASI: Otomatik takip edilen kategorileri (study, practice, focus, test_submission)
+ * istemci manipülasyonuna kapattık. Bu kategoriler sadece triggerlar ile güncellenir.
  */
 exports.reportAction = onCall({
   region: "us-central1",
@@ -400,12 +309,21 @@ exports.reportAction = onCall({
   }
   const uid = request.auth.uid;
   const categoryName = request.data?.category;
-  const amount = request.data?.amount || 1;
-  const routeKey = request.data?.routeKey; // YENİ: Route bazlı filtreleme
-  const tags = request.data?.tags; // YENİ: Tag bazlı filtreleme
+  // GÜVENLİK: İstemciden gelen miktar artık çoğu senaryoda yoksayılır veya 1 olarak sabitlenir.
+  const amount = 1;
+  const routeKey = request.data?.routeKey;
+  const tags = request.data?.tags;
 
   if (!categoryName) {
     throw new HttpsError("invalid-argument", "Kategori gerekli.");
+  }
+
+  // 1. GÜVENLİK KONTROLÜ: Otomatik takip edilen kategorileri engelle
+  const AUTO_TRACKED_CATEGORIES = ["study", "practice", "focus", "test_submission"];
+  if (AUTO_TRACKED_CATEGORIES.includes(categoryName)) {
+    // İstemciye sessizce "başarılı" dön ama işlem yapma (veya hata fırlatılabilir, UX tercihine göre)
+    // Hata fırlatırsak eski client sürümleri çökebilir. Bu yüzden "no-op" (işlemsiz) dönüş daha güvenli.
+    return { success: true, message: "Bu kategori otomatik takip ediliyor.", updatedCount: 0 };
   }
 
   // Finansal/Spam koruması: Kullanıcı bu fonksiyonu çok hızlı çağıramasın
@@ -414,7 +332,7 @@ exports.reportAction = onCall({
   const questColRef = db.collection("users").doc(uid).collection("daily_quests");
 
   // İlgili, tamamlanmamış ve bu eylemle tetiklenebilecek görevleri bul
-  let query = questColRef
+  const query = questColRef
     .where("category", "==", categoryName)
     .where("isCompleted", "==", false);
 
@@ -428,18 +346,17 @@ exports.reportAction = onCall({
   let relevantDocs = querySnap.docs;
 
   if (routeKey) {
-    relevantDocs = relevantDocs.filter(doc => {
+    relevantDocs = relevantDocs.filter((doc) => {
       const questData = doc.data();
       return questData.routeKey === routeKey || questData.actionRoute?.includes(routeKey);
     });
   }
 
   if (tags && Array.isArray(tags) && tags.length > 0) {
-    relevantDocs = relevantDocs.filter(doc => {
+    relevantDocs = relevantDocs.filter((doc) => {
       const questData = doc.data();
       const questTags = questData.tags || [];
-      // En az bir tag eşleşmesi varsa uygun
-      return tags.some(tag => questTags.includes(tag));
+      return tags.some((tag) => questTags.includes(tag));
     });
   }
 
@@ -448,7 +365,7 @@ exports.reportAction = onCall({
   }
 
   const batch = db.batch();
-  let completedQuest = null; // Sadece ilk tamamlanan görevi UI'a bildir
+  let completedQuest = null;
   let updateCount = 0;
 
   for (const doc of relevantDocs) {
@@ -478,8 +395,6 @@ exports.reportAction = onCall({
     await batch.commit();
   }
 
-  // Eğer bir görev tamamlandıysa, istemciye bildirim göstermesi için
-  // bu görevin verisini döndür.
   if (completedQuest) {
     return { success: true, completedQuest: completedQuest, updatedCount };
   }
@@ -489,7 +404,6 @@ exports.reportAction = onCall({
 
 /**
  * Bir görevin ödülünü GÜVENLİ bir şekilde alır.
- * Puanı artırır ve görevi 'ödendi' olarak işaretler.
  */
 exports.claimQuestReward = onCall({
   region: "us-central1",
@@ -506,8 +420,8 @@ exports.claimQuestReward = onCall({
     throw new HttpsError("invalid-argument", "questId gerekli.");
   }
 
-  // Hız limiti: Çift tıklama veya spam'i engelle
-  await enforceRateLimit(`claim_reward_uid_${uid}`, 10, 5); // 10 saniyede 5 istek
+  // Hız limiti
+  await enforceRateLimit(`claim_reward_uid_${uid}`, 10, 5);
 
   const questRef = db.collection("users").doc(uid).collection("daily_quests").doc(questId);
   const statsRef = db.collection("users").doc(uid).collection("state").doc("stats");
@@ -533,16 +447,14 @@ exports.claimQuestReward = onCall({
         throw new HttpsError("failed-precondition", "Görev henüz tamamlanmamış.");
       }
 
-      reward = questData.reward || 10; // Dinamik ödül hesaplaması da buraya eklenebilir.
+      reward = questData.reward || 10;
 
-      // 1. Görevi "ödendi" olarak işaretle
       transaction.update(questRef, {
         rewardClaimed: true,
         rewardClaimedAt: admin.firestore.FieldValue.serverTimestamp(),
         actualReward: reward,
       });
 
-      // 2. Puanı (engagementScore) GÜVENLİ olarak artır
       transaction.set(statsRef, {
         engagementScore: admin.firestore.FieldValue.increment(reward),
         totalEarnedBP: admin.firestore.FieldValue.increment(reward),
@@ -552,7 +464,6 @@ exports.claimQuestReward = onCall({
     });
 
     return { success: true, reward: reward, questTitle: questTitle };
-
   } catch (e) {
     logger.error("claimQuestReward Transaction hatası", { uid, questId, error: e });
     if (e instanceof HttpsError) throw e;
@@ -562,27 +473,20 @@ exports.claimQuestReward = onCall({
 
 /**
  * Kullanıcı uygulamayı açtığında görevlerini kontrol eder ve gerekiyorsa yeniler.
- * Bu yaklaşım sadece AKTİF kullanıcılar için işlem yapar (Lazy Loading).
- *
- * Avantajları:
- * - Hiç giriş yapmayan kullanıcılar için gereksiz işlem yapılmaz
- * - Firestore okuma/yazma maliyeti minimuma iner
- * - Zaman aşımı riski olmaz
- * - Ölçeklenebilir ve sürdürülebilir
+ * OPTİMİZASYON: Artık güncel görev listesini de döndürerek "Double Read" sorununu çözüyor.
  */
 exports.checkAndRefreshQuests = onCall({
   region: "us-central1",
   enforceAppCheck: true,
   timeoutSeconds: 60,
-  maxInstances: 50, // Yüksek trafikte birden fazla instance
+  maxInstances: 50,
 }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Oturum gerekli");
   }
   const uid = request.auth.uid;
 
-  // Rate limit: Aynı kullanıcı sürekli çağıramasın
-  await enforceRateLimit(`check_quests_uid_${uid}`, 60, 10); // Dakikada 10 kontrol yeterli
+  await enforceRateLimit(`check_quests_uid_${uid}`, 60, 10);
 
   try {
     const userRef = db.collection("users").doc(uid);
@@ -594,26 +498,31 @@ exports.checkAndRefreshQuests = onCall({
 
     const userData = userSnap.data() || {};
     const lastRefresh = userData.lastQuestRefreshDate;
-
-    // Bugünün başlangıcını hesapla (İstanbul saati)
     const now = nowIstanbul();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    // Son yenileme bugün mü yapılmış?
     let needsRefresh = true;
     if (lastRefresh && lastRefresh.toDate) {
       const lastRefreshDate = lastRefresh.toDate();
       needsRefresh = lastRefreshDate < todayStart;
     }
 
+    const dailyCol = userRef.collection("daily_quests");
+
     if (!needsRefresh) {
-      // Görevler zaten güncel, sadece mevcut görevleri döndür
-      const existingQuests = await userRef.collection("daily_quests").get();
+      // Görevler zaten güncel, mevcut görevleri çek ve dön
+      const existingQuestsSnap = await dailyCol.get();
+      const quests = existingQuestsSnap.docs.map((doc) => {
+        // Client için ID ekle
+        return { ...doc.data(), id: doc.id };
+      });
+
       return {
         ok: true,
         refreshed: false,
         message: "Görevler zaten güncel",
-        questCount: existingQuests.size
+        questCount: existingQuestsSnap.size,
+        quests: quests, // OPTİMİZASYON: Listeyi dön
       };
     }
 
@@ -629,32 +538,27 @@ exports.checkAndRefreshQuests = onCall({
     const ctx = await getUserContext(userRef);
     const dailyList = pickDailyQuestsForUser(userData, analysis, ctx);
 
-    // Eski görevleri temizle, yenilerini ekle
-    const dailyCol = userRef.collection("daily_quests");
     const existing = await dailyCol.get();
     const batch = db.batch();
 
     existing.docs.forEach((d) => batch.delete(d.ref));
     dailyList.forEach((q) => batch.set(dailyCol.doc(q.qid), q, { merge: true }));
     batch.update(userRef, {
-      lastQuestRefreshDate: admin.firestore.FieldValue.serverTimestamp()
+      lastQuestRefreshDate: admin.firestore.FieldValue.serverTimestamp(),
     });
 
     await batch.commit();
-
-    logger.info(`Görevler yenilendi - uid: ${uid}, questCount: ${dailyList.length}`);
 
     return {
       ok: true,
       refreshed: true,
       message: "Görevler başarıyla yenilendi",
-      questCount: dailyList.length
+      questCount: dailyList.length,
+      quests: dailyList, // OPTİMİZASYON: Listeyi dön
     };
-
   } catch (e) {
     logger.error("checkAndRefreshQuests hatası", { uid, error: String(e) });
     if (e instanceof HttpsError) throw e;
     throw new HttpsError("internal", `Görev kontrolü başarısız: ${String(e)}`);
   }
 });
-
