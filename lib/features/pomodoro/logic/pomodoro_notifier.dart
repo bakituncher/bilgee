@@ -1,14 +1,16 @@
 // lib/features/pomodoro/logic/pomodoro_notifier.dart
 import 'dart:async';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:taktik/data/models/focus_session_model.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/data/providers/shared_prefs_provider.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
-import 'package:intl/intl.dart';
 import 'package:taktik/shared/notifications/notification_service.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
-import 'package:taktik/data/providers/shared_prefs_provider.dart';
-import 'package:flutter/services.dart'; // HapticFeedback için
 
 enum PomodoroSessionState { idle, work, shortBreak, longBreak, completed }
 
@@ -322,6 +324,11 @@ class PomodoroNotifier extends StateNotifier<PomodoroModel> {
       // 1. Odaklanma seansını veritabanına kaydet.
       _saveSession(state.currentTask, state.activeSessionTotalDuration);
 
+      // --- EKLENEN KISIM BAŞLANGIÇ ---
+      // Pomodoro tamamlandığında ilgili görevi güncelle
+      _updateFocusQuestProgress(state.activeSessionTotalDuration);
+      // --- EKLENEN KISIM BİTİŞ ---
+
       // 2. Sonucu oluştur ve ekran durumunu "tamamlandı" olarak değiştir.
       final result = FocusSessionResult(
         totalFocusSeconds: state.activeSessionTotalDuration,
@@ -576,6 +583,33 @@ class PomodoroNotifier extends StateNotifier<PomodoroModel> {
       task: task,
     );
     _ref.read(firestoreServiceProvider).recordFocusSessionAndStats(session);
+  }
+
+  /// Pomodoro tamamlandığında görev ilerlemesini güncelle
+  Future<void> _updateFocusQuestProgress(int durationSeconds) async {
+    try {
+      // Cloud Function çağırarak "Focus" kategorisindeki görevleri ilerlet
+      final functions = _ref.read(functionsProvider);
+      final callable = functions.httpsCallable('quests-updateProgress');
+
+      // Debug kontrolü - Debug modunda App Check'i atla
+      // if (!kDebugMode) await ensureAppCheckTokenReady();
+
+      await callable.call({
+        'type': 'focus_duration',
+        'amount': durationSeconds, // Saniye cinsinden
+        'category': 'focus' // veya 'consistency'
+      });
+
+      if (kDebugMode) {
+        print('[Pomodoro] Görev ilerlemesi tetiklendi.');
+      }
+    } catch (e) {
+      // Kullanıcıya hata göstermeye gerek yok, sessizce logla
+      if (kDebugMode) {
+        print('[Pomodoro] Görev güncelleme hatası: $e');
+      }
+    }
   }
 
   // YENI: lastResult ödülü yazıldı olarak işaretle

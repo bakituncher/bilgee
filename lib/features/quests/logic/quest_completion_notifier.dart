@@ -40,100 +40,34 @@ class QuestCompletionNotifier extends StateNotifier<QuestCompletionState> {
     }
   }
 
-  /// Ödül toplama - geliştirilmiş VE GÜVENLİ
+  /// Ödül toplama - Backend'e delege edildi
   Future<void> claimReward(Quest quest, Ref ref) async {
     try {
-      final firestoreService = ref.read(firestoreServiceProvider);
-      final user = ref.read(userProfileProvider).value;
+      final questService = ref.read(questServiceProvider);
 
-      if (user == null) {
-        debugPrint('[QuestCompletion] HATA: Kullanıcı bulunamadı');
-        return;
-      }
+      // 1. İşi backend'e (Cloud Function) bırak
+      // Bu, puan hesaplamasını, anti-cheat kontrolünü ve veritabanı yazma işlemini sunucuda yapar.
+      final success = await questService.claimReward(questService.currentUserId ?? '', quest.id);
 
-      // Çifte ödül toplama koruması
-      if (quest.rewardClaimed) {
-        debugPrint('[QuestCompletion] UYARI: Ödül zaten toplanmış');
-        return;
-      }
+      if (success) {
+        // 2. UI'ı anında güncelle (Optimistic Update)
+        // Backend'den yanıt başarılı geldiyse UI'da 'alındı' göster.
+        // Puan zaten stream üzerinden güncelleneceği için burada puan eklemeye gerek yok.
+        state = state.copyWith(
+          rewardClaimed: true,
+          actualReward: quest.reward, // Backend'den dönen gerçek değeri servisten almak daha iyi olurdu ama şimdilik modeldekini gösteriyoruz.
+        );
 
-      // Dinamik ödül hesaplama
-      final dynamicReward = quest.calculateDynamicReward(
-        userLevel: (user.engagementScore / 100).floor(),
-        currentStreak: user.currentQuestStreak,
-      );
+        debugPrint('[QuestCompletion] ✅ Ödül başarıyla toplandı.');
 
-      // ATOMIK TRANSACTION İLE GÜVENLİ ÖDÜL TOPLAMA
-      await firestoreService.db.runTransaction((transaction) async {
-        // 1. Görev durumunu kontrol et
-        final questRef = firestoreService.questsCollection(user.id).doc(quest.id);
-        final questSnap = await transaction.get(questRef);
-
-        if (!questSnap.exists || questSnap.data()?['rewardClaimed'] == true) {
-          throw Exception('Ödül zaten toplanmış veya görev bulunamadı');
-        }
-
-        // 2. Puan ve ilgili istatistikler merkezi 'stats' dokümanında güncellenir.
-        // Bu, onUserStatsWritten tetikleyicisini çalıştırarak veri bütünlüğünü ve anlık UI güncellemelerini sağlar.
-        final statsRef = firestoreService.usersCollection.doc(user.id).collection('state').doc('stats');
-        transaction.set(statsRef, {
-          'engagementScore': FieldValue.increment(dynamicReward),
-          'totalEarnedBP': FieldValue.increment(dynamicReward),
-          'lastRewardClaimedAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
-
-        // 3. Görev reward claimed flag'ini güncelle
-        transaction.update(questRef, {
-          'rewardClaimed': true,
-          'actualReward': dynamicReward,
-          'rewardClaimedAt': FieldValue.serverTimestamp(),
+        // 2 saniye sonra bildirimi kapat
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) clear();
         });
-
-        // 4. Ödül toplama log'u
-        final rewardLogRef = firestoreService.db.collection('reward_claims').doc();
-        transaction.set(rewardLogRef, {
-          'userId': user.id,
-          'questId': quest.id,
-          'questTitle': quest.title,
-          'baseReward': quest.reward,
-          'actualReward': dynamicReward,
-          'claimedAt': FieldValue.serverTimestamp(),
-        });
-      });
-
-      // Liderlik tablosu senkronu (sessizce dene)
-      try { await firestoreService.syncLeaderboardUser(user.id); } catch (_) {}
-
-      debugPrint('[QuestCompletion] ✅ Ödül başarıyla toplandı: $dynamicReward BP');
-
-      // State güncelle
-      state = state.copyWith(
-        rewardClaimed: true,
-        actualReward: dynamicReward,
-      );
-
-      // Provider'ları yenile - PUANIN ANINDA YANSIMASI
-      ref.invalidate(userProfileProvider);
-      ref.invalidate(optimizedQuestsProvider);
-      ref.invalidate(dailyQuestsProvider);
-
-      // Özel görev tipleri için ek işlemler
-      await _handleSpecialRewardTypes(quest, ref, dynamicReward);
-
-      // 2 saniye sonra otomatik clear
-      Future.delayed(const Duration(seconds: 2), () {
-        if (mounted) clear();
-      });
-
+      }
     } catch (e) {
-      debugPrint('[QuestCompletion] ❌ KRITIK HATA - Ödül toplama başarısız: $e');
-
-      // Hata durumunda state temizle
-      clear();
-
-      // Kullanıcıya hata bildirimi (opsiyonel)
-      // _showErrorNotification(e.toString());
+      debugPrint('[QuestCompletion] ❌ Ödül toplama hatası: $e');
+      // Hata durumunda state'i sıfırla veya kullanıcıya bilgi ver
     }
   }
 
