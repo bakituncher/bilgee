@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/home/widgets/todays_plan.dart';
 import 'package:taktik/features/onboarding/providers/tutorial_provider.dart';
@@ -17,6 +18,7 @@ import 'package:taktik/data/models/plan_model.dart';
 import 'package:taktik/data/providers/shared_prefs_provider.dart';
 import 'package:taktik/shared/widgets/ad_banner_widget.dart';
 import 'package:in_app_review/in_app_review.dart';
+import 'package:lottie/lottie.dart';
 
 final celebratedDatesProvider = StateProvider<Set<String>>((ref) => <String>{});
 final expiredPlanDialogShownProvider = StateProvider<bool>((ref) => false);
@@ -101,6 +103,47 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         // prefs alınamazsa sessiz geç
       }
     });
+  }
+
+  // 18+ kullanıcılar için premium ekranı kontrolü
+  void _checkAndShowPremiumForAdults() async {
+    final user = ref.read(userProfileProvider).value;
+    if (user == null) return;
+
+    // Kullanıcı zaten premium ise kontrol etmeye gerek yok
+    if (user.isPremium) return;
+
+    // Kullanıcının yaşını hesapla
+    if (user.dateOfBirth == null) return;
+
+    final now = DateTime.now();
+    final age = now.year - user.dateOfBirth!.year;
+    final hasHadBirthdayThisYear = now.month > user.dateOfBirth!.month ||
+        (now.month == user.dateOfBirth!.month && now.day >= user.dateOfBirth!.day);
+    final actualAge = hasHadBirthdayThisYear ? age : age - 1;
+
+    // 18 yaşından küçükse kontrol etmeye gerek yok
+    if (actualAge < 18) return;
+
+    try {
+      final prefs = await ref.read(sharedPreferencesProvider.future);
+      final today = DateTime.now().toString().split(' ')[0]; // YYYY-MM-DD formatı
+      final lastShownDate = prefs.getString('premium_screen_last_shown') ?? '';
+
+      // Bugün zaten gösterildiyse tekrar gösterme
+      if (lastShownDate == today) return;
+
+      // Premium ekranını göster ve tarihi kaydet
+      Future.microtask(() async {
+        if (!mounted) return;
+        await prefs.setString('premium_screen_last_shown', today);
+        if (mounted) {
+          context.go(AppRoutes.premium);
+        }
+      });
+    } catch (_) {
+      // prefs alınamazsa sessiz geç
+    }
   }
 
   Future<void> _showExpiredPlanNudge(BuildContext context) async {
@@ -210,6 +253,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Widget build(BuildContext context) {
     final userAsync = ref.watch(userProfileProvider);
     _checkAndShowExpiredPlanDialog();
+    _checkAndShowPremiumForAdults(); // 18+ kullanıcılar için premium ekran kontrolü
 
     return userAsync.when(
       data: (user) {
@@ -404,6 +448,8 @@ class _RatingStarButton extends ConsumerWidget {
         context: context,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
+        isDismissible: true,
+        enableDrag: true,
         builder: (BuildContext context) {
           final theme = Theme.of(context);
           final colorScheme = theme.colorScheme;
@@ -412,194 +458,275 @@ class _RatingStarButton extends ConsumerWidget {
           return Container(
             decoration: BoxDecoration(
               color: isDark
-                  ? colorScheme.surface
-                  : colorScheme.surface,
+                  ? const Color(0xFF1A1A1A)
+                  : Colors.white,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.3),
-                  blurRadius: 24,
+                  blurRadius: 40,
+                  spreadRadius: 0,
                   offset: const Offset(0, -8),
                 ),
               ],
             ),
             child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Drag handle
-                    Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: colorScheme.onSurfaceVariant.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-
-                    // Animated star icon
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Colors.amber.shade400,
-                            Colors.amber.shade700,
-                          ],
-                        ),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.amber.withOpacity(0.4),
-                            blurRadius: 20,
-                            spreadRadius: 2,
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.star_rounded,
-                        size: 48,
-                        color: Colors.white,
-                      ),
-                    ).animate(onPlay: (controller) => controller.repeat()).shimmer(
-                          duration: const Duration(seconds: 2),
-                          color: Colors.white.withOpacity(0.3),
-                        ),
-                    const SizedBox(height: 24),
-
-                    // Title
-                    Text(
-                      'Desteğiniz Bizim İçin Çok Değerli! 💫',
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.onSurface,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Subtitle
-                    Text(
-                      'Hedeflerinize ulaşma yolculuğunuzda size yardımcı olabildiysek, bizi değerlendirerek destekleyebilir misiniz?',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                        height: 1.5,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 28),
-
-                    // Features
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? colorScheme.surfaceContainerHighest
-                            : colorScheme.primaryContainer.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: colorScheme.primary.withOpacity(0.3),
-                          width: 1.5,
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Drag handle
+                      Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white.withOpacity(0.3)
+                              : Colors.black.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(2),
                         ),
                       ),
-                      child: Column(
-                        children: [
-                          _RatingFeature(
-                            icon: Icons.favorite_rounded,
-                            text: 'Bizi motive eder',
-                            color: Colors.pink,
-                          ),
-                          const SizedBox(height: 12),
-                          _RatingFeature(
-                            icon: Icons.trending_up_rounded,
-                            text: 'Daha fazla kişiye ulaşmamızı sağlar',
-                            color: Colors.green,
-                          ),
-                          const SizedBox(height: 12),
-                          _RatingFeature(
-                            icon: Icons.auto_awesome_rounded,
-                            text: 'Uygulamayı geliştirmemize yardımcı olur',
-                            color: Colors.amber,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 32),
+                      const SizedBox(height: 24),
 
-                    // Action buttons
-                    Column(
-                      children: [
-                        SizedBox(
-                          width: double.infinity,
-                          height: 56,
-                          child: ElevatedButton(
-                            onPressed: () => Navigator.of(context).pop(true),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: colorScheme.primary,
-                              foregroundColor: colorScheme.onPrimary,
-                              elevation: 4,
-                              shadowColor: colorScheme.primary.withOpacity(0.4),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
+                      // Premium badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              const Color(0xFFFFD700).withOpacity(0.2),
+                              const Color(0xFFFFA500).withOpacity(0.2),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: const Color(0xFFFFD700).withOpacity(0.5),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.verified_rounded,
+                              size: 16,
+                              color: const Color(0xFFFFD700),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'GÜVENILIR PLATFORM',
+                              style: TextStyle(
+                                color: isDark ? Colors.white : const Color(0xFF1A1A1A),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.2,
                               ),
                             ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.star_rounded,
-                                  size: 24,
-                                  color: Colors.amber.shade300,
-                                ),
-                                const SizedBox(width: 8),
-                                const Text(
-                                  'Değerlendir',
-                                  style: TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 0.3,
+                          ],
+                        ),
+                      ).animate()
+                        .fadeIn(duration: 400.ms)
+                        .scale(begin: const Offset(0.8, 0.8)),
+                      const SizedBox(height: 20),
+
+                      // Lottie Animation
+                      SizedBox(
+                        height: 160,
+                        child: Lottie.asset(
+                          'assets/lotties/review.json',
+                          fit: BoxFit.contain,
+                          repeat: true,
+                          animate: true,
+                        ),
+                      ).animate()
+                        .fadeIn(duration: 400.ms)
+                        .scale(begin: const Offset(0.9, 0.9), duration: 400.ms),
+                      const SizedBox(height: 20),
+
+                      // Title
+                      ShaderMask(
+                        shaderCallback: (bounds) => const LinearGradient(
+                          colors: [
+                            Color(0xFF6366F1),
+                            Color(0xFF8B5CF6),
+                            Color(0xFFEC4899),
+                          ],
+                        ).createShader(bounds),
+                        child: Text(
+                          'Sizi değerlendirmeye\ndavet ediyoruz',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            height: 1.2,
+                            letterSpacing: -0.5,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ).animate()
+                        .fadeIn(delay: 200.ms, duration: 400.ms)
+                        .slideY(begin: -0.1, end: 0),
+                      const SizedBox(height: 12),
+
+                      // Subtitle
+                      Text(
+                        'Görüşleriniz bizim için çok önemli\nve diğer öğrencilere yol gösteriyor',
+                        style: TextStyle(
+                          color: isDark
+                              ? Colors.white.withOpacity(0.7)
+                              : Colors.black.withOpacity(0.6),
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          height: 1.5,
+                        ),
+                        textAlign: TextAlign.center,
+                      ).animate()
+                        .fadeIn(delay: 300.ms, duration: 400.ms),
+                      const SizedBox(height: 28),
+
+                      // Benefits Row
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _BenefitItem(
+                            icon: Icons.workspace_premium_rounded,
+                            label: 'Kaliteli\nİçerik',
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                            ),
+                          ).animate()
+                            .fadeIn(delay: 400.ms, duration: 300.ms)
+                            .slideX(begin: -0.2, end: 0),
+                          Container(
+                            width: 1,
+                            height: 50,
+                            color: isDark
+                                ? Colors.white.withOpacity(0.1)
+                                : Colors.black.withOpacity(0.1),
+                          ),
+                          _BenefitItem(
+                            icon: Icons.auto_awesome_rounded,
+                            label: 'Sürekli\nGelişim',
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                            ),
+                          ).animate()
+                            .fadeIn(delay: 450.ms, duration: 300.ms)
+                            .scale(begin: const Offset(0.8, 0.8)),
+                          Container(
+                            width: 1,
+                            height: 50,
+                            color: isDark
+                                ? Colors.white.withOpacity(0.1)
+                                : Colors.black.withOpacity(0.1),
+                          ),
+                          _BenefitItem(
+                            icon: Icons.verified_rounded,
+                            label: 'Güvenilir\nPlatform',
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF10B981), Color(0xFF059669)],
+                            ),
+                          ).animate()
+                            .fadeIn(delay: 500.ms, duration: 300.ms)
+                            .slideX(begin: 0.2, end: 0),
+                        ],
+                      ),
+                      const SizedBox(height: 28),
+
+                      // Primary CTA
+                      Container(
+                        width: double.infinity,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [
+                              Color(0xFF6366F1),
+                              Color(0xFF8B5CF6),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF6366F1).withOpacity(0.4),
+                              blurRadius: 20,
+                              spreadRadius: 0,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => Navigator.of(context).pop(true),
+                            borderRadius: BorderRadius.circular(16),
+                            child: Center(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.star_rounded,
+                                    color: const Color(0xFFFFD700),
+                                    size: 26,
+                                  ).animate(onPlay: (controller) => controller.repeat())
+                                    .shimmer(
+                                      duration: 2.seconds,
+                                      color: Colors.white.withOpacity(0.6),
+                                    )
+                                    .shake(duration: 2.seconds, hz: 2, curve: Curves.easeInOut),
+                                  const SizedBox(width: 12),
+                                  const Text(
+                                    'Play Store\'da Değerlendir',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.3,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                Icon(
-                                  Icons.star_rounded,
-                                  size: 24,
-                                  color: Colors.amber.shade300,
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                        const SizedBox(height: 12),
-                        TextButton(
-                          onPressed: () async {
-                            await _saveDismissTime(ref);
-                            ref.read(_ratingVisibilityProvider.notifier).state = false;
-                            if (context.mounted) {
-                              Navigator.of(context).pop(false);
-                            }
-                          },
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                          ),
-                          child: Text(
-                            'Sonra Hatırlat',
-                            style: TextStyle(
-                              color: colorScheme.onSurfaceVariant,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                            ),
+                      ).animate()
+                        .fadeIn(delay: 550.ms, duration: 400.ms)
+                        .slideY(begin: 0.2, end: 0)
+                        .then()
+                        .shimmer(
+                          delay: 1000.ms,
+                          duration: 2.seconds,
+                          color: Colors.white.withOpacity(0.3),
+                        ),
+                      const SizedBox(height: 16),
+
+                      // Secondary action
+                      TextButton(
+                        onPressed: () async {
+                          await _saveDismissTime(ref);
+                          ref.read(_ratingVisibilityProvider.notifier).state = false;
+                          if (context.mounted) {
+                            Navigator.of(context).pop(false);
+                          }
+                        },
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                        ),
+                        child: Text(
+                          'Şimdi değil',
+                          style: TextStyle(
+                            color: isDark
+                                ? Colors.white.withOpacity(0.5)
+                                : Colors.black.withOpacity(0.4),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                      ],
-                    ),
-                  ],
+                      ).animate()
+                        .fadeIn(delay: 600.ms, duration: 400.ms),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -664,44 +791,58 @@ class _RatingStarButton extends ConsumerWidget {
 }
 
 
-class _RatingFeature extends StatelessWidget {
+class _BenefitItem extends StatelessWidget {
   final IconData icon;
-  final String text;
-  final Color color;
+  final String label;
+  final Gradient gradient;
 
-  const _RatingFeature({
+  const _BenefitItem({
     required this.icon,
-    required this.text,
-    required this.color,
+    required this.label,
+    required this.gradient,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    return Row(
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: isDark ? color.withOpacity(0.25) : color.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(10),
+            gradient: gradient,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: gradient.colors.first.withOpacity(0.3),
+                blurRadius: 16,
+                spreadRadius: 2,
+              ),
+            ],
           ),
           child: Icon(
             icon,
-            size: 20,
-            color: color,
+            size: 26,
+            color: Colors.white,
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            text,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w500,
-              color: theme.colorScheme.onSurface,
-            ),
+        ).animate(onPlay: (controller) => controller.repeat())
+          .shimmer(duration: 3.seconds, color: Colors.white.withOpacity(0.5))
+          .then()
+          .shake(duration: 3.seconds, hz: 1, curve: Curves.easeInOut),
+        const SizedBox(height: 12),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: isDark ? Colors.white : const Color(0xFF1A1A1A),
+            letterSpacing: 0.2,
+            height: 1.3,
           ),
+          textAlign: TextAlign.center,
         ),
       ],
     );

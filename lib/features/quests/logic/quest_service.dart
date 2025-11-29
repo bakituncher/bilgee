@@ -1,14 +1,15 @@
 // lib/features/quests/logic/quest_service.dart
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taktik/data/models/user_model.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/quests/models/quest_model.dart';
-import 'package:flutter/foundation.dart';
 import 'package:taktik/core/app_check/app_check_helper.dart';
 import 'package:taktik/features/quests/logic/quest_session_state.dart';
 import 'package:taktik/features/quests/logic/optimized_quests_provider.dart';
+import 'package:taktik/features/auth/application/auth_controller.dart';
 
 final questServiceProvider = Provider<QuestService>((ref) {
   return QuestService(ref);
@@ -30,7 +31,10 @@ class QuestService {
     }
     _inProgress = true;
     try {
-      await ensureAppCheckTokenReady();
+      // DÜZELTME: Debug modunda App Check'i atla
+      if (!kDebugMode) {
+        await ensureAppCheckTokenReady();
+      }
       final functions = _ref.read(functionsProvider);
       final callable = functions.httpsCallable('quests-checkAndRefreshQuests');
 
@@ -128,13 +132,14 @@ class QuestService {
       final functions = _ref.read(functionsProvider);
       final callable = functions.httpsCallable('quests-claimQuestReward');
 
-      await ensureAppCheckTokenReady(); // App Check
+      // DÜZELTME: Debug modunda App Check'i atla
+      if (!kDebugMode) {
+        await ensureAppCheckTokenReady();
+      }
 
       await callable.call({'questId': questId});
 
-      // Başarılı olduğunda, puanın ve görev durumunun
-      // UI'a yansıması için provider'ları yenile.
-      _ref.invalidate(userProfileProvider);
+      // UI güncellemeleri için invalidate çağrıları
       _ref.invalidate(optimizedQuestsProvider);
 
       return true;
@@ -146,6 +151,15 @@ class QuestService {
       // Hata durumunda bile UI'ın güncel veriyi çekmesi için yenile
       _ref.invalidate(optimizedQuestsProvider);
       return false;
+    }
+  }
+
+  // Helper: currentUserId (QuestCompletionNotifier için eklendi)
+  String? get currentUserId {
+    try {
+      return _ref.read(authControllerProvider).value?.uid;
+    } catch (_) {
+      return null;
     }
   }
 }
