@@ -5,14 +5,13 @@ import 'dart:async';
 import 'dart:ui';
 import 'package:taktik/core/navigation/app_router.dart';
 import 'package:taktik/core/theme/app_theme.dart';
-import 'package:taktik/core/theme/theme_provider.dart'; // EKLENDİ
+import 'package:taktik/core/theme/theme_provider.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
-import 'package:flutter/foundation.dart'; // kDebugMode için bu import gerekli
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-// SystemChrome için gerekli
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'firebase_options.dart';
@@ -27,7 +26,6 @@ import 'package:taktik/shared/screens/no_internet_screen.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Arka plan izole içinde Firebase'i başlatmak önemli
   try {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   } catch (_) {}
@@ -42,21 +40,18 @@ void main() async {
       debugPrint('[FlutterError] ${details.exceptionAsString()}');
       debugPrint(details.stack?.toString());
     }
-    // Firebase Crashlytics'e hata gönder
     FirebaseCrashlytics.instance.recordFlutterFatalError(details);
   };
 
-  // Asenkron hatalar için de Crashlytics'e gönder
   PlatformDispatcher.instance.onError = (error, stack) {
     FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
     return true;
   };
 
   await runZonedGuarded(() async {
-    // Binding ve runApp aynı zone'da olmalı
     WidgetsFlutterBinding.ensureInitialized();
 
-    // KRİTİK: Environment variables'ı yükle (timeout ile)
+    // 1. .env yükle
     try {
       await dotenv.load(fileName: ".env").timeout(
         const Duration(seconds: 2),
@@ -70,7 +65,7 @@ void main() async {
       }
     }
 
-    // KRİTİK: Firebase başlatma (timeout ile)
+    // 2. Firebase Başlat
     try {
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
@@ -89,33 +84,32 @@ void main() async {
       return;
     }
 
-    // Firebase Crashlytics'i yapılandır (non-blocking)
+    // Firebase servislerini yapılandır
     FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(!kDebugMode);
-
-    // Firebase Analytics'i yapılandır (non-blocking)
     FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(true);
 
-    // UYGULAMAYI HEMEN BAŞLAT - Diğer servisler arka planda yüklenecek
+    // 3. REVENUECAT BAŞLATMA (KRİTİK - BURAYA TAŞINDI)
+    // UI çizilmeden önce RevenueCat'in hazır olması şarttır, aksi takdirde iOS'ta çökme yaşanır.
+    try {
+      await RevenueCatService.init().timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {
+          if (kDebugMode) debugPrint('[RevenueCat] Initialization timeout');
+        },
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[RevenueCat] Initialization failed: $e');
+      }
+      // RevenueCat hatası uygulamanın açılmasını engellememeli ama loglanmalı
+    }
+
+    // 4. UYGULAMAYI BAŞLAT
     runApp(const ProviderScope(child: BilgeAiApp()));
 
-    // NON-KRİTİK: RevenueCat'i arka planda başlat
-    Future.microtask(() async {
-      try {
-        await RevenueCatService.init().timeout(
-          const Duration(seconds: 5),
-          onTimeout: () {
-            if (kDebugMode) debugPrint('[RevenueCat] Initialization timeout');
-          },
-        );
-      } catch (e) {
-        if (kDebugMode) {
-          debugPrint('[RevenueCat] Initialization failed: $e');
-        }
-      }
-    });
+    // --- Diğer "Non-Kritik" Servisler Arka Planda Başlatılabilir ---
 
-
-    // NON-KRİTİK: App Check'i arka planda başlat
+    // App Check
     Future.microtask(() async {
       try {
         await FirebaseAppCheck.instance.activate(
@@ -132,7 +126,6 @@ void main() async {
           },
         );
       } catch (e) {
-        // iOS'ta App Attest desteklenmiyorsa DeviceCheck'e düş
         try {
           await FirebaseAppCheck.instance.activate(
             androidProvider: kDebugMode
@@ -144,12 +137,11 @@ void main() async {
           ).timeout(const Duration(seconds: 5));
         } catch (e2) {
           if (kDebugMode) {
-            debugPrint('[AppCheck] Play Integrity aktivasyon başarısız: $e | DeviceCheck fallback hata: $e2');
+            debugPrint('[AppCheck] Fallback failed: $e2');
           }
         }
       }
 
-      // App Check tokenlarını otomatik yenile
       try {
         await FirebaseAppCheck.instance.setTokenAutoRefreshEnabled(true);
         try {
@@ -160,7 +152,7 @@ void main() async {
       } catch (_) {}
     });
 
-    // NON-KRİTİK: FCM background handler'ı kaydet
+    // FCM Handler
     Future.microtask(() {
       try {
         FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
@@ -169,7 +161,7 @@ void main() async {
       }
     });
 
-    // NON-KRİTİK: Tarih yerelleştirme
+    // Tarih Yerelleştirme
     Future.microtask(() async {
       try {
         await initializeDateFormatting('tr_TR', null).timeout(
@@ -183,7 +175,7 @@ void main() async {
       }
     });
 
-    // NON-KRİTİK: Ağ bağımlı preload işleri uygulamayı bloklamasın
+    // Preload İşlemleri
     Future.microtask(() async {
       try {
         await Future.wait([
@@ -208,7 +200,6 @@ void main() async {
       debugPrint('[Zoned] Yakalanmamış hata: $error');
       debugPrint(stack.toString());
     }
-    // Firebase Crashlytics'e hata gönder
     FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
   });
 }
@@ -225,7 +216,6 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // İlk bildirim servisi başlatma
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final router = ref.read(goRouterProvider);
       NotificationService.instance.initialize(onNavigate: (route) {
@@ -243,10 +233,6 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
   @override
   void didChangePlatformBrightness() {
     super.didChangePlatformBrightness();
-    // Sistem teması değiştiğinde, eğer kullanıcı "Sistem" modunu seçtiyse,
-    // UI'ı yeniden çizmek için state'i tazelemeye gerek kalmaz,
-    // MaterialApp değişikliği otomatik olarak yönetir.
-    // Ancak SystemUIOverlay'ı manuel güncellememiz gerekiyor.
     final themeMode = ref.read(themeModeNotifierProvider);
     if (themeMode == ThemeMode.system) {
       final platformBrightness = WidgetsBinding.instance.platformDispatcher.platformBrightness;
