@@ -5,6 +5,7 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:taktik/core/services/revenuecat_service.dart';
 import 'package:collection/collection.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
+import 'package:taktik/data/providers/shared_prefs_provider.dart';
 import 'dart:ui';
 import 'dart:async';
 import 'package:taktik/core/navigation/app_routes.dart';
@@ -89,6 +90,16 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
   // --- NAVIGATION & RESTORE LOGIC ---
 
   Future<void> _handleBack() async {
+    // Premium ekranı kapatılırken bugünün tarihini kaydet
+    // Böylece kullanıcı bugün tekrar premium ekranı görmeyecek
+    try {
+      final prefs = await ref.read(sharedPreferencesProvider.future);
+      final today = DateTime.now().toString().split(' ')[0]; // YYYY-MM-DD formatı
+      await prefs.setString('premium_screen_last_shown', today);
+    } catch (_) {
+      // Hata durumunda sessiz geç
+    }
+
     if (context.canPop()) {
       context.pop();
     } else {

@@ -1,6 +1,7 @@
 // lib/features/quests/models/quest_model.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
+import 'package:taktik/core/navigation/app_routes.dart';
 
 // GÜNCELLENDİ: Yeni 'focus' kategorisi eklendi.
 enum QuestCategory { study, practice, engagement, consistency, test_submission, focus }
@@ -38,21 +39,21 @@ QuestRoute questRouteFromPath(String path) {
 
 String questRouteToPath(QuestRoute r) {
   switch (r) {
-    case QuestRoute.home: return '/home';
-    case QuestRoute.pomodoro: return '/home/pomodoro';
-    case QuestRoute.coach: return '/coach';
-    case QuestRoute.weeklyPlan: return '/home/weekly-plan';
-    case QuestRoute.stats: return '/home/stats';
-    case QuestRoute.addTest: return '/home/add-test';
-    case QuestRoute.quests: return '/home/quests';
-    case QuestRoute.strategy: return '/ai-hub/strategic-planning';
-    case QuestRoute.workshop: return '/ai-hub/weakness-workshop';
-    case QuestRoute.availability: return '/availability';
-    case QuestRoute.avatar: return '/profile/avatar-selection';
-    case QuestRoute.arena: return '/arena';
-    case QuestRoute.library: return '/library';
-    case QuestRoute.motivationChat: return '/ai-hub/motivation-chat';
-    case QuestRoute.unknown: return '/home';
+    case QuestRoute.home: return AppRoutes.home;
+    case QuestRoute.pomodoro: return '/home/${AppRoutes.pomodoro}'; // Nested route
+    case QuestRoute.coach: return AppRoutes.coach;
+    case QuestRoute.weeklyPlan: return '/home/weekly-plan'; // AppRoutes'da sabit olarak tanımlı değil
+    case QuestRoute.stats: return '/home/${AppRoutes.stats}';
+    case QuestRoute.addTest: return '/home/${AppRoutes.addTest}';
+    case QuestRoute.quests: return '/home/${AppRoutes.quests}';
+    case QuestRoute.strategy: return '${AppRoutes.aiHub}/${AppRoutes.strategicPlanning}';
+    case QuestRoute.workshop: return '${AppRoutes.aiHub}/${AppRoutes.weaknessWorkshop}';
+    case QuestRoute.availability: return AppRoutes.availability;
+    case QuestRoute.avatar: return '${AppRoutes.profile}/avatar-selection';
+    case QuestRoute.arena: return AppRoutes.arena;
+    case QuestRoute.library: return AppRoutes.library;
+    case QuestRoute.motivationChat: return '${AppRoutes.aiHub}/${AppRoutes.motivationChat}';
+    case QuestRoute.unknown: return AppRoutes.home;
   }
 }
 

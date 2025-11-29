@@ -21,6 +21,8 @@ import 'shared/notifications/notification_service.dart';
 import 'package:taktik/core/prompts/prompt_remote.dart';
 import 'package:taktik/core/services/revenuecat_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:taktik/core/services/connectivity_service.dart';
+import 'package:taktik/shared/screens/no_internet_screen.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -243,6 +245,10 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
     final router = ref.watch(goRouterProvider);
     final themeMode = ref.watch(themeModeNotifierProvider);
 
+    // İnternet bağlantısını kontrol et
+    final connectivityAsync = ref.watch(connectivityProvider);
+
+    // Tema her değiştiğinde (açık, koyu veya sistem) doğru UI overlay'i ayarla
     final Brightness currentBrightness;
     switch (themeMode) {
       case ThemeMode.light:
@@ -257,13 +263,49 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
     }
     AppTheme.configureSystemUI(currentBrightness);
 
-    return MaterialApp.router(
-      title: 'Taktik',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: themeMode,
-      routerConfig: router,
+    // İnternet bağlantısı yoksa NoInternetScreen göster
+    return connectivityAsync.when(
+      data: (isConnected) {
+        if (!isConnected) {
+          return MaterialApp(
+            title: 'Taktik',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeMode,
+            home: const NoInternetScreen(),
+          );
+        }
+
+        return MaterialApp.router(
+          title: 'Taktik',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: themeMode,
+          routerConfig: router,
+        );
+      },
+      loading: () => MaterialApp(
+        title: 'Taktik',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: themeMode,
+        home: const Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        ),
+      ),
+      error: (_, __) => MaterialApp.router(
+        title: 'Taktik',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: themeMode,
+        routerConfig: router,
+      ),
     );
   }
 }
