@@ -93,6 +93,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           return location == AppRoutes.availability ? null : AppRoutes.availability;
         }
 
+        // Onboarding Step 4: Intro / Tutorial
+        if (!user.tutorialCompleted) {
+          return location == '/intro' ? null : '/intro';
+        }
+
         // **** HATAYI ÇÖZEN ANA MANTIK ****
         // If the user is fully onboarded and tries to go to login, register, or the loading screen,
         // redirect them to the home screen.
