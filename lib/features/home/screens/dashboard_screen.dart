@@ -306,6 +306,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
                 centerTitle: true,
                 actions: [
+                  _HelpButton(),
+                  const SizedBox(width: 4),
                   _RatingStarButton(),
                   const SizedBox(width: 4),
                   _NotificationBell(),
@@ -849,9 +851,54 @@ class _BenefitItem extends StatelessWidget {
   }
 }
 
+
+class _HelpButton extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return IconButton(
+      tooltip: 'Kullanım Kılavuzu',
+      onPressed: () => context.go(AppRoutes.userGuide),
+      icon: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Theme.of(context).colorScheme.primary.withOpacity(0.15),
+              Theme.of(context).colorScheme.secondary.withOpacity(0.15),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+            width: 1.5,
+          ),
+        ),
+        child: Icon(
+          Icons.help_outline_rounded,
+          color: Theme.of(context).colorScheme.primary,
+          size: 20,
+        ),
+      ).animate(
+        onPlay: (controller) => controller.repeat(reverse: true),
+      ).shimmer(
+        duration: 2.seconds,
+        color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+      ).scale(
+        duration: 2.seconds,
+        begin: const Offset(1.0, 1.0),
+        end: const Offset(1.05, 1.05),
+      ),
+    );
+  }
+}
+
 class _NudgeBullet extends StatelessWidget {
-  final IconData icon; final String text;
+  final IconData icon;
+  final String text;
   const _NudgeBullet({required this.icon, required this.text});
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -859,7 +906,8 @@ class _NudgeBullet extends StatelessWidget {
     return Row(children: [
       Container(
         decoration: BoxDecoration(shape: BoxShape.circle, color: colorScheme.primary.withOpacity(.18)),
-        padding: const EdgeInsets.all(6), child: Icon(icon, size: 16, color: colorScheme.primary),
+        padding: const EdgeInsets.all(6),
+        child: Icon(icon, size: 16, color: colorScheme.primary),
       ),
       const SizedBox(width: 10),
       Expanded(child: Text(text, style: TextStyle(color: colorScheme.onSurface)))

@@ -32,6 +32,7 @@ import 'package:taktik/features/profile/screens/blocked_users_screen.dart';
 import 'package:taktik/shared/widgets/splash_screen.dart';
 import 'package:taktik/data/providers/admin_providers.dart';
 import 'transition_utils.dart';
+import 'package:taktik/features/home/screens/user_guide_screen.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   final rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -150,6 +151,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           context: context,
           state: state,
           child: const SettingsScreen(),
+        ),
+      ),
+      // Kullanım Kılavuzu
+      GoRoute(
+        path: AppRoutes.userGuide,
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) => buildPageWithFadeTransition(
+          context: context,
+          state: state,
+          child: const UserGuideScreen(),
         ),
       ),
       // Blog ve Premium (üst seviye sayfalar)
