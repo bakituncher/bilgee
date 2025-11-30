@@ -8,6 +8,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taktik/features/profile/logic/rank_service.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class SidePanelDrawer extends ConsumerStatefulWidget {
   const SidePanelDrawer({super.key});
@@ -355,8 +356,8 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                   color: const Color(0xFF25D366).withOpacity(0.15),
                   borderRadius: BorderRadius.circular(9),
                 ),
-                child: const Icon(
-                  Icons.chat_bubble_rounded,
+                child: const FaIcon(
+                  FontAwesomeIcons.whatsapp,
                   size: 17,
                   color: Color(0xFF25D366),
                 ),
@@ -432,19 +433,30 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                 color: const Color(0xFF25D366).withOpacity(0.15),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(
-                Icons.chat_bubble_rounded,
+              child: const FaIcon(
+                FontAwesomeIcons.whatsapp,
                 color: Color(0xFF25D366),
                 size: 24,
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(
-                'WhatsApp Kanalına Katıl',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w900,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'WhatsApp Kanalımıza Katıl',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  Text(
+                    'Taktik $examType',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -687,7 +699,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
             const SizedBox(height: 20),
             _socialMediaButton(
               context: context,
-              icon: Icons.camera_alt_rounded,
+              icon: FontAwesomeIcons.instagram,
               label: 'Instagram',
               gradient: const LinearGradient(
                 colors: [Color(0xFFE1306C), Color(0xFFFD1D1D), Color(0xFFF77737)],
@@ -701,7 +713,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
             const SizedBox(height: 12),
             _socialMediaButton(
               context: context,
-              icon: Icons.music_note_rounded,
+              icon: FontAwesomeIcons.tiktok,
               label: 'TikTok',
               gradient: const LinearGradient(
                 colors: [Color(0xFF000000), Color(0xFF00F2EA), Color(0xFFFF0050)],
@@ -769,7 +781,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: Colors.white, size: 22),
+            FaIcon(icon, color: Colors.white, size: 22),
             const SizedBox(width: 12),
             Text(
               label,
