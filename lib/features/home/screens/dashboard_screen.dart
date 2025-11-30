@@ -307,11 +307,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 centerTitle: true,
                 actions: [
                   _HelpButton(),
-                  const SizedBox(width: 4),
                   _RatingStarButton(),
-                  const SizedBox(width: 4),
                   _NotificationBell(),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 8),
                 ],
                 flexibleSpace: IgnorePointer(
                   child: AnimatedContainer(
@@ -857,39 +855,13 @@ class _HelpButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return IconButton(
       tooltip: 'Kullanım Kılavuzu',
-      onPressed: () => context.go(AppRoutes.userGuide),
-      icon: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Theme.of(context).colorScheme.primary.withOpacity(0.15),
-              Theme.of(context).colorScheme.secondary.withOpacity(0.15),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-            width: 1.5,
-          ),
-        ),
-        child: Icon(
-          Icons.help_outline_rounded,
-          color: Theme.of(context).colorScheme.primary,
-          size: 20,
-        ),
-      ).animate(
-        onPlay: (controller) => controller.repeat(reverse: true),
-      ).shimmer(
-        duration: 2.seconds,
-        color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-      ).scale(
-        duration: 2.seconds,
-        begin: const Offset(1.0, 1.0),
-        end: const Offset(1.05, 1.05),
+      icon: Icon(
+        Icons.help_outline_rounded,
+        color: Theme.of(context).colorScheme.primary.withOpacity(0.85),
+        size: 22,
       ),
+      onPressed: () => context.go(AppRoutes.userGuide),
+      padding: const EdgeInsets.all(8),
     );
   }
 }
