@@ -28,7 +28,7 @@ class _IntroScreenState extends ConsumerState<IntroScreen> {
     ),
     _IntroContent(
       title: "Akıllı Analiz Sistemi",
-      description: "Sen test çözdükçe zayıf noktalarını tespit ederim. Kritik konuları belirler, eksiklerini kapatman için sana özel stratejiler üretirim.",
+      description: "Sen deneme ve test verilerini ekledikçe zayıf noktalarını tespit ederim. Kritik konuları belirler, eksiklerini kapatman için sana özel stratejiler üretirim.",
       iconData: Icons.insights_rounded,
       color: const Color(0xFF0EA5E9),
     ),
