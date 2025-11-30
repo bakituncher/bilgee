@@ -35,7 +35,7 @@ class ScaffoldWithNavBar extends ConsumerWidget {
     final List<TutorialStep> tutorialSteps = [
       TutorialStep(
         title: "Karargaha Hoş Geldin!",
-        text: "Ben Taktik Baykuş! Zafer yolundaki en büyük destekçin ben olacağım. Sana hızlıca komuta merkezini tanıtayım.",
+        text: "Ben Taktik Tavşan! Zafer yolundaki en büyük destekçin ben olacağım. Sana hızlıca komuta merkezini tanıtayım.",
       ),
       TutorialStep(
         highlightKey: todaysPlanKey,
