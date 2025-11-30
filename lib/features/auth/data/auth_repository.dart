@@ -216,27 +216,73 @@ class AuthRepository {
 
   Future<void> signInWithApple() async {
     try {
-      // FirebaseAuth’un yerel AppleAuthProvider’ını kullan
-      final provider = AppleAuthProvider();
-      // İsteğe bağlı kapsamlar (email ve ad-soyad)
-      provider.addScope('email');
-      provider.addScope('name');
-      // iOS’ta locale belirtmek isteyenler için (opsiyonel):
-      // provider.setCustomParameters({'locale': 'tr_TR'});
+      if (kIsWeb) {
+        // Web: FirebaseAuth’un AppleAuthProvider ile signInWithProvider kullanımı
+        final provider = AppleAuthProvider();
+        provider.addScope('email');
+        provider.addScope('name');
+        final userCredential = await _firebaseAuth.signInWithProvider(provider);
+        if (userCredential.user != null) {
+          final isNewUser = userCredential.additionalUserInfo?.isNewUser ?? false;
+          if (isNewUser) {
+            final user = userCredential.user!;
+            final displayName = user.displayName ?? '';
+            String firstName = '';
+            String lastName = '';
+            if (displayName.isNotEmpty) {
+              final nameParts = displayName.split(' ');
+              firstName = nameParts.isNotEmpty ? nameParts.first : '';
+              lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+            }
+            if (firstName.isEmpty && lastName.isEmpty) {
+              firstName = 'Apple';
+              lastName = 'Kullanıcısı';
+            }
+            final generatedUsername = user.email?.split('@').first ?? 'apple_${user.uid.substring(0, 8)}';
+            await _firestoreService.createUserProfile(
+              user: user,
+              firstName: firstName,
+              lastName: lastName,
+              username: generatedUsername,
+              avatarStyle: 'bottts',
+              avatarSeed: generatedUsername,
+            );
+          }
+        }
+        return;
+      }
 
-      // FlutterFire’ın signInWithProvider API’si; web’de popup/redirect
-      final userCredential = await _firebaseAuth.signInWithProvider(provider);
+      // Mobile (iOS/Android): SignInWithApple ile credential al, nonce ile güvence sağla
+      final rawNonce = _generateNonce();
+      final nonce = _sha256ofString(rawNonce);
+
+      final appleCredential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+        nonce: nonce,
+      );
+
+      // OAuth credential oluştur: idToken + rawNonce + authorizationCode’u accessToken olarak EKLE
+      final oauthCredential = OAuthProvider("apple.com").credential(
+        idToken: appleCredential.identityToken,
+        rawNonce: rawNonce,
+        accessToken: appleCredential.authorizationCode,
+      );
+
+      final userCredential = await _firebaseAuth.signInWithCredential(oauthCredential);
 
       if (userCredential.user != null) {
-        // Yeni kullanıcı ise profil oluştur
         final isNewUser = userCredential.additionalUserInfo?.isNewUser ?? false;
         if (isNewUser) {
           final user = userCredential.user!;
-          final displayName = user.displayName ?? '';
-          String firstName = '';
-          String lastName = '';
-          if (displayName.isNotEmpty) {
-            final nameParts = displayName.split(' ');
+          final givenName = appleCredential.givenName ?? '';
+          final familyName = appleCredential.familyName ?? '';
+          String firstName = givenName;
+          String lastName = familyName;
+          if (firstName.isEmpty && lastName.isEmpty && user.displayName != null) {
+            final nameParts = user.displayName!.split(' ');
             firstName = nameParts.isNotEmpty ? nameParts.first : '';
             lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
           }
@@ -244,9 +290,7 @@ class AuthRepository {
             firstName = 'Apple';
             lastName = 'Kullanıcısı';
           }
-
           final generatedUsername = user.email?.split('@').first ?? 'apple_${user.uid.substring(0, 8)}';
-
           await _firestoreService.createUserProfile(
             user: user,
             firstName: firstName,
@@ -261,7 +305,6 @@ class AuthRepository {
       if (kDebugMode) {
         debugPrint('APPLE GİRİŞ HATASI DETAYI: $e');
       }
-      // Kullanıcı iptal ettiyse sessizce çık
       final msg = e.toString();
       if (msg.contains('canceled') || msg.contains('popup_closed_by_user')) {
         return;
