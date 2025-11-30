@@ -59,17 +59,17 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                 InkWell(
                   onTap: () { Navigator.of(context).pop(); context.go('/profile'); },
                   child: Container(
-                    margin: const EdgeInsets.fromLTRB(12, 12, 12, 10),
-                    padding: const EdgeInsets.all(14),
+                    margin: const EdgeInsets.fromLTRB(10, 10, 10, 8),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      color: colorScheme.surfaceContainerHighest.withOpacity(.15),
-                      border: Border.all(color: colorScheme.surfaceContainerHighest.withOpacity(.25)),
+                      borderRadius: BorderRadius.circular(14),
+                      color: colorScheme.surfaceContainerHighest.withOpacity(.12),
+                      border: Border.all(color: colorScheme.surfaceContainerHighest.withOpacity(.2)),
                     ),
                     child: Row(
                       children: [
                         _Avatar(userName: user?.name, style: user?.avatarStyle, seed: user?.avatarSeed),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -77,31 +77,31 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                             children: [
                               Text(
                                 user?.name ?? 'Gezgin',
-                                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                                style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700, fontSize: 14),
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(height: 3),
+                              const SizedBox(height: 2),
                               Row(
                                 children: [
-                                  Icon(Icons.workspace_premium_rounded, size: 14, color: colorScheme.primary),
-                                  const SizedBox(width: 5),
+                                  Icon(Icons.workspace_premium_rounded, size: 12, color: colorScheme.primary),
+                                  const SizedBox(width: 4),
                                   Expanded(
                                     child: Text(
                                       rankInfo.current.name,
-                                      style: theme.textTheme.labelMedium?.copyWith(color: colorScheme.primary, fontWeight: FontWeight.w600),
+                                      style: theme.textTheme.labelSmall?.copyWith(color: colorScheme.primary, fontWeight: FontWeight.w600, fontSize: 11),
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
-                                  const SizedBox(width: 6),
-                                  Text('${user?.engagementScore ?? 0} TP', style: theme.textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant.withOpacity(.7))),
+                                  const SizedBox(width: 4),
+                                  Text('${user?.engagementScore ?? 0} TP', style: theme.textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant.withOpacity(.65), fontSize: 10)),
                                 ],
                               ),
-                              const SizedBox(height: 5),
+                              const SizedBox(height: 4),
                               ClipRRect(
-                                borderRadius: BorderRadius.circular(4),
+                                borderRadius: BorderRadius.circular(3),
                                 child: LinearProgressIndicator(
                                   value: rankInfo.progress,
-                                  minHeight: 5,
+                                  minHeight: 4,
                                   backgroundColor: colorScheme.surfaceContainerHighest.withOpacity(.25),
                                   valueColor: AlwaysStoppedAnimation(colorScheme.primary),
                                 ),
@@ -109,8 +109,8 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                             ],
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Icon(Icons.chevron_right_rounded, size: 20, color: colorScheme.onSurfaceVariant.withOpacity(.6)),
+                        const SizedBox(width: 6),
+                        Icon(Icons.chevron_right_rounded, size: 18, color: colorScheme.onSurfaceVariant.withOpacity(.5)),
                       ],
                     ),
                   ),
@@ -119,7 +119,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                 // Navigation items
                 Expanded(
                   child: ListView(
-                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+                    padding: const EdgeInsets.fromLTRB(6, 4, 6, 4),
                     children: [
                       _navTile(context, currentLocation: location, icon: Icons.dashboard_rounded, title: 'Ana Panel', route: '/home'),
                       _navTile(context, currentLocation: location, icon: Icons.timer_rounded, title: 'Odaklan (Pomodoro)', route: '/home/pomodoro'),
@@ -127,7 +127,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                       _navTile(context, currentLocation: location, icon: Icons.insights_rounded, title: 'Genel Bakış', route: '/stats/overview'),
                       _navTile(context, currentLocation: location, icon: Icons.inventory_2_outlined, title: 'Deneme Arşivi', route: '/library'),
                       _navTile(context, currentLocation: location, icon: Icons.article_rounded, title: 'Taktik Blog', route: '/blog'),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       _whatsappChannelTile(context, user: user),
                     ],
                   ),
@@ -135,7 +135,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
 
                 // Premium Section - GÜNCELLENMİŞ PAZARLAMA ALANI
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                  padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
                   child: isPremium
                       ? _PremiumActiveCard(colorScheme: colorScheme, theme: theme)
                       : _PremiumOfferCard(
@@ -152,7 +152,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
 
                 // Footer actions
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 12, 8, 12),
+                  padding: const EdgeInsets.fromLTRB(8, 10, 8, 10),
                   child: Row(
                     children: [
                       Expanded(
@@ -163,7 +163,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                           onTap: () { Navigator.of(context).pop(); context.go('/settings'); },
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: _actionTileCompact(
                           context,
@@ -203,9 +203,9 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
     final userIsPremium = ref.watch(premiumStatusProvider);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 2),
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         onTap: () {
           Navigator.of(context).pop();
           if (isPremium && !userIsPremium) {
@@ -221,9 +221,9 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOut,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
             color: selected ? colorScheme.primary.withOpacity(.12) : Colors.transparent,
             border: selected ? Border.all(color: colorScheme.primary.withOpacity(.3), width: 1.5) : null,
           ),
@@ -231,49 +231,50 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
             children: [
               Icon(
                 icon,
-                size: 24,
+                size: 21,
                 color: selected ? colorScheme.primary : colorScheme.onSurfaceVariant.withOpacity(.85),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   title,
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                    fontSize: 13.5,
                     color: selected ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
                   ),
                 ),
               ),
               if (showPremiumBadge) ...[
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [colorScheme.primary.withOpacity(0.2), Colors.amber.withOpacity(0.2)],
                     ),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(7),
                     border: Border.all(color: colorScheme.primary.withOpacity(0.35), width: 1),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.workspace_premium_rounded, size: 12, color: colorScheme.primary),
-                      const SizedBox(width: 4),
+                      Icon(Icons.workspace_premium_rounded, size: 11, color: colorScheme.primary),
+                      const SizedBox(width: 3),
                       Text(
                         'PRO',
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: colorScheme.primary,
                           fontWeight: FontWeight.w800,
-                          fontSize: 11,
+                          fontSize: 10,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 4),
               ],
               if (selected)
-                Icon(Icons.chevron_right_rounded, size: 20, color: colorScheme.primary.withOpacity(0.7)),
+                Icon(Icons.chevron_right_rounded, size: 18, color: colorScheme.primary.withOpacity(0.7)),
             ],
           ),
         ),
@@ -291,23 +292,24 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     return InkWell(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(12),
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           color: colorScheme.surfaceContainerHighest.withOpacity(.2),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 22, color: iconColor ?? colorScheme.onSurfaceVariant),
-            const SizedBox(width: 10),
+            Icon(icon, size: 19, color: iconColor ?? colorScheme.onSurfaceVariant),
+            const SizedBox(width: 8),
             Text(
               title,
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w800,
+                fontSize: 13,
                 color: iconColor ?? colorScheme.onSurfaceVariant,
               ),
             ),
@@ -322,14 +324,14 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
     final colorScheme = theme.colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 2),
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         onTap: () => _showWhatsappDialog(context, user),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
             gradient: LinearGradient(
               colors: [
                 const Color(0xFF25D366).withOpacity(0.12),
@@ -346,18 +348,18 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(
                   color: const Color(0xFF25D366).withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(9),
                 ),
                 child: const Icon(
                   Icons.chat_bubble_rounded,
-                  size: 20,
+                  size: 17,
                   color: Color(0xFF25D366),
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 11),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -366,6 +368,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                       'WhatsApp Kanalımız',
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w800,
+                        fontSize: 13.5,
                         color: colorScheme.onSurface,
                       ),
                     ),
@@ -374,7 +377,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                       'Güncel duyurular için katıl 💬',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurfaceVariant.withOpacity(0.8),
-                        fontSize: 11,
+                        fontSize: 10.5,
                       ),
                     ),
                   ],
@@ -382,7 +385,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
               ),
               Icon(
                 Icons.open_in_new_rounded,
-                size: 18,
+                size: 16,
                 color: const Color(0xFF25D366),
               ),
             ],
@@ -593,7 +596,7 @@ class _Avatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final url = _buildSvgUrl();
-    const radius = 26.0;
+    const radius = 22.0;
     if (url == null) {
       final initials = (userName ?? 'G').trim();
       return CircleAvatar(
@@ -601,7 +604,7 @@ class _Avatar extends StatelessWidget {
         backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
         child: Text(
           initials.isEmpty ? 'G' : initials.characters.first.toUpperCase(),
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
       );
     }
@@ -614,7 +617,7 @@ class _Avatar extends StatelessWidget {
           width: radius * 2,
           height: radius * 2,
           fit: BoxFit.cover,
-          placeholderBuilder: (_) => Icon(Icons.person, size: 24, color: Theme.of(context).colorScheme.onSurfaceVariant),
+          placeholderBuilder: (_) => Icon(Icons.person, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
       ),
     );
@@ -647,7 +650,7 @@ class _PremiumOfferCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(16),
       child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -658,7 +661,7 @@ class _PremiumOfferCard extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
               color: const Color(0xFF2E3192).withOpacity(0.3),
@@ -675,27 +678,27 @@ class _PremiumOfferCard extends StatelessWidget {
               top: -15,
               child: Icon(
                 Icons.workspace_premium_rounded,
-                size: 90,
+                size: 80,
                 color: Colors.white.withOpacity(0.05),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(7),
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(9),
                           border: Border.all(color: Colors.white.withOpacity(0.3)),
                         ),
-                        child: const Icon(Icons.diamond_rounded, color: Colors.white, size: 20),
+                        child: const Icon(Icons.diamond_rounded, color: Colors.white, size: 18),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 9),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -705,7 +708,7 @@ class _PremiumOfferCard extends StatelessWidget {
                               style: theme.textTheme.titleMedium?.copyWith(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w900,
-                                fontSize: 16,
+                                fontSize: 15,
                                 letterSpacing: -0.3,
                               ),
                             ),
@@ -714,7 +717,7 @@ class _PremiumOfferCard extends StatelessWidget {
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: Colors.white.withOpacity(0.9),
                                 fontWeight: FontWeight.w500,
-                                fontSize: 11,
+                                fontSize: 10.5,
                               ),
                             ),
                           ],
@@ -722,14 +725,14 @@ class _PremiumOfferCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   ..._buildBenefitsList(),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    padding: const EdgeInsets.symmetric(vertical: 9),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(11),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(0.1),
@@ -746,7 +749,7 @@ class _PremiumOfferCard extends StatelessWidget {
                           style: theme.textTheme.titleSmall?.copyWith(
                             color: const Color(0xFF2E3192),
                             fontWeight: FontWeight.w900,
-                            fontSize: 14,
+                            fontSize: 13.5,
                           ),
                         ),
                       ],
@@ -772,22 +775,22 @@ class _PremiumOfferCard extends StatelessWidget {
 
     return benefits.map((benefit) {
       return Padding(
-        padding: const EdgeInsets.only(bottom: 6),
+        padding: const EdgeInsets.only(bottom: 5),
         child: Row(
           children: [
             Icon(
               benefit['icon'] as IconData,
               color: Colors.white.withOpacity(0.85),
-              size: 14,
+              size: 13,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 7),
             Expanded(
               child: Text(
                 benefit['text'] as String,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
-                  fontSize: 11.5,
+                  fontSize: 11,
                   letterSpacing: -0.1,
                   height: 1.2,
                 ),
@@ -796,7 +799,7 @@ class _PremiumOfferCard extends StatelessWidget {
             Icon(
               Icons.check_circle,
               color: Colors.greenAccent.shade100,
-              size: 14,
+              size: 13,
             ),
           ],
         ),
@@ -826,7 +829,7 @@ class _PremiumActiveCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: const Color(0xFFFFD700).withOpacity(0.4),
           width: 1.5,
@@ -839,12 +842,12 @@ class _PremiumActiveCard extends StatelessWidget {
             top: -10,
             child: Icon(
               Icons.verified_rounded,
-              size: 70,
+              size: 60,
               color: Colors.amber.withOpacity(0.08),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -858,18 +861,18 @@ class _PremiumActiveCard extends StatelessWidget {
                           style: theme.textTheme.titleMedium?.copyWith(
                             color: colorScheme.onSurface,
                             fontWeight: FontWeight.w900,
-                            fontSize: 16,
+                            fontSize: 15,
                           ),
                         ),
                         const SizedBox(width: 4),
-                        const Icon(Icons.verified, color: Colors.amber, size: 16),
+                        const Icon(Icons.verified, color: Colors.amber, size: 15),
                       ],
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                       decoration: BoxDecoration(
                         color: Colors.green.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: Colors.green.withOpacity(0.3)),
                       ),
                       child: Text(
@@ -883,11 +886,11 @@ class _PremiumActiveCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 9),
                 _buildActiveFeature(Icons.block_rounded, "Reklamsız"),
-                const SizedBox(height: 6),
+                const SizedBox(height: 5),
                 _buildActiveFeature(Icons.psychology_rounded, "TaktikAI"),
-                const SizedBox(height: 6),
+                const SizedBox(height: 5),
                 _buildActiveFeature(Icons.all_inclusive_rounded, "Sınırsız Arşiv"),
               ],
             ),
@@ -900,19 +903,19 @@ class _PremiumActiveCard extends StatelessWidget {
   Widget _buildActiveFeature(IconData icon, String text) {
     return Row(
       children: [
-        Icon(icon, size: 14, color: colorScheme.primary),
-        const SizedBox(width: 8),
+        Icon(icon, size: 13, color: colorScheme.primary),
+        const SizedBox(width: 7),
         Expanded(
           child: Text(
             text,
             style: theme.textTheme.bodySmall?.copyWith(
               fontWeight: FontWeight.w600,
               color: colorScheme.onSurface.withOpacity(0.8),
-              fontSize: 11.5,
+              fontSize: 11,
             ),
           ),
         ),
-        Icon(Icons.check_circle, size: 13, color: Colors.green.withOpacity(0.7)),
+        Icon(Icons.check_circle, size: 12, color: Colors.green.withOpacity(0.7)),
       ],
     );
   }
