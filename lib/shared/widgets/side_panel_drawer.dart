@@ -425,38 +425,51 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         backgroundColor: theme.cardColor,
-        title: Row(
+        title: Stack(
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: const Color(0xFF25D366).withOpacity(0.15),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const FaIcon(
-                FontAwesomeIcons.whatsapp,
-                color: Color(0xFF25D366),
-                size: 24,
-              ),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF25D366).withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const FaIcon(
+                    FontAwesomeIcons.whatsapp,
+                    color: Color(0xFF25D366),
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'WhatsApp Kanalımıza Katıl',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      Text(
+                        'Taktik $examType',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'WhatsApp Kanalımıza Katıl',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  Text(
-                    'Taktik $examType',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
+            Positioned(
+              right: -12,
+              top: -12,
+              child: IconButton(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: Icon(Icons.close_rounded, size: 22, color: colorScheme.onSurfaceVariant),
+                tooltip: 'Kapat',
               ),
             ),
           ],
@@ -524,43 +537,34 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            style: TextButton.styleFrom(
-              foregroundColor: colorScheme.onSurfaceVariant,
-            ),
-            child: Text(
-              'İptal',
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                final Uri url = Uri.parse(channelUrl);
+                if (await canLaunchUrl(url)) {
+                  await launchUrl(
+                    url,
+                    mode: LaunchMode.externalApplication,
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF25D366),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-            ),
-          ),
-          ElevatedButton.icon(
-            onPressed: () async {
-              Navigator.of(context).pop();
-              final Uri url = Uri.parse(channelUrl);
-              if (await canLaunchUrl(url)) {
-                await launchUrl(
-                  url,
-                  mode: LaunchMode.externalApplication,
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF25D366),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            icon: const Icon(Icons.open_in_new_rounded, size: 18),
-            label: Text(
-              'Katıl',
-              style: theme.textTheme.titleSmall?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
+              icon: const Icon(Icons.open_in_new_rounded, size: 18),
+              label: Text(
+                'Katıl',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
           ),
@@ -654,32 +658,45 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         backgroundColor: theme.cardColor,
-        title: Row(
+        title: Stack(
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    colorScheme.primary.withOpacity(0.2),
-                    colorScheme.secondary.withOpacity(0.15),
-                  ],
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        colorScheme.primary.withOpacity(0.2),
+                        colorScheme.secondary.withOpacity(0.15),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.share_rounded,
+                    color: colorScheme.primary,
+                    size: 24,
+                  ),
                 ),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                Icons.share_rounded,
-                color: colorScheme.primary,
-                size: 24,
-              ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Bizi Takip Edin',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'Bizi Takip Edin',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w900,
-                ),
+            Positioned(
+              right: -12,
+              top: -12,
+              child: IconButton(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: Icon(Icons.close_rounded, size: 22, color: colorScheme.onSurfaceVariant),
+                tooltip: 'Kapat',
               ),
             ),
           ],
@@ -726,20 +743,6 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            style: TextButton.styleFrom(
-              foregroundColor: colorScheme.onSurfaceVariant,
-            ),
-            child: Text(
-              'Kapat',
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
