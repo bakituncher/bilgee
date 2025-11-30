@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taktik/features/profile/logic/rank_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SidePanelDrawer extends ConsumerStatefulWidget {
   const SidePanelDrawer({super.key});
@@ -126,6 +127,8 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                       _navTile(context, currentLocation: location, icon: Icons.insights_rounded, title: 'Genel Bakış', route: '/stats/overview'),
                       _navTile(context, currentLocation: location, icon: Icons.inventory_2_outlined, title: 'Deneme Arşivi', route: '/library'),
                       _navTile(context, currentLocation: location, icon: Icons.article_rounded, title: 'Taktik Blog', route: '/blog'),
+                      const SizedBox(height: 8),
+                      _whatsappChannelTile(context, user: user),
                     ],
                   ),
                 ),
@@ -311,6 +314,272 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
           ],
         ),
       ),
+    );
+  }
+
+  Widget _whatsappChannelTile(BuildContext context, {required dynamic user}) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => _showWhatsappDialog(context, user),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            gradient: LinearGradient(
+              colors: [
+                const Color(0xFF25D366).withOpacity(0.12),
+                const Color(0xFF128C7E).withOpacity(0.08),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            border: Border.all(
+              color: const Color(0xFF25D366).withOpacity(0.3),
+              width: 1.5,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF25D366).withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.chat_bubble_rounded,
+                  size: 20,
+                  color: Color(0xFF25D366),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'WhatsApp Kanalımız',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Güncel duyurular için katıl 💬',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant.withOpacity(0.8),
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.open_in_new_rounded,
+                size: 18,
+                color: const Color(0xFF25D366),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showWhatsappDialog(BuildContext context, dynamic user) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    // Determine the WhatsApp channel URL based on exam type
+    String channelUrl = 'https://whatsapp.com/channel/0029VbBdCY96BIEo5XqCbK1V'; // Default KPSS
+    String examType = 'KPSS';
+
+    if (user?.selectedExam != null) {
+      final exam = user!.selectedExam.toString().toLowerCase();
+      if (exam.contains('yks') || exam.contains('tyt') || exam.contains('ayt')) {
+        channelUrl = 'https://whatsapp.com/channel/0029VbB9FtNDp2Q09xHfAq0E';
+        examType = 'YKS';
+      } else if (exam.contains('lgs')) {
+        channelUrl = 'https://whatsapp.com/channel/0029VbBVIRTKbYMJI3tqsl3u';
+        examType = 'LGS';
+      } else if (exam.contains('kpss')) {
+        channelUrl = 'https://whatsapp.com/channel/0029VbBdCY96BIEo5XqCbK1V';
+        examType = 'KPSS';
+      }
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: theme.cardColor,
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF25D366).withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.chat_bubble_rounded,
+                color: Color(0xFF25D366),
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'WhatsApp Kanalına Katıl',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: colorScheme.primary.withOpacity(0.2),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline_rounded,
+                    color: colorScheme.primary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'WhatsApp uygulamasına yönlendirileceksiniz.',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurface.withOpacity(0.8),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Taktik $examType WhatsApp kanalımızda:',
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 12),
+            _dialogBenefit(
+              icon: Icons.notifications_active_rounded,
+              text: 'Önemli duyurular',
+              colorScheme: colorScheme,
+              theme: theme,
+            ),
+            const SizedBox(height: 8),
+            _dialogBenefit(
+              icon: Icons.tips_and_updates_rounded,
+              text: 'Güncel ipuçları',
+              colorScheme: colorScheme,
+              theme: theme,
+            ),
+            const SizedBox(height: 8),
+            _dialogBenefit(
+              icon: Icons.campaign_rounded,
+              text: 'Özel kampanyalar',
+              colorScheme: colorScheme,
+              theme: theme,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            style: TextButton.styleFrom(
+              foregroundColor: colorScheme.onSurfaceVariant,
+            ),
+            child: Text(
+              'İptal',
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          ElevatedButton.icon(
+            onPressed: () async {
+              Navigator.of(context).pop();
+              final Uri url = Uri.parse(channelUrl);
+              if (await canLaunchUrl(url)) {
+                await launchUrl(
+                  url,
+                  mode: LaunchMode.externalApplication,
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF25D366),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            icon: const Icon(Icons.open_in_new_rounded, size: 18),
+            label: Text(
+              'Katıl',
+              style: theme.textTheme.titleSmall?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _dialogBenefit({
+    required IconData icon,
+    required String text,
+    required ColorScheme colorScheme,
+    required ThemeData theme,
+  }) {
+    return Row(
+      children: [
+        Icon(
+          icon,
+          size: 18,
+          color: colorScheme.primary.withOpacity(0.8),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onSurface.withOpacity(0.75),
+            ),
+          ),
+        ),
+        Icon(
+          Icons.check_circle,
+          size: 16,
+          color: const Color(0xFF25D366),
+        ),
+      ],
     );
   }
 }
