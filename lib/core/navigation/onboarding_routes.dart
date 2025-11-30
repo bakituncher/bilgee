@@ -4,11 +4,21 @@ import 'package:go_router/go_router.dart';
 import 'package:taktik/features/onboarding/screens/exam_selection_screen.dart';
 import 'package:taktik/features/onboarding/screens/availability_screen.dart';
 import 'package:taktik/features/onboarding/screens/profile_completion_screen.dart';
+import 'package:taktik/features/onboarding/screens/intro_screen.dart';
 import 'app_routes.dart';
 import 'transition_utils.dart';
 
 List<RouteBase> onboardingRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
   return [
+    GoRoute(
+      path: '/intro', // Hardcoded path or add to AppRoutes if preferred
+      parentNavigatorKey: rootNavigatorKey,
+      pageBuilder: (context, state) => buildPageWithFadeTransition(
+        context: context,
+        state: state,
+        child: const IntroScreen(),
+      ),
+    ),
     GoRoute(
       path: AppRoutes.profileCompletion,
       pageBuilder: (context, state) => buildPageWithFadeTransition(
