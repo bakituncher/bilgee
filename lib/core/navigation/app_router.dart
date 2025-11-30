@@ -183,7 +183,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           child: const premium.PremiumScreen(),
         ),
       ),
-       GoRoute(
+      GoRoute(
         path: '/ai-hub/offer',
         parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) {

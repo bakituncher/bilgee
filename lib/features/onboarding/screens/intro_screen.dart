@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
+import 'dart:ui'; // For ImageFilter
 
 class IntroScreen extends ConsumerStatefulWidget {
   const IntroScreen({super.key});
@@ -20,27 +21,28 @@ class _IntroScreenState extends ConsumerState<IntroScreen> {
   final List<_IntroContent> _contents = [
     _IntroContent(
       title: "Selam! Ben Taktik Tavşan",
-      description: "Sınav maratonunda sana rehberlik edecek, seni zirveye taşıyacak yapay zeka koçunum. Tanıştığımıza memnun oldum!",
+      description: "Sınav maratonunda senin en büyük destekçin, seni zirveye taşıyacak yapay zeka koçunum. Hazır mısın?",
       imagePath: 'assets/images/bunnyy.png',
       isAssetImage: true,
+      color: const Color(0xFF6366F1), // Indigo
     ),
     _IntroContent(
       title: "Akıllı Analiz Sistemi",
-      description: "Sen test çözdükçe zayıf noktalarını tespit ederim. Senin için en kritik konuları belirler ve eksiklerini kapatman için özel stratejiler üretirim.",
+      description: "Sen test çözdükçe zayıf noktalarını tespit ederim. Kritik konuları belirler, eksiklerini kapatman için sana özel stratejiler üretirim.",
       iconData: Icons.insights_rounded,
-      color: Colors.cyan,
+      color: const Color(0xFF0EA5E9), // Sky Blue
     ),
     _IntroContent(
       title: "Sana Özel Plan",
-      description: "Hedeflerine ve boş zamanlarına uygun haftalık çalışma programını hazırlarım. 'Bugün ne çalışsam?' derdine son!",
+      description: "Hedeflerine ve boş zamanlarına uygun haftalık çalışma programını saniyeler içinde hazırlarım. Planlama derdine son!",
       iconData: Icons.calendar_month_rounded,
-      color: Colors.orange,
+      color: const Color(0xFFF59E0B), // Amber
     ),
     _IntroContent(
-      title: "Rekabet ve Ödül",
-      description: "Diğer adaylarla arenada yarış, liglerde yüksel ve başarılarını madalyalarla taçlandır. Oyunlaştırma ile motivasyonun hep zirvede kalsın.",
+      title: "Rekabet ve Zafer",
+      description: "Diğer adaylarla arenada yarış, liglerde yüksel ve başarılarını madalyalarla taçlandır. Motivasyonun hep zirvede kalsın.",
       iconData: Icons.emoji_events_rounded,
-      color: Colors.amber,
+      color: const Color(0xFFEC4899), // Pink
     ),
   ];
 
@@ -78,8 +80,8 @@ class _IntroScreenState extends ConsumerState<IntroScreen> {
   void _nextPage() {
     if (_currentPage < _contents.length - 1) {
       _pageController.nextPage(
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.easeInOutCubic,
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.fastOutSlowIn,
       );
     } else {
       _completeIntro();
@@ -90,31 +92,107 @@ class _IntroScreenState extends ConsumerState<IntroScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final activeContent = _contents[_currentPage];
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            // Skip Button
-            if (_currentPage < _contents.length - 1)
-              Positioned(
-                top: 16,
-                right: 16,
-                child: TextButton(
-                  onPressed: _completeIntro,
-                  child: Text(
-                    "Atla",
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
+      body: Stack(
+        children: [
+          // 1. Dynamic Background (Gradients & Blobs)
+          Positioned.fill(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 800),
+              curve: Curves.easeInOut,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    activeContent.color!.withOpacity(0.15),
+                    theme.scaffoldBackgroundColor,
+                    activeContent.color!.withOpacity(0.05),
+                  ],
                 ),
               ),
+            ),
+          ),
 
-            // Content
-            Column(
+          // Decorative Blob 1 (Top Left)
+          Positioned(
+            top: -100,
+            left: -100,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 800),
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: activeContent.color!.withOpacity(0.2),
+                boxShadow: [
+                  BoxShadow(
+                    color: activeContent.color!.withOpacity(0.3),
+                    blurRadius: 100,
+                    spreadRadius: 20,
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Decorative Blob 2 (Bottom Right)
+          Positioned(
+            bottom: -50,
+            right: -50,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 800),
+              width: 250,
+              height: 250,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: activeContent.color!.withOpacity(0.15),
+                boxShadow: [
+                  BoxShadow(
+                    color: activeContent.color!.withOpacity(0.2),
+                    blurRadius: 80,
+                    spreadRadius: 10,
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Blur Effect for smoother background blending
+          Positioned.fill(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+              child: Container(color: Colors.transparent),
+            ),
+          ),
+
+          // 2. Main Content PageView
+          SafeArea(
+            child: Column(
               children: [
+                // Header (Skip Button)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      if (_currentPage < _contents.length - 1)
+                        TextButton(
+                          onPressed: _completeIntro,
+                          style: TextButton.styleFrom(
+                            foregroundColor: colorScheme.onSurface.withOpacity(0.6),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            textStyle: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          child: const Text("Atla"),
+                        ).animate().fadeIn(duration: 300.ms),
+                    ],
+                  ),
+                ),
+
                 Expanded(
                   child: PageView.builder(
                     controller: _pageController,
@@ -126,84 +204,104 @@ class _IntroScreenState extends ConsumerState<IntroScreen> {
                   ),
                 ),
 
-                // Bottom Controls
+                // 3. Bottom Controls (Indicators & Button)
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  padding: const EdgeInsets.fromLTRB(32, 0, 32, 48),
+                  child: Column(
                     children: [
-                      // Indicators
+                      // Page Indicators
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: List.generate(
                           _contents.length,
-                          (index) => AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            margin: const EdgeInsets.only(right: 8),
+                              (index) => AnimatedContainer(
+                            duration: const Duration(milliseconds: 400),
+                            curve: Curves.easeOutBack,
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
                             height: 8,
-                            width: _currentPage == index ? 24 : 8,
+                            width: _currentPage == index ? 32 : 8,
                             decoration: BoxDecoration(
                               color: _currentPage == index
-                                  ? colorScheme.primary
-                                  : colorScheme.surfaceContainerHighest,
+                                  ? activeContent.color
+                                  : colorScheme.onSurface.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(4),
+                              boxShadow: _currentPage == index
+                                  ? [
+                                BoxShadow(
+                                  color: activeContent.color!.withOpacity(0.4),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                )
+                              ]
+                                  : null,
                             ),
                           ),
                         ),
                       ),
 
-                      // Next/Start Button
-                      ElevatedButton(
-                        onPressed: _nextPage,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colorScheme.primary,
-                          foregroundColor: colorScheme.onPrimary,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 16,
+                      const SizedBox(height: 32),
+
+                      // Large Action Button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton(
+                          onPressed: _nextPage,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: activeContent.color,
+                            foregroundColor: Colors.white,
+                            elevation: 8,
+                            shadowColor: activeContent.color!.withOpacity(0.5),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: _isLoading
-                            ? SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: colorScheme.onPrimary,
+                          child: _isLoading
+                              ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: Colors.white,
+                            ),
+                          )
+                              : AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 300),
+                            transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: child),
+                            child: Row(
+                              key: ValueKey(_currentPage == _contents.length - 1),
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  _currentPage == _contents.length - 1
+                                      ? "Başlayalım"
+                                      : "Devam Et",
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.5,
+                                  ),
                                 ),
-                              )
-                            : Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    _currentPage == _contents.length - 1
-                                        ? "Başlayalım"
-                                        : "İlerle",
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Icon(
-                                    _currentPage == _contents.length - 1
-                                        ? Icons.rocket_launch_rounded
-                                        : Icons.arrow_forward_rounded,
-                                    size: 20,
-                                  ),
-                                ],
-                              ),
+                                const SizedBox(width: 12),
+                                Icon(
+                                  _currentPage == _contents.length - 1
+                                      ? Icons.rocket_launch_rounded
+                                      : Icons.arrow_forward_rounded,
+                                  size: 24,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ).animate(target: _currentPage == _contents.length - 1 ? 1 : 0)
+                            .shimmer(duration: 1200.ms, color: Colors.white30, delay: 500.ms),
                       ),
                     ],
                   ),
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -236,68 +334,101 @@ class _IntroSlide extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
     return Padding(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.symmetric(horizontal: 32.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Spacer(),
-          // Image / Icon
+          const Spacer(flex: 2),
+
+          // Visual Container
           Expanded(
-            flex: 3,
+            flex: 5,
             child: Container(
-              alignment: Alignment.center,
-              child: content.isAssetImage
-                  ? Image.asset(
-                      content.imagePath!,
-                      fit: BoxFit.contain,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withOpacity(0.05)
+                    : Colors.white.withOpacity(0.6),
+                borderRadius: BorderRadius.circular(40),
+                border: Border.all(
+                  color: Colors.white.withOpacity(isDark ? 0.1 : 0.5),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: (content.color ?? Colors.black).withOpacity(0.1),
+                    blurRadius: 40,
+                    offset: const Offset(0, 10),
+                    spreadRadius: 0,
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(40),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Center(
+                    child: content.isAssetImage
+                        ? Padding(
+                      padding: const EdgeInsets.all(32.0),
+                      child: Image.asset(
+                        content.imagePath!,
+                        fit: BoxFit.contain,
+                      ).animate()
+                          .scale(duration: 600.ms, curve: Curves.elasticOut)
+                          .shimmer(delay: 1000.ms, duration: 1500.ms, color: Colors.white24),
+                    )
+                        : Icon(
+                      content.iconData,
+                      size: 100,
+                      color: content.color,
                     ).animate()
-                      .scale(duration: 600.ms, curve: Curves.easeOutBack)
-                      .fadeIn(duration: 400.ms)
-                  : Container(
-                      padding: const EdgeInsets.all(48),
-                      decoration: BoxDecoration(
-                        color: (content.color ?? colorScheme.primary).withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        content.iconData,
-                        size: 80,
-                        color: content.color ?? colorScheme.primary,
-                      ),
-                    ).animate()
-                      .scale(duration: 500.ms, curve: Curves.easeOutBack)
-                      .shimmer(delay: 1000.ms, duration: 1000.ms, color: Colors.white24),
-            ),
+                        .scale(duration: 500.ms, curve: Curves.easeOutBack)
+                        .then()
+                        .shake(duration: 500.ms, hz: 2),
+                  ),
+                ),
+              ),
+            ).animate()
+                .slideY(begin: 0.1, end: 0, duration: 600.ms, curve: Curves.easeOutQuint)
+                .fadeIn(duration: 600.ms),
           ),
-          const SizedBox(height: 32),
+
+          const SizedBox(height: 48),
+
           // Text Content
           Expanded(
-            flex: 2,
+            flex: 4,
             child: Column(
               children: [
                 Text(
                   content.title,
                   textAlign: TextAlign.center,
                   style: theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w800,
                     color: colorScheme.onSurface,
+                    letterSpacing: -0.5,
                   ),
                 ).animate()
-                  .fadeIn(delay: 200.ms, duration: 400.ms)
-                  .slideY(begin: 0.2, end: 0),
+                    .fadeIn(delay: 200.ms, duration: 500.ms)
+                    .moveY(begin: 20, end: 0, curve: Curves.easeOut),
+
                 const SizedBox(height: 16),
+
                 Text(
                   content.description,
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyLarge?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                     height: 1.5,
+                    fontSize: 16,
                   ),
                 ).animate()
-                  .fadeIn(delay: 400.ms, duration: 400.ms)
-                  .slideY(begin: 0.2, end: 0),
+                    .fadeIn(delay: 400.ms, duration: 500.ms)
+                    .moveY(begin: 20, end: 0, curve: Curves.easeOut),
               ],
             ),
           ),
