@@ -56,21 +56,21 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Header - Kullanıcı Profili
+                // Header - Kullanıcı Profili (Compact)
                 InkWell(
                   onTap: () { Navigator.of(context).pop(); context.go('/profile'); },
                   child: Container(
-                    margin: const EdgeInsets.fromLTRB(10, 10, 10, 8),
-                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.fromLTRB(8, 8, 8, 6),
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(12),
                       color: colorScheme.surfaceContainerHighest.withOpacity(.12),
                       border: Border.all(color: colorScheme.surfaceContainerHighest.withOpacity(.2)),
                     ),
                     child: Row(
                       children: [
-                        _Avatar(userName: user?.name, style: user?.avatarStyle, seed: user?.avatarSeed),
-                        const SizedBox(width: 10),
+                        _Avatar(userName: user?.name, style: user?.avatarStyle, seed: user?.avatarSeed, radius: 18),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -78,31 +78,33 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                             children: [
                               Text(
                                 user?.name ?? 'Gezgin',
-                                style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700, fontSize: 14),
+                                style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700, fontSize: 13),
                                 overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
                               ),
-                              const SizedBox(height: 2),
+                              const SizedBox(height: 1),
                               Row(
                                 children: [
-                                  Icon(Icons.workspace_premium_rounded, size: 12, color: colorScheme.primary),
-                                  const SizedBox(width: 4),
+                                  Icon(Icons.workspace_premium_rounded, size: 10, color: colorScheme.primary),
+                                  const SizedBox(width: 3),
                                   Expanded(
                                     child: Text(
                                       rankInfo.current.name,
-                                      style: theme.textTheme.labelSmall?.copyWith(color: colorScheme.primary, fontWeight: FontWeight.w600, fontSize: 11),
+                                      style: theme.textTheme.labelSmall?.copyWith(color: colorScheme.primary, fontWeight: FontWeight.w600, fontSize: 10),
                                       overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
                                     ),
                                   ),
-                                  const SizedBox(width: 4),
-                                  Text('${user?.engagementScore ?? 0} TP', style: theme.textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant.withOpacity(.65), fontSize: 10)),
+                                  const SizedBox(width: 3),
+                                  Text('${user?.engagementScore ?? 0} TP', style: theme.textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant.withOpacity(.65), fontSize: 9)),
                                 ],
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 3),
                               ClipRRect(
-                                borderRadius: BorderRadius.circular(3),
+                                borderRadius: BorderRadius.circular(2),
                                 child: LinearProgressIndicator(
                                   value: rankInfo.progress,
-                                  minHeight: 4,
+                                  minHeight: 3,
                                   backgroundColor: colorScheme.surfaceContainerHighest.withOpacity(.25),
                                   valueColor: AlwaysStoppedAnimation(colorScheme.primary),
                                 ),
@@ -110,8 +112,8 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                             ],
                           ),
                         ),
-                        const SizedBox(width: 6),
-                        Icon(Icons.chevron_right_rounded, size: 18, color: colorScheme.onSurfaceVariant.withOpacity(.5)),
+                        const SizedBox(width: 4),
+                        Icon(Icons.chevron_right_rounded, size: 16, color: colorScheme.onSurfaceVariant.withOpacity(.5)),
                       ],
                     ),
                   ),
@@ -136,9 +138,9 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                   ),
                 ),
 
-                // Premium Section - GÜNCELLENMİŞ PAZARLAMA ALANI
+                // Premium Section - Compact
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+                  padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
                   child: isPremium
                       ? _PremiumActiveCard(colorScheme: colorScheme, theme: theme)
                       : _PremiumOfferCard(
@@ -155,7 +157,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
 
                 // Footer actions
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 10, 8, 10),
+                  padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
                   child: Row(
                     children: [
                       Expanded(
@@ -206,9 +208,9 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
     final userIsPremium = ref.watch(premiumStatusProvider);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 1),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         onTap: () {
           Navigator.of(context).pop();
           if (isPremium && !userIsPremium) {
@@ -224,9 +226,9 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOut,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
             color: selected ? colorScheme.primary.withOpacity(.12) : Colors.transparent,
             border: selected ? Border.all(color: colorScheme.primary.withOpacity(.3), width: 1.5) : null,
           ),
@@ -234,50 +236,52 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
             children: [
               Icon(
                 icon,
-                size: 21,
+                size: 19,
                 color: selected ? colorScheme.primary : colorScheme.onSurfaceVariant.withOpacity(.85),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   title,
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-                    fontSize: 13.5,
+                    fontSize: 12.5,
                     color: selected ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               if (showPremiumBadge) ...[
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [colorScheme.primary.withOpacity(0.2), Colors.amber.withOpacity(0.2)],
                     ),
-                    borderRadius: BorderRadius.circular(7),
+                    borderRadius: BorderRadius.circular(6),
                     border: Border.all(color: colorScheme.primary.withOpacity(0.35), width: 1),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.workspace_premium_rounded, size: 11, color: colorScheme.primary),
-                      const SizedBox(width: 3),
+                      Icon(Icons.workspace_premium_rounded, size: 9, color: colorScheme.primary),
+                      const SizedBox(width: 2),
                       Text(
                         'PRO',
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: colorScheme.primary,
                           fontWeight: FontWeight.w800,
-                          fontSize: 10,
+                          fontSize: 8,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 3),
               ],
               if (selected)
-                Icon(Icons.chevron_right_rounded, size: 18, color: colorScheme.primary.withOpacity(0.7)),
+                Icon(Icons.chevron_right_rounded, size: 16, color: colorScheme.primary.withOpacity(0.7)),
             ],
           ),
         ),
@@ -298,7 +302,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
       borderRadius: BorderRadius.circular(12),
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           color: colorScheme.surfaceContainerHighest.withOpacity(.2),
@@ -306,14 +310,18 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 19, color: iconColor ?? colorScheme.onSurfaceVariant),
-            const SizedBox(width: 8),
-            Text(
-              title,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w800,
-                fontSize: 13,
-                color: iconColor ?? colorScheme.onSurfaceVariant,
+            Icon(icon, size: 18, color: iconColor ?? colorScheme.onSurfaceVariant),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                title,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 12.5,
+                  color: iconColor ?? colorScheme.onSurfaceVariant,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
             ),
           ],
@@ -327,14 +335,14 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
     final colorScheme = theme.colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 1),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         onTap: () => _showWhatsappDialog(context, user),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
             gradient: LinearGradient(
               colors: [
                 const Color(0xFF25D366).withOpacity(0.12),
@@ -345,24 +353,24 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
             ),
             border: Border.all(
               color: const Color(0xFF25D366).withOpacity(0.3),
-              width: 1.5,
+              width: 1.2,
             ),
           ),
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(7),
+                padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
                   color: const Color(0xFF25D366).withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(9),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: const FaIcon(
                   FontAwesomeIcons.whatsapp,
-                  size: 17,
+                  size: 15,
                   color: Color(0xFF25D366),
                 ),
               ),
-              const SizedBox(width: 11),
+              const SizedBox(width: 9),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -371,24 +379,28 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                       'WhatsApp Kanalımız',
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w800,
-                        fontSize: 13.5,
+                        fontSize: 12.5,
                         color: colorScheme.onSurface,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 1),
                     Text(
-                      'Güncel duyurular için katıl 💬',
+                      'Güncel duyurular 💬',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurfaceVariant.withOpacity(0.8),
-                        fontSize: 10.5,
+                        fontSize: 10,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
               Icon(
                 Icons.open_in_new_rounded,
-                size: 16,
+                size: 14,
                 color: const Color(0xFF25D366),
               ),
             ],
@@ -578,14 +590,14 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
     final colorScheme = theme.colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 1),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         onTap: () => _showSocialMediaDialog(context),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
             gradient: LinearGradient(
               colors: [
                 colorScheme.primary.withOpacity(0.12),
@@ -596,24 +608,24 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
             ),
             border: Border.all(
               color: colorScheme.primary.withOpacity(0.3),
-              width: 1.5,
+              width: 1.2,
             ),
           ),
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(7),
+                padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
                   color: colorScheme.primary.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(9),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
                   Icons.share_rounded,
-                  size: 17,
+                  size: 15,
                   color: colorScheme.primary,
                 ),
               ),
-              const SizedBox(width: 11),
+              const SizedBox(width: 9),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -622,24 +634,28 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                       'Sosyal Medya',
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w800,
-                        fontSize: 13.5,
+                        fontSize: 12.5,
                         color: colorScheme.onSurface,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 1),
                     Text(
                       'Bizi takip edin 🎯',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurfaceVariant.withOpacity(0.8),
-                        fontSize: 10.5,
+                        fontSize: 10,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
               Icon(
                 Icons.open_in_new_rounded,
-                size: 16,
+                size: 14,
                 color: colorScheme.primary,
               ),
             ],
@@ -842,33 +858,34 @@ class _Avatar extends StatelessWidget {
   final String? userName;
   final String? style;
   final String? seed;
-  const _Avatar({required this.userName, required this.style, required this.seed});
+  final double? radius;
+  const _Avatar({required this.userName, required this.style, required this.seed, this.radius});
 
   @override
   Widget build(BuildContext context) {
     final url = _buildSvgUrl();
-    const radius = 22.0;
+    final avatarRadius = radius ?? 22.0;
     if (url == null) {
       final initials = (userName ?? 'G').trim();
       return CircleAvatar(
-        radius: radius,
+        radius: avatarRadius,
         backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
         child: Text(
           initials.isEmpty ? 'G' : initials.characters.first.toUpperCase(),
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: avatarRadius * 0.7),
         ),
       );
     }
     return CircleAvatar(
-      radius: radius,
+      radius: avatarRadius,
       backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
       child: ClipOval(
         child: SvgPicture.network(
           url,
-          width: radius * 2,
-          height: radius * 2,
+          width: avatarRadius * 2,
+          height: avatarRadius * 2,
           fit: BoxFit.cover,
-          placeholderBuilder: (_) => Icon(Icons.person, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
+          placeholderBuilder: (_) => Icon(Icons.person, size: avatarRadius * 0.9, color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
       ),
     );
