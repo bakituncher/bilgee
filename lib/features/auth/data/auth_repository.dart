@@ -3,6 +3,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:crypto/crypto.dart';
+import 'dart:convert';
+import 'dart:math';
 import 'package:taktik/data/repositories/firestore_service.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import '../../../shared/notifications/notification_service.dart';
@@ -193,6 +197,76 @@ class AuthRepository {
     } catch (e) {
       // Handle exceptions
       throw 'Google ile giriş yapılamadı. Lütfen tekrar deneyin.';
+    }
+  }
+
+  /// Generates Nonce
+  String _generateNonce([int length = 32]) {
+    const charset = '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+    final random = Random.secure();
+    return List.generate(length, (_) => charset[random.nextInt(charset.length)]).join();
+  }
+
+  /// Returns the sha256 hash of [input] in hex notation.
+  String _sha256ofString(String input) {
+    final bytes = utf8.encode(input);
+    final digest = sha256.convert(bytes);
+    return digest.toString();
+  }
+
+  Future<void> signInWithApple() async {
+    try {
+      // FirebaseAuth’un yerel AppleAuthProvider’ını kullan
+      final provider = AppleAuthProvider();
+      // İsteğe bağlı kapsamlar (email ve ad-soyad)
+      provider.addScope('email');
+      provider.addScope('name');
+      // iOS’ta locale belirtmek isteyenler için (opsiyonel):
+      // provider.setCustomParameters({'locale': 'tr_TR'});
+
+      // FlutterFire’ın signInWithProvider API’si; web’de popup/redirect
+      final userCredential = await _firebaseAuth.signInWithProvider(provider);
+
+      if (userCredential.user != null) {
+        // Yeni kullanıcı ise profil oluştur
+        final isNewUser = userCredential.additionalUserInfo?.isNewUser ?? false;
+        if (isNewUser) {
+          final user = userCredential.user!;
+          final displayName = user.displayName ?? '';
+          String firstName = '';
+          String lastName = '';
+          if (displayName.isNotEmpty) {
+            final nameParts = displayName.split(' ');
+            firstName = nameParts.isNotEmpty ? nameParts.first : '';
+            lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+          }
+          if (firstName.isEmpty && lastName.isEmpty) {
+            firstName = 'Apple';
+            lastName = 'Kullanıcısı';
+          }
+
+          final generatedUsername = user.email?.split('@').first ?? 'apple_${user.uid.substring(0, 8)}';
+
+          await _firestoreService.createUserProfile(
+            user: user,
+            firstName: firstName,
+            lastName: lastName,
+            username: generatedUsername,
+            avatarStyle: 'bottts',
+            avatarSeed: generatedUsername,
+          );
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('APPLE GİRİŞ HATASI DETAYI: $e');
+      }
+      // Kullanıcı iptal ettiyse sessizce çık
+      final msg = e.toString();
+      if (msg.contains('canceled') || msg.contains('popup_closed_by_user')) {
+        return;
+      }
+      throw 'Apple ile giriş yapılamadı. Lütfen tekrar deneyin.';
     }
   }
 }

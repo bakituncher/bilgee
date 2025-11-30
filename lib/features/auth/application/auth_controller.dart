@@ -263,4 +263,11 @@ class AuthController extends StreamNotifier<User?> {
     final authRepository = ref.read(authRepositoryProvider);
     await authRepository.signInWithGoogle();
   }
+
+  Future<void> signInWithApple() async {
+    // Apple sign-in'den önce mevcut RevenueCat kullanıcısını temizle
+    await _logOutFromRevenueCat();
+    final authRepository = ref.read(authRepositoryProvider);
+    await authRepository.signInWithApple();
+  }
 }
