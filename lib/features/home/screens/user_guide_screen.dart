@@ -90,7 +90,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      '🎯 Taktik Rehberi',
+                      'Taktik Rehberi',
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 19,
@@ -127,25 +127,6 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
                         ),
                       ),
                     ),
-                    // Animated particles effect
-                    Positioned(
-                      right: -30,
-                      top: -30,
-                      child: Icon(
-                        Icons.stars_rounded,
-                        size: 150,
-                        color: Colors.amber.withOpacity(0.08),
-                      ),
-                    ),
-                    Positioned(
-                      left: -20,
-                      bottom: -20,
-                      child: Icon(
-                        Icons.rocket_launch_rounded,
-                        size: 100,
-                        color: Colors.white.withOpacity(0.05),
-                      ),
-                    ),
                     // Close button positioned safely
                     Positioned(
                       top: MediaQuery.of(context).padding.top + 8,
@@ -156,7 +137,6 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
                           decoration: BoxDecoration(
                             color: Colors.black38,
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white24, width: 1),
                           ),
                           child: const Icon(Icons.close_rounded, color: Colors.white, size: 20),
                         ),
@@ -189,12 +169,12 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
                   dividerColor: Colors.transparent,
                   labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                   tabs: const [
-                    Tab(text: 'Başlangıç 🚀'),
-                    Tab(text: 'Plan 📅'),
-                    Tab(text: 'Arşiv 📚'),
-                    Tab(text: 'Cevher 💎'),
-                    Tab(text: 'Arena 🎮'),
-                    Tab(text: 'İstatistik 📊'),
+                    Tab(text: '🚀 Başlangıç'),
+                    Tab(text: '📅 Plan'),
+                    Tab(text: '📚 Arşiv'),
+                    Tab(text: '💎 Cevher'),
+                    Tab(text: '🎮 Arena'),
+                    Tab(text: '📊 İstatistik'),
                   ],
                 ),
                 isDark: isDark,
@@ -365,20 +345,18 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       children: [
-        // Clean Hero Banner
+        // Hero Banner
         Container(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.all(16),
           margin: const EdgeInsets.only(bottom: 16),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+            gradient: LinearGradient(
+              colors: [Colors.indigo.shade600, Colors.purple.shade600],
             ),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF8B5CF6).withOpacity(0.3),
+                color: Colors.purple.withOpacity(0.3),
                 blurRadius: 15,
                 offset: const Offset(0, 6),
               ),
@@ -387,33 +365,23 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           child: const Column(
             children: [
               Icon(Icons.rocket_launch_rounded, color: Colors.white, size: 36),
-              SizedBox(height: 10),
+              SizedBox(height: 8),
               Text(
-                'Hoş Geldin!',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0.3,
-                ),
+                'Hoş Geldin',
+                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900),
               ),
-              SizedBox(height: 6),
+              SizedBox(height: 4),
               Text(
-                'Yapay zeka destekli çalışma sistemi ile\nhedefine daha hızlı ulaş',
+                'Taktik ile hedefine ulaş',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  height: 1.4,
-                ),
+                style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500),
               ),
             ],
           ),
-        ).animate().fadeIn(duration: 400.ms).scale(delay: 100.ms),
+        ).animate().fadeIn(duration: 400.ms, curve: Curves.easeOut).slideY(begin: 0.05, end: 0, duration: 400.ms, curve: Curves.easeOut),
 
         _buildSectionHeader(
-          '🚀 3 Adımda Başla',
+          '3 Adımda Başla',
           'Hemen kullanmaya başla, farkı hisset.',
           color: Colors.blue,
         ),
@@ -422,14 +390,14 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           context,
           isDark: isDark,
           icon: Icons.psychology_alt_rounded,
-          title: '1. Yapay Zeka Seni Öğrensin',
-          content: 'Sınav türün, hedef puanın, güçlü/zayıf konuların... AI her şeyi analiz edip sana özel strateji oluşturur.',
+          title: 'Yapay Zeka Seni Öğrensin',
+          content: 'Sınav türün, hedef puanın, güçlü/zayıf konuların analiz edilip sana özel strateji oluşturulur.',
           accentColor: Colors.blue,
           bottomContent: Column(
             children: [
-              _buildTipRow('🎯 Gerçekçi hedefler = Sürdürülebilir başarı', isDark),
-              _buildTipRow('⏰ Dürüst zaman planı = Etkili çalışma', isDark),
-              _buildTipRow('📊 Doğru veriler = Doğru yönlendirme', isDark),
+              _buildTipRow('Gerçekçi hedefler = Sürdürülebilir başarı', isDark),
+              _buildTipRow('Dürüst zaman planı = Etkili çalışma', isDark),
+              _buildTipRow('Doğru veriler = Doğru yönlendirme', isDark),
             ],
           ),
         ),
@@ -438,8 +406,8 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           context,
           isDark: isDark,
           icon: Icons.schedule_rounded,
-          title: '2. Günde Sadece 2 Dakika Ayır',
-          content: 'Karmaşık sisteme elveda! Deneme çözdün mü? Netlerini gir, gerisini AI halleder. Saat değil, verimlilik önemli.',
+          title: 'Günde Sadece 2 Dakika Ayır',
+          content: 'Karmaşık sisteme elveda! Deneme çözdün mü? Netlerini gir, gerisini AI halleder.',
           accentColor: Colors.orange,
           bottomContent: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -455,8 +423,8 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           context,
           isDark: isDark,
           icon: Icons.auto_graph_rounded,
-          title: '3. Sonuçları İzle, Motive Ol',
-          content: 'Her hafta gelişimini grafiklerle gör. Motivasyon kaybetmek imkansız hale geliyor. Rakiplerini geç, liderler tablosuna çık!',
+          title: 'Sonuçları İzle, Motive Ol',
+          content: 'Her hafta gelişimini grafiklerle gör. Motivasyon kaybetmek imkansız hale geliyor.',
           accentColor: Colors.green,
         ),
 
@@ -472,14 +440,14 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           ),
           child: Row(
             children: [
-              const Icon(Icons.lightbulb_rounded, color: Colors.blue, size: 24),
+              const Icon(Icons.lightbulb_rounded, color: Colors.blue, size: 20),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  '💡 İpucu: Ana sayfadaki rehber görevlerini takip ederek sistemi öğren!',
+                  'İpucu: Ana sayfadaki rehber görevlerini takip ederek sistemi öğren',
                   style: TextStyle(
                     fontSize: 12,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                     color: isDark ? Colors.blue.shade200 : Colors.blue.shade900,
                   ),
                 ),
@@ -495,7 +463,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       children: [
-        // Value Proposition Header
+        // Hero Banner
         Container(
           padding: const EdgeInsets.all(16),
           margin: const EdgeInsets.only(bottom: 16),
@@ -514,55 +482,24 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           ),
           child: const Column(
             children: [
-              Icon(Icons.military_tech, color: Colors.amber, size: 36),
+              Icon(Icons.calendar_month_rounded, color: Colors.white, size: 36),
               SizedBox(height: 8),
               Text(
-                '📅 Haftalık Planın Gücü',
+                'Haftalık Planın Gücü',
                 style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900),
-                textAlign: TextAlign.center,
               ),
-              SizedBox(height: 6),
+              SizedBox(height: 4),
               Text(
-                '"Başarılı öğrenciler planlı çalışır.\nSen de aralarına katıl!"',
-                style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600),
+                'Başarılı öğrenciler planlı çalışır',
+                style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500),
                 textAlign: TextAlign.center,
               ),
             ],
           ),
-        ),
-
-        // AI Logic Visualization - Improved
-        Container(
-          padding: const EdgeInsets.all(14),
-          margin: const EdgeInsets.only(bottom: 16),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.green.withOpacity(0.3)),
-          ),
-          child: Column(
-            children: [
-              const Text(
-                '🤖 AI Nasıl Çalışır?',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildProcessStep(Icons.analytics_rounded, 'Analiz', isDark),
-                  const Icon(Icons.arrow_forward, color: Colors.green, size: 20),
-                  _buildProcessStep(Icons.warning_amber_rounded, 'Eksik\nTespiti', isDark),
-                  const Icon(Icons.arrow_forward, color: Colors.green, size: 20),
-                  _buildProcessStep(Icons.auto_fix_high, 'Özel\nPlan', isDark),
-                ],
-              ),
-            ],
-          ),
-        ),
+        ).animate().fadeIn(duration: 400.ms, curve: Curves.easeOut).slideY(begin: 0.05, end: 0, duration: 400.ms, curve: Curves.easeOut),
 
         _buildSectionHeader(
-          '⚡ Özellikler',
+          'Özellikler',
           'Senin için çalışan, seninle gelişen akıllı planlama.',
           color: Colors.green,
         ),
@@ -579,14 +516,14 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildTag('🟢 Rahat', Colors.green),
-                  _buildTag('🟡 Orta', Colors.orange),
-                  _buildTag('🔴 Yoğun', Colors.red),
+                  _buildTag('Rahat', Colors.green),
+                  _buildTag('Orta', Colors.orange),
+                  _buildTag('Yoğun', Colors.red),
                 ],
               ),
               const SizedBox(height: 8),
               const Text(
-                '💡 Her mod farklı görev yoğunluğu ve zorluk seviyesi sunar',
+                'Her mod farklı görev yoğunluğu ve zorluk seviyesi sunar',
                 style: TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: Colors.grey),
                 textAlign: TextAlign.center,
               ),
@@ -603,9 +540,9 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           accentColor: Colors.purple,
           bottomContent: Column(
             children: [
-              _buildTipRow('🔄 Tek tıkla plan yenileme', isDark),
-              _buildTipRow('📆 Görevleri sonraki haftaya taşıma', isDark),
-              _buildTipRow('✅ Tamamlanan görevler otomatik işaretlenir', isDark),
+              _buildTipRow('Tek tıkla plan yenileme', isDark),
+              _buildTipRow('Görevleri sonraki haftaya taşıma', isDark),
+              _buildTipRow('Tamamlanan görevler otomatik işaretlenir', isDark),
             ],
           ),
         ),
@@ -615,7 +552,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           isDark: isDark,
           icon: Icons.school_rounded,
           title: 'Okul Programı Entegrasyonu',
-          content: 'Okul saatlerin, özel ders programın... Her şeyi hesaba kat. Plan, gerçek müsaitliğine göre oluşturulsun.',
+          content: 'Okul saatlerin, özel ders programın hesaba katılır. Plan gerçek müsaitliğine göre oluşturulur.',
           accentColor: Colors.indigo,
         ),
 
@@ -630,14 +567,14 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           ),
           child: Row(
             children: [
-              const Icon(Icons.lightbulb_rounded, color: Colors.green, size: 28),
+              const Icon(Icons.lightbulb_rounded, color: Colors.green, size: 20),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  '💡 Planlı çalışmak, başarının en önemli anahtarıdır!',
+                  'Planlı çalışmak, başarının en önemli anahtarıdır',
                   style: TextStyle(
                     fontSize: 12,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                     color: isDark ? Colors.green.shade200 : Colors.green.shade900,
                   ),
                 ),
@@ -672,24 +609,24 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           ),
           child: const Column(
             children: [
-              Icon(Icons.library_books_rounded, color: Colors.white, size: 40),
+              Icon(Icons.library_books_rounded, color: Colors.white, size: 36),
               SizedBox(height: 8),
               Text(
-                '📚 Deneme Arşivi',
+                'Deneme Arşivi',
                 style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900),
               ),
               SizedBox(height: 4),
               Text(
-                '"Veri olmadan strateji olmaz!\nHer deneme bir altın madenidir."',
-                style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600),
+                'Her deneme bir fırsat, her analiz bir adım',
+                style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500),
                 textAlign: TextAlign.center,
               ),
             ],
           ),
-        ),
+        ).animate().fadeIn(duration: 400.ms, curve: Curves.easeOut).slideY(begin: 0.05, end: 0, duration: 400.ms, curve: Curves.easeOut),
 
         _buildSectionHeader(
-          '🎯 Sadece Kayıt Değil, Analiz',
+          'Sadece Kayıt Değil, Analiz',
           'Netlerini giriyorsun, AI her şeyi analiz ediyor.',
           color: Colors.redAccent,
         ),
@@ -698,15 +635,15 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           context,
           isDark: isDark,
           icon: Icons.radar_rounded,
-          title: '⚡ Anlık Detaylı Rapor',
-          content: 'Deneme bittiğinde sadece "Kaç net?" değil, "Neden bu kadar?" sorusuna da cevap al:',
+          title: 'Anlık Detaylı Rapor',
+          content: 'Deneme bittiğinde sadece "Kaç net?" değil, "Neden bu kadar?" sorusuna da cevap al.',
           accentColor: Colors.red,
           bottomContent: Column(
             children: [
-              _buildTipRow('📊 Konu bazlı başarı haritası', isDark),
-              _buildTipRow('🎯 Doğru/Yanlış/Boş oranları', isDark),
-              _buildTipRow('📈 Önceki denemelerle trend grafiği', isDark),
-              _buildTipRow('🏆 Hedef puanına ne kadar yakınsın?', isDark),
+              _buildTipRow('Konu bazlı başarı haritası', isDark),
+              _buildTipRow('Doğru/Yanlış/Boş oranları', isDark),
+              _buildTipRow('Önceki denemelerle trend grafiği', isDark),
+              _buildTipRow('Hedef puanına ne kadar yakınsın?', isDark),
             ],
           ),
         ),
@@ -715,17 +652,17 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           context,
           isDark: isDark,
           icon: Icons.gps_fixed_rounded,
-          title: '🔴 Zayıf Nokta Tespit Sistemi',
-          content: 'Sürekli aynı konularda mı takılıyorsun? AI bunu fark eder ve kırmızı alarm verir: "Türev\'e odaklan!"',
+          title: 'Zayıf Nokta Tespit Sistemi',
+          content: 'Sürekli aynı konularda mı takılıyorsun? AI bunu fark eder ve kırmızı alarm verir.',
           accentColor: Colors.orange,
           bottomContent: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildColorBadge('🟢', 'Güçlü', Colors.green),
+              _buildColorBadge('✓', 'Güçlü', Colors.green),
               const SizedBox(width: 8),
-              _buildColorBadge('🟡', 'Orta', Colors.orange),
+              _buildColorBadge('~', 'Orta', Colors.orange),
               const SizedBox(width: 8),
-              _buildColorBadge('🔴', 'Zayıf', Colors.red),
+              _buildColorBadge('!', 'Zayıf', Colors.red),
             ],
           ),
         ),
@@ -734,8 +671,8 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           context,
           isDark: isDark,
           icon: Icons.history_rounded,
-          title: '📊 Gelişim Grafiği',
-          content: 'Her deneme sonrası grafiğini gör. Net artışın gerçek zamanlı olarak takip edilir. Motive olmak bu kadar kolaydı!',
+          title: 'Gelişim Grafiği',
+          content: 'Her deneme sonrası grafiğini gör. Net artışın gerçek zamanlı olarak takip edilir.',
           accentColor: Colors.blue,
         ),
 
@@ -743,7 +680,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           context,
           isDark: isDark,
           icon: Icons.compare_arrows_rounded,
-          title: '🆚 Karşılaştırma Modu',
+          title: 'Karşılaştırma Modu',
           content: 'İki denemeyi yan yana koy. Hangi konularda ilerleme var? Hangi derste düşüş? Hepsi net ve görsel.',
           accentColor: Colors.purple,
         ),
@@ -759,14 +696,14 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           ),
           child: Row(
             children: [
-              const Icon(Icons.trending_up_rounded, color: Colors.red, size: 28),
+              const Icon(Icons.trending_up_rounded, color: Colors.red, size: 20),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  '📈 Her deneme bir adım, her analiz bir fırsat! Başarı veriye dayalıdır.',
+                  'Her deneme bir adım, her analiz bir fırsat',
                   style: TextStyle(
                     fontSize: 12,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                     color: isDark ? Colors.red.shade200 : Colors.red.shade900,
                   ),
                 ),
@@ -793,29 +730,29 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.purple.withOpacity(0.4),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
+                color: Colors.purple.withOpacity(0.3),
+                blurRadius: 15,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
           child: const Column(
             children: [
-              Icon(Icons.diamond_rounded, color: Colors.amber, size: 44),
-              SizedBox(height: 10),
+              Icon(Icons.diamond_rounded, color: Colors.amber, size: 36),
+              SizedBox(height: 8),
               Text(
-                '💎 Cevher Atölyesi',
-                style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900),
+                'Cevher Atölyesi',
+                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900),
               ),
-              SizedBox(height: 6),
+              SizedBox(height: 4),
               Text(
-                '"Zayıf noktalar = En büyük potansiyel!\nBurayı çalış, sıralamanda sıçra."',
-                style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600),
+                'Zayıf noktalar aslında en büyük potansiyelindir',
+                style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500),
                 textAlign: TextAlign.center,
               ),
             ],
           ),
-        ),
+        ).animate().fadeIn(duration: 400.ms, curve: Curves.easeOut).slideY(begin: 0.05, end: 0, duration: 400.ms, curve: Curves.easeOut),
 
         // Value Prop - Cevher tanımı
         Container(
@@ -836,15 +773,15 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           ),
           child: const Row(
             children: [
-              Icon(Icons.emoji_objects_rounded, color: Colors.white, size: 28),
+              Icon(Icons.lightbulb_rounded, color: Colors.white, size: 28),
               SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  '💡 Cevher = Az çalışma, çok net!\nSana en fazla puan getirecek kritik konular.',
+                  'Cevher = Az çalışma, çok net! Sana en fazla puan getirecek kritik konular.',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 13,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                     height: 1.3,
                   ),
                 ),
@@ -854,7 +791,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
         ),
 
         _buildSectionHeader(
-          '🎯 Nasıl Çalışır?',
+          'Nasıl Çalışır?',
           'AI analiz eder, sen sadece takip et.',
           color: Colors.purple,
         ),
@@ -863,7 +800,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           context,
           isDark: isDark,
           icon: Icons.psychology_rounded,
-          title: '🤖 AI Zayıf Noktayı Bulur',
+          title: 'AI Zayıf Noktayı Bulur',
           content: 'Deneme verilerine bakarak hangi konularda en çok hata yaptığını tespit eder. Sonra bunları "Cevher" olarak işaretler.',
           accentColor: Colors.deepPurple,
         ),
@@ -872,14 +809,14 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           context,
           isDark: isDark,
           icon: Icons.auto_fix_high_rounded,
-          title: '📚 3 Aşamalı Özel Reçete',
-          content: 'Her cevher için AI, sana özel 3 aşamalı çalışma planı hazırlar:',
+          title: '3 Aşamalı Özel Reçete',
+          content: 'Her cevher için AI, sana özel 3 aşamalı çalışma planı hazırlar.',
           accentColor: Colors.purple,
           bottomContent: Column(
             children: [
-              _buildStepRow('1', '📖 Konu Anlatımı', 'Temelden başla, eksikleri kapat'),
-              _buildStepRow('2', '✏️ Soru Çözümü', 'Pratik yap, hızlan, güven kazan'),
-              _buildStepRow('3', '🏆 Pekiştirme', 'Zor sorularla ustalaş, sınav hazır ol'),
+              _buildStepRow('1', 'Konu Anlatımı', 'Temelden başla, eksikleri kapat'),
+              _buildStepRow('2', 'Soru Çözümü', 'Pratik yap, hızlan, güven kazan'),
+              _buildStepRow('3', 'Pekiştirme', 'Zor sorularla ustalaş, sınav hazır ol'),
             ],
           ),
         ),
@@ -888,7 +825,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           context,
           isDark: isDark,
           icon: Icons.check_circle_outline_rounded,
-          title: '✅ İlerlemeyi Takip Et',
+          title: 'İlerlemeyi Takip Et',
           content: 'Her adımı tamamladıkça cevher parlıyor. Tamamlandığında o konu artık "güçlü" kategorisine geçer.',
           accentColor: Colors.green,
         ),
@@ -897,8 +834,8 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           context,
           isDark: isDark,
           icon: Icons.rocket_launch_rounded,
-          title: '🚀 Odaklanmış Çalışma',
-          content: 'Zayıf konularına odaklanarak daha verimli çalış. Az ama etkili çalışma = Hızlı gelişim!',
+          title: 'Odaklanmış Çalışma',
+          content: 'Zayıf konularına odaklanarak daha verimli çalış. Az ama etkili çalışma = Hızlı gelişim.',
           accentColor: Colors.orange,
         ),
 
@@ -913,14 +850,14 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           ),
           child: Row(
             children: [
-              const Icon(Icons.diamond_rounded, color: Colors.purple, size: 28),
+              const Icon(Icons.diamond_rounded, color: Colors.purple, size: 20),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  '💎 Zayıf noktaların aslında en büyük potansiyelindir!',
+                  'Zayıf noktaların aslında en büyük potansiyelindir',
                   style: TextStyle(
                     fontSize: 12,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                     color: isDark ? Colors.purple.shade200 : Colors.purple.shade900,
                   ),
                 ),
@@ -936,7 +873,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       children: [
-        // Hero Gaming Banner
+        // Hero Banner
         Container(
           padding: const EdgeInsets.all(16),
           margin: const EdgeInsets.only(bottom: 16),
@@ -947,52 +884,65 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.orange.withOpacity(0.4),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
+                color: Colors.orange.withOpacity(0.3),
+                blurRadius: 15,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
-          child: Column(
+          child: const Column(
             children: [
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.videogame_asset_rounded, color: Colors.white, size: 32),
-                  SizedBox(width: 12),
-                  Icon(Icons.emoji_events_rounded, color: Colors.amber, size: 36),
-                  SizedBox(width: 12),
-                  Icon(Icons.military_tech_rounded, color: Colors.white, size: 32),
-                ],
+              Icon(Icons.emoji_events_rounded, color: Colors.amber, size: 36),
+              SizedBox(height: 8),
+              Text(
+                'Arena & Oyunlaştırma',
+                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900),
               ),
-              const SizedBox(height: 12),
-              const Text(
-                '🎮 Arena & Oyunlaştırma',
-                style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900),
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                '"Ders çalışmak artık bir oyun!\nRakiplerini geç, zirveye çık."',
-                style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600),
+              SizedBox(height: 4),
+              Text(
+                'Çalış, kazan, yarış',
+                style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 14),
-              // TP & Rank badges
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildQuickStatBadge('⚡', 'TP', 'Her eylem puan', Colors.amber),
-                  _buildQuickStatBadge('🏆', 'Liderlik', 'Sıralamada çık', Colors.blue),
-                  _buildQuickStatBadge('🎖️', 'Rozet', 'Başarı göster', Colors.purple),
-                ],
+            ],
+          ),
+        ).animate().fadeIn(duration: 400.ms, curve: Curves.easeOut).slideY(begin: 0.05, end: 0, duration: 400.ms, curve: Curves.easeOut),
+
+        // Arena Özellikleri
+        Container(
+          padding: const EdgeInsets.all(14),
+          margin: const EdgeInsets.only(bottom: 16),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.orange.withOpacity(0.08),
+                blurRadius: 15,
+                offset: const Offset(0, 4),
               ),
             ],
+          ),
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(child: _buildQuickStatBadge('⚡', 'TP Kazan', Colors.amber)),
+                const SizedBox(width: 10),
+                Expanded(child: _buildQuickStatBadge('🏆', 'Sıralamaya Gir', Colors.blue)),
+                const SizedBox(width: 10),
+                Expanded(child: _buildQuickStatBadge('🎖️', 'Rozetler Edin', Colors.purple)),
+              ],
+            ),
           ),
         ),
 
         _buildSectionHeader(
-          '🎯 Nasıl Çalışır?',
-          'Çalış, kazan, yarış!',
+          'Nasıl Çalışır?',
+          'Çalış, kazan, yarış',
           color: Colors.orange,
         ),
 
@@ -1000,15 +950,15 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           context,
           isDark: isDark,
           icon: Icons.bolt_rounded,
-          title: '⚡ Her Şey TP Kazandırır',
-          content: 'Deneme çözme, cevher tamamlama, görev bitirme... Her başarılı eylem sana TP kazandırır. TP = Seviye atlama!',
+          title: 'Her Şey TP Kazandırır',
+          content: 'Deneme çözme, cevher tamamlama, görev bitirme... Her başarılı eylem sana TP kazandırır.',
           accentColor: Colors.amber,
           bottomContent: Column(
             children: [
-              _buildTipRow('✅ Deneme çöz → +50 TP', isDark),
-              _buildTipRow('💎 Cevher tamamla → +100 TP', isDark),
-              _buildTipRow('🎯 Günlük görev → +25 TP', isDark),
-              _buildTipRow('🔥 Seri bonus → +10 TP/gün', isDark),
+              _buildTipRow('Deneme çöz → +50 TP', isDark),
+              _buildTipRow('Cevher tamamla → +100 TP', isDark),
+              _buildTipRow('Günlük görev → +25 TP', isDark),
+              _buildTipRow('Seri bonus → +10 TP/gün', isDark),
             ],
           ),
         ),
@@ -1017,7 +967,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           context,
           isDark: isDark,
           icon: Icons.task_alt_rounded,
-          title: '📋 Günlük Görevler',
+          title: 'Günlük Görevler',
           content: 'Her gün sana özel 3-5 küçük görev verilir. Bunları tamamla, hem disiplinli çalış hem de ekstra TP kazan.',
           accentColor: Colors.blue,
         ),
@@ -1026,37 +976,37 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           context,
           isDark: isDark,
           icon: Icons.leaderboard_rounded,
-          title: '🏆 Liderlik Tablosu',
-          content: 'Haftalık ve aylık liderlik tablolarında rakiplerini gör. Seni geçenler motivasyon, sen geçenler gurur kaynağın!',
+          title: 'Liderlik Tablosu',
+          content: 'Haftalık ve aylık liderlik tablolarında rakiplerini gör. Seni geçenler motivasyon kaynağın.',
           accentColor: Colors.green,
-          bottomContent: const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('🥇 ', style: TextStyle(fontSize: 20)),
-              Text('🥈 ', style: TextStyle(fontSize: 20)),
-              Text('🥉 ', style: TextStyle(fontSize: 20)),
-              SizedBox(width: 8),
-              Text('Top 3 = Özel ödüller!', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-            ],
-          ),
         ),
 
         _buildInfoCard(
           context,
           isDark: isDark,
           icon: Icons.emoji_events_rounded,
-          title: '🎖️ Rozet Koleksiyonu',
-          content: 'Başarılarını göster! Her milestone\'da yeni rozet kazan:',
+          title: 'Rozet Koleksiyonu',
+          content: 'Başarılarını göster! Her başarı seviyesinde yeni rozet kazan.',
           accentColor: Colors.deepOrange,
-          bottomContent: Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            alignment: WrapAlignment.center,
+          bottomContent: Column(
             children: [
-              _buildBadgeChip('🎯 Deneme Fatihi'),
-              _buildBadgeChip('💎 Cevher Avcısı'),
-              _buildBadgeChip('🔥 Alev Ustası'),
-              _buildBadgeChip('⭐ Efsane'),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Expanded(child: _buildBadgeChip('Deneme Fatihi')),
+                  const SizedBox(width: 8),
+                  Expanded(child: _buildBadgeChip('Cevher Avcısı')),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Expanded(child: _buildBadgeChip('Alev Ustası')),
+                  const SizedBox(width: 8),
+                  Expanded(child: _buildBadgeChip('Efsane')),
+                ],
+              ),
             ],
           ),
         ),
@@ -1065,8 +1015,8 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           context,
           isDark: isDark,
           icon: Icons.whatshot_rounded,
-          title: '🔥 Streak (Seri) Sistemi',
-          content: 'Art arda gün sayısını artır! 7 gün, 30 gün, 100 gün... Her milestone ekstra TP ve özel rozetler kazandırır.',
+          title: 'Seri Sistemi',
+          content: 'Art arda gün sayısını artır! 7 gün, 30 gün, 100 gün... Her başarı seviyesinde ekstra TP ve özel rozetler kazandırır.',
           accentColor: Colors.red,
         ),
 
@@ -1082,14 +1032,14 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           ),
           child: const Row(
             children: [
-              Icon(Icons.celebration_rounded, color: Colors.amber, size: 28),
+              Icon(Icons.celebration_rounded, color: Colors.white, size: 20),
               SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  '🎊 Çalışmak hiç bu kadar eğlenceli olmamıştı!\nOyun oynar gibi başarıya ulaş.',
+                  'Çalışmak hiç bu kadar eğlenceli olmamıştı',
                   style: TextStyle(
                     fontSize: 12,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                     color: Colors.white,
                   ),
                 ),
@@ -1105,7 +1055,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       children: [
-        // Hero Analytics Banner
+        // Hero Banner
         Container(
           padding: const EdgeInsets.all(16),
           margin: const EdgeInsets.only(bottom: 16),
@@ -1116,32 +1066,32 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.indigo.withOpacity(0.4),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
+                color: Colors.purple.withOpacity(0.3),
+                blurRadius: 15,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
           child: const Column(
             children: [
-              Icon(Icons.analytics_rounded, color: Colors.white, size: 42),
-              SizedBox(height: 10),
+              Icon(Icons.analytics_rounded, color: Colors.white, size: 36),
+              SizedBox(height: 8),
               Text(
-                '📊 İstatistik & Analiz',
-                style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900),
+                'İstatistik & Analiz',
+                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900),
               ),
-              SizedBox(height: 6),
+              SizedBox(height: 4),
               Text(
-                '"Ölçemediğin şeyi geliştiremezsin.\nVeriye dayalı başarı burada!"',
-                style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600),
+                'Veriye dayalı başarı',
+                style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500),
                 textAlign: TextAlign.center,
               ),
             ],
           ),
-        ),
+        ).animate().fadeIn(duration: 400.ms, curve: Curves.easeOut).slideY(begin: 0.05, end: 0, duration: 400.ms, curve: Curves.easeOut),
 
         _buildSectionHeader(
-          '📈 Gelişimini Gör, Motive Ol',
+          'Gelişimini Gör, Motive Ol',
           'Her grafik bir başarı hikayesi anlatır.',
           color: Colors.indigo,
         ),
@@ -1150,15 +1100,15 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           context,
           isDark: isDark,
           icon: Icons.show_chart_rounded,
-          title: '📊 Dinamik Gelişim Grafikleri',
+          title: 'Dinamik Gelişim Grafikleri',
           content: 'Netlerin artıyor mu? Hangi derste ilerleme var? Trend ne yönde? Hepsi görsel ve interaktif grafiklerle önünde.',
           accentColor: Colors.indigo,
           bottomContent: Column(
             children: [
-              _buildTipRow('📈 Net artış trendleri (haftalık/aylık)', isDark),
-              _buildTipRow('🎯 Ders bazlı performans analizi', isDark),
-              _buildTipRow('📉 Düşüş tespiti ve erken uyarı', isDark),
-              _buildTipRow('🏆 Hedefe kalan mesafe göstergesi', isDark),
+              _buildTipRow('Net artış trendleri (haftalık/aylık)', isDark),
+              _buildTipRow('Ders bazlı performans analizi', isDark),
+              _buildTipRow('Düşüş tespiti ve erken uyarı', isDark),
+              _buildTipRow('Hedefe kalan mesafe göstergesi', isDark),
             ],
           ),
         ),
@@ -1167,7 +1117,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           context,
           isDark: isDark,
           icon: Icons.compare_rounded,
-          title: '🔄 Karşılaştırmalı Analiz',
+          title: 'Karşılaştırmalı Analiz',
           content: 'Geçen aya göre ne kadar ilerledin? Geçen haftaki performansınla bugünkü arasında fark var mı? Karşılaştır, öğren.',
           accentColor: Colors.blue,
         ),
@@ -1176,17 +1126,17 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           context,
           isDark: isDark,
           icon: Icons.radar_rounded,
-          title: '🎯 Güç-Zayıf Haritası',
+          title: 'Güç-Zayıf Haritası',
           content: 'Hangi konularda güçlüsün? Nerelerde eksiksin? Renkli ısı haritasıyla anlık durum analizi.',
           accentColor: Colors.purple,
           bottomContent: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildColorBadge('🟢', 'Güçlü', Colors.green),
+              _buildColorBadge('✓', 'Güçlü', Colors.green),
               const SizedBox(width: 8),
-              _buildColorBadge('🟡', 'Orta', Colors.orange),
+              _buildColorBadge('~', 'Orta', Colors.orange),
               const SizedBox(width: 8),
-              _buildColorBadge('🔴', 'Zayıf', Colors.red),
+              _buildColorBadge('!', 'Zayıf', Colors.red),
             ],
           ),
         ),
@@ -1195,7 +1145,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           context,
           isDark: isDark,
           icon: Icons.local_fire_department_rounded,
-          title: '🔥 Streak (Seri) Takibi',
+          title: 'Seri Takibi',
           content: 'İstikrar = Başarı! Her gün çalışarak serini uzat. Uzun seriler ekstra TP ve özel rozetler kazandırır.',
           accentColor: Colors.deepOrange,
           bottomContent: Row(
@@ -1212,8 +1162,8 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           context,
           isDark: isDark,
           icon: Icons.psychology_rounded,
-          title: '🧠 AI Önerileri',
-          content: 'İstatistiklerine bakarak AI, sana özel tavsiyeler verir: "Matematik\'te harikasın ama Türkçe\'ye biraz daha ağırlık ver!"',
+          title: 'AI Önerileri',
+          content: 'İstatistiklerine bakarak AI, sana özel tavsiyeler verir.',
           accentColor: Colors.teal,
         ),
 
@@ -1229,14 +1179,14 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           ),
           child: const Row(
             children: [
-              Icon(Icons.trending_up, color: Colors.white, size: 28),
+              Icon(Icons.trending_up, color: Colors.white, size: 20),
               SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  '📈 Grafikler yükselirken motivasyon da yükselir!\nİlerlemeyi görmek, devam etmenin en güçlü sebebidir.',
+                  'Grafikler yükselirken motivasyon da yükselir',
                   style: TextStyle(
                     fontSize: 12,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                     color: Colors.white,
                   ),
                 ),
@@ -1251,25 +1201,6 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
   // ---------------------------------------------------------------------------
   // HELPER WIDGETS
   // ---------------------------------------------------------------------------
-
-  Widget _buildProcessStep(IconData icon, String label, bool isDark) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        CircleAvatar(
-          radius: 20,
-          backgroundColor: isDark ? Colors.white10 : Colors.grey[200],
-          child: Icon(icon, size: 18, color: isDark ? Colors.white : Colors.black54),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-        ),
-      ],
-    );
-  }
 
   Widget _buildMicroStat(String icon, String value, String label) {
     return Column(
@@ -1311,26 +1242,37 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
     );
   }
 
-  Widget _buildQuickStatBadge(String emoji, String title, String subtitle, Color color) {
+  Widget _buildQuickStatBadge(String emoji, String title, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
+        color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.3)),
+        border: Border.all(color: color.withOpacity(0.3), width: 1.5),
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(emoji, style: const TextStyle(fontSize: 20)),
-          const SizedBox(height: 4),
           Text(
-            title,
-            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w900),
+            emoji,
+            style: const TextStyle(fontSize: 26),
           ),
-          Text(
-            subtitle,
-            style: const TextStyle(color: Colors.white70, fontSize: 9, fontWeight: FontWeight.w600),
+          const SizedBox(height: 6),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                title,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  height: 1.1,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+              ),
+            ),
           ),
         ],
       ),
@@ -1339,15 +1281,18 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
 
   Widget _buildBadgeChip(String text) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.deepOrange.withOpacity(0.15),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.deepOrange.withOpacity(0.4)),
       ),
-      child: Text(
-        text,
-        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.deepOrange),
+      child: Center(
+        child: Text(
+          text,
+          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.deepOrange),
+          textAlign: TextAlign.center,
+        ),
       ),
     );
   }
@@ -1391,14 +1336,14 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
       child: Row(
         children: [
           Container(
-            width: 22,
-            height: 22,
+            width: 24,
+            height: 24,
             alignment: Alignment.center,
             decoration: const BoxDecoration(
               color: Colors.deepPurple,
               shape: BoxShape.circle,
             ),
-            child: Text(step, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11)),
+            child: Text(step, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -1412,25 +1357,6 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatBox(String title, String sub, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(title, style: TextStyle(color: color, fontSize: 18, fontWeight: FontWeight.w900)),
-          const SizedBox(height: 2),
-          Text(sub, style: TextStyle(color: color, fontSize: 11)),
         ],
       ),
     );
