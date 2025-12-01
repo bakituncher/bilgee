@@ -105,7 +105,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     });
   }
 
-  // 18+ kullanıcılar için premium ekranı kontrolü
+  // 18+ kullanıcılar için premium ekranı kontrolü (Günde 4 kez gösterim)
   void _checkAndShowPremiumForAdults() async {
     final user = ref.read(userProfileProvider).value;
     if (user == null) return;
@@ -129,14 +129,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       final prefs = await ref.read(sharedPreferencesProvider.future);
       final today = DateTime.now().toString().split(' ')[0]; // YYYY-MM-DD formatı
       final lastShownDate = prefs.getString('premium_screen_last_shown') ?? '';
+      final showCountToday = prefs.getInt('premium_screen_count_$today') ?? 0;
 
-      // Bugün zaten gösterildiyse tekrar gösterme
-      if (lastShownDate == today) return;
+      // Bugün 4 kez gösterildiyse tekrar gösterme
+      if (lastShownDate == today && showCountToday >= 4) return;
 
-      // Premium ekranını göster ve tarihi kaydet
+      // Yeni gün başladıysa sayacı sıfırla
+      final newCount = (lastShownDate == today) ? showCountToday + 1 : 1;
+
+      // Premium ekranını göster ve sayacı güncelle
       Future.microtask(() async {
         if (!mounted) return;
         await prefs.setString('premium_screen_last_shown', today);
+        await prefs.setInt('premium_screen_count_$today', newCount);
         if (mounted) {
           context.go(AppRoutes.premium);
         }
