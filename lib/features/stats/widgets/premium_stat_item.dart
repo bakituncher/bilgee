@@ -27,10 +27,10 @@ class PremiumStatItem extends StatelessWidget {
     return AspectRatio(
       aspectRatio: 1.0,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 6),
         decoration: BoxDecoration(
           color: (isDark ? const Color(0xFF1E293B) : Colors.white).withOpacity(0.6),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: isHighlight
                 ? color.withOpacity(0.5)
@@ -41,8 +41,8 @@ class PremiumStatItem extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color, size: 16),
-            const SizedBox(height: 4),
+            Icon(icon, color: color, size: 14),
+            const SizedBox(height: 3),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -51,24 +51,24 @@ class PremiumStatItem extends StatelessWidget {
                   child: Text(
                     value,
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 13,
                       fontWeight: FontWeight.w900,
                       color: color,
                       height: 1,
-                      letterSpacing: -0.5,
+                      letterSpacing: -0.3,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 if (suffix != null) ...[
-                  const SizedBox(width: 2),
+                  const SizedBox(width: 1.5),
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 1),
+                    padding: const EdgeInsets.only(bottom: 0.5),
                     child: Text(
                       suffix!,
                       style: TextStyle(
-                        fontSize: 9,
+                        fontSize: 8,
                         fontWeight: FontWeight.w700,
                         color: color.withOpacity(0.7),
                       ),
@@ -77,18 +77,18 @@ class PremiumStatItem extends StatelessWidget {
                 ],
               ],
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 1.5),
             FittedBox(
               fit: BoxFit.scaleDown,
               child: Text(
                 label,
                 style: TextStyle(
-                  fontSize: 8.5,
+                  fontSize: 8,
                   fontWeight: FontWeight.w700,
                   color: isDark
                       ? Colors.white.withOpacity(0.5)
                       : Colors.black.withOpacity(0.4),
-                  letterSpacing: 0.2,
+                  letterSpacing: 0.1,
                   height: 1.1,
                 ),
                 textAlign: TextAlign.center,

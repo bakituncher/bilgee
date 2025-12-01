@@ -30,22 +30,22 @@ class PremiumHeroCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: const Color(0xFF10B981),
-          width: 2.0,
+          width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF10B981).withOpacity(0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-            spreadRadius: -2,
+            color: const Color(0xFF10B981).withOpacity(0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+            spreadRadius: -1,
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         child: Stack(
           children: [
             // Arka plan gradient
@@ -104,7 +104,7 @@ class PremiumHeroCard extends StatelessWidget {
             SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               child: Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(14),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
@@ -114,8 +114,8 @@ class PremiumHeroCard extends StatelessWidget {
                     children: [
                       // Avatar
                       Container(
-                        width: 48,
-                        height: 48,
+                        width: 42,
+                        height: 42,
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topLeft,
@@ -125,20 +125,20 @@ class PremiumHeroCard extends StatelessWidget {
                           shape: BoxShape.circle,
                           border: Border.all(
                             color: Colors.white.withOpacity(isDark ? 0.1 : 0.3),
-                            width: 3,
+                            width: 2.5,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: motivationColor.withOpacity(0.5),
-                              blurRadius: 16,
-                              offset: const Offset(0, 4),
+                              color: motivationColor.withOpacity(0.4),
+                              blurRadius: 12,
+                              offset: const Offset(0, 3),
                             ),
                           ],
                         ),
                         child: _getMotivationIcon() == Icons.rocket_launch_rounded
                             ? ClipOval(
                                 child: Padding(
-                                  padding: const EdgeInsets.all(6.0),
+                                  padding: const EdgeInsets.all(5.0),
                                   child: Image.asset(
                                     'assets/images/bunnyy.png',
                                     fit: BoxFit.contain,
@@ -148,10 +148,10 @@ class PremiumHeroCard extends StatelessWidget {
                             : Icon(
                                 _getMotivationIcon(),
                                 color: Colors.white,
-                                size: 24,
+                                size: 20,
                               ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -159,23 +159,23 @@ class PremiumHeroCard extends StatelessWidget {
                             Text(
                               'Hoş Geldin, ${user.firstName.isNotEmpty ? user.firstName : 'Öğrenci'}',
                               style: TextStyle(
-                                fontSize: 11,
+                                fontSize: 10,
                                 fontWeight: FontWeight.w600,
                                 color: isDark
-                                    ? Colors.white.withOpacity(0.6)
-                                    : Colors.black.withOpacity(0.5),
-                                letterSpacing: 0.5,
+                                    ? Colors.white.withOpacity(0.55)
+                                    : Colors.black.withOpacity(0.45),
+                                letterSpacing: 0.3,
                               ),
                             ),
-                            const SizedBox(height: 2),
+                            const SizedBox(height: 1),
                             Text(
                               motivationMessage,
                               style: TextStyle(
-                                fontSize: 16,
+                                fontSize: 14,
                                 fontWeight: FontWeight.w900,
                                 color: isDark ? Colors.white : const Color(0xFF0F172A),
                                 height: 1.2,
-                                letterSpacing: -0.5,
+                                letterSpacing: -0.3,
                               ),
                             ),
                           ],
@@ -183,17 +183,17 @@ class PremiumHeroCard extends StatelessWidget {
                       ),
                       // Durum rozeti
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [motivationColor, motivationColor.withOpacity(0.8)],
                           ),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(10),
                           boxShadow: [
                             BoxShadow(
-                              color: motivationColor.withOpacity(0.4),
-                              blurRadius: 8,
-                              offset: const Offset(0, 3),
+                              color: motivationColor.withOpacity(0.35),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
                             ),
                           ],
                         ),
@@ -203,16 +203,16 @@ class PremiumHeroCard extends StatelessWidget {
                             Icon(
                               _getStatusIcon(),
                               color: Colors.white,
-                              size: 14,
+                              size: 12,
                             ),
-                            const SizedBox(width: 4),
+                            const SizedBox(width: 3),
                             Text(
                               _getStatusText(),
                               style: const TextStyle(
-                                fontSize: 11,
+                                fontSize: 10,
                                 fontWeight: FontWeight.w900,
                                 color: Colors.white,
-                                letterSpacing: 0.5,
+                                letterSpacing: 0.3,
                               ),
                             ),
                           ],
@@ -221,7 +221,7 @@ class PremiumHeroCard extends StatelessWidget {
                     ],
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
 
                   // İstatistik kartları - Grid
                   IntrinsicHeight(
@@ -237,7 +237,7 @@ class PremiumHeroCard extends StatelessWidget {
                             isDark: isDark,
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: PremiumStatItem(
                             icon: Icons.trending_up_rounded,
@@ -247,7 +247,7 @@ class PremiumHeroCard extends StatelessWidget {
                             isDark: isDark,
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: PremiumStatItem(
                             icon: Icons.local_fire_department_rounded,
@@ -259,11 +259,11 @@ class PremiumHeroCard extends StatelessWidget {
                             isHighlight: streak >= 3,
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: PremiumStatItem(
                             icon: Icons.emoji_events_rounded,
-                            label: 'Taktik Puanı',
+                            label: 'Puan',
                             value: '${user.engagementScore ?? 0}',
                             color: AppTheme.goldBrandColor,
                             isDark: isDark,
@@ -273,7 +273,7 @@ class PremiumHeroCard extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
 
                   // İlerleme barı
                   Column(
@@ -285,40 +285,40 @@ class PremiumHeroCard extends StatelessWidget {
                           Text(
                             'Haftalık İlerleme',
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: 10,
                               fontWeight: FontWeight.w700,
                               color: isDark
-                                  ? Colors.white.withOpacity(0.6)
-                                  : Colors.black.withOpacity(0.5),
-                              letterSpacing: 0.5,
+                                  ? Colors.white.withOpacity(0.55)
+                                  : Colors.black.withOpacity(0.45),
+                              letterSpacing: 0.3,
                             ),
                           ),
                           Text(
                             '${(progressPercentage * 100).toInt()}%',
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: 11,
                               fontWeight: FontWeight.w900,
                               color: motivationColor,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 5),
                       Stack(
                         children: [
                           Container(
-                            height: 6,
+                            height: 5,
                             decoration: BoxDecoration(
                               color: isDark
                                   ? Colors.white.withOpacity(0.1)
                                   : Colors.black.withOpacity(0.08),
-                              borderRadius: BorderRadius.circular(3),
+                              borderRadius: BorderRadius.circular(2.5),
                             ),
                           ),
                           FractionallySizedBox(
                             widthFactor: progressPercentage.clamp(0.0, 1.0),
                             child: Container(
-                              height: 6,
+                              height: 5,
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   colors: [
@@ -326,12 +326,12 @@ class PremiumHeroCard extends StatelessWidget {
                                     motivationColor.withOpacity(0.7),
                                   ],
                                 ),
-                                borderRadius: BorderRadius.circular(3),
+                                borderRadius: BorderRadius.circular(2.5),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: motivationColor.withOpacity(0.5),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
+                                    color: motivationColor.withOpacity(0.4),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 1.5),
                                   ),
                                 ],
                               ),

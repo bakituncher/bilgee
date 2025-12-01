@@ -45,7 +45,7 @@ class OverviewContent extends ConsumerWidget {
         // Premium Hero Kartı - Sektör seviyesinde tasarım
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+            padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
             child: PremiumHeroCard(
               user: user,
               tests: tests,
@@ -66,11 +66,11 @@ class OverviewContent extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
                   child: Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(6),
+                        padding: const EdgeInsets.all(5),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
@@ -78,35 +78,35 @@ class OverviewContent extends ConsumerWidget {
                               AppTheme.secondaryBrandColor.withOpacity(0.1),
                             ],
                           ),
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(6),
                         ),
                         child: Icon(
                           Icons.insights_rounded,
                           color: AppTheme.primaryBrandColor,
-                          size: 16,
+                          size: 14,
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 8),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             'Performans Trendleri',
                             style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w900,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
                               color: isDark ? Colors.white : const Color(0xFF0F172A),
-                              letterSpacing: -0.5,
+                              letterSpacing: -0.3,
                             ),
                           ),
                           Text(
                             'Gelişimini takip et',
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: 10,
                               fontWeight: FontWeight.w600,
                               color: isDark
-                                  ? Colors.white.withOpacity(0.5)
-                                  : Colors.black.withOpacity(0.45),
+                                  ? Colors.white.withOpacity(0.45)
+                                  : Colors.black.withOpacity(0.4),
                             ),
                           ),
                         ],
@@ -115,7 +115,7 @@ class OverviewContent extends ConsumerWidget {
                   ).animate(delay: 300.ms).fadeIn().slideX(begin: -0.05),
                 ),
                 SizedBox(
-                  height: 220,
+                  height: 200,
                   child: SmartPerformanceCharts(
                     tests: tests,
                     isDark: isDark,
@@ -135,7 +135,7 @@ class OverviewContent extends ConsumerWidget {
             .slideY(begin: 0.05, curve: Curves.easeOutCubic),
         ),
 
-        const SliverToBoxAdapter(child: SizedBox(height: 4)),
+        const SliverToBoxAdapter(child: SizedBox(height: 2)),
 
         // Daily Activity & Subject Performance - Kompakt
         if (tests.isNotEmpty)
@@ -153,7 +153,7 @@ class OverviewContent extends ConsumerWidget {
                     .fadeIn(duration: 300.ms)
                     .slideY(begin: 0.05, curve: Curves.easeOutCubic),
 
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
 
                   // Ders Performansı
                   EnhancedSubjectBreakdown(
@@ -171,7 +171,7 @@ class OverviewContent extends ConsumerWidget {
         if (tests.isNotEmpty)
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              padding: const EdgeInsets.fromLTRB(16, 6, 16, 12),
               child: MotivationalFooter(
                 tests: tests,
                 streak: streak,
@@ -183,7 +183,7 @@ class OverviewContent extends ConsumerWidget {
           ),
 
         // Bottom spacing
-        const SliverToBoxAdapter(child: SizedBox(height: 12)),
+        const SliverToBoxAdapter(child: SizedBox(height: 8)),
       ],
     );
   }
