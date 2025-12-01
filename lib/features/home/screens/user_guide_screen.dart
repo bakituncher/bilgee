@@ -429,7 +429,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
             children: [
               _buildTipRow('🎯 Gerçekçi hedefler = Sürdürülebilir başarı', isDark),
               _buildTipRow('⏰ Dürüst zaman planı = Etkili çalışma', isDark),
-              _buildTipRow('📊 İlk verin kalitesi = AI doğruluğu', isDark),
+              _buildTipRow('📊 Doğru veriler = Doğru yönlendirme', isDark),
             ],
           ),
         ),
@@ -1086,7 +1086,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
               SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  '🎊 Çalışmak hiç bu kadar eğlenceli olmamıştı!\nOyun oyna gibi başarıya ulaş.',
+                  '🎊 Çalışmak hiç bu kadar eğlenceli olmamıştı!\nOyun oynar gibi başarıya ulaş.',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
