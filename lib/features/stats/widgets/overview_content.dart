@@ -14,6 +14,7 @@ import 'package:taktik/features/stats/widgets/motivational_footer.dart';
 import 'package:taktik/features/stats/widgets/performance_charts.dart';
 import 'package:taktik/features/stats/widgets/premium_hero_card.dart';
 import 'package:taktik/features/stats/widgets/subject_breakdown_widgets.dart';
+import 'package:taktik/features/stats/widgets/topic_performance_carousel.dart';
 
 /// Main content widget with all overview sections
 class OverviewContent extends ConsumerWidget {
@@ -125,6 +126,15 @@ class OverviewContent extends ConsumerWidget {
             ),
           ),
 
+        // Konu Performansı Carousel - Yatay kaydırılabilir (Coach screen'den girilen veriler)
+        SliverToBoxAdapter(
+          child: TopicPerformanceCarousel(
+            isDark: isDark,
+          ).animate(delay: 400.ms)
+            .fadeIn(duration: 300.ms)
+            .slideY(begin: 0.05, curve: Curves.easeOutCubic),
+        ),
+
         const SliverToBoxAdapter(child: SizedBox(height: 4)),
 
         // Daily Activity & Subject Performance - Kompakt
@@ -139,7 +149,7 @@ class OverviewContent extends ConsumerWidget {
                     userId: user.id,
                     isDark: isDark,
                     tests: tests,
-                  ).animate(delay: 400.ms)
+                  ).animate(delay: 450.ms)
                     .fadeIn(duration: 300.ms)
                     .slideY(begin: 0.05, curve: Curves.easeOutCubic),
 
@@ -149,7 +159,7 @@ class OverviewContent extends ConsumerWidget {
                   EnhancedSubjectBreakdown(
                     tests: tests,
                     isDark: isDark,
-                  ).animate(delay: 450.ms)
+                  ).animate(delay: 500.ms)
                     .fadeIn(duration: 300.ms)
                     .slideY(begin: 0.05, curve: Curves.easeOutCubic),
                 ],
@@ -166,7 +176,7 @@ class OverviewContent extends ConsumerWidget {
                 tests: tests,
                 streak: streak,
                 isDark: isDark,
-              ).animate(delay: 500.ms)
+              ).animate(delay: 550.ms)
                 .fadeIn(duration: 300.ms)
                 .scale(begin: const Offset(0.95, 0.95)),
             ),
