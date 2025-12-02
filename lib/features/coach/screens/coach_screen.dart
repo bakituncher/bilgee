@@ -298,18 +298,28 @@ class _SubjectGalaxyViewState extends ConsumerState<_SubjectGalaxyView> {
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
-                color: isDark 
-                  ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35)
-                  : Colors.white,
+                gradient: LinearGradient(
+                  colors: isDark
+                    ? [
+                        Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25),
+                        Theme.of(context).colorScheme.surfaceContainer.withOpacity(0.15),
+                      ]
+                    : [
+                        Colors.white,
+                        Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.05),
+                      ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
                 border: Border.all(
                   color: isDark 
-                    ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.55)
-                    : Theme.of(context).colorScheme.onSurface.withOpacity(0.15), 
+                    ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)
+                    : Theme.of(context).colorScheme.onSurface.withOpacity(0.12),
                   width: isDark ? 1 : 1.5
                 ),
                 boxShadow: isDark ? null : [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
+                    color: Colors.black.withOpacity(0.05),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -670,7 +680,7 @@ class _MasteryPill extends StatelessWidget {
 
     if (mastery < 0) {
       level = 'Veri Yok';
-      c = Theme.of(context).colorScheme.surfaceContainerHighest;
+      c = Theme.of(context).colorScheme.outline;
     } else if (mastery < 0.4) {
       level = 'Zayıf';
       c = Theme.of(context).colorScheme.error;
@@ -698,7 +708,7 @@ class _MasteryPill extends StatelessWidget {
         style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
-          color: c,
+          color: mastery < 0 ? Theme.of(context).colorScheme.onSurface : c,
           letterSpacing: 0.2,
         ),
         textAlign: TextAlign.center,

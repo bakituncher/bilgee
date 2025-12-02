@@ -562,7 +562,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
               _PurchaseOptionCard(
                 animationController: _cardPopController,
                 package: yearly,
-                title: 'Yıllık Premium Plan',
+                title: 'Yıllık PRO Plan',
                 price: yearly.storeProduct.priceString,
                 billingPeriod: '/ yıl',
                 tag: savePercent != null ? '%${savePercent.toStringAsFixed(0)} İNDİRİM' : 'EN POPÜLER',
@@ -579,7 +579,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
               _PurchaseOptionCard(
                 animationController: _cardPopController,
                 package: monthly,
-                title: 'Aylık Premium Plan',
+                title: 'Aylık PRO Plan',
                 price: monthly.storeProduct.priceString,
                 billingPeriod: '/ ay',
                 tag: 'ESNEKLİK',

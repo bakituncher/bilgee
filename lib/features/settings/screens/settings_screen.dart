@@ -27,73 +27,99 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   void _showDeleteAccountFlow(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    // 1. Uyarı Diyaloğu
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: theme.cardColor,
-        title: Row(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Column(
           children: [
-            Icon(Icons.warning_rounded, color: theme.colorScheme.error, size: 28),
-            const SizedBox(width: 12),
-            const Expanded(child: Text("Hesabınızı Silmek İstiyor Musunuz?", overflow: TextOverflow.ellipsis)),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.errorContainer.withOpacity(0.3),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.warning_rounded,
+                color: theme.colorScheme.error,
+                size: 48,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              "Hesabınızı Silmek İstiyor Musunuz?",
+              textAlign: TextAlign.center,
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ],
         ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Bu işlem GERİ ALINAMAZ ve hesabınız kalıcı olarak silinecektir.",
-                style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.error),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.errorContainer.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: theme.colorScheme.error.withOpacity(0.3),
+                ),
               ),
-              const SizedBox(height: 16),
-              const Text("Silinecek veriler:"),
-              const SizedBox(height: 8),
-              _buildDeleteItem("Hesap bilgileriniz ve profil"),
-              _buildDeleteItem("Tüm deneme sonuçlarınız"),
-              _buildDeleteItem("Haftalık planlar ve stratejiler"),
-              _buildDeleteItem("Konu performans analizleri"),
-              _buildDeleteItem("Çalışma geçmişi ve istatistikler"),
-              _buildDeleteItem("Kaydedilmiş çalışma kartları"),
-              _buildDeleteItem("Liderlik tablosu verileriniz"),
-              _buildDeleteItem("AI sohbet geçmişiniz"),
-              const SizedBox(height: 12),
-              Text(
-                "Bu işlemden sonra aynı e-posta ile yeni hesap açabilirsiniz.",
-                style: theme.textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.delete_sweep_rounded,
+                    color: theme.colorScheme.error,
+                    size: 48,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    "Bu işlem geri alınamaz!",
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.error,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Tüm verileriniz kalıcı olarak silinecektir.",
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.8),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text("İptal Et"),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+            child: const Text("İptal"),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: theme.colorScheme.error),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: theme.colorScheme.error,
+              foregroundColor: theme.colorScheme.onError,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
             onPressed: () {
               Navigator.of(context).pop();
-              _showDeleteAccountConfirmation(context, ref); // 2. Onay Diyaloğuna geç
+              _showDeleteAccountConfirmation(context, ref);
             },
             child: const Text("Devam Et"),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildDeleteItem(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Row(
-        children: [
-          Icon(Icons.close, size: 16, color: Theme.of(context).colorScheme.error),
-          const SizedBox(width: 8),
-          Expanded(child: Text(text, style: const TextStyle(fontSize: 13))),
-        ],
+        actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+        actionsAlignment: MainAxisAlignment.end,
       ),
     );
   }
@@ -110,103 +136,234 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (context, setState) {
-            return AlertDialog(
+            return Dialog(
               backgroundColor: theme.cardColor,
-              title: Row(
-                children: [
-                  Icon(Icons.delete_forever_rounded, color: theme.colorScheme.error, size: 28),
-                  const SizedBox(width: 12),
-                  const Expanded(child: Text("Son Onay", overflow: TextOverflow.ellipsis)),
-                ],
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    "Bu işlem kalıcıdır ve geri alınamaz!",
-                    style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.error),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Hesabınızı silmek için aşağıdaki alana şunu yazın:',
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.errorContainer.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: theme.colorScheme.error.withOpacity(0.5)),
-                    ),
-                    child: Text(
-                      confirmationText,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: theme.colorScheme.error,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Form(
-                    key: formKey,
-                    child: TextFormField(
-                      controller: confirmationController,
-                      onChanged: (_) => setState(() {}),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                      validator: (value) {
-                        if (value == null || value.trim() != confirmationText) {
-                          return 'Lütfen tam olarak "$confirmationText" yazın';
-                        }
-                        return null;
-                      },
-                      decoration: InputDecoration(
-                        hintText: confirmationText,
-                        errorMaxLines: 2,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: const Text("Vazgeç"),
-                ),
-                Consumer(
-                  builder: (context, ref, child) {
-                    final isLoading = ref.watch(settingsNotifierProvider).isLoading;
-                    return ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.colorScheme.error,
-                        foregroundColor: theme.colorScheme.onError,
-                      ),
-                      onPressed: (confirmationController.text == confirmationText && !isLoading)
-                          ? () {
-                        if (formKey.currentState!.validate()) {
-                          Navigator.of(dialogContext).pop();
-                          ref.read(settingsNotifierProvider.notifier).deleteAccount();
-                        }
-                      }
-                          : null,
-                      child: isLoading
-                          ? SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: theme.colorScheme.onError,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Başlık
+                      Text(
+                        "Son Onay",
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onSurface,
                         ),
-                      )
-                          : const Text("Hesabımı Kalıcı Olarak Sil"),
-                    );
-                  },
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // Uyarı Mesajı
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.errorContainer.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          "Bu işlem kalıcıdır ve geri alınamaz!",
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.error,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Talimat
+                      Text(
+                        "Onaylamak için aşağıya yazın:",
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      // Onay Metni
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.errorContainer.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: theme.colorScheme.error.withOpacity(0.4),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Text(
+                          confirmationText,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: theme.colorScheme.error,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 14),
+
+                      // Form
+                      Form(
+                        key: formKey,
+                        child: TextFormField(
+                          controller: confirmationController,
+                          onChanged: (_) => setState(() {}),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            letterSpacing: 1.3,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                          validator: (value) {
+                            if (value == null || value.trim() != confirmationText) {
+                              return 'Lütfen "$confirmationText" yazın';
+                            }
+                            return null;
+                          },
+                          decoration: InputDecoration(
+                            hintText: confirmationText,
+                            hintStyle: TextStyle(
+                              color: theme.colorScheme.onSurface.withOpacity(0.25),
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 1.1,
+                            ),
+                            errorMaxLines: 2,
+                            filled: true,
+                            fillColor: theme.colorScheme.surfaceContainerHighest,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 14,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide.none,
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(
+                                color: theme.colorScheme.outline.withOpacity(0.3),
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(
+                                color: theme.colorScheme.error,
+                                width: 2,
+                              ),
+                            ),
+                            errorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(
+                                color: theme.colorScheme.error,
+                              ),
+                            ),
+                            focusedErrorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(
+                                color: theme.colorScheme.error,
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Butonlar
+                      Consumer(
+                        builder: (context, ref, child) {
+                          final isLoading = ref.watch(settingsNotifierProvider).isLoading;
+                          final isValid = confirmationController.text == confirmationText;
+
+                          return Row(
+                            children: [
+                              Expanded(
+                                child: TextButton(
+                                  onPressed: isLoading
+                                      ? null
+                                      : () => Navigator.of(dialogContext).pop(),
+                                  style: TextButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    minimumSize: const Size.fromHeight(44),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    "Vazgeç",
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: FilledButton(
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: theme.colorScheme.error,
+                                    foregroundColor: theme.colorScheme.onError,
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    minimumSize: const Size.fromHeight(44),
+                                    disabledBackgroundColor:
+                                        theme.colorScheme.surfaceContainerHighest,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                  onPressed: (isValid && !isLoading)
+                                      ? () {
+                                    if (formKey.currentState!.validate()) {
+                                      Navigator.of(dialogContext).pop();
+                                      ref.read(settingsNotifierProvider.notifier)
+                                          .deleteAccount();
+                                    }
+                                  }
+                                      : null,
+                                  child: isLoading
+                                      ? SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: theme.colorScheme.onError,
+                                    ),
+                                  )
+                                      : const Text(
+                                    "Hesabımı Sil",
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                 ),
-              ],
+              ),
             );
           },
         );
@@ -766,21 +923,30 @@ class _ThemeSelection extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
         SegmentedButton<ThemeMode>(
-          segments: const <ButtonSegment<ThemeMode>>[
+          segments: <ButtonSegment<ThemeMode>>[
             ButtonSegment<ThemeMode>(
               value: ThemeMode.light,
-              label: Text('Açık'),
-              icon: Icon(Icons.wb_sunny_outlined, size: 18),
+              label: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: const Text('Açık'),
+              ),
+              icon: const Icon(Icons.wb_sunny_outlined, size: 18),
             ),
             ButtonSegment<ThemeMode>(
               value: ThemeMode.dark,
-              label: Text('Koyu'),
-              icon: Icon(Icons.nightlight_round, size: 18),
+              label: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: const Text('Koyu'),
+              ),
+              icon: const Icon(Icons.nightlight_round, size: 18),
             ),
             ButtonSegment<ThemeMode>(
               value: ThemeMode.system,
-              label: Text('Sistem'),
-              icon: Icon(Icons.phone_iphone_rounded, size: 18),
+              label: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: const Text('Sistem'),
+              ),
+              icon: const Icon(Icons.phone_iphone_rounded, size: 18),
             ),
           ],
           selected: <ThemeMode>{currentThemeMode},

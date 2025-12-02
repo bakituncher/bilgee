@@ -661,30 +661,51 @@ class _RatingStarButton extends ConsumerWidget {
                           child: InkWell(
                             onTap: () => Navigator.of(context).pop(true),
                             borderRadius: BorderRadius.circular(16),
-                            child: Center(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(
                                     Icons.star_rounded,
                                     color: const Color(0xFFFFD700),
-                                    size: 26,
+                                    size: 24,
                                   ).animate(onPlay: (controller) => controller.repeat())
                                       .shimmer(
                                     duration: 2.seconds,
                                     color: Colors.white.withOpacity(0.6),
                                   )
                                       .shake(duration: 2.seconds, hz: 2, curve: Curves.easeInOut),
-                                  const SizedBox(width: 12),
-                                  const Text(
-                                    'Play Store\'da Değerlendir',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: 0.3,
+                                  const SizedBox(width: 10),
+                                  Flexible(
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: const Text(
+                                        'Mağaza\'da Değerlendir',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: 0.2,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
                                   ),
+                                  const SizedBox(width: 10),
+                                  Icon(
+                                    Icons.star_rounded,
+                                    color: const Color(0xFFFFD700),
+                                    size: 24,
+                                  ).animate(onPlay: (controller) => controller.repeat())
+                                      .shimmer(
+                                    duration: 2.seconds,
+                                    delay: 1.seconds,
+                                    color: Colors.white.withOpacity(0.6),
+                                  )
+                                      .shake(duration: 2.seconds, hz: 2, curve: Curves.easeInOut),
                                 ],
                               ),
                             ),
