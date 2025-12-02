@@ -8,6 +8,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
 import 'dart:ui';
 import 'package:taktik/core/navigation/app_routes.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ToolOfferScreen extends ConsumerStatefulWidget {
   final String title;
@@ -92,11 +93,11 @@ class _LegalFooter extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const _FooterLink(text: 'Kullanım Şartları', targetRoute: AppRoutes.settings),
+          const _FooterLink(text: 'Kullanım Şartları', url: 'https://www.codenzi.com/taktik-kullanim-sozlesmesi.html'),
           const SizedBox(width: 8),
           Text('|', style: TextStyle(color: dividerColor, fontSize: 10)),
           const SizedBox(width: 8),
-          const _FooterLink(text: 'Gizlilik Politikası', targetRoute: AppRoutes.settings),
+          const _FooterLink(text: 'Gizlilik Politikası', url: 'https://www.codenzi.com/taktik-gizlilik-politikasi.html'),
         ],
       ),
     );
@@ -105,30 +106,32 @@ class _LegalFooter extends StatelessWidget {
 
 class _FooterLink extends StatelessWidget {
   final String text;
-  final String targetRoute;
+  final String url;
 
-  const _FooterLink({required this.text, required this.targetRoute});
+  const _FooterLink({required this.text, required this.url});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final linkColor = isDark ? Colors.white70 : Theme.of(context).colorScheme.onSurfaceVariant;
     return GestureDetector(
-      onTap: () {
-        context.push(targetRoute).catchError((error) {
+      onTap: () async {
+        final uri = Uri.parse(url);
+        if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: const Text('Sayfa açılamadı'),
+                content: Text('Bağlantı açılamadı: $url'),
                 action: SnackBarAction(
                   label: 'Tekrar',
-                  onPressed: () => context.push(targetRoute),
+                  onPressed: () async {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  },
                 ),
               ),
             );
           }
-          return Future.error(error);
-        });
+        }
       },
       child: Text(
         text,
