@@ -191,7 +191,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
                                           ),
                                           const SizedBox(width: 4),
                                           Text(
-                                            'Premium Gerektirir',
+                                            'PRO Gerektirir',
                                             style: theme.textTheme.labelSmall?.copyWith(
                                               color: theme.colorScheme.primary,
                                               fontWeight: FontWeight.w700,

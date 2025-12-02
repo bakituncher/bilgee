@@ -105,7 +105,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     });
   }
 
-  // 18+ kullanıcılar için premium ekranı kontrolü (Günde 4 kez gösterim)
+  // 18+ kullanıcılar için premium ekranı kontrolü
   void _checkAndShowPremiumForAdults() async {
     final user = ref.read(userProfileProvider).value;
     if (user == null) return;
@@ -129,19 +129,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       final prefs = await ref.read(sharedPreferencesProvider.future);
       final today = DateTime.now().toString().split(' ')[0]; // YYYY-MM-DD formatı
       final lastShownDate = prefs.getString('premium_screen_last_shown') ?? '';
-      final showCountToday = prefs.getInt('premium_screen_count_$today') ?? 0;
 
-      // Bugün 4 kez gösterildiyse tekrar gösterme
-      if (lastShownDate == today && showCountToday >= 4) return;
+      // Bugün zaten gösterildiyse tekrar gösterme
+      if (lastShownDate == today) return;
 
-      // Yeni gün başladıysa sayacı sıfırla
-      final newCount = (lastShownDate == today) ? showCountToday + 1 : 1;
-
-      // Premium ekranını göster ve sayacı güncelle
+      // Premium ekranını göster ve tarihi kaydet
       Future.microtask(() async {
         if (!mounted) return;
         await prefs.setString('premium_screen_last_shown', today);
-        await prefs.setInt('premium_screen_count_$today', newCount);
         if (mounted) {
           context.go(AppRoutes.premium);
         }
@@ -330,11 +325,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       ),
                       border: _appBarOpacity > 0.7
                           ? Border(
-                              bottom: BorderSide(
-                                color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.2),
-                                width: 1,
-                              ),
-                            )
+                        bottom: BorderSide(
+                          color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.2),
+                          width: 1,
+                        ),
+                      )
                           : null,
                     ),
                   ),
@@ -532,8 +527,8 @@ class _RatingStarButton extends ConsumerWidget {
                           ],
                         ),
                       ).animate()
-                        .fadeIn(duration: 400.ms)
-                        .scale(begin: const Offset(0.8, 0.8)),
+                          .fadeIn(duration: 400.ms)
+                          .scale(begin: const Offset(0.8, 0.8)),
                       const SizedBox(height: 20),
 
                       // Lottie Animation
@@ -546,8 +541,8 @@ class _RatingStarButton extends ConsumerWidget {
                           animate: true,
                         ),
                       ).animate()
-                        .fadeIn(duration: 400.ms)
-                        .scale(begin: const Offset(0.9, 0.9), duration: 400.ms),
+                          .fadeIn(duration: 400.ms)
+                          .scale(begin: const Offset(0.9, 0.9), duration: 400.ms),
                       const SizedBox(height: 20),
 
                       // Title
@@ -571,8 +566,8 @@ class _RatingStarButton extends ConsumerWidget {
                           textAlign: TextAlign.center,
                         ),
                       ).animate()
-                        .fadeIn(delay: 200.ms, duration: 400.ms)
-                        .slideY(begin: -0.1, end: 0),
+                          .fadeIn(delay: 200.ms, duration: 400.ms)
+                          .slideY(begin: -0.1, end: 0),
                       const SizedBox(height: 12),
 
                       // Subtitle
@@ -588,7 +583,7 @@ class _RatingStarButton extends ConsumerWidget {
                         ),
                         textAlign: TextAlign.center,
                       ).animate()
-                        .fadeIn(delay: 300.ms, duration: 400.ms),
+                          .fadeIn(delay: 300.ms, duration: 400.ms),
                       const SizedBox(height: 28),
 
                       // Benefits Row
@@ -602,8 +597,8 @@ class _RatingStarButton extends ConsumerWidget {
                               colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
                             ),
                           ).animate()
-                            .fadeIn(delay: 400.ms, duration: 300.ms)
-                            .slideX(begin: -0.2, end: 0),
+                              .fadeIn(delay: 400.ms, duration: 300.ms)
+                              .slideX(begin: -0.2, end: 0),
                           Container(
                             width: 1,
                             height: 50,
@@ -618,8 +613,8 @@ class _RatingStarButton extends ConsumerWidget {
                               colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
                             ),
                           ).animate()
-                            .fadeIn(delay: 450.ms, duration: 300.ms)
-                            .scale(begin: const Offset(0.8, 0.8)),
+                              .fadeIn(delay: 450.ms, duration: 300.ms)
+                              .scale(begin: const Offset(0.8, 0.8)),
                           Container(
                             width: 1,
                             height: 50,
@@ -634,8 +629,8 @@ class _RatingStarButton extends ConsumerWidget {
                               colors: [Color(0xFF10B981), Color(0xFF059669)],
                             ),
                           ).animate()
-                            .fadeIn(delay: 500.ms, duration: 300.ms)
-                            .slideX(begin: 0.2, end: 0),
+                              .fadeIn(delay: 500.ms, duration: 300.ms)
+                              .slideX(begin: 0.2, end: 0),
                         ],
                       ),
                       const SizedBox(height: 28),
@@ -666,44 +661,65 @@ class _RatingStarButton extends ConsumerWidget {
                           child: InkWell(
                             onTap: () => Navigator.of(context).pop(true),
                             borderRadius: BorderRadius.circular(16),
-                            child: Center(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(
                                     Icons.star_rounded,
                                     color: const Color(0xFFFFD700),
-                                    size: 26,
+                                    size: 24,
                                   ).animate(onPlay: (controller) => controller.repeat())
-                                    .shimmer(
-                                      duration: 2.seconds,
-                                      color: Colors.white.withOpacity(0.6),
-                                    )
-                                    .shake(duration: 2.seconds, hz: 2, curve: Curves.easeInOut),
-                                  const SizedBox(width: 12),
-                                  const Text(
-                                    'Play Store\'da Değerlendir',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: 0.3,
+                                      .shimmer(
+                                    duration: 2.seconds,
+                                    color: Colors.white.withOpacity(0.6),
+                                  )
+                                      .shake(duration: 2.seconds, hz: 2, curve: Curves.easeInOut),
+                                  const SizedBox(width: 10),
+                                  Flexible(
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: const Text(
+                                        'Mağaza\'da Değerlendir',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: 0.2,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
                                   ),
+                                  const SizedBox(width: 10),
+                                  Icon(
+                                    Icons.star_rounded,
+                                    color: const Color(0xFFFFD700),
+                                    size: 24,
+                                  ).animate(onPlay: (controller) => controller.repeat())
+                                      .shimmer(
+                                    duration: 2.seconds,
+                                    delay: 1.seconds,
+                                    color: Colors.white.withOpacity(0.6),
+                                  )
+                                      .shake(duration: 2.seconds, hz: 2, curve: Curves.easeInOut),
                                 ],
                               ),
                             ),
                           ),
                         ),
                       ).animate()
-                        .fadeIn(delay: 550.ms, duration: 400.ms)
-                        .slideY(begin: 0.2, end: 0)
-                        .then()
-                        .shimmer(
-                          delay: 1000.ms,
-                          duration: 2.seconds,
-                          color: Colors.white.withOpacity(0.3),
-                        ),
+                          .fadeIn(delay: 550.ms, duration: 400.ms)
+                          .slideY(begin: 0.2, end: 0)
+                          .then()
+                          .shimmer(
+                        delay: 1000.ms,
+                        duration: 2.seconds,
+                        color: Colors.white.withOpacity(0.3),
+                      ),
                       const SizedBox(height: 16),
 
                       // Secondary action
@@ -729,7 +745,7 @@ class _RatingStarButton extends ConsumerWidget {
                           ),
                         ),
                       ).animate()
-                        .fadeIn(delay: 600.ms, duration: 400.ms),
+                          .fadeIn(delay: 600.ms, duration: 400.ms),
                     ],
                   ),
                 ),
@@ -785,11 +801,11 @@ class _RatingStarButton extends ConsumerWidget {
         )
             .animate(onPlay: (controller) => controller.repeat())
             .shimmer(
-              duration: const Duration(milliseconds: 4000),
-              delay: const Duration(milliseconds: 50),
-              color: Colors.white.withOpacity(0.4),
-              size: 0.5,
-            );
+          duration: const Duration(milliseconds: 4000),
+          delay: const Duration(milliseconds: 50),
+          color: Colors.white.withOpacity(0.4),
+          size: 0.5,
+        );
       },
     );
   }
@@ -834,9 +850,9 @@ class _BenefitItem extends StatelessWidget {
             color: Colors.white,
           ),
         ).animate(onPlay: (controller) => controller.repeat())
-          .shimmer(duration: 3.seconds, color: Colors.white.withOpacity(0.5))
-          .then()
-          .shake(duration: 3.seconds, hz: 1, curve: Curves.easeInOut),
+            .shimmer(duration: 3.seconds, color: Colors.white.withOpacity(0.5))
+            .then()
+            .shake(duration: 3.seconds, hz: 1, curve: Curves.easeInOut),
         const SizedBox(height: 12),
         Text(
           label,

@@ -315,7 +315,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
 
                 // Açıklama
                 Text(
-                  'Her deneme, gelecekteki başarın için bir kanıtıdır. İlk kaydını ekleyerek yolculuğuna başla ve gelişimini takip et.',
+                  'Her deneme, gelecekteki başarının bir kanıtıdır. İlk kaydını ekleyerek yolculuğuna başla ve gelişimini takip et.',
                   textAlign: TextAlign.center,
                   style: textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
