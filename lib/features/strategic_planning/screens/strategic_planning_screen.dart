@@ -536,8 +536,8 @@ class StrategicPlanningScreen extends ConsumerWidget {
     bool isTestsOk;
 
     if (lastTestDate == null) {
-      testStatusText = "Hiç deneme eklenmemiş";
-      isTestsOk = false;
+      testStatusText = "Henüz deneme eklenmemiş (AI genel plan oluşturacak)";
+      isTestsOk = true; // Test olmadan da plan oluşturulabilir
     } else {
       final daysSinceLastTest = DateTime.now().difference(lastTestDate).inDays;
       if (daysSinceLastTest == 0) {

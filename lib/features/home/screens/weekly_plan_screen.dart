@@ -25,7 +25,55 @@ class WeeklyPlanScreen extends ConsumerWidget {
     final weeklyPlan = planDoc?.weeklyPlan != null ? WeeklyPlan.fromJson(planDoc!.weeklyPlan!) : null;
 
     if (user == null || weeklyPlan == null) {
-      return Scaffold(appBar: AppBar(), body: const Center(child: Text("Aktif bir haftalık plan bulunamadı.")));
+      return Scaffold(
+        appBar: AppBar(title: const Text('Haftalık Plan')),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.calendar_today_outlined, size: 64, color: Theme.of(context).colorScheme.primary.withOpacity(0.3)),
+              const SizedBox(height: 16),
+              Text("Aktif bir haftalık plan bulunamadı.", style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 8),
+              Text("Yeni bir plan oluşturmak için Strateji bölümünü ziyaret edin.", textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodySmall),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: () => context.go('/ai-hub/strategic-planning'),
+                icon: const Icon(Icons.add),
+                label: const Text('Plan Oluştur'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Eski plan uyarısı
+    if (weeklyPlan.isExpired) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) {
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('⚠️ Planınızın Süresi Doldu'),
+              content: const Text('Haftalık planınızın süresi doldu. Yeni bir plan oluşturmanız önerilir.'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: const Text('Şimdi Değil'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                    context.go('/ai-hub/strategic-planning');
+                  },
+                  child: const Text('Yeni Plan Oluştur'),
+                ),
+              ],
+            ),
+          );
+        }
+      });
     }
 
     return Scaffold(

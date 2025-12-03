@@ -733,6 +733,11 @@ class FirestoreService {
     required String pacing,
     required Map<String, dynamic> weeklyPlan,
   }) async {
+    // CreationDate ekle (eğer yoksa)
+    if (!weeklyPlan.containsKey('creationDate')) {
+      weeklyPlan['creationDate'] = FieldValue.serverTimestamp();
+    }
+
     await _planDoc(userId).set({
       'studyPacing': pacing,
       'weeklyPlan': weeklyPlan,

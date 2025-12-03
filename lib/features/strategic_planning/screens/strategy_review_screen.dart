@@ -33,29 +33,46 @@ class _StrategyReviewScreenState extends ConsumerState<StrategyReviewScreen> {
   WeeklyPlan get weeklyPlan => WeeklyPlan.fromJson(_currentStrategyData['weeklyPlan']);
   String get pacing => _currentStrategyData['pacing'];
 
-  void _approvePlan() {
+  void _approvePlan() async {
     final userId = ref.read(authControllerProvider).value!.uid;
-    ref.read(firestoreServiceProvider).updateStrategicPlan(
+
+    // Plan kaydet
+    await ref.read(firestoreServiceProvider).updateStrategicPlan(
       userId: userId,
       pacing: pacing,
       weeklyPlan: _currentStrategyData['weeklyPlan'],
     );
+
+    // Quest'i kaydet
     ref.read(questNotifierProvider.notifier).userApprovedStrategy();
+
+    // Provider'ları yenile
     ref.invalidate(userProfileProvider);
-    context.go('/home');
+    ref.invalidate(planProvider);
+
+    // Ana ekrana dön
+    if (mounted) context.go('/home');
   }
 
   Future<void> _fetchRevisedPlan(String feedback) async {
     setState(() => _isRevising = true);
 
     final user = ref.read(userProfileProvider).value;
-    final tests = ref.read(testsProvider).value;
+    final tests = ref.read(testsProvider).value ?? [];
     final performance = ref.read(performanceProvider).value;
     final planDoc = ref.read(planProvider).value;
 
-    if (user == null || tests == null || performance == null) {
+    if (user == null) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Kullanıcı, test veya performans verisi bulunamadı.")));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Kullanıcı verisi bulunamadı.")));
+      }
+      setState(() => _isRevising = false);
+      return;
+    }
+
+    if (performance == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Performans verisi yükleniyor, lütfen bekleyin.")));
       }
       setState(() => _isRevising = false);
       return;
