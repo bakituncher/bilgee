@@ -70,6 +70,7 @@ NOT: Bu bir revizyon talebidir, önceki planı unutun!
   }) {
     assert(_yksTemplate != null, 'StrategyPrompts.preload() çağrılmalı');
     final template = _yksTemplate!;
+    final currentDate = DateTime.now().toIso8601String();
     final replacements = <String, String>{
       'REVISION_BLOCK': _revisionBlock(revisionRequest),
       'AVAILABILITY_JSON': availabilityJson,
@@ -87,6 +88,7 @@ NOT: Bu bir revizyon talebidir, önceki planı unutun!
       'COMPLETED_TASKS_JSON': completedTasksJson,
       'CURRICULUM_JSON': curriculumJson,
       'GUARDRAILS_JSON': guardrailsJson,
+      'CURRENT_DATE': currentDate,
     };
     return _fillTemplate(template, replacements);
   }
@@ -107,6 +109,7 @@ NOT: Bu bir revizyon talebidir, önceki planı unutun!
   }) {
     assert(_lgsTemplate != null, 'StrategyPrompts.preload() çağrılmalı');
     final template = _lgsTemplate!;
+    final currentDate = DateTime.now().toIso8601String();
     final replacements = <String, String>{
       'REVISION_BLOCK': _revisionBlock(revisionRequest),
       'AVAILABILITY_JSON': availabilityJson,
@@ -123,6 +126,7 @@ NOT: Bu bir revizyon talebidir, önceki planı unutun!
       'COMPLETED_TASKS_JSON': completedTasksJson,
       'CURRICULUM_JSON': curriculumJson,
       'GUARDRAILS_JSON': guardrailsJson,
+      'CURRENT_DATE': currentDate,
     };
     return _fillTemplate(template, replacements);
   }

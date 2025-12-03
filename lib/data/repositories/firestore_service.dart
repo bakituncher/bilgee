@@ -734,8 +734,10 @@ class FirestoreService {
     required Map<String, dynamic> weeklyPlan,
   }) async {
     // CreationDate ekle (eğer yoksa)
-    if (!weeklyPlan.containsKey('creationDate')) {
-      weeklyPlan['creationDate'] = FieldValue.serverTimestamp();
+    // FieldValue.serverTimestamp() KULLANMA! UI patlar (Type Mismatch)
+    // Prompt zaten creationDate üretiyor, yoksa şimdi String olarak ekle
+    if (!weeklyPlan.containsKey('creationDate') || weeklyPlan['creationDate'] == null) {
+      weeklyPlan['creationDate'] = DateTime.now().toIso8601String();
     }
 
     await _planDoc(userId).set({
