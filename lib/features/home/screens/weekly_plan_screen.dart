@@ -106,6 +106,8 @@ class WeeklyPlanScreen extends ConsumerWidget {
                     ),
                     Text(
                       weeklyPlan.strategyFocus,
+                      maxLines: 2, // 👈 Maksimum 2 satır
+                      overflow: TextOverflow.ellipsis, // 👈 Uzunsa "..." ekle
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Theme.of(context).colorScheme.primary, fontStyle: FontStyle.italic),
                     ),
                   ],

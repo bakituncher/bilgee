@@ -100,7 +100,7 @@ Sadece aşağıdaki JSON formatında çıktı ver. Açıklama, yorum YOK:
 {
   "weeklyPlan": {
     "planTitle": "YKS {{SELECTED_EXAM_SECTION}} - Haftalık Çalışma Planı",
-    "strategyFocus": "Bu haftanın ana stratejisi: [kısa, motive edici, net strateji açıklaması]",
+    "strategyFocus": "Bu haftanın ana stratejisi: [MAKSIMUM 100 KARAKTER, kısa ve öz, motive edici strateji]",
     "weekNumber": {{CURRENT_WEEK}},
     "creationDate": "{{CURRENT_DATE}}",
     "plan": [

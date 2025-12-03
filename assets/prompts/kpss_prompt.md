@@ -110,8 +110,8 @@ Sadece aşağıdaki JSON formatında çıktı ver. Açıklama, yorum YOK:
 {
   "weeklyPlan": {
     "planTitle": "KPSS Haftalık Plan - Atanma Yolunda",
-    "strategyFocus": "Bu hafta iş ve özel hayat bahaneleri bir kenara. Tek odak: atanmak. [net strateji]",
-    "weekNumber": 1,
+    "strategyFocus": "Bu haftanın ana stratejisi: [MAKSIMUM 100 KARAKTER, kısa ve öz, motive edici]",
+    "weekNumber": {{CURRENT_WEEK}},
     "creationDate": "{{CURRENT_DATE}}",
     "plan": [
       {

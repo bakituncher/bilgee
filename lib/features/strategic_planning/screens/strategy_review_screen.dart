@@ -302,6 +302,8 @@ class _DailyPlanCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
+      elevation: 4, // 👈 Gölge ekle
+      color: Theme.of(context).cardColor, // 👈 Tam renk, opacity yok
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -313,9 +315,12 @@ class _DailyPlanCard extends StatelessWidget {
               style: Theme.of(context)
                   .textTheme
                   .headlineSmall
-                  ?.copyWith(color: Theme.of(context).colorScheme.primary),
+                  ?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.bold, // 👈 Daha kalın yazı
+                  ),
             ),
-            const Divider(height: 24),
+            const Divider(height: 24, thickness: 2), // 👈 Çizgi kalınlaştır
             Expanded(
               child: dailyPlan.schedule.isEmpty
                   ? Center(
@@ -332,23 +337,46 @@ class _DailyPlanCard extends StatelessWidget {
                 itemCount: dailyPlan.schedule.length,
                 itemBuilder: (context, index) {
                   final item = dailyPlan.schedule[index];
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12.0),
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 10.0),
+                    padding: const EdgeInsets.all(12.0),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.4), // 👈 Hafif arka plan
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.only(top: 2.0),
-                          child: Icon(_getIconForTaskType(item.type),
-                              size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary.withOpacity(0.15), // 👈 İkon kutusu
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            _getIconForTaskType(item.type),
+                            size: 18,
+                            color: Theme.of(context).colorScheme.primary, // 👈 Primary renk kullan
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(item.activity, style: Theme.of(context).textTheme.bodyLarge),
-                              Text(item.time, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                              Text(
+                                item.activity,
+                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                  fontWeight: FontWeight.w600, // 👈 Daha kalın
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                item.time,
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Theme.of(context).colorScheme.primary.withOpacity(0.8), // 👈 Daha belirgin
+                                ),
+                              ),
                             ],
                           ),
                         ),

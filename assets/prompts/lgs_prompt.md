@@ -112,8 +112,8 @@ Sadece aşağıdaki JSON formatında çıktı ver. Açıklama, yorum YOK:
 {
   "weeklyPlan": {
     "planTitle": "LGS Haftalık Çalışma Planı",
-    "strategyFocus": "Okul sonrası hayatın bu hafta iptal edildi. Tek odak: Zayıf konuların imhası. [net strateji]",
-    "weekNumber": 1,
+    "strategyFocus": "Bu haftanın ana stratejisi: [MAKSIMUM 100 KARAKTER, kısa ve öz, motive edici]",
+    "weekNumber": {{CURRENT_WEEK}},
     "creationDate": "{{CURRENT_DATE}}",
     "plan": [
       {
