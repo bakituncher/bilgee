@@ -23,6 +23,7 @@ class _StrategyReviewScreenState extends ConsumerState<StrategyReviewScreen> {
   late Map<String, dynamic> _currentStrategyData;
   final PageController _pageController = PageController(viewportFraction: 0.85);
   bool _isRevising = false;
+  bool _isSaving = false; // 👈 Çift tıklama engelleyici
 
   @override
   void initState() {
@@ -34,24 +35,40 @@ class _StrategyReviewScreenState extends ConsumerState<StrategyReviewScreen> {
   String get pacing => _currentStrategyData['pacing'];
 
   void _approvePlan() async {
-    final userId = ref.read(authControllerProvider).value!.uid;
+    // ✅ Çift tıklamayı engelle
+    if (_isSaving) return;
+    setState(() => _isSaving = true);
 
-    // Plan kaydet
-    await ref.read(firestoreServiceProvider).updateStrategicPlan(
-      userId: userId,
-      pacing: pacing,
-      weeklyPlan: _currentStrategyData['weeklyPlan'],
-    );
+    try {
+      final userId = ref.read(authControllerProvider).value!.uid;
 
-    // Quest'i kaydet
-    ref.read(questNotifierProvider.notifier).userApprovedStrategy();
+      // Plan kaydet
+      await ref.read(firestoreServiceProvider).updateStrategicPlan(
+        userId: userId,
+        pacing: pacing,
+        weeklyPlan: _currentStrategyData['weeklyPlan'],
+      );
 
-    // Provider'ları yenile
-    ref.invalidate(userProfileProvider);
-    ref.invalidate(planProvider);
+      // Quest'i kaydet
+      ref.read(questNotifierProvider.notifier).userApprovedStrategy();
 
-    // Ana ekrana dön
-    if (mounted) context.go('/home');
+      // Provider'ları yenile
+      ref.invalidate(userProfileProvider);
+      ref.invalidate(planProvider);
+
+      // Ana ekrana dön
+      if (mounted) context.go('/home');
+    } catch (e) {
+      // Hata olursa kullanıcıyı bilgilendir
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Plan kaydedilemedi: $e')),
+        );
+      }
+    } finally {
+      // İşlem bitti, kilidi aç
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 
   Future<void> _fetchRevisedPlan(String feedback) async {
@@ -203,20 +220,36 @@ class _StrategyReviewScreenState extends ConsumerState<StrategyReviewScreen> {
                       const SizedBox(width: 16),
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: _approvePlan,
+                          onPressed: _isSaving ? null : _approvePlan, // 👈 Loading sırasında devre dışı
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
                           ),
                           child: FittedBox(
                             fit: BoxFit.scaleDown,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: const [
-                                Icon(Icons.check_circle_outline_rounded),
-                                SizedBox(width: 8),
-                                Text("Onayla ve Başla"),
-                              ],
-                            ),
+                            child: _isSaving
+                                ? Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: const [
+                                      SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                        ),
+                                      ),
+                                      SizedBox(width: 8),
+                                      Text("Kaydediliyor..."),
+                                    ],
+                                  )
+                                : Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: const [
+                                      Icon(Icons.check_circle_outline_rounded),
+                                      SizedBox(width: 8),
+                                      Text("Onayla ve Başla"),
+                                    ],
+                                  ),
                           ),
                         ),
                       ),

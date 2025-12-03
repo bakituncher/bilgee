@@ -57,6 +57,13 @@ Her görevin tipi şunlardan biri olmalı:
 - Motivasyon ve disiplini korumaya özen
 - Kısa, etkili çalışma oturumları (45-60 dk)
 
+### 8. KRİTİK UYARI: PLAN YENİLEME KURALI
+⚠️ **ASLA AYNI PLANI TEKRARLAMA!**
+- Eğer geçmiş haftanın planı verilmişse ({{WEEKLY_PLAN_TEXT}}), birebir aynı görevleri ASLA üretme
+- Öğrenci gelişim gösteriyor, görevlerin zorluğunu ARTIR
+- Farklı soru tipleri, farklı konular, farklı deneme sınavları kullan
+- Önceki planla %100 aynı olan bir plan üretmek YASAKTIR
+
 {{REVISION_BLOCK}}
 
 ## USER DATA

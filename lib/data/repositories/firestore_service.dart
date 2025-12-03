@@ -740,9 +740,13 @@ class FirestoreService {
       weeklyPlan['creationDate'] = DateTime.now().toIso8601String();
     }
 
+    // ✅ KRİTİK DÜZELTME: Yeni plan geldiğinde eski tamamlanan görevleri sıfırla!
+    // Aksi halde eski plandaki taskId'ler yeni planda da tamamlanmış gibi gözükür ("ghost completion")
     await _planDoc(userId).set({
       'studyPacing': pacing,
       'weeklyPlan': weeklyPlan,
+      'completedTasks': [], // 👈 İşte bu! Tamamlanmış görevleri sıfırla
+      'lastUpdated': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
     await updateEngagementScore(userId, 100);
   }

@@ -48,6 +48,28 @@ NOT: Bu bir revizyon talebidir, önceki planı unutun!
     return out;
   }
 
+  // ✅ Hafta numarasını dinamik hesapla: Eğer weeklyPlanJson varsa ve creationDate içeriyorsa
+  // eski planın tarihine göre kaç hafta geçtiğini hesapla
+  static String _calculateCurrentWeek(String? weeklyPlanJson) {
+    if (weeklyPlanJson == null || weeklyPlanJson.isEmpty || weeklyPlanJson.contains('YOK')) {
+      return '1'; // İlk hafta
+    }
+
+    try {
+      final decoded = jsonDecode(weeklyPlanJson);
+      if (decoded is Map && decoded.containsKey('creationDate')) {
+        final creationDate = DateTime.parse(decoded['creationDate']);
+        final now = DateTime.now();
+        final weeksPassed = now.difference(creationDate).inDays ~/ 7;
+        return (weeksPassed + 1).toString(); // Şu anki hafta = geçen haftalar + 1
+      }
+    } catch (_) {
+      // Parse hatası olursa varsayılan
+    }
+
+    return '1'; // Varsayılan: 1. hafta
+  }
+
   // Rules block artık yeni prompt dosyalarında var, burada gereksiz
 
   static String getYksPrompt({
@@ -71,6 +93,7 @@ NOT: Bu bir revizyon talebidir, önceki planı unutun!
     assert(_yksTemplate != null, 'StrategyPrompts.preload() çağrılmalı');
     final template = _yksTemplate!;
     final currentDate = DateTime.now().toIso8601String();
+    final currentWeek = _calculateCurrentWeek(weeklyPlanJson); // 👈 Dinamik hafta
     final replacements = <String, String>{
       'REVISION_BLOCK': _revisionBlock(revisionRequest),
       'AVAILABILITY_JSON': availabilityJson,
@@ -89,6 +112,7 @@ NOT: Bu bir revizyon talebidir, önceki planı unutun!
       'CURRICULUM_JSON': curriculumJson,
       'GUARDRAILS_JSON': guardrailsJson,
       'CURRENT_DATE': currentDate,
+      'CURRENT_WEEK': currentWeek, // 👈 Hafta numarası prompt'a gidiyor
     };
     return _fillTemplate(template, replacements);
   }
@@ -110,6 +134,7 @@ NOT: Bu bir revizyon talebidir, önceki planı unutun!
     assert(_lgsTemplate != null, 'StrategyPrompts.preload() çağrılmalı');
     final template = _lgsTemplate!;
     final currentDate = DateTime.now().toIso8601String();
+    final currentWeek = _calculateCurrentWeek(weeklyPlanJson); // 👈 Dinamik hafta
     final replacements = <String, String>{
       'REVISION_BLOCK': _revisionBlock(revisionRequest),
       'AVAILABILITY_JSON': availabilityJson,
@@ -127,6 +152,7 @@ NOT: Bu bir revizyon talebidir, önceki planı unutun!
       'CURRICULUM_JSON': curriculumJson,
       'GUARDRAILS_JSON': guardrailsJson,
       'CURRENT_DATE': currentDate,
+      'CURRENT_WEEK': currentWeek, // 👈 Hafta numarası prompt'a gidiyor
     };
     return _fillTemplate(template, replacements);
   }
@@ -149,6 +175,7 @@ NOT: Bu bir revizyon talebidir, önceki planı unutun!
     assert(_kpssTemplate != null, 'StrategyPrompts.preload() çağrılmalı');
     final template = _kpssTemplate!;
     final currentDate = DateTime.now().toIso8601String();
+    final currentWeek = _calculateCurrentWeek(weeklyPlanJson); // 👈 Dinamik hafta
     final replacements = <String, String>{
       'REVISION_BLOCK': _revisionBlock(revisionRequest),
       'AVAILABILITY_JSON': availabilityJson,
@@ -167,6 +194,7 @@ NOT: Bu bir revizyon talebidir, önceki planı unutun!
       'CURRICULUM_JSON': curriculumJson,
       'GUARDRAILS_JSON': guardrailsJson,
       'CURRENT_DATE': currentDate,
+      'CURRENT_WEEK': currentWeek, // 👈 Hafta numarası prompt'a gidiyor
     };
     return _fillTemplate(template, replacements);
   }

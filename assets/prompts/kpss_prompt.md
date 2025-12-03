@@ -55,6 +55,13 @@ Her görevin tipi şunlardan biri olmalı:
 - Pratik ve uygulamaya dayalı içerik
 - Güncel olayları takip (özellikle GK için)
 
+### 8. KRİTİK UYARI: PLAN YENİLEME KURALI
+⚠️ **ASLA AYNI PLANI TEKRARLAMA!**
+- Eğer geçmiş haftanın planı verilmişse ({{WEEKLY_PLAN_TEXT}}), birebir aynı görevleri ASLA üretme
+- Aday gelişim gösteriyor, görevlerin zorluğunu ARTIR
+- Farklı soru tipleri, farklı konular, farklı deneme sınavları kullan
+- Önceki planla %100 aynı olan bir plan üretmek YASAKTIR
+
 {{REVISION_BLOCK}}
 
 ## USER DATA
