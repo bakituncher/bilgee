@@ -690,6 +690,7 @@ class AiService {
   }
 
   Map<String, double> _computeSubjectAveragesQuick(List<TestModel> tests) {
+    if (tests.isEmpty) return {}; // Boş liste ise boş map döndür (NaN önleme)
     final Map<String, List<double>> subjectNets = {};
     for (final t in tests) {
       t.scores.forEach((subject, scores) {

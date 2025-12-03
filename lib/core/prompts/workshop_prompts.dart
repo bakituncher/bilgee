@@ -18,24 +18,37 @@ String getStudyGuideAndQuizPrompt(
 
   // Sınava özel yönergeler: ton, kapsam ve vurgu
   String examGuidelines = "";
-  switch ((selectedExam ?? '').toLowerCase()) {
-    case 'kpss lisans':
-      examGuidelines = "Sınav: KPSS Lisans. Odak: yetişkin dili, analitik akıl yürütme, süre yönetimi ipuçları, çeldiricilerde kavramsal nüanslar. Paragraf/sözel mantık ve sayısal analizlerde resmi ve net üslup kullan. Basitleştirici çocuk dili KESİNLİKLE kullanılmayacak.";
-      break;
-    case 'kpss önlisans':
-      examGuidelines = "Sınav: KPSS Önlisans. Odak: pratik çözüm yolları, işlem hatalarını engelleyici kontroller, kısa notlarla hatırlatmalar. Üslup profesyonel ve sınav odaklı olmalı; gereksiz uzatmalardan kaçın.";
-      break;
-    case 'kpss ortaöğretim':
-      examGuidelines = "Sınav: KPSS Ortaöğretim. Odak: net ve yalın ama asla çocuklaştırıcı olmayan yetişkin dili, tipik tuzakların altı çizilmiş açıklamalar, hızlı uygulama örnekleri.";
-      break;
-    case 'yks':
-      examGuidelines = "Sınav: YKS. Odak: derin kavram ilişkileri, modelleme, grafik/tablo yorumlama, çoklu kazanım birleştiren senaryolar. Üslup akademik ve motive edici.";
-      break;
-    case 'lgs':
-      examGuidelines = "Sınav: LGS. Odak: beceri temelli sorular, metin-grafik ilişkilendirme, akıl yürütme zinciri. Üslup disiplinli ve odaklı, gereksiz süsleme yok.";
-      break;
-    default:
-      examGuidelines = "Sınav düzeyi: ${selectedExam ?? 'Belirtilmedi'}. Üslup profesyonel, sınav odaklı ve yetişkin dilinde olacak. Öğrenciyi asla çocuklaştırma. Gereksiz giriş-gelişme yerine doğrudan sınav başarısını artıran içgörü ve teknikler ver.";
+  final examLower = (selectedExam ?? '').toLowerCase();
+
+  if (examLower.contains('kpss')) {
+    examGuidelines = """
+**KPSS ÖZEL TALİMATLAR:**
+- Yetişkin, profesyonel dil kullan (asla basitleştirme yapma)
+- GY soruları için: Sözel/Sayısal mantık stratejileri, zaman yönetimi, çeldirici analizi
+- GK soruları için: Ezber teknikleri, kronoloji, coğrafi ilişkiler, güncel bağlantılar
+- Paragraf analizi, mantık çıkarımı ve hızlı eleme tekniklerine odaklan
+- Çalışan adaylar için: Verimli, yoğun, ezbere dayalı içerik
+""";
+  } else if (examLower.contains('yks') || examLower.contains('tyt') || examLower.contains('ayt')) {
+    examGuidelines = """
+**YKS ÖZEL TALİMATLAR:**
+- Akademik, motive edici ton
+- TYT için: Temel kavramlar, hız ve doğruluk dengesi, tuzak soruları
+- AYT için: Derin kavram ilişkileri, modelleme, analiz, çoklu adım çözümler
+- Grafik/tablo yorumlama, veri analizi, karmaşık senaryolar
+- Lise öğrencilerine uygun: Zorlu ama anlaşılır, cesaretlendirici
+""";
+  } else if (examLower.contains('lgs')) {
+    examGuidelines = """
+**LGS ÖZEL TALİMATLAR:**
+- Disiplinli, odaklı, pozitif ton (ortaokul seviyesi)
+- Yeni nesil sorular: Metin-grafik-tablo ilişkilendirme, çoklu kaynak analizi
+- Beceri temelli düşünme: Akıl yürütme zinciri, strateji geliştirme
+- Basit değil, akıllı: Ortaokul öğrencisine saygılı ama zorlayıcı içerik
+- Motivasyon: "Sen yapabilirsin" mesajı, küçük adımlar, başarı hissi
+""";
+  } else {
+    examGuidelines = "**GENEL:** Profesyonel, sınav odaklı yaklaşım. Gereksiz detaydan kaçın, doğrudan çözüm ve strateji ver.";
   }
 
   // Tüm Cevher Atölyesi için 5 şık zorunluluğu (A-E)

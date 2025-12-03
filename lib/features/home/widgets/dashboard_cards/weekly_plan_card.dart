@@ -148,6 +148,7 @@ class _HeaderBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isExpired = weeklyPlan.isExpired;
     int total=0; int done=0;
     final now=DateTime.now();
     final sow=now.subtract(Duration(days: now.weekday-1));
@@ -190,7 +191,21 @@ class _HeaderBar extends ConsumerWidget {
         ]),
         const SizedBox(width:10),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children:[
-          Text('Haftalık Plan', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800, fontSize: 13)),
+          Row(children: [
+            Text('Haftalık Plan', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800, fontSize: 13)),
+            if (isExpired) ...[
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orange, width: 1),
+                ),
+                child: Text('Süresi Doldu', style: TextStyle(color: Colors.orange, fontSize: 9, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ]),
           const SizedBox(height:2),
           Text(DateFormat('d MMM', 'tr').format(dateForTab), style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 9)),
           const SizedBox(height:4),

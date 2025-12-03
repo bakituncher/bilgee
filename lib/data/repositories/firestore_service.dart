@@ -733,9 +733,20 @@ class FirestoreService {
     required String pacing,
     required Map<String, dynamic> weeklyPlan,
   }) async {
+    // CreationDate ekle (eğer yoksa)
+    // FieldValue.serverTimestamp() KULLANMA! UI patlar (Type Mismatch)
+    // Prompt zaten creationDate üretiyor, yoksa şimdi String olarak ekle
+    if (!weeklyPlan.containsKey('creationDate') || weeklyPlan['creationDate'] == null) {
+      weeklyPlan['creationDate'] = DateTime.now().toIso8601String();
+    }
+
+    // ✅ KRİTİK DÜZELTME: Yeni plan geldiğinde eski tamamlanan görevleri sıfırla!
+    // Aksi halde eski plandaki taskId'ler yeni planda da tamamlanmış gibi gözükür ("ghost completion")
     await _planDoc(userId).set({
       'studyPacing': pacing,
       'weeklyPlan': weeklyPlan,
+      'completedTasks': [], // 👈 İşte bu! Tamamlanmış görevleri sıfırla
+      'lastUpdated': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
     await updateEngagementScore(userId, 100);
   }

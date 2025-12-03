@@ -10,22 +10,32 @@ class StrategyPrompts {
   static String? _kpssTemplate;
 
   static Future<void> preload() async {
-    // Önce Firestore’daki uzaktan içerikleri dene; yoksa asset’e geri dön
+    // Önce Firestore'daki uzaktan içerikleri dene; yoksa asset'e geri dön
     _yksTemplate = RemotePrompts.get('yks_prompt') ?? await rootBundle.loadString('assets/prompts/yks_prompt.md');
-    // Tüm sınavlar için YKS şablonunu temel al
-    _lgsTemplate = _yksTemplate;
-    _kpssTemplate = _yksTemplate;
+    _lgsTemplate = RemotePrompts.get('lgs_prompt') ?? await rootBundle.loadString('assets/prompts/lgs_prompt.md');
+    _kpssTemplate = RemotePrompts.get('kpss_prompt') ?? await rootBundle.loadString('assets/prompts/kpss_prompt.md');
   }
 
   static String _revisionBlock(String? revisionRequest) {
     if (revisionRequest != null && revisionRequest.isNotEmpty) {
       return """
-      // REVİZYON EMRİ:
-      // BU ÇOK ÖNEMLİ! KULLANICI MEVCUT PLANDAN MEMNUN DEĞİL VE AŞAĞIDAKİ DEĞİŞİKLİKLERİ İSTİYOR.
-      // YENİ PLANI BU TALEPLERİ MERKEZE ALARAK, SIFIRDAN OLUŞTUR.
-      // KULLANICI TALEPLERİ:
-      $revisionRequest
-      """;
+
+## ⚠️ KRİTİK REVİZYON TALEBİ
+
+**KULLANICI MEVCUT PLANDAN MEMNUN DEĞİL!**
+
+Kullanıcının Geri Bildirimi:
+"$revisionRequest"
+
+**AKSİYON:**
+1. Yukarıdaki geri bildirimi DİKKATLE oku
+2. Planı TAMAMEN YENİDEN oluştur
+3. Önceki planı ASLA tekrarlama
+4. Kullanıcı talebini MERKEZE al
+5. Tüm günleri YENİDEN düzenle
+
+NOT: Bu bir revizyon talebidir, önceki planı unutun!
+""";
     }
     return '';
   }
@@ -38,27 +48,29 @@ class StrategyPrompts {
     return out;
   }
 
-  static String _rulesBlock({
-    required String curriculumJson,
-    required int daysUntilExam,
-    required String pacing,
-    required String guardrailsJson,
-  }) {
-    final urgency = daysUntilExam <= 14 ? 'kritik' : daysUntilExam <= 30 ? 'yüksek' : daysUntilExam <= 90 ? 'orta' : 'uzun-vade';
+  // ✅ Hafta numarasını dinamik hesapla: Eğer weeklyPlanJson varsa ve creationDate içeriyorsa
+  // eski planın tarihine göre kaç hafta geçtiğini hesapla
+  static String _calculateCurrentWeek(String? weeklyPlanJson) {
+    if (weeklyPlanJson == null || weeklyPlanJson.isEmpty || weeklyPlanJson.contains('YOK')) {
+      return '1'; // İlk hafta
+    }
 
-    return '''
-// KISITLAR:
-// Guardrails: $guardrailsJson
-// - Backlog doluysa yeni konu yok
-// - Kırmızı/sarı konuları öncelikle
-// - Unknown konularda kısa tanılayıcı set
-// Müfredat sırası: $curriculumJson
-// Tempo (pacing=$pacing): relaxed=düşük, moderate=dengeli, intense=yüksek
-// Aciliyet (days=$daysUntilExam, level=$urgency)
-// JSON format: weeklyPlan {planTitle, strategyFocus, creationDate, plan[{day, schedule[{time, activity, type}]}]}
-// Activity örnekleri: "Türev - 40 soru", type: study/practice/test/review/break
-''';
+    try {
+      final decoded = jsonDecode(weeklyPlanJson);
+      if (decoded is Map && decoded.containsKey('creationDate')) {
+        final creationDate = DateTime.parse(decoded['creationDate']);
+        final now = DateTime.now();
+        final weeksPassed = now.difference(creationDate).inDays ~/ 7;
+        return (weeksPassed + 1).toString(); // Şu anki hafta = geçen haftalar + 1
+      }
+    } catch (_) {
+      // Parse hatası olursa varsayılan
+    }
+
+    return '1'; // Varsayılan: 1. hafta
   }
+
+  // Rules block artık yeni prompt dosyalarında var, burada gereksiz
 
   static String getYksPrompt({
     required String userId,
@@ -80,9 +92,8 @@ class StrategyPrompts {
   }) {
     assert(_yksTemplate != null, 'StrategyPrompts.preload() çağrılmalı');
     final template = _yksTemplate!;
-    final phase2Start = daysUntilExam > 90 ? (daysUntilExam - 60) : 30;
-    final rules = _rulesBlock(curriculumJson: curriculumJson, daysUntilExam: daysUntilExam, pacing: pacing, guardrailsJson: guardrailsJson);
-    final base = '$rules\n$template';
+    final currentDate = DateTime.now().toIso8601String();
+    final currentWeek = _calculateCurrentWeek(weeklyPlanJson); // 👈 Dinamik hafta
     final replacements = <String, String>{
       'REVISION_BLOCK': _revisionBlock(revisionRequest),
       'AVAILABILITY_JSON': availabilityJson,
@@ -98,9 +109,12 @@ class StrategyPrompts {
       'TOPIC_PERFORMANCES_JSON': topicPerformancesJson,
       'WEEKLY_PLAN_TEXT': weeklyPlanJson ?? 'YOK. BU İLK HAFTA. TAARRUZ BAŞLIYOR.',
       'COMPLETED_TASKS_JSON': completedTasksJson,
-      'PHASE2_START': phase2Start.toString(),
+      'CURRICULUM_JSON': curriculumJson,
+      'GUARDRAILS_JSON': guardrailsJson,
+      'CURRENT_DATE': currentDate,
+      'CURRENT_WEEK': currentWeek, // 👈 Hafta numarası prompt'a gidiyor
     };
-    return _fillTemplate(base, replacements);
+    return _fillTemplate(template, replacements);
   }
 
   static String getLgsPrompt({
@@ -117,18 +131,14 @@ class StrategyPrompts {
     required String guardrailsJson,
     String? revisionRequest,
   }) {
-    // LGS de YKS şablonunun uyarlanmış sürümünü kullan
-    assert(_yksTemplate != null, 'StrategyPrompts.preload() çağrılmalı');
-    final template = _yksTemplate!;
-    final rules = _rulesBlock(curriculumJson: curriculumJson, daysUntilExam: daysUntilExam, pacing: pacing, guardrailsJson: guardrailsJson);
-    final base = '$rules\n$template';
-    final phase2Start = daysUntilExam > 90 ? (daysUntilExam - 60) : 30;
+    assert(_lgsTemplate != null, 'StrategyPrompts.preload() çağrılmalı');
+    final template = _lgsTemplate!;
+    final currentDate = DateTime.now().toIso8601String();
+    final currentWeek = _calculateCurrentWeek(weeklyPlanJson); // 👈 Dinamik hafta
     final replacements = <String, String>{
       'REVISION_BLOCK': _revisionBlock(revisionRequest),
       'AVAILABILITY_JSON': availabilityJson,
       'USER_ID': user.id,
-      // LGS için bölüm bilgisi olmayabilir; boş geç
-      'SELECTED_EXAM_SECTION': user.selectedExamSection ?? '',
       'DAYS_UNTIL_EXAM': daysUntilExam.toString(),
       'GOAL': user.goal ?? '',
       'CHALLENGES': (user.challenges ?? []).join(', '),
@@ -139,11 +149,12 @@ class StrategyPrompts {
       'TOPIC_PERFORMANCES_JSON': topicPerformancesJson,
       'WEEKLY_PLAN_TEXT': weeklyPlanJson ?? 'YOK. HAREKÂT BAŞLIYOR.',
       'COMPLETED_TASKS_JSON': completedTasksJson,
-      'PHASE2_START': phase2Start.toString(),
-      // Uyumlu olması için isim geçilebilir; YKS şablonu kullanmayabilir
-      'EXAM_NAME': 'LGS',
+      'CURRICULUM_JSON': curriculumJson,
+      'GUARDRAILS_JSON': guardrailsJson,
+      'CURRENT_DATE': currentDate,
+      'CURRENT_WEEK': currentWeek, // 👈 Hafta numarası prompt'a gidiyor
     };
-    return _fillTemplate(base, replacements);
+    return _fillTemplate(template, replacements);
   }
 
   static String getKpssPrompt({
@@ -161,17 +172,15 @@ class StrategyPrompts {
     required String guardrailsJson,
     String? revisionRequest,
   }) {
-    // KPSS de YKS şablonunun uyarlanmış sürümünü kullan
-    assert(_yksTemplate != null, 'StrategyPrompts.preload() çağrılmalı');
-    final template = _yksTemplate!;
-    final rules = _rulesBlock(curriculumJson: curriculumJson, daysUntilExam: daysUntilExam, pacing: pacing, guardrailsJson: guardrailsJson);
-    final base = '$rules\n$template';
-    final phase2Start = daysUntilExam > 90 ? (daysUntilExam - 60) : 30;
+    assert(_kpssTemplate != null, 'StrategyPrompts.preload() çağrılmalı');
+    final template = _kpssTemplate!;
+    final currentDate = DateTime.now().toIso8601String();
+    final currentWeek = _calculateCurrentWeek(weeklyPlanJson); // 👈 Dinamik hafta
     final replacements = <String, String>{
       'REVISION_BLOCK': _revisionBlock(revisionRequest),
       'AVAILABILITY_JSON': availabilityJson,
       'USER_ID': user.id,
-      'SELECTED_EXAM_SECTION': user.selectedExamSection ?? '',
+      'EXAM_NAME': examName,
       'DAYS_UNTIL_EXAM': daysUntilExam.toString(),
       'GOAL': user.goal ?? '',
       'CHALLENGES': (user.challenges ?? []).join(', '),
@@ -182,9 +191,11 @@ class StrategyPrompts {
       'TOPIC_PERFORMANCES_JSON': topicPerformancesJson,
       'WEEKLY_PLAN_TEXT': weeklyPlanJson ?? 'YOK. PLANLAMA BAŞLIYOR.',
       'COMPLETED_TASKS_JSON': completedTasksJson,
-      'PHASE2_START': phase2Start.toString(),
-      'EXAM_NAME': examName,
+      'CURRICULUM_JSON': curriculumJson,
+      'GUARDRAILS_JSON': guardrailsJson,
+      'CURRENT_DATE': currentDate,
+      'CURRENT_WEEK': currentWeek, // 👈 Hafta numarası prompt'a gidiyor
     };
-    return _fillTemplate(base, replacements);
+    return _fillTemplate(template, replacements);
   }
 }
