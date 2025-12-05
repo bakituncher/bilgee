@@ -15,7 +15,7 @@ class AppLoader extends StatelessWidget {
           duration: const Duration(milliseconds: 400),
           builder: (context, v, child) => Opacity(opacity: v, child: child),
           child: Image.asset(
-            'assets/images/logo.png',
+            'assets/images/splash.png',
             width: 160,
             height: 160,
             filterQuality: FilterQuality.medium,
