@@ -70,11 +70,16 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     _lastVisible = snap;
   }
 
-  Future<void> _loadInitial() async {
+  Future<void> _loadInitial({bool showLoader = true}) async {
     final service = ref.read(firestoreServiceProvider);
     final userId = service.getUserId();
     if (userId == null) return;
-    setState(() => _isLoading = true);
+
+    // Sadece showLoader true ise (ilk açılışta) yükleniyor işaretini aç
+    if (showLoader) {
+      setState(() => _isLoading = true);
+    }
+
     try {
       final items = await service.getTestResultsPaginated(userId, limit: _pageSize);
       setState(() {
@@ -84,7 +89,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       });
       await _syncLastVisibleFromLastItem();
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      // Yükleme işareti açıksa kapat
+      if (showLoader && mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -556,21 +564,36 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           child: RefreshIndicator(
             onRefresh: () async {
               _lastVisible = null;
-              await _loadInitial();
+              // showLoader: false gönderiyoruz ki alttaki çark çıkmasın
+              await _loadInitial(showLoader: false);
             },
             child: ListView.separated(
+              // Liste kısa olsa bile aşağı çekilmesine izin verir (RefreshIndicator için gerekli)
+              physics: const AlwaysScrollableScrollPhysics(),
               controller: _scrollController,
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              itemCount: filtered.length + (_isLoading || _hasMore ? 1 : 0),
+              // Sadece _isLoading true ve liste boş değilse alttaki çark için yer ayır
+              itemCount: filtered.length + (_isLoading && filtered.isNotEmpty ? 1 : 0),
               separatorBuilder: (_, __) => const SizedBox(height: 8),
               itemBuilder: (context, index) {
                 if (index >= filtered.length) {
                   return Padding(
                     padding: const EdgeInsets.all(12.0),
-                    child: Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary)),
+                    child: Center(
+                      child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                    ),
                   );
                 }
                 final test = filtered[index];
+
+                // Sektör standardı three-dots menü yaklaşımı
                 return _ArchiveListTile(test: test);
               },
             ),
@@ -590,16 +613,149 @@ class _SortOption {
   const _SortOption({required this.field, required this.descending});
 }
 
-// YENI: Liste görünümü satırı
+// Sektör standardı liste öğesi (Three-dots menü ile)
 class _ArchiveListTile extends ConsumerWidget {
   final TestModel test;
+
   const _ArchiveListTile({required this.test});
 
   double _accuracy(TestModel t) {
-    // Doğruluk: boş sorular da yüzdelik hesabında paydada yer almalı.
     final total = t.totalCorrect + t.totalWrong + t.totalBlank;
     if (total == 0) return 0.0;
     return (t.totalCorrect / total) * 100.0;
+  }
+
+  // Savaş Raporuna (Özet Ekranı) "Arşivden geliyorum" sinyaliyle git
+  void _goToWarReport(BuildContext context) {
+    // fromArchive=true parametresi, hedef ekranda geri tuşunu aktifleştirecek
+    context.push(
+      '/home/test-result-summary?fromArchive=true',
+      extra: test
+    );
+  }
+
+  // Şık bir Bottom Sheet (Alttan Açılan Menü)
+  void _showOptionsSheet(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: theme.cardColor,
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Başlık kısmı
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Text(
+                    test.testName,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const Divider(),
+
+                // SEÇENEK 1: Savaş Raporu (Eski Detaylı Analiz yerine)
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.analytics_rounded, color: theme.colorScheme.primary),
+                  ),
+                  title: const Text('Savaş Raporunu İncele'),
+                  subtitle: const Text('Netlerini ve detaylı analizini gör'),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _goToWarReport(context); // Arşiv modunda Savaş Raporu'na git
+                  },
+                ),
+
+                // SEÇENEK 2: Silme İşlemi
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.error.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.delete_outline_rounded, color: theme.colorScheme.error),
+                  ),
+                  title: Text(
+                    'Denemeyi Sil',
+                    style: TextStyle(color: theme.colorScheme.error, fontWeight: FontWeight.bold),
+                  ),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    _confirmAndDelete(context, ref);
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Silme Onay Dialogu ve İşlemi
+  Future<void> _confirmAndDelete(BuildContext context, WidgetRef ref) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Theme.of(context).cardColor,
+        title: const Text('Denemeyi Sil'),
+        content: Text('${test.testName} silinsin mi? Bu işlem geri alınamaz.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('İptal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(
+              'Sil',
+              style: TextStyle(color: Theme.of(context).colorScheme.error, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        await ref.read(firestoreServiceProvider).deleteTest(test.id);
+
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${test.testName} başarıyla silindi. Listeyi yenilemek için sayfayı aşağı çekin.'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Hata: $e')),
+          );
+        }
+      }
+    }
   }
 
   @override
@@ -609,147 +765,135 @@ class _ArchiveListTile extends ConsumerWidget {
     final textTheme = theme.textTheme;
     final acc = _accuracy(test);
     final isDark = theme.brightness == Brightness.dark;
+
     final isPremium = ref.watch(premiumStatusProvider);
     final hasTemporaryAccess = ref.watch(hasPremiumFeaturesAccessProvider);
 
     return Container(
       decoration: BoxDecoration(
         color: theme.cardColor,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isDark
-              ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3)
-              : colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
-          width: 1.5,
+              ? colorScheme.outline.withValues(alpha: 0.2)
+              : colorScheme.outline.withValues(alpha: 0.1),
+          width: 1,
         ),
         boxShadow: isDark
             ? []
             : [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
               ],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           onTap: () {
+            // Ana tıklama artık direkt Savaş Raporuna (Arşiv modunda) gidiyor
             if (isPremium || hasTemporaryAccess) {
-              context.push('/home/test-result-summary', extra: test);
+              _goToWarReport(context);
             } else {
               context.push('/stats-premium-offer?source=archive');
             }
           },
-          onLongPress: () => context.push('/home/test-detail', extra: test),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
+            padding: const EdgeInsets.all(12.0),
             child: Row(
               children: [
-                // Sol rozet - daha compact
+                // 1. SOL ROZET (NET Puanı)
                 Container(
-                  width: 48,
-                  height: 48,
+                  width: 52,
+                  height: 52,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        colorScheme.primary.withValues(alpha: 0.15),
-                        colorScheme.secondary.withValues(alpha: 0.1),
-                      ],
-                    ),
-                    border: Border.all(
-                      color: colorScheme.primary.withValues(alpha: 0.2),
-                      width: 1,
-                    ),
+                    color: colorScheme.primaryContainer.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(14),
                   ),
                   alignment: Alignment.center,
-                  child: Text(
-                    test.totalNet.toStringAsFixed(1),
-                    style: textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: colorScheme.primary,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                // Orta içerik - daha compact
-                Expanded(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Hero(
-                        tag: 'test_title_${test.id}',
-                        child: Material(
-                          color: Colors.transparent,
-                          child: Text(
-                            test.testName,
-                            style: textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 14,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
                       Text(
-                        '${test.sectionName} • ${DateFormat.yMd('tr').format(test.date)}',
-                        style: textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                          fontSize: 11,
+                        test.totalNet.toStringAsFixed(1),
+                        style: textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w900,
+                          color: colorScheme.primary,
+                          height: 1.0,
                         ),
                       ),
+                      Text(
+                        'NET',
+                        style: textTheme.labelSmall?.copyWith(
+                          fontSize: 8,
+                          color: colorScheme.primary.withValues(alpha: 0.8),
+                          fontWeight: FontWeight.bold
+                        ),
+                      )
                     ],
                   ),
                 ),
-                const SizedBox(width: 8),
-                // Sağ metrikler - daha compact ve elegant
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: colorScheme.secondary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: colorScheme.secondary.withValues(alpha: 0.3),
-                      width: 1,
-                    ),
-                  ),
+
+                const SizedBox(width: 14),
+
+                // 2. ORTA BİLGİ ALANI
+                Expanded(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Text(
+                        test.testName,
+                        style: textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
                       Row(
-                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.check_circle_rounded, size: 14, color: colorScheme.secondary),
-                          const SizedBox(width: 3),
+                          Icon(Icons.calendar_today_rounded, size: 12, color: colorScheme.onSurfaceVariant),
+                          const SizedBox(width: 4),
                           Text(
-                            '%${acc.toStringAsFixed(0)}',
-                            style: textTheme.labelLarge?.copyWith(
-                              color: colorScheme.secondary,
-                              fontWeight: FontWeight.w800,
+                            DateFormat.yMMMd('tr').format(test.date),
+                            style: textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
                               fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // Doğruluk Oranı Rozeti
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: colorScheme.secondary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              '%${acc.toStringAsFixed(0)} Doğruluk',
+                              style: textTheme.labelSmall?.copyWith(
+                                color: colorScheme.secondary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 10,
+                              ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${test.totalCorrect}/${test.totalWrong}/${test.totalBlank}',
-                        style: textTheme.labelSmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                          fontSize: 10,
-                        ),
-                      ),
                     ],
                   ),
+                ),
+
+                // 3. SEKTÖR STANDARDI THREE-DOTS MENU BUTONU
+                IconButton(
+                  icon: const Icon(Icons.more_vert_rounded),
+                  color: colorScheme.onSurfaceVariant,
+                  onPressed: () => _showOptionsSheet(context, ref),
+                  tooltip: 'Seçenekler',
                 ),
               ],
             ),

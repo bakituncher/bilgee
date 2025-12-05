@@ -30,6 +30,9 @@ class TestResultSummaryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // 1. URL parametresini kontrol et: Arşivden mi gelindi?
+    final bool fromArchive = GoRouterState.of(context).uri.queryParameters['fromArchive'] == 'true';
+
     final wisdomScore = test.wisdomScore;
     final verdict = test.expertVerdict;
     final keySubjects = test.findKeySubjects();
@@ -41,13 +44,31 @@ class TestResultSummaryScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        // 2. Eğer arşivden gelindiyse Geri Tuşu koy, yoksa (yeni deneme ise) Çarpı/Home koy
+        leading: fromArchive
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                onPressed: () => context.pop(), // Geldiği yere (Arşiv) döner
+              )
+            : IconButton(
+                icon: const Icon(Icons.close_rounded),
+                onPressed: () => context.go('/home'), // Ana sayfaya döner
+              ),
         title: const Text("Savaş Raporu"),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        automaticallyImplyLeading: false,
       ),
       backgroundColor: theme.scaffoldBackgroundColor,
-      body: Container(
+      // Geri tuşuna basınca (Android fiziksel tuş) davranışı yönetmek için:
+      body: PopScope(
+        canPop: fromArchive, // Sadece arşivden gelindiyse fiziksel geri tuşu çalışsın
+        onPopInvoked: (didPop) {
+          if (didPop) return;
+          if (!fromArchive) {
+            context.go('/home'); // Yeni deneme ise home'a at
+          }
+        },
+        child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -219,6 +240,7 @@ class TestResultSummaryScreen extends ConsumerWidget {
               ],
             ),
           ],
+        ),
         ),
       ),
       bottomNavigationBar: Padding(

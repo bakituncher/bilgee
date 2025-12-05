@@ -597,6 +597,18 @@ class FirestoreService {
     return qs.docs.map((d) => TestModel.fromSnapshot(d as DocumentSnapshot<Map<String, dynamic>>)).toList();
   }
 
+  // Test silme fonksiyonu
+  Future<void> deleteTest(String testId) async {
+    try {
+      await _testsCollection.doc(testId).delete();
+      // Not: İstatistiklerin güncellenmesi (test sayısının düşmesi vb.)
+      // genellikle arka planda bir Firestore Trigger (Cloud Function) tarafından yönetilmelidir.
+    } catch (e) {
+      debugPrint('Test silme hatası: $e');
+      rethrow;
+    }
+  }
+
   Future<void> saveExamSelection({
     required String userId,
     required ExamType examType,
