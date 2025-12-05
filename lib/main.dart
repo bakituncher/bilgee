@@ -5,13 +5,14 @@ import 'dart:async';
 import 'dart:ui';
 import 'package:taktik/core/navigation/app_router.dart';
 import 'package:taktik/core/theme/app_theme.dart';
-import 'package:taktik/core/theme/theme_provider.dart';
+import 'package:taktik/core/theme/theme_provider.dart'; // EKLENDİ
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart'; // kDebugMode için bu import gerekli
 import 'package:flutter/material.dart';
+// SystemChrome için gerekli
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'firebase_options.dart';
@@ -21,11 +22,11 @@ import 'shared/notifications/notification_service.dart';
 import 'package:taktik/core/prompts/prompt_remote.dart';
 import 'package:taktik/core/services/revenuecat_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:taktik/core/services/connectivity_service.dart';
-import 'package:taktik/shared/screens/no_internet_screen.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart'; // CRITICAL
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // Arka plan izole içinde Firebase'i başlatmak önemli
   try {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   } catch (_) {}
@@ -40,18 +41,24 @@ void main() async {
       debugPrint('[FlutterError] ${details.exceptionAsString()}');
       debugPrint(details.stack?.toString());
     }
+    // Firebase Crashlytics'e hata gönder
     FirebaseCrashlytics.instance.recordFlutterFatalError(details);
   };
 
+  // Asenkron hatalar için de Crashlytics'e gönder
   PlatformDispatcher.instance.onError = (error, stack) {
     FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
     return true;
   };
 
   await runZonedGuarded(() async {
-    WidgetsFlutterBinding.ensureInitialized();
+    // Binding ve runApp aynı zone'da olmalı
+    WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
 
-    // 1. .env yükle
+    // CRITICAL: Preserve splash screen to prevent white screen on iOS
+    FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+
+    // KRİTİK: Environment variables'ı yükle (timeout ile)
     try {
       await dotenv.load(fileName: ".env").timeout(
         const Duration(seconds: 2),
@@ -65,7 +72,7 @@ void main() async {
       }
     }
 
-    // 2. Firebase Başlat
+    // KRİTİK: Firebase başlatma (timeout ile)
     try {
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
@@ -84,32 +91,33 @@ void main() async {
       return;
     }
 
-    // Firebase servislerini yapılandır
+    // Firebase Crashlytics'i yapılandır (non-blocking)
     FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(!kDebugMode);
+
+    // Firebase Analytics'i yapılandır (non-blocking)
     FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(true);
 
-    // 3. REVENUECAT BAŞLATMA (KRİTİK - BURAYA TAŞINDI)
-    // UI çizilmeden önce RevenueCat'in hazır olması şarttır, aksi takdirde iOS'ta çökme yaşanır.
-    try {
-      await RevenueCatService.init().timeout(
-        const Duration(seconds: 5),
-        onTimeout: () {
-          if (kDebugMode) debugPrint('[RevenueCat] Initialization timeout');
-        },
-      );
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('[RevenueCat] Initialization failed: $e');
-      }
-      // RevenueCat hatası uygulamanın açılmasını engellememeli ama loglanmalı
-    }
-
-    // 4. UYGULAMAYI BAŞLAT
+    // UYGULAMAYI HEMEN BAŞLAT - Diğer servisler arka planda yüklenecek
     runApp(const ProviderScope(child: BilgeAiApp()));
 
-    // --- Diğer "Non-Kritik" Servisler Arka Planda Başlatılabilir ---
+    // NON-KRİTİK: RevenueCat'i arka planda başlat
+    Future.microtask(() async {
+      try {
+        await RevenueCatService.init().timeout(
+          const Duration(seconds: 5),
+          onTimeout: () {
+            if (kDebugMode) debugPrint('[RevenueCat] Initialization timeout');
+          },
+        );
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('[RevenueCat] Initialization failed: $e');
+        }
+      }
+    });
 
-    // App Check
+
+    // NON-KRİTİK: App Check'i arka planda başlat
     Future.microtask(() async {
       try {
         await FirebaseAppCheck.instance.activate(
@@ -126,6 +134,7 @@ void main() async {
           },
         );
       } catch (e) {
+        // iOS'ta App Attest desteklenmiyorsa DeviceCheck'e düş
         try {
           await FirebaseAppCheck.instance.activate(
             androidProvider: kDebugMode
@@ -137,11 +146,12 @@ void main() async {
           ).timeout(const Duration(seconds: 5));
         } catch (e2) {
           if (kDebugMode) {
-            debugPrint('[AppCheck] Fallback failed: $e2');
+            debugPrint('[AppCheck] Play Integrity aktivasyon başarısız: $e | DeviceCheck fallback hata: $e2');
           }
         }
       }
 
+      // App Check tokenlarını otomatik yenile
       try {
         await FirebaseAppCheck.instance.setTokenAutoRefreshEnabled(true);
         try {
@@ -152,7 +162,7 @@ void main() async {
       } catch (_) {}
     });
 
-    // FCM Handler
+    // NON-KRİTİK: FCM background handler'ı kaydet
     Future.microtask(() {
       try {
         FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
@@ -161,7 +171,7 @@ void main() async {
       }
     });
 
-    // Tarih Yerelleştirme
+    // NON-KRİTİK: Tarih yerelleştirme
     Future.microtask(() async {
       try {
         await initializeDateFormatting('tr_TR', null).timeout(
@@ -175,7 +185,7 @@ void main() async {
       }
     });
 
-    // Preload İşlemleri
+    // NON-KRİTİK: Ağ bağımlı preload işleri uygulamayı bloklamasın
     Future.microtask(() async {
       try {
         await Future.wait([
@@ -200,6 +210,7 @@ void main() async {
       debugPrint('[Zoned] Yakalanmamış hata: $error');
       debugPrint(stack.toString());
     }
+    // Firebase Crashlytics'e hata gönder
     FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
   });
 }
@@ -216,7 +227,19 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
+    // CRITICAL: Initialize UI Overlay Style ONCE here, not in build loop
+    final themeMode = ref.read(themeModeNotifierProvider);
+    final platformBrightness = WidgetsBinding.instance.platformDispatcher.platformBrightness;
+    final brightness = (themeMode == ThemeMode.system)
+        ? platformBrightness
+        : (themeMode == ThemeMode.dark ? Brightness.dark : Brightness.light);
+    AppTheme.configureSystemUI(brightness);
+
+    // Remove splash screen when first frame is rendered
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      FlutterNativeSplash.remove(); // CRITICAL
+
       final router = ref.read(goRouterProvider);
       NotificationService.instance.initialize(onNavigate: (route) {
         router.go(route);
@@ -233,6 +256,7 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
   @override
   void didChangePlatformBrightness() {
     super.didChangePlatformBrightness();
+    // Update SystemUI only when necessary
     final themeMode = ref.read(themeModeNotifierProvider);
     if (themeMode == ThemeMode.system) {
       final platformBrightness = WidgetsBinding.instance.platformDispatcher.platformBrightness;
@@ -245,67 +269,16 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
     final router = ref.watch(goRouterProvider);
     final themeMode = ref.watch(themeModeNotifierProvider);
 
-    // İnternet bağlantısını kontrol et
-    final connectivityAsync = ref.watch(connectivityProvider);
+    // CRITICAL: Remove calls to SystemChrome/AppTheme.configureSystemUI from build()
+    // to prevent potential thread locking on frequent rebuilds/hot reloads.
 
-    // Tema her değiştiğinde (açık, koyu veya sistem) doğru UI overlay'i ayarla
-    final Brightness currentBrightness;
-    switch (themeMode) {
-      case ThemeMode.light:
-        currentBrightness = Brightness.light;
-        break;
-      case ThemeMode.dark:
-        currentBrightness = Brightness.dark;
-        break;
-      case ThemeMode.system:
-        currentBrightness = MediaQuery.of(context).platformBrightness;
-        break;
-    }
-    AppTheme.configureSystemUI(currentBrightness);
-
-    // İnternet bağlantısı yoksa NoInternetScreen göster
-    return connectivityAsync.when(
-      data: (isConnected) {
-        if (!isConnected) {
-          return MaterialApp(
-            title: 'Taktik',
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode: themeMode,
-            home: const NoInternetScreen(),
-          );
-        }
-
-        return MaterialApp.router(
-          title: 'Taktik',
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          themeMode: themeMode,
-          routerConfig: router,
-        );
-      },
-      loading: () => MaterialApp(
-        title: 'Taktik',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: themeMode,
-        home: const Scaffold(
-          body: Center(
-            child: CircularProgressIndicator(),
-          ),
-        ),
-      ),
-      error: (_, __) => MaterialApp.router(
-        title: 'Taktik',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: themeMode,
-        routerConfig: router,
-      ),
+    return MaterialApp.router(
+      title: 'Taktik',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeMode,
+      routerConfig: router,
     );
   }
 }

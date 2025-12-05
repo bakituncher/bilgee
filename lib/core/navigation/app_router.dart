@@ -28,15 +28,15 @@ import 'package:taktik/features/admin/screens/user_reports_screen.dart';
 import 'package:taktik/shared/notifications/notification_center_screen.dart';
 import 'package:taktik/features/profile/screens/blocked_users_screen.dart';
 import 'package:taktik/features/profile/screens/user_search_screen.dart';
-import 'package:taktik/features/profile/screens/blocked_users_screen.dart';
 import 'package:taktik/shared/widgets/splash_screen.dart';
 import 'package:taktik/data/providers/admin_providers.dart';
 import 'transition_utils.dart';
 import 'package:taktik/features/home/screens/user_guide_screen.dart';
 
-final goRouterProvider = Provider<GoRouter>((ref) {
-  final rootNavigatorKey = GlobalKey<NavigatorState>();
+// GLOBAL DEFINITION - CRITICAL FOR HOT RELOAD STABILITY
+final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
+final goRouterProvider = Provider<GoRouter>((ref) {
   final listenable = ValueNotifier<bool>(false);
   ref.listen(authControllerProvider, (_, __) => listenable.value = !listenable.value);
   ref.listen(userProfileProvider, (_, __) => listenable.value = !listenable.value);
