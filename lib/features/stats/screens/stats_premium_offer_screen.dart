@@ -178,7 +178,7 @@ class _StatsPremiumOfferScreenState extends ConsumerState<StatsPremiumOfferScree
                                   Icon(Icons.workspace_premium_rounded,
                                       color: colorScheme.primary, size: 16),
                                   const SizedBox(width: 4),
-                                  Text('PREMIUM',
+                                  Text('PRO',
                                       style: theme.textTheme.labelSmall?.copyWith(
                                         color: colorScheme.primary,
                                         fontWeight: FontWeight.w800,
@@ -341,7 +341,7 @@ class _StatsPremiumOfferScreenState extends ConsumerState<StatsPremiumOfferScree
                                                   ),
                                                   borderRadius: BorderRadius.circular(8),
                                                 ),
-                                                child: Text('PREMIUM',
+                                                child: Text('PRO',
                                                     style: theme.textTheme.labelSmall?.copyWith(
                                                         color: Colors.white,
                                                         fontWeight: FontWeight.w900,
@@ -641,7 +641,7 @@ class _StatsPremiumOfferScreenState extends ConsumerState<StatsPremiumOfferScree
                                               shaderCallback: (bounds) => const LinearGradient(
                                                 colors: [Color(0xFF2E3192), Color(0xFF1BFFFF)],
                                               ).createShader(bounds),
-                                              child: Text('Premium\'a Geç',
+                                              child: Text('Pro\'ya Geç',
                                                   style: theme.textTheme.titleMedium?.copyWith(
                                                       color: Colors.white,
                                                       fontWeight: FontWeight.w900,
@@ -654,7 +654,7 @@ class _StatsPremiumOfferScreenState extends ConsumerState<StatsPremiumOfferScree
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    'Reklamla geçici erişim, Premium ile sınırsız!',
+                                    'Reklamla geçici erişim, Pro ile sınırsız!',
                                     style: theme.textTheme.bodySmall?.copyWith(
                                       color: colorScheme.onSurfaceVariant.withOpacity(0.7),
                                       fontSize: 11,

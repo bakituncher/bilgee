@@ -109,16 +109,16 @@ flutter:
 # Splash Screen Ayarları
 flutter_native_splash:
   color: "#0F172A"
-  image: assets/images/logo.png
+  image: assets/images/splash.png
   android_12:
-    image: assets/images/logo.png
+    image: assets/images/splash.png
     icon_background_color: "#0F172A"
   android: true
   ios: true
   web: false
   fullscreen: true
   color_dark: "#0F172A"
-  image_dark: assets/images/logo.png
+  image_dark: assets/images/splash.png
 
 # --- EKLENEN KISIM BURASI ---
 # Uygulama İkonu Ayarları

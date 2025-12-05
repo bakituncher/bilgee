@@ -365,7 +365,7 @@ class _ProfileView extends ConsumerWidget {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Image.asset('assets/images/logo.png', width: 24, height: 24),
+                                  Image.asset('assets/images/splash.png', width: 24, height: 24),
                                   const SizedBox(width: 6),
                                   Text('Taktik App', style: theme.textTheme.titleSmall?.copyWith(color: colorScheme.secondary, fontWeight: FontWeight.bold, fontSize: 13)),
                                 ],

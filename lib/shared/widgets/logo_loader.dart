@@ -9,7 +9,7 @@ class LogoLoader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Image.asset(
-        'assets/images/logo.png',
+        'assets/images/splash.png',
         width: size ?? 150,
       )
       .animate(onPlay: (controller) => controller.repeat(reverse: true))
