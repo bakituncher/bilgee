@@ -23,6 +23,7 @@ import 'package:taktik/core/services/revenuecat_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:taktik/core/services/connectivity_service.dart';
 import 'package:taktik/shared/screens/no_internet_screen.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -49,7 +50,9 @@ void main() async {
   };
 
   await runZonedGuarded(() async {
-    WidgetsFlutterBinding.ensureInitialized();
+    WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+    // Splash screen'i koru - JS Bridge/Native yüklenirken beyaz ekranı engeller
+    FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
     // 1. .env yükle
     try {
@@ -88,8 +91,7 @@ void main() async {
     FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(!kDebugMode);
     FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(true);
 
-    // 3. REVENUECAT BAŞLATMA (KRİTİK - BURAYA TAŞINDI)
-    // UI çizilmeden önce RevenueCat'in hazır olması şarttır, aksi takdirde iOS'ta çökme yaşanır.
+    // 3. REVENUECAT BAŞLATMA
     try {
       await RevenueCatService.init().timeout(
         const Duration(seconds: 5),
@@ -101,11 +103,13 @@ void main() async {
       if (kDebugMode) {
         debugPrint('[RevenueCat] Initialization failed: $e');
       }
-      // RevenueCat hatası uygulamanın açılmasını engellememeli ama loglanmalı
     }
 
     // 4. UYGULAMAYI BAŞLAT
     runApp(const ProviderScope(child: BilgeAiApp()));
+
+    // Uygulama başlatıldıktan sonra splash screen'i kaldır
+    FlutterNativeSplash.remove();
 
     // --- Diğer "Non-Kritik" Servisler Arka Planda Başlatılabilir ---
 
@@ -245,9 +249,6 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
     final router = ref.watch(goRouterProvider);
     final themeMode = ref.watch(themeModeNotifierProvider);
 
-    // İnternet bağlantısını kontrol et
-    final connectivityAsync = ref.watch(connectivityProvider);
-
     // Tema her değiştiğinde (açık, koyu veya sistem) doğru UI overlay'i ayarla
     final Brightness currentBrightness;
     switch (themeMode) {
@@ -263,49 +264,31 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
     }
     AppTheme.configureSystemUI(currentBrightness);
 
-    // İnternet bağlantısı yoksa NoInternetScreen göster
-    return connectivityAsync.when(
-      data: (isConnected) {
-        if (!isConnected) {
-          return MaterialApp(
-            title: 'Taktik',
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode: themeMode,
-            home: const NoInternetScreen(),
-          );
-        }
+    // Hot Reload sorununu çözmek için yapıyı değiştirdik.
+    // MaterialApp.router'ı sürekli yeniden oluşturmak (rebuild) yerine,
+    // bağlantı kontrolünü builder içinde yapıyoruz.
+    return MaterialApp.router(
+      title: 'Taktik',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeMode,
+      routerConfig: router,
+      builder: (context, child) {
+        // İnternet bağlantısını burada dinle
+        final connectivityAsync = ref.watch(connectivityProvider);
 
-        return MaterialApp.router(
-          title: 'Taktik',
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          themeMode: themeMode,
-          routerConfig: router,
+        return connectivityAsync.when(
+          data: (isConnected) {
+            if (!isConnected) return const NoInternetScreen();
+            return child ?? const SizedBox();
+          },
+          // Hot reload veya loading durumunda UI'ı bozma, child'ı göster
+          loading: () => child ?? const SizedBox(),
+          // Hata durumunda da akışı bozma
+          error: (_, __) => child ?? const SizedBox(),
         );
       },
-      loading: () => MaterialApp(
-        title: 'Taktik',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: themeMode,
-        home: const Scaffold(
-          body: Center(
-            child: CircularProgressIndicator(),
-          ),
-        ),
-      ),
-      error: (_, __) => MaterialApp.router(
-        title: 'Taktik',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: themeMode,
-        routerConfig: router,
-      ),
     );
   }
 }
