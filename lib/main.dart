@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 // --- FIREBASE GERİ GELDİ ---
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 // --- NAVIGATION & THEME ---
 import 'package:taktik/core/navigation/app_router.dart';
@@ -17,12 +18,14 @@ import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/core/theme/theme_provider.dart';
 import 'package:taktik/core/services/connectivity_service.dart';
 import 'package:taktik/shared/screens/no_internet_screen.dart';
+import 'package:taktik/core/services/revenuecat_service.dart';
 
-// --- REVENUECAT TAMAMEN KAPALI (Importu bile yok) ---
-// import 'package:purchases_flutter/purchases_flutter.dart';
-
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // .env dosyasını yükle (assets klasöründen)
+  await dotenv.load(fileName: "assets/.env");
+
   // AppBootstrapper ile güvenli açılış
   runApp(const ProviderScope(child: AppBootstrapper()));
 }
@@ -58,7 +61,14 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
       );
       debugPrint("✅ Firebase Başarıyla Başlatıldı");
 
-      // 3. RevenueCat BURADA YOK. SİLİNDİ. HİÇ ÇAĞRILMIYOR.
+      // 3. RevenueCat Başlat
+      try {
+        await RevenueCatService.init();
+        debugPrint("✅ RevenueCat Başarıyla Başlatıldı");
+      } catch (e) {
+        debugPrint("⚠️ RevenueCat Başlatma Hatası: $e");
+        // RevenueCat hatası uygulamayı durdurmasın, sadece loglayalım
+      }
 
       if (mounted) {
         setState(() {

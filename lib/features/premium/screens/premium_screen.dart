@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-// --- REVENUECAT DEVRE DIŞI ---
-// import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:taktik/core/services/revenuecat_service.dart';
 import 'package:collection/collection.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
@@ -36,7 +35,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
   bool _isPurchasing = false;
 
   // State to track selected package
-  MockPackage? _selectedPackage;
+  Package? _selectedPackage;
 
   // --- INITIALIZATION & DISPOSAL ---
 
@@ -366,10 +365,10 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
   }
 
   Widget _buildMarketingCarousel(
-    List<({String title, String subtitle, IconData icon, Color color})> marketingSlides,
-    bool isSmallScreen,
-    bool isMediumScreen,
-  ) {
+      List<({String title, String subtitle, IconData icon, Color color})> marketingSlides,
+      bool isSmallScreen,
+      bool isMediumScreen,
+      ) {
     final carouselHeight = isSmallScreen ? 85.0 : (isMediumScreen ? 100.0 : 115.0);
 
     return FadeTransition(
@@ -437,39 +436,39 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
             child: Center(
               child: _isPurchasing
                   ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.5,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
                   : Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.check_circle_rounded,
-                          color: Colors.white,
-                          size: isSmallScreen ? 22 : 26,
-                        ),
-                        SizedBox(width: isSmallScreen ? 8 : 12),
-                        Text(
-                          'Hemen Başla',
-                          style: TextStyle(
-                            fontSize: isSmallScreen ? 16.5 : 19.0,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                        SizedBox(width: isSmallScreen ? 8 : 12),
-                        Icon(
-                          Icons.arrow_forward_rounded,
-                          color: Colors.white,
-                          size: isSmallScreen ? 22 : 26,
-                        ),
-                      ],
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.check_circle_rounded,
+                    color: Colors.white,
+                    size: isSmallScreen ? 22 : 26,
+                  ),
+                  SizedBox(width: isSmallScreen ? 8 : 12),
+                  Text(
+                    'Hemen Başla',
+                    style: TextStyle(
+                      fontSize: isSmallScreen ? 16.5 : 19.0,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      letterSpacing: 0.5,
                     ),
+                  ),
+                  SizedBox(width: isSmallScreen ? 8 : 12),
+                  Icon(
+                    Icons.arrow_forward_rounded,
+                    color: Colors.white,
+                    size: isSmallScreen ? 22 : 26,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -496,10 +495,10 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                 decoration: BoxDecoration(
                   gradient: index == currentPage.round()
                       ? const LinearGradient(
-                          colors: [Color(0xFF2E3192), Color(0xFF1BFFFF)],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        )
+                    colors: [Color(0xFF2E3192), Color(0xFF1BFFFF)],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  )
                       : null,
                   color: index == currentPage.round()
                       ? null
@@ -507,12 +506,12 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                   borderRadius: BorderRadius.circular(4),
                   boxShadow: index == currentPage.round()
                       ? [
-                          BoxShadow(
-                            color: const Color(0xFF2E3192).withOpacity(0.4),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ]
+                    BoxShadow(
+                      color: const Color(0xFF2E3192).withOpacity(0.4),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
                       : null,
                 ),
               ),
@@ -523,14 +522,11 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     );
   }
 
-  Widget _buildPurchaseOptions(BuildContext context, WidgetRef ref, dynamic offerings, bool isSmallScreen) {
-    // --- REVENUECAT DEVRE DIŞI - HİÇ PAKET YOK ---
-    MockPackage? monthly, yearly;
+  Widget _buildPurchaseOptions(BuildContext context, WidgetRef ref, Offerings? offerings, bool isSmallScreen) {
+    Package? monthly, yearly;
     double? savePercent;
 
-    // RevenueCat devre dışı olduğu için paket bilgisi yok
-    // Offerings null veya boş olacak
-    /*
+    // --- REVENUECAT PACKAGE EXTRACTION (logic unchanged) ---
     if (offerings != null) {
       final current = offerings.current ?? offerings.all.values.firstWhereOrNull((o) => o.availablePackages.isNotEmpty);
       if (current != null) {
@@ -552,7 +548,6 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
         }
       }
     }
-    */
     // --- END OF PACKAGE EXTRACTION ---
 
     // Eğer hiç seçim yapılmadıysa, aylık planı varsayılan olarak seç
@@ -607,7 +602,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
 
   // --- PURCHASE LOGIC (KEPT AS IS) ---
 
-  Future<void> _purchasePackage(BuildContext context, WidgetRef ref, MockPackage package) async {
+  Future<void> _purchasePackage(BuildContext context, WidgetRef ref, Package package) async {
     if (_isPurchasing) return;
 
     setState(() {
@@ -872,13 +867,13 @@ class _MarketingSlideCard extends StatelessWidget {
             end: Alignment.bottomRight,
             colors: isDark
                 ? [
-                    colorScheme.surface,
-                    Color.lerp(colorScheme.surface, color, 0.08)!,
-                  ]
+              colorScheme.surface,
+              Color.lerp(colorScheme.surface, color, 0.08)!,
+            ]
                 : [
-                    Colors.white,
-                    Color.lerp(Colors.white, color, 0.08)!,
-                  ],
+              Colors.white,
+              Color.lerp(Colors.white, color, 0.08)!,
+            ],
           ),
           borderRadius: BorderRadius.circular(isSmallScreen ? 16 : 20),
           border: Border.all(
@@ -988,7 +983,7 @@ class _PurchaseOptionCard extends StatefulWidget {
   });
 
   final AnimationController animationController;
-  final MockPackage package;
+  final Package package;
   final String title;
   final String price;
   final String billingPeriod;
@@ -1070,26 +1065,26 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
               decoration: BoxDecoration(
                 gradient: widget.highlight
                     ? const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Color(0xFF2E3192),
-                          Color(0xFF1BFFFF),
-                        ],
-                      )
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFF2E3192),
+                    Color(0xFF1BFFFF),
+                  ],
+                )
                     : LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: isDark
-                            ? [
-                                Color(0xFF1A1A2E),
-                                Color(0xFF16213E),
-                              ]
-                            : [
-                                Colors.white,
-                                Color(0xFFF8F9FA),
-                              ],
-                      ),
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: isDark
+                      ? [
+                    Color(0xFF1A1A2E),
+                    Color(0xFF16213E),
+                  ]
+                      : [
+                    Colors.white,
+                    Color(0xFFF8F9FA),
+                  ],
+                ),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: widget.highlight
@@ -1099,29 +1094,29 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                 ),
                 boxShadow: widget.highlight
                     ? [
-                        BoxShadow(
-                          color: const Color(0xFF2E3192).withOpacity(0.6),
-                          blurRadius: 32,
-                          spreadRadius: 0,
-                          offset: const Offset(0, 10),
-                        ),
-                        BoxShadow(
-                          color: const Color(0xFF1BFFFF).withOpacity(0.4),
-                          blurRadius: 48,
-                          spreadRadius: -4,
-                          offset: const Offset(0, 16),
-                        ),
-                      ]
+                  BoxShadow(
+                    color: const Color(0xFF2E3192).withOpacity(0.6),
+                    blurRadius: 32,
+                    spreadRadius: 0,
+                    offset: const Offset(0, 10),
+                  ),
+                  BoxShadow(
+                    color: const Color(0xFF1BFFFF).withOpacity(0.4),
+                    blurRadius: 48,
+                    spreadRadius: -4,
+                    offset: const Offset(0, 16),
+                  ),
+                ]
                     : [
-                        BoxShadow(
-                          color: isDark
-                              ? Colors.black.withOpacity(0.3)
-                              : Colors.black.withOpacity(0.06),
-                          blurRadius: 16,
-                          offset: const Offset(0, 6),
-                          spreadRadius: -2,
-                        ),
-                      ],
+                  BoxShadow(
+                    color: isDark
+                        ? Colors.black.withOpacity(0.3)
+                        : Colors.black.withOpacity(0.06),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                    spreadRadius: -2,
+                  ),
+                ],
               ),
               child: Stack(
                 clipBehavior: Clip.none,
@@ -1236,13 +1231,13 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                         decoration: BoxDecoration(
                           gradient: widget.highlight
                               ? const LinearGradient(
-                                  colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                )
+                            colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          )
                               : const LinearGradient(
-                                  colors: [Color(0xFF1BFFFF), Color(0xFF2E3192)],
-                                ),
+                            colors: [Color(0xFF1BFFFF), Color(0xFF2E3192)],
+                          ),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: Colors.white.withOpacity(0.3),
