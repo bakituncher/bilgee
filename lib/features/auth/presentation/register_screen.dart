@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/gestures.dart';
 import 'package:taktik/shared/widgets/custom_date_picker.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -118,6 +119,48 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         if (mounted) {
           setState(() => _isLoading = false);
         }
+      }
+    }
+  }
+
+  void _signInWithGoogle() async {
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      await ref.read(authControllerProvider.notifier).signInWithGoogle();
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString();
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  void _signInWithApple() async {
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      await ref.read(authControllerProvider.notifier).signInWithApple();
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString();
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
     }
   }
@@ -425,6 +468,45 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     ? SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Theme.of(context).colorScheme.onPrimary, strokeWidth: 2))
                     : const Text('Kayıt Ol'),
               ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(child: Divider(color: Theme.of(context).colorScheme.outline.withOpacity(0.5))),
+                  const SizedBox(width: 12),
+                  Text('veya', style: Theme.of(context).textTheme.bodySmall),
+                  const SizedBox(width: 12),
+                  Expanded(child: Divider(color: Theme.of(context).colorScheme.outline.withOpacity(0.5))),
+                ],
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 48,
+                child: OutlinedButton.icon(
+                  icon: SvgPicture.asset('assets/images/google_logo.svg', height: 24),
+                  onPressed: _isLoading ? null : _signInWithGoogle,
+                  label: const Text('Google ile Devam Et'),
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 48,
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.apple, size: 24),
+                  onPressed: _isLoading ? null : _signInWithApple,
+                  label: const Text('Apple ile Devam Et'),
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
               TextButton(
                 onPressed: _isLoading ? null : () { context.go(AppRoutes.login); },
                 child: const Text('Zaten bir hesabın var mı? Giriş Yap'),

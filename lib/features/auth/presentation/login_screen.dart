@@ -79,6 +79,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  void _signInWithApple() async {
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      await ref.read(authControllerProvider.notifier).signInWithApple();
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString();
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   void _showResetPasswordDialog() {
     final emailController = TextEditingController(text: _emailController.text.trim());
     final formKey = GlobalKey<FormState>();
@@ -307,6 +328,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   icon: SvgPicture.asset('assets/images/google_logo.svg', height: 24),
                                   onPressed: _isLoading ? null : _signInWithGoogle,
                                   label: const Text('Google ile Giriş Yap'),
+                                  style: OutlinedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              SizedBox(
+                                height: 48,
+                                child: OutlinedButton.icon(
+                                  icon: const Icon(Icons.apple, size: 24),
+                                  onPressed: _isLoading ? null : _signInWithApple,
+                                  label: const Text('Apple ile Giriş Yap'),
                                   style: OutlinedButton.styleFrom(
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
