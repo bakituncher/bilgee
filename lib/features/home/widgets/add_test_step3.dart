@@ -134,7 +134,11 @@ class Step3Summary extends ConsumerWidget {
                 }
 
                 if (context.mounted) {
-                  context.push('/home/test-result-summary', extra: newTest);
+                  // pushReplacement kullanarak bu ekranı (AddTestScreen)
+                  // yığından kaldırıp yerine özet ekranını koyuyoruz.
+                  // Bu sayede geri tuşuna basıldığında Dashboard'a dönülür,
+                  // aynı denemenin tekrar kaydedilmesi engellenir.
+                  context.pushReplacement('/home/test-result-summary', extra: newTest);
                 }
               } catch (e, s) {
                 debugPrint('Deneme sonucu kaydedilirken bir hata oluştu: $e');

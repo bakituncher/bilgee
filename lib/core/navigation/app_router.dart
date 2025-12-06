@@ -32,6 +32,7 @@ import 'package:taktik/features/profile/screens/blocked_users_screen.dart';
 import 'package:taktik/shared/widgets/splash_screen.dart';
 import 'package:taktik/data/providers/admin_providers.dart';
 import 'transition_utils.dart';
+import 'package:taktik/features/home/screens/user_guide_screen.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   final rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -93,6 +94,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           return location == AppRoutes.availability ? null : AppRoutes.availability;
         }
 
+        // Onboarding Step 4: Intro / Tutorial
+        if (!user.tutorialCompleted) {
+          return location == '/intro' ? null : '/intro';
+        }
+
         // **** HATAYI ÇÖZEN ANA MANTIK ****
         // If the user is fully onboarded and tries to go to login, register, or the loading screen,
         // redirect them to the home screen.
@@ -147,6 +153,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           child: const SettingsScreen(),
         ),
       ),
+      // Kullanım Kılavuzu
+      GoRoute(
+        path: AppRoutes.userGuide,
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) => buildPageWithFadeTransition(
+          context: context,
+          state: state,
+          child: const UserGuideScreen(),
+        ),
+      ),
       // Blog ve Premium (üst seviye sayfalar)
       GoRoute(
         path: '/blog',
@@ -178,7 +194,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           child: const premium.PremiumScreen(),
         ),
       ),
-       GoRoute(
+      GoRoute(
         path: '/ai-hub/offer',
         parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) {

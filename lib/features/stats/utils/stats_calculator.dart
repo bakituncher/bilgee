@@ -30,25 +30,32 @@ class StatsCalculator {
       final testDate = DateTime(test.date.year, test.date.month, test.date.day);
 
       if (lastDate == null) {
-        // İlk test - bugün veya dün olmalı
+        // İlk test kontrolü - bugün olmalı, yoksa seri yok
         final daysDiff = today.difference(testDate).inDays;
-        if (daysDiff <= 1) {
+        if (daysDiff == 0) {
+          // Bugün test var, seri başlasın
           streak = 1;
           lastDate = testDate;
+        } else if (daysDiff == 1) {
+          // En son test dün yapılmış, bugün yapılmamış - seri yok
+          return 0;
         } else {
-          break; // Seri kırılmış
+          // Daha eski - seri kesinlikle yok
+          return 0;
         }
       } else {
         // Bir önceki günde test var mı?
         final daysDiff = lastDate.difference(testDate).inDays;
         if (daysDiff == 1) {
+          // Ardışık gün
           streak++;
           lastDate = testDate;
         } else if (daysDiff == 0) {
           // Aynı gün içinde birden fazla test - sayma
           continue;
         } else {
-          break; // Seri kırılmış
+          // Seri kırılmış
+          break;
         }
       }
     }

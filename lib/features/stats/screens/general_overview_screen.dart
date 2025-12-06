@@ -57,8 +57,9 @@ class _GeneralOverviewScreenState extends ConsumerState<GeneralOverviewScreen> {
           'Genel Bakış',
           style: TextStyle(
             fontWeight: FontWeight.w800,
-            fontSize: 22,
+            fontSize: 20,
             color: isDark ? Colors.white : const Color(0xFF0F172A),
+            letterSpacing: -0.5,
           ),
         ),
         automaticallyImplyLeading: false,
@@ -66,6 +67,7 @@ class _GeneralOverviewScreenState extends ConsumerState<GeneralOverviewScreen> {
           icon: Icon(
             Icons.arrow_back_rounded,
             color: isDark ? Colors.white : const Color(0xFF0F172A),
+            size: 24,
           ),
           tooltip: 'Geri',
           onPressed: () => _handleBack(context),

@@ -368,7 +368,7 @@ class _ShareableProfileCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.asset('assets/images/logo.png', width: 28, height: 28),
+              Image.asset('assets/images/splash.png', width: 28, height: 28),
               const SizedBox(width: 8),
               Text('Taktik App', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
             ],

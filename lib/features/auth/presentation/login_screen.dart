@@ -189,9 +189,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     // Logo ve başlık
                     Column(
                       children: [
-                        Image.asset('assets/images/logo.png', height: 100),
+                        Image.asset('assets/images/splash.png', height: 100),
                         const SizedBox(height: 12),
-                        Text('Tekrar Hoş Geldin!', textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),
+                        Text('Hoş Geldin!', textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),
                         const SizedBox(height: 6),
                         Text('Hesabına giriş yap ve kaldığın yerden devam et.', textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodyMedium),
                       ],

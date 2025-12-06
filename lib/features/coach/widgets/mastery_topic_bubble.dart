@@ -141,14 +141,14 @@ class _MasteryTopicBubbleState extends State<MasteryTopicBubble>
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: isDark
-                        ? [color.withOpacity(0.2), color.withOpacity(0.12)]
-                        : [color.withOpacity(0.15), color.withOpacity(0.08)],
+                        ? [color.withOpacity(0.25), color.withOpacity(0.15)]
+                        : [Colors.white, color.withOpacity(0.12)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.circular(widget.compact ? 20 : 32),
                     border: Border.all(
-                      color: color.withOpacity(_isHovered ? 0.9 : (isDark ? 0.6 : 0.7)),
+                      color: color.withOpacity(_isHovered ? 0.9 : (isDark ? 0.5 : 0.6)),
                       width: _isHovered ? 2.0 : (isDark ? 1.5 : 2.0),
                     ),
                     boxShadow: [

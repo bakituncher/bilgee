@@ -34,4 +34,5 @@ class AppRoutes {
   static const String premium = '/premium'; // Premium ekranı
   static const String aiToolsOffer = '/ai-tools-offer'; // AI araçları tanıtım ekranı
   static const String selectSubject = 'select-subject';
+  static const String userGuide = '/user-guide'; // Kullanım kılavuzu
 }

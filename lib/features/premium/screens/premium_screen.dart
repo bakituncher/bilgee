@@ -10,6 +10,7 @@ import 'dart:ui';
 import 'dart:async';
 import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 // --- PREMIUM SCREEN (Mükemmeliyetçi Son Versiyon) ---
 
@@ -562,7 +563,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
               _PurchaseOptionCard(
                 animationController: _cardPopController,
                 package: yearly,
-                title: 'Yıllık Premium Plan',
+                title: 'Yıllık PRO Plan',
                 price: yearly.storeProduct.priceString,
                 billingPeriod: '/ yıl',
                 tag: savePercent != null ? '%${savePercent.toStringAsFixed(0)} İNDİRİM' : 'EN POPÜLER',
@@ -579,7 +580,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
               _PurchaseOptionCard(
                 animationController: _cardPopController,
                 package: monthly,
-                title: 'Aylık Premium Plan',
+                title: 'Aylık PRO Plan',
                 price: monthly.storeProduct.priceString,
                 billingPeriod: '/ ay',
                 tag: 'ESNEKLİK',
@@ -1340,11 +1341,11 @@ class _LegalFooter extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const _FooterLink(text: 'Kullanım Şartları', targetRoute: AppRoutes.settings),
+              const _FooterLink(text: 'Kullanım Şartları', targetUrl: 'https://www.codenzi.com/taktik-kullanim-sozlesmesi.html'),
               const SizedBox(width: 7),
               Text('|', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.38), fontSize: 9)),
               const SizedBox(width: 7),
-              const _FooterLink(text: 'Gizlilik Politikası', targetRoute: AppRoutes.settings),
+              const _FooterLink(text: 'Gizlilik Politikası', targetUrl: 'https://www.codenzi.com/taktik-gizlilik-politikasi.html'),
             ],
           ),
         ],
@@ -1355,20 +1356,26 @@ class _LegalFooter extends StatelessWidget {
 
 class _FooterLink extends StatelessWidget {
   final String text;
-  final String targetRoute;
+  final String targetUrl;
 
-  const _FooterLink({required this.text, required this.targetRoute});
+  const _FooterLink({required this.text, required this.targetUrl});
+
+  Future<void> _launchURL(BuildContext context) async {
+    final uri = Uri.parse(targetUrl);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Bağlantı açılamadı: $targetUrl')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final color = Theme.of(context).colorScheme.onSurface.withOpacity(0.7);
     return GestureDetector(
-      onTap: () {
-        // Gerçekte URL Launcher veya Webview kullanılmalıdır.
-        context.push(targetRoute).catchError((_) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$text: Navigasyon başarısız oldu. Rota: $targetRoute')));
-        });
-      },
+      onTap: () => _launchURL(context),
       child: Text(
         text,
         style: TextStyle(

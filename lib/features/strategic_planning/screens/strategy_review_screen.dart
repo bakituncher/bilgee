@@ -23,6 +23,7 @@ class _StrategyReviewScreenState extends ConsumerState<StrategyReviewScreen> {
   late Map<String, dynamic> _currentStrategyData;
   final PageController _pageController = PageController(viewportFraction: 0.85);
   bool _isRevising = false;
+  bool _isSaving = false; // 👈 Çift tıklama engelleyici
 
   @override
   void initState() {
@@ -33,29 +34,62 @@ class _StrategyReviewScreenState extends ConsumerState<StrategyReviewScreen> {
   WeeklyPlan get weeklyPlan => WeeklyPlan.fromJson(_currentStrategyData['weeklyPlan']);
   String get pacing => _currentStrategyData['pacing'];
 
-  void _approvePlan() {
-    final userId = ref.read(authControllerProvider).value!.uid;
-    ref.read(firestoreServiceProvider).updateStrategicPlan(
-      userId: userId,
-      pacing: pacing,
-      weeklyPlan: _currentStrategyData['weeklyPlan'],
-    );
-    ref.read(questNotifierProvider.notifier).userApprovedStrategy();
-    ref.invalidate(userProfileProvider);
-    context.go('/home');
+  void _approvePlan() async {
+    // ✅ Çift tıklamayı engelle
+    if (_isSaving) return;
+    setState(() => _isSaving = true);
+
+    try {
+      final userId = ref.read(authControllerProvider).value!.uid;
+
+      // Plan kaydet
+      await ref.read(firestoreServiceProvider).updateStrategicPlan(
+        userId: userId,
+        pacing: pacing,
+        weeklyPlan: _currentStrategyData['weeklyPlan'],
+      );
+
+      // Quest'i kaydet
+      ref.read(questNotifierProvider.notifier).userApprovedStrategy();
+
+      // Provider'ları yenile
+      ref.invalidate(userProfileProvider);
+      ref.invalidate(planProvider);
+
+      // Ana ekrana dön
+      if (mounted) context.go('/home');
+    } catch (e) {
+      // Hata olursa kullanıcıyı bilgilendir
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Plan kaydedilemedi: $e')),
+        );
+      }
+    } finally {
+      // İşlem bitti, kilidi aç
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 
   Future<void> _fetchRevisedPlan(String feedback) async {
     setState(() => _isRevising = true);
 
     final user = ref.read(userProfileProvider).value;
-    final tests = ref.read(testsProvider).value;
+    final tests = ref.read(testsProvider).value ?? [];
     final performance = ref.read(performanceProvider).value;
     final planDoc = ref.read(planProvider).value;
 
-    if (user == null || tests == null || performance == null) {
+    if (user == null) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Kullanıcı, test veya performans verisi bulunamadı.")));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Kullanıcı verisi bulunamadı.")));
+      }
+      setState(() => _isRevising = false);
+      return;
+    }
+
+    if (performance == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Performans verisi yükleniyor, lütfen bekleyin.")));
       }
       setState(() => _isRevising = false);
       return;
@@ -186,20 +220,36 @@ class _StrategyReviewScreenState extends ConsumerState<StrategyReviewScreen> {
                       const SizedBox(width: 16),
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: _approvePlan,
+                          onPressed: _isSaving ? null : _approvePlan, // 👈 Loading sırasında devre dışı
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
                           ),
                           child: FittedBox(
                             fit: BoxFit.scaleDown,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: const [
-                                Icon(Icons.check_circle_outline_rounded),
-                                SizedBox(width: 8),
-                                Text("Onayla ve Başla"),
-                              ],
-                            ),
+                            child: _isSaving
+                                ? Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: const [
+                                      SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                        ),
+                                      ),
+                                      SizedBox(width: 8),
+                                      Text("Kaydediliyor..."),
+                                    ],
+                                  )
+                                : Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: const [
+                                      Icon(Icons.check_circle_outline_rounded),
+                                      SizedBox(width: 8),
+                                      Text("Onayla ve Başla"),
+                                    ],
+                                  ),
                           ),
                         ),
                       ),
@@ -252,6 +302,8 @@ class _DailyPlanCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
+      elevation: 4, // 👈 Gölge ekle
+      color: Theme.of(context).cardColor, // 👈 Tam renk, opacity yok
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -263,9 +315,12 @@ class _DailyPlanCard extends StatelessWidget {
               style: Theme.of(context)
                   .textTheme
                   .headlineSmall
-                  ?.copyWith(color: Theme.of(context).colorScheme.primary),
+                  ?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.bold, // 👈 Daha kalın yazı
+                  ),
             ),
-            const Divider(height: 24),
+            const Divider(height: 24, thickness: 2), // 👈 Çizgi kalınlaştır
             Expanded(
               child: dailyPlan.schedule.isEmpty
                   ? Center(
@@ -282,23 +337,46 @@ class _DailyPlanCard extends StatelessWidget {
                 itemCount: dailyPlan.schedule.length,
                 itemBuilder: (context, index) {
                   final item = dailyPlan.schedule[index];
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12.0),
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 10.0),
+                    padding: const EdgeInsets.all(12.0),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.4), // 👈 Hafif arka plan
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.only(top: 2.0),
-                          child: Icon(_getIconForTaskType(item.type),
-                              size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary.withOpacity(0.15), // 👈 İkon kutusu
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            _getIconForTaskType(item.type),
+                            size: 18,
+                            color: Theme.of(context).colorScheme.primary, // 👈 Primary renk kullan
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(item.activity, style: Theme.of(context).textTheme.bodyLarge),
-                              Text(item.time, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                              Text(
+                                item.activity,
+                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                  fontWeight: FontWeight.w600, // 👈 Daha kalın
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                item.time,
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Theme.of(context).colorScheme.primary.withOpacity(0.8), // 👈 Daha belirgin
+                                ),
+                              ),
                             ],
                           ),
                         ),

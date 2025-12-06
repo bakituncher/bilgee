@@ -3,14 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:taktik/features/onboarding/providers/tutorial_provider.dart';
-import 'package:taktik/features/onboarding/widgets/tutorial_overlay.dart';
-import 'package:taktik/features/onboarding/models/tutorial_step.dart';
 import 'package:taktik/features/quests/logic/quest_completion_notifier.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:taktik/shared/widgets/quest_completion_celebration.dart';
 import 'package:taktik/data/models/plan_model.dart';
-import 'package:taktik/data/models/user_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/shared/constants/highlight_keys.dart';
@@ -32,199 +28,113 @@ class ScaffoldWithNavBar extends ConsumerWidget {
     // QuestNotifier'ı canlı tut (arkaplan olaylarını dinlesin)
     ref.watch(questNotifierProvider);
 
-    final List<TutorialStep> tutorialSteps = [
-      TutorialStep(
-        title: "Karargaha Hoş Geldin!",
-        text: "Ben Taktik Baykuş! Zafer yolundaki en büyük destekçin ben olacağım. Sana hızlıca komuta merkezini tanıtayım.",
-      ),
-      TutorialStep(
-        highlightKey: todaysPlanKey,
-        title: "Burası Harekat Merkezin",
-        text: "Günlük görevlerin, haftalık planın ve performans raporun... En kritik bilgiler burada. Sağa kaydırarak diğer kartları görebilirsin!",
-        requiredScreenIndex: 0,
-      ),
-      TutorialStep(
-        highlightKey: addTestKey,
-        title: "Veri Güçtür!",
-        text: "Buraya eklediğin her deneme, yapay zekanın seni daha iyi tanımasını ve sana özel stratejiler üretmesini sağlar! Hadi devam edelim.",
-        requiredScreenIndex: 0,
-      ),
-      TutorialStep(
-        highlightKey: coachKey,
-        title: "Ders Netlerim",
-        text: "Şimdi en güçlü silahımızın olduğu yer, çözdüğün testlerin sonuçlarını bu kısıma girerek yapay zekanın sana özel koçluk yapmasını sağlayabilirsin.",
-        buttonText: "Harika! ",
-        isNavigational: true,
-        requiredScreenIndex: 0,
-      ),
-      TutorialStep(
-        highlightKey: aiHubFabKey,
-        title: "İşte TaktikAI Çekirdeği!",
-        text: "Burası sihrin gerçekleştiği yer! Buradan kişisel zafer planını oluşturabilir, en zayıf konularına özel çalışmalar yapabilirsin.",
-        requiredScreenIndex: 1,
-      ),
-      TutorialStep(
-        highlightKey: arenaKey,
-        title: "Savaşçılar Arenası",
-        text: "Diğer savaşçılar arasındaki yerini gör ve rekabetin tadını çıkar! Hadi Arena sekmesine dokun.",
-        buttonText: "Arenayı Ziyaret Et!",
-        isNavigational: true,
-        requiredScreenIndex: 1,
-      ),
-      TutorialStep(
-        highlightKey: profileKey,
-        title: "Komuta Merkezin",
-        text: "Son olarak burası senin profilin. Madalyalarını ve genel istatistiklerini buradan takip edebilirsin. Profil sekmesine dokun.",
-        buttonText: "Profilime Gidelim!",
-        isNavigational: true,
-        requiredScreenIndex: 3,
-      ),
-      TutorialStep(
-        title: "Keşif Turu Bitti!",
-        text: "Harika! Artık karargahı tanıyorsun. Unutma, zafer azim, strateji ve doğru rehberlikle kazanılır. Ben her zaman buradayım!",
-        buttonText: "Harika, Başlayalım!",
-        requiredScreenIndex: 4,
-      ),
-    ];
+    return Consumer(
+        builder: (context, ref, child) {
+          final completionState = ref.watch(questCompletionProvider);
+          final completedQuest = completionState.completedQuest;
 
-    return ProviderScope(
-      overrides: [
-        tutorialProvider.overrideWith((ref) => TutorialNotifier(tutorialSteps.length, navigationShell, ref)),
-      ],
-      child: Consumer(
-          builder: (context, ref, child) {
-            final currentStepIndex = ref.watch(tutorialProvider);
-            final shouldShowTutorial = currentStepIndex != null;
-            final completionState = ref.watch(questCompletionProvider);
-            final completedQuest = completionState.completedQuest;
-
-            // Tutorial'ı sadece tutorialCompleted=false olan kullanıcılara göster
-            ref.listen<UserModel?>(
-              userProfileProvider.select((data) => data.value),
-              (previous, next) {
-                if (next != null && !next.tutorialCompleted && currentStepIndex == null) {
-                  // Tutorial henüz başlatılmamışsa ve kullanıcı tutorial'ı görmemişse başlat
-                  Future.microtask(() {
-                    ref.read(tutorialProvider.notifier).start();
-                  });
+          ref.listen<QuestCompletionState>(questCompletionProvider, (previous, next) {
+            final nextQuest = next.completedQuest;
+            if (nextQuest != null) {
+              Future.delayed(3.seconds, () {
+                if (ref.read(questCompletionProvider).completedQuest == nextQuest) {
+                  ref.read(questCompletionProvider.notifier).clear();
                 }
-              },
-            );
+              });
+            }
+          });
 
-            ref.listen<QuestCompletionState>(questCompletionProvider, (previous, next) {
-              final nextQuest = next.completedQuest;
-              if (nextQuest != null) {
-                Future.delayed(3.seconds, () {
-                  if (ref.read(questCompletionProvider).completedQuest == nextQuest) {
-                    ref.read(questCompletionProvider.notifier).clear();
-                  }
-                });
-              }
-            });
-
-            return Stack(
-              children: [
-                Scaffold(
-                  key: rootScaffoldKey,
-                  resizeToAvoidBottomInset: false,
-                  body: SafeArea(
-                    top: false,
-                    bottom: true,
-                    child: Builder(
-                      builder: (ctx){
-                        final completedQuest = ref.watch(questCompletionProvider).completedQuest;
-                        if(completedQuest != null) {
-                          WidgetsBinding.instance.addPostFrameCallback((_){
-                            ScaffoldMessenger.of(ctx).clearSnackBars();
-                          });
-                        }
-                        return navigationShell;
-                      },
-                    ),
-                  ),
-                  extendBody: true,
-                  drawer: const SidePanelDrawer(),
-                  drawerScrimColor: Theme.of(context).colorScheme.surface.withOpacity(0.6),
-                  drawerEdgeDragWidth: 48,
-                  floatingActionButton: _AnimatedBunnyButton(
-                    key: aiHubFabKey,
-                    onTap: () => _onTap(2, ref, tutorialSteps),
-                  ).animate().scale(delay: 500.ms, curve: Curves.easeOutBack),
-                  floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-                  bottomNavigationBar: BottomAppBar(
-                    // shape: const CircularNotchedRectangle(),
-                    // notchMargin: 10.0,
-                    padding: EdgeInsets.zero,
-                    height: 70,
-                    color: Theme.of(context).cardColor.withOpacity(0.95),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _buildNavItem(context, icon: Icons.dashboard_rounded, label: 'Panel', index: 0, key: null, ref: ref, steps: tutorialSteps),
-                        _buildNavItem(context, icon: Icons.school_rounded, label: 'Galaksi', index: 1, key: coachKey, ref: ref, steps: tutorialSteps),
-                        const SizedBox(width: 56),
-                        _buildNavItem(context, icon: Icons.military_tech_rounded, label: 'Arena', index: 3, key: arenaKey, ref: ref, steps: tutorialSteps),
-                        _buildNavItem(context, icon: Icons.person_rounded, label: 'Profil', index: 4, key: profileKey, ref: ref, steps: tutorialSteps),
-                      ],
-                    ),
+          return Stack(
+            children: [
+              Scaffold(
+                key: rootScaffoldKey,
+                resizeToAvoidBottomInset: false,
+                body: SafeArea(
+                  top: false,
+                  bottom: true,
+                  child: Builder(
+                    builder: (ctx){
+                      final completedQuest = ref.watch(questCompletionProvider).completedQuest;
+                      if(completedQuest != null) {
+                        WidgetsBinding.instance.addPostFrameCallback((_){
+                          ScaffoldMessenger.of(ctx).clearSnackBars();
+                        });
+                      }
+                      return navigationShell;
+                    },
                   ),
                 ),
-                if (shouldShowTutorial)
-                  TutorialOverlay(steps: tutorialSteps),
-                if (completedQuest != null && !shouldShowTutorial)
-                  QuestCompletionCelebration(completedQuest: completedQuest),
-                Consumer(builder: (context, r, _) {
-                  final showWeeklyPopup = r.watch(weeklyPlanCompletionProvider);
-                  if(!showWeeklyPopup) return const SizedBox.shrink();
-                  return _WeeklyPlanVictoryOverlay(onDismiss: () async {
-                    r.read(_weeklyPlanPopupShownProvider.notifier).state = true;
-                    final user = r.read(userProfileProvider).value;
-                    if(user!=null) {
-                      await r.read(firestoreServiceProvider).usersCollection.doc(user.id).update({'weeklyPlanCompletedAt': Timestamp.now()});
-                    }
-                  });
-                }),
-              ],
-            );
-          }
-      ),
+                extendBody: true,
+                drawer: const SidePanelDrawer(),
+                drawerScrimColor: Theme.of(context).colorScheme.surface.withOpacity(0.6),
+                drawerEdgeDragWidth: 48,
+                floatingActionButton: _AnimatedBunnyButton(
+                  key: aiHubFabKey,
+                  onTap: () => navigationShell.goBranch(
+                    2, // Galaksi (AI Hub) index is typically 2 in the bottom nav list?
+                    // Wait, in the original code:
+                    // Panel=0, Galaksi=1, Arena=3, Profil=4. The FAB was "AI Hub" but pointing to index 2?
+                    // Actually checking original code:
+                    // _buildNavItem for Galaksi is index 1.
+                    // FAB _onTap(2, ...)
+                    // Let's check the branches setup in main_shell_routes.dart usually, but here we can trust the previous implementation used index 2 for the FAB action.
+                    // However, `navigationShell.goBranch` works on the branches defined in the ShellRoute.
+                    // If the FAB is meant to open a specific tab or screen, we need to be careful.
+                    // The previous code: `_onTap(2, ref, tutorialSteps)`.
+                    // And `_buildNavItem` had indices: Panel=0, Galaksi=1, Arena=3, Profil=4.
+                    // This implies the FAB (index 2) corresponds to a branch in the ShellRoute that is not shown in the BottomBar icons directly (it's the center item).
+                    initialLocation: 2 == navigationShell.currentIndex,
+                  ),
+                ).animate().scale(delay: 500.ms, curve: Curves.easeOutBack),
+                floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+                bottomNavigationBar: BottomAppBar(
+                  padding: EdgeInsets.zero,
+                  height: 70,
+                  color: Theme.of(context).cardColor.withOpacity(0.95),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildNavItem(context, icon: Icons.dashboard_rounded, label: 'Panel', index: 0, ref: ref),
+                      _buildNavItem(context, icon: Icons.school_rounded, label: 'Galaksi', index: 1, ref: ref),
+                      const SizedBox(width: 56),
+                      _buildNavItem(context, icon: Icons.military_tech_rounded, label: 'Arena', index: 3, ref: ref),
+                      _buildNavItem(context, icon: Icons.person_rounded, label: 'Profil', index: 4, ref: ref),
+                    ],
+                  ),
+                ),
+              ),
+              if (completedQuest != null)
+                QuestCompletionCelebration(completedQuest: completedQuest),
+              Consumer(builder: (context, r, _) {
+                final showWeeklyPopup = r.watch(weeklyPlanCompletionProvider);
+                if(!showWeeklyPopup) return const SizedBox.shrink();
+                return _WeeklyPlanVictoryOverlay(onDismiss: () async {
+                  r.read(_weeklyPlanPopupShownProvider.notifier).state = true;
+                  final user = r.read(userProfileProvider).value;
+                  if(user!=null) {
+                    await r.read(firestoreServiceProvider).usersCollection.doc(user.id).update({'weeklyPlanCompletedAt': Timestamp.now()});
+                  }
+                });
+              }),
+            ],
+          );
+        }
     );
   }
 
-  Widget _buildNavItem(BuildContext context, {required IconData icon, required String label, required int index, required GlobalKey? key, required WidgetRef ref, required List<TutorialStep> steps}) {
+  Widget _buildNavItem(BuildContext context, {required IconData icon, required String label, required int index, required WidgetRef ref}) {
     final isSelected = navigationShell.currentIndex == index;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     return IconButton(
-      key: key,
       icon: Icon(icon, color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant, size: 28),
-      onPressed: () => _onTap(index, ref, steps),
+      onPressed: () => navigationShell.goBranch(
+        index,
+        initialLocation: index == navigationShell.currentIndex,
+      ),
       tooltip: label,
       splashColor: colorScheme.primary.withOpacity(0.2),
       highlightColor: colorScheme.primary.withOpacity(0.1),
-    );
-  }
-
-  void _onTap(int index, WidgetRef ref, List<TutorialStep> tutorialSteps) {
-    final tutorialNotifier = ref.read(tutorialProvider.notifier);
-    final currentStepIndex = ref.read(tutorialProvider);
-
-    if (currentStepIndex != null) {
-      if (currentStepIndex >= tutorialSteps.length) return;
-      final step = tutorialSteps[currentStepIndex];
-      if (step.isNavigational) {
-        if ( (currentStepIndex == 3 && index == 1) ||
-            (currentStepIndex == 5 && index == 3) ||
-            (currentStepIndex == 6 && index == 4) ) {
-          tutorialNotifier.next();
-        }
-      }
-      return;
-    }
-
-    navigationShell.goBranch(
-      index,
-      initialLocation: index == navigationShell.currentIndex,
     );
   }
 }
@@ -246,7 +156,6 @@ final weeklyPlanCompletionProvider = Provider<bool>((ref){
     final thisWeekStart = startOfWeek(now);
     final dates = List.generate(7, (i) => thisWeekStart.add(Duration(days: i)));
 
-    // Haftalık toplu okuma: tek seferde tüm günlerin tamamlananları
     final weekMap = ref.watch(completedTasksForWeekProvider(thisWeekStart))
         .maybeWhen(data: (m)=> m, orElse: ()=> const <String, List<String>>{});
 

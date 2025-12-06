@@ -44,7 +44,7 @@ class PreAuthWelcomeScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Image.asset(
-                    'assets/images/logo.png',
+                    'assets/images/splash.png',
                     height: 120,
                   ),
                   const SizedBox(height: 24),
