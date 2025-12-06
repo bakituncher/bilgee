@@ -3,7 +3,8 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:purchases_flutter/purchases_flutter.dart'; // RevenueCat SDK
+// --- REVENUECAT DEVRE DIŞI ---
+// import 'package:purchases_flutter/purchases_flutter.dart'; // RevenueCat SDK
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/auth/data/auth_repository.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
@@ -24,30 +25,20 @@ class AuthController extends StreamNotifier<User?> {
     // Auth state dinleyicisini ayarla
     final authSubscription = authStream.listen(_onUserActivity);
 
-    // RevenueCat müşteri bilgisi dinleyicisini ayarla
-    // Bu dinleyici, uygulama içindeki satın almalar veya sunucu tarafındaki
-    // değişiklikler (örn. abonelik yenileme) sonrası tetiklenir.
+    // --- REVENUECAT DEVRE DIŞI ---
+    // RevenueCat müşteri bilgisi dinleyicisi devre dışı
+    /*
     Purchases.addCustomerInfoUpdateListener((info) {
-      // Değişiklik olduğunda, rate-limit korumalı sunucu senkronunu tetikle.
       _triggerServerSideSync();
-
-      // --- AdMob "Kill Switch" ---
-      // Kullanıcı premium satın aldığı anda, backend veya UI güncellemesini beklemeden
-      // reklamları anında temizle. Bu, "instant gratification" için kritiktir.
-      // Entitlement kontrolü basitçe yapılır (detaylı kontrol backend'de olsa da, buradaki
-      // amaç UI'ı anında temizlemektir).
       final isPremium = info.entitlements.active.isNotEmpty;
       if (isPremium) {
         AdMobService().updatePremiumStatus(true);
       } else {
-        // Eğer premium değilse (süresi bittiyse veya iptal edildiyse)
-        // Reklamları geri yükle.
         AdMobService().updatePremiumStatus(false);
       }
-
-      // Kullanıcı profilini yenileyerek genel state'in de güncellenmesini sağla
       ref.invalidate(userProfileProvider);
     });
+    */
 
     ref.onDispose(() {
       authSubscription.cancel();
@@ -214,23 +205,29 @@ class AuthController extends StreamNotifier<User?> {
   }
 
   Future<void> _logInToRevenueCat(String uid) async {
+    // --- REVENUECAT DEVRE DIŞI ---
+    debugPrint("⚠️ RevenueCat devre dışı - logIn çağrısı atlandı");
+    return;
+    /*
     try {
       await Purchases.logIn(uid);
     } catch (e) {
       print("RevenueCat login error (safe to ignore): $e");
     }
+    */
   }
 
   Future<void> _logOutFromRevenueCat() async {
+    // --- REVENUECAT DEVRE DIŞI ---
+    debugPrint("⚠️ RevenueCat devre dışı - logOut çağrısı atlandı");
+    return;
+    /*
     try {
-      // DÜZELTME: Kullanıcı oturumunu sonlandırır ve yerel önbelleği temizler.
-      // Bu paketin eski sürümlerinde, bu işlem için `logOut` metodu kullanılır.
-      // Daha yeni sürümlerde bu metodun adı `reset` olarak değiştirilmiştir.
-      // Projedeki `purchases_flutter: ^9.7.1` sürümü için doğru kullanım budur.
       await Purchases.logOut();
     } catch (e) {
       print("RevenueCat logOut error (safe to ignore): $e");
     }
+    */
   }
 
   Future<void> signOut() async {

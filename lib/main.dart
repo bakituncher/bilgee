@@ -1,207 +1,120 @@
 // lib/main.dart
-//Rahman ve Rahim olan Allah'ın adıyla
-//Bismilahirrahmanirrahim
+// Rahman ve Rahim olan Allah'ın adıyla
+// Bismilahirrahmanirrahim
+
 import 'dart:async';
-import 'dart:ui';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
+
+// --- FIREBASE GERİ GELDİ ---
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+
+// --- NAVIGATION & THEME ---
 import 'package:taktik/core/navigation/app_router.dart';
 import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/core/theme/theme_provider.dart';
-import 'package:firebase_app_check/firebase_app_check.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:firebase_analytics/firebase_analytics.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/date_symbol_data_local.dart';
-import 'firebase_options.dart';
-import 'package:taktik/core/prompts/strategy_prompts.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
-import 'shared/notifications/notification_service.dart';
-import 'package:taktik/core/prompts/prompt_remote.dart';
-import 'package:taktik/core/services/revenuecat_service.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:taktik/core/services/connectivity_service.dart';
 import 'package:taktik/shared/screens/no_internet_screen.dart';
 
-@pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  try {
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  } catch (_) {}
-  await NotificationService.firebaseMessagingBackgroundHandler(message);
+// --- REVENUECAT TAMAMEN KAPALI (Importu bile yok) ---
+// import 'package:purchases_flutter/purchases_flutter.dart';
+
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  // AppBootstrapper ile güvenli açılış
+  runApp(const ProviderScope(child: AppBootstrapper()));
 }
 
-void main() async {
-  // Global hata yakalama (Flutter ve Dart)
-  FlutterError.onError = (details) {
-    FlutterError.presentError(details);
-    if (kDebugMode) {
-      debugPrint('[FlutterError] ${details.exceptionAsString()}');
-      debugPrint(details.stack?.toString());
-    }
-    FirebaseCrashlytics.instance.recordFlutterFatalError(details);
-  };
+/// Uygulama Başlatıcı (Bekçi)
+class AppBootstrapper extends StatefulWidget {
+  const AppBootstrapper({super.key});
 
-  PlatformDispatcher.instance.onError = (error, stack) {
-    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-    return true;
-  };
+  @override
+  State<AppBootstrapper> createState() => _AppBootstrapperState();
+}
 
-  await runZonedGuarded(() async {
-    WidgetsFlutterBinding.ensureInitialized();
+class _AppBootstrapperState extends State<AppBootstrapper> {
+  bool _isInitialized = false;
+  String? _errorMessage;
 
-    // 1. .env yükle
+  @override
+  void initState() {
+    super.initState();
+    _initializeCriticalServices();
+  }
+
+  Future<void> _initializeCriticalServices() async {
     try {
-      await dotenv.load(fileName: ".env").timeout(
-        const Duration(seconds: 2),
-        onTimeout: () {
-          if (kDebugMode) debugPrint('[Init] .env yükleme timeout');
-        },
-      );
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('[Init] .env dosyası yüklenemedi: $e');
-      }
-    }
+      // 1. Ekran Yönü
+      await SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+      ]);
 
-    // 2. Firebase Başlat
-    try {
+      // 2. Firebase Başlat
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
-      ).timeout(
-        const Duration(seconds: 3),
-        onTimeout: () {
-          throw TimeoutException('Firebase initialization timeout');
-        },
       );
-    } catch (e, st) {
-      if (kDebugMode) {
-        debugPrint('[Init] Firebase başlatılamadı: $e');
-        debugPrint(st.toString());
+      debugPrint("✅ Firebase Başarıyla Başlatıldı");
+
+      // 3. RevenueCat BURADA YOK. SİLİNDİ. HİÇ ÇAĞRILMIYOR.
+
+      if (mounted) {
+        setState(() {
+          _isInitialized = true;
+        });
       }
-      runApp(const ErrorApp(message: 'Başlatma hatası: Firebase yüklenemedi.'));
-      return;
-    }
-
-    // Firebase servislerini yapılandır
-    FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(!kDebugMode);
-    FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(true);
-
-    // 3. REVENUECAT BAŞLATMA (KRİTİK - BURAYA TAŞINDI)
-    // UI çizilmeden önce RevenueCat'in hazır olması şarttır, aksi takdirde iOS'ta çökme yaşanır.
-    try {
-      await RevenueCatService.init().timeout(
-        const Duration(seconds: 5),
-        onTimeout: () {
-          if (kDebugMode) debugPrint('[RevenueCat] Initialization timeout');
-        },
-      );
     } catch (e) {
-      if (kDebugMode) {
-        debugPrint('[RevenueCat] Initialization failed: $e');
+      debugPrint("❌ Kritik Başlatma Hatası: $e");
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString();
+        });
       }
-      // RevenueCat hatası uygulamanın açılmasını engellememeli ama loglanmalı
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Hata Ekranı
+    if (_errorMessage != null) {
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Text("Hata:\n$_errorMessage", textAlign: TextAlign.center),
+            ),
+          ),
+        ),
+      );
     }
 
-    // 4. UYGULAMAYI BAŞLAT
-    runApp(const ProviderScope(child: BilgeAiApp()));
-
-    // --- Diğer "Non-Kritik" Servisler Arka Planda Başlatılabilir ---
-
-    // App Check
-    Future.microtask(() async {
-      try {
-        await FirebaseAppCheck.instance.activate(
-          androidProvider: kDebugMode
-              ? AndroidProvider.debug
-              : AndroidProvider.playIntegrity,
-          appleProvider: kDebugMode
-              ? AppleProvider.debug
-              : AppleProvider.appAttest,
-        ).timeout(
-          const Duration(seconds: 5),
-          onTimeout: () {
-            if (kDebugMode) debugPrint('[AppCheck] Activation timeout');
-          },
-        );
-      } catch (e) {
-        try {
-          await FirebaseAppCheck.instance.activate(
-            androidProvider: kDebugMode
-                ? AndroidProvider.debug
-                : AndroidProvider.playIntegrity,
-            appleProvider: kDebugMode
-                ? AppleProvider.debug
-                : AppleProvider.deviceCheck,
-          ).timeout(const Duration(seconds: 5));
-        } catch (e2) {
-          if (kDebugMode) {
-            debugPrint('[AppCheck] Fallback failed: $e2');
-          }
-        }
-      }
-
-      try {
-        await FirebaseAppCheck.instance.setTokenAutoRefreshEnabled(true);
-        try {
-          await FirebaseAppCheck.instance.getToken().timeout(const Duration(seconds: 3));
-        } catch (e) {
-          if (kDebugMode) debugPrint('[AppCheck] İlk token alınamadı: $e');
-        }
-      } catch (_) {}
-    });
-
-    // FCM Handler
-    Future.microtask(() {
-      try {
-        FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-      } catch (e) {
-        if (kDebugMode) debugPrint('[FCM] Background handler kaydedilemedi: $e');
-      }
-    });
-
-    // Tarih Yerelleştirme
-    Future.microtask(() async {
-      try {
-        await initializeDateFormatting('tr_TR', null).timeout(
-          const Duration(seconds: 2),
-          onTimeout: () {
-            if (kDebugMode) debugPrint('[Intl] Tarih format timeout');
-          },
-        );
-      } catch (e) {
-        if (kDebugMode) debugPrint('[Intl] Tarih format başlatılamadı: $e');
-      }
-    });
-
-    // Preload İşlemleri
-    Future.microtask(() async {
-      try {
-        await Future.wait([
-          RemotePrompts.preloadAndWatch(),
-          StrategyPrompts.preload(),
-        ]).timeout(
-          const Duration(seconds: 10),
-          onTimeout: () {
-            if (kDebugMode) debugPrint('[Preload] Timeout - devam ediyor');
-            return <void>[];
-          },
-        );
-      } catch (e, st) {
-        if (kDebugMode) {
-          debugPrint('[Preload] Hata: $e');
-          debugPrint(st.toString());
-        }
-      }
-    });
-  }, (error, stack) {
-    if (kDebugMode) {
-      debugPrint('[Zoned] Yakalanmamış hata: $error');
-      debugPrint(stack.toString());
+    // Yükleniyor Ekranı
+    if (!_isInitialized) {
+      return const MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          backgroundColor: Colors.white,
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 20),
+                Text("Taktik Hazırlanıyor..."),
+              ],
+            ),
+          ),
+        ),
+      );
     }
-    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-  });
+
+    // Asıl Uygulama
+    return const BilgeAiApp();
+  }
 }
 
 class BilgeAiApp extends ConsumerStatefulWidget {
@@ -216,12 +129,6 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final router = ref.read(goRouterProvider);
-      NotificationService.instance.initialize(onNavigate: (route) {
-        router.go(route);
-      });
-    });
   }
 
   @override
@@ -231,24 +138,12 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
   }
 
   @override
-  void didChangePlatformBrightness() {
-    super.didChangePlatformBrightness();
-    final themeMode = ref.read(themeModeNotifierProvider);
-    if (themeMode == ThemeMode.system) {
-      final platformBrightness = WidgetsBinding.instance.platformDispatcher.platformBrightness;
-      AppTheme.configureSystemUI(platformBrightness);
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     final router = ref.watch(goRouterProvider);
     final themeMode = ref.watch(themeModeNotifierProvider);
-
-    // İnternet bağlantısını kontrol et
     final connectivityAsync = ref.watch(connectivityProvider);
 
-    // Tema her değiştiğinde (açık, koyu veya sistem) doğru UI overlay'i ayarla
+    // Tema mantığı
     final Brightness currentBrightness;
     switch (themeMode) {
       case ThemeMode.light:
@@ -263,20 +158,14 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
     }
     AppTheme.configureSystemUI(currentBrightness);
 
-    // İnternet bağlantısı yoksa NoInternetScreen göster
     return connectivityAsync.when(
       data: (isConnected) {
         if (!isConnected) {
           return MaterialApp(
-            title: 'Taktik',
             debugShowCheckedModeBanner: false,
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode: themeMode,
             home: const NoInternetScreen(),
           );
         }
-
         return MaterialApp.router(
           title: 'Taktik',
           debugShowCheckedModeBanner: false,
@@ -286,51 +175,11 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
           routerConfig: router,
         );
       },
-      loading: () => MaterialApp(
-        title: 'Taktik',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: themeMode,
-        home: const Scaffold(
-          body: Center(
-            child: CircularProgressIndicator(),
-          ),
-        ),
+      loading: () => const MaterialApp(
+        home: Scaffold(body: Center(child: CircularProgressIndicator())),
       ),
-      error: (_, __) => MaterialApp.router(
-        title: 'Taktik',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: themeMode,
-        routerConfig: router,
-      ),
-    );
-  }
-}
-
-class ErrorApp extends StatelessWidget {
-  const ErrorApp({super.key, required this.message});
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      themeMode: ThemeMode.dark,
-      theme: AppTheme.darkTheme,
-      darkTheme: AppTheme.darkTheme,
-      home: Scaffold(
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Text(
-              message,
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ),
+      error: (err, stack) => MaterialApp(
+        home: Scaffold(body: Center(child: Text("Hata: $err"))),
       ),
     );
   }

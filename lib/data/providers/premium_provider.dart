@@ -1,10 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:purchases_flutter/purchases_flutter.dart';
+// --- REVENUECAT DEVRE DIŞI ---
+// import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:taktik/core/services/revenuecat_service.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 
 // Provider to fetch offerings from RevenueCat using the static method
-final offeringsProvider = FutureProvider<Offerings>((ref) async {
+// RevenueCat devre dışı olduğu için mock data döndürüyor
+final offeringsProvider = FutureProvider<MockOfferings>((ref) async {
   return await RevenueCatService.getOfferings();
 });
 

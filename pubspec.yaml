@@ -104,7 +104,7 @@ flutter:
     - assets/prompts/
     - assets/images/
     - assets/lotties/
-    - .env
+    - assets/.env
 
 # Splash Screen Ayarları
 flutter_native_splash:

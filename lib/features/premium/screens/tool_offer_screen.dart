@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:purchases_flutter/purchases_flutter.dart';
+// --- REVENUECAT DEVRE DIŞI ---
+// import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:taktik/core/services/revenuecat_service.dart';
 import 'package:collection/collection.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -155,7 +156,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
   late final AnimationController _fadeController;
   late final AnimationController _cardPopController;
 
-  Package? _selectedPackage;
+  MockPackage? _selectedPackage;
   bool _isPurchaseInProgress = false;
   bool _hasInitializedPackage = false;
 
@@ -182,6 +183,10 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
   }
 
   void _initializeDefaultPackage() {
+    // --- REVENUECAT DEVRE DIŞI ---
+    // Paket başlatma devre dışı
+    return;
+    /*
     Future.microtask(() {
       if (!mounted || _hasInitializedPackage) return;
 
@@ -210,6 +215,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
         }
       });
     });
+    */
   }
 
   @override
@@ -288,7 +294,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
   }
 
   /// ÇÖZÜM: Purchase section içeriğini ayrı method'a çıkar (scroll içinde olacak)
-  Widget _buildPurchaseSectionContent(AsyncValue<Offerings?> offeringsAsyncValue) {
+  Widget _buildPurchaseSectionContent(AsyncValue<dynamic> offeringsAsyncValue) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: double.infinity,
@@ -422,7 +428,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
   Widget _buildPurchaseOptions(
       BuildContext context,
       WidgetRef ref,
-      Offerings? offerings,
+      dynamic offerings,
       ) {
     final current = offerings?.current ??
         offerings?.all.values.firstWhereOrNull(
@@ -441,9 +447,12 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
       );
     }
 
-    Package? monthly, yearly;
+    // --- REVENUECAT DEVRE DIŞI ---
+    MockPackage? monthly, yearly;
     double? savePercent;
 
+    // Paket bilgisi yok - RevenueCat devre dışı
+    /*
     monthly = current.monthly ??
         current.getPackage('aylik-normal') ??
         current.availablePackages.firstWhereOrNull(
@@ -462,6 +471,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
       if (sortedPackages.isNotEmpty) monthly ??= sortedPackages.first;
       if (sortedPackages.length > 1) yearly ??= sortedPackages.last;
     }
+    */
 
     if (monthly != null && yearly != null) {
       final mPrice = monthly.storeProduct.price;
@@ -827,13 +837,13 @@ class _PurchaseOptionCard extends StatefulWidget {
   });
 
   final AnimationController animationController;
-  final Package package;
+  final MockPackage package;
   final String title;
   final String price;
   final String billingPeriod;
   final String? tag;
   final bool isSelected;
-  final ValueChanged<Package> onSelected;
+  final ValueChanged<MockPackage> onSelected;
   final Duration delay;
   final Color color;
   final String? trialSubtitle;

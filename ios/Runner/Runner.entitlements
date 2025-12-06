@@ -4,9 +4,9 @@
 <dict>
 	<key>aps-environment</key>
 	<string>development</string>
-	<key>keychain-access-groups</key>
+	<key>com.apple.developer.applesignin</key>
 	<array>
-		<string>$(AppIdentifierPrefix)com.codenzi.taktik</string>
+		<string>Default</string>
 	</array>
 </dict>
 </plist>

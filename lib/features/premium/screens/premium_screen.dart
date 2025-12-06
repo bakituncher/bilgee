@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:purchases_flutter/purchases_flutter.dart';
+// --- REVENUECAT DEVRE DIŞI ---
+// import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:taktik/core/services/revenuecat_service.dart';
 import 'package:collection/collection.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
@@ -35,7 +36,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
   bool _isPurchasing = false;
 
   // State to track selected package
-  Package? _selectedPackage;
+  MockPackage? _selectedPackage;
 
   // --- INITIALIZATION & DISPOSAL ---
 
@@ -522,11 +523,14 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     );
   }
 
-  Widget _buildPurchaseOptions(BuildContext context, WidgetRef ref, Offerings? offerings, bool isSmallScreen) {
-    Package? monthly, yearly;
+  Widget _buildPurchaseOptions(BuildContext context, WidgetRef ref, dynamic offerings, bool isSmallScreen) {
+    // --- REVENUECAT DEVRE DIŞI - HİÇ PAKET YOK ---
+    MockPackage? monthly, yearly;
     double? savePercent;
 
-    // --- REVENUECAT PACKAGE EXTRACTION (logic unchanged) ---
+    // RevenueCat devre dışı olduğu için paket bilgisi yok
+    // Offerings null veya boş olacak
+    /*
     if (offerings != null) {
       final current = offerings.current ?? offerings.all.values.firstWhereOrNull((o) => o.availablePackages.isNotEmpty);
       if (current != null) {
@@ -548,6 +552,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
         }
       }
     }
+    */
     // --- END OF PACKAGE EXTRACTION ---
 
     // Eğer hiç seçim yapılmadıysa, aylık planı varsayılan olarak seç
@@ -602,7 +607,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
 
   // --- PURCHASE LOGIC (KEPT AS IS) ---
 
-  Future<void> _purchasePackage(BuildContext context, WidgetRef ref, Package package) async {
+  Future<void> _purchasePackage(BuildContext context, WidgetRef ref, MockPackage package) async {
     if (_isPurchasing) return;
 
     setState(() {
@@ -983,7 +988,7 @@ class _PurchaseOptionCard extends StatefulWidget {
   });
 
   final AnimationController animationController;
-  final Package package;
+  final MockPackage package;
   final String title;
   final String price;
   final String billingPeriod;
