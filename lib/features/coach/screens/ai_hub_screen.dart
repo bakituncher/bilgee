@@ -110,7 +110,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
                 elevation: 0,
                 toolbarHeight: kToolbarHeight,
                 title: Text(
-                  'TaktikAI Çekirdeği',
+                  'Taktik Tavşan',
                   style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.w700),
                 ),
                 flexibleSpace: ClipRect(
