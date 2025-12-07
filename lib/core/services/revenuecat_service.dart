@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
@@ -13,39 +14,68 @@ class PurchaseOutcome {
 
 class RevenueCatService {
   static bool _isInitialized = false;
+  static final Completer<void> _initCompleter = Completer<void>();
 
   static Future<void> init() async {
     if (_isInitialized) {
       debugPrint("⚠️ RevenueCat zaten başlatılmış");
-      return;
+      return _initCompleter.future; // İlk başlatmanın tamamlanmasını bekle
     }
 
-    await Purchases.setLogLevel(LogLevel.debug);
+    try {
+      await Purchases.setLogLevel(LogLevel.debug);
 
-    // Environment variables'dan API anahtarlarını al
-    final googleApiKey = dotenv.env['REVENUECAT_GOOGLE_API_KEY'];
-    final appleApiKey = dotenv.env['REVENUECAT_APPLE_API_KEY'];
+      // Environment variables'dan API anahtarlarını al
+      final googleApiKey = dotenv.env['REVENUECAT_GOOGLE_API_KEY'];
+      final appleApiKey = dotenv.env['REVENUECAT_APPLE_API_KEY'];
 
-    PurchasesConfiguration configuration;
-    if (isAndroid) {
-      if (googleApiKey == null || googleApiKey.isEmpty) {
-        throw Exception('RevenueCat Google API key not found in environment variables');
+      PurchasesConfiguration configuration;
+      if (isAndroid) {
+        if (googleApiKey == null || googleApiKey.isEmpty) {
+          throw Exception('RevenueCat Google API key not found in environment variables');
+        }
+        configuration = PurchasesConfiguration(googleApiKey);
+      } else if (isIOS) {
+        if (appleApiKey == null || appleApiKey.isEmpty) {
+          throw Exception('RevenueCat Apple API key not found in environment variables');
+        }
+        configuration = PurchasesConfiguration(appleApiKey);
+      } else {
+        // Unsupported platform
+        debugPrint("⚠️ RevenueCat desteklenmeyen platform");
+        if (!_initCompleter.isCompleted) {
+          _initCompleter.complete();
+        }
+        return;
       }
-      configuration = PurchasesConfiguration(googleApiKey);
-    } else if (isIOS) {
-      if (appleApiKey == null || appleApiKey.isEmpty) {
-        throw Exception('RevenueCat Apple API key not found in environment variables');
+
+      await Purchases.configure(configuration);
+
+      // iOS'ta configuration sonrası SDK'nın hazır olması için kısa bir bekleme
+      if (isIOS) {
+        await Future.delayed(const Duration(milliseconds: 300));
       }
-      configuration = PurchasesConfiguration(appleApiKey);
-    } else {
-      // Unsupported platform
-      debugPrint("⚠️ RevenueCat desteklenmeyen platform");
-      return;
+
+      _isInitialized = true;
+      debugPrint("✅ RevenueCat configure edildi");
+
+      if (!_initCompleter.isCompleted) {
+        _initCompleter.complete();
+      }
+    } catch (e) {
+      debugPrint("❌ RevenueCat init hatası: $e");
+      if (!_initCompleter.isCompleted) {
+        _initCompleter.completeError(e);
+      }
+      rethrow;
     }
+  }
 
-    await Purchases.configure(configuration);
-    _isInitialized = true;
-    debugPrint("✅ RevenueCat configure edildi");
+  // SDK'nın tam olarak hazır olduğundan emin olmak için helper method
+  static Future<void> ensureInitialized() async {
+    if (!_isInitialized) {
+      await _initCompleter.future;
+    }
   }
 
   static bool get isAndroid => defaultTargetPlatform == TargetPlatform.android;
@@ -89,9 +119,7 @@ class RevenueCatService {
   }
 
   static Future<CustomerInfo?> restorePurchases() async {
-    if (!_isInitialized) {
-      throw Exception('RevenueCat henüz başlatılmadı. Lütfen önce init() metodunu çağırın.');
-    }
+    await ensureInitialized();
     try {
       return await Purchases.restorePurchases();
     } on PlatformException catch (e) {
