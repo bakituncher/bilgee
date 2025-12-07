@@ -278,63 +278,62 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           const RepaintBoundary(child: MotivationQuotesCard()),
         ];
 
-        return SafeArea(
-          child: CustomScrollView(
-            controller: _scrollController,
-            physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-            slivers: [
-              SliverAppBar(
-                pinned: true,
-                floating: false,
-                snap: false,
-                elevation: _appBarOpacity > 0.95 ? 3 : 0,
-                backgroundColor: Theme.of(context).cardColor.withOpacity(_appBarOpacity * 0.95),
-                surfaceTintColor: Colors.transparent,
-                toolbarHeight: 56,
-                shadowColor: Colors.black.withOpacity(0.2),
-                leading: Builder(
-                  builder: (ctx) => IconButton(
-                    icon: Icon(Icons.menu_rounded, color: Theme.of(context).colorScheme.primary),
-                    onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
-                    tooltip: 'Menü',
-                  ),
+        return CustomScrollView(
+          controller: _scrollController,
+          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+          slivers: [
+            SliverAppBar(
+              pinned: true,
+              floating: false,
+              snap: false,
+              elevation: _appBarOpacity > 0.95 ? 3 : 0,
+              backgroundColor: Theme.of(context).cardColor.withOpacity(_appBarOpacity * 0.95),
+              surfaceTintColor: Colors.transparent,
+              toolbarHeight: 56,
+              shadowColor: Colors.black.withOpacity(0.2),
+              leading: Builder(
+                builder: (ctx) => IconButton(
+                  icon: Icon(Icons.menu_rounded, color: Theme.of(context).colorScheme.primary),
+                  onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
+                  tooltip: 'Menü',
                 ),
-                title: AnimatedOpacity(
-                  duration: 200.ms,
-                  opacity: _appBarOpacity.clamp(0, 1),
-                  child: const Text('Ana Panel'),
-                ),
-                centerTitle: true,
-                actions: [
-                  _HelpButton(),
-                  _RatingStarButton(),
-                  _NotificationBell(),
-                  const SizedBox(width: 8),
-                ],
-                flexibleSpace: IgnorePointer(
-                  child: AnimatedContainer(
-                    duration: 220.ms,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Theme.of(context).cardColor.withOpacity((_appBarOpacity * 0.98).clamp(0, .98)),
-                          Theme.of(context).cardColor.withOpacity((_appBarOpacity * 0.85).clamp(0, .85)),
-                        ],
-                      ),
-                      border: _appBarOpacity > 0.7
-                          ? Border(
-                        bottom: BorderSide(
-                          color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.2),
-                          width: 1,
-                        ),
-                      )
-                          : null,
+              ),
+              title: AnimatedOpacity(
+                duration: 200.ms,
+                opacity: _appBarOpacity.clamp(0, 1),
+                child: const Text('Ana Panel'),
+              ),
+              centerTitle: true,
+              actions: [
+                _HelpButton(),
+                _RatingStarButton(),
+                _NotificationBell(),
+                const SizedBox(width: 8),
+              ],
+              flexibleSpace: IgnorePointer(
+                child: AnimatedContainer(
+                  duration: 220.ms,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Theme.of(context).cardColor.withOpacity((_appBarOpacity * 0.98).clamp(0, .98)),
+                        Theme.of(context).cardColor.withOpacity((_appBarOpacity * 0.85).clamp(0, .85)),
+                      ],
                     ),
+                    border: _appBarOpacity > 0.7
+                        ? Border(
+                      bottom: BorderSide(
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.2),
+                        width: 1,
+                      ),
+                    )
+                        : null,
                   ),
                 ),
               ),
+            ),
 
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(_hPad, 0, _hPad, 4),
@@ -349,13 +348,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   },
                 ),
               ),
-              SliverToBoxAdapter(
-                child: SizedBox(
-                  height: MediaQuery.of(context).padding.bottom + 60,
-                ),
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: MediaQuery.of(context).padding.bottom + 60,
               ),
-            ],
-          ),
+            ),
+          ],
         );
       },
       loading: () => const LogoLoader(),
