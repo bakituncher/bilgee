@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
+import 'package:lottie/lottie.dart';
 import 'dart:math';
 import 'dart:ui';
 
@@ -26,7 +27,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
   @override
   void initState() {
     super.initState();
-    _pulse = AnimationController(vsync: this, duration: const Duration(seconds: 5))..forward();
+    _pulse = AnimationController(vsync: this, duration: const Duration(seconds: 5))..repeat(reverse: true);
     _glow = CurvedAnimation(parent: _pulse, curve: Curves.easeInOut);
   }
 
@@ -49,11 +50,12 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
         subtitle: 'Uzun vadeli zafer stratejini ve haftalık planını oluştur.',
         icon: Icons.insights_rounded,
         route: '/ai-hub/strategic-planning',
-        color: theme.colorScheme.secondary,
+        // İlk kutunun rengi secondary ile aynı olduğundan farklı olsun diye primary yaptık
+        color: theme.colorScheme.primary,
         heroTag: 'strategic-core',
         chip: 'Odak',
         marketingTitle: 'Kişisel Başarı Yol Haritanız',
-        marketingSubtitle: 'Yapay zeka, sınav hedeflerinize ve takviminize göre size özel, dinamik bir haftalık çalışma planı oluşturur. Ne zaman ne çalışacağınızı öğrenin.',
+        marketingSubtitle: 'Taktik Tavşan, sınav hedeflerinize ve takviminize göre size özel, dinamik bir haftalık çalışma planı oluşturur. Ne zaman ne çalışacağınızı öğrenin.',
       ),
       _AiTool(
         key: weaknessWorkshopKey,
@@ -65,7 +67,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
         heroTag: 'weakness-core',
         chip: 'Gelişim',
         marketingTitle: 'Zayıf Noktalarınızı Güce Dönüştürün',
-        marketingSubtitle: 'En çok zorlandığınız konuları tespit edin ve AI destekli özel çalışma materyalleri ile zayıf yanlarınızı güçlü yanlara çevirin.',
+        marketingSubtitle: 'En çok zorlandığınız konuları Taktik Tavşan tespit eder. Size özel çalışma materyalleri ile zayıf yanlarınızı güçlü yanlara çevirin.',
       ),
       _AiTool(
         key: analysisStrategyKey,
@@ -77,7 +79,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
         heroTag: 'analysis-strategy-core',
         chip: 'Suite',
         marketingTitle: 'Akıllı Deneme Analizi',
-        marketingSubtitle: 'Deneme sınavlarınızı yapay zeka ile derinlemesine analiz edin. Hangi konulara odaklanmanız gerektiğini öğrenin, her zaman zirvede kalın.',
+        marketingSubtitle: 'Deneme sınavlarınızı Taktik Tavşan ile derinlemesine analiz edin. Hangi konulara odaklanmanız gerektiğini öğrenin, her zaman zirvede kalın.',
       ),
       _AiTool(
         key: motivationChatKey,
@@ -89,11 +91,9 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
         heroTag: 'motivation-core',
         chip: 'Destek',
         marketingTitle: 'Sınav Sürecindeki En Yakın Dostunuz',
-        marketingSubtitle: 'Stresli veya motivasyonsuz hissettiğinizde, yapay zeka koçunuzla sohbet edin. Size özel tavsiyeler ve destekle mental olarak her zaman daha iyi olacağınızı öğrenin.',
+        marketingSubtitle: 'Stresli veya motivasyonsuz hissettiğinizde, koçunuz Taktik Tavşan ile sohbet edin. Size özel tavsiyeler ve destekle mental olarak her zaman daha sağlam olun.',
       ),
     ];
-
-    final bottomInset = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
       extendBodyBehindAppBar: false,
@@ -148,64 +148,18 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      const SizedBox(height: 4),
+                      const _CoreVisual(),
                       const SizedBox(height: 8),
-                      _CoreVisual(glow: _glow),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              alignment: Alignment.centerLeft,
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    'Yapay Zeka Araçları',
-                                    style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
-                                  ),
-                                  if (!isPremium) ...[
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          colors: [
-                                            theme.colorScheme.primary.withOpacity(0.15),
-                                            theme.colorScheme.secondary.withOpacity(0.15),
-                                          ],
-                                        ),
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
-                                          color: theme.colorScheme.primary.withOpacity(0.3),
-                                          width: 1,
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            Icons.workspace_premium_rounded,
-                                            size: 16,
-                                            color: theme.colorScheme.primary,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            'PRO Gerektirir',
-                                            style: theme.textTheme.labelSmall?.copyWith(
-                                              color: theme.colorScheme.primary,
-                                              fontWeight: FontWeight.w700,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
+                      // Ortalanmış başlık: "Taktik Araçları"
+                      Center(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'Taktik Araçları',
+                            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
                           ),
-                        ],
+                        ),
                       ),
                       const SizedBox(height: 8),
                     ],
@@ -251,68 +205,73 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
                   ),
                 ),
               ),
-
-              // Sorumluluk Reddi - Alt kısımda şık yerleşim
+              // PRO banner - ekran genişliğini kaplayacak, büyük ve tam ortalı
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: EdgeInsets.fromLTRB(20, 8, 20, bottomInset + 16),
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      gradient: LinearGradient(
-                        colors: [
-                          theme.colorScheme.primary.withOpacity(0.06),
-                          theme.colorScheme.secondary.withOpacity(0.04),
-                        ],
-                      ),
-                      border: Border.all(
-                        color: theme.colorScheme.primary.withOpacity(0.15),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(
-                            Icons.info_outline_rounded,
-                            color: theme.colorScheme.primary,
-                            size: 18,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Sorumluluk Reddi',
-                                style: theme.textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  color: theme.colorScheme.primary,
-                                  fontSize: 13,
+                  // Boydan boya görünmesi için yatay padding sıfır
+                  padding: EdgeInsets.zero,
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 12),
+                      if (!isPremium) ...[
+                        Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6),
+                            child: FractionallySizedBox(
+                              widthFactor: 0.90, // biraz daha dar
+                              child: Container(
+                                height: 48, // daha ince hale getirildi
+                                alignment: Alignment.center,
+                                padding: const EdgeInsets.symmetric(horizontal: 12), // daha dar iç boşluk
+                                decoration: BoxDecoration(
+                                  // Çok belirgin gradient yerine çok hafif, tek tonlu bir geçiş
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      theme.colorScheme.primary.withAlpha((0.06 * 255).round()),
+                                      theme.colorScheme.primary.withAlpha((0.04 * 255).round()),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(999),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: theme.colorScheme.onSurface.withAlpha((0.02 * 255).round()),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                  border: Border.all(
+                                    color: theme.colorScheme.primary.withAlpha((0.08 * 255).round()),
+                                    width: 0.6,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.max,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.lock_rounded, size: 14, color: theme.colorScheme.primary),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'PRO Gerektirir',
+                                      textAlign: TextAlign.center,
+                                      style: theme.textTheme.titleLarge?.copyWith(
+                                        color: theme.colorScheme.primary,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 15,
+                                        letterSpacing: 0.2,
+                                        height: 1.0,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'TaktikAI, bir yapay zeka asistanıdır. Psikolojik danışmanlık hizmeti sunmaz.',
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                  height: 1.4,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                         ),
                       ],
-                    ),
+                      const SizedBox(height: 12),
+                    ],
                   ),
                 ),
               ),
@@ -325,8 +284,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
 }
 
 class _CoreVisual extends StatelessWidget {
-  const _CoreVisual({required this.glow});
-  final Animation<double> glow;
+  const _CoreVisual();
 
   @override
   Widget build(BuildContext context) {
@@ -334,70 +292,13 @@ class _CoreVisual extends StatelessWidget {
       child: SizedBox(
         width: 140,
         height: 140,
-        child: AnimatedBuilder(
-          animation: glow,
-          builder: (context, _) {
-            final g = glow.value;
-            return Stack(
-              alignment: Alignment.center,
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        Theme.of(context).colorScheme.primary.withOpacity(0.05 + g * 0.12),
-                        Theme.of(context).scaffoldBackgroundColor.withOpacity(0),
-                      ],
-                      stops: const [0.5, 1],
-                    ),
-                  ),
-                ),
-                Container(
-                  width: 114 + g * 4,
-                  height: 114 + g * 4,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(.12 + g * .18),
-                        blurRadius: 30 + g * 20,
-                        spreadRadius: 5 + g * 5,
-                      ),
-                    ],
-                    gradient: SweepGradient(
-                      colors: [
-                        Theme.of(context).colorScheme.primary.withOpacity(.4),
-                        AppTheme.successBrandColor.withOpacity(.35),
-                        Colors.pinkAccent.withOpacity(.3),
-                        Theme.of(context).colorScheme.primary.withOpacity(.4),
-                      ],
-                      stops: const [0, .33, .66, 1],
-                      transform: GradientRotation(g * pi * 2),
-                    ),
-                  ),
-                  child: Container(
-                    margin: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          Theme.of(context).cardColor.withOpacity(.9),
-                          Theme.of(context).cardColor.withOpacity(.6),
-                        ],
-                      ),
-                      border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(.2), width: 1.5),
-                    ),
-                    child: Icon(
-                      Icons.auto_awesome,
-                      size: 42 + g * 4,
-                      color: Theme.of(context).colorScheme.primary.withOpacity(.92),
-                    ),
-                  ),
-                ),
-              ],
-            );
-          },
+        child: Lottie.asset(
+          'assets/lotties/AI logo Foriday.json',
+          width: 140,
+          height: 140,
+          fit: BoxFit.contain,
+          repeat: true,
+          animate: true,
         ),
       ),
     );
@@ -670,4 +571,3 @@ class _Badge extends StatelessWidget {
     );
   }
 }
-
