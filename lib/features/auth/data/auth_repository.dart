@@ -7,6 +7,7 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
 import 'dart:math';
+import 'dart:io' show Platform;
 import 'package:taktik/data/repositories/firestore_service.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import '../../../shared/notifications/notification_service.dart';
@@ -216,21 +217,46 @@ class AuthRepository {
 
   Future<void> signInWithApple() async {
     try {
+      UserCredential? userCredential;
+
       if (kIsWeb) {
-        // Web: FirebaseAuth’un AppleAuthProvider ile signInWithProvider kullanımı
+        // Web: FirebaseAuth'un AppleAuthProvider ile signInWithProvider kullanımı
         final provider = AppleAuthProvider();
         provider.addScope('email');
         provider.addScope('name');
-        final userCredential = await _firebaseAuth.signInWithProvider(provider);
+        userCredential = await _firebaseAuth.signInWithProvider(provider);
+      } else if (Platform.isIOS) {
+        // --- iOS: Native sign_in_with_apple paketi ile (Native Pencere) ---
+        final rawNonce = _generateNonce();
+        final nonce = _sha256ofString(rawNonce);
+
+        final appleCredential = await SignInWithApple.getAppleIDCredential(
+          scopes: [
+            AppleIDAuthorizationScopes.email,
+            AppleIDAuthorizationScopes.fullName,
+          ],
+          nonce: nonce,
+        );
+
+        final oauthCredential = OAuthProvider("apple.com").credential(
+          idToken: appleCredential.identityToken,
+          rawNonce: rawNonce,
+          accessToken: appleCredential.authorizationCode,
+        );
+
+        userCredential = await _firebaseAuth.signInWithCredential(oauthCredential);
+
+        // iOS'ta yeni kullanıcı ise isim bilgilerini al
         if (userCredential.user != null) {
           final isNewUser = userCredential.additionalUserInfo?.isNewUser ?? false;
           if (isNewUser) {
             final user = userCredential.user!;
-            final displayName = user.displayName ?? '';
-            String firstName = '';
-            String lastName = '';
-            if (displayName.isNotEmpty) {
-              final nameParts = displayName.split(' ');
+            final givenName = appleCredential.givenName ?? '';
+            final familyName = appleCredential.familyName ?? '';
+            String firstName = givenName;
+            String lastName = familyName;
+            if (firstName.isEmpty && lastName.isEmpty && user.displayName != null) {
+              final nameParts = user.displayName!.split(' ');
               firstName = nameParts.isNotEmpty ? nameParts.first : '';
               lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
             }
@@ -249,40 +275,28 @@ class AuthRepository {
             );
           }
         }
-        return;
+      } else {
+        // --- ANDROID: Firebase OAuthProvider (State uyuşmazlık sorunu çözüldü) ---
+        // Android'de webAuthenticationOptions ile uğraşmak yerine
+        // Firebase'in kendi OAuthProvider'ını kullanıyoruz.
+        // Bu yöntem, Firebase handler linkini otomatik ve doğru şekilde kullanır.
+        final appleProvider = OAuthProvider('apple.com');
+        appleProvider.addScope('email');
+        appleProvider.addScope('name');
+
+        userCredential = await _firebaseAuth.signInWithProvider(appleProvider);
       }
 
-      // Mobile (iOS/Android): SignInWithApple ile credential al, nonce ile güvence sağla
-      final rawNonce = _generateNonce();
-      final nonce = _sha256ofString(rawNonce);
-
-      final appleCredential = await SignInWithApple.getAppleIDCredential(
-        scopes: [
-          AppleIDAuthorizationScopes.email,
-          AppleIDAuthorizationScopes.fullName,
-        ],
-        nonce: nonce,
-      );
-
-      // OAuth credential oluştur: idToken + rawNonce + authorizationCode’u accessToken olarak EKLE
-      final oauthCredential = OAuthProvider("apple.com").credential(
-        idToken: appleCredential.identityToken,
-        rawNonce: rawNonce,
-        accessToken: appleCredential.authorizationCode,
-      );
-
-      final userCredential = await _firebaseAuth.signInWithCredential(oauthCredential);
-
-      if (userCredential.user != null) {
+      // Yeni kullanıcı profili oluşturma (Web ve Android için)
+      if (userCredential != null && userCredential.user != null && !Platform.isIOS) {
         final isNewUser = userCredential.additionalUserInfo?.isNewUser ?? false;
         if (isNewUser) {
           final user = userCredential.user!;
-          final givenName = appleCredential.givenName ?? '';
-          final familyName = appleCredential.familyName ?? '';
-          String firstName = givenName;
-          String lastName = familyName;
-          if (firstName.isEmpty && lastName.isEmpty && user.displayName != null) {
-            final nameParts = user.displayName!.split(' ');
+          final displayName = user.displayName ?? '';
+          String firstName = '';
+          String lastName = '';
+          if (displayName.isNotEmpty) {
+            final nameParts = displayName.split(' ');
             firstName = nameParts.isNotEmpty ? nameParts.first : '';
             lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
           }
