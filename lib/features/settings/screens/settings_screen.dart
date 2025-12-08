@@ -945,44 +945,39 @@ class _ThemeSelection extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 12),
-        SegmentedButton<ThemeMode>(
-          segments: <ButtonSegment<ThemeMode>>[
-            ButtonSegment<ThemeMode>(
-              value: ThemeMode.light,
-              label: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: const Text('Açık'),
+        SizedBox(
+          width: double.infinity,
+          child: SegmentedButton<ThemeMode>(
+            segments: <ButtonSegment<ThemeMode>>[
+              ButtonSegment<ThemeMode>(
+                value: ThemeMode.light,
+                label: const Text('Açık'),
+                icon: const Icon(Icons.wb_sunny_outlined, size: 18),
               ),
-              icon: const Icon(Icons.wb_sunny_outlined, size: 18),
-            ),
-            ButtonSegment<ThemeMode>(
-              value: ThemeMode.dark,
-              label: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: const Text('Koyu'),
+              ButtonSegment<ThemeMode>(
+                value: ThemeMode.dark,
+                label: const Text('Koyu'),
+                icon: const Icon(Icons.nightlight_round, size: 18),
               ),
-              icon: const Icon(Icons.nightlight_round, size: 18),
-            ),
-            ButtonSegment<ThemeMode>(
-              value: ThemeMode.system,
-              label: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: const Text('Sistem'),
+              ButtonSegment<ThemeMode>(
+                value: ThemeMode.system,
+                label: const Text('Sistem'),
+                icon: const Icon(Icons.phone_iphone_rounded, size: 18),
               ),
-              icon: const Icon(Icons.phone_iphone_rounded, size: 18),
+            ],
+            selected: <ThemeMode>{currentThemeMode},
+            onSelectionChanged: (Set<ThemeMode> newSelection) {
+              ref.read(themeModeNotifierProvider.notifier).setThemeMode(newSelection.first);
+            },
+            style: SegmentedButton.styleFrom(
+              backgroundColor: theme.colorScheme.surface,
+              foregroundColor: theme.colorScheme.onSurfaceVariant,
+              selectedForegroundColor: theme.colorScheme.onPrimary,
+              selectedBackgroundColor: theme.colorScheme.primary,
+              side: BorderSide(color: theme.colorScheme.outlineVariant),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-          ],
-          selected: <ThemeMode>{currentThemeMode},
-          onSelectionChanged: (Set<ThemeMode> newSelection) {
-            ref.read(themeModeNotifierProvider.notifier).setThemeMode(newSelection.first);
-          },
-          style: SegmentedButton.styleFrom(
-            backgroundColor: theme.colorScheme.surface,
-            foregroundColor: theme.colorScheme.onSurfaceVariant,
-            selectedForegroundColor: theme.colorScheme.onPrimary,
-            selectedBackgroundColor: theme.colorScheme.primary,
-            side: BorderSide(color: theme.colorScheme.outlineVariant),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            showSelectedIcon: false,
           ),
         ),
       ],
