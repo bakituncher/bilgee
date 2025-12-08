@@ -1,281 +1,422 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:taktik/core/theme/app_theme.dart';
-import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:lottie/lottie.dart';
-import 'dart:math';
 import 'dart:ui';
 
-// Öğretici için GlobalKey'ler
-final GlobalKey strategicPlanningKey = GlobalKey();
-final GlobalKey weaknessWorkshopKey = GlobalKey();
-final GlobalKey motivationChatKey = GlobalKey();
-final GlobalKey analysisStrategyKey = GlobalKey();
+import 'package:taktik/data/providers/premium_provider.dart';
 
-class AiHubScreen extends ConsumerStatefulWidget {
+// -----------------------------------------------------------------------------
+// TAKTIK AI HUB - THE ULTIMATE SHOWCASE
+// -----------------------------------------------------------------------------
+
+class AiHubScreen extends ConsumerWidget {
   const AiHubScreen({super.key});
 
   @override
-  ConsumerState<AiHubScreen> createState() => _AiHubScreenState();
-}
-
-class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProviderStateMixin {
-  late final AnimationController _pulse;
-  late final Animation<double> _glow;
-
-  @override
-  void initState() {
-    super.initState();
-    _pulse = AnimationController(vsync: this, duration: const Duration(seconds: 5))..repeat(reverse: true);
-    _glow = CurvedAnimation(parent: _pulse, curve: Curves.easeInOut);
-  }
-
-  @override
-  void dispose() {
-    _pulse.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isPremium = ref.watch(premiumStatusProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final tools = [
-      _AiTool(
-        key: strategicPlanningKey,
-        title: 'Haftalık Planlama',
-        subtitle: 'Uzun vadeli zafer stratejini ve haftalık planını oluştur.',
-        icon: Icons.insights_rounded,
-        route: '/ai-hub/strategic-planning',
-        // İlk kutunun rengi secondary ile aynı olduğundan farklı olsun diye primary yaptık
-        color: theme.colorScheme.primary,
-        heroTag: 'strategic-core',
-        chip: 'Odak',
-        marketingTitle: 'Kişisel Başarı Yol Haritanız',
-        marketingSubtitle: 'Taktik Tavşan, sınav hedeflerinize ve takviminize göre size özel, dinamik bir haftalık çalışma planı oluşturur. Ne zaman ne çalışacağınızı öğrenin.',
-      ),
-      _AiTool(
-        key: weaknessWorkshopKey,
-        title: 'Cevher Atölyesi',
-        subtitle: 'En zayıf konunu, kişisel çalışma kartı ve özel test ile işle.',
-        icon: Icons.construction_rounded,
-        route: '/ai-hub/weakness-workshop',
-        color: theme.colorScheme.secondary,
-        heroTag: 'weakness-core',
-        chip: 'Gelişim',
-        marketingTitle: 'Zayıf Noktalarınızı Güce Dönüştürün',
-        marketingSubtitle: 'En çok zorlandığınız konuları Taktik Tavşan tespit eder. Size özel çalışma materyalleri ile zayıf yanlarınızı güçlü yanlara çevirin.',
-      ),
-      _AiTool(
-        key: analysisStrategyKey,
-        title: 'Analiz & Strateji',
-        subtitle: 'Deneme değerlendirme ve strateji danışmanı tek panelden yönet.',
-        icon: Icons.dashboard_customize_rounded,
-        route: '/ai-hub/analysis-strategy',
-        color: Colors.amberAccent,
-        heroTag: 'analysis-strategy-core',
-        chip: 'Suite',
-        marketingTitle: 'Akıllı Deneme Analizi',
-        marketingSubtitle: 'Deneme sınavlarınızı Taktik Tavşan ile derinlemesine analiz edin. Hangi konulara odaklanmanız gerektiğini öğrenin, her zaman zirvede kalın.',
-      ),
-      _AiTool(
-        key: motivationChatKey,
-        title: 'Motivasyon Sohbeti',
-        subtitle: 'Zorlandığında konuşabileceğin bir dost.',
-        icon: Icons.forum_rounded,
-        route: '/ai-hub/motivation-chat',
-        color: Colors.pinkAccent,
-        heroTag: 'motivation-core',
-        chip: 'Destek',
-        marketingTitle: 'Sınav Sürecindeki En Yakın Dostunuz',
-        marketingSubtitle: 'Stresli veya motivasyonsuz hissettiğinizde, koçunuz Taktik Tavşan ile sohbet edin. Size özel tavsiyeler ve destekle mental olarak her zaman daha sağlam olun.',
-      ),
-    ];
+    // Taktik Pro Gold Gradient
+    final goldGradient = const LinearGradient(
+      colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
 
     return Scaffold(
-      extendBodyBehindAppBar: false,
-      appBar: null,
+      backgroundColor: isDark ? const Color(0xFF0F0F13) : const Color(0xFFF5F7FA),
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        systemOverlayStyle: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(Icons.auto_awesome_mosaic_rounded, color: theme.colorScheme.primary, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Taktik Tavşan',
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                color: theme.colorScheme.onSurface,
+                letterSpacing: -0.5,
+                fontSize: 20,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          if (isPremium)
+            Container(
+              margin: const EdgeInsets.only(right: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                gradient: goldGradient,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(color: Colors.orange.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4)),
+                ],
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.verified, size: 16, color: Colors.white),
+                  SizedBox(width: 4),
+                  Text(
+                    'TAKTIK PRO',
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
       body: Stack(
         children: [
-          _AnimatedBackground(glow: _glow),
-          CustomScrollView(
+          // Arka Plan Dekoru (Premium Aura)
+          const _AmbientBackground(),
+
+          // Ana İçerik
+          SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
-            slivers: [
-              SliverAppBar(
-                pinned: true,
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                toolbarHeight: kToolbarHeight,
-                title: Text(
-                  'Taktik Tavşan',
-                  style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.w700),
-                ),
-                flexibleSpace: ClipRect(
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: isDark
-                              ? [
-                                  theme.scaffoldBackgroundColor.withOpacity(0.9),
-                                  theme.scaffoldBackgroundColor.withOpacity(0.7),
-                                ]
-                              : [
-                                  theme.scaffoldBackgroundColor.withOpacity(0.9),
-                                  theme.scaffoldBackgroundColor.withOpacity(0.75),
-                                ],
-                        ),
-                        border: const Border(
-                          bottom: BorderSide(
-                            color: Colors.white10,
-                            width: 0.5,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+            padding: const EdgeInsets.only(top: 110, bottom: 100),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // --- SHOWCASE GRID (BENTO BOX) ---
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 4),
-                      const _CoreVisual(),
-                      const SizedBox(height: 8),
-                      // Ortalanmış başlık: "Taktik Araçları"
-                      Center(
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            'Taktik Araçları',
-                            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4, bottom: 16),
+                        child: Text(
+                          'KOMUTA MERKEZİ',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.5,
+                            color: theme.colorScheme.onSurface.withOpacity(0.5),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 8),
-                    ],
-                  ),
-                ),
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                sliver: SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    mainAxisExtent: 168,
-                  ),
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final tool = tools[index];
-                      return _AiToolTile(
-                        tool: tool,
-                        onTap: () {
-                          if (isPremium) {
-                            context.go(tool.route);
-                          } else {
-                            context.go(
-                              '/ai-hub/offer',
-                              extra: {
-                                'title': tool.title,
-                                'subtitle': tool.subtitle,
-                                'icon': tool.icon,
-                                'color': tool.color,
-                                'heroTag': tool.heroTag,
-                                'marketingTitle': tool.marketingTitle,
-                                'marketingSubtitle': tool.marketingSubtitle,
-                                'redirectRoute': tool.route,
-                              },
-                            );
-                          }
-                        },
-                      );
-                    },
-                    childCount: tools.length,
-                  ),
-                ),
-              ),
-              // PRO banner - ekran genişliğini kaplayacak, büyük ve tam ortalı
-              SliverToBoxAdapter(
-                child: Padding(
-                  // Boydan boya görünmesi için yatay padding sıfır
-                  padding: EdgeInsets.zero,
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 12),
-                      if (!isPremium) ...[
-                        Center(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6),
-                            child: FractionallySizedBox(
-                              widthFactor: 0.90, // biraz daha dar
-                              child: Container(
-                                height: 48, // daha ince hale getirildi
-                                alignment: Alignment.center,
-                                padding: const EdgeInsets.symmetric(horizontal: 12), // daha dar iç boşluk
-                                decoration: BoxDecoration(
-                                  // Çok belirgin gradient yerine çok hafif, tek tonlu bir geçiş
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                    colors: [
-                                      theme.colorScheme.primary.withAlpha((0.06 * 255).round()),
-                                      theme.colorScheme.primary.withAlpha((0.04 * 255).round()),
-                                    ],
-                                  ),
-                                  borderRadius: BorderRadius.circular(999),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: theme.colorScheme.onSurface.withAlpha((0.02 * 255).round()),
-                                      blurRadius: 6,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                  border: Border.all(
-                                    color: theme.colorScheme.primary.withAlpha((0.08 * 255).round()),
-                                    width: 0.6,
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.max,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.lock_rounded, size: 14, color: theme.colorScheme.primary),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'PRO Gerektirir',
-                                      textAlign: TextAlign.center,
-                                      style: theme.textTheme.titleLarge?.copyWith(
-                                        color: theme.colorScheme.primary,
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 15,
-                                        letterSpacing: 0.2,
-                                        height: 1.0,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+
+                      // 1. Büyük Kart: Stratejik Planlama (HERO)
+                      _ShowcaseCardLarge(
+                        title: 'Haftalık Stratejist',
+                        // MERAK UYANDIRICI AÇIKLAMA:
+                        subtitle: 'Sadece sana özel değil, *kazananlara* özel bir rota. Rakiplerin uyurken sen ne yapman gerektiğini bil.',
+                        icon: Icons.map_rounded,
+                        accentColor: const Color(0xFF6366F1), // Indigo
+                        isPremium: isPremium,
+                        lottieAsset: 'assets/lotties/data.json',
+                        onTap: () => _handleNavigation(
+                            context,
+                            isPremium,
+                            route: '/ai-hub/strategic-planning',
+                            offerData: {
+                              'title': 'Haftalık Planlama',
+                              'subtitle': 'Zafer stratejini şimdi oluştur.',
+                              'icon': Icons.insights_rounded,
+                              'color': theme.colorScheme.primary,
+                              'heroTag': 'strategic-core',
+                              'marketingTitle': 'Kişisel Başarı Haritası',
+                              'marketingSubtitle': 'Sınav takvimine göre dinamik olarak güncellenen, nokta atışı çalışma planı.',
+                              'redirectRoute': '/ai-hub/strategic-planning',
+                            }
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // 2. Orta Kartlar
+                      Row(
+                        children: [
+                          // Cevher Atölyesi
+                          Expanded(
+                            child: _ShowcaseCardMedium(
+                              title: 'Cevher\nAtölyesi',
+                              // MERAK UYANDIRICI AÇIKLAMA:
+                              subtitle: 'Zayıf halkanı, en güçlü silahına dönüştüren gizli laboratuvar.',
+                              icon: Icons.diamond_outlined,
+                              accentColor: const Color(0xFFEC4899), // Pink
+                              isPremium: isPremium,
+                              onTap: () => _handleNavigation(
+                                  context,
+                                  isPremium,
+                                  route: '/ai-hub/weakness-workshop',
+                                  offerData: {
+                                    'title': 'Cevher Atölyesi',
+                                    'subtitle': 'Zayıf noktalarını güce çevir.',
+                                    'icon': Icons.construction_rounded,
+                                    'color': theme.colorScheme.secondary,
+                                    'heroTag': 'weakness-core',
+                                    'marketingTitle': 'Zayıflıklar Güce Dönüşüyor',
+                                    'marketingSubtitle': 'En çok zorlandığın konuları tespit edip seni o konuda ustalaştıran özel çalışma.',
+                                    'redirectRoute': '/ai-hub/weakness-workshop',
+                                  }
                               ),
                             ),
                           ),
+                          const SizedBox(width: 16),
+                          // Analiz & Strateji
+                          Expanded(
+                            child: _ShowcaseCardMedium(
+                              title: 'Analiz &\nStrateji',
+                              // MERAK UYANDIRICI AÇIKLAMA:
+                              subtitle: 'Görünmeyeni gören göz. Netlerin neden artmıyor? Cevabı burada.',
+                              icon: Icons.pie_chart_outline_rounded,
+                              accentColor: const Color(0xFFF59E0B), // Amber
+                              isPremium: isPremium,
+                              onTap: () => _handleNavigation(
+                                  context,
+                                  isPremium,
+                                  route: '/ai-hub/analysis-strategy',
+                                  offerData: {
+                                    'title': 'Analiz & Strateji',
+                                    'subtitle': 'Derinlemesine performans analizi.',
+                                    'icon': Icons.dashboard_customize_rounded,
+                                    'color': Colors.amberAccent,
+                                    'heroTag': 'analysis-strategy-core',
+                                    'marketingTitle': 'Verilerle Konuşan Koç',
+                                    'marketingSubtitle': 'Deneme analizlerinle hangi konuya odaklanman gerektiğini saniye saniye gör.',
+                                    'redirectRoute': '/ai-hub/analysis-strategy',
+                                  }
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // 3. Geniş Kart: Motivasyon
+                      _ShowcaseCardWide(
+                        title: 'Motivasyon & Güç',
+                        // MERAK UYANDIRICI AÇIKLAMA:
+                        subtitle: 'Düştüğünde kaldıran, yorulduğunda iten güç. Sınav maratonunun dopingi.',
+                        icon: Icons.bolt_rounded,
+                        accentColor: const Color(0xFF10B981), // Emerald
+                        isPremium: isPremium,
+                        onTap: () => _handleNavigation(
+                            context,
+                            isPremium,
+                            route: '/ai-hub/motivation-chat',
+                            offerData: {
+                              'title': 'Motivasyon Sohbeti',
+                              'subtitle': 'Zorlandığında yanında olan güç.',
+                              'icon': Icons.forum_rounded,
+                              'color': Colors.pinkAccent,
+                              'heroTag': 'motivation-core',
+                              'marketingTitle': 'Sınırsız Motivasyon Desteği',
+                              'marketingSubtitle': 'Stresli anlarda seni sakinleştiren ve odaklayan yapay zeka koçun.',
+                              'redirectRoute': '/ai-hub/motivation-chat',
+                            }
                         ),
-                      ],
-                      const SizedBox(height: 12),
+                      ),
                     ],
                   ),
                 ),
+
+                const SizedBox(height: 32),
+
+                // --- DÖNÜŞÜM ALANI (HIGH CONVERSION ZONE) ---
+                // Sadece Premium olmayanlar için görünür
+                if (!isPremium) ...[
+                  _HighConversionZone(theme: theme),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- YÖNLENDİRME MANTIĞI (Routing Logic) ---
+  // Orijinal yapıyı bozmuyoruz: Kartlara tıklayınca ToolOfferScreen (/ai-hub/offer) açılıyor.
+  void _handleNavigation(BuildContext context, bool isPremium, {required String route, required Map<String, dynamic> offerData}) {
+    if (isPremium) {
+      context.go(route);
+    } else {
+      // Premium değilse, o tool'a özel teklif ekranına git (Mevcut mantık)
+      context.go('/ai-hub/offer', extra: offerData);
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------
+// HIGH CONVERSION ZONE (DÖNÜŞÜM ALANI)
+// -----------------------------------------------------------------------------
+
+class _HighConversionZone extends StatelessWidget {
+  final ThemeData theme;
+  const _HighConversionZone({required this.theme});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(32),
+        // Dikkat çekici ama şık bir gradient
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
+              : [const Color(0xFFFFFFFF), const Color(0xFFF1F5F9)],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
+            blurRadius: 30,
+            offset: const Offset(0, 10),
+          ),
+        ],
+        border: Border.all(
+          // Altın çerçeve detayı (Subliminal Premium mesajı)
+          color: Colors.amber.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          // Başlık
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.workspace_premium_rounded, color: Colors.amber[700], size: 28),
+              const SizedBox(width: 8),
+              Text(
+                'Neden Taktik Pro?',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  color: theme.colorScheme.onSurface,
+                  letterSpacing: -0.5,
+                ),
               ),
             ],
+          ),
+          const SizedBox(height: 24),
+
+          // Fayda Listesi (Kısa ve Vurucu)
+          _buildBenefitRow(context, Icons.rocket_launch_rounded, 'Limitleri Kaldır', 'Yapay zeka analizlerine sınırsız erişim.'),
+          _buildBenefitRow(context, Icons.visibility_rounded, 'Görünmeyeni Gör', 'Rakiplerinin fark etmediği detayları yakala.'),
+          _buildBenefitRow(context, Icons.verified_user_rounded, 'Kişisel Zafer Planı', 'Sana özel hesaplanan başarı rotası.'),
+
+          const SizedBox(height: 24),
+
+          // CTA Butonu (Call to Action)
+          // Bu buton direkt olarak ana satın alma ekranına (PremiumScreen) gidebilir
+          // veya genel bir teklif sayfasına. Kullanıcı "premium_screen" istediği için
+          // burayı direkt /premium rotasına yönlendiriyoruz.
+          GestureDetector(
+            onTap: () => context.go('/premium'), // DİREKT SATIN ALMA EKRANI
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF2E3192), Color(0xFF1BFFFF)], // Electric Blue Gradient
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF2E3192).withOpacity(0.4),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'TAKTIK PRO\'YA GEÇ',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 20),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'İstediğin zaman iptal et. Gizli ücret yok.',
+            style: TextStyle(
+              fontSize: 11,
+              color: theme.colorScheme.onSurface.withOpacity(0.5),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBenefitRow(BuildContext context, IconData icon, String title, String subtitle) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: theme.colorScheme.primary, size: 18),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: theme.colorScheme.onSurfaceVariant,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -283,242 +424,109 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> with SingleTickerProv
   }
 }
 
-class _CoreVisual extends StatelessWidget {
-  const _CoreVisual();
+// -----------------------------------------------------------------------------
+// SHOWCASE CARDS (VITRIN TASARIMI)
+// -----------------------------------------------------------------------------
 
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: SizedBox(
-        width: 140,
-        height: 140,
-        child: Lottie.asset(
-          'assets/lotties/AI logo Foriday.json',
-          width: 140,
-          height: 140,
-          fit: BoxFit.contain,
-          repeat: true,
-          animate: true,
-        ),
-      ),
-    );
-  }
-}
-
-class _AiTool {
-  final GlobalKey key;
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final String route;
-  final Color color;
-  final String heroTag;
-  final String chip;
-  final String marketingTitle;
-  final String marketingSubtitle;
-
-  _AiTool({
-    required this.key,
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.route,
-    required this.color,
-    required this.heroTag,
-    required this.chip,
-    required this.marketingTitle,
-    required this.marketingSubtitle,
-  });
-}
-
-class _AnimatedBackground extends StatelessWidget {
-  const _AnimatedBackground({required this.glow});
-  final Animation<double> glow;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return AnimatedBuilder(
-      animation: glow,
-      builder: (context, _) {
-        final g = glow.value;
-        return Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: isDark
-                  ? [
-                      Theme.of(context).scaffoldBackgroundColor,
-                      Theme.of(context).scaffoldBackgroundColor.blend(Theme.of(context).colorScheme.primary.withOpacity(.15), .08 + g * .1),
-                      Theme.of(context).scaffoldBackgroundColor.blend(Theme.of(context).colorScheme.secondary.withOpacity(.12), .05 + g * .08),
-                    ]
-                  : [
-                      Theme.of(context).scaffoldBackgroundColor,
-                      Theme.of(context).scaffoldBackgroundColor.blend(Theme.of(context).colorScheme.primary.withOpacity(.15), .03 + g * .05),
-                      Theme.of(context).scaffoldBackgroundColor.blend(Theme.of(context).colorScheme.primary.withOpacity(.1), .02 + g * .04),
-                    ],
-            ),
-          ),
-          child: CustomPaint(
-            painter: _ParticlePainter(progress: g, isDark: isDark),
-          ),
-        );
-      },
-    );
-  }
-}
-
-extension on Color {
-  Color blend(Color other, double t) => Color.lerp(this, other, t)!;
-}
-
-class _ParticlePainter extends CustomPainter {
-  _ParticlePainter({required this.progress, required this.isDark});
-  final double progress;
-  final bool isDark;
-  final int count = 22;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rnd = Random(42);
-    final baseOpacity = isDark ? 0.05 : 0.03;
-    final variableOpacity = isDark ? 0.08 : 0.05;
-    for (var i = 0; i < count; i++) {
-      final dx = rnd.nextDouble() * size.width;
-      final dy = rnd.nextDouble() * size.height;
-      final radius = (rnd.nextDouble() * 2 + 1) * (1 + (progress * .3));
-      final paint = Paint()
-        ..color = AppTheme.secondaryBrandColor.withOpacity(baseOpacity + rnd.nextDouble() * variableOpacity)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
-      canvas.drawCircle(Offset(dx, dy), radius, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _ParticlePainter oldDelegate) =>
-      oldDelegate.progress != progress || oldDelegate.isDark != isDark;
-}
-
-class _AiToolTile extends StatelessWidget {
-  const _AiToolTile({required this.tool, required this.onTap});
-  final _AiTool tool;
+// Base Card: Ortak Stil ve Kilit Mantığı
+class _BaseShowcaseCard extends StatelessWidget {
+  final Widget child;
   final VoidCallback onTap;
+  final Color accentColor;
+  final bool isPremium;
+
+  const _BaseShowcaseCard({
+    required this.child,
+    required this.onTap,
+    required this.accentColor,
+    required this.isPremium,
+  });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final radius = BorderRadius.circular(20);
 
-    return Hero(
-      tag: tool.heroTag,
-      flightShuttleBuilder: (context, animation, direction, from, to) => FadeTransition(opacity: animation, child: to.widget),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          key: tool.key,
-          borderRadius: radius,
-          onTap: onTap,
-          child: Ink(
-            decoration: BoxDecoration(
-              borderRadius: radius,
-              boxShadow: [
-                BoxShadow(color: tool.color.withOpacity(.18), blurRadius: 18, spreadRadius: -2, offset: const Offset(0, 10)),
-              ],
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E1E24) : Colors.white,
+          borderRadius: BorderRadius.circular(28),
+          // Premium Değilse: Altın Çerçeve (Vitrin Etkisi)
+          border: isPremium
+              ? Border.all(color: accentColor.withOpacity(0.1), width: 1)
+              : Border.all(color: Colors.amber.withOpacity(0.5), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: isPremium ? accentColor.withOpacity(0.08) : Colors.amber.withOpacity(0.1),
+              blurRadius: 24,
+              offset: const Offset(0, 12),
             ),
-            child: ClipRRect(
-              borderRadius: radius,
-              child: Stack(
-                children: [
-                  BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                    child: Container(),
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: radius,
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: isDark
-                            ? [
-                                Theme.of(context).colorScheme.surfaceContainer.withOpacity(.85),
-                                Theme.of(context).cardColor.withOpacity(.9),
-                              ]
-                            : [
-                                Theme.of(context).cardColor.withOpacity(.98),
-                                Theme.of(context).cardColor.withOpacity(.92),
-                              ],
-                      ),
-                      border: Border.all(
-                        color: isDark
-                            ? tool.color.withOpacity(.4)
-                            : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(.5),
-                        width: 1.5,
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    right: -24,
-                    top: -24,
-                    child: Container(
-                      width: 96,
-                      height: 96,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(colors: [tool.color.withOpacity(.28), Colors.transparent]),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(14),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _IconOrb(icon: tool.icon, color: tool.color),
-                            const Spacer(),
-                            _Badge(label: tool.chip, color: tool.color),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          tool.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          tool.subtitle,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                        ),
-                        const Spacer(),
-                        Row(
-                          children: [
-                            Icon(Icons.flash_on_rounded, size: 16, color: tool.color.withOpacity(.9)),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Hızlı başla',
-                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                    color: tool.color.withOpacity(.9),
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                            ),
-                            const Spacer(),
-                            Icon(Icons.arrow_forward_rounded, size: 20, color: Theme.of(context).colorScheme.onSurface.withOpacity(.9)),
-                          ],
-                        )
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: Stack(
+            children: [
+              // Arka plan dekoru (Hafif renk)
+              Positioned(
+                right: -40,
+                top: -40,
+                child: Container(
+                  width: 150,
+                  height: 150,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        accentColor.withOpacity(0.1),
+                        Colors.transparent
                       ],
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
+
+              // Ana İçerik
+              child,
+
+              // KİLİT MEKANİZMASI (Showcase: İçerik Net, Köşede Kilit)
+              if (!isPremium)
+                Positioned(
+                  top: 16,
+                  right: 16,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.amber, // Altın Badge
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.amber.withOpacity(0.4),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        )
+                      ],
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.lock_rounded, color: Colors.black, size: 12),
+                        SizedBox(width: 4),
+                        Text(
+                          'PRO',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.black,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ),
@@ -526,47 +534,274 @@ class _AiToolTile extends StatelessWidget {
   }
 }
 
-class _IconOrb extends StatelessWidget {
-  const _IconOrb({required this.icon, required this.color});
+// Büyük Kart (Lottie Animasyonlu)
+class _ShowcaseCardLarge extends StatelessWidget {
+  final String title;
+  final String subtitle;
   final IconData icon;
-  final Color color;
+  final Color accentColor;
+  final bool isPremium;
+  final VoidCallback onTap;
+  final String lottieAsset;
+
+  const _ShowcaseCardLarge({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.accentColor,
+    required this.isPremium,
+    required this.onTap,
+    required this.lottieAsset,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: RadialGradient(colors: [color.withOpacity(.35), Colors.transparent]),
-        border: Border.all(color: color.withOpacity(.35)),
+    return SizedBox(
+      height: 220,
+      child: _BaseShowcaseCard(
+        accentColor: accentColor,
+        isPremium: isPremium,
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: accentColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(icon, color: accentColor, size: 24),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        height: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Expanded(
+                      child: Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          height: 1.4,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 4,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Opacity(
+                      opacity: 0.9,
+                      child: Lottie.asset(lottieAsset, fit: BoxFit.contain, height: 100),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
-      child: Icon(icon, size: 22, color: color),
     );
   }
 }
 
-class _Badge extends StatelessWidget {
-  const _Badge({required this.label, required this.color});
-  final String label;
-  final Color color;
+// Orta Boy Kartlar
+class _ShowcaseCardMedium extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color accentColor;
+  final bool isPremium;
+  final VoidCallback onTap;
+
+  const _ShowcaseCardMedium({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.accentColor,
+    required this.isPremium,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(999),
-        gradient: LinearGradient(colors: [color.withOpacity(.25), color.withOpacity(.12)]),
-        border: Border.all(color: color.withOpacity(.35)),
+    return SizedBox(
+      height: 190, // Açıklama sığsın diye biraz uzattık
+      child: _BaseShowcaseCard(
+        accentColor: accentColor,
+        isPremium: isPremium,
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: accentColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: accentColor, size: 22),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  height: 1.2,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Expanded(
+                child: Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    height: 1.4,
+                  ),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: color,
-              fontWeight: FontWeight.w700,
-              fontSize: 11,
+    );
+  }
+}
+
+// Geniş Kart
+class _ShowcaseCardWide extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color accentColor;
+  final bool isPremium;
+  final VoidCallback onTap;
+
+  const _ShowcaseCardWide({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.accentColor,
+    required this.isPremium,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 110,
+      child: _BaseShowcaseCard(
+        accentColor: accentColor,
+        isPremium: isPremium,
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: accentColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(icon, color: accentColor, size: 26),
+              ),
+              const SizedBox(width: 20),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        height: 1.3,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 14,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Arka Plan Efekti
+class _AmbientBackground extends StatelessWidget {
+  const _AmbientBackground();
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      color: Colors.transparent,
+      child: Stack(
+        children: [
+          Positioned(
+            top: -100,
+            left: -50,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Theme.of(context).colorScheme.primary.withOpacity(isDark ? 0.08 : 0.04),
+              ),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
+                child: Container(color: Colors.transparent),
+              ),
             ),
+          ),
+        ],
       ),
     );
   }
