@@ -1,4 +1,5 @@
 // lib/features/settings/screens/settings_screen.dart
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -393,6 +394,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
+  Future<void> _launchSubscriptionManagement(BuildContext context) async {
+    String url;
+
+    if (Platform.isIOS) {
+      // iOS için App Store abonelik yönetimi
+      url = 'https://apps.apple.com/account/subscriptions';
+    } else if (Platform.isAndroid) {
+      // Android için Google Play abonelik yönetimi
+      url = 'https://play.google.com/store/account/subscriptions';
+    } else {
+      // Diğer platformlar için (web vb.)
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Bu platform için abonelik yönetimi desteklenmiyor.')),
+      );
+      return;
+    }
+
+    await _launchURL(context, url);
+  }
+
   void _showLogoutDialog(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     showDialog(
@@ -785,8 +806,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               SettingsTile(
                 icon: Icons.subscriptions_outlined,
                 title: "Abonelikleri Yönet",
-                subtitle: "Aboneliklerinizi Google Play'de yönetin",
-                onTap: () => _launchURL(context, "https://play.google.com/store/account/subscriptions"),
+                subtitle: Platform.isIOS
+                    ? "Aboneliklerinizi App Store'da yönetin"
+                    : "Aboneliklerinizi Google Play'de yönetin",
+                onTap: () => _launchSubscriptionManagement(context),
               ),
               const Divider(height: 1, indent: 56),
               Consumer(

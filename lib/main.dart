@@ -90,18 +90,35 @@ void main() async {
 
     // 3. REVENUECAT BAŞLATMA (KRİTİK - BURAYA TAŞINDI)
     // UI çizilmeden önce RevenueCat'in hazır olması şarttır, aksi takdirde iOS'ta çökme yaşanır.
+    // Başlatma sırasını garanti altına almak için await kullanıyoruz.
     try {
+      if (kDebugMode) {
+        debugPrint('[RevenueCat] Başlatılıyor...');
+      }
+
       await RevenueCatService.init().timeout(
-        const Duration(seconds: 5),
+        const Duration(seconds: 8),
         onTimeout: () {
           if (kDebugMode) debugPrint('[RevenueCat] Initialization timeout');
+          throw TimeoutException('RevenueCat initialization timeout');
         },
       );
-    } catch (e) {
+
       if (kDebugMode) {
-        debugPrint('[RevenueCat] Initialization failed: $e');
+        debugPrint('[RevenueCat] ✅ Başarıyla başlatıldı');
+      }
+    } catch (e, stackTrace) {
+      if (kDebugMode) {
+        debugPrint('[RevenueCat] ❌ Initialization failed: $e');
+        debugPrint('[RevenueCat] Stack trace: $stackTrace');
       }
       // RevenueCat hatası uygulamanın açılmasını engellememeli ama loglanmalı
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        stackTrace,
+        reason: 'RevenueCat initialization failed',
+        fatal: false,
+      );
     }
 
     // 4. UYGULAMAYI BAŞLAT

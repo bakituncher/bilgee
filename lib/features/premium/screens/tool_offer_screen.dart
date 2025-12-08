@@ -298,8 +298,8 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
             : Theme.of(context).cardColor.withOpacity(0.95),
         borderRadius: BorderRadius.circular(30),
         border: Border.all(
-          color: isDark 
-              ? Colors.white.withOpacity(0.1) 
+          color: isDark
+              ? Colors.white.withOpacity(0.1)
               : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
         ),
         boxShadow: [
@@ -402,15 +402,15 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
           radius: 1.5,
           colors: isDark
               ? [
-                  widget.color.withOpacity(0.3),
-                  Theme.of(context).scaffoldBackgroundColor.withOpacity(0.2),
-                  Theme.of(context).scaffoldBackgroundColor,
-                ]
+            widget.color.withOpacity(0.3),
+            Theme.of(context).scaffoldBackgroundColor.withOpacity(0.2),
+            Theme.of(context).scaffoldBackgroundColor,
+          ]
               : [
-                  widget.color.withOpacity(0.15),
-                  Theme.of(context).scaffoldBackgroundColor.withOpacity(0.5),
-                  Theme.of(context).scaffoldBackgroundColor,
-                ],
+            widget.color.withOpacity(0.15),
+            Theme.of(context).scaffoldBackgroundColor.withOpacity(0.5),
+            Theme.of(context).scaffoldBackgroundColor,
+          ],
           stops: const [0.0, 0.4, 1.0],
         ),
       ),
@@ -774,12 +774,12 @@ class _MarketingInfo extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark 
+          color: isDark
               ? Colors.white.withOpacity(0.05)
               : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: isDark 
+            color: isDark
                 ? Colors.white.withOpacity(0.1)
                 : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
           ),
@@ -906,14 +906,14 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
 
     final borderColor = widget.isSelected
         ? widget.color
-        : (isDark 
-            ? Theme.of(context).cardColor.withOpacity(0.5)
-            : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5));
+        : (isDark
+        ? Theme.of(context).cardColor.withOpacity(0.5)
+        : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5));
     final backgroundColor = widget.isSelected
         ? widget.color.withOpacity(0.15)
-        : (isDark 
-            ? Colors.white.withOpacity(0.05)
-            : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.1));
+        : (isDark
+        ? Colors.white.withOpacity(0.05)
+        : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.1));
 
     return SlideTransition(
       position: _slideAnimation,
@@ -1088,9 +1088,9 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
                           style: TextStyle(
                             color: widget.isSelected
                                 ? Colors.white
-                                : (Theme.of(context).brightness == Brightness.dark 
-                                    ? Theme.of(context).scaffoldBackgroundColor
-                                    : Colors.white),
+                                : (Theme.of(context).brightness == Brightness.dark
+                                ? Theme.of(context).scaffoldBackgroundColor
+                                : Colors.white),
                             fontWeight: FontWeight.bold,
                             fontSize: 10,
                           ),

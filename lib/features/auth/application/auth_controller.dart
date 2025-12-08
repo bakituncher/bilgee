@@ -10,6 +10,7 @@ import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:flutter/foundation.dart'; // kDebugMode ve debugPrint için
 import '../../../shared/notifications/notification_service.dart';
 import '../../../core/services/admob_service.dart';
+import '../../../core/services/revenuecat_service.dart'; // RevenueCat Service
 
 final authControllerProvider = StreamNotifierProvider<AuthController, User?>(() {
   return AuthController();
@@ -24,36 +25,72 @@ class AuthController extends StreamNotifier<User?> {
     // Auth state dinleyicisini ayarla
     final authSubscription = authStream.listen(_onUserActivity);
 
-    // RevenueCat müşteri bilgisi dinleyicisini ayarla
-    // Bu dinleyici, uygulama içindeki satın almalar veya sunucu tarafındaki
-    // değişiklikler (örn. abonelik yenileme) sonrası tetiklenir.
-    Purchases.addCustomerInfoUpdateListener((info) {
-      // Değişiklik olduğunda, rate-limit korumalı sunucu senkronunu tetikle.
-      _triggerServerSideSync();
-
-      // --- AdMob "Kill Switch" ---
-      // Kullanıcı premium satın aldığı anda, backend veya UI güncellemesini beklemeden
-      // reklamları anında temizle. Bu, "instant gratification" için kritiktir.
-      // Entitlement kontrolü basitçe yapılır (detaylı kontrol backend'de olsa da, buradaki
-      // amaç UI'ı anında temizlemektir).
-      final isPremium = info.entitlements.active.isNotEmpty;
-      if (isPremium) {
-        AdMobService().updatePremiumStatus(true);
-      } else {
-        // Eğer premium değilse (süresi bittiyse veya iptal edildiyse)
-        // Reklamları geri yükle.
-        AdMobService().updatePremiumStatus(false);
-      }
-
-      // Kullanıcı profilini yenileyerek genel state'in de güncellenmesini sağla
-      ref.invalidate(userProfileProvider);
-    });
+    // RevenueCat müşteri bilgisi dinleyicisini GÜVENLİ şekilde başlat
+    // Bu, RevenueCat'in initialize edilmesinden SONRA çalışacak
+    _setupRevenueCatListener();
 
     ref.onDispose(() {
       authSubscription.cancel();
     });
 
     return authStream;
+  }
+
+  // RevenueCat listener'ını güvenli ve asenkron şekilde kur
+  void _setupRevenueCatListener() {
+    Future.microtask(() async {
+      try {
+        // RevenueCat'in TAM OLARAK başlatılmasını bekle
+        // ensureInitialized, init tamamlanana kadar bekleyecek
+        if (kDebugMode) {
+          debugPrint('🔄 RevenueCat listener kuruluyor...');
+        }
+
+        await RevenueCatService.ensureInitialized().timeout(
+          const Duration(seconds: 10),
+          onTimeout: () {
+            if (kDebugMode) {
+              debugPrint('⚠️ RevenueCat initialization timeout, listener atlanıyor');
+            }
+            throw TimeoutException('RevenueCat not initialized in time');
+          },
+        );
+
+        // iOS için ek güvenlik: SDK'nın tam olarak hazır olması için kısa bir bekleme
+        await Future.delayed(const Duration(milliseconds: 500));
+
+        // Listener'ı kur - addCustomerInfoUpdateListener kullan
+        // Bu, RevenueCat SDK'nın resmi listener yöntemidir
+        Purchases.addCustomerInfoUpdateListener((CustomerInfo info) {
+          if (kDebugMode) {
+            debugPrint('📱 RevenueCat CustomerInfo güncellendi');
+            debugPrint('   Active entitlements: ${info.entitlements.active.keys.join(", ")}');
+          }
+
+          // Premium durumunu kontrol et
+          final isPremium = info.entitlements.active.isNotEmpty;
+
+          // AdMob durumunu güncelle
+          AdMobService().updatePremiumStatus(isPremium);
+
+          // Sunucu senkronizasyonunu tetikle
+          _triggerServerSideSync();
+
+          // User profile'ı yenile
+          ref.invalidate(userProfileProvider);
+        });
+
+        if (kDebugMode) {
+          debugPrint('✅ RevenueCat listener başarıyla kuruldu');
+        }
+      } catch (e, stackTrace) {
+        // RevenueCat henüz başlatılmamışsa veya hata varsa sessizce logla
+        if (kDebugMode) {
+          debugPrint('⚠️ RevenueCat listener kurulamadı (güvenli): $e');
+          debugPrint('   Stack trace: $stackTrace');
+        }
+      }
+    });
   }
 
   void _onUserActivity(User? user) {
@@ -215,21 +252,29 @@ class AuthController extends StreamNotifier<User?> {
 
   Future<void> _logInToRevenueCat(String uid) async {
     try {
+      // RevenueCat'in başlatıldığından emin ol
+      await Future.delayed(const Duration(milliseconds: 200));
       await Purchases.logIn(uid);
+      if (kDebugMode) {
+        debugPrint('✅ RevenueCat logIn başarılı: $uid');
+      }
     } catch (e) {
-      print("RevenueCat login error (safe to ignore): $e");
+      if (kDebugMode) {
+        debugPrint("⚠️ RevenueCat login error (güvenli): $e");
+      }
     }
   }
 
   Future<void> _logOutFromRevenueCat() async {
     try {
-      // DÜZELTME: Kullanıcı oturumunu sonlandırır ve yerel önbelleği temizler.
-      // Bu paketin eski sürümlerinde, bu işlem için `logOut` metodu kullanılır.
-      // Daha yeni sürümlerde bu metodun adı `reset` olarak değiştirilmiştir.
-      // Projedeki `purchases_flutter: ^9.7.1` sürümü için doğru kullanım budur.
       await Purchases.logOut();
+      if (kDebugMode) {
+        debugPrint('✅ RevenueCat logOut başarılı');
+      }
     } catch (e) {
-      print("RevenueCat logOut error (safe to ignore): $e");
+      if (kDebugMode) {
+        debugPrint("⚠️ RevenueCat logOut error (güvenli): $e");
+      }
     }
   }
 
