@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/gestures.dart';
 import 'package:taktik/shared/widgets/custom_date_picker.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -169,6 +170,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Widget build(BuildContext context) {
     final passValue = _passwordController.text;
     final strength = _passwordStrength(passValue);
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
@@ -506,25 +508,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
               ),
               const SizedBox(height: 12),
+              // UX İYİLEŞTİRMESİ VE APPLE POLİTİKA UYUMU BURADA:
               SizedBox(
                 height: 48,
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.apple, size: 24, color: Colors.white),
-                  onPressed: _isLoading ? null : _signInWithApple,
-                  label: const Text(
-                    'Apple ile Devam Et',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    foregroundColor: Colors.white,
-                    disabledBackgroundColor: Colors.black54,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
+                child: Opacity(
+                  opacity: _isLoading ? 0.6 : 1.0, // Yüklenirken %60 opaklık
+                  child: AbsorbPointer(
+                    absorbing: _isLoading, // Yüklenirken tıklamayı engelle
+                    child: SignInWithAppleButton(
+                      onPressed: _signInWithApple,
+                      text: 'Apple ile Devam Et',
+                      height: 48,
+                      // Dark mode'da Beyaz, Light mode'da Siyah buton
+                      style: isDarkMode
+                          ? SignInWithAppleButtonStyle.white
+                          : SignInWithAppleButtonStyle.black,
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),

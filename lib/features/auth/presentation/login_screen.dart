@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -351,26 +352,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               const SizedBox(height: 12),
                               SizedBox(
                                 height: 48,
-                                child: ElevatedButton.icon(
-                                  icon: const Icon(Icons.apple, size: 24, color: Colors.white),
-                                  onPressed: _isLoading ? null : _signInWithApple,
-                                  label: const Text(
-                                    'Apple ile Giriş Yap',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.black,
-                                    foregroundColor: Colors.white,
-                                    disabledBackgroundColor: Colors.black54,
-                                    elevation: 0,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
+                                child: SignInWithAppleButton(
+                                  onPressed: _isLoading ? () {} : _signInWithApple,
+                                  text: 'Apple ile Giriş Yap',
+                                  height: 48,
+                                  style: Theme.of(context).brightness == Brightness.dark
+                                      ? SignInWithAppleButtonStyle.white
+                                      : SignInWithAppleButtonStyle.black,
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
                             ],
