@@ -495,11 +495,22 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               const SizedBox(height: 12),
               SizedBox(
                 height: 48,
-                child: OutlinedButton.icon(
-                  icon: const Icon(Icons.apple, size: 24),
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.apple, size: 24, color: Colors.white),
                   onPressed: _isLoading ? null : _signInWithApple,
-                  label: const Text('Apple ile Devam Et'),
-                  style: OutlinedButton.styleFrom(
+                  label: const Text(
+                    'Apple ile Devam Et',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: Colors.black54,
+                    elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
