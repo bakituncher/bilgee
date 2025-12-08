@@ -175,7 +175,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     final marketingSlides = [
       (
       title: 'Sınırsız TaktikAI Koçu',
-      subtitle: 'Yapay zeka koçunuzla sınırsız strateji ve ders desteği.',
+      subtitle: 'Koçunuz Taktik Tavşan ile sınırsız strateji ve ders desteği.',
       icon: Icons.rocket_launch_rounded,
       color: const Color(0xFF5b3d88)
       ),
@@ -199,7 +199,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
       ),
       (
       title: 'Gelişmiş Test Analizi',
-      subtitle: 'Yapay zeka yorumlarıyla detaylı performans raporları.',
+      subtitle: "Taktik Tavşan'ın yorumlarıyla detaylı performans raporları.",
       icon: Icons.analytics_rounded,
       color: Theme.of(context).colorScheme.tertiary
       ),

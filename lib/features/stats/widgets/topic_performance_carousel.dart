@@ -124,7 +124,7 @@ class _TopicPerformanceCarouselState extends ConsumerState<TopicPerformanceCarou
           ),
         ),
         SizedBox(
-          height: 180,
+          height: 220,
           child: ListView.builder(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             scrollDirection: Axis.horizontal,
@@ -244,10 +244,9 @@ class _TopicStatCard extends StatelessWidget {
     ];
 
     final colorPair = colors[index % colors.length];
-    final total = stat.totalCorrect + stat.totalWrong + stat.totalEmpty;
 
     return Container(
-      width: 160,
+      width: 180,
       margin: const EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -272,72 +271,82 @@ class _TopicStatCard extends StatelessWidget {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Başlık ve konu adı
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  stat.subject,
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: colorPair[0].withOpacity(0.8),
-                    letterSpacing: 0.5,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  stat.name,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
-                    letterSpacing: -0.3,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-
-            // Ana metrik - Doğruluk oranı
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  '${stat.accuracy.toStringAsFixed(1)}%',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w900,
-                    color: colorPair[0],
-                    height: 1,
-                    letterSpacing: -1,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Text(
-                    'doğruluk',
+            // Başlık ve konu adı - Sabit yükseklik
+            SizedBox(
+              height: 52,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    stat.subject,
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
-                      color: isDark
-                          ? Colors.white.withOpacity(0.5)
-                          : Colors.black.withOpacity(0.4),
+                      color: colorPair[0].withOpacity(0.8),
+                      letterSpacing: 0.5,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Expanded(
+                    child: Text(
+                      stat.name,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        letterSpacing: -0.3,
+                        height: 1.2,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 6),
+
+            // Ana metrik - Doğruluk oranı - Sabit yükseklik
+            SizedBox(
+              height: 38,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '${stat.accuracy.toStringAsFixed(1)}%',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w900,
+                      color: colorPair[0],
+                      height: 1,
+                      letterSpacing: -1,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text(
+                      'doğruluk',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: isDark
+                            ? Colors.white.withOpacity(0.5)
+                            : Colors.black.withOpacity(0.4),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 6),
 
             // İlerleme çubuğu
             ClipRRect(
@@ -351,98 +360,104 @@ class _TopicStatCard extends StatelessWidget {
                 valueColor: AlwaysStoppedAnimation(colorPair[0]),
               ),
             ),
-            const Spacer(),
+            const SizedBox(height: 8),
 
-            // İstatistikler
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _MiniStat(
-                  icon: Icons.check_circle_rounded,
-                  value: stat.totalCorrect.toString(),
-                  color: Colors.green,
-                  isDark: isDark,
-                ),
-                _MiniStat(
-                  icon: Icons.cancel_rounded,
-                  value: stat.totalWrong.toString(),
-                  color: Colors.red,
-                  isDark: isDark,
-                ),
-                _MiniStat(
-                  icon: Icons.remove_circle_rounded,
-                  value: stat.totalEmpty.toString(),
-                  color: Colors.orange,
-                  isDark: isDark,
-                ),
-              ],
+            // İstatistikler - Sabit yükseklik
+            SizedBox(
+              height: 20,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _MiniStat(
+                    icon: Icons.check_circle_rounded,
+                    value: stat.totalCorrect.toString(),
+                    color: Colors.green,
+                    isDark: isDark,
+                  ),
+                  _MiniStat(
+                    icon: Icons.cancel_rounded,
+                    value: stat.totalWrong.toString(),
+                    color: Colors.red,
+                    isDark: isDark,
+                  ),
+                  _MiniStat(
+                    icon: Icons.remove_circle_rounded,
+                    value: stat.totalEmpty.toString(),
+                    color: Colors.orange,
+                    isDark: isDark,
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
 
-            // Toplam soru sayısı ve mastery badge
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: colorPair[0].withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.quiz_rounded,
-                        size: 11,
-                        color: colorPair[0],
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${stat.totalQuestions} soru',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: colorPair[0],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (stat.mastery >= 80)
+            // Toplam soru sayısı ve mastery badge - Sabit yükseklik
+            SizedBox(
+              height: 28,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.amber.withOpacity(0.3),
-                          Colors.orange.withOpacity(0.2),
-                        ],
-                      ),
+                      color: colorPair[0].withOpacity(0.15),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.amber.withOpacity(0.5)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          Icons.stars_rounded,
-                          size: 10,
-                          color: Colors.amber.shade700,
+                          Icons.quiz_rounded,
+                          size: 11,
+                          color: colorPair[0],
                         ),
-                        const SizedBox(width: 2),
+                        const SizedBox(width: 4),
                         Text(
-                          'Uzman',
+                          '${stat.totalQuestions} soru',
                           style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.amber.shade700,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: colorPair[0],
                           ),
                         ),
                       ],
                     ),
                   ),
-              ],
+                  if (stat.mastery >= 80)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.amber.withOpacity(0.3),
+                            Colors.orange.withOpacity(0.2),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.amber.withOpacity(0.5)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.stars_rounded,
+                            size: 10,
+                            color: Colors.amber.shade700,
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            'Uzman',
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.amber.shade700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
             ),
           ],
         ),
