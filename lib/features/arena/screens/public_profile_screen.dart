@@ -50,7 +50,19 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
       if (byteData == null) return;
       final bytes = byteData.buffer.asUint8List();
       final xfile = XFile.fromData(bytes, name: 'warrior_card.png', mimeType: 'image/png');
-      await Share.shareXFiles([xfile], text: 'Savaşçı Künyem');
+
+      // iOS için sharePositionOrigin gerekli
+      final box = context.findRenderObject() as RenderBox?;
+      final sharePositionOrigin = box != null
+          ? box.localToGlobal(Offset.zero) & box.size
+          : null;
+
+      // ignore: deprecated_member_use
+      await Share.shareXFiles(
+        [xfile],
+        text: 'Savaşçı Künyem',
+        sharePositionOrigin: sharePositionOrigin,
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Paylaşım hatası: $e')));

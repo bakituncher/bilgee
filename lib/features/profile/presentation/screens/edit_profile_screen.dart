@@ -145,6 +145,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profilimi Düzenle'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: 'Geri',
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ),
       body: userProfileAsync.when(
         data: (user) {
