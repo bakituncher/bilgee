@@ -517,8 +517,12 @@ exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => 
     return {processed, sent};
   }
 
-  function scheduleSpecAt(hour, minute = 0) {
-    return {schedule: `${minute} ${hour} * * *`, timeZone: 'Europe/Istanbul'};
+function scheduleSpecAt(hour, minute = 0) {
+    return {
+      schedule: `${minute} ${hour} * * *`,
+      timeZone: 'Europe/Istanbul',
+      timeoutSeconds: 540  // Sadece bunu ekledik (9 dakika süre)
+    };
   }
 
   // ---- ZAMANLANMIŞ BİLDİRİM FONKSİYONLARI ----
