@@ -1024,7 +1024,7 @@ class _PremiumOfferCard extends StatelessWidget {
   List<Widget> _buildBenefitsList() {
     final benefits = [
       {'icon': Icons.block_rounded, 'text': 'Reklamsız Deneyim'},
-      {'icon': Icons.psychology_rounded, 'text': 'TaktikAI Desteği'},
+      {'icon': Icons.psychology_rounded, 'text': 'Taktik Tavşan Desteği'},
       {'icon': Icons.radar_rounded, 'text': 'Eksik Analizi'},
       {'icon': Icons.all_inclusive_rounded, 'text': 'Sınırsız Arşiv'},
       {'icon': Icons.trending_up_rounded, 'text': 'Detaylı Raporlar'},
