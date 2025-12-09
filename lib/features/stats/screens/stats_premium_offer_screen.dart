@@ -464,7 +464,7 @@ class _StatsPremiumOfferScreenState extends ConsumerState<StatsPremiumOfferScree
                                     SizedBox(height: 8),
                                     _FeatureItem(
                                         icon: Icons.psychology_rounded,
-                                        text: 'AI destekli akıllı öneriler'),
+                                        text: "Taktik Tavşan'dan akıllı öneriler"),
                                     SizedBox(height: 8),
                                     _FeatureItem(
                                         icon: Icons.trending_up_rounded,

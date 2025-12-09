@@ -79,71 +79,68 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
             // PREMIUM APP BAR
             SliverAppBar(
               expandedHeight: 140,
+              collapsedHeight: 60,
               pinned: true,
               floating: false,
-              backgroundColor: const Color(0xFF1A1A1A),
-              automaticallyImplyLeading: false,
+              backgroundColor: colorScheme.primary,
+              leading: IconButton(
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.close_rounded, color: Colors.white, size: 20),
+                ),
+                onPressed: () => context.canPop() ? context.pop() : context.go('/home'),
+              ),
               flexibleSpace: FlexibleSpaceBar(
-                titlePadding: const EdgeInsets.only(left: 60, right: 16, bottom: 16),
+                centerTitle: true,
+                titlePadding: EdgeInsets.only(
+                  left: 56,
+                  right: 56,
+                  bottom: innerBoxIsScrolled ? 16 : 20,
+                ),
                 title: Column(
                   mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     const Text(
                       'Taktik Rehberi',
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
-                        fontSize: 19,
+                        fontSize: 20,
                         color: Colors.white,
                         letterSpacing: 0.3,
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Akıllı çalış, başarıyı yakala',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.white.withOpacity(0.85),
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: 0.2,
+                    if (!innerBoxIsScrolled) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Akıllı çalış, başarıyı yakala',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white.withOpacity(0.9),
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 0.2,
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
-                background: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            colorScheme.primary,
-                            colorScheme.primary.withBlue(180),
-                            const Color(0xFF1E3A8A),
-                          ],
-                          stops: const [0.0, 0.5, 1.0],
-                        ),
-                      ),
+                background: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        colorScheme.primary,
+                        colorScheme.primary.withBlue(180),
+                        const Color(0xFF1E3A8A),
+                      ],
+                      stops: const [0.0, 0.5, 1.0],
                     ),
-                    // Close button positioned safely
-                    Positioned(
-                      top: MediaQuery.of(context).padding.top + 8,
-                      left: 8,
-                      child: IconButton(
-                        icon: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.black38,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.close_rounded, color: Colors.white, size: 20),
-                        ),
-                        onPressed: () => context.canPop() ? context.pop() : context.go('/home'),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -390,7 +387,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           context,
           isDark: isDark,
           icon: Icons.psychology_alt_rounded,
-          title: 'Yapay Zeka Seni Öğrensin',
+          title: 'Taktik Tavşan Seni Öğrensin',
           content: 'Sınav türün, hedef puanın, güçlü/zayıf konuların analiz edilip sana özel strateji oluşturulur.',
           accentColor: Colors.blue,
           bottomContent: Column(
@@ -627,7 +624,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
 
         _buildSectionHeader(
           'Sadece Kayıt Değil, Analiz',
-          'Netlerini giriyorsun, AI her şeyi analiz ediyor.',
+          'Netlerini giriyorsun, Taktik Tavşan her şeyi analiz ediyor.',
           color: Colors.redAccent,
         ),
 
@@ -653,7 +650,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           isDark: isDark,
           icon: Icons.gps_fixed_rounded,
           title: 'Zayıf Nokta Tespit Sistemi',
-          content: 'Sürekli aynı konularda mı takılıyorsun? AI bunu fark eder ve kırmızı alarm verir.',
+          content: 'Sürekli aynı konularda mı takılıyorsun? Taktik Tavşan bunu fark eder ve kırmızı alarm verir.',
           accentColor: Colors.orange,
           bottomContent: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -792,7 +789,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
 
         _buildSectionHeader(
           'Nasıl Çalışır?',
-          'AI analiz eder, sen sadece takip et.',
+          'Taktik Tavşan analiz eder, sen sadece takip et.',
           color: Colors.purple,
         ),
 
@@ -800,7 +797,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           context,
           isDark: isDark,
           icon: Icons.psychology_rounded,
-          title: 'AI Zayıf Noktayı Bulur',
+          title: 'Taktik Tavşan Zayıf Noktayı Bulur',
           content: 'Deneme verilerine bakarak hangi konularda en çok hata yaptığını tespit eder. Sonra bunları "Cevher" olarak işaretler.',
           accentColor: Colors.deepPurple,
         ),
@@ -810,7 +807,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           isDark: isDark,
           icon: Icons.auto_fix_high_rounded,
           title: '3 Aşamalı Özel Reçete',
-          content: 'Her cevher için AI, sana özel 3 aşamalı çalışma planı hazırlar.',
+          content: 'Her cevher için Taktik Tavşan, sana özel 3 aşamalı çalışma planı hazırlar.',
           accentColor: Colors.purple,
           bottomContent: Column(
             children: [
@@ -1162,8 +1159,8 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           context,
           isDark: isDark,
           icon: Icons.psychology_rounded,
-          title: 'AI Önerileri',
-          content: 'İstatistiklerine bakarak AI, sana özel tavsiyeler verir.',
+          title: 'TaktiK Tavşan Önerileri',
+          content: 'İstatistiklerine bakarak Taktik Tavşan, sana özel tavsiyeler verir.',
           accentColor: Colors.teal,
         ),
 

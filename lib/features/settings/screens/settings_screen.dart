@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
@@ -38,7 +39,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: theme.colorScheme.errorContainer.withOpacity(0.3),
+                color: theme.colorScheme.errorContainer.withValues(alpha: 0.3),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -63,10 +64,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: theme.colorScheme.errorContainer.withOpacity(0.2),
+                color: theme.colorScheme.errorContainer.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: theme.colorScheme.error.withOpacity(0.3),
+                  color: theme.colorScheme.error.withValues(alpha: 0.3),
                 ),
               ),
               child: Column(
@@ -90,7 +91,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     "Tüm verileriniz kalıcı olarak silinecektir.",
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyLarge?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.8),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
                     ),
                   ),
                 ],
@@ -163,7 +164,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.errorContainer.withOpacity(0.3),
+                          color: theme.colorScheme.errorContainer.withValues(alpha: 0.3),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -197,10 +198,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           vertical: 10,
                         ),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.errorContainer.withOpacity(0.15),
+                          color: theme.colorScheme.errorContainer.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: theme.colorScheme.error.withOpacity(0.4),
+                            color: theme.colorScheme.error.withValues(alpha: 0.4),
                             width: 1.5,
                           ),
                         ),
@@ -240,7 +241,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           decoration: InputDecoration(
                             hintText: confirmationText,
                             hintStyle: TextStyle(
-                              color: theme.colorScheme.onSurface.withOpacity(0.25),
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.25),
                               fontWeight: FontWeight.w500,
                               letterSpacing: 1.1,
                             ),
@@ -258,7 +259,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
                               borderSide: BorderSide(
-                                color: theme.colorScheme.outline.withOpacity(0.3),
+                                color: theme.colorScheme.outline.withValues(alpha: 0.3),
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
@@ -571,6 +572,72 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
+  // Avatar gösterme widget'ı
+  Widget _buildAvatarWidget(dynamic user, ThemeData theme) {
+    final firstName = user.firstName ?? '';
+    final email = user.email ?? '';
+    final avatarStyle = user.avatarStyle;
+    final avatarSeed = user.avatarSeed;
+
+    // Avatar URL'i oluştur
+    String? avatarUrl;
+    if (avatarStyle != null && avatarSeed != null) {
+      final style = avatarStyle;
+      final seed = Uri.encodeComponent(avatarSeed);
+      avatarUrl = 'https://api.dicebear.com/7.x/$style/svg?seed=$seed';
+    }
+
+    // Başlangıç harfi
+    final initials = firstName.isNotEmpty
+        ? firstName.substring(0, 1).toUpperCase()
+        : email.isNotEmpty
+            ? email.substring(0, 1).toUpperCase()
+            : '?';
+
+    return Container(
+      width: 64,
+      height: 64,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.primary.withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: avatarUrl != null
+          ? ClipOval(
+              child: SvgPicture.network(
+                avatarUrl,
+                width: 64,
+                height: 64,
+                fit: BoxFit.cover,
+                placeholderBuilder: (_) => Center(
+                  child: Text(
+                    initials,
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      color: theme.colorScheme.onPrimary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            )
+          : Center(
+              child: Text(
+                initials,
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  color: theme.colorScheme.onPrimary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+    );
+  }
+
   // Profil header widget'ı
   Widget _buildProfileHeader(BuildContext context, dynamic user) {
     final theme = Theme.of(context);
@@ -580,11 +647,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final displayName = firstName.isNotEmpty
         ? '$firstName ${lastName.isNotEmpty ? lastName : ''}'.trim()
         : 'Kullanıcı';
-    final initials = firstName.isNotEmpty
-        ? firstName.substring(0, 1).toUpperCase()
-        : email.isNotEmpty
-            ? email.substring(0, 1).toUpperCase()
-            : '?';
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 24),
@@ -601,7 +663,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.primary.withOpacity(0.1),
+            color: theme.colorScheme.primary.withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: theme.colorScheme.primary.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -610,53 +677,37 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       child: Row(
         children: [
           // Avatar
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: theme.colorScheme.primary.withOpacity(0.3),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Center(
-              child: Text(
-                initials,
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  color: theme.colorScheme.onPrimary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
+          _buildAvatarWidget(user, theme),
           const SizedBox(width: 16),
           // User info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  displayName,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.onPrimaryContainer,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    displayName,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onPrimaryContainer,
+                    ),
+                    maxLines: 1,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  email,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onPrimaryContainer.withOpacity(0.8),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    email,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.8),
+                    ),
+                    maxLines: 1,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -902,10 +953,10 @@ class _SettingsCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: theme.colorScheme.outlineVariant.withOpacity(0.5),
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
           width: 1,
         ),
       ),
@@ -945,44 +996,66 @@ class _ThemeSelection extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 12),
-        SegmentedButton<ThemeMode>(
-          segments: <ButtonSegment<ThemeMode>>[
-            ButtonSegment<ThemeMode>(
-              value: ThemeMode.light,
-              label: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: const Text('Açık'),
+        SizedBox(
+          width: double.infinity,
+          child: SegmentedButton<ThemeMode>(
+            segments: <ButtonSegment<ThemeMode>>[
+              ButtonSegment<ThemeMode>(
+                value: ThemeMode.light,
+                label: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.center,
+                  child: const Text(
+                    'Açık',
+                    maxLines: 1,
+                    softWrap: false,
+                    overflow: TextOverflow.visible,
+                  ),
+                ),
+                icon: const Icon(Icons.wb_sunny_outlined, size: 18),
               ),
-              icon: const Icon(Icons.wb_sunny_outlined, size: 18),
-            ),
-            ButtonSegment<ThemeMode>(
-              value: ThemeMode.dark,
-              label: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: const Text('Koyu'),
+              ButtonSegment<ThemeMode>(
+                value: ThemeMode.dark,
+                label: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.center,
+                  child: const Text(
+                    'Koyu',
+                    maxLines: 1,
+                    softWrap: false,
+                    overflow: TextOverflow.visible,
+                  ),
+                ),
+                icon: const Icon(Icons.nightlight_round, size: 18),
               ),
-              icon: const Icon(Icons.nightlight_round, size: 18),
-            ),
-            ButtonSegment<ThemeMode>(
-              value: ThemeMode.system,
-              label: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: const Text('Sistem'),
+              ButtonSegment<ThemeMode>(
+                value: ThemeMode.system,
+                label: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.center,
+                  child: const Text(
+                    'Sistem',
+                    maxLines: 1,
+                    softWrap: false,
+                    overflow: TextOverflow.visible,
+                  ),
+                ),
+                icon: const Icon(Icons.phone_iphone_rounded, size: 18),
               ),
-              icon: const Icon(Icons.phone_iphone_rounded, size: 18),
+            ],
+            selected: <ThemeMode>{currentThemeMode},
+            onSelectionChanged: (Set<ThemeMode> newSelection) {
+              ref.read(themeModeNotifierProvider.notifier).setThemeMode(newSelection.first);
+            },
+            style: SegmentedButton.styleFrom(
+              backgroundColor: theme.colorScheme.surface,
+              foregroundColor: theme.colorScheme.onSurfaceVariant,
+              selectedForegroundColor: theme.colorScheme.onPrimary,
+              selectedBackgroundColor: theme.colorScheme.primary,
+              side: BorderSide(color: theme.colorScheme.outlineVariant),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-          ],
-          selected: <ThemeMode>{currentThemeMode},
-          onSelectionChanged: (Set<ThemeMode> newSelection) {
-            ref.read(themeModeNotifierProvider.notifier).setThemeMode(newSelection.first);
-          },
-          style: SegmentedButton.styleFrom(
-            backgroundColor: theme.colorScheme.surface,
-            foregroundColor: theme.colorScheme.onSurfaceVariant,
-            selectedForegroundColor: theme.colorScheme.onPrimary,
-            selectedBackgroundColor: theme.colorScheme.primary,
-            side: BorderSide(color: theme.colorScheme.outlineVariant),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            showSelectedIcon: false,
           ),
         ),
       ],

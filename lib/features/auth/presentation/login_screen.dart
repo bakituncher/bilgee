@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -324,13 +325,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               const SizedBox(height: 16),
                               SizedBox(
                                 height: 48,
-                                child: OutlinedButton.icon(
+                                child: ElevatedButton.icon(
                                   icon: SvgPicture.asset('assets/images/google_logo.svg', height: 24),
                                   onPressed: _isLoading ? null : _signInWithGoogle,
-                                  label: const Text('Google ile Giriş Yap'),
-                                  style: OutlinedButton.styleFrom(
+                                  label: const Text(
+                                    'Google ile Giriş Yap',
+                                    style: TextStyle(
+                                      color: Color(0xFF1F1F1F),
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    foregroundColor: const Color(0xFF1F1F1F),
+                                    disabledBackgroundColor: Colors.grey.shade100,
+                                    elevation: 1,
+                                    shadowColor: Colors.black26,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
+                                      side: BorderSide(color: Colors.grey.shade300, width: 1),
                                     ),
                                   ),
                                 ),
@@ -338,15 +352,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               const SizedBox(height: 12),
                               SizedBox(
                                 height: 48,
-                                child: OutlinedButton.icon(
-                                  icon: const Icon(Icons.apple, size: 24),
-                                  onPressed: _isLoading ? null : _signInWithApple,
-                                  label: const Text('Apple ile Giriş Yap'),
-                                  style: OutlinedButton.styleFrom(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
+                                child: SignInWithAppleButton(
+                                  onPressed: _isLoading ? () {} : _signInWithApple,
+                                  text: 'Apple ile Giriş Yap',
+                                  height: 48,
+                                  style: Theme.of(context).brightness == Brightness.dark
+                                      ? SignInWithAppleButtonStyle.white
+                                      : SignInWithAppleButtonStyle.black,
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
                             ],

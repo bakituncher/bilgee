@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/gestures.dart';
 import 'package:taktik/shared/widgets/custom_date_picker.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -35,6 +36,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool _obscurePass1 = true;
   bool _obscurePass2 = true;
   bool _acceptPolicy = true;
+
+  // İki aşamalı kayıt için
+  bool _showEmailForm = false;
 
   @override
   void dispose() {
@@ -169,36 +173,309 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Widget build(BuildContext context) {
     final passValue = _passwordController.text;
     final strength = _passwordStrength(passValue);
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Kayıt Ol'),
+        title: Text(_showEmailForm ? 'Kayıt Ol' : 'Hesap Oluştur'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Girişe dön',
+          tooltip: _showEmailForm ? 'Geri dön' : 'Girişe dön',
           onPressed: () {
-            if (context.canPop()) {
-              Navigator.of(context).pop();
+            if (_showEmailForm) {
+              setState(() {
+                _showEmailForm = false;
+                _errorMessage = null;
+              });
             } else {
-              context.go(AppRoutes.login);
+              if (context.canPop()) {
+                Navigator.of(context).pop();
+              } else {
+                context.go(AppRoutes.login);
+              }
             }
           },
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+      body: _showEmailForm ? _buildEmailForm(context, passValue, strength, isDarkMode) : _buildMethodSelection(context, isDarkMode),
+    );
+  }
+
+  Widget _buildMethodSelection(BuildContext context, bool isDarkMode) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: 20),
+          // Logo veya İkon
+          Container(
+            height: 100,
+            width: 100,
+            alignment: Alignment.center,
+            child: Icon(
+              Icons.account_circle_rounded,
+              size: 100,
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
+            ),
+          ),
+          const SizedBox(height: 32),
+          Text(
+            'Taktik\'e Hoş Geldin!',
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Hesabını oluşturmak için bir yöntem seç',
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 48),
+
+          // Hata mesajı
+          if (_errorMessage != null && _errorMessage!.isNotEmpty)
+            Card(
+              color: Theme.of(context).colorScheme.errorContainer,
+              margin: const EdgeInsets.only(bottom: 24),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                child: Row(
+                  children: [
+                    Icon(Icons.error_outline, color: Theme.of(context).colorScheme.onErrorContainer),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _errorMessage!,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onErrorContainer,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Kapat',
+                      onPressed: _isLoading ? null : () => setState(() => _errorMessage = null),
+                      icon: Icon(Icons.close_rounded, color: Theme.of(context).colorScheme.onErrorContainer),
+                    )
+                  ],
+                ),
+              ),
+            ),
+
+          // E-posta ile Devam Et Butonu
+          SizedBox(
+            height: 56,
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.email_outlined, size: 24),
+              onPressed: _isLoading ? null : () {
+                setState(() {
+                  _showEmailForm = true;
+                  _errorMessage = null;
+                });
+              },
+              label: const Text(
+                'E-posta ile Devam Et',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          Row(
+            children: [
+              Expanded(child: Divider(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3))),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  'veya',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+              ),
+              Expanded(child: Divider(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3))),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Google ile Devam Et
+          SizedBox(
+            height: 56,
+            child: ElevatedButton.icon(
+              icon: SvgPicture.asset('assets/images/google_logo.svg', height: 24),
+              onPressed: _isLoading ? null : _signInWithGoogle,
+              label: const Text(
+                'Google ile Devam Et',
+                style: TextStyle(
+                  color: Color(0xFF1F1F1F),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: const Color(0xFF1F1F1F),
+                disabledBackgroundColor: Colors.grey.shade100,
+                elevation: 0,
+                shadowColor: Colors.transparent,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: Colors.grey.shade300, width: 1.5),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Apple ile Devam Et
+          SizedBox(
+            height: 56,
+            child: Opacity(
+              opacity: _isLoading ? 0.6 : 1.0,
+              child: AbsorbPointer(
+                absorbing: _isLoading,
+                child: SignInWithAppleButton(
+                  onPressed: _signInWithApple,
+                  text: 'Apple ile Devam Et',
+                  height: 56,
+                  style: isDarkMode
+                      ? SignInWithAppleButtonStyle.white
+                      : SignInWithAppleButtonStyle.black,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 32),
+
+          // Zaten hesabın var mı?
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                'Taktik\'e Hoş Geldin!',
-                style: Theme.of(context).textTheme.headlineMedium,
-                textAlign: TextAlign.center,
+                'Zaten bir hesabın var mı?',
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
-              const SizedBox(height: 12),
-              if (_errorMessage != null && _errorMessage!.isNotEmpty)
+              TextButton(
+                onPressed: _isLoading ? null : () {
+                  context.go(AppRoutes.login);
+                },
+                child: const Text(
+                  'Giriş Yap',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          // Politika metni
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: RichText(
+              textAlign: TextAlign.center,
+              text: TextSpan(
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
+                children: [
+                  const TextSpan(text: 'Devam ederek '),
+                  TextSpan(
+                    text: 'Kullanım Sözleşmesi',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                      decoration: TextDecoration.underline,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = () async {
+                        const url = 'https://www.codenzi.com/taktik-kullanim-sozlesmesi.html';
+                        final uri = Uri.parse(url);
+                        try {
+                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Link açılamadı')),
+                            );
+                          }
+                        }
+                      },
+                  ),
+                  const TextSpan(text: ' ve '),
+                  TextSpan(
+                    text: 'Gizlilik Politikası',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                      decoration: TextDecoration.underline,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = () async {
+                        const url = 'https://www.codenzi.com/taktik-gizlilik-politikasi.html';
+                        final uri = Uri.parse(url);
+                        try {
+                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Link açılamadı')),
+                            );
+                          }
+                        }
+                      },
+                  ),
+                  const TextSpan(text: "'nı kabul etmiş olursunuz."),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmailForm(BuildContext context, String passValue, double strength, bool isDarkMode) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Bilgilerini Tamamla',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Hesabını oluşturmak için aşağıdaki bilgileri doldur',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            if (_errorMessage != null && _errorMessage!.isNotEmpty)
                 Card(
                   color: Theme.of(context).colorScheme.errorContainer,
                   child: Padding(
@@ -363,7 +640,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 borderRadius: BorderRadius.circular(6),
                 child: LinearProgressIndicator(
                   value: strength <= 0.05 ? 0.05 : strength,
-                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                   valueColor: AlwaysStoppedAnimation(
                     strength < .34 ? Colors.redAccent : (strength < .67 ? Colors.amber : Colors.green),
                   ),
@@ -460,59 +737,55 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
-              ElevatedButton(
+            const SizedBox(height: 24),
+            SizedBox(
+              height: 52,
+              child: ElevatedButton(
                 onPressed: _isLoading ? null : _submit,
-                style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
                 child: _isLoading
-                    ? SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Theme.of(context).colorScheme.onPrimary, strokeWidth: 2))
-                    : const Text('Kayıt Ol'),
+                    ? SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text(
+                        'Kayıt Ol',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
               ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(child: Divider(color: Theme.of(context).colorScheme.outline.withOpacity(0.5))),
-                  const SizedBox(width: 12),
-                  Text('veya', style: Theme.of(context).textTheme.bodySmall),
-                  const SizedBox(width: 12),
-                  Expanded(child: Divider(color: Theme.of(context).colorScheme.outline.withOpacity(0.5))),
-                ],
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                height: 48,
-                child: OutlinedButton.icon(
-                  icon: SvgPicture.asset('assets/images/google_logo.svg', height: 24),
-                  onPressed: _isLoading ? null : _signInWithGoogle,
-                  label: const Text('Google ile Devam Et'),
-                  style: OutlinedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Zaten bir hesabın var mı?',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                TextButton(
+                  onPressed: _isLoading ? null : () {
+                    context.go(AppRoutes.login);
+                  },
+                  child: const Text(
+                    'Giriş Yap',
+                    style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                height: 48,
-                child: OutlinedButton.icon(
-                  icon: const Icon(Icons.apple, size: 24),
-                  onPressed: _isLoading ? null : _signInWithApple,
-                  label: const Text('Apple ile Devam Et'),
-                  style: OutlinedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextButton(
-                onPressed: _isLoading ? null : () { context.go(AppRoutes.login); },
-                child: const Text('Zaten bir hesabın var mı? Giriş Yap'),
-              )
-            ],
-          ),
+              ],
+            ),
+          ],
         ),
       ),
     );

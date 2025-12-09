@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
-import 'package:taktik/data/repositories/firestore_service.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
 import 'package:taktik/features/profile/widgets/user_moderation_menu.dart';
 
@@ -62,9 +61,9 @@ class FollowListScreen extends ConsumerWidget {
                 );
               }
               return ListView.separated(
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                 itemCount: ids.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   final uid = ids[index];
                   if (uid == me!.uid) return const SizedBox.shrink();
@@ -91,13 +90,6 @@ class _FollowListTile extends ConsumerStatefulWidget {
 
 class _FollowListTileState extends ConsumerState<_FollowListTile> {
   bool? _optimistic; // null: stream belirleyici, true/false: anlık göster
-
-  bool _looksLikeId(String s) {
-    final t = s.trim();
-    if (t.isEmpty) return false;
-    // Çok uzun ve alfasayısal UID benzeri dizeleri isim olarak kabul etme
-    return RegExp(r'^[A-Za-z0-9_-]{20,}$').hasMatch(t);
-  }
 
   String _safeDisplayName(Map<String, dynamic>? data) {
     // GÜVENLİK: Gerçek isim yerine username (13-17 yaş koruması)
@@ -134,127 +126,179 @@ class _FollowListTileState extends ConsumerState<_FollowListTile> {
         final avatarSeed = data?['avatarSeed'] as String?;
         final isFollowing = _optimistic ?? (isFollowingAsync.valueOrNull ?? false);
 
-        return Material(
-          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.03),
-          borderRadius: BorderRadius.circular(16),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: () => context.push('/arena/${widget.targetUserId}'),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 22,
-                    backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.06),
-                    child: ClipOval(
-                      child: (avatarStyle != null && avatarSeed != null)
-                          ? SvgPicture.network(
-                              'https://api.dicebear.com/9.x/$avatarStyle/svg?seed=$avatarSeed',
-                              fit: BoxFit.cover,
-                              width: 44,
-                              height: 44,
-                              placeholderBuilder: (_) => const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2)),
-                            )
-                          : Text(
-                              displayName.startsWith('@') && displayName.length > 1
-                                  ? displayName.substring(1, 2).toUpperCase()
-                                  : displayName.substring(0, 1).toUpperCase(),
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                            ),
+        return Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.03),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.08),
+            ),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () => context.push('/arena/${widget.targetUserId}'),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 24,
+                      backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.06),
+                      child: ClipOval(
+                        child: (avatarStyle != null && avatarSeed != null)
+                            ? SvgPicture.network(
+                                'https://api.dicebear.com/9.x/$avatarStyle/svg?seed=$avatarSeed',
+                                fit: BoxFit.cover,
+                                width: 48,
+                                height: 48,
+                                placeholderBuilder: (_) => const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                ),
+                              )
+                            : Text(
+                                displayName.startsWith('@') && displayName.length > 1
+                                    ? displayName.substring(1, 2).toUpperCase()
+                                    : displayName.substring(0, 1).toUpperCase(),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                ),
+                              ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          displayName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-                        ),
-                        const SizedBox(height: 4),
-                        countsAsync.when(
-                          data: (c) => Text(
-                            'Takipçi ${c.$1} • Takip ${c.$2}',
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            displayName,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: Theme.of(context).colorScheme.onSurface,
+                                ),
                           ),
-                          loading: () => const SizedBox(height: 14, child: LinearProgressIndicator(minHeight: 6)),
-                          error: (e, s) => const SizedBox.shrink(),
-                        ),
-                      ],
+                          const SizedBox(height: 4),
+                          countsAsync.when(
+                            data: (c) => Text(
+                              'Takipçi ${c.$1} • Takip ${c.$2}',
+                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                                  ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            loading: () => Container(
+                              height: 14,
+                              width: 80,
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(7),
+                              ),
+                            ),
+                            error: (e, s) => const SizedBox.shrink(),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  // Moderasyon menüsü
-                  UserModerationMenu(
-                    targetUserId: widget.targetUserId,
-                    targetUserName: displayName,
+                    const SizedBox(width: 8),
+                    // Moderasyon menüsü
+                    UserModerationMenu(
+                      targetUserId: widget.targetUserId,
+                      targetUserName: displayName,
                     onBlocked: () {
                       // Engelleme sonrası listeyi yenile
-                      ref.invalidate(followerIdsProvider(me!.uid));
-                      ref.invalidate(followingIdsProvider(me!.uid));
+                      if (me != null) {
+                        ref.invalidate(followerIdsProvider(me.uid));
+                        ref.invalidate(followingIdsProvider(me.uid));
+                      }
                     },
-                  ),
-                  const SizedBox(width: 4),
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 180),
-                    switchInCurve: Curves.easeOut,
-                    switchOutCurve: Curves.easeIn,
-                    child: isFollowing
-                        ? OutlinedButton.icon(
-                            key: const ValueKey('unfollow'),
-                            onPressed: () async {
-                              HapticFeedback.selectionClick();
-                              final svc = ref.read(firestoreServiceProvider);
-                              setState(() => _optimistic = false);
-                              try {
-                                await svc.unfollowUser(currentUserId: me!.uid, targetUserId: widget.targetUserId);
-                              } finally {
-                                if (mounted) setState(() => _optimistic = null);
-                              }
-                            },
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Theme.of(context).colorScheme.error,
-                              side: BorderSide(color: Theme.of(context).colorScheme.error),
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                              minimumSize: const Size(0, 40),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    const SizedBox(width: 8),
+                    // Takip butonu - sadece ikon
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      child: isFollowing
+                          ? IconButton.outlined(
+                              key: const ValueKey('unfollow'),
+                              onPressed: () async {
+                                HapticFeedback.lightImpact();
+                                final svc = ref.read(firestoreServiceProvider);
+                                setState(() => _optimistic = false);
+                                try {
+                                  await svc.unfollowUser(
+                                    currentUserId: me!.uid,
+                                    targetUserId: widget.targetUserId,
+                                  );
+                                } catch (e) {
+                                  // Hata durumunda geri al
+                                  if (mounted) setState(() => _optimistic = true);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Takipten çıkarma hatası: $e'),
+                                      backgroundColor: Theme.of(context).colorScheme.error,
+                                    ),
+                                  );
+                                } finally {
+                                  if (mounted) setState(() => _optimistic = null);
+                                }
+                              },
+                              style: IconButton.styleFrom(
+                                foregroundColor: Theme.of(context).colorScheme.error,
+                                side: BorderSide(color: Theme.of(context).colorScheme.error),
+                              ),
+                              icon: const Icon(Icons.person_remove_alt_1, size: 20),
+                              tooltip: 'Takipten Çıkar',
+                            )
+                          : IconButton.filledTonal(
+                              key: const ValueKey('follow'),
+                              onPressed: () async {
+                                HapticFeedback.lightImpact();
+                                final svc = ref.read(firestoreServiceProvider);
+                                setState(() => _optimistic = true);
+                                try {
+                                  await svc.followUser(
+                                    currentUserId: me!.uid,
+                                    targetUserId: widget.targetUserId,
+                                  );
+                                  // Başarılı takip için bildirim göster
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('$displayName takip edildi!'),
+                                      backgroundColor: Theme.of(context).colorScheme.primary,
+                                      duration: const Duration(seconds: 2),
+                                    ),
+                                  );
+                                } catch (e) {
+                                  // Hata durumunda geri al
+                                  if (mounted) setState(() => _optimistic = false);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Takip etme hatası: $e'),
+                                      backgroundColor: Theme.of(context).colorScheme.error,
+                                    ),
+                                  );
+                                } finally {
+                                  if (mounted) setState(() => _optimistic = null);
+                                }
+                              },
+                              style: IconButton.styleFrom(
+                                backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.18),
+                                foregroundColor: Theme.of(context).colorScheme.primary,
+                              ),
+                              icon: const Icon(Icons.person_add_alt_1, size: 20),
+                              tooltip: 'Takip Et',
                             ),
-                            icon: const Icon(Icons.person_remove_alt_1, size: 18),
-                            label: const Text('Takipten Çıkar'),
-                          )
-                        : FilledButton.tonalIcon(
-                            key: const ValueKey('follow'),
-                            onPressed: () async {
-                              HapticFeedback.selectionClick();
-                              final svc = ref.read(firestoreServiceProvider);
-                              setState(() => _optimistic = true);
-                              try {
-                                await svc.followUser(currentUserId: me!.uid, targetUserId: widget.targetUserId);
-                              } finally {
-                                if (mounted) setState(() => _optimistic = null);
-                              }
-                            },
-                            style: FilledButton.styleFrom(
-                              backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.18),
-                              foregroundColor: Theme.of(context).colorScheme.primary,
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                              minimumSize: const Size(0, 40),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
-                            icon: const Icon(Icons.person_add_alt_1, size: 18),
-                            label: const Text('Takip Et'),
-                          ),
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

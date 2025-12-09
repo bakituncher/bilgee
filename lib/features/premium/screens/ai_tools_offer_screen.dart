@@ -183,7 +183,7 @@ class _AIToolsOfferScreenState extends ConsumerState<AIToolsOfferScreen> with Ti
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          'AI Koçun Seni Bekliyor',
+          'Taktik Tavşan Seni Bekliyor',
           style: theme.textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.w900,
             letterSpacing: -0.8,
@@ -193,7 +193,7 @@ class _AIToolsOfferScreenState extends ConsumerState<AIToolsOfferScreen> with Ti
         ),
         const SizedBox(height: 6),
         Text(
-          'Yapay zeka destekli kişisel asistanınla hedeflerine ulaş',
+          "Kişisel asistanın Taktik Tavşan'la hedeflerine ulaş",
           style: theme.textTheme.bodyMedium?.copyWith(
             color: colorScheme.onSurfaceVariant,
             fontWeight: FontWeight.w500,
@@ -296,7 +296,7 @@ class _AIToolsOfferScreenState extends ConsumerState<AIToolsOfferScreen> with Ti
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      'Premium\'a Yükselt',
+                      'Pro\'ya Yükselt',
                       style: theme.textTheme.titleMedium?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
@@ -353,7 +353,7 @@ class _CompactFeaturesList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final features = [
-      {'text': 'AI destekli kişisel koçluk', 'icon': Icons.psychology_rounded},
+      {'text': 'Profesyonel kişisel koçluk', 'icon': Icons.psychology_rounded},
       {'text': 'Akıllı performans analizi', 'icon': Icons.analytics_rounded},
       {'text': 'Özel strateji önerileri', 'icon': Icons.lightbulb_rounded},
       {'text': 'Hedef odaklı çalışma planı', 'icon': Icons.track_changes_rounded},
