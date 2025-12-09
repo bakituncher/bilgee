@@ -2,14 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lottie/lottie.dart';
-import 'dart:ui';
 
 import 'package:taktik/data/providers/premium_provider.dart';
-
-// -----------------------------------------------------------------------------
-// TAKTIK AI HUB - THE ULTIMATE SHOWCASE
-// -----------------------------------------------------------------------------
 
 class AiHubScreen extends ConsumerWidget {
   const AiHubScreen({super.key});
@@ -20,785 +14,540 @@ class AiHubScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    // Taktik Pro Gold Gradient
-    final goldGradient = const LinearGradient(
-      colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    );
-
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F0F13) : const Color(0xFFF5F7FA),
-      extendBodyBehindAppBar: true,
+      backgroundColor: isDark ? const Color(0xFF0F0F13) : const Color(0xFFF0F2F5),
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: isDark ? const Color(0xFF0F0F13) : const Color(0xFFF0F2F5),
         elevation: 0,
-        systemOverlayStyle: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(Icons.auto_awesome_mosaic_rounded, color: theme.colorScheme.primary, size: 20),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              'Taktik Tavşan',
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-                color: theme.colorScheme.onSurface,
-                letterSpacing: -0.5,
-                fontSize: 20,
-              ),
-            ),
-          ],
+        scrolledUnderElevation: 0,
+        title: Text(
+          'Taktik Üssü',
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            color: theme.colorScheme.onSurface,
+            letterSpacing: -0.5,
+            fontSize: 22,
+          ),
         ),
         actions: [
           if (isPremium)
             Container(
               margin: const EdgeInsets.only(right: 16),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                gradient: goldGradient,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(color: Colors.orange.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4)),
-                ],
+                color: Colors.amber.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.amber.withOpacity(0.5)),
               ),
               child: const Row(
                 children: [
-                  Icon(Icons.verified, size: 16, color: Colors.white),
+                  Icon(Icons.verified, size: 14, color: Colors.amber),
                   SizedBox(width: 4),
-                  Text(
-                    'TAKTIK PRO',
-                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.white),
-                  ),
+                  Text('PRO', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.amber)),
                 ],
               ),
             ),
         ],
       ),
-      body: Stack(
-        children: [
-          // Arka Plan Dekoru (Premium Aura)
-          const _AmbientBackground(),
+      body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 100),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // --- 1. HERO KART: TAKTİK TAVŞAN (Görsel Güncellendi) ---
+            _HeroCoachCard(
+              isPremium: isPremium,
+              onTap: () => _handleNavigation(
+                  context,
+                  isPremium,
+                  route: '/ai-hub/motivation-chat',
+                  offerData: {
+                    'title': 'Taktik Tavşan',
+                    'subtitle': 'Sadece ders değil, kriz anlarını yönet.',
+                    'icon': Icons.psychology_rounded, // Burada ikon kalabilir, görsel asset yollanmaz
+                    'color': Colors.indigoAccent,
+                    'marketingTitle': 'Koçun Cebinde!',
+                    'marketingSubtitle': 'Netlerin neden artmıyor? Stresle nasıl başa çıkarsın? Taktik Tavşan seni analiz edip nokta atışı yönlendirme yapsın.',
+                    'redirectRoute': '/ai-hub/motivation-chat',
+                  }
+              ),
+            ),
 
-          // Ana İçerik
-          SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.only(top: 110, bottom: 100),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            const SizedBox(height: 20),
+
+            Padding(
+              padding: const EdgeInsets.only(left: 4, bottom: 12),
+              child: Text(
+                'PERFORMANS ARAÇLARI',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1,
+                  color: theme.colorScheme.onSurface.withOpacity(0.4),
+                ),
+              ),
+            ),
+
+            // --- 2. GRID KARTLAR ---
+            Row(
               children: [
-                // --- SHOWCASE GRID (BENTO BOX) ---
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(left: 4, bottom: 16),
-                        child: Text(
-                          'KOMUTA MERKEZİ',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 1.5,
-                            color: theme.colorScheme.onSurface.withOpacity(0.5),
-                          ),
-                        ),
-                      ),
-
-                      // 1. Büyük Kart: Stratejik Planlama (HERO)
-                      _ShowcaseCardLarge(
-                        title: 'Haftalık Stratejist',
-                        // MERAK UYANDIRICI AÇIKLAMA:
-                        subtitle: 'Sadece sana özel değil, *kazananlara* özel bir rota. Rakiplerin uyurken sen ne yapman gerektiğini bil.',
-                        icon: Icons.map_rounded,
-                        accentColor: const Color(0xFF6366F1), // Indigo
-                        isPremium: isPremium,
-                        lottieAsset: 'assets/lotties/data.json',
-                        onTap: () => _handleNavigation(
-                            context,
-                            isPremium,
-                            route: '/ai-hub/strategic-planning',
-                            offerData: {
-                              'title': 'Haftalık Planlama',
-                              'subtitle': 'Zafer stratejini şimdi oluştur.',
-                              'icon': Icons.insights_rounded,
-                              'color': theme.colorScheme.primary,
-                              'heroTag': 'strategic-core',
-                              'marketingTitle': 'Kişisel Başarı Haritası',
-                              'marketingSubtitle': 'Sınav takvimine göre dinamik olarak güncellenen, nokta atışı çalışma planı.',
-                              'redirectRoute': '/ai-hub/strategic-planning',
-                            }
-                        ),
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // 2. Orta Kartlar
-                      Row(
-                        children: [
-                          // Cevher Atölyesi
-                          Expanded(
-                            child: _ShowcaseCardMedium(
-                              title: 'Cevher\nAtölyesi',
-                              // MERAK UYANDIRICI AÇIKLAMA:
-                              subtitle: 'Zayıf halkanı, en güçlü silahına dönüştüren gizli laboratuvar.',
-                              icon: Icons.diamond_outlined,
-                              accentColor: const Color(0xFFEC4899), // Pink
-                              isPremium: isPremium,
-                              onTap: () => _handleNavigation(
-                                  context,
-                                  isPremium,
-                                  route: '/ai-hub/weakness-workshop',
-                                  offerData: {
-                                    'title': 'Cevher Atölyesi',
-                                    'subtitle': 'Zayıf noktalarını güce çevir.',
-                                    'icon': Icons.construction_rounded,
-                                    'color': theme.colorScheme.secondary,
-                                    'heroTag': 'weakness-core',
-                                    'marketingTitle': 'Zayıflıklar Güce Dönüşüyor',
-                                    'marketingSubtitle': 'En çok zorlandığın konuları tespit edip seni o konuda ustalaştıran özel çalışma.',
-                                    'redirectRoute': '/ai-hub/weakness-workshop',
-                                  }
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          // Analiz & Strateji
-                          Expanded(
-                            child: _ShowcaseCardMedium(
-                              title: 'Analiz &\nStrateji',
-                              // MERAK UYANDIRICI AÇIKLAMA:
-                              subtitle: 'Görünmeyeni gören göz. Netlerin neden artmıyor? Cevabı burada.',
-                              icon: Icons.pie_chart_outline_rounded,
-                              accentColor: const Color(0xFFF59E0B), // Amber
-                              isPremium: isPremium,
-                              onTap: () => _handleNavigation(
-                                  context,
-                                  isPremium,
-                                  route: '/ai-hub/analysis-strategy',
-                                  offerData: {
-                                    'title': 'Analiz & Strateji',
-                                    'subtitle': 'Derinlemesine performans analizi.',
-                                    'icon': Icons.dashboard_customize_rounded,
-                                    'color': Colors.amberAccent,
-                                    'heroTag': 'analysis-strategy-core',
-                                    'marketingTitle': 'Verilerle Konuşan Koç',
-                                    'marketingSubtitle': 'Deneme analizlerinle hangi konuya odaklanman gerektiğini saniye saniye gör.',
-                                    'redirectRoute': '/ai-hub/analysis-strategy',
-                                  }
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // 3. Geniş Kart: Motivasyon
-                      _ShowcaseCardWide(
-                        title: 'Motivasyon & Güç',
-                        // MERAK UYANDIRICI AÇIKLAMA:
-                        subtitle: 'Düştüğünde kaldıran, yorulduğunda iten güç. Sınav maratonunun dopingi.',
-                        icon: Icons.bolt_rounded,
-                        accentColor: const Color(0xFF10B981), // Emerald
-                        isPremium: isPremium,
-                        onTap: () => _handleNavigation(
-                            context,
-                            isPremium,
-                            route: '/ai-hub/motivation-chat',
-                            offerData: {
-                              'title': 'Motivasyon Sohbeti',
-                              'subtitle': 'Zorlandığında yanında olan güç.',
-                              'icon': Icons.forum_rounded,
-                              'color': Colors.pinkAccent,
-                              'heroTag': 'motivation-core',
-                              'marketingTitle': 'Sınırsız Motivasyon Desteği',
-                              'marketingSubtitle': 'Stresli anlarda seni sakinleştiren ve odaklayan yapay zeka koçun.',
-                              'redirectRoute': '/ai-hub/motivation-chat',
-                            }
-                        ),
-                      ),
-                    ],
+                Expanded(
+                  child: _FeatureCard(
+                    title: 'Haftalık\nStratejist',
+                    subtitle: 'Senin hızına göre dinamik değişen rota.',
+                    icon: Icons.map_rounded,
+                    color: const Color(0xFF10B981), // Emerald Green
+                    isPremium: isPremium,
+                    onTap: () => _handleNavigation(
+                        context,
+                        isPremium,
+                        route: '/ai-hub/strategic-planning',
+                        offerData: {
+                          'title': 'Haftalık Stratejist',
+                          'subtitle': 'Hedefine giden en kısa yol.',
+                          'icon': Icons.map_rounded,
+                          'color': const Color(0xFF10B981),
+                          'marketingTitle': 'Rotanı Çiz!',
+                          'marketingSubtitle': 'Rastgele çalışarak vakit kaybetme. Taktik Tavşan senin için en verimli haftalık planı saniyeler içinde oluştursun.',
+                          'redirectRoute': '/ai-hub/strategic-planning',
+                        }
+                    ),
                   ),
                 ),
-
-                const SizedBox(height: 32),
-
-                // --- DÖNÜŞÜM ALANI (HIGH CONVERSION ZONE) ---
-                // Sadece Premium olmayanlar için görünür
-                if (!isPremium) ...[
-                  _HighConversionZone(theme: theme),
-                ],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _FeatureCard(
+                    title: 'Analiz &\nStrateji',
+                    subtitle: 'Gözünden kaçan "tuzağı" bulur.',
+                    icon: Icons.radar_rounded,
+                    color: const Color(0xFFF43F5E), // Rose Red
+                    isPremium: isPremium,
+                    onTap: () => _handleNavigation(
+                        context,
+                        isPremium,
+                        route: '/ai-hub/analysis-strategy',
+                        offerData: {
+                          'title': 'Analiz & Strateji',
+                          'subtitle': 'Verilerle konuşan koç.',
+                          'icon': Icons.radar_rounded,
+                          'color': const Color(0xFFF43F5E),
+                          'marketingTitle': 'Tuzağı Fark Et!',
+                          'marketingSubtitle': 'Denemelerde neden takılıyorsun? Detaylı analiz sistemi, seni aşağı çeken konuları nokta atışı tespit etsin.',
+                          'redirectRoute': '/ai-hub/analysis-strategy',
+                        }
+                    ),
+                  ),
+                ),
               ],
             ),
-          ),
-        ],
+
+            const SizedBox(height: 12),
+
+            // Cevher Atölyesi (Yatay)
+            _WideFeatureCard(
+              title: 'Cevher Atölyesi',
+              subtitle: 'Zayıf olduğun konuyu seç, Taktik Tavşan seni o konuda ustalaştırana kadar test etsin.',
+              icon: Icons.diamond_rounded,
+              color: const Color(0xFF8B5CF6), // Violet
+              isPremium: isPremium,
+              onTap: () => _handleNavigation(
+                  context,
+                  isPremium,
+                  route: '/ai-hub/weakness-workshop',
+                  offerData: {
+                    'title': 'Cevher Atölyesi',
+                    'subtitle': 'Zayıflıkları güce çevir.',
+                    'icon': Icons.diamond_rounded,
+                    'color': const Color(0xFF8B5CF6),
+                    'marketingTitle': 'Ustalaşmadan Çıkma!',
+                    'marketingSubtitle': 'Sadece eksik olduğun konuya odaklan. Taktik Tavşan sana özel sorularla o konuyu halletmeden seni bırakmasın.',
+                    'redirectRoute': '/ai-hub/weakness-workshop',
+                  }
+              ),
+            ),
+
+            const SizedBox(height: 30),
+
+            // --- 3. PREMIUM TEŞVİK (Tavşansız, Pro Odaklı) ---
+            if (!isPremium) const _PremiumTeaserBox(),
+          ],
+        ),
       ),
     );
   }
 
-  // --- YÖNLENDİRME MANTIĞI (Routing Logic) ---
-  // Orijinal yapıyı bozmuyoruz: Kartlara tıklayınca ToolOfferScreen (/ai-hub/offer) açılıyor.
   void _handleNavigation(BuildContext context, bool isPremium, {required String route, required Map<String, dynamic> offerData}) {
     if (isPremium) {
       context.go(route);
     } else {
-      // Premium değilse, o tool'a özel teklif ekranına git (Mevcut mantık)
       context.go('/ai-hub/offer', extra: offerData);
     }
   }
 }
 
 // -----------------------------------------------------------------------------
-// HIGH CONVERSION ZONE (DÖNÜŞÜM ALANI)
+// 1. HERO COACH CARD (BUNNY PNG KULLANILDI)
 // -----------------------------------------------------------------------------
-
-class _HighConversionZone extends StatelessWidget {
-  final ThemeData theme;
-  const _HighConversionZone({required this.theme});
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = theme.brightness == Brightness.dark;
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(32),
-        // Dikkat çekici ama şık bir gradient
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark
-              ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
-              : [const Color(0xFFFFFFFF), const Color(0xFFF1F5F9)],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
-            blurRadius: 30,
-            offset: const Offset(0, 10),
-          ),
-        ],
-        border: Border.all(
-          // Altın çerçeve detayı (Subliminal Premium mesajı)
-          color: Colors.amber.withOpacity(0.3),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        children: [
-          // Başlık
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.workspace_premium_rounded, color: Colors.amber[700], size: 28),
-              const SizedBox(width: 8),
-              Text(
-                'Neden Taktik Pro?',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                  color: theme.colorScheme.onSurface,
-                  letterSpacing: -0.5,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-
-          // Fayda Listesi (Kısa ve Vurucu)
-          _buildBenefitRow(context, Icons.rocket_launch_rounded, 'Limitleri Kaldır', 'Yapay zeka analizlerine sınırsız erişim.'),
-          _buildBenefitRow(context, Icons.visibility_rounded, 'Görünmeyeni Gör', 'Rakiplerinin fark etmediği detayları yakala.'),
-          _buildBenefitRow(context, Icons.verified_user_rounded, 'Kişisel Zafer Planı', 'Sana özel hesaplanan başarı rotası.'),
-
-          const SizedBox(height: 24),
-
-          // CTA Butonu (Call to Action)
-          // Bu buton direkt olarak ana satın alma ekranına (PremiumScreen) gidebilir
-          // veya genel bir teklif sayfasına. Kullanıcı "premium_screen" istediği için
-          // burayı direkt /premium rotasına yönlendiriyoruz.
-          GestureDetector(
-            onTap: () => context.go('/premium'), // DİREKT SATIN ALMA EKRANI
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 18),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF2E3192), Color(0xFF1BFFFF)], // Electric Blue Gradient
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF2E3192).withOpacity(0.4),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'TAKTIK PRO\'YA GEÇ',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                  SizedBox(width: 8),
-                  Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 20),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'İstediğin zaman iptal et. Gizli ücret yok.',
-            style: TextStyle(
-              fontSize: 11,
-              color: theme.colorScheme.onSurface.withOpacity(0.5),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBenefitRow(BuildContext context, IconData icon, String title, String subtitle) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: theme.colorScheme.primary, size: 18),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 14,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: theme.colorScheme.onSurfaceVariant,
-                    height: 1.3,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// -----------------------------------------------------------------------------
-// SHOWCASE CARDS (VITRIN TASARIMI)
-// -----------------------------------------------------------------------------
-
-// Base Card: Ortak Stil ve Kilit Mantığı
-class _BaseShowcaseCard extends StatelessWidget {
-  final Widget child;
-  final VoidCallback onTap;
-  final Color accentColor;
+class _HeroCoachCard extends StatelessWidget {
   final bool isPremium;
+  final VoidCallback onTap;
 
-  const _BaseShowcaseCard({
-    required this.child,
-    required this.onTap,
-    required this.accentColor,
-    required this.isPremium,
-  });
+  const _HeroCoachCard({required this.isPremium, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
+        height: 160,
+        width: double.infinity,
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E1E24) : Colors.white,
-          borderRadius: BorderRadius.circular(28),
-          // Premium Değilse: Altın Çerçeve (Vitrin Etkisi)
-          border: isPremium
-              ? Border.all(color: accentColor.withOpacity(0.1), width: 1)
-              : Border.all(color: Colors.amber.withOpacity(0.5), width: 1.5),
+          color: isDark ? const Color(0xFF18181B) : Colors.white,
+          borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: isPremium ? accentColor.withOpacity(0.08) : Colors.amber.withOpacity(0.1),
-              blurRadius: 24,
-              offset: const Offset(0, 12),
+              color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+          border: Border.all(
+            color: isDark ? Colors.white10 : Colors.grey.shade200,
+          ),
+        ),
+        child: Stack(
+          children: [
+            // Arka plan dekoru - Bunny PNG (Silik)
+            Positioned(
+              right: -30,
+              bottom: -20,
+              child: Opacity(
+                opacity: 0.08, // Çok hafif arkada dursun
+                child: Image.asset(
+                  'assets/images/bunnyy.png',
+                  height: 180,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  // Sol taraf: Metinler
+                  Expanded(
+                    flex: 3,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF6366F1).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text(
+                            'MENTORUN',
+                            style: TextStyle(
+                              color: Color(0xFF6366F1),
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Taktik Tavşan',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            height: 1.1,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Netlerin neden durdu? Seni analiz edip nokta atışı taktik veren akıl hocan.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: theme.colorScheme.onSurface.withOpacity(0.7),
+                            height: 1.4,
+                          ),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Sağ taraf: Bunny PNG (Net Görünüm)
+                  Expanded(
+                    flex: 2,
+                    child: Center(
+                      child: Image.asset(
+                        'assets/images/bunnyy.png',
+                        height: 90, // Yüksekliği ayarlayabilirsin
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Kilit İkonu
+            if (!isPremium)
+              Positioned(
+                top: 16,
+                right: 16,
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: const BoxDecoration(
+                    color: Colors.amber,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.lock, size: 14, color: Colors.black),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// -----------------------------------------------------------------------------
+// 2. FEATURE CARDS
+// -----------------------------------------------------------------------------
+class _FeatureCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color color;
+  final bool isPremium;
+  final VoidCallback onTap;
+
+  const _FeatureCard({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.color,
+    required this.isPremium,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 150,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF18181B) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: isDark ? Colors.white10 : Colors.grey.shade200),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(28),
-          child: Stack(
-            children: [
-              // Arka plan dekoru (Hafif renk)
-              Positioned(
-                right: -40,
-                top: -40,
-                child: Container(
-                  width: 150,
-                  height: 150,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        accentColor.withOpacity(0.1),
-                        Colors.transparent
-                      ],
-                    ),
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
                   ),
+                  child: Icon(icon, color: color, size: 22),
                 ),
+                if (!isPremium)
+                  Icon(Icons.lock_rounded, size: 16, color: theme.colorScheme.onSurface.withOpacity(0.3)),
+              ],
+            ),
+            const Spacer(),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+                color: theme.colorScheme.onSurface,
+                height: 1.1,
               ),
-
-              // Ana İçerik
-              child,
-
-              // KİLİT MEKANİZMASI (Showcase: İçerik Net, Köşede Kilit)
-              if (!isPremium)
-                Positioned(
-                  top: 16,
-                  right: 16,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.amber, // Altın Badge
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.amber.withOpacity(0.4),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        )
-                      ],
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.lock_rounded, color: Colors.black, size: 12),
-                        SizedBox(width: 4),
-                        Text(
-                          'PRO',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.black,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 11,
+                color: theme.colorScheme.onSurface.withOpacity(0.6),
+                height: 1.2,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-// Büyük Kart (Lottie Animasyonlu)
-class _ShowcaseCardLarge extends StatelessWidget {
+class _WideFeatureCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final IconData icon;
-  final Color accentColor;
-  final bool isPremium;
-  final VoidCallback onTap;
-  final String lottieAsset;
-
-  const _ShowcaseCardLarge({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.accentColor,
-    required this.isPremium,
-    required this.onTap,
-    required this.lottieAsset,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 220,
-      child: _BaseShowcaseCard(
-        accentColor: accentColor,
-        isPremium: isPremium,
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Row(
-            children: [
-              Expanded(
-                flex: 3,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: accentColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(icon, color: accentColor, size: 24),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        height: 1.1,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Expanded(
-                      child: Text(
-                        subtitle,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          height: 1.4,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        maxLines: 4,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                flex: 2,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Opacity(
-                      opacity: 0.9,
-                      child: Lottie.asset(lottieAsset, fit: BoxFit.contain, height: 100),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Orta Boy Kartlar
-class _ShowcaseCardMedium extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final Color accentColor;
+  final Color color;
   final bool isPremium;
   final VoidCallback onTap;
 
-  const _ShowcaseCardMedium({
+  const _WideFeatureCard({
     required this.title,
     required this.subtitle,
     required this.icon,
-    required this.accentColor,
+    required this.color,
     required this.isPremium,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 190, // Açıklama sığsın diye biraz uzattık
-      child: _BaseShowcaseCard(
-        accentColor: accentColor,
-        isPremium: isPremium,
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: accentColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: accentColor, size: 22),
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF18181B) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: isDark ? Colors.white10 : Colors.grey.shade200),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
               ),
-              const SizedBox(height: 12),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  height: 1.2,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Expanded(
-                child: Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    height: 1.4,
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: theme.colorScheme.onSurface,
+                    ),
                   ),
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      height: 1.2,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+            if (!isPremium)
+              Icon(Icons.lock_rounded, size: 16, color: theme.colorScheme.onSurface.withOpacity(0.3)),
+          ],
         ),
       ),
     );
   }
 }
 
-// Geniş Kart
-class _ShowcaseCardWide extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final Color accentColor;
-  final bool isPremium;
-  final VoidCallback onTap;
-
-  const _ShowcaseCardWide({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.accentColor,
-    required this.isPremium,
-    required this.onTap,
-  });
+// -----------------------------------------------------------------------------
+// 3. PREMIUM TEASER (TAKTİK PRO KONSEPTİ)
+// -----------------------------------------------------------------------------
+class _PremiumTeaserBox extends StatelessWidget {
+  const _PremiumTeaserBox();
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 110,
-      child: _BaseShowcaseCard(
-        accentColor: accentColor,
-        isPremium: isPremium,
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: accentColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(icon, color: accentColor, size: 26),
-              ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        height: 1.3,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 14,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Arka Plan Efekti
-class _AmbientBackground extends StatelessWidget {
-  const _AmbientBackground();
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: double.infinity,
-      height: double.infinity,
-      color: Colors.transparent,
-      child: Stack(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1A1A2E), Color(0xFF16213E)], // Dark Blue Gradient
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1A1A2E).withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
         children: [
-          Positioned(
-            top: -100,
-            left: -50,
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Theme.of(context).colorScheme.primary.withOpacity(isDark ? 0.08 : 0.04),
+          // Tavşan Yok -> Pro/Elmas İkonu Var
+          const Icon(Icons.workspace_premium_rounded, color: Colors.amber, size: 36),
+          const SizedBox(height: 12),
+          const Text(
+            'Taktik Pro Ayrıcalığı',
+            style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Rakiplerin uyurken sen fark at. Taktik Pro üyeleri tüm analizlere ve sınırsız koçluk desteğine sahiptir.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 12),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => context.go('/premium'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.black,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
-                child: Container(color: Colors.transparent),
-              ),
+              child: const Text('AVANTAJI KAP', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
             ),
           ),
         ],
