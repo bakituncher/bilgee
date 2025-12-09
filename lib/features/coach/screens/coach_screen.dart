@@ -233,10 +233,10 @@ class _SubjectGalaxyViewState extends ConsumerState<_SubjectGalaxyView> {
     final firestoreService = ref.read(firestoreServiceProvider);
     final sanitizedSubjectName = firestoreService.sanitizeKey(subjectName);
     final performances = widget.performanceSummary.topicPerformances[sanitizedSubjectName] ?? {};
-    int totalQuestions = 0, totalCorrect = 0, totalWrong = 0;
+    int totalQuestions = 0, totalCorrect = 0, totalWrong = 0, totalBlank = 0;
     final relevantSection = widget.exam.sections.firstWhere((s) => s.subjects.containsKey(subjectName), orElse: () => widget.exam.sections.first);
     final penaltyCoefficient = relevantSection.penaltyCoefficient;
-    performances.forEach((_, v){ totalQuestions += v.questionCount; totalCorrect += v.correctCount; totalWrong += v.wrongCount; });
+    performances.forEach((_, v){ totalQuestions += v.questionCount; totalCorrect += v.correctCount; totalWrong += v.wrongCount; totalBlank += v.blankCount; });
     final overallNet = totalCorrect - (totalWrong * penaltyCoefficient);
     final double overallMastery = totalQuestions==0 ? 0.0 : ((overallNet/totalQuestions).clamp(0.0,1.0));
     final auraColor = Color.lerp(Theme.of(context).colorScheme.error, Colors.green, overallMastery)!.withOpacity(0.12);
@@ -343,7 +343,7 @@ class _SubjectGalaxyViewState extends ConsumerState<_SubjectGalaxyView> {
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20,20,20,110),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children:[
-          _SubjectStatsCard(subjectName: subjectName, overallMastery: overallMastery, totalQuestions: totalQuestions, totalCorrect: totalCorrect, totalWrong: totalWrong),
+          _SubjectStatsCard(subjectName: subjectName, overallMastery: overallMastery, totalQuestions: totalQuestions, totalCorrect: totalCorrect, totalWrong: totalWrong, totalBlank: totalBlank),
           const SizedBox(height:20),
           _InstructionBanner(),
           const SizedBox(height:20),
@@ -418,8 +418,8 @@ class _InstructionBanner extends StatelessWidget {
 }
 
 class _SubjectStatsCard extends StatelessWidget {
-  final String subjectName; final double overallMastery; final int totalQuestions; final int totalCorrect; final int totalWrong;
-  const _SubjectStatsCard({required this.subjectName, required this.overallMastery, required this.totalQuestions, required this.totalCorrect, required this.totalWrong});
+  final String subjectName; final double overallMastery; final int totalQuestions; final int totalCorrect; final int totalWrong; final int totalBlank;
+  const _SubjectStatsCard({required this.subjectName, required this.overallMastery, required this.totalQuestions, required this.totalCorrect, required this.totalWrong, required this.totalBlank});
   @override
   Widget build(BuildContext context) {
     final masteryPercent = (overallMastery*100).toStringAsFixed(0);
@@ -488,13 +488,42 @@ class _SubjectStatsCard extends StatelessWidget {
           ),
         ),
         const SizedBox(height:16),
-        Row(children:[
-          Expanded(child: _StatChip(label:'Soru', value: totalQuestions.toString())),
-          const SizedBox(width:10),
-          Expanded(child: _StatChip(label:'Doğru', value: totalCorrect.toString(), color: Colors.green)),
-          const SizedBox(width:10),
-          Expanded(child: _StatChip(label:'Yanlış', value: totalWrong.toString(), color: Theme.of(context).colorScheme.error))
-        ])
+        LayoutBuilder(
+          builder: (context, constraints) {
+            // Ekran genişliğine göre 2x2 veya 4 sütun yapısı
+            final isWideScreen = constraints.maxWidth > 400;
+
+            if (isWideScreen) {
+              // Geniş ekran: 4 sütun
+              return Row(children:[
+                Expanded(child: _StatChip(label:'Soru', value: totalQuestions.toString())),
+                const SizedBox(width:10),
+                Expanded(child: _StatChip(label:'Doğru', value: totalCorrect.toString(), color: Colors.green)),
+                const SizedBox(width:10),
+                Expanded(child: _StatChip(label:'Yanlış', value: totalWrong.toString(), color: Theme.of(context).colorScheme.error)),
+                const SizedBox(width:10),
+                Expanded(child: _StatChip(label:'Boş', value: totalBlank.toString(), color: Colors.orange)),
+              ]);
+            } else {
+              // Dar ekran: 2x2 grid
+              return Column(
+                children: [
+                  Row(children:[
+                    Expanded(child: _StatChip(label:'Soru', value: totalQuestions.toString())),
+                    const SizedBox(width:10),
+                    Expanded(child: _StatChip(label:'Doğru', value: totalCorrect.toString(), color: Colors.green)),
+                  ]),
+                  const SizedBox(height:10),
+                  Row(children:[
+                    Expanded(child: _StatChip(label:'Yanlış', value: totalWrong.toString(), color: Theme.of(context).colorScheme.error)),
+                    const SizedBox(width:10),
+                    Expanded(child: _StatChip(label:'Boş', value: totalBlank.toString(), color: Colors.orange)),
+                  ]),
+                ],
+              );
+            }
+          },
+        ),
       ]),
     );
   }
