@@ -71,35 +71,37 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                 floatingActionButton: _AnimatedBunnyButton(
                   key: aiHubFabKey,
                   onTap: () => navigationShell.goBranch(
-                    2, // Galaksi (AI Hub) index is typically 2 in the bottom nav list?
-                    // Wait, in the original code:
-                    // Panel=0, Galaksi=1, Arena=3, Profil=4. The FAB was "AI Hub" but pointing to index 2?
-                    // Actually checking original code:
-                    // _buildNavItem for Galaksi is index 1.
-                    // FAB _onTap(2, ...)
-                    // Let's check the branches setup in main_shell_routes.dart usually, but here we can trust the previous implementation used index 2 for the FAB action.
-                    // However, `navigationShell.goBranch` works on the branches defined in the ShellRoute.
-                    // If the FAB is meant to open a specific tab or screen, we need to be careful.
-                    // The previous code: `_onTap(2, ref, tutorialSteps)`.
-                    // And `_buildNavItem` had indices: Panel=0, Galaksi=1, Arena=3, Profil=4.
-                    // This implies the FAB (index 2) corresponds to a branch in the ShellRoute that is not shown in the BottomBar icons directly (it's the center item).
+                    2,
                     initialLocation: 2 == navigationShell.currentIndex,
                   ),
                 ).animate().scale(delay: 500.ms, curve: Curves.easeOutBack),
                 floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-                bottomNavigationBar: BottomAppBar(
-                  padding: EdgeInsets.zero,
-                  height: 70,
-                  color: Theme.of(context).cardColor.withOpacity(0.95),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildNavItem(context, icon: Icons.dashboard_rounded, label: 'Panel', index: 0, ref: ref),
-                      _buildNavItem(context, icon: Icons.school_rounded, label: 'Galaksi', index: 1, ref: ref),
-                      const SizedBox(width: 56),
-                      _buildNavItem(context, icon: Icons.military_tech_rounded, label: 'Arena', index: 3, ref: ref),
-                      _buildNavItem(context, icon: Icons.person_rounded, label: 'Profil', index: 4, ref: ref),
+                bottomNavigationBar: Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardColor.withOpacity(0.95),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 12,
+                        offset: const Offset(0, -2),
+                      ),
                     ],
+                  ),
+                  child: BottomAppBar(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    height: 72,
+                    elevation: 0,
+                    color: Colors.transparent,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildNavItem(context, icon: Icons.dashboard_rounded, index: 0, ref: ref),
+                        _buildNavItem(context, icon: Icons.school_rounded, index: 1, ref: ref),
+                        const SizedBox(width: 72),
+                        _buildNavItem(context, icon: Icons.military_tech_rounded, index: 3, ref: ref),
+                        _buildNavItem(context, icon: Icons.person_rounded, index: 4, ref: ref),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -122,19 +124,57 @@ class ScaffoldWithNavBar extends ConsumerWidget {
     );
   }
 
-  Widget _buildNavItem(BuildContext context, {required IconData icon, required String label, required int index, required WidgetRef ref}) {
+  Widget _buildNavItem(BuildContext context, {required IconData icon, required int index, required WidgetRef ref}) {
     final isSelected = navigationShell.currentIndex == index;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    return IconButton(
-      icon: Icon(icon, color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant, size: 28),
-      onPressed: () => navigationShell.goBranch(
-        index,
-        initialLocation: index == navigationShell.currentIndex,
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => navigationShell.goBranch(
+            index,
+            initialLocation: index == navigationShell.currentIndex,
+          ),
+          customBorder: const CircleBorder(),
+          splashColor: colorScheme.primary.withOpacity(0.2),
+          highlightColor: colorScheme.primary.withOpacity(0.1),
+          child: Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isSelected
+                ? colorScheme.primary.withOpacity(0.15)
+                : Colors.transparent,
+              border: isSelected
+                ? Border.all(
+                    color: colorScheme.primary.withOpacity(0.3),
+                    width: 1.5,
+                  )
+                : null,
+            ),
+            child: Center(
+              child: Icon(
+                icon,
+                color: isSelected
+                  ? colorScheme.primary
+                  : colorScheme.onSurfaceVariant.withOpacity(0.7),
+                size: isSelected ? 28 : 26,
+              ),
+            ),
+          ),
+        ),
       ),
-      tooltip: label,
-      splashColor: colorScheme.primary.withOpacity(0.2),
-      highlightColor: colorScheme.primary.withOpacity(0.1),
+    ).animate(
+      target: isSelected ? 1 : 0,
+    ).scale(
+      begin: const Offset(0.95, 0.95),
+      end: const Offset(1.0, 1.0),
+      duration: 200.ms,
     );
   }
 }
@@ -298,6 +338,8 @@ class _AnimatedBunnyButtonState extends State<_AnimatedBunnyButton> with SingleT
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return GestureDetector(
       onTapDown: _handleTapDown,
       onTapUp: _handleTapUp,
@@ -308,22 +350,48 @@ class _AnimatedBunnyButtonState extends State<_AnimatedBunnyButton> with SingleT
           return Transform.scale(
             scale: _scaleAnimation.value,
             child: Container(
-              width: 64,
-              height: 64,
+              width: 68,
+              height: 68,
               decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    colorScheme.primary,
+                    colorScheme.primary.withOpacity(0.85),
+                  ],
+                ),
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
-                    blurRadius: 8,
+                    color: colorScheme.primary.withOpacity(0.4),
+                    blurRadius: 12,
+                    spreadRadius: 2,
                     offset: const Offset(0, 4),
                   ),
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
                 ],
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.3),
+                  width: 2,
+                ),
               ),
-              child: ClipOval(
-                child: Image.asset(
-                  'assets/images/bunnyy.png',
-                  fit: BoxFit.cover,
+              padding: const EdgeInsets.all(3),
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withOpacity(0.95),
+                ),
+                padding: const EdgeInsets.all(6),
+                child: ClipOval(
+                  child: Image.asset(
+                    'assets/images/bunnyy.png',
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
             ),

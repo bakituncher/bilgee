@@ -298,11 +298,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   tooltip: 'Menü',
                 ),
               ),
-              title: AnimatedOpacity(
-                duration: 200.ms,
-                opacity: _appBarOpacity.clamp(0, 1),
-                child: const Text('Ana Panel'),
-              ),
+              title: const Text('Ana Panel'),
               centerTitle: true,
               actions: [
                 _HelpButton(),

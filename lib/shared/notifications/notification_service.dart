@@ -60,7 +60,8 @@ class NotificationService {
       _appBuild = int.tryParse(info.buildNumber);
     } catch (_) {}
 
-    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+    // DÜZELTME: '@mipmap/ic_launcher' yerine Manifest'teki '@mipmap/launcher_icon' kullanılmalı
+    const androidInit = AndroidInitializationSettings('@mipmap/launcher_icon');
     const iOSInit = DarwinInitializationSettings();
     const initSettings = InitializationSettings(android: androidInit, iOS: iOSInit);
     await _fln.initialize(initSettings, onDidReceiveNotificationResponse: (resp) {
