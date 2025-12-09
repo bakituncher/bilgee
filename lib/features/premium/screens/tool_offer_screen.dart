@@ -19,6 +19,7 @@ class ToolOfferScreen extends ConsumerStatefulWidget {
   final String marketingTitle;
   final String marketingSubtitle;
   final String? redirectRoute;
+  final String? imageAsset;
 
   const ToolOfferScreen({
     super.key,
@@ -30,6 +31,7 @@ class ToolOfferScreen extends ConsumerStatefulWidget {
     required this.marketingTitle,
     required this.marketingSubtitle,
     this.redirectRoute,
+    this.imageAsset,
   });
 
   @override
@@ -264,6 +266,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
                           icon: widget.icon,
                           color: widget.color,
                           title: widget.title,
+                          imageAsset: widget.imageAsset,
                         ),
                         const SizedBox(height: 20),
                         _MarketingInfo(
@@ -695,12 +698,14 @@ class _ToolFeatureHeader extends StatelessWidget {
     required this.icon,
     required this.color,
     required this.title,
+    this.imageAsset,
   });
 
   final String heroTag;
   final IconData icon;
   final Color color;
   final String title;
+  final String? imageAsset;
 
   @override
   Widget build(BuildContext context) {
@@ -737,7 +742,19 @@ class _ToolFeatureHeader extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Icon(icon, size: 42, color: color),
+              child: imageAsset != null
+                  ? ClipOval(
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Image.asset(
+                          imageAsset!,
+                          width: 61,
+                          height: 61,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    )
+                  : Icon(icon, size: 42, color: color),
             ),
             const SizedBox(height: 12),
             Text(

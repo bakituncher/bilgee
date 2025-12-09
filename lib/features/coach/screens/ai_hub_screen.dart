@@ -71,6 +71,7 @@ class AiHubScreen extends ConsumerWidget {
                     'marketingTitle': 'Koçun Cebinde!',
                     'marketingSubtitle': 'Netlerin neden artmıyor? Stresle nasıl başa çıkarsın? Taktik Tavşan seni analiz edip nokta atışı yönlendirme yapsın.',
                     'redirectRoute': '/ai-hub/motivation-chat',
+                    'imageAsset': 'assets/images/bunnyy.png',
                   }
               ),
             ),
@@ -558,7 +559,7 @@ class _PremiumSalesCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 GestureDetector(
-                  onTap: () => context.go('/premium'),
+                  onTap: () => context.push('/premium'),
                   child: Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 16),

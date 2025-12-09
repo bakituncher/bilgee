@@ -212,6 +212,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               marketingTitle: (args['marketingTitle'] as String?) ?? 'Sınavda her zaman önde olun',
               marketingSubtitle: (args['marketingSubtitle'] as String?) ?? 'Akıllı planlama, zayıf noktaları kapatma ve daha fazlası.',
               redirectRoute: args['redirectRoute'] as String?,
+              imageAsset: args['imageAsset'] as String?,
             ),
           );
         },
