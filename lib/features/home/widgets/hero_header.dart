@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/profile/logic/rank_service.dart';
 import 'package:taktik/features/home/providers/home_providers.dart';
@@ -111,17 +112,48 @@ class HeroHeader extends ConsumerWidget {
             children: [
               // Greeting & User Name with Exam Countdowns
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  // Kullanıcı Avatarı - Sabit boyut
+                  CircleAvatar(
+                    radius: 18,
+                    backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                    child: ClipOval(
+                      child: (user.avatarStyle != null && user.avatarSeed != null)
+                          ? SvgPicture.network(
+                              'https://api.dicebear.com/9.x/${user.avatarStyle}/svg?seed=${user.avatarSeed}',
+                              fit: BoxFit.cover,
+                              width: 36,
+                              height: 36,
+                              placeholderBuilder: (_) => const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                            )
+                          : Icon(
+                              Icons.person_rounded,
+                              size: 20,
+                              color: theme.colorScheme.primary,
+                            ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Selamlama Metni - Esnek genişlik
                   Expanded(
-                    child: Text(
-                      '${_getGreeting()}, ${user.firstName}',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -0.3,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        '${_getGreeting()}, ${user.firstName}',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.3,
+                          fontSize: 15,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.visible,
+                        softWrap: false,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   const SizedBox(width: 8),

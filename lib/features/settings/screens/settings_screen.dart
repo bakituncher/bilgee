@@ -39,7 +39,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: theme.colorScheme.errorContainer.withOpacity(0.3),
+                color: theme.colorScheme.errorContainer.withValues(alpha: 0.3),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -64,10 +64,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: theme.colorScheme.errorContainer.withOpacity(0.2),
+                color: theme.colorScheme.errorContainer.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: theme.colorScheme.error.withOpacity(0.3),
+                  color: theme.colorScheme.error.withValues(alpha: 0.3),
                 ),
               ),
               child: Column(
@@ -91,7 +91,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     "Tüm verileriniz kalıcı olarak silinecektir.",
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyLarge?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.8),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
                     ),
                   ),
                 ],
@@ -164,7 +164,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.errorContainer.withOpacity(0.3),
+                          color: theme.colorScheme.errorContainer.withValues(alpha: 0.3),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -198,10 +198,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           vertical: 10,
                         ),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.errorContainer.withOpacity(0.15),
+                          color: theme.colorScheme.errorContainer.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: theme.colorScheme.error.withOpacity(0.4),
+                            color: theme.colorScheme.error.withValues(alpha: 0.4),
                             width: 1.5,
                           ),
                         ),
@@ -241,7 +241,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           decoration: InputDecoration(
                             hintText: confirmationText,
                             hintStyle: TextStyle(
-                              color: theme.colorScheme.onSurface.withOpacity(0.25),
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.25),
                               fontWeight: FontWeight.w500,
                               letterSpacing: 1.1,
                             ),
@@ -259,7 +259,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
                               borderSide: BorderSide(
-                                color: theme.colorScheme.outline.withOpacity(0.3),
+                                color: theme.colorScheme.outline.withValues(alpha: 0.3),
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
@@ -602,7 +602,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.primary.withOpacity(0.3),
+            color: theme.colorScheme.primary.withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -663,7 +663,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.primary.withOpacity(0.1),
+            color: theme.colorScheme.primary.withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: theme.colorScheme.primary.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -699,7 +704,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   child: Text(
                     email,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onPrimaryContainer.withOpacity(0.8),
+                      color: theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.8),
                     ),
                     maxLines: 1,
                   ),
@@ -948,10 +953,10 @@ class _SettingsCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: theme.colorScheme.outlineVariant.withOpacity(0.5),
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
           width: 1,
         ),
       ),
@@ -997,17 +1002,44 @@ class _ThemeSelection extends ConsumerWidget {
             segments: <ButtonSegment<ThemeMode>>[
               ButtonSegment<ThemeMode>(
                 value: ThemeMode.light,
-                label: const Text('Açık'),
+                label: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.center,
+                  child: const Text(
+                    'Açık',
+                    maxLines: 1,
+                    softWrap: false,
+                    overflow: TextOverflow.visible,
+                  ),
+                ),
                 icon: const Icon(Icons.wb_sunny_outlined, size: 18),
               ),
               ButtonSegment<ThemeMode>(
                 value: ThemeMode.dark,
-                label: const Text('Koyu'),
+                label: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.center,
+                  child: const Text(
+                    'Koyu',
+                    maxLines: 1,
+                    softWrap: false,
+                    overflow: TextOverflow.visible,
+                  ),
+                ),
                 icon: const Icon(Icons.nightlight_round, size: 18),
               ),
               ButtonSegment<ThemeMode>(
                 value: ThemeMode.system,
-                label: const Text('Sistem'),
+                label: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.center,
+                  child: const Text(
+                    'Sistem',
+                    maxLines: 1,
+                    softWrap: false,
+                    overflow: TextOverflow.visible,
+                  ),
+                ),
                 icon: const Icon(Icons.phone_iphone_rounded, size: 18),
               ),
             ],
