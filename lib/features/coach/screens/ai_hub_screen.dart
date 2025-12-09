@@ -15,9 +15,9 @@ class AiHubScreen extends ConsumerWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F0F13) : const Color(0xFFF4F6F9),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: isDark ? const Color(0xFF0F0F13) : const Color(0xFFF4F6F9),
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
@@ -196,7 +196,7 @@ class _HeroCoachCard extends StatelessWidget {
         height: 170,
         width: double.infinity,
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF18181B) : Colors.white,
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(32),
           boxShadow: [
             BoxShadow(
@@ -342,9 +342,9 @@ class _FeatureCard extends StatelessWidget {
         height: 190,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF18181B) : Colors.white,
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: isDark ? Colors.white10 : Colors.grey.shade100),
+          border: Border.all(color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5)),
           boxShadow: [
             BoxShadow(
               color: const Color(0xFF000000).withOpacity(0.04),
@@ -430,9 +430,9 @@ class _WideFeatureCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF18181B) : Colors.white,
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: isDark ? Colors.white10 : Colors.grey.shade100),
+          border: Border.all(color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5)),
           boxShadow: [
             BoxShadow(
               color: const Color(0xFF000000).withOpacity(0.04),
