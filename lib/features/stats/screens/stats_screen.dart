@@ -94,7 +94,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
             child: Text(
-              'Premium\'a Geç',
+              'Pro\'ya Geç',
               style: TextStyle(
                 color: Theme.of(context).colorScheme.secondary,
                 fontWeight: FontWeight.bold,

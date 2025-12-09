@@ -193,8 +193,8 @@ class _HeroCoachCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 170,
         width: double.infinity,
+        constraints: const BoxConstraints(minHeight: 160),
         decoration: BoxDecoration(
           color: theme.cardColor,
           borderRadius: BorderRadius.circular(32),
@@ -222,13 +222,14 @@ class _HeroCoachCard extends StatelessWidget {
             ),
 
             Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(20),
               child: Row(
                 children: [
                   Expanded(
                     flex: 3,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -246,28 +247,30 @@ class _HeroCoachCard extends StatelessWidget {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 12),
                         Text(
                           'Taktik Tavşan',
                           style: TextStyle(
-                            fontSize: 22,
+                            fontSize: 20,
                             fontWeight: FontWeight.w900,
                             height: 1.0,
                             color: theme.colorScheme.onSurface,
                             letterSpacing: -0.5,
                           ),
                         ),
-                        const SizedBox(height: 10),
-                        Text(
-                          'Sınav maratonunda seni yalnız bırakmayan, her adımda sana rehberlik eden yol arkadaşın.',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: theme.colorScheme.onSurface.withOpacity(0.7),
-                            height: 1.4,
-                            fontWeight: FontWeight.w500,
+                        const SizedBox(height: 8),
+                        Flexible(
+                          child: Text(
+                            'Sınav maratonunda seni yalnız bırakmayan, her adımda sana rehberlik eden yol arkadaşın.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: theme.colorScheme.onSurface.withOpacity(0.7),
+                              height: 1.3,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
@@ -279,7 +282,7 @@ class _HeroCoachCard extends StatelessWidget {
                       padding: const EdgeInsets.only(right: 12.0),
                       child: Image.asset(
                         'assets/images/bunnyy.png',
-                        height: 120,
+                        height: 110,
                         fit: BoxFit.contain,
                       ),
                     ),
@@ -339,8 +342,8 @@ class _FeatureCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 190,
-        padding: const EdgeInsets.all(20),
+        height: 200,
+        padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           color: theme.cardColor,
           borderRadius: BorderRadius.circular(24),
@@ -372,29 +375,29 @@ class _FeatureCard extends StatelessWidget {
               ],
             ),
 
-            // DÜZELTME: Spacer yerine sabit bir boşluk.
-            // Bu, başlığın en alta gitmesini engeller ve ikona yaklaştırır.
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
 
             Text(
               title,
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 15,
                 fontWeight: FontWeight.w800,
                 color: theme.colorScheme.onSurface,
                 height: 1.1,
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              subtitle,
-              style: TextStyle(
-                fontSize: 12,
-                color: theme.colorScheme.onSurface.withOpacity(0.6),
-                height: 1.3,
+            const SizedBox(height: 6),
+            Expanded(
+              child: Text(
+                subtitle,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  height: 1.3,
+                ),
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
               ),
-              maxLines: 4,
-              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

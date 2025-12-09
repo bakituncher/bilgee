@@ -139,6 +139,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final userAsync = ref.watch(userProfileProvider);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     ref.listen<AsyncValue<UserModel?>>(userProfileProvider, (previous, next) {
       final prevUser = previous?.valueOrNull;
@@ -148,6 +150,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         final nextRank = RankService.getRankInfo(nextUser.engagementScore).current;
         if (prevRank.name != nextRank.name) {
           _confettiController.play();
+          HapticFeedback.heavyImpact();
         }
       }
     });
@@ -155,28 +158,53 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('Profil'),
+        title: Text(
+          'Profil',
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.3,
+          ),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                theme.scaffoldBackgroundColor.withOpacity(0.95),
+                theme.scaffoldBackgroundColor.withOpacity(0.0),
+              ],
+            ),
+          ),
+        ),
         actions: [
-          IconButton(
+          _ModernIconButton(
             tooltip: 'Arkadaş Ara',
-            icon: const Icon(Icons.person_add_alt_1),
+            icon: Icons.person_add_alt_1_rounded,
             onPressed: () {
               HapticFeedback.selectionClick();
               context.push('/user-search');
             },
           ),
-          IconButton(
+          _ModernIconButton(
             tooltip: _sharing ? 'Hazırlanıyor...' : 'Paylaş',
-            icon: const Icon(Icons.ios_share_rounded),
-            onPressed: _sharing ? null : () { HapticFeedback.selectionClick(); _shareProfileImage(); },
+            icon: Icons.ios_share_rounded,
+            onPressed: _sharing ? null : () {
+              HapticFeedback.selectionClick();
+              _shareProfileImage();
+            },
           ),
-          IconButton(
-            icon: const Icon(Icons.settings_rounded),
-            onPressed: () => context.push(AppRoutes.settings),
+          _ModernIconButton(
+            icon: Icons.settings_rounded,
+            onPressed: () {
+              HapticFeedback.selectionClick();
+              context.push(AppRoutes.settings);
+            },
             tooltip: 'Ayarlar',
           ),
+          const SizedBox(width: 4),
         ],
       ),
       body: Container(
@@ -185,19 +213,138 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Theme.of(context).scaffoldBackgroundColor,
-              Theme.of(context).cardColor,
-              Theme.of(context).scaffoldBackgroundColor,
+              colorScheme.surface,
+              colorScheme.surfaceContainerLowest,
+              colorScheme.surface,
             ],
           ),
         ),
         child: userAsync.when(
           data: (user) {
-            if (user == null) return const Center(child: Text('Komutan bulunamadı.'));
-            return _ProfileView(user: user, shareKey: _shareKey, confettiController: _confettiController);
+            if (user == null) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.person_off_rounded,
+                      size: 80,
+                      color: colorScheme.onSurface.withOpacity(0.3),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Komutan bulunamadı',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: colorScheme.onSurface.withOpacity(0.6),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+            return _ProfileView(
+              user: user,
+              shareKey: _shareKey,
+              confettiController: _confettiController,
+            );
           },
           loading: () => const LogoLoader(),
-          error: (e, s) => Center(child: Text('Karargâh Yüklenemedi: $e')),
+          error: (e, s) => Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.error_outline_rounded,
+                  size: 80,
+                  color: colorScheme.error.withOpacity(0.5),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Karargâh Yüklenemedi',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: colorScheme.error,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  child: Text(
+                    e.toString(),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurface.withOpacity(0.5),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Modern Icon Button Widget
+class _ModernIconButton extends StatefulWidget {
+  final String? tooltip;
+  final IconData icon;
+  final VoidCallback? onPressed;
+
+  const _ModernIconButton({
+    this.tooltip,
+    required this.icon,
+    this.onPressed,
+  });
+
+  @override
+  State<_ModernIconButton> createState() => _ModernIconButtonState();
+}
+
+class _ModernIconButtonState extends State<_ModernIconButton> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Tooltip(
+        message: widget.tooltip ?? '',
+        child: GestureDetector(
+          onTapDown: widget.onPressed != null ? (_) => setState(() => _isPressed = true) : null,
+          onTapUp: widget.onPressed != null ? (_) {
+            setState(() => _isPressed = false);
+            widget.onPressed?.call();
+          } : null,
+          onTapCancel: () => setState(() => _isPressed = false),
+          child: AnimatedScale(
+            scale: _isPressed ? 0.85 : 1.0,
+            duration: const Duration(milliseconds: 100),
+            curve: Curves.easeOut,
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: _isPressed
+                  ? colorScheme.primaryContainer.withOpacity(0.8)
+                  : colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: colorScheme.outline.withOpacity(0.1),
+                  width: 1,
+                ),
+              ),
+              child: Icon(
+                widget.icon,
+                size: 22,
+                color: widget.onPressed != null
+                  ? colorScheme.onSurface
+                  : colorScheme.onSurface.withOpacity(0.3),
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -288,10 +435,10 @@ class _ProfileView extends ConsumerWidget {
             slivers: [
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
                   child: Column(
                     children: [
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
                       RepaintBoundary(
                         key: shareKey,
                         child: Container(
@@ -299,27 +446,47 @@ class _ProfileView extends ConsumerWidget {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(28),
                             gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: theme.brightness == Brightness.dark
-                                    ? [
-                                        colorScheme.surface.withOpacity(0.5),
-                                        colorScheme.surface.withOpacity(0.2)
-                                      ]
-                                    : [
-                                        colorScheme.surface.withOpacity(0.98),
-                                        colorScheme.surface.withOpacity(0.92)
-                                      ]),
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: theme.brightness == Brightness.dark
+                                  ? [
+                                      colorScheme.surface.withOpacity(0.7),
+                                      colorScheme.surface.withOpacity(0.4),
+                                      colorScheme.surface.withOpacity(0.6),
+                                    ]
+                                  : [
+                                      colorScheme.surface.withOpacity(0.98),
+                                      colorScheme.surfaceContainerHighest.withOpacity(0.85),
+                                      colorScheme.surface.withOpacity(0.95),
+                                    ],
+                            ),
                             border: Border.all(
                               color: theme.brightness == Brightness.dark
-                                  ? colorScheme.onSurface.withOpacity(0.12)
-                                  : colorScheme.surfaceContainerHighest.withOpacity(0.5),
-                              width: 1.5,
+                                  ? colorScheme.outline.withOpacity(0.15)
+                                  : colorScheme.outline.withOpacity(0.2),
+                              width: 2,
                             ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: colorScheme.shadow.withOpacity(0.1),
+                                blurRadius: 24,
+                                spreadRadius: 0,
+                                offset: const Offset(0, 8),
+                              ),
+                              BoxShadow(
+                                color: colorScheme.primary.withOpacity(0.05),
+                                blurRadius: 40,
+                                spreadRadius: -5,
+                                offset: const Offset(0, 20),
+                              ),
+                            ],
                           ),
                           child: Column(
                             children: [
-                              _ProfileAvatarHalo(user: user, color: currentRank.color, rankIndex: rankIndex),
+                              _ProfileAvatarHalo(user: user, color: currentRank.color, rankIndex: rankIndex)
+                                .animate()
+                                .fadeIn(duration: 400.ms, curve: Curves.easeOut)
+                                .scale(begin: const Offset(0.8, 0.8), duration: 500.ms, curve: Curves.easeOutBack),
                               const SizedBox(height: 8),
                               Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -328,31 +495,123 @@ class _ProfileView extends ConsumerWidget {
                                   Flexible(
                                     child: Text(
                                       user.name ?? 'İsimsiz Savaşçı',
-                                      style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 0.3, fontSize: 20),
+                                      style: theme.textTheme.headlineSmall?.copyWith(
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 0.5,
+                                        fontSize: 20,
+                                        height: 1.2,
+                                      ),
                                       textAlign: TextAlign.center,
                                       overflow: TextOverflow.ellipsis,
-                                    ),
+                                    ).animate()
+                                      .fadeIn(duration: 500.ms, delay: 100.ms)
+                                      .slideY(begin: 0.3, end: 0, duration: 500.ms, curve: Curves.easeOutCubic),
                                   ),
                                   if (isPremium) ...[
-                                    const SizedBox(width: 6),
-                                    const _PremiumStatusBadge(),
+                                    const SizedBox(width: 8),
+                                    const _PremiumStatusBadge()
+                                      .animate()
+                                      .fadeIn(duration: 400.ms, delay: 200.ms)
+                                      .scale(begin: const Offset(0.5, 0.5), duration: 600.ms, curve: Curves.elasticOut),
                                   ],
                                 ],
                               ),
-                              const SizedBox(height: 4),
-                              _RankPill(rank: currentRank),
-                              const SizedBox(height: 10),
+                              const SizedBox(height: 6),
+                              _RankPill(rank: currentRank)
+                                .animate()
+                                .fadeIn(duration: 500.ms, delay: 150.ms)
+                                .slideY(begin: 0.3, end: 0, duration: 500.ms, curve: Curves.easeOutCubic),
+                              const SizedBox(height: 14),
+                              // XP Progress Bar
+                              _NeoXpBar(
+                                currentXp: user.engagementScore,
+                                nextLevelXp: nextRank.requiredScore == currentRank.requiredScore ? currentRank.requiredScore : nextRank.requiredScore,
+                                progress: progressToNext,
+                              ).animate()
+                                .fadeIn(duration: 500.ms, delay: 200.ms)
+                                .slideX(begin: -0.2, end: 0, duration: 500.ms, curve: Curves.easeOutCubic),
+                              const SizedBox(height: 14),
+                              // Madalyalar ve Seviye
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(18),
+                                  color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                                  border: Border.all(
+                                    color: colorScheme.outline.withOpacity(0.1),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: _StatButton(
+                                        onTap: () => context.push('/profile/honor-wall', extra: allBadges),
+                                        icon: Icons.military_tech_rounded,
+                                        iconColor: Colors.amber.shade600,
+                                        value: '$unlockedCount/${allBadges.length}',
+                                        label: 'Madalyalar',
+                                        delay: 250.ms,
+                                      ),
+                                    ),
+                                    Container(
+                                      width: 1.5,
+                                      height: 60,
+                                      margin: const EdgeInsets.symmetric(vertical: 6),
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.bottomCenter,
+                                          colors: [
+                                            colorScheme.outline.withOpacity(0.0),
+                                            colorScheme.outline.withOpacity(0.3),
+                                            colorScheme.outline.withOpacity(0.0),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: _StatButton(
+                                        onTap: () => context.push('/profile/ranks'),
+                                        icon: Icons.workspace_premium,
+                                        iconColor: currentRank.color,
+                                        value: '${rankIndex + 1}',
+                                        label: 'Seviye',
+                                        delay: 300.ms,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ).animate()
+                                .fadeIn(duration: 500.ms, delay: 250.ms)
+                                .scale(begin: const Offset(0.95, 0.95), duration: 500.ms, curve: Curves.easeOutBack),
+                              const SizedBox(height: 14),
+                              // Deneme, Ort. Net, Seri
                               Row(
                                 children: [
-                                  Expanded(child: _ProfileStatCard(label: 'Deneme', value: testCount.toString(), icon: Icons.library_books_rounded, delay: 0.ms)),
-                                  const SizedBox(width: 8),
-                                  Expanded(child: _ProfileStatCard(label: 'Ort. Net', value: avgNet.toStringAsFixed(1), icon: Icons.track_changes_rounded, delay: 0.ms)),
-                                  const SizedBox(width: 8),
-                                  Expanded(child: _ProfileStatCard(label: 'Seri', value: user.streak.toString(), icon: Icons.local_fire_department_rounded, delay: 0.ms)),
+                                  Expanded(child: _ProfileStatCard(
+                                    label: 'Deneme',
+                                    value: testCount.toString(),
+                                    icon: Icons.library_books_rounded,
+                                    delay: 300.ms,
+                                  )),
+                                  const SizedBox(width: 10),
+                                  Expanded(child: _ProfileStatCard(
+                                    label: 'Ort. Net',
+                                    value: avgNet.toStringAsFixed(1),
+                                    icon: Icons.track_changes_rounded,
+                                    delay: 350.ms,
+                                  )),
+                                  const SizedBox(width: 10),
+                                  Expanded(child: _ProfileStatCard(
+                                    label: 'Seri',
+                                    value: user.streak.toString(),
+                                    icon: Icons.local_fire_department_rounded,
+                                    delay: 400.ms,
+                                  )),
                                 ],
                               ),
                               const SizedBox(height: 12),
-                              // Takipçi / Takip alanı dashboard içinde
+                              // Takipçi / Takip alanı
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
@@ -360,16 +619,20 @@ class _ProfileView extends ConsumerWidget {
                                     child: _FollowCount(
                                       label: 'Takipçi',
                                       value: followCounts.$1,
-                                      onTap: () => context.push('/profile/follow-list?mode=followers')
-                                    ),
+                                      onTap: () => context.push('/profile/follow-list?mode=followers'),
+                                    ).animate()
+                                      .fadeIn(duration: 500.ms, delay: 450.ms)
+                                      .slideX(begin: -0.2, end: 0, duration: 500.ms, curve: Curves.easeOutCubic),
                                   ),
-                                  const SizedBox(width: 12),
+                                  const SizedBox(width: 16),
                                   Expanded(
                                     child: _FollowCount(
                                       label: 'Takip',
                                       value: followCounts.$2,
-                                      onTap: () => context.push('/profile/follow-list?mode=following')
-                                    ),
+                                      onTap: () => context.push('/profile/follow-list?mode=following'),
+                                    ).animate()
+                                      .fadeIn(duration: 500.ms, delay: 500.ms)
+                                      .slideX(begin: 0.2, end: 0, duration: 500.ms, curve: Curves.easeOutCubic),
                                   ),
                                 ],
                               ),
@@ -377,60 +640,33 @@ class _ProfileView extends ConsumerWidget {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Image.asset('assets/images/splash.png', width: 24, height: 24),
-                                  const SizedBox(width: 6),
-                                  Text('Taktik App', style: theme.textTheme.titleSmall?.copyWith(color: colorScheme.secondary, fontWeight: FontWeight.bold, fontSize: 13)),
+                                  Image.asset('assets/images/splash.png', width: 28, height: 28),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Taktik App',
+                                    style: theme.textTheme.titleSmall?.copyWith(
+                                      color: colorScheme.primary,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 14,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
                                 ],
-                              ),
+                              ).animate()
+                                .fadeIn(duration: 500.ms, delay: 550.ms)
+                                .scale(begin: const Offset(0.9, 0.9), duration: 500.ms, curve: Curves.easeOutBack),
                             ],
                           ),
                         ),
                       ),
                       const SizedBox(height: 8),
-                      const SizedBox(height: 12),
-                      _NeoXpBar(
-                        currentXp: user.engagementScore,
-                        nextLevelXp: nextRank.requiredScore == currentRank.requiredScore ? currentRank.requiredScore : nextRank.requiredScore,
-                        progress: progressToNext,
-                      ).animate().fadeIn(duration: 450.ms, delay: 200.ms),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(child: _ProfileStatCard(label: 'Madalyalar', value: '$unlockedCount/${allBadges.length}', icon: Icons.military_tech_rounded, delay: 260.ms)),
-                          const SizedBox(width: 10),
-                          Expanded(child: _ProfileStatCard(label: 'Seviye', value: (rankIndex + 1).toString(), icon: Icons.workspace_premium, delay: 320.ms)),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(child: _ActionNeo(icon: Icons.emoji_events_outlined, label: 'Başarılar', onTap: () => context.push('/profile/honor-wall', extra: allBadges))),
-                          const SizedBox(width: 10),
-                          Expanded(child: _ActionNeo(icon: Icons.timeline_rounded, label: 'İlerleme', onTap: () => context.push('/home/stats'))),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Expanded(child: _ActionNeo(icon: Icons.person_rounded, label: 'Avatar', onTap: () => context.push('/profile/avatar-selection'))),
-                          const SizedBox(width: 10),
-                          Expanded(child: _ActionNeo(icon: Icons.map_rounded, label: 'Strateji', onTap: () {
-                            if (planDoc?.weeklyPlan != null) {
-                              context.push('/home/weekly-plan');
-                            } else {
-                              context.push('${AppRoutes.aiHub}/${AppRoutes.strategicPlanning}');
-                            }
-                          })),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
                       if (ref.watch(adminClaimProvider).valueOrNull == true)
                         Row(
                           children: [
                             Expanded(child: _ActionNeo(icon: Icons.admin_panel_settings_rounded, label: 'Admin Paneli', onTap: () => context.push('/admin/panel'))),
                           ],
                         ),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 30),
                     ],
                   ),
                 ),
@@ -457,16 +693,40 @@ class _FollowCount extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
     return InkWell(
       borderRadius: BorderRadius.circular(20),
-      onTap: onTap,
+      onTap: () {
+        if (onTap != null) {
+          HapticFeedback.selectionClick();
+          onTap!();
+        }
+      },
       child: Container(
-        constraints: const BoxConstraints(minWidth: 86, minHeight: 72),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        constraints: const BoxConstraints(minWidth: 80, minHeight: 68),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.06),
-          border: Border.all(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.12)),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              colorScheme.primaryContainer.withOpacity(0.15),
+              colorScheme.secondaryContainer.withOpacity(0.1),
+            ],
+          ),
+          border: Border.all(
+            color: colorScheme.outline.withOpacity(0.15),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: colorScheme.primary.withOpacity(0.05),
+              blurRadius: 12,
+              spreadRadius: 0,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -475,7 +735,11 @@ class _FollowCount extends StatelessWidget {
               FittedBox(
                 child: Text(
                   value.toString(),
-                  style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+                  style: textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 22,
+                    letterSpacing: 0.5,
+                  ),
                   maxLines: 1,
                 ),
               ),
@@ -484,12 +748,98 @@ class _FollowCount extends StatelessWidget {
                 child: FittedBox(
                   child: Text(
                     label,
-                    style: textTheme.labelMedium?.copyWith(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
+                    style: textTheme.labelMedium?.copyWith(
+                      color: colorScheme.onSurface.withOpacity(0.7),
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.3,
+                    ),
                     maxLines: 1,
                   ),
                 ),
               ),
             ],
+        ),
+      ),
+    );
+  }
+}
+
+// Yeni _StatButton Widget
+class _StatButton extends StatefulWidget {
+  final VoidCallback onTap;
+  final IconData icon;
+  final Color iconColor;
+  final String value;
+  final String label;
+  final Duration delay;
+
+  const _StatButton({
+    required this.onTap,
+    required this.icon,
+    required this.iconColor,
+    required this.value,
+    required this.label,
+    required this.delay,
+  });
+
+  @override
+  State<_StatButton> createState() => _StatButtonState();
+}
+
+class _StatButtonState extends State<_StatButton> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) {
+        setState(() => _isPressed = false);
+        HapticFeedback.selectionClick();
+        widget.onTap();
+      },
+      onTapCancel: () => setState(() => _isPressed = false),
+      child: AnimatedScale(
+        scale: _isPressed ? 0.92 : 1.0,
+        duration: const Duration(milliseconds: 100),
+        curve: Curves.easeOut,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: widget.iconColor.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(widget.icon, color: widget.iconColor, size: 24),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                widget.value,
+                style: textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: widget.iconColor,
+                  fontSize: 18,
+                  letterSpacing: 0.3,
+                ),
+              ),
+              const SizedBox(height: 1),
+              Text(
+                widget.label,
+                style: textTheme.bodySmall?.copyWith(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -544,19 +894,30 @@ class _ProfileAvatarHaloState extends State<_ProfileAvatarHalo> with SingleTicke
     }
   }
 
+  void _showAvatarPicker(BuildContext context) {
+    HapticFeedback.mediumImpact();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _AvatarPickerSheet(currentUser: widget.user),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final accentProfile1 = colorScheme.primary;
     final accentProfile2 = colorScheme.secondary;
 
-    const double outerSize = 170;
-    const double avatarDiameter = 126;
+    const double outerSize = 150;
+    const double avatarDiameter = 110;
     final primaryGlow = widget.color.o(0.30);
     final secondaryGlow = _highTier ? accentProfile1.o(0.25) : accentProfile2.o(0.18);
 
     return GestureDetector(
-      onTap: _triggerGlow,
+      onTap: () => _showAvatarPicker(context),
+      onLongPress: _triggerGlow,
       child: SizedBox(
         width: outerSize,
         height: outerSize,
@@ -861,25 +1222,72 @@ class _HaloRing extends StatelessWidget {
   }
 }
 
-class _RankPill extends StatelessWidget {
-  final Rank rank; const _RankPill({required this.rank});
+class _RankPill extends StatefulWidget {
+  final Rank rank;
+  const _RankPill({required this.rank});
+
+  @override
+  State<_RankPill> createState() => _RankPillState();
+}
+
+class _RankPillState extends State<_RankPill> {
+  bool _isPressed = false;
+
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: 400.ms,
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
-        gradient: LinearGradient(colors: [rank.color.o(0.25), rank.color.o(0.06)]),
-        border: Border.all(color: rank.color.o(0.55), width: 1.2),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(rank.icon, size: 18, color: rank.color),
-          const SizedBox(width: 8),
-          Text(rank.name, style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700)),
-        ],
+    final theme = Theme.of(context);
+
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) => setState(() => _isPressed = false),
+      onTapCancel: () => setState(() => _isPressed = false),
+      child: AnimatedScale(
+        scale: _isPressed ? 0.95 : 1.0,
+        duration: const Duration(milliseconds: 100),
+        curve: Curves.easeOut,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                widget.rank.color.withOpacity(0.3),
+                widget.rank.color.withOpacity(0.1),
+              ],
+            ),
+            border: Border.all(
+              color: widget.rank.color.withOpacity(0.6),
+              width: 2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: widget.rank.color.withOpacity(0.2),
+                blurRadius: 12,
+                spreadRadius: 0,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(widget.rank.icon, size: 18, color: widget.rank.color),
+              const SizedBox(width: 8),
+              Text(
+                widget.rank.name,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.5,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -901,31 +1309,62 @@ class _NeoXpBar extends StatelessWidget {
       children: [
         Row(
           children: [
-            Icon(Icons.flash_on_rounded, size: 16, color: accentProfile2),
-            const SizedBox(width: 4),
+            Container(
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                color: accentProfile2.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(7),
+              ),
+              child: Icon(Icons.flash_on_rounded, size: 16, color: accentProfile2),
+            ),
+            const SizedBox(width: 6),
             Text(
               'Taktik Puanı',
-              style: theme.textTheme.labelMedium?.copyWith(
-                fontWeight: FontWeight.bold,
+              style: theme.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w800,
                 fontSize: 12,
+                letterSpacing: 0.3,
               ),
             ),
             const Spacer(),
-            Text(
-              '$currentXp / $nextLevelXp',
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: colorScheme.onSurface.withOpacity(0.7),
-                fontSize: 11,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: colorScheme.outline.withOpacity(0.1),
+                  width: 1,
+                ),
+              ),
+              child: Text(
+                '$currentXp / $nextLevelXp',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: colorScheme.onSurface.withOpacity(0.8),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.2,
+                ),
               ),
             ),
           ],
         ),
         const SizedBox(height: 8),
         Container(
-          padding: const EdgeInsets.all(1.5),
+          padding: const EdgeInsets.all(2),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            gradient: LinearGradient(colors: [accentProfile1, accentProfile2]),
+            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              colors: [accentProfile1, accentProfile2, accentProfile1],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: accentProfile2.withOpacity(0.3),
+                blurRadius: 12,
+                spreadRadius: 0,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: LayoutBuilder(
             builder: (context, constraints) {
@@ -933,25 +1372,59 @@ class _NeoXpBar extends StatelessWidget {
               return Stack(
                 children: [
                   Container(
-                    height: 18,
+                    height: 20,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      color: colorScheme.surface.withOpacity(0.55),
+                      borderRadius: BorderRadius.circular(14),
+                      color: colorScheme.surface.withOpacity(0.7),
                     ),
                   ),
                   AnimatedContainer(
-                    duration: 700.ms,
+                    duration: const Duration(milliseconds: 900),
                     curve: Curves.easeOutCubic,
                     width: (w) * capped,
-                    height: 18,
+                    height: 20,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      gradient: LinearGradient(begin: Alignment.centerLeft, end: Alignment.centerRight, colors: [accentProfile2, accentProfile1]),
+                      borderRadius: BorderRadius.circular(14),
+                      gradient: LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: [
+                          accentProfile2,
+                          accentProfile1,
+                          accentProfile2,
+                        ],
+                      ),
                       boxShadow: [
-                        BoxShadow(color: accentProfile2.o(0.4), blurRadius: 14, spreadRadius: 1),
+                        BoxShadow(
+                          color: accentProfile2.withOpacity(0.5),
+                          blurRadius: 16,
+                          spreadRadius: 2,
+                        ),
                       ],
                     ),
                   ),
+                  // Shine effect
+                  if (capped > 0.05)
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 900),
+                      curve: Curves.easeOutCubic,
+                      width: (w) * capped,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(14),
+                        gradient: LinearGradient(
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                          colors: [
+                            Colors.white.withOpacity(0.0),
+                            Colors.white.withOpacity(0.2),
+                            Colors.white.withOpacity(0.0),
+                          ],
+                          stops: const [0.0, 0.5, 1.0],
+                        ),
+                      ),
+                    ).animate(onPlay: (controller) => controller.repeat())
+                      .shimmer(duration: 2000.ms, delay: 500.ms),
                 ],
               );
             },
@@ -962,9 +1435,28 @@ class _NeoXpBar extends StatelessWidget {
   }
 }
 
-class _ProfileStatCard extends StatelessWidget {
-  final String label; final String value; final IconData icon; final Duration delay;
-  const _ProfileStatCard({required this.label, required this.value, required this.icon, required this.delay});
+class _ProfileStatCard extends StatefulWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Duration delay;
+  final VoidCallback? onTap;
+
+  const _ProfileStatCard({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.delay,
+    this.onTap,
+  });
+
+  @override
+  State<_ProfileStatCard> createState() => _ProfileStatCardState();
+}
+
+class _ProfileStatCardState extends State<_ProfileStatCard> {
+  bool _isPressed = false;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -972,58 +1464,100 @@ class _ProfileStatCard extends StatelessWidget {
     final textTheme = theme.textTheme;
     final isDark = theme.brightness == Brightness.dark;
 
-    return Semantics(
-      label: '$label istatistiği: $value',
-      child: Container(
-        constraints: const BoxConstraints(minHeight: 88),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
+    final cardContent = GestureDetector(
+      onTapDown: widget.onTap != null ? (_) => setState(() => _isPressed = true) : null,
+      onTapUp: widget.onTap != null ? (_) {
+        setState(() => _isPressed = false);
+        HapticFeedback.selectionClick();
+        widget.onTap?.call();
+      } : null,
+      onTapCancel: () => setState(() => _isPressed = false),
+      child: AnimatedScale(
+        scale: _isPressed ? 0.94 : 1.0,
+        duration: const Duration(milliseconds: 100),
+        curve: Curves.easeOut,
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 80),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: isDark
                   ? [
-                      colorScheme.onSurface.withOpacity(0.1),
-                      colorScheme.onSurface.withOpacity(0.05)
+                      colorScheme.surfaceContainerHigh.withOpacity(0.4),
+                      colorScheme.surfaceContainer.withOpacity(0.2),
                     ]
                   : [
-                      colorScheme.surfaceContainerHighest.withOpacity(0.35),
-                      colorScheme.surfaceContainerHighest.withOpacity(0.20)
-                    ]),
-          border: Border.all(
-            color: isDark
-                ? colorScheme.onSurface.withOpacity(0.12)
-                : colorScheme.surfaceContainerHighest.withOpacity(0.5),
-            width: 1,
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(icon, size: 20, color: colorScheme.secondary),
-              const SizedBox(height: 6),
-              FittedBox(
-                child: Text(
-                  value,
-                  style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, fontSize: 16),
-                  maxLines: 1,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                label,
-                style: textTheme.labelSmall?.copyWith(color: colorScheme.onSurface.withOpacity(0.7), fontSize: 11),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+                      colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                      colorScheme.surfaceContainerHigh.withOpacity(0.3),
+                    ],
+            ),
+            border: Border.all(
+              color: isDark
+                  ? colorScheme.outline.withOpacity(0.15)
+                  : colorScheme.outline.withOpacity(0.2),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: colorScheme.shadow.withOpacity(0.08),
+                blurRadius: 12,
+                spreadRadius: 0,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(5),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(widget.icon, size: 20, color: colorScheme.primary),
+                ),
+                const SizedBox(height: 8),
+                FittedBox(
+                  child: Text(
+                    widget.value,
+                    style: textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 18,
+                      letterSpacing: 0.3,
+                    ),
+                    maxLines: 1,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  widget.label,
+                  style: textTheme.labelMedium?.copyWith(
+                    color: colorScheme.onSurface.withOpacity(0.7),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.2,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
         ),
-      ).animate().fadeIn(duration: 400.ms, delay: delay).slideY(begin: 0.15, end: 0, curve: Curves.easeOutCubic),
+      ),
     );
+
+    return Semantics(
+      label: '${widget.label} istatistiği: ${widget.value}',
+      button: widget.onTap != null,
+      child: cardContent,
+    ).animate().fadeIn(duration: 500.ms, delay: widget.delay).slideY(begin: 0.2, end: 0, curve: Curves.easeOutCubic);
   }
 }
 
@@ -1058,13 +1592,23 @@ class _ProfileQuickActions extends StatelessWidget {
 }
 
 class _ActionNeo extends StatefulWidget {
-  final IconData icon; final String label; final VoidCallback onTap; const _ActionNeo({required this.icon, required this.label, required this.onTap});
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _ActionNeo({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
   @override
   State<_ActionNeo> createState() => _ActionNeoState();
 }
 
 class _ActionNeoState extends State<_ActionNeo> {
   bool _pressed = false;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -1076,46 +1620,75 @@ class _ActionNeoState extends State<_ActionNeo> {
       onTapCancel: () => setState(() => _pressed = false),
       onTapUp: (_) {
         setState(() => _pressed = false);
-        HapticFeedback.selectionClick();
+        HapticFeedback.mediumImpact();
         widget.onTap();
       },
       child: AnimatedScale(
-        scale: _pressed ? 0.96 : 1,
-        duration: 120.ms,
+        scale: _pressed ? 0.96 : 1.0,
+        duration: const Duration(milliseconds: 120),
         curve: Curves.easeOut,
-        child: Container(
-          height: 52,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          height: 56,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
             gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: isDark
-                    ? [
-                        colorScheme.surface.withOpacity(0.5),
-                        colorScheme.surface.withOpacity(0.2)
-                      ]
-                    : [
-                        colorScheme.surfaceContainerHighest.withOpacity(0.3),
-                        colorScheme.surfaceContainerHighest.withOpacity(0.15)
-                      ]),
-            border: Border.all(
-              color: isDark
-                  ? colorScheme.onSurface.withOpacity(0.12)
-                  : colorScheme.surfaceContainerHighest.withOpacity(0.5),
-              width: 1,
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: _pressed
+                ? [
+                    colorScheme.primaryContainer.withOpacity(0.6),
+                    colorScheme.secondaryContainer.withOpacity(0.4),
+                  ]
+                : isDark
+                  ? [
+                      colorScheme.surfaceContainerHigh.withOpacity(0.5),
+                      colorScheme.surfaceContainer.withOpacity(0.3),
+                    ]
+                  : [
+                      colorScheme.surfaceContainerHighest.withOpacity(0.4),
+                      colorScheme.surfaceContainerHigh.withOpacity(0.25),
+                    ],
             ),
+            border: Border.all(
+              color: _pressed
+                  ? colorScheme.primary.withOpacity(0.3)
+                  : isDark
+                    ? colorScheme.outline.withOpacity(0.15)
+                    : colorScheme.outline.withOpacity(0.2),
+              width: 1.5,
+            ),
+            boxShadow: _pressed
+              ? []
+              : [
+                  BoxShadow(
+                    color: colorScheme.shadow.withOpacity(0.08),
+                    blurRadius: 12,
+                    spreadRadius: 0,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(widget.icon, color: colorScheme.primary, size: 20),
-              const SizedBox(width: 6),
+              Icon(
+                widget.icon,
+                color: _pressed
+                  ? colorScheme.primary
+                  : colorScheme.onSurface,
+                size: 22,
+              ),
+              const SizedBox(width: 8),
               Text(
                 widget.label,
                 style: theme.textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 14,
+                  letterSpacing: 0.3,
+                  color: _pressed
+                    ? colorScheme.primary
+                    : colorScheme.onSurface,
                 ),
               ),
             ],
@@ -1133,31 +1706,519 @@ class _PremiumStatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final gold = Theme.of(context).colorScheme.primaryContainer;
+    final colorScheme = Theme.of(context).colorScheme;
+    final gold = Colors.amber.shade600;
+
     return Tooltip(
       message: 'Premium Üye',
       child: Container(
+        padding: const EdgeInsets.all(2),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
+          gradient: LinearGradient(
+            colors: [
+              gold,
+              Colors.amber.shade400,
+            ],
+          ),
           boxShadow: [
             BoxShadow(
-              color: gold.withOpacity(0.7),
-              blurRadius: 14,
+              color: gold.withOpacity(0.5),
+              blurRadius: 16,
               spreadRadius: 2,
             ),
           ],
         ),
-        child: Icon(
-          Icons.workspace_premium_rounded,
-          color: gold,
-          size: 26,
-        ),
-      ).animate(onPlay: (c) => c.repeat(reverse: true)).scale(
-            begin: const Offset(0.95, 0.95),
-            end: const Offset(1.1, 1.1),
-            duration: 1800.ms,
-            curve: Curves.easeInOut,
+        child: Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: colorScheme.surface,
           ),
+          child: Icon(
+            Icons.workspace_premium_rounded,
+            color: gold,
+            size: 20,
+          ),
+        ),
+      ).animate(onPlay: (c) => c.repeat(reverse: true))
+        .scale(
+          begin: const Offset(1.0, 1.0),
+          end: const Offset(1.15, 1.15),
+          duration: const Duration(milliseconds: 2000),
+          curve: Curves.easeInOut,
+        )
+        .then()
+        .shimmer(
+          duration: const Duration(milliseconds: 1500),
+          color: Colors.white.withOpacity(0.3),
+        ),
     );
   }
 }
+
+// =============================================================================
+// AVATAR PICKER SHEET - Modern & User-Friendly Design
+// =============================================================================
+
+class _AvatarPickerSheet extends ConsumerStatefulWidget {
+  final UserModel currentUser;
+
+  const _AvatarPickerSheet({required this.currentUser});
+
+  @override
+  ConsumerState<_AvatarPickerSheet> createState() => _AvatarPickerSheetState();
+}
+
+class _AvatarPickerSheetState extends ConsumerState<_AvatarPickerSheet> {
+  late String selectedStyle;
+  late String selectedSeed;
+  bool _isUpdating = false;
+
+  // En popüler 6 avatar stili
+  final List<String> avatarStyles = [
+    'avataaars',
+    'adventurer',
+    'lorelei',
+    'bottts',
+    'pixel-art',
+    'fun-emoji',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    selectedStyle = widget.currentUser.avatarStyle ?? 'avataaars';
+    selectedSeed = widget.currentUser.avatarSeed ?? widget.currentUser.name ?? 'User${DateTime.now().millisecondsSinceEpoch}';
+  }
+
+  String _buildAvatarUrl(String style, String seed) {
+    return 'https://api.dicebear.com/9.x/$style/svg?seed=${Uri.encodeComponent(seed)}&backgroundColor=transparent&margin=0&scale=110&size=256';
+  }
+
+  Future<void> _updateAvatar() async {
+    if (_isUpdating) return;
+
+    setState(() => _isUpdating = true);
+    HapticFeedback.mediumImpact();
+
+    try {
+      final userId = ref.read(authControllerProvider).value?.uid;
+      if (userId == null) return;
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .update({
+        'avatarStyle': selectedStyle,
+        'avatarSeed': selectedSeed,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 12),
+                const Text('Profil fotoğrafın güncellendi!'),
+              ],
+            ),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            duration: const Duration(seconds: 2),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Hata: ${e.toString()}'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isUpdating = false);
+      }
+    }
+  }
+
+  void _randomizeAvatar() {
+    HapticFeedback.lightImpact();
+    setState(() {
+      selectedSeed = 'user${DateTime.now().millisecondsSinceEpoch}';
+    });
+  }
+
+  void _selectStyle(String style) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      selectedStyle = style;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final mediaQuery = MediaQuery.of(context);
+
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: mediaQuery.size.height * 0.75,
+      ),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Drag Handle
+          Container(
+            margin: const EdgeInsets.only(top: 12, bottom: 8),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: colorScheme.onSurfaceVariant.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+
+          // Header with Preview
+          Container(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Avatar Seç',
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          'Stilini bul, kendin ol! 🎨',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded),
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: IconButton.styleFrom(
+                        backgroundColor: colorScheme.surfaceContainerHighest,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 20),
+
+                // Large Preview with Actions
+                Row(
+                  children: [
+                    // Preview Avatar
+                    Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: [
+                            colorScheme.primaryContainer,
+                            colorScheme.secondaryContainer,
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: colorScheme.primary.withOpacity(0.3),
+                            blurRadius: 20,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.all(3),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: colorScheme.surface,
+                        ),
+                        child: ClipOval(
+                          child: SvgPicture.network(
+                            _buildAvatarUrl(selectedStyle, selectedSeed),
+                            fit: BoxFit.cover,
+                            placeholderBuilder: (_) => Center(
+                              child: CircularProgressIndicator(
+                                strokeWidth: 3,
+                                color: colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ).animate().scale(
+                      duration: 300.ms,
+                      curve: Curves.easeOutBack,
+                    ),
+
+                    const SizedBox(width: 20),
+
+                    // Action Button - Yeşil Şans Dene
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: _randomizeAvatar,
+                        icon: const Icon(Icons.casino_rounded, size: 22),
+                        label: const Text('Şans Dene'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF4CAF50), // Yeşil
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          const Divider(height: 1),
+
+          // Avatar Grid - Kompakt ve optimize edilmiş
+          Flexible(
+            child: Container(
+              constraints: const BoxConstraints(
+                maxHeight: 320,
+              ),
+              child: GridView.builder(
+                shrinkWrap: true,
+                padding: const EdgeInsets.all(20),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 1.0,
+                ),
+                itemCount: avatarStyles.length,
+                itemBuilder: (context, index) {
+                final styleKey = avatarStyles[index];
+                final isSelected = selectedStyle == styleKey;
+
+                return GestureDetector(
+                  onTap: () => _selectStyle(styleKey),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeOutCubic,
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? colorScheme.primaryContainer
+                          : colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: isSelected
+                            ? colorScheme.primary
+                            : Colors.transparent,
+                        width: 3,
+                      ),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: colorScheme.primary.withOpacity(0.3),
+                                blurRadius: 16,
+                                spreadRadius: 2,
+                              ),
+                            ]
+                          : null,
+                    ),
+                    padding: const EdgeInsets.all(12),
+                    child: Stack(
+                      children: [
+                        // Avatar Preview
+                        Center(
+                          child: Container(
+                            width: double.infinity,
+                            height: double.infinity,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: colorScheme.surface,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 8,
+                                  spreadRadius: 1,
+                                ),
+                              ],
+                            ),
+                            child: ClipOval(
+                              child: SvgPicture.network(
+                                _buildAvatarUrl(styleKey, selectedSeed),
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: double.infinity,
+                                placeholderBuilder: (_) => Center(
+                                  child: SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: colorScheme.primary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ).animate(key: ValueKey('$styleKey-$selectedSeed'))
+                            .fadeIn(duration: 250.ms)
+                            .scale(
+                              begin: const Offset(0.85, 0.85),
+                              duration: 250.ms,
+                              curve: Curves.easeOutBack,
+                            ),
+                        ),
+
+                        // Check Icon
+                        if (isSelected)
+                          Positioned(
+                            top: 4,
+                            right: 4,
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: colorScheme.primary,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: colorScheme.primary.withOpacity(0.4),
+                                    blurRadius: 8,
+                                    spreadRadius: 1,
+                                  ),
+                                ],
+                              ),
+                              child: Icon(
+                                Icons.check_rounded,
+                                size: 16,
+                                color: colorScheme.onPrimary,
+                              ),
+                            ).animate()
+                              .scale(
+                                duration: 300.ms,
+                                curve: Curves.elasticOut,
+                              )
+                              .fadeIn(duration: 200.ms),
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+
+          // Bottom Action Bar - Eşit Boyutlu Butonlar
+          Container(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+            decoration: BoxDecoration(
+              color: colorScheme.surface,
+              boxShadow: [
+                BoxShadow(
+                  color: colorScheme.shadow.withOpacity(0.08),
+                  blurRadius: 12,
+                  offset: const Offset(0, -4),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              top: false,
+              child: Row(
+                children: [
+                  // İptal Butonu
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: colorScheme.surfaceContainerHighest,
+                        foregroundColor: colorScheme.onSurface,
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'İptal',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  // Kaydet Butonu
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: _isUpdating ? null : _updateAvatar,
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                        backgroundColor: colorScheme.primary,
+                        foregroundColor: colorScheme.onPrimary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        disabledBackgroundColor: colorScheme.primary.withOpacity(0.5),
+                        elevation: 0,
+                      ),
+                      child: _isUpdating
+                          ? SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                color: colorScheme.onPrimary,
+                              ),
+                            )
+                          : const Text(
+                              'Kaydet',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.2,
+                              ),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
