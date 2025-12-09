@@ -231,9 +231,16 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
       child: Scaffold(
         resizeToAvoidBottomInset: true,
         appBar: AppBar(
-          title: const Text('Sohbet'),
+          title: Text(
+            'Sohbet',
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 20,
+            ),
+          ),
           backgroundColor: Theme.of(context).colorScheme.surface,
           elevation: 0,
+          centerTitle: true,
         ),
         backgroundColor: Theme.of(context).colorScheme.surface,
         body: Stack(
@@ -293,47 +300,90 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
   }
 
   Widget _buildChatInput() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return SafeArea(
       top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
         child: Row(
           children: [
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(22),
+                  color: colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                    color: colorScheme.outline.withOpacity(0.2),
+                    width: 1.5,
                   ),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 14),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 child: TextField(
                   controller: _controller,
                   textCapitalization: TextCapitalization.sentences,
                   keyboardType: TextInputType.multiline,
                   minLines: 1,
                   maxLines: 4,
-                  decoration: const InputDecoration(
-                    hintText: 'Yaz...',
+                  style: theme.textTheme.bodyLarge,
+                  decoration: InputDecoration(
+                    hintText: 'Mesajını yaz...',
+                    hintStyle: TextStyle(
+                      color: colorScheme.onSurfaceVariant.withOpacity(0.6),
+                    ),
                     border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                   onSubmitted: (_) => _sendMessage(),
                 ),
               ),
             ),
-            const SizedBox(width: 8),
-            IconButton.filled(
-              onPressed: _isTyping ? null : () => _sendMessage(),
-              icon: _isTyping
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Icon(Icons.send_rounded),
-              style: IconButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.secondary,
-                foregroundColor: Colors.black,
-                padding: const EdgeInsets.all(12),
-                shape: const CircleBorder(),
+            const SizedBox(width: 12),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    colorScheme.secondary,
+                    colorScheme.secondary.withOpacity(0.8),
+                  ],
+                ),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: colorScheme.secondary.withOpacity(0.4),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                onPressed: _isTyping ? null : () => _sendMessage(),
+                icon: _isTyping
+                    ? SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.black.withOpacity(0.7),
+                          ),
+                        ),
+                      )
+                    : const Icon(Icons.send_rounded, size: 24),
+                color: Colors.black87,
+                padding: const EdgeInsets.all(14),
+                constraints: const BoxConstraints(minWidth: 52, minHeight: 52),
               ),
             ),
           ],
@@ -351,59 +401,154 @@ class _SmartBriefingView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
     return SafeArea(
       child: LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 28, 16, 32),
+            padding: const EdgeInsets.fromLTRB(20, 36, 20, 36),
             child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight - 60),
+              constraints: BoxConstraints(minHeight: constraints.maxHeight - 72),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const SizedBox(height: 4),
-                  const CircleAvatar(
-                    backgroundColor: Colors.transparent,
-                    radius: 42,
-                    backgroundImage: AssetImage('assets/images/bunnyy.png'),
-                  ).animate().fadeIn(delay: 180.ms).scale(),
-                  const SizedBox(height: 24),
-                  Text('Motivasyon Sohbeti', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700))
-                      .animate().fadeIn(delay: 260.ms),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Hızlı destek için bir başlık seç. Deneme Değerlendirme ve Strateji Danışma AiHub’a taşındı.',
-                    style: theme.textTheme.titleMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant, height: 1.3),
-                    textAlign: TextAlign.center,
-                  ).animate().fadeIn(delay: 300.ms),
-                  const SizedBox(height: 24),
-                  // KALDI: Dostça Destek
+                  // Premium Hero Section
+                  Container(
+                    padding: const EdgeInsets.all(28),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: isDark
+                            ? [
+                                colorScheme.primaryContainer.withOpacity(0.25),
+                                colorScheme.tertiaryContainer.withOpacity(0.15),
+                              ]
+                            : [
+                                colorScheme.primaryContainer.withOpacity(0.5),
+                                colorScheme.tertiaryContainer.withOpacity(0.3),
+                              ],
+                      ),
+                      borderRadius: BorderRadius.circular(32),
+                      boxShadow: [
+                        BoxShadow(
+                          color: colorScheme.primary.withOpacity(0.15),
+                          blurRadius: 24,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: colorScheme.surface,
+                            boxShadow: [
+                              BoxShadow(
+                                color: colorScheme.secondary.withOpacity(0.3),
+                                blurRadius: 20,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                          child: const CircleAvatar(
+                            backgroundColor: Colors.transparent,
+                            radius: 44,
+                            backgroundImage: AssetImage('assets/images/bunnyy.png'),
+                          ),
+                        ).animate().fadeIn(delay: 100.ms).scale(curve: Curves.elasticOut),
+                        const SizedBox(height: 24),
+                        Text(
+                          'Motivasyon & Destek',
+                          style: theme.textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.5,
+                          ),
+                        ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.3),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Stresini yönet, enerjini topla. Zihinsel performansın için yargısız, güvenli alanın burası. 🫶',
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                            height: 1.5,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          textAlign: TextAlign.center,
+                        ).animate().fadeIn(delay: 300.ms),
+                      ],
+                    ),
+                  ).animate().fadeIn(delay: 50.ms).scale(),
+
+                  const SizedBox(height: 32),
+
+                  // Feature Cards
                   _BriefingButton(
                     icon: Icons.favorite_rounded,
                     title: 'Dostça Destek',
-                    subtitle: 'Stres / moral düşüşü için kısa destek + mikro adım.',
+                    subtitle: 'Sınav kaygısı veya yorgunluk... Yargılamak yok, çözüm var. Anlat, rahatla ve odaklan.',
                     onTap: () => onPromptSelected('psych_support'),
-                    delay: 380.ms,
+                    delay: 400.ms,
+                    gradient: LinearGradient(
+                      colors: isDark
+                          ? [const Color(0xFF7B1FA2), const Color(0xFF9C27B0)]
+                          : [const Color(0xFFE91E63), const Color(0xFFF06292)],
+                    ),
+                    accentColor: isDark ? const Color(0xFFBA68C8) : const Color(0xFFC2185B),
                   ),
-                  // KALDI: Motivasyon Köşesi
+
+                  const SizedBox(height: 16),
+
                   _BriefingButton(
                     icon: Icons.bolt_rounded,
                     title: 'Motivasyon Köşesi',
-                    subtitle: '5 dk. mikro meydan okuma ve ritim önerisi.',
+                    subtitle: 'Düşük pille çalışma! Seni anında masaya kilitleyecek güç konuşması için tıkla. ⚡',
                     onTap: () => onPromptSelected('motivation_corner'),
-                    delay: 460.ms,
+                    delay: 500.ms,
+                    gradient: LinearGradient(
+                      colors: isDark
+                          ? [const Color(0xFFE65100), const Color(0xFFF57C00)]
+                          : [const Color(0xFFFF9800), const Color(0xFFFFB74D)],
+                    ),
+                    accentColor: isDark ? const Color(0xFFFFAB40) : const Color(0xFFF57C00),
                   ),
+
                   const SizedBox(height: 32),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      'Taktik AI Koçu yalnızca akademik strateji ve motivasyon aracıdır. Tıbbi veya psikolojik teşhis/tedavi amaçlı tasarlanmamıştır. Sağlık sorunları için lütfen lisanslı bir uzmana başvurun.',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.6),
+
+                  // Disclaimer
+                  Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: colorScheme.outline.withOpacity(0.2),
                       ),
                     ),
-                  ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.info_outline_rounded,
+                          size: 20,
+                          color: colorScheme.primary,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Taktik Tavşan senin dijital akademik koçundur. Burada sunulanlar rehberlik amaçlıdır, tıbbi tedavi yerine geçmez. Ciddi sağlık durumlarında lütfen uzmana danış.',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ).animate().fadeIn(delay: 600.ms),
                 ],
               ),
             ),
@@ -415,93 +560,122 @@ class _SmartBriefingView extends ConsumerWidget {
 }
 
 class _BriefingButton extends StatelessWidget {
-  final String title, subtitle; final IconData icon; final VoidCallback onTap; final Duration delay;
-  const _BriefingButton({required this.title, required this.subtitle, required this.icon, required this.onTap, required this.delay});
+  final String title, subtitle;
+  final IconData icon;
+  final VoidCallback onTap;
+  final Duration delay;
+  final Gradient gradient;
+  final Color accentColor;
+
+  const _BriefingButton({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.onTap,
+    required this.delay,
+    required this.gradient,
+    required this.accentColor,
+  });
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(24),
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isDark
-                ? [const Color(0x18222C2C), const Color(0x10222C2C)]
-                : [
-              colorScheme.surfaceContainerHighest.withOpacity(0.4),
-              colorScheme.surfaceContainerHighest.withOpacity(0.2),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(28),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28),
+            gradient: gradient,
+            boxShadow: [
+              BoxShadow(
+                color: accentColor.withOpacity(0.3),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+                spreadRadius: 0,
+              ),
+              BoxShadow(
+                color: Colors.black.withOpacity(isDark ? 0.4 : 0.1),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
             ],
           ),
-          border: Border.all(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.08)
-                : colorScheme.outline.withOpacity(0.3),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: isDark
-                  ? Colors.black.withValues(alpha: 0.25)
-                  : Colors.black.withOpacity(0.08),
-              blurRadius: 14,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 54,
-              height: 54,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(colors: [theme.colorScheme.secondary, theme.colorScheme.secondary]),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withOpacity(isDark ? 0.15 : 0.25),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.3),
+                    width: 2,
+                  ),
+                ),
+                child: Icon(
+                  icon,
+                  size: 30,
+                  color: isDark ? Colors.white : Colors.white.withOpacity(0.95),
+                ),
               ),
-              child: Icon(icon, size: 30, color: isDark ? theme.primaryColor : Colors.black87),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: colorScheme.onSurface,
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? Colors.white : Colors.white,
+                        letterSpacing: -0.3,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    subtitle,
-                    style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant, height: 1.25),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+                    const SizedBox(height: 6),
+                    Text(
+                      subtitle,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: isDark
+                            ? Colors.white.withOpacity(0.85)
+                            : Colors.white.withOpacity(0.9),
+                        height: 1.4,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Icon(
-              Icons.arrow_forward_ios_rounded,
-              size: 18,
-              color: colorScheme.onSurfaceVariant.withOpacity(0.8),
-            ),
-          ],
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.all(5),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withOpacity(0.2),
+                ),
+                child: Icon(
+                  Icons.arrow_forward_rounded,
+                  size: 18,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    ).animate().fadeIn(delay: delay).slideY(begin: 0.35, curve: Curves.easeOutCubic);
+    ).animate().fadeIn(delay: delay).slideX(begin: 0.2, curve: Curves.easeOutCubic);
   }
 }
 
@@ -514,47 +688,82 @@ class _MessageBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final isUser = message.isUser;
     final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
-    final Color bg = isUser ? colorScheme.secondary : colorScheme.surfaceContainerHighest;
-    final Color fg = isUser ? Colors.black : colorScheme.onSurface;
+    final Color bg = isUser
+        ? colorScheme.secondary
+        : colorScheme.surfaceContainerHighest;
+    final Color fg = isUser ? Colors.black87 : colorScheme.onSurface;
 
     final content = GestureDetector(
       onLongPress: () async {
         await Clipboard.setData(ClipboardData(text: message.text));
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Mesaj kopyalandı')));
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('✓ Mesaj kopyalandı'),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
       },
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
         child: Row(
           mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             if (!isUser)
-              const CircleAvatar(
-                backgroundColor: Colors.transparent,
-                radius: 14,
-                backgroundImage: AssetImage('assets/images/bunnyy.png'),
+              Container(
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: colorScheme.primary.withOpacity(0.3),
+                    width: 2,
+                  ),
+                ),
+                child: const CircleAvatar(
+                  backgroundColor: Colors.transparent,
+                  radius: 16,
+                  backgroundImage: AssetImage('assets/images/bunnyy.png'),
+                ),
               ),
-            if (!isUser) const SizedBox(width: 8),
+            if (!isUser) const SizedBox(width: 10),
             Flexible(
               child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.82),
+                constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.78),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   decoration: BoxDecoration(
                     color: bg,
                     borderRadius: BorderRadius.only(
-                      topLeft: const Radius.circular(20), topRight: const Radius.circular(20),
-                      bottomLeft: isUser ? const Radius.circular(20) : const Radius.circular(10),
-                      bottomRight: isUser ? const Radius.circular(10) : const Radius.circular(20),
+                      topLeft: const Radius.circular(20),
+                      topRight: const Radius.circular(20),
+                      bottomLeft: isUser ? const Radius.circular(20) : const Radius.circular(6),
+                      bottomRight: isUser ? const Radius.circular(6) : const Radius.circular(20),
                     ),
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withValues(alpha: 0.18), blurRadius: 10, offset: const Offset(0, 2)),
+                      BoxShadow(
+                        color: Colors.black.withOpacity(isDark ? 0.3 : 0.12),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
                     ],
                   ),
                   child: Text(
                     message.text,
-                    style: TextStyle(color: fg, fontSize: 16, height: 1.48),
+                    style: TextStyle(
+                      color: fg,
+                      fontSize: 15.5,
+                      height: 1.5,
+                      fontWeight: FontWeight.w400,
+                    ),
                   ),
                 ),
               ),
@@ -566,7 +775,14 @@ class _MessageBubble extends StatelessWidget {
 
     if (!animate) return content;
     return Animate(
-      effects: const [FadeEffect(duration: Duration(milliseconds: 150), curve: Curves.easeIn)],
+      effects: const [
+        FadeEffect(duration: Duration(milliseconds: 200), curve: Curves.easeIn),
+        SlideEffect(
+          begin: Offset(0, 0.1),
+          duration: Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+        ),
+      ],
       child: content,
     );
   }
@@ -574,37 +790,77 @@ class _MessageBubble extends StatelessWidget {
 
 class _TypingBubble extends StatelessWidget {
   const _TypingBubble();
+
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Align(
       alignment: Alignment.centerLeft,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 0.0),
+        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 4.0),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            const CircleAvatar(
+            Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: colorScheme.primary.withOpacity(0.3),
+                  width: 2,
+                ),
+              ),
+              child: const CircleAvatar(
                 backgroundColor: Colors.transparent,
                 radius: 16,
-                backgroundImage: AssetImage('assets/images/bunnyy.png')),
-            const SizedBox(width: 8),
+                backgroundImage: AssetImage('assets/images/bunnyy.png'),
+              ),
+            ),
+            const SizedBox(width: 10),
             Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  borderRadius: const BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20),
-                      bottomRight: Radius.circular(20), bottomLeft: Radius.circular(4))),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
+                  bottomRight: Radius.circular(20),
+                  bottomLeft: Radius.circular(6),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(isDark ? 0.3 : 0.12),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: List.generate(3, (index) {
                   return Animate(
-                    delay: (index * 200).ms, onPlay: (c) => c.repeat(reverse: true),
-                    effects: const [ScaleEffect(duration: Duration(milliseconds: 600), curve: Curves.easeInOut,
-                        begin: Offset(0.7, 0.7), end: Offset(1.1, 1.1))],
+                    delay: (index * 200).ms,
+                    onPlay: (c) => c.repeat(reverse: true),
+                    effects: const [
+                      ScaleEffect(
+                        duration: Duration(milliseconds: 600),
+                        curve: Curves.easeInOut,
+                        begin: Offset(0.7, 0.7),
+                        end: Offset(1.1, 1.1),
+                      ),
+                    ],
                     child: Container(
                       margin: const EdgeInsets.symmetric(horizontal: 3),
-                      width: 8, height: 8,
-                      decoration: BoxDecoration(color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.7), shape: BoxShape.circle),
+                      width: 9,
+                      height: 9,
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary.withOpacity(0.7),
+                        shape: BoxShape.circle,
+                      ),
                     ),
                   );
                 }),
