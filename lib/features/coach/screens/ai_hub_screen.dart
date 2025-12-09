@@ -15,18 +15,19 @@ class AiHubScreen extends ConsumerWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F0F13) : const Color(0xFFF0F2F5),
+      backgroundColor: isDark ? const Color(0xFF0F0F13) : const Color(0xFFF4F6F9),
       appBar: AppBar(
-        backgroundColor: isDark ? const Color(0xFF0F0F13) : const Color(0xFFF0F2F5),
+        backgroundColor: isDark ? const Color(0xFF0F0F13) : const Color(0xFFF4F6F9),
         elevation: 0,
         scrolledUnderElevation: 0,
+        centerTitle: true,
         title: Text(
           'Taktik Üssü',
           style: TextStyle(
             fontWeight: FontWeight.w900,
             color: theme.colorScheme.onSurface,
             letterSpacing: -0.5,
-            fontSize: 22,
+            fontSize: 24,
           ),
         ),
         actions: [
@@ -51,11 +52,11 @@ class AiHubScreen extends ConsumerWidget {
       ),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 100),
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 120),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- 1. HERO KART: TAKTİK TAVŞAN (Görsel Güncellendi) ---
+            // --- 1. HERO KART: TAKTİK TAVŞAN ---
             _HeroCoachCard(
               isPremium: isPremium,
               onTap: () => _handleNavigation(
@@ -65,7 +66,7 @@ class AiHubScreen extends ConsumerWidget {
                   offerData: {
                     'title': 'Taktik Tavşan',
                     'subtitle': 'Sadece ders değil, kriz anlarını yönet.',
-                    'icon': Icons.psychology_rounded, // Burada ikon kalabilir, görsel asset yollanmaz
+                    'icon': Icons.psychology_rounded,
                     'color': Colors.indigoAccent,
                     'marketingTitle': 'Koçun Cebinde!',
                     'marketingSubtitle': 'Netlerin neden artmıyor? Stresle nasıl başa çıkarsın? Taktik Tavşan seni analiz edip nokta atışı yönlendirme yapsın.',
@@ -74,7 +75,7 @@ class AiHubScreen extends ConsumerWidget {
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
             Padding(
               padding: const EdgeInsets.only(left: 4, bottom: 12),
@@ -83,7 +84,7 @@ class AiHubScreen extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
-                  letterSpacing: 1,
+                  letterSpacing: 1.2,
                   color: theme.colorScheme.onSurface.withOpacity(0.4),
                 ),
               ),
@@ -94,49 +95,39 @@ class AiHubScreen extends ConsumerWidget {
               children: [
                 Expanded(
                   child: _FeatureCard(
-                    title: 'Haftalık\nStratejist',
-                    subtitle: 'Senin hızına göre dinamik değişen rota.',
+                    title: 'Haftalık Strateji',
+                    subtitle: 'Planı Taktik Tavşan yapsın, sen hedefe kilitlen! Kişisel haftalık programın hazır.',
                     icon: Icons.map_rounded,
-                    color: const Color(0xFF10B981), // Emerald Green
+                    color: const Color(0xFF10B981),
                     isPremium: isPremium,
-                    onTap: () => _handleNavigation(
-                        context,
-                        isPremium,
-                        route: '/ai-hub/strategic-planning',
-                        offerData: {
-                          'title': 'Haftalık Stratejist',
-                          'subtitle': 'Hedefine giden en kısa yol.',
-                          'icon': Icons.map_rounded,
-                          'color': const Color(0xFF10B981),
-                          'marketingTitle': 'Rotanı Çiz!',
-                          'marketingSubtitle': 'Rastgele çalışarak vakit kaybetme. Taktik Tavşan senin için en verimli haftalık planı saniyeler içinde oluştursun.',
-                          'redirectRoute': '/ai-hub/strategic-planning',
-                        }
-                    ),
+                    onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/strategic-planning', offerData: {
+                      'title': 'Haftalık Stratejist',
+                      'subtitle': 'Hedefine giden en kısa yol.',
+                      'icon': Icons.map_rounded,
+                      'color': const Color(0xFF10B981),
+                      'marketingTitle': 'Rotanı Çiz!',
+                      'marketingSubtitle': 'Rastgele çalışarak vakit kaybetme. Taktik Tavşan senin için en verimli haftalık planı saniyeler içinde oluştursun.',
+                      'redirectRoute': '/ai-hub/strategic-planning',
+                    }),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: _FeatureCard(
-                    title: 'Analiz &\nStrateji',
-                    subtitle: 'Gözünden kaçan "tuzağı" bulur.',
+                    title: 'Analiz & Strateji',
+                    subtitle: 'Taktik Tavşan senin için deneme analizleri yapsın, stratejini belirlesin.',
                     icon: Icons.radar_rounded,
-                    color: const Color(0xFFF43F5E), // Rose Red
+                    color: const Color(0xFFF43F5E),
                     isPremium: isPremium,
-                    onTap: () => _handleNavigation(
-                        context,
-                        isPremium,
-                        route: '/ai-hub/analysis-strategy',
-                        offerData: {
-                          'title': 'Analiz & Strateji',
-                          'subtitle': 'Verilerle konuşan koç.',
-                          'icon': Icons.radar_rounded,
-                          'color': const Color(0xFFF43F5E),
-                          'marketingTitle': 'Tuzağı Fark Et!',
-                          'marketingSubtitle': 'Denemelerde neden takılıyorsun? Detaylı analiz sistemi, seni aşağı çeken konuları nokta atışı tespit etsin.',
-                          'redirectRoute': '/ai-hub/analysis-strategy',
-                        }
-                    ),
+                    onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/analysis-strategy', offerData: {
+                      'title': 'Analiz & Strateji',
+                      'subtitle': 'Verilerle konuşan koç.',
+                      'icon': Icons.radar_rounded,
+                      'color': const Color(0xFFF43F5E),
+                      'marketingTitle': 'Tuzağı Fark Et!',
+                      'marketingSubtitle': 'Denemelerde neden takılıyorsun? Detaylı analiz sistemi, seni aşağı çeken konuları nokta atışı tespit etsin.',
+                      'redirectRoute': '/ai-hub/analysis-strategy',
+                    }),
                   ),
                 ),
               ],
@@ -144,33 +135,31 @@ class AiHubScreen extends ConsumerWidget {
 
             const SizedBox(height: 12),
 
-            // Cevher Atölyesi (Yatay)
+            // Cevher Atölyesi
             _WideFeatureCard(
               title: 'Cevher Atölyesi',
-              subtitle: 'Zayıf olduğun konuyu seç, Taktik Tavşan seni o konuda ustalaştırana kadar test etsin.',
+              subtitle: 'Taktik Tavşan zayıf olduğun konuları tespit edip sana özel çalışma seti sunsun.',
               icon: Icons.diamond_rounded,
-              color: const Color(0xFF8B5CF6), // Violet
+              color: const Color(0xFF8B5CF6),
               isPremium: isPremium,
-              onTap: () => _handleNavigation(
-                  context,
-                  isPremium,
-                  route: '/ai-hub/weakness-workshop',
-                  offerData: {
-                    'title': 'Cevher Atölyesi',
-                    'subtitle': 'Zayıflıkları güce çevir.',
-                    'icon': Icons.diamond_rounded,
-                    'color': const Color(0xFF8B5CF6),
-                    'marketingTitle': 'Ustalaşmadan Çıkma!',
-                    'marketingSubtitle': 'Sadece eksik olduğun konuya odaklan. Taktik Tavşan sana özel sorularla o konuyu halletmeden seni bırakmasın.',
-                    'redirectRoute': '/ai-hub/weakness-workshop',
-                  }
-              ),
+              onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/weakness-workshop', offerData: {
+                'title': 'Cevher Atölyesi',
+                'subtitle': 'Zayıflıkları güce çevir.',
+                'icon': Icons.diamond_rounded,
+                'color': const Color(0xFF8B5CF6),
+                'marketingTitle': 'Ustalaşmadan Çıkma!',
+                'marketingSubtitle': 'Sadece eksik olduğun konuya odaklan. Taktik Tavşan sana özel sorularla o konuyu halletmeden seni bırakmasın.',
+                'redirectRoute': '/ai-hub/weakness-workshop',
+              }),
             ),
 
             const SizedBox(height: 30),
 
-            // --- 3. PREMIUM TEŞVİK (Tavşansız, Pro Odaklı) ---
-            if (!isPremium) const _PremiumTeaserBox(),
+            // --- 3. ALAN YÖNETİMİ ---
+            if (!isPremium)
+              const _PremiumSalesCard()
+            else
+              const _AiDisclaimerFooter(),
           ],
         ),
       ),
@@ -187,7 +176,7 @@ class AiHubScreen extends ConsumerWidget {
 }
 
 // -----------------------------------------------------------------------------
-// 1. HERO COACH CARD (BUNNY PNG KULLANILDI)
+// HERO KART
 // -----------------------------------------------------------------------------
 class _HeroCoachCard extends StatelessWidget {
   final bool isPremium;
@@ -203,81 +192,78 @@ class _HeroCoachCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 160,
+        height: 170,
         width: double.infinity,
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF18181B) : Colors.white,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(32),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              color: const Color(0xFF6366F1).withOpacity(0.08),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
             ),
           ],
-          border: Border.all(
-            color: isDark ? Colors.white10 : Colors.grey.shade200,
-          ),
         ),
         child: Stack(
           children: [
-            // Arka plan dekoru - Bunny PNG (Silik)
             Positioned(
-              right: -30,
-              bottom: -20,
+              right: -40,
+              bottom: -40,
               child: Opacity(
-                opacity: 0.08, // Çok hafif arkada dursun
+                opacity: 0.05,
                 child: Image.asset(
                   'assets/images/bunnyy.png',
-                  height: 180,
+                  height: 240,
                   fit: BoxFit.contain,
                 ),
               ),
             ),
 
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(24),
               child: Row(
                 children: [
-                  // Sol taraf: Metinler
                   Expanded(
                     flex: 3,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                           decoration: BoxDecoration(
                             color: const Color(0xFF6366F1).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(10),
                           ),
                           child: const Text(
                             'MENTORUN',
                             style: TextStyle(
                               color: Color(0xFF6366F1),
-                              fontSize: 10,
+                              fontSize: 11,
                               fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5,
                             ),
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 16),
                         Text(
                           'Taktik Tavşan',
                           style: TextStyle(
-                            fontSize: 20,
+                            fontSize: 22,
                             fontWeight: FontWeight.w900,
-                            height: 1.1,
+                            height: 1.0,
                             color: theme.colorScheme.onSurface,
+                            letterSpacing: -0.5,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 10),
                         Text(
-                          'Netlerin neden durdu? Seni analiz edip nokta atışı taktik veren akıl hocan.',
+                          'Sınav maratonunda seni yalnız bırakmayan, her adımda sana rehberlik eden yol arkadaşın.',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 13,
                             color: theme.colorScheme.onSurface.withOpacity(0.7),
                             height: 1.4,
+                            fontWeight: FontWeight.w500,
                           ),
                           maxLines: 3,
                           overflow: TextOverflow.ellipsis,
@@ -285,14 +271,14 @@ class _HeroCoachCard extends StatelessWidget {
                       ],
                     ),
                   ),
-
-                  // Sağ taraf: Bunny PNG (Net Görünüm)
                   Expanded(
                     flex: 2,
-                    child: Center(
+                    child: Container(
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.only(right: 12.0),
                       child: Image.asset(
                         'assets/images/bunnyy.png',
-                        height: 90, // Yüksekliği ayarlayabilirsin
+                        height: 120,
                         fit: BoxFit.contain,
                       ),
                     ),
@@ -301,18 +287,20 @@ class _HeroCoachCard extends StatelessWidget {
               ),
             ),
 
-            // Kilit İkonu
             if (!isPremium)
               Positioned(
-                top: 16,
-                right: 16,
+                top: 20,
+                right: 20,
                 child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: const BoxDecoration(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
                     color: Colors.amber,
                     shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(color: Colors.amber.withOpacity(0.4), blurRadius: 8, offset: const Offset(0, 4)),
+                    ],
                   ),
-                  child: const Icon(Icons.lock, size: 14, color: Colors.black),
+                  child: const Icon(Icons.lock, size: 16, color: Colors.black),
                 ),
               ),
           ],
@@ -323,7 +311,7 @@ class _HeroCoachCard extends StatelessWidget {
 }
 
 // -----------------------------------------------------------------------------
-// 2. FEATURE CARDS
+// FEATURE CARDS (GÜNCELLENDİ: SPACER KALDIRILDI)
 // -----------------------------------------------------------------------------
 class _FeatureCard extends StatelessWidget {
   final String title;
@@ -350,16 +338,16 @@ class _FeatureCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 150,
-        padding: const EdgeInsets.all(16),
+        height: 190,
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF18181B) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isDark ? Colors.white10 : Colors.grey.shade200),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: isDark ? Colors.white10 : Colors.grey.shade100),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
-              blurRadius: 8,
+              color: const Color(0xFF000000).withOpacity(0.04),
+              blurRadius: 10,
               offset: const Offset(0, 4),
             ),
           ],
@@ -376,31 +364,35 @@ class _FeatureCard extends StatelessWidget {
                     color: color.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(icon, color: color, size: 22),
+                  child: Icon(icon, color: color, size: 24),
                 ),
                 if (!isPremium)
-                  Icon(Icons.lock_rounded, size: 16, color: theme.colorScheme.onSurface.withOpacity(0.3)),
+                  Icon(Icons.lock_rounded, size: 18, color: theme.colorScheme.onSurface.withOpacity(0.2)),
               ],
             ),
-            const Spacer(),
+
+            // DÜZELTME: Spacer yerine sabit bir boşluk.
+            // Bu, başlığın en alta gitmesini engeller ve ikona yaklaştırır.
+            const SizedBox(height: 16),
+
             Text(
               title,
               style: TextStyle(
-                fontSize: 15,
+                fontSize: 16,
                 fontWeight: FontWeight.w800,
                 color: theme.colorScheme.onSurface,
                 height: 1.1,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text(
               subtitle,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 12,
                 color: theme.colorScheme.onSurface.withOpacity(0.6),
-                height: 1.2,
+                height: 1.3,
               ),
-              maxLines: 2,
+              maxLines: 4,
               overflow: TextOverflow.ellipsis,
             ),
           ],
@@ -435,15 +427,15 @@ class _WideFeatureCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF18181B) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isDark ? Colors.white10 : Colors.grey.shade200),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: isDark ? Colors.white10 : Colors.grey.shade100),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
-              blurRadius: 8,
+              color: const Color(0xFF000000).withOpacity(0.04),
+              blurRadius: 10,
               offset: const Offset(0, 4),
             ),
           ],
@@ -451,12 +443,12 @@ class _WideFeatureCard extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(14),
               ),
-              child: Icon(icon, color: color, size: 24),
+              child: Icon(icon, color: color, size: 26),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -466,7 +458,7 @@ class _WideFeatureCard extends StatelessWidget {
                   Text(
                     title,
                     style: TextStyle(
-                      fontSize: 15,
+                      fontSize: 16,
                       fontWeight: FontWeight.w800,
                       color: theme.colorScheme.onSurface,
                     ),
@@ -475,18 +467,18 @@ class _WideFeatureCard extends StatelessWidget {
                   Text(
                     subtitle,
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 12,
                       color: theme.colorScheme.onSurface.withOpacity(0.6),
-                      height: 1.2,
+                      height: 1.3,
                     ),
-                    maxLines: 2,
+                    maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
             ),
             if (!isPremium)
-              Icon(Icons.lock_rounded, size: 16, color: theme.colorScheme.onSurface.withOpacity(0.3)),
+              Icon(Icons.lock_rounded, size: 18, color: theme.colorScheme.onSurface.withOpacity(0.2)),
           ],
         ),
       ),
@@ -494,60 +486,180 @@ class _WideFeatureCard extends StatelessWidget {
   }
 }
 
-// -----------------------------------------------------------------------------
-// 3. PREMIUM TEASER (TAKTİK PRO KONSEPTİ)
-// -----------------------------------------------------------------------------
-class _PremiumTeaserBox extends StatelessWidget {
-  const _PremiumTeaserBox();
+class _PremiumSalesCard extends StatelessWidget {
+  const _PremiumSalesCard();
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF1A1A2E), Color(0xFF16213E)], // Dark Blue Gradient
+          colors: [Color(0xFF0F172A), Color(0xFF1E1B4B)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(
+          color: Colors.amber.withOpacity(0.3),
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1A1A2E).withOpacity(0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
+            color: const Color(0xFF1E1B4B).withOpacity(0.5),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
-      child: Column(
+      child: Stack(
         children: [
-          // Tavşan Yok -> Pro/Elmas İkonu Var
-          const Icon(Icons.workspace_premium_rounded, color: Colors.amber, size: 36),
-          const SizedBox(height: 12),
-          const Text(
-            'Taktik Pro Ayrıcalığı',
-            style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+          Positioned(
+            right: -20,
+            top: -20,
+            child: Icon(
+              Icons.workspace_premium,
+              size: 150,
+              color: Colors.white.withOpacity(0.03),
+            ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Rakiplerin uyurken sen fark at. Taktik Pro üyeleri tüm analizlere ve sınırsız koçluk desteğine sahiptir.',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 12),
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.stars_rounded, color: Colors.amber, size: 32),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Taktik Pro Ayrıcalığı',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.5,
+                        shadows: [Shadow(color: Colors.amber.withOpacity(0.5), blurRadius: 10)],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Rakiplerin uyurken sen fark at. Taktik Pro üyeleri tüm analizlere ve sınırsız koçluk desteğine anında erişir.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 13,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                GestureDetector(
+                  onTap: () => context.go('/premium'),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFFD700), Color(0xFFFFA000)],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.amber.withOpacity(0.4),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'AVANTAJI KAP',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Icon(Icons.arrow_forward_rounded, color: Colors.black, size: 20),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'İstediğin zaman iptal et. Gizli ücret yok.',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.4),
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => context.go('/premium'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.black,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: const Text('AVANTAJI KAP', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
+        ],
+      ),
+    );
+  }
+}
+
+class _AiDisclaimerFooter extends StatelessWidget {
+  const _AiDisclaimerFooter();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      margin: const EdgeInsets.only(top: 20),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.onSurface.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: theme.colorScheme.onSurface.withOpacity(0.05),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+              Icons.info_outline_rounded,
+              size: 20,
+              color: theme.colorScheme.onSurface.withOpacity(0.4)
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Yapay Zeka Sorumluluk Reddi',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Taktik Tavşan, üretken yapay zeka teknolojisi kullanır. Sunulan analizler ve tavsiyeler rehberlik amaçlıdır, kesinlik içermeyebilir. Önemli kararlar için bir uzmana danışmanızı öneririz.',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: theme.colorScheme.onSurface.withOpacity(0.4),
+                    height: 1.4,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
