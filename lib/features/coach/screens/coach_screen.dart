@@ -572,7 +572,8 @@ class _GalaxyToolbar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+    const chipHeight = 48.0; // Tüm öğeler için sabit yükseklik
+
     Widget modeChip(GalaxyViewMode m, IconData icon, String label){
       final active = currentMode==m;
       final color = active ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).colorScheme.onSurfaceVariant;
@@ -581,7 +582,8 @@ class _GalaxyToolbar extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(horizontal:16, vertical:10),
+          height: chipHeight,
+          padding: const EdgeInsets.symmetric(horizontal:16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             color: active 
@@ -603,7 +605,7 @@ class _GalaxyToolbar extends StatelessWidget {
               ),
             ] : null,
           ),
-          child: Row(mainAxisSize: MainAxisSize.min, children:[
+          child: Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children:[
             Icon(icon, size:18, color: color),
             const SizedBox(width:8),
             Text(label, style: TextStyle(fontSize:13, fontWeight: FontWeight.w600, color: color))
@@ -611,53 +613,57 @@ class _GalaxyToolbar extends StatelessWidget {
         ),
       );
     }
-    return Row(children:[
+    return Row(crossAxisAlignment: CrossAxisAlignment.center, children:[
       Expanded(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            // Dinamik hint text boyutu hesaplama
-            final availableWidth = constraints.maxWidth - 70; // prefixIcon + padding için alan
-            final hintText = 'Ara...';
-            final fontSize = _calculateFontSize(context, hintText, availableWidth);
+        child: SizedBox(
+          height: chipHeight,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // Dinamik hint text boyutu hesaplama
+              final availableWidth = constraints.maxWidth - 70; // prefixIcon + padding için alan
+              final hintText = 'Ara...';
+              final fontSize = _calculateFontSize(context, hintText, availableWidth);
 
-            return TextField(
-              controller: controller,
-              onChanged: onChanged,
-              style: TextStyle(fontSize: fontSize),
-              decoration: InputDecoration(
-                isDense:true,
-                hintText: hintText,
-                filled:true,
-                fillColor: isDark
-                  ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)
-                  : Colors.white,
-                prefixIcon: Icon(Icons.search, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                hintStyle: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  fontSize: fontSize,
+              return TextField(
+                controller: controller,
+                onChanged: onChanged,
+                style: TextStyle(fontSize: fontSize),
+                textAlignVertical: TextAlignVertical.center,
+                decoration: InputDecoration(
+                  isDense: true,
+                  hintText: hintText,
+                  filled: true,
+                  fillColor: isDark
+                    ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)
+                    : Colors.white,
+                  prefixIcon: Icon(Icons.search, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  hintStyle: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: fontSize,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(isDark ? 0.1 : 0.2),
+                      width: isDark ? 1 : 1.5
+                    )
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(isDark ? 0.1 : 0.2),
+                      width: isDark ? 1 : 1.5
+                    )
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2)
+                  ),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(isDark ? 0.1 : 0.2),
-                    width: isDark ? 1 : 1.5
-                  )
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(isDark ? 0.1 : 0.2),
-                    width: isDark ? 1 : 1.5
-                  )
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2)
-                ),
-              ),
-            );
-          }
+              );
+            }
+          ),
         ),
       ),
       const SizedBox(width:12),

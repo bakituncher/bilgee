@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
@@ -571,6 +572,72 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
+  // Avatar gösterme widget'ı
+  Widget _buildAvatarWidget(dynamic user, ThemeData theme) {
+    final firstName = user.firstName ?? '';
+    final email = user.email ?? '';
+    final avatarStyle = user.avatarStyle;
+    final avatarSeed = user.avatarSeed;
+
+    // Avatar URL'i oluştur
+    String? avatarUrl;
+    if (avatarStyle != null && avatarSeed != null) {
+      final style = avatarStyle;
+      final seed = Uri.encodeComponent(avatarSeed);
+      avatarUrl = 'https://api.dicebear.com/7.x/$style/svg?seed=$seed';
+    }
+
+    // Başlangıç harfi
+    final initials = firstName.isNotEmpty
+        ? firstName.substring(0, 1).toUpperCase()
+        : email.isNotEmpty
+            ? email.substring(0, 1).toUpperCase()
+            : '?';
+
+    return Container(
+      width: 64,
+      height: 64,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.primary.withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: avatarUrl != null
+          ? ClipOval(
+              child: SvgPicture.network(
+                avatarUrl,
+                width: 64,
+                height: 64,
+                fit: BoxFit.cover,
+                placeholderBuilder: (_) => Center(
+                  child: Text(
+                    initials,
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      color: theme.colorScheme.onPrimary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            )
+          : Center(
+              child: Text(
+                initials,
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  color: theme.colorScheme.onPrimary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+    );
+  }
+
   // Profil header widget'ı
   Widget _buildProfileHeader(BuildContext context, dynamic user) {
     final theme = Theme.of(context);
@@ -580,11 +647,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final displayName = firstName.isNotEmpty
         ? '$firstName ${lastName.isNotEmpty ? lastName : ''}'.trim()
         : 'Kullanıcı';
-    final initials = firstName.isNotEmpty
-        ? firstName.substring(0, 1).toUpperCase()
-        : email.isNotEmpty
-            ? email.substring(0, 1).toUpperCase()
-            : '?';
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 24),
@@ -610,53 +672,37 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       child: Row(
         children: [
           // Avatar
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: theme.colorScheme.primary.withOpacity(0.3),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Center(
-              child: Text(
-                initials,
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  color: theme.colorScheme.onPrimary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
+          _buildAvatarWidget(user, theme),
           const SizedBox(width: 16),
           // User info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  displayName,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.onPrimaryContainer,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    displayName,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onPrimaryContainer,
+                    ),
+                    maxLines: 1,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  email,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onPrimaryContainer.withOpacity(0.8),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    email,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onPrimaryContainer.withOpacity(0.8),
+                    ),
+                    maxLines: 1,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
