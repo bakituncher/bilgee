@@ -128,54 +128,55 @@ class HeroHeader extends ConsumerWidget {
             children: [
               // Header Section
               Padding(
-                padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Avatar
-                    Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            theme.colorScheme.primary.withValues(alpha: 0.15),
-                            theme.colorScheme.primary.withValues(alpha: 0.08),
-                          ],
-                        ),
-                      ),
-                      padding: const EdgeInsets.all(1.5),
-                      child: CircleAvatar(
-                        radius: 20,
-                        backgroundColor: theme.cardColor,
-                        child: ClipOval(
-                          child: (user.avatarStyle != null && user.avatarSeed != null)
-                              ? SvgPicture.network(
-                                  'https://api.dicebear.com/9.x/${user.avatarStyle}/svg?seed=${user.avatarSeed}',
-                                  fit: BoxFit.cover,
-                                  width: 40,
-                                  height: 40,
-                                  placeholderBuilder: (_) => const SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(strokeWidth: 1.5),
-                                  ),
-                                )
-                              : Icon(
-                                  Icons.person_rounded,
-                                  size: 20,
-                                  color: theme.colorScheme.primary,
-                                ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-
-                    // Name & Greeting
+                    // Left side: Avatar on top, greeting+name below
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // Avatar
+                          Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  theme.colorScheme.primary.withValues(alpha: 0.15),
+                                  theme.colorScheme.primary.withValues(alpha: 0.08),
+                                ],
+                              ),
+                            ),
+                            padding: const EdgeInsets.all(1.5),
+                            child: CircleAvatar(
+                              radius: 20,
+                              backgroundColor: theme.cardColor,
+                              child: ClipOval(
+                                child: (user.avatarStyle != null && user.avatarSeed != null)
+                                    ? SvgPicture.network(
+                                        'https://api.dicebear.com/9.x/${user.avatarStyle}/svg?seed=${user.avatarSeed}',
+                                        fit: BoxFit.cover,
+                                        width: 40,
+                                        height: 40,
+                                        placeholderBuilder: (_) => const SizedBox(
+                                          width: 14,
+                                          height: 14,
+                                          child: CircularProgressIndicator(strokeWidth: 1.5),
+                                        ),
+                                      )
+                                    : Icon(
+                                        Icons.person_rounded,
+                                        size: 20,
+                                        color: theme.colorScheme.primary,
+                                      ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          // Greeting + Name below avatar
                           Row(
                             children: [
                               Icon(
@@ -183,18 +184,21 @@ class HeroHeader extends ConsumerWidget {
                                 size: 13,
                                 color: theme.colorScheme.onSurface.withValues(alpha: 0.45),
                               ),
-                              const SizedBox(width: 4),
+                              const SizedBox(width: 5),
                               Flexible(
-                                child: Text(
-                                  '${_getGreeting()}, ${user.firstName}',
-                                  style: theme.textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 15,
-                                    letterSpacing: -0.2,
-                                    height: 1.2,
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    '${_getGreeting()}, ${user.firstName ?? ''}',
+                                    style: theme.textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 15,
+                                      letterSpacing: -0.2,
+                                      height: 1.2,
+                                    ),
+                                    maxLines: 1,
                                   ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],
@@ -203,7 +207,9 @@ class HeroHeader extends ConsumerWidget {
                       ),
                     ),
 
-                    // Exam Countdown Badges (multiple if available)
+                    const SizedBox(width: 10),
+
+                    // Right side: Exam Countdown Badges (multiple if available)
                     if (examCountdowns.isNotEmpty)
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
@@ -287,7 +293,7 @@ class HeroHeader extends ConsumerWidget {
               // Divider
               Container(
                 height: 1,
-                margin: const EdgeInsets.symmetric(horizontal: 14),
+                margin: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -301,7 +307,7 @@ class HeroHeader extends ConsumerWidget {
 
               // Stats Section - Ultra Compact
               Padding(
-                padding: const EdgeInsets.all(14),
+                padding: const EdgeInsets.all(12),
                 child: Row(
                   children: [
                     // Rank Card
@@ -328,7 +334,7 @@ class HeroHeader extends ConsumerWidget {
         );
       },
       loading: () => Container(
-        height: 120,
+        height: 100,
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(16),
@@ -356,43 +362,45 @@ class _UltraCompactRankCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = theme.brightness == Brightness.dark;
 
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            theme.colorScheme.primary.withValues(alpha: isDark ? 0.10 : 0.05),
-            theme.colorScheme.primary.withValues(alpha: isDark ? 0.05 : 0.02),
-          ],
+    return GestureDetector(
+      onTap: () => context.push('/profile/ranks'),
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              theme.colorScheme.primary.withValues(alpha: isDark ? 0.10 : 0.05),
+              theme.colorScheme.primary.withValues(alpha: isDark ? 0.05 : 0.02),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: theme.colorScheme.primary.withValues(alpha: 0.12),
+            width: 1,
+          ),
         ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: 0.12),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Icon & Label
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Icon & Label
+            Row(
+              children: [
+                Container(
+                padding: const EdgeInsets.all(3),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(5),
                 ),
                 child: Icon(
                   Icons.military_tech_rounded,
-                  size: 13,
+                  size: 12,
                   color: theme.colorScheme.primary,
                 ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 5),
               Text(
                 'Rütbe',
                 style: theme.textTheme.labelSmall?.copyWith(
@@ -404,7 +412,7 @@ class _UltraCompactRankCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
 
           // Rank Name
           Text(
@@ -412,41 +420,41 @@ class _UltraCompactRankCard extends StatelessWidget {
             style: theme.textTheme.titleMedium?.copyWith(
               color: theme.colorScheme.primary,
               fontWeight: FontWeight.w800,
-              fontSize: 14,
+              fontSize: 13,
               letterSpacing: -0.2,
               height: 1.1,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 5),
 
           // Progress bar
           ClipRRect(
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(3),
             child: Stack(
               children: [
                 Container(
-                  height: 4,
+                  height: 3,
                   decoration: BoxDecoration(
                     color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(3),
                   ),
                 ),
                 FractionallySizedBox(
                   widthFactor: rankInfo.progress.clamp(0.0, 1.0),
                   child: Container(
-                    height: 4,
+                    height: 3,
                     decoration: BoxDecoration(
                       color: theme.colorScheme.primary,
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(3),
                     ),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 5),
+          const SizedBox(height: 4),
 
           // Score & Progress
           Row(
@@ -471,6 +479,7 @@ class _UltraCompactRankCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
       ),
     );
   }
@@ -548,9 +557,9 @@ class _UltraCompactQuestCardState extends ConsumerState<_UltraCompactQuestCard>
         builder: (context, child) {
           return Transform.scale(
             scale: hasClaimable ? _pulseAnimation.value : 1.0,
-            child: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -589,22 +598,22 @@ class _UltraCompactQuestCardState extends ConsumerState<_UltraCompactQuestCard>
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(4),
+                        padding: const EdgeInsets.all(3),
                         decoration: BoxDecoration(
                           color: hasClaimable
                               ? Colors.white.withValues(alpha: 0.2)
                               : theme.colorScheme.secondary.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(5),
                         ),
                         child: Icon(
                           buttonIcon,
-                          size: 13,
+                          size: 12,
                           color: hasClaimable
                               ? Colors.white
                               : theme.colorScheme.secondary,
                         ),
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 5),
                       Text(
                         'Görevler',
                         style: theme.textTheme.labelSmall?.copyWith(
@@ -618,7 +627,7 @@ class _UltraCompactQuestCardState extends ConsumerState<_UltraCompactQuestCard>
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
 
                   // Progress Count
                   Text(
@@ -628,43 +637,43 @@ class _UltraCompactQuestCardState extends ConsumerState<_UltraCompactQuestCard>
                           ? Colors.white
                           : theme.colorScheme.secondary,
                       fontWeight: FontWeight.w800,
-                      fontSize: 14,
+                      fontSize: 13,
                       letterSpacing: -0.2,
                       height: 1.1,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 5),
 
                   // Progress bar
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(3),
                     child: Stack(
                       children: [
                         Container(
-                          height: 4,
+                          height: 3,
                           decoration: BoxDecoration(
                             color: hasClaimable
                                 ? Colors.white.withValues(alpha: 0.25)
                                 : theme.colorScheme.secondary.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(4),
+                            borderRadius: BorderRadius.circular(3),
                           ),
                         ),
                         FractionallySizedBox(
                           widthFactor: total == 0 ? 0 : progress,
                           child: Container(
-                            height: 4,
+                            height: 3,
                             decoration: BoxDecoration(
                               color: hasClaimable
                                   ? Colors.white
                                   : theme.colorScheme.secondary,
-                              borderRadius: BorderRadius.circular(4),
+                              borderRadius: BorderRadius.circular(3),
                             ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 4),
 
                   // Status text
                   if (hasClaimable)
