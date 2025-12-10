@@ -426,6 +426,11 @@ class _SubjectStatsCard extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     
+    // Hakimiyet rengi
+    final masteryColor = overallMastery < 0.4
+      ? theme.colorScheme.error
+      : (overallMastery < 0.7 ? theme.colorScheme.primary : Colors.green);
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -436,7 +441,7 @@ class _SubjectStatsCard extends StatelessWidget {
         border: Border.all(
           color: isDark 
             ? theme.colorScheme.onSurface.withOpacity(0.1)
-            : theme.colorScheme.onSurface.withOpacity(0.15), 
+            : theme.colorScheme.onSurface.withOpacity(0.15),
           width: isDark ? 1 : 1.5
         ),
         boxShadow: [
@@ -449,37 +454,81 @@ class _SubjectStatsCard extends StatelessWidget {
         ],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children:[
-        Row(crossAxisAlignment: CrossAxisAlignment.start, children:[
+        // Başlık ve istatistikler
+        Row(crossAxisAlignment: CrossAxisAlignment.center, children:[
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  subjectName,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    subjectName,
+                    maxLines: 1,
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 4),
-                Text('Genel Hakimiyet: %$masteryPercent', style: theme.textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                const SizedBox(height: 12),
+                // Kompakt istatistikler
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    color: theme.colorScheme.surfaceContainerHighest.withOpacity(isDark ? 0.3 : 0.5),
+                    border: Border.all(
+                      color: theme.colorScheme.onSurface.withOpacity(isDark ? 0.08 : 0.1),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _CompactStat(
+                          icon: Icons.quiz_rounded,
+                          value: '$totalQuestions',
+                          label: 'soru çözdün',
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                      Container(
+                        width: 1,
+                        height: 40,
+                        color: theme.colorScheme.onSurface.withOpacity(0.1),
+                      ),
+                      Expanded(
+                        child: _CompactStat(
+                          icon: Icons.percent_rounded,
+                          value: masteryPercent,
+                          label: 'hakimsin',
+                          color: masteryColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
-          const SizedBox(width: 12),
-          _MasteryPill(mastery: overallMastery)
         ]),
         const SizedBox(height:16),
+        // Progress bar
         ClipRRect(
           borderRadius: BorderRadius.circular(10),
           child: SizedBox(
-            height: 12,
+            height: 8,
             child: Stack(children: [
-              Container(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+              Container(color: theme.colorScheme.surfaceContainerHighest),
               FractionallySizedBox(
                 widthFactor: overallMastery,
                 child: Container(
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(colors: [Theme.of(context).colorScheme.error, Colors.green]),
+                    gradient: LinearGradient(
+                      colors: [theme.colorScheme.error, Colors.green]
+                    ),
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
@@ -488,43 +537,67 @@ class _SubjectStatsCard extends StatelessWidget {
           ),
         ),
         const SizedBox(height:16),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            // Ekran genişliğine göre 2x2 veya 4 sütun yapısı
-            final isWideScreen = constraints.maxWidth > 400;
-
-            if (isWideScreen) {
-              // Geniş ekran: 4 sütun
-              return Row(children:[
-                Expanded(child: _StatChip(label:'Soru', value: totalQuestions.toString())),
-                const SizedBox(width:10),
-                Expanded(child: _StatChip(label:'Doğru', value: totalCorrect.toString(), color: Colors.green)),
-                const SizedBox(width:10),
-                Expanded(child: _StatChip(label:'Yanlış', value: totalWrong.toString(), color: Theme.of(context).colorScheme.error)),
-                const SizedBox(width:10),
-                Expanded(child: _StatChip(label:'Boş', value: totalBlank.toString(), color: Colors.orange)),
-              ]);
-            } else {
-              // Dar ekran: 2x2 grid
-              return Column(
-                children: [
-                  Row(children:[
-                    Expanded(child: _StatChip(label:'Soru', value: totalQuestions.toString())),
-                    const SizedBox(width:10),
-                    Expanded(child: _StatChip(label:'Doğru', value: totalCorrect.toString(), color: Colors.green)),
-                  ]),
-                  const SizedBox(height:10),
-                  Row(children:[
-                    Expanded(child: _StatChip(label:'Yanlış', value: totalWrong.toString(), color: Theme.of(context).colorScheme.error)),
-                    const SizedBox(width:10),
-                    Expanded(child: _StatChip(label:'Boş', value: totalBlank.toString(), color: Colors.orange)),
-                  ]),
-                ],
-              );
-            }
-          },
-        ),
+        // Doğru, Yanlış, Boş
+        Row(children:[
+          Expanded(child: _StatChip(label:'Doğru', value: totalCorrect.toString(), color: Colors.green, icon: Icons.check_circle_rounded)),
+          const SizedBox(width:12),
+          Expanded(child: _StatChip(label:'Yanlış', value: totalWrong.toString(), color: theme.colorScheme.error, icon: Icons.cancel_rounded)),
+          const SizedBox(width:12),
+          Expanded(child: _StatChip(label:'Boş', value: totalBlank.toString(), color: Colors.orange, icon: Icons.radio_button_unchecked_rounded)),
+        ]),
       ]),
+    );
+  }
+}
+
+class _CompactStat extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final String label;
+  final Color color;
+
+  const _CompactStat({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 20, color: color),
+            const SizedBox(width: 8),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: color,
+                height: 1.1,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            height: 1.1,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
     );
   }
 }
@@ -533,29 +606,98 @@ class _StatChip extends StatelessWidget {
   final String label;
   final String value;
   final Color? color;
-  const _StatChip({required this.label, required this.value, this.color});
+  final IconData? icon;
+  const _StatChip({required this.label, required this.value, this.color, this.icon});
 
   @override
   Widget build(BuildContext context) {
-    final c = color ?? Theme.of(context).colorScheme.onSurfaceVariant;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = color ?? Theme.of(context).colorScheme.surfaceContainerHighest;
-    
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryColor = color ?? theme.colorScheme.primary;
+
+    // Gradient colors
+    final gradientStart = isDark
+        ? primaryColor.withOpacity(0.25)
+        : primaryColor.withOpacity(0.15);
+    final gradientEnd = isDark
+        ? primaryColor.withOpacity(0.08)
+        : primaryColor.withOpacity(0.05);
+
+    // Değer uzunluğuna göre font boyutunu ayarla
+    final valueFontSize = value.length > 4 ? 20.0 : (value.length > 3 ? 22.0 : 26.0);
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      constraints: const BoxConstraints(
+        minHeight: 110, // Minimum yükseklik
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: bgColor.withOpacity(isDark ? 0.15 : 0.12),
-        border: Border.all(
-          color: bgColor.withOpacity(isDark ? 0.4 : 0.5), 
-          width: isDark ? 1 : 1.5
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          colors: [gradientStart, gradientEnd],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
+        border: Border.all(
+          color: primaryColor.withOpacity(isDark ? 0.35 : 0.25),
+          width: 1.5,
+        ),
+        boxShadow: [
+          if (!isDark)
+            BoxShadow(
+              color: primaryColor.withOpacity(0.12),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          if (isDark)
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+        ],
       ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color ?? Theme.of(context).colorScheme.onSurface)),
-          const SizedBox(height: 2),
-          Text(label, style: TextStyle(fontSize: 12, color: c.withOpacity(0.8))),
+          if (icon != null) ...[
+            Icon(
+              icon,
+              color: primaryColor,
+              size: 24,
+            ),
+            const SizedBox(height: 8),
+          ],
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                value,
+                style: TextStyle(
+                  fontSize: valueFontSize,
+                  fontWeight: FontWeight.w800,
+                  color: primaryColor,
+                  letterSpacing: -0.5,
+                  height: 1,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.visible,
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              letterSpacing: 0.3,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ],
       ),
     );
@@ -623,7 +765,7 @@ class _GalaxyToolbar extends StatelessWidget {
             border: Border.all(
               color: active 
                 ? Theme.of(context).colorScheme.primary 
-                : Theme.of(context).colorScheme.onSurface.withOpacity(isDark ? 0.1 : 0.2), 
+                : Theme.of(context).colorScheme.onSurface.withOpacity(isDark ? 0.1 : 0.2),
               width: isDark ? 1 : 1.5
             ),
             boxShadow: (!active && !isDark) ? [
