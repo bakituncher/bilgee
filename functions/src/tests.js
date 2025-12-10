@@ -2,7 +2,6 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions");
 const { db, admin } = require("./init");
 const { nowIstanbul, computeTestAggregates, enforceRateLimit, enforceDailyQuota, getClientIpFromRawRequest } = require("./utils");
-const { upsertLeaderboardScore } = require("./leaderboard");
 const { updatePublicProfile } = require("./profile");
 
 exports.addEngagementPoints = onCall({ region: "us-central1", enforceAppCheck: true, maxInstances: 20 }, async (request) => {
@@ -25,35 +24,20 @@ exports.addEngagementPoints = onCall({ region: "us-central1", enforceAppCheck: t
 
   const userRef = db.collection("users").doc(uid);
   const statsRef = userRef.collection("state").doc("stats");
-  let examType = null;
-  let userDocData = null;
+
+  // Transaction içinde sadece kullanıcının puanını artırıyoruz.
+  // Liderlik tablosu güncellemesini leaderboard.js'deki onUserStatsWritten trigger yapacak.
   await db.runTransaction(async (tx) => {
     const [uSnap] = await Promise.all([tx.get(userRef)]);
     if (!uSnap.exists) throw new HttpsError("failed-precondition", "Kullanıcı bulunamadı");
-    userDocData = uSnap.data() || {};
-    examType = (userDocData && userDocData.selectedExam) || null;
+
     tx.set(statsRef, {
       engagementScore: admin.firestore.FieldValue.increment(delta),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     }, { merge: true });
   });
 
-  try {
-    if (examType) {
-      await upsertLeaderboardScore({ examType, uid, delta, userDocData });
-      const lbRef = db.collection("leaderboards").doc(examType).collection("users").doc(uid);
-      await lbRef.set({
-        userId: uid,
-        userName: (userDocData && userDocData.name) || "",
-        avatarStyle: (userDocData && userDocData.avatarStyle) || null,
-        avatarSeed: (userDocData && userDocData.avatarSeed) || null,
-        score: admin.firestore.FieldValue.increment(delta),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      }, { merge: true });
-    }
-  } catch (e) {
-    logger.warn("Leaderboard update failed on addEngagementPoints", { uid, examType, error: String(e) });
-  }
+  // Manuel leaderboard güncellemeleri kaldırıldı - trigger tarafından yapılacak
 
   await updatePublicProfile(uid).catch(() => { });
   return { ok: true, added: delta };
@@ -102,8 +86,6 @@ exports.addTestResult = onCall({ region: "us-central1", timeoutSeconds: 30, enfo
     const statsRef = userRef.collection("state").doc("stats");
     const testsCol = db.collection("tests");
 
-    let userDocData = null;
-    let examType = null;
     let newTestId = null;
     const pointsAward = 50;
 
@@ -116,8 +98,8 @@ exports.addTestResult = onCall({ region: "us-central1", timeoutSeconds: 30, enfo
       ]);
 
       if (!uSnap.exists) throw new HttpsError("failed-precondition", "Kullanıcı yok");
-      userDocData = uSnap.data() || {};
-      examType = ((userDocData && userDocData.selectedExam) || examTypeParam || "").toString();
+      const userDocData = uSnap.data() || {};
+      const examType = ((userDocData && userDocData.selectedExam) || examTypeParam || "").toString();
 
       const stats = sSnap.exists ? (sSnap.data() || {}) : {};
       const lastTs = stats.lastStreakUpdate; // beklenen Timestamp
@@ -158,6 +140,7 @@ exports.addTestResult = onCall({ region: "us-central1", timeoutSeconds: 30, enfo
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
+      // İstatistikleri güncelle (onUserStatsWritten trigger'ı buradan tetiklenecek)
       tx.set(statsRef, {
         testCount: admin.firestore.FieldValue.increment(1),
         totalNetSum: admin.firestore.FieldValue.increment(totalNet),
@@ -184,23 +167,7 @@ exports.addTestResult = onCall({ region: "us-central1", timeoutSeconds: 30, enfo
       }
     });
 
-    try {
-      if (examType) {
-        await upsertLeaderboardScore({ examType, uid, delta: pointsAward, userDocData });
-        const lbRef = db.collection("leaderboards").doc(examType).collection("users").doc(uid);
-        await lbRef.set({
-          userId: uid,
-          userName: (userDocData && userDocData.name) || "",
-          avatarStyle: (userDocData && userDocData.avatarStyle) || null,
-          avatarSeed: (userDocData && userDocData.avatarSeed) || null,
-          score: admin.firestore.FieldValue.increment(pointsAward),
-          testCount: admin.firestore.FieldValue.increment(1),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        }, { merge: true });
-      }
-    } catch (e) {
-      logger.warn("Leaderboard update failed on addTestResult", { uid, examType, error: String(e) });
-    }
+    // Manuel leaderboard güncellemeleri kaldırıldı - onUserStatsWritten trigger'ı yapacak
 
     await updatePublicProfile(uid).catch(() => { });
     return { ok: true, testId: newTestId, awarded: pointsAward };

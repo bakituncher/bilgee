@@ -208,6 +208,10 @@ exports.onUserProfileChanged = onDocumentWritten({
     const avatarSeed = after?.avatarSeed || null;
 
     if (newExam) {
+      /* Legacy leaderboards sistemi artık kullanılmıyor.
+         Bu blok veri tutarsızlığı yaratıyordu çünkü onUserStatsWritten trigger'ı
+         zaten leaderboard'ları güncelliyor.
+
       // Stats oku (puan/testCount için)
       let stats = {};
       try {
@@ -224,12 +228,13 @@ exports.onUserProfileChanged = onDocumentWritten({
         userName: name,
         avatarStyle,
         avatarSeed,
-        score, // skorun kendisi de tutarlı kalsın
+        score,
         testCount,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       }, { merge: true });
+      */
 
-      // Yeni leaderboard_scores (günlük/haftalık) isim ve avatar senkronu
+      // Sadece yeni leaderboard_scores (günlük/haftalık) isim ve avatar senkronu
       const dayKey = dayKeyIstanbul();
       const weekKey = weekKeyIstanbul();
       const base = db.collection("leaderboard_scores").doc(String(newExam));
