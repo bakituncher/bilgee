@@ -451,9 +451,7 @@ class _RatingStarButton extends ConsumerWidget {
 
           return Container(
             decoration: BoxDecoration(
-              color: isDark
-                  ? const Color(0xFF1A1A1A)
-                  : Colors.white,
+              color: colorScheme.surface,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
               boxShadow: [
                 BoxShadow(
@@ -512,7 +510,7 @@ class _RatingStarButton extends ConsumerWidget {
                             Text(
                               'GÜVENILIR PLATFORM',
                               style: TextStyle(
-                                color: isDark ? Colors.white : const Color(0xFF1A1A1A),
+                                color: colorScheme.onSurface,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: 1.2,
@@ -568,9 +566,7 @@ class _RatingStarButton extends ConsumerWidget {
                       Text(
                         'Görüşleriniz bizim için çok önemli\nve diğer öğrencilere yol gösteriyor',
                         style: TextStyle(
-                          color: isDark
-                              ? Colors.white.withOpacity(0.7)
-                              : Colors.black.withOpacity(0.6),
+                          color: colorScheme.onSurfaceVariant,
                           fontSize: 15,
                           fontWeight: FontWeight.w500,
                           height: 1.5,
@@ -596,9 +592,7 @@ class _RatingStarButton extends ConsumerWidget {
                           Container(
                             width: 1,
                             height: 50,
-                            color: isDark
-                                ? Colors.white.withOpacity(0.1)
-                                : Colors.black.withOpacity(0.1),
+                            color: colorScheme.outlineVariant.withOpacity(0.3),
                           ),
                           _BenefitItem(
                             icon: Icons.auto_awesome_rounded,
@@ -612,9 +606,7 @@ class _RatingStarButton extends ConsumerWidget {
                           Container(
                             width: 1,
                             height: 50,
-                            color: isDark
-                                ? Colors.white.withOpacity(0.1)
-                                : Colors.black.withOpacity(0.1),
+                            color: colorScheme.outlineVariant.withOpacity(0.3),
                           ),
                           _BenefitItem(
                             icon: Icons.verified_rounded,
@@ -731,9 +723,7 @@ class _RatingStarButton extends ConsumerWidget {
                         child: Text(
                           'Şimdi değil',
                           style: TextStyle(
-                            color: isDark
-                                ? Colors.white.withOpacity(0.5)
-                                : Colors.black.withOpacity(0.4),
+                            color: colorScheme.onSurfaceVariant,
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                           ),
@@ -820,7 +810,7 @@ class _BenefitItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final colorScheme = theme.colorScheme;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -853,7 +843,7 @@ class _BenefitItem extends StatelessWidget {
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w700,
-            color: isDark ? Colors.white : const Color(0xFF1A1A1A),
+            color: colorScheme.onSurface,
             letterSpacing: 0.2,
             height: 1.3,
           ),
