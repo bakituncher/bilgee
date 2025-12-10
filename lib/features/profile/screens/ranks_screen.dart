@@ -80,7 +80,7 @@ class RanksScreen extends ConsumerWidget {
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
-                                          '$currentScore XP',
+                                          '$currentScore TP',
                                           style: textTheme.bodyMedium?.copyWith(
                                             color: colorScheme.onSurface.withOpacity(0.7),
                                           ),
@@ -122,7 +122,7 @@ class RanksScreen extends ConsumerWidget {
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  '${rankInfo.next.requiredScore - currentScore} XP kaldı!',
+                                  '${rankInfo.next.requiredScore - currentScore} TP kaldı!',
                                   style: textTheme.bodySmall?.copyWith(
                                     color: colorScheme.onSurface.withOpacity(0.5),
                                   ),
@@ -155,12 +155,12 @@ class RanksScreen extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(height: 20),
-                        ],
-                      ),
+                      ],
                     ),
                   ),
-                  // Seviye Listesi
-                  SliverPadding(
+                ),
+                // Seviye Listesi
+                SliverPadding(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate(
@@ -329,7 +329,7 @@ class _RankCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            '${rank.requiredScore} XP',
+                            '${rank.requiredScore} TP',
                             style: textTheme.bodySmall?.copyWith(
                               color: isUnlocked
                                   ? colorScheme.onSurface.withOpacity(0.7)
@@ -339,7 +339,7 @@ class _RankCard extends StatelessWidget {
                           if (isNext && !isUnlocked) ...[
                             const SizedBox(width: 8),
                             Text(
-                              '• ${rank.requiredScore - currentScore} XP kaldı!',
+                              '• ${rank.requiredScore - currentScore} TP kaldı!',
                               style: textTheme.bodySmall?.copyWith(
                                 color: colorScheme.secondary,
                                 fontWeight: FontWeight.w600,
@@ -373,16 +373,23 @@ class _RankCard extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (context) => Container(
         decoration: BoxDecoration(
           color: theme.cardColor,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: 24,
+              right: 24,
+              top: 24,
+              bottom: 24 + MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
               // Handle bar
               Container(
                 width: 40,
@@ -491,7 +498,7 @@ class _RankCard extends StatelessWidget {
                     Icon(Icons.stars, color: rank.color, size: 20),
                     const SizedBox(width: 8),
                     Text(
-                      'Gereken XP: ${rank.requiredScore}',
+                      'Gereken TP: ${rank.requiredScore}',
                       style: textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -513,7 +520,7 @@ class _RankCard extends StatelessWidget {
                       Icon(Icons.trending_up, color: colorScheme.secondary, size: 20),
                       const SizedBox(width: 8),
                       Text(
-                        '${rank.requiredScore - currentScore} XP daha',
+                        '${rank.requiredScore - currentScore} TP daha',
                         style: textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: colorScheme.secondary,
@@ -534,6 +541,7 @@ class _RankCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }

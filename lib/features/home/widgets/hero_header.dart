@@ -494,7 +494,7 @@ class _UltraCompactRankCard extends StatelessWidget {
                 ),
               ),
               Text(
-                '${(rankInfo.progress * 100).toInt()}%',
+                '%${(rankInfo.progress * 100).toInt()}',
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
                   fontWeight: FontWeight.w600,
