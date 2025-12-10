@@ -1,4 +1,5 @@
 // lib/shared/widgets/scaffold_with_nav_bar.dart
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -70,6 +71,7 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                 drawerEdgeDragWidth: 48,
                 floatingActionButton: _AnimatedBunnyButton(
                   key: aiHubFabKey,
+                  isActive: navigationShell.currentIndex == 2,
                   onTap: () => navigationShell.goBranch(
                     2,
                     initialLocation: 2 == navigationShell.currentIndex,
@@ -294,51 +296,89 @@ class _WeeklyPlanVictoryOverlay extends StatelessWidget {
 
 class _AnimatedBunnyButton extends StatefulWidget {
   final VoidCallback onTap;
+  final bool isActive;
 
-  const _AnimatedBunnyButton({super.key, required this.onTap});
+  const _AnimatedBunnyButton({
+    super.key,
+    required this.onTap,
+    this.isActive = false,
+  });
 
   @override
   State<_AnimatedBunnyButton> createState() => _AnimatedBunnyButtonState();
 }
 
-class _AnimatedBunnyButtonState extends State<_AnimatedBunnyButton> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
+class _AnimatedBunnyButtonState extends State<_AnimatedBunnyButton> with TickerProviderStateMixin {
+  late AnimationController _scaleController;
+  late AnimationController _shimmerController;
   late Animation<double> _scaleAnimation;
+  bool _showShimmer = false;
+  bool _wasActive = false; // Önceki aktif durumunu takip et
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
+    _wasActive = widget.isActive;
+    _scaleController = AnimationController(
       duration: const Duration(milliseconds: 50),
       vsync: this,
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.85).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    _shimmerController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
     );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.85).animate(
+      CurvedAnimation(parent: _scaleController, curve: Curves.easeInOut),
+    );
+
+    _shimmerController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        setState(() {
+          _showShimmer = false;
+        });
+      }
+    });
+  }
+
+  @override
+  void didUpdateWidget(_AnimatedBunnyButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // Aktif durumu değiştiyse ve şimdi aktif olduysa shimmer göster
+    if (!_wasActive && widget.isActive) {
+      setState(() {
+        _showShimmer = true;
+      });
+      _shimmerController.forward(from: 0);
+    }
+
+    _wasActive = widget.isActive;
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _scaleController.dispose();
+    _shimmerController.dispose();
     super.dispose();
   }
 
   void _handleTapDown(TapDownDetails details) {
-    _controller.forward();
+    _scaleController.forward();
   }
 
   void _handleTapUp(TapUpDetails details) {
-    _controller.reverse();
+    _scaleController.reverse();
     widget.onTap();
   }
 
   void _handleTapCancel() {
-    _controller.reverse();
+    _scaleController.reverse();
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isActive = widget.isActive;
 
     return GestureDetector(
       onTapDown: _handleTapDown,
@@ -349,51 +389,129 @@ class _AnimatedBunnyButtonState extends State<_AnimatedBunnyButton> with SingleT
         builder: (context, child) {
           return Transform.scale(
             scale: _scaleAnimation.value,
-            child: Container(
-              width: 68,
-              height: 68,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    colorScheme.primary,
-                    colorScheme.primary.withOpacity(0.85),
-                  ],
-                ),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: colorScheme.primary.withOpacity(0.4),
-                    blurRadius: 12,
-                    spreadRadius: 2,
-                    offset: const Offset(0, 4),
-                  ),
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.3),
-                  width: 2,
-                ),
-              ),
-              padding: const EdgeInsets.all(3),
-              child: Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.95),
-                ),
-                padding: const EdgeInsets.all(6),
-                child: ClipOval(
-                  child: Image.asset(
-                    'assets/images/bunnyy.png',
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
+            child: ClipOval(
+              child: _showShimmer
+                  ? AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: isActive
+                              ? [
+                                  colorScheme.primary,
+                                  colorScheme.primary.withOpacity(0.85),
+                                ]
+                              : [
+                                  colorScheme.primary.withOpacity(0.9),
+                                  colorScheme.primary.withOpacity(0.75),
+                                ],
+                        ),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: colorScheme.primary.withOpacity(isActive ? 0.5 : 0.4),
+                            blurRadius: isActive ? 20 : 16,
+                            spreadRadius: isActive ? 4 : 2,
+                            offset: const Offset(0, 4),
+                          ),
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.4),
+                          width: 2.5,
+                        ),
+                      ),
+                      padding: const EdgeInsets.all(3.5),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withOpacity(0.98),
+                          boxShadow: [
+                            BoxShadow(
+                              color: colorScheme.primary.withOpacity(0.2),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        padding: const EdgeInsets.all(7),
+                        child: ClipOval(
+                          child: Image.asset(
+                            'assets/images/bunnyy.png',
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                    ).animate().shimmer(
+                      duration: 600.ms,
+                      color: Colors.white.withOpacity(0.6),
+                    )
+                  : AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: isActive
+                              ? [
+                                  colorScheme.primary,
+                                  colorScheme.primary.withOpacity(0.85),
+                                ]
+                              : [
+                                  colorScheme.primary.withOpacity(0.9),
+                                  colorScheme.primary.withOpacity(0.75),
+                                ],
+                        ),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: colorScheme.primary.withOpacity(isActive ? 0.5 : 0.4),
+                            blurRadius: isActive ? 20 : 16,
+                            spreadRadius: isActive ? 4 : 2,
+                            offset: const Offset(0, 4),
+                          ),
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.4),
+                          width: 2.5,
+                        ),
+                      ),
+                      padding: const EdgeInsets.all(3.5),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withOpacity(0.98),
+                          boxShadow: [
+                            BoxShadow(
+                              color: colorScheme.primary.withOpacity(0.2),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        padding: const EdgeInsets.all(7),
+                        child: ClipOval(
+                          child: Image.asset(
+                            'assets/images/bunnyy.png',
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                    ),
             ),
           );
         },

@@ -488,33 +488,209 @@ class StrategicPlanningScreen extends ConsumerWidget {
   }
 
   Widget _buildDataMissingView(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textTheme = Theme.of(context).textTheme;
+
     return Center(
-      child: Padding(
+      key: const ValueKey('dataMissing'),
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.report_problem_outlined, color: Theme.of(context).colorScheme.primary, size: 56),
-            const SizedBox(height: 20),
-            Text(
-              "Strateji İçin Veri Gerekli",
-              style: Theme.of(context).textTheme.titleLarge,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              "Sana özel bir strateji oluşturabilmem için önce düşmanı tanımam gerek. Lütfen en az bir deneme sonucu ekle.",
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () => context.push('/home/add-test'),
-              icon: const Icon(Icons.add_chart_rounded),
-              label: const Text("İlk Denemeni Ekle"),
-            )
-          ],
-        ).animate().fadeIn(),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 450),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Lottie animasyonu
+              Animate(
+                effects: const [
+                  FadeEffect(duration: Duration(milliseconds: 600)),
+                  ScaleEffect(
+                    begin: Offset(0.8, 0.8),
+                    end: Offset(1.0, 1.0),
+                    curve: Curves.easeOutBack,
+                    duration: Duration(milliseconds: 600),
+                  ),
+                ],
+                child: Lottie.asset(
+                  'assets/lotties/Get things done.json',
+                  width: 240,
+                  height: 240,
+                  fit: BoxFit.contain,
+                ),
+              ),
+              const SizedBox(height: 32),
+              // Başlık
+              Animate(
+                effects: const [
+                  FadeEffect(
+                    delay: Duration(milliseconds: 300),
+                    duration: Duration(milliseconds: 400),
+                  ),
+                ],
+                child: Text(
+                  "Strateji İçin Veri Gerekli",
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              // Açıklama
+              Animate(
+                effects: const [
+                  FadeEffect(
+                    delay: Duration(milliseconds: 500),
+                    duration: Duration(milliseconds: 400),
+                  ),
+                ],
+                child: Text(
+                  "Sana özel bir strateji oluşturabilmem için önce düşmanı tanımam gerek. Lütfen en az bir deneme sonucu ekle.",
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
+              // Tıklanabilir kart - deneme arşivi gibi
+              Animate(
+                effects: const [
+                  FadeEffect(
+                    delay: Duration(milliseconds: 400),
+                    duration: Duration(milliseconds: 500),
+                  ),
+                  SlideEffect(
+                    begin: Offset(0, 0.15),
+                    end: Offset.zero,
+                    curve: Curves.easeOutCubic,
+                    duration: Duration(milliseconds: 600),
+                    delay: Duration(milliseconds: 400),
+                  ),
+                ],
+                child: Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: InkWell(
+                    onTap: () => context.push('/home/add-test'),
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      padding: const EdgeInsets.all(28),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: isDark
+                              ? [
+                                  const Color(0xFF1A1F3A),
+                                  const Color(0xFF0F1729),
+                                ]
+                              : [
+                                  Colors.white,
+                                  const Color(0xFFF8F9FF),
+                                ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isDark
+                              ? const Color(0xFF2E3192).withValues(alpha: 0.3)
+                              : const Color(0xFF2E3192).withValues(alpha: 0.15),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          // Gradient Icon Container
+                          Container(
+                            padding: const EdgeInsets.all(18),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: isDark
+                                    ? [
+                                        const Color(0xFF4D5FD1),
+                                        const Color(0xFF1BFFFF),
+                                      ]
+                                    : [
+                                        const Color(0xFF2E3192),
+                                        const Color(0xFF1BFFFF),
+                                      ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF2E3192).withValues(alpha: isDark ? 0.5 : 0.4),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 6),
+                                ),
+                                BoxShadow(
+                                  color: const Color(0xFF1BFFFF).withValues(alpha: isDark ? 0.4 : 0.3),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 8),
+                                  spreadRadius: -4,
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.add_chart_rounded,
+                              color: Colors.white,
+                              size: 36,
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                          // Gradient Text Başlık
+                          ShaderMask(
+                            shaderCallback: (bounds) => LinearGradient(
+                              colors: isDark
+                                  ? [
+                                      const Color(0xFF6B7FFF),
+                                      const Color(0xFF1BFFFF),
+                                    ]
+                                  : [
+                                      const Color(0xFF2E3192),
+                                      const Color(0xFF1BFFFF),
+                                    ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ).createShader(bounds),
+                            child: Text(
+                              'İlk Denemeni Ekle',
+                              style: textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 22,
+                                letterSpacing: -0.5,
+                                color: Colors.white,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          // Açıklama
+                          Text(
+                            'Stratejini planlamaya başla',
+                            style: textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                              height: 1.4,
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.85)
+                                  : Colors.black.withValues(alpha: 0.6),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ).animate(delay: 800.ms).shimmer(duration: 1500.ms),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

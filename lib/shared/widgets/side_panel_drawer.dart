@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:taktik/features/profile/logic/rank_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:taktik/core/navigation/app_routes.dart';
 
 class SidePanelDrawer extends ConsumerStatefulWidget {
   const SidePanelDrawer({super.key});
@@ -41,6 +42,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
   Widget build(BuildContext context) {
     final user = ref.watch(userProfileProvider).value;
     final isPremium = ref.watch(premiumStatusProvider);
+    final planDoc = ref.watch(planProvider).value;
     final rankInfo = RankService.getRankInfo(user?.engagementScore ?? 0);
     final location = GoRouter.of(context).routeInformationProvider.value.location ?? '';
     final theme = Theme.of(context);
@@ -126,6 +128,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                       _navTile(context, currentLocation: location, icon: Icons.timer_rounded, title: 'Odaklan (Pomodoro)', route: '/home/pomodoro'),
                       _navTile(context, currentLocation: location, icon: Icons.bar_chart_rounded, title: 'Deneme Gelişimi', route: '/home/stats'),
                       _navTile(context, currentLocation: location, icon: Icons.insights_rounded, title: 'Genel Bakış', route: '/stats/overview'),
+                      _navTileStrategy(context, currentLocation: location, planDoc: planDoc),
                       _navTile(context, currentLocation: location, icon: Icons.inventory_2_outlined, title: 'Deneme Arşivi', route: '/library'),
                       _navTile(context, currentLocation: location, icon: Icons.article_rounded, title: 'Taktik Blog', route: '/blog'),
                       const SizedBox(height: 6),
@@ -276,6 +279,63 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                 ),
                 const SizedBox(width: 4),
               ],
+              if (selected)
+                Icon(Icons.chevron_right_rounded, size: 18, color: colorScheme.primary.withOpacity(0.7)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _navTileStrategy(
+      BuildContext context, {
+        required String currentLocation,
+        required dynamic planDoc,
+      }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final bool selected = currentLocation.contains('weekly-plan') || currentLocation.contains('strategic-planning');
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 2),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          Navigator.of(context).pop();
+          if (planDoc?.weeklyPlan != null) {
+            context.push('/home/weekly-plan');
+          } else {
+            context.push('${AppRoutes.aiHub}/${AppRoutes.strategicPlanning}');
+          }
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            color: selected ? colorScheme.primary.withOpacity(.12) : Colors.transparent,
+            border: selected ? Border.all(color: colorScheme.primary.withOpacity(.3), width: 1.5) : null,
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.map_rounded,
+                size: 21,
+                color: selected ? colorScheme.primary : colorScheme.onSurfaceVariant.withOpacity(.85),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Haftalık Strateji',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                    fontSize: 13.5,
+                    color: selected ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
               if (selected)
                 Icon(Icons.chevron_right_rounded, size: 18, color: colorScheme.primary.withOpacity(0.7)),
             ],
