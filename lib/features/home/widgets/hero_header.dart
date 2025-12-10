@@ -21,6 +21,15 @@ class HeroHeader extends ConsumerWidget {
     return 'İyi Geceler';
   }
 
+  IconData _getGreetingIcon() {
+    final hour = DateTime.now().hour;
+    if (hour < 6) return Icons.nightlight_round;
+    if (hour < 11) return Icons.wb_sunny_rounded;
+    if (hour < 17) return Icons.wb_sunny_rounded;
+    if (hour < 22) return Icons.nights_stay_rounded;
+    return Icons.nightlight_round;
+  }
+
   List<Map<String, dynamic>> _getExamCountdowns(String? selectedExam, String? selectedExamSection) {
     if (selectedExam == null) return [];
 
@@ -32,7 +41,7 @@ class HeroHeader extends ConsumerWidget {
         final examDate = DateTime(2026, 6, 14);
         final diff = examDate.difference(now);
         if (!diff.isNegative) {
-          countdowns.add({'days': diff.inDays, 'label': 'LGS'});
+          countdowns.add({'days': diff.inDays, 'label': 'LGS', 'icon': Icons.school_rounded});
         }
         break;
 
@@ -40,19 +49,20 @@ class HeroHeader extends ConsumerWidget {
         final tytDate = DateTime(2026, 6, 20);
         final tytDiff = tytDate.difference(now);
         if (!tytDiff.isNegative) {
-          countdowns.add({'days': tytDiff.inDays, 'label': 'TYT'});
+          countdowns.add({'days': tytDiff.inDays, 'label': 'TYT', 'icon': Icons.menu_book_rounded});
         }
 
         final aytDate = DateTime(2026, 6, 21);
         final aytDiff = aytDate.difference(now);
         if (!aytDiff.isNegative) {
-          countdowns.add({'days': aytDiff.inDays, 'label': 'AYT'});
+          countdowns.add({'days': aytDiff.inDays, 'label': 'AYT', 'icon': Icons.auto_stories_rounded});
         }
         break;
 
       case 'kpss':
         DateTime? examDate;
         String? examLabel;
+        IconData examIcon = Icons.workspace_premium_rounded;
 
         if (selectedExamSection != null) {
           final section = selectedExamSection.toLowerCase();
@@ -73,7 +83,7 @@ class HeroHeader extends ConsumerWidget {
 
         final diff = examDate.difference(now);
         if (!diff.isNegative) {
-          countdowns.add({'days': diff.inDays, 'label': examLabel});
+          countdowns.add({'days': diff.inDays, 'label': examLabel, 'icon': examIcon});
         }
         break;
     }
@@ -95,200 +105,414 @@ class HeroHeader extends ConsumerWidget {
         final isDark = theme.brightness == Brightness.dark;
 
         return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             color: theme.cardColor,
             borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.05)
+                  : Colors.black.withValues(alpha: 0.05),
+              width: 1,
+            ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
-                blurRadius: 14,
-                offset: const Offset(0, 3),
+                color: isDark
+                    ? Colors.black.withValues(alpha: 0.25)
+                    : theme.colorScheme.primary.withValues(alpha: 0.04),
+                blurRadius: 12,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Greeting & User Name with Exam Countdowns
-              Row(
-                children: [
-                  // Kullanıcı Avatarı - Sabit boyut
-                  CircleAvatar(
-                    radius: 18,
-                    backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-                    child: ClipOval(
-                      child: (user.avatarStyle != null && user.avatarSeed != null)
-                          ? SvgPicture.network(
-                              'https://api.dicebear.com/9.x/${user.avatarStyle}/svg?seed=${user.avatarSeed}',
-                              fit: BoxFit.cover,
-                              width: 36,
-                              height: 36,
-                              placeholderBuilder: (_) => const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              ),
-                            )
-                          : Icon(
-                              Icons.person_rounded,
-                              size: 20,
-                              color: theme.colorScheme.primary,
-                            ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  // Selamlama Metni - Esnek genişlik
-                  Expanded(
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        '${_getGreeting()}, ${user.firstName}',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.3,
-                          fontSize: 15,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.visible,
-                        softWrap: false,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  // Sınav Sayaçları
-                  if (examCountdowns.isNotEmpty)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      mainAxisSize: MainAxisSize.min,
-                      children: examCountdowns.map((countdown) {
-                        return Padding(
-                          padding: EdgeInsets.only(
-                            top: examCountdowns.indexOf(countdown) > 0 ? 3 : 0,
-                          ),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+              // Header Section
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Left side: Avatar on top, greeting+name below
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Avatar
+                          Container(
                             decoration: BoxDecoration(
+                              shape: BoxShape.circle,
                               gradient: LinearGradient(
-                                colors: [
-                                  theme.colorScheme.secondary.withValues(alpha: 0.95),
-                                  theme.colorScheme.secondary.withValues(alpha: 0.75),
-                                ],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
+                                colors: [
+                                  theme.colorScheme.primary.withValues(alpha: 0.15),
+                                  theme.colorScheme.primary.withValues(alpha: 0.08),
+                                ],
                               ),
-                              borderRadius: BorderRadius.circular(6),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: theme.colorScheme.secondary.withValues(alpha: 0.25),
-                                  blurRadius: 3,
-                                  offset: const Offset(0, 1),
-                                ),
-                              ],
                             ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  countdown['label'],
-                                  style: theme.textTheme.labelSmall?.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 9.5,
-                                    height: 1,
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '|',
-                                  style: theme.textTheme.labelSmall?.copyWith(
-                                    color: Colors.white.withValues(alpha: 0.7),
-                                    fontWeight: FontWeight.w400,
-                                    fontSize: 9,
-                                    height: 1,
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                Icon(
-                                  Icons.calendar_today_rounded,
-                                  size: 8.5,
-                                  color: Colors.white.withValues(alpha: 0.9),
-                                ),
-                                const SizedBox(width: 3),
-                                Text(
-                                  '${countdown['days']} gün',
-                                  style: theme.textTheme.labelSmall?.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 9.5,
-                                    height: 1,
-                                  ),
-                                ),
-                              ],
+                            padding: const EdgeInsets.all(1.5),
+                            child: CircleAvatar(
+                              radius: 20,
+                              backgroundColor: theme.cardColor,
+                              child: ClipOval(
+                                child: (user.avatarStyle != null && user.avatarSeed != null)
+                                    ? SvgPicture.network(
+                                        'https://api.dicebear.com/9.x/${user.avatarStyle}/svg?seed=${user.avatarSeed}',
+                                        fit: BoxFit.cover,
+                                        width: 40,
+                                        height: 40,
+                                        placeholderBuilder: (_) => const SizedBox(
+                                          width: 14,
+                                          height: 14,
+                                          child: CircularProgressIndicator(strokeWidth: 1.5),
+                                        ),
+                                      )
+                                    : Icon(
+                                        Icons.person_rounded,
+                                        size: 20,
+                                        color: theme.colorScheme.primary,
+                                      ),
+                              ),
                             ),
                           ),
-                        );
-                      }).toList(),
+                          const SizedBox(height: 6),
+                          // Greeting + Name below avatar
+                          Row(
+                            children: [
+                              Icon(
+                                _getGreetingIcon(),
+                                size: 13,
+                                color: theme.colorScheme.onSurface.withValues(alpha: 0.45),
+                              ),
+                              const SizedBox(width: 5),
+                              Flexible(
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    '${_getGreeting()}, ${user.firstName ?? ''}',
+                                    style: theme.textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 15,
+                                      letterSpacing: -0.2,
+                                      height: 1.2,
+                                    ),
+                                    maxLines: 1,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                ],
+
+                    const SizedBox(width: 10),
+
+                    // Right side: Exam Countdown Badges (multiple if available)
+                    if (examCountdowns.isNotEmpty)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        mainAxisSize: MainAxisSize.min,
+                        children: examCountdowns.take(2).map((countdown) {
+                          return Padding(
+                            padding: EdgeInsets.only(
+                              top: examCountdowns.indexOf(countdown) > 0 ? 4 : 0,
+                            ),
+                            child: SizedBox(
+                              width: 105,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      theme.colorScheme.secondary,
+                                      theme.colorScheme.secondary.withValues(alpha: 0.85),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: theme.colorScheme.secondary.withValues(alpha: 0.3),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      countdown['icon'],
+                                      size: 12,
+                                      color: Colors.white,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      countdown['label'],
+                                      style: theme.textTheme.labelSmall?.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 10,
+                                        height: 1.2,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      '•',
+                                      style: TextStyle(
+                                        color: Colors.white.withValues(alpha: 0.7),
+                                        fontSize: 9,
+                                        height: 1.2,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      '${countdown['days']} gün',
+                                      style: theme.textTheme.labelSmall?.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 10,
+                                        height: 1.2,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                  ],
+                ),
               ),
 
-              const SizedBox(height: 8),
-
-              // Stats Row
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Rank Badge with Quest Button
-                  Expanded(
-                    flex: 3,
-                    child: _StatCard(
-                      icon: Icons.military_tech_rounded,
-                      label: rankInfo.current.name,
-                      value: 'TP ${user.engagementScore}',
-                      color: theme.colorScheme.primary,
-                      progress: rankInfo.progress,
-                      questButton: const _QuestButton(),
-                      theme: theme,
-                    ),
+              // Divider
+              Container(
+                height: 1,
+                margin: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.transparent,
+                      (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
+                      Colors.transparent,
+                    ],
                   ),
-                ],
+                ),
+              ),
+
+              // Stats Section - Ultra Compact
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    // Rank Card
+                    Expanded(
+                      child: _UltraCompactRankCard(
+                        rankInfo: rankInfo,
+                        score: user.engagementScore,
+                        theme: theme,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+
+                    // Quest Card
+                    Expanded(
+                      child: _UltraCompactQuestCard(
+                        theme: theme,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
         );
       },
-      loading: () => const SizedBox(
-        height: 120,
-        child: Center(child: LogoLoader(size: 42)),
+      loading: () => Container(
+        height: 100,
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Center(child: LogoLoader(size: 36)),
       ),
       error: (_, __) => const SizedBox.shrink(),
     );
   }
 }
 
-// Günlük Görevler Butonu
-class _QuestButton extends ConsumerStatefulWidget {
-  const _QuestButton();
+// Ultra Compact Rank Card Widget
+class _UltraCompactRankCard extends StatelessWidget {
+  final dynamic rankInfo;
+  final int score;
+  final ThemeData theme;
+
+  const _UltraCompactRankCard({
+    required this.rankInfo,
+    required this.score,
+    required this.theme,
+  });
 
   @override
-  ConsumerState<_QuestButton> createState() => _QuestButtonState();
+  Widget build(BuildContext context) {
+    final isDark = theme.brightness == Brightness.dark;
+
+    return GestureDetector(
+      onTap: () => context.push('/profile/ranks'),
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              theme.colorScheme.primary.withValues(alpha: isDark ? 0.10 : 0.05),
+              theme.colorScheme.primary.withValues(alpha: isDark ? 0.05 : 0.02),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: theme.colorScheme.primary.withValues(alpha: 0.12),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Icon & Label
+            Row(
+              children: [
+                Container(
+                padding: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                child: Icon(
+                  Icons.military_tech_rounded,
+                  size: 12,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+              const SizedBox(width: 5),
+              Text(
+                'Rütbe',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.45),
+                  fontWeight: FontWeight.w600,
+                  fontSize: 10,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+
+          // Rank Name
+          Text(
+            rankInfo.current.name,
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.w800,
+              fontSize: 13,
+              letterSpacing: -0.2,
+              height: 1.1,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 5),
+
+          // Progress bar
+          ClipRRect(
+            borderRadius: BorderRadius.circular(3),
+            child: Stack(
+              children: [
+                Container(
+                  height: 3,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+                FractionallySizedBox(
+                  widthFactor: rankInfo.progress.clamp(0.0, 1.0),
+                  child: Container(
+                    height: 3,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
+
+          // Score & Progress
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'TP $score',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 10,
+                ),
+              ),
+              Text(
+                '${(rankInfo.progress * 100).toInt()}%',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
+                  fontWeight: FontWeight.w600,
+                  fontSize: 9,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+      ),
+    );
+  }
 }
 
-class _QuestButtonState extends ConsumerState<_QuestButton>
+// Ultra Compact Quest Card Widget
+class _UltraCompactQuestCard extends ConsumerStatefulWidget {
+  final ThemeData theme;
+
+  const _UltraCompactQuestCard({
+    required this.theme,
+  });
+
+  @override
+  ConsumerState<_UltraCompactQuestCard> createState() => _UltraCompactQuestCardState();
+}
+
+class _UltraCompactQuestCardState extends ConsumerState<_UltraCompactQuestCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
+  late Animation<double> _pulseAnimation;
 
   @override
   void initState() {
     super.initState();
-    // Reverse: true yaparak git-gel efekti veriyoruz.
-    // Bu, "loop" sırasındaki keskin geçişi yok eder.
     _controller = AnimationController(
-      duration: const Duration(seconds: 3),
+      duration: const Duration(milliseconds: 1200),
       vsync: this,
     )..repeat(reverse: true);
+
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.04).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
   }
 
   @override
@@ -307,7 +531,8 @@ class _QuestButtonState extends ConsumerState<_QuestButton>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final theme = widget.theme;
+    final isDark = theme.brightness == Brightness.dark;
     final questProg = ref.watch(dailyQuestsProgressProvider);
     final hasClaimable = ref.watch(hasClaimableQuestsProvider);
 
@@ -318,237 +543,188 @@ class _QuestButtonState extends ConsumerState<_QuestButton>
 
     IconData buttonIcon;
     if (hasClaimable) {
-      buttonIcon = Icons.military_tech_rounded;
+      buttonIcon = Icons.card_giftcard_rounded;
     } else if (progress >= 1.0) {
-      buttonIcon = Icons.emoji_events_rounded;
+      buttonIcon = Icons.check_circle_rounded;
     } else {
-      buttonIcon = Icons.shield_moon_rounded;
+      buttonIcon = Icons.shield_rounded;
     }
-
-    final gradientColor = theme.colorScheme.secondary;
 
     return GestureDetector(
       onTap: () => context.go('/home/quests'),
       child: AnimatedBuilder(
-        animation: _controller,
+        animation: _pulseAnimation,
         builder: (context, child) {
-          // Alignment.lerp ile gradyanın yönünü yumuşakça kaydırıyoruz.
-          // Bu yöntem stops listesini değiştirmekten çok daha performanslıdır.
-          return Container(
-            constraints: const BoxConstraints(minWidth: 80),
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  gradientColor.withValues(alpha: 0.70),
-                  gradientColor.withValues(alpha: 0.95),
-                  gradientColor.withValues(alpha: 0.70),
-                ],
-                // stops kullanmak yerine Alignment'ı kaydırıyoruz
-                begin: Alignment.lerp(
-                    Alignment.topLeft,
-                    Alignment.topRight,
-                    _controller.value
-                )!,
-                end: Alignment.lerp(
-                    Alignment.bottomRight,
-                    Alignment.bottomLeft,
-                    _controller.value
-                )!,
+          return Transform.scale(
+            scale: hasClaimable ? _pulseAnimation.value : 1.0,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: hasClaimable
+                      ? [
+                          theme.colorScheme.secondary,
+                          theme.colorScheme.secondary.withValues(alpha: 0.85),
+                        ]
+                      : [
+                          theme.colorScheme.secondary.withValues(alpha: isDark ? 0.10 : 0.05),
+                          theme.colorScheme.secondary.withValues(alpha: isDark ? 0.05 : 0.02),
+                        ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: hasClaimable
+                      ? theme.colorScheme.secondary
+                      : theme.colorScheme.secondary.withValues(alpha: 0.12),
+                  width: 1,
+                ),
+                boxShadow: hasClaimable
+                    ? [
+                        BoxShadow(
+                          color: theme.colorScheme.secondary.withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
+                    : null,
               ),
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: gradientColor.withValues(alpha: 0.3),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Görevler',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 8.5,
-                    height: 1,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        SizedBox(
-                          height: 18,
-                          width: 18,
-                          child: CircularProgressIndicator(
-                            value: total == 0 ? 0 : progress,
-                            strokeWidth: 2,
-                            backgroundColor: Colors.white.withValues(alpha: 0.25),
-                            valueColor: const AlwaysStoppedAnimation(Colors.white),
-                          ),
-                        ),
-                        Icon(
-                          buttonIcon,
-                          size: 10,
-                          color: Colors.white,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      total == 0 ? '0/0' : '$completed/$total',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 10,
-                        height: 1,
-                      ),
-                    ),
-                  ],
-                ),
-                if (total > 0 && progress < 1.0) ...[
-                  const SizedBox(height: 3),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Icon & Label
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.timer_outlined,
-                        size: 8,
-                        color: Colors.white.withValues(alpha: 0.9),
+                      Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                          color: hasClaimable
+                              ? Colors.white.withValues(alpha: 0.2)
+                              : theme.colorScheme.secondary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Icon(
+                          buttonIcon,
+                          size: 12,
+                          color: hasClaimable
+                              ? Colors.white
+                              : theme.colorScheme.secondary,
+                        ),
                       ),
-                      const SizedBox(width: 2),
+                      const SizedBox(width: 5),
                       Text(
-                        _formatRemaining(remaining),
+                        'Görevler',
                         style: theme.textTheme.labelSmall?.copyWith(
-                          color: Colors.white,
+                          color: hasClaimable
+                              ? Colors.white.withValues(alpha: 0.95)
+                              : theme.colorScheme.onSurface.withValues(alpha: 0.45),
                           fontWeight: FontWeight.w600,
-                          fontSize: 8,
-                          height: 1,
+                          fontSize: 10,
+                          letterSpacing: 0.2,
                         ),
                       ),
                     ],
                   ),
-                ] else if (hasClaimable || progress >= 1.0 || total == 0) ...[
-                  const SizedBox(height: 3),
+                  const SizedBox(height: 6),
+
+                  // Progress Count
                   Text(
-                    hasClaimable
-                        ? 'Ödül Al!'
-                        : (progress >= 1.0
-                        ? 'Tamam'
-                        : 'Yok'),
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 8,
-                      height: 1,
+                    total == 0 ? '0/0' : '$completed/$total',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: hasClaimable
+                          ? Colors.white
+                          : theme.colorScheme.secondary,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                      letterSpacing: -0.2,
+                      height: 1.1,
                     ),
                   ),
+                  const SizedBox(height: 5),
+
+                  // Progress bar
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(3),
+                    child: Stack(
+                      children: [
+                        Container(
+                          height: 3,
+                          decoration: BoxDecoration(
+                            color: hasClaimable
+                                ? Colors.white.withValues(alpha: 0.25)
+                                : theme.colorScheme.secondary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(3),
+                          ),
+                        ),
+                        FractionallySizedBox(
+                          widthFactor: total == 0 ? 0 : progress,
+                          child: Container(
+                            height: 3,
+                            decoration: BoxDecoration(
+                              color: hasClaimable
+                                  ? Colors.white
+                                  : theme.colorScheme.secondary,
+                              borderRadius: BorderRadius.circular(3),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+
+                  // Status text
+                  if (hasClaimable)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      child: Text(
+                        '🎁 Ödül Al!',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.secondary,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 9,
+                        ),
+                      ),
+                    )
+                  else if (total > 0 && progress < 1.0)
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.schedule_rounded,
+                          size: 10,
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
+                        ),
+                        const SizedBox(width: 3),
+                        Text(
+                          _formatRemaining(remaining),
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 9,
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    Text(
+                      progress >= 1.0 ? '✓ Tamam' : 'Yok',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 9,
+                      ),
+                    ),
                 ],
-              ],
+              ),
             ),
           );
         },
-      ),
-    );
-  }
-}
-
-class _StatCard extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color color;
-  final double progress;
-  final Widget? questButton;
-  final ThemeData theme;
-
-  const _StatCard({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.color,
-    required this.progress,
-    required this.theme,
-    this.questButton,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.07),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: color.withValues(alpha: 0.18),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // SOL TARAF: Bilgiler
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    Icon(icon, size: 14, color: color),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        label,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                          fontWeight: FontWeight.w600,
-                          fontSize: 10,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 16,
-                    letterSpacing: -0.2,
-                    height: 1.1,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(2.5),
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    minHeight: 3,
-                    backgroundColor: color.withValues(alpha: 0.12),
-                    valueColor: AlwaysStoppedAnimation(color),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // SAĞ TARAF: Quest Butonu
-          if (questButton != null) ...[
-            const SizedBox(width: 8),
-            questButton!,
-          ],
-        ],
       ),
     );
   }

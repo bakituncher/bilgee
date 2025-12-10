@@ -131,16 +131,31 @@ class NotificationService {
 
   Future<void> _requestPermission() async {
     try {
-      await FirebaseMessaging.instance.requestPermission(
+      final settings = await FirebaseMessaging.instance.requestPermission(
         alert: true,
-        announcement: false,
+        announcement: true,
         badge: true,
         carPlay: false,
         criticalAlert: false,
         provisional: false,
         sound: true,
       );
-    } catch (_) {}
+
+      if (kDebugMode) {
+        debugPrint('Bildirim izin durumu: ${settings.authorizationStatus}');
+        debugPrint('Alert: ${settings.alert}, Badge: ${settings.badge}, Sound: ${settings.sound}');
+      }
+
+      // iOS için ek kontrol
+      if (Platform.isIOS) {
+        final token = await FirebaseMessaging.instance.getAPNSToken();
+        if (kDebugMode) {
+          debugPrint('APNS Token: ${token != null ? "Alındı" : "Alınamadı"}');
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('İzin talebi hatası: $e');
+    }
   }
 
   Future<void> _ensureAndRegisterToken() async {
