@@ -370,7 +370,7 @@ class _InstructionBanner extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         gradient: LinearGradient(
@@ -392,23 +392,22 @@ class _InstructionBanner extends StatelessWidget {
         ),
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.touch_app_rounded,
-            color: colorScheme.primary,
-            size: 16,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
+          Icon(Icons.touch_app_rounded, size: 16, color: colorScheme.primary),
+          const SizedBox(width: 6),
+          Flexible(
             child: Text(
-              'Test eklemek istediğiniz konuyu seçin',
+              'Dokun: Test ekle  •  Basılı tut: Detay gör',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: colorScheme.onSurface,
                 fontWeight: FontWeight.w600,
                 fontSize: 12,
+                height: 1.2,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
             ),
           ),
         ],
