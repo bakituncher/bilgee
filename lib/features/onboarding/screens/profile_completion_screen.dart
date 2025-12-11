@@ -180,7 +180,7 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
                                   labelText: 'Cinsiyet',
                                   prefixIcon: Icon(Icons.wc_rounded),
                                 ),
-                                items: ['Erkek', 'Kadın', 'Diğer']
+                                items: ['Erkek', 'Kadın', 'Belirtmek istemiyorum']
                                     .map((label) => DropdownMenuItem(value: label, child: Text(label)))
                                     .toList(),
                                 onChanged: (value) => setState(() => _gender = value),
