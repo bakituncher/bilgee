@@ -99,14 +99,15 @@ class AuthRepository {
   }
 
   Future<void> signOut() async {
-    // Çıkış yapıldığında bildirim token'ını temizle
-    try {
-      await NotificationService.instance.clearTokenOnLogout();
-    } catch (e) {
+    // PERFORMANS İYİLEŞTİRMESİ: Bildirim token temizleme işlemini beklemeden
+    // (fire-and-forget) arkaplanda çalıştır. Kullanıcının çıkış yapması için
+    // sunucu yanıtı beklenmesine gerek yok.
+    NotificationService.instance.clearTokenOnLogout().catchError((e) {
       // Bildirim temizleme hatası uygulamayı engellemesin
-      if (kDebugMode) debugPrint('Bildirim temizleme hatası: $e');
-    }
+      if (kDebugMode) debugPrint('Bildirim temizleme hatası (arkaplan): $e');
+    });
 
+    // Kullanıcıyı hemen çıkar
     await _firebaseAuth.signOut();
   }
 

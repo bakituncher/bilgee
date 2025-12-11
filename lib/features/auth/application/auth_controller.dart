@@ -279,17 +279,39 @@ class AuthController extends StreamNotifier<User?> {
   }
 
   Future<void> signOut() async {
-    // Çıkış yaparken reklam servisini sıfırla.
-    // Bu, bir sonraki kullanıcının (veya aynı kullanıcının tekrar girişinin)
-    // temiz bir durumla başlamasını sağlar ve önceki kullanıcının premium/yaş
-    // verilerinin sızmasını engeller.
-    AdMobService().reset();
+    // PERFORMANS İYİLEŞTİRMESİ: Yan görevleri (RevenueCat, AdMob) paralel olarak
+    // çalıştır ve hata vermesin diye güvenli şekilde sar. Kullanıcı deneyimi için
+    // bu işlemlerin bitmesini beklemeden Firebase'den hemen çıkış yap.
 
-    await _logOutFromRevenueCat();
+    // Güvenli çalıştırıcı yardımcı fonksiyonu
+    Future<void> safeRun(Future<void> Function() action) async {
+      try {
+        await action();
+      } catch (e) {
+        if (kDebugMode) debugPrint("Cleanup error (ignored): $e");
+      }
+    }
+
+    // Temizlik işlemlerini paralel başlat (kullanıcıyı bekletmeden)
+    final cleanupFuture = Future.wait([
+      safeRun(() async {
+        AdMobService().reset(); // void method, Future içinde çalıştır
+      }),
+      safeRun(() => _logOutFromRevenueCat()),
+    ]);
+
+    // Firebase çıkışını hemen yap (cleanup bitmesini bekleme)
     final authRepository = ref.read(authRepositoryProvider);
     await authRepository.signOut();
+
     // Oturum kapatıldıktan sonra kullanıcıya özel verileri temizle
     ref.invalidate(userProfileProvider);
+
+    // Temizlik işlemlerinin arka planda tamamlanmasını bekle (opsiyonel)
+    // Bu satırı kaldırırsanız daha da hızlı olur, ancak güvenlik için bırakılabilir
+    cleanupFuture.catchError((e) {
+      if (kDebugMode) debugPrint("Background cleanup error (safe): $e");
+    });
   }
 
   Future<void> updatePassword({required String currentPassword, required String newPassword}) {

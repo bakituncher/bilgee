@@ -11,6 +11,7 @@ import 'package:taktik/features/auth/application/auth_controller.dart';
 import 'package:taktik/features/settings/logic/settings_notifier.dart';
 import 'package:taktik/features/settings/widgets/settings_section.dart';
 import 'package:taktik/features/settings/widgets/settings_tile.dart';
+import 'package:taktik/features/settings/widgets/delete_account_loading_dialog.dart';
 import 'package:taktik/data/providers/admin_providers.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
 import 'package:taktik/core/theme/theme_provider.dart';
@@ -728,21 +729,44 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Hesap silme işlemlerini dinle
+    // Hesap silme işlemlerini dinle ve loading dialog'u yönet
     ref.listen<SettingsState>(settingsNotifierProvider, (previous, next) {
+      final wasLoading = previous?.isLoading ?? false;
+      final isLoading = next.isLoading;
+
+      // Loading başladığında dialog'u göster
+      if (!wasLoading && isLoading) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const DeleteAccountLoadingDialog(),
+        );
+      }
+
+      // Loading bittiyse dialog'u kapat
+      if (wasLoading && !isLoading) {
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop(); // Loading dialog'u kapat
+        }
+      }
+
+      // Hata durumu
       if (next.resetStatus == ResetStatus.failure) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text("Hesap silinirken bir hata oluştu. Lütfen tekrar deneyin."),
             backgroundColor: Theme.of(context).colorScheme.error,
             behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 4),
           ),
         );
         ref.read(settingsNotifierProvider.notifier).resetOperationStatus();
-      } else if (next.resetStatus == ResetStatus.success) {
+      }
+      // Başarı durumu
+      else if (next.resetStatus == ResetStatus.success) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text("Hesabınız başarıyla silindi. Sizi özleyeceğiz."),
+            content: const Text("Hesabınız başarıyla silindi. Sizi özleyeceğiz. 💙"),
             backgroundColor: Theme.of(context).colorScheme.primary,
             behavior: SnackBarBehavior.floating,
             duration: const Duration(seconds: 3),

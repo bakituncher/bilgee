@@ -190,6 +190,7 @@ exports.onUserStatsWritten = onDocumentWritten({
 });
 
 // Kullanıcı profil güncellemesi: public_profile yansıt
+// Kullanıcı profil güncellemesi: İsim ve avatar değişikliklerini liderlik tablosuna yansıtır
 exports.onUserProfileChanged = onDocumentWritten({
   document: "users/{userId}",
   region: "us-central1",
@@ -197,70 +198,51 @@ exports.onUserProfileChanged = onDocumentWritten({
   const uid = event.params.userId;
   const before = event.data?.before?.data() || {};
   const after = event.data?.after?.data() || {};
+
   try {
-    // Public profile senkronu
+    // 1. Public profile senkronu (Her zaman çalışmalı)
     await updatePublicProfile(uid);
 
-    const prevExam = before?.selectedExam || null;
     const newExam = after?.selectedExam || null;
     const name = after?.name || "";
     const avatarStyle = after?.avatarStyle || null;
     const avatarSeed = after?.avatarSeed || null;
 
-    if (newExam) {
-      // Stats oku (puan/testCount için)
-      let stats = {};
-      try {
-        const sSnap = await db.collection("users").doc(uid).collection("state").doc("stats").get();
-        stats = sSnap.exists ? (sSnap.data() || {}) : {};
-      } catch (_) {}
-      const score = typeof stats.engagementScore === "number" ? stats.engagementScore : 0;
-      const testCount = typeof stats.testCount === "number" ? stats.testCount : 0;
+    // Sınav türü seçili değilse işlem yapma
+    if (!newExam) return;
 
-      // Legacy leaderboards kaydını güncelle
-      const lbRef = db.collection("leaderboards").doc(String(newExam)).collection("users").doc(uid);
-      await lbRef.set({
+    // 2. Liderlik Tablosu Senkronizasyonu (Sadece Metadata)
+    // KRİTİK DÜZELTME: Buradan 'score' alanını kaldırdık.
+    // Puanlar sadece 'onUserStatsWritten' trigger'ı ile güncellenir.
+    // Burada sadece kullanıcının adı ve avatarı değişirse tabloda güncelliyoruz.
+
+    const dayKey = dayKeyIstanbul();
+    const weekKey = weekKeyIstanbul();
+    const base = db.collection("leaderboard_scores").doc(String(newExam));
+
+    await Promise.all([
+      // Günlük Tabloda İsim/Avatar Güncelle
+      base.collection("daily").doc(dayKey).collection("users").doc(uid).set({
         userId: uid,
         userName: name,
         avatarStyle,
         avatarSeed,
-        score, // skorun kendisi de tutarlı kalsın
-        testCount,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      }, { merge: true });
+      }, { merge: true }),
 
-      // Yeni leaderboard_scores (günlük/haftalık) isim ve avatar senkronu
-      const dayKey = dayKeyIstanbul();
-      const weekKey = weekKeyIstanbul();
-      const base = db.collection("leaderboard_scores").doc(String(newExam));
-      await Promise.all([
-        base.collection("daily").doc(dayKey).collection("users").doc(uid).set({
-          userId: uid,
-          userName: name,
-          avatarStyle,
-          avatarSeed,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        }, { merge: true }),
-        base.collection("weekly").doc(weekKey).collection("users").doc(uid).set({
-          userId: uid,
-          userName: name,
-          avatarStyle,
-          avatarSeed,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        }, { merge: true }),
-      ]);
+      // Haftalık Tabloda İsim/Avatar Güncelle
+      base.collection("weekly").doc(weekKey).collection("users").doc(uid).set({
+        userId: uid,
+        userName: name,
+        avatarStyle,
+        avatarSeed,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true }),
+    ]);
 
-      // YENİ: Periyodik snapshot güncellemeleri bu anlık yeniden yayını gereksiz kılar.
-      // await Promise.allSettled([
-      //   publishLeaderboardSnapshot(String(newExam), 'daily'),
-      //   publishLeaderboardSnapshot(String(newExam), 'weekly'),
-      // ]);
-    }
+    // Not: Eski sınavdan silme işlemi (garbage collection) günlük temizlik fonksiyonuna bırakılmıştır.
+    // Anlık silme işlemi, çok fazla write operasyonu yarattığı için kaldırıldı.
 
-    // Sınav değiştiyse eski leaderboard kaydını temizle
-    if (prevExam && prevExam !== newExam) {
-      await db.collection("leaderboards").doc(String(prevExam)).collection("users").doc(uid).delete().catch(()=>{});
-    }
   } catch (e) {
     logger.warn("onUserProfileChanged sync failed", { uid, error: String(e) });
   }
