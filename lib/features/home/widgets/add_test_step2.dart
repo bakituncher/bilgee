@@ -16,6 +16,7 @@ class Step2ScoreEntry extends ConsumerStatefulWidget {
 class _Step2ScoreEntryState extends ConsumerState<Step2ScoreEntry> {
   late PageController _pageController;
   int _currentPage = 0;
+  bool _isAnySliderActive = false;
 
   @override
   void initState() {
@@ -29,6 +30,14 @@ class _Step2ScoreEntryState extends ConsumerState<Step2ScoreEntry> {
     if (page != _currentPage) {
       setState(() {
         _currentPage = page;
+      });
+    }
+  }
+
+  void _setSliderActive(bool active) {
+    if (_isAnySliderActive != active) {
+      setState(() {
+        _isAnySliderActive = active;
       });
     }
   }
@@ -50,23 +59,34 @@ class _Step2ScoreEntryState extends ConsumerState<Step2ScoreEntry> {
     return Column(
       children: [
         Expanded(
-          child: PageView.builder(
-            controller: _pageController,
-            itemCount: subjects.length,
-            itemBuilder: (context, index) {
-              final subjectEntry = subjects[index];
-              return _SubjectScoreCard(
-                key: ValueKey(subjectEntry.key),
-                subjectName: subjectEntry.key,
-                details: subjectEntry.value,
-                isFirst: index == 0,
-                isLast: index == subjects.length - 1,
-                currentPage: _currentPage,
-                totalPages: subjects.length,
-                onNext: () => _pageController.nextPage(duration: 300.ms, curve: Curves.easeOut),
-                onPrevious: () => _pageController.previousPage(duration: 300.ms, curve: Curves.easeOut),
-              );
+          child: NotificationListener<ScrollNotification>(
+            onNotification: (notification) {
+              // PageView scroll olaylarını dinle
+              return false;
             },
+            child: PageView.builder(
+              controller: _pageController,
+              physics: _isAnySliderActive
+                  ? const NeverScrollableScrollPhysics()
+                  : const PageScrollPhysics(),
+              itemCount: subjects.length,
+              itemBuilder: (context, index) {
+                final subjectEntry = subjects[index];
+                return _SubjectScoreCard(
+                  key: ValueKey(subjectEntry.key),
+                  subjectName: subjectEntry.key,
+                  details: subjectEntry.value,
+                  isFirst: index == 0,
+                  isLast: index == subjects.length - 1,
+                  currentPage: _currentPage,
+                  totalPages: subjects.length,
+                  onNext: () => _pageController.nextPage(duration: 200.ms, curve: Curves.easeOut),
+                  onPrevious: () => _pageController.previousPage(duration: 200.ms, curve: Curves.easeOut),
+                  pageController: _pageController,
+                  onSliderActiveChanged: _setSliderActive,
+                );
+              },
+            ),
           ),
         ),
       ],
@@ -74,12 +94,14 @@ class _Step2ScoreEntryState extends ConsumerState<Step2ScoreEntry> {
   }
 }
 
-class _SubjectScoreCard extends ConsumerWidget {
+class _SubjectScoreCard extends ConsumerStatefulWidget {
   final String subjectName;
   final SubjectDetails details;
   final bool isFirst, isLast;
   final int currentPage, totalPages;
   final VoidCallback onNext, onPrevious;
+  final PageController pageController;
+  final ValueChanged<bool> onSliderActiveChanged;
 
   const _SubjectScoreCard({
     super.key,
@@ -91,17 +113,29 @@ class _SubjectScoreCard extends ConsumerWidget {
     required this.totalPages,
     required this.onNext,
     required this.onPrevious,
+    required this.pageController,
+    required this.onSliderActiveChanged,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_SubjectScoreCard> createState() => _SubjectScoreCardState();
+}
+
+class _SubjectScoreCardState extends ConsumerState<_SubjectScoreCard> {
+  void _setSliding(bool value) {
+    // Parent widget'a bildir
+    widget.onSliderActiveChanged(value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final notifier = ref.read(addTestProvider.notifier);
-    final subjectScores = ref.watch(addTestProvider.select((s) => s.scores[subjectName])) ?? {'dogru': 0, 'yanlis': 0};
+    final subjectScores = ref.watch(addTestProvider.select((s) => s.scores[widget.subjectName])) ?? {'dogru': 0, 'yanlis': 0};
     final section = ref.watch(addTestProvider.select((s) => s.selectedSection))!;
 
     int correct = subjectScores['dogru']!;
     int wrong = subjectScores['yanlis']!;
-    int blank = details.questionCount - correct - wrong;
+    int blank = widget.details.questionCount - correct - wrong;
     double net = correct - (wrong * section.penaltyCoefficient);
 
     return LayoutBuilder(
@@ -119,7 +153,7 @@ class _SubjectScoreCard extends ConsumerWidget {
             children: [
               // Başlık bölümü
               Text(
-                subjectName,
+                widget.subjectName,
                 style: Theme.of(context).textTheme.headlineSmall,
                 textAlign: TextAlign.center,
                 maxLines: 2,
@@ -127,7 +161,7 @@ class _SubjectScoreCard extends ConsumerWidget {
               ),
               SizedBox(height: isCompact ? 2 : 4),
               Text(
-                "${details.questionCount} Soru",
+                "${widget.details.questionCount} Soru",
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
@@ -137,44 +171,64 @@ class _SubjectScoreCard extends ConsumerWidget {
 
               // Slider'lar
               GestureDetector(
-                onHorizontalDragStart: (_) {},
-                onHorizontalDragUpdate: (_) {},
-                child: ScoreSlider(
-                  label: "Doğru",
-                  value: correct.toDouble(),
-                  max: details.questionCount.toDouble(),
-                  color: Theme.of(context).colorScheme.secondary,
-                  totalQuestions: details.questionCount.toDouble(),
-                  onChanged: (value) {
-                    final newCorrect = value.toInt();
-                    if (newCorrect + wrong > details.questionCount) {
-                      final adjustedWrong = details.questionCount - newCorrect;
-                      notifier.updateScores(subjectName, correct: newCorrect, wrong: adjustedWrong);
-                    } else {
-                      notifier.updateScores(subjectName, correct: newCorrect);
-                    }
-                  },
+                onHorizontalDragStart: (_) {
+                  _setSliding(true);
+                },
+                onHorizontalDragEnd: (_) {
+                  _setSliding(false);
+                },
+                onHorizontalDragCancel: () {
+                  _setSliding(false);
+                },
+                child: AbsorbPointer(
+                  absorbing: false,
+                  child: ScoreSlider(
+                    label: "Doğru",
+                    value: correct.toDouble(),
+                    max: widget.details.questionCount.toDouble(),
+                    color: Theme.of(context).colorScheme.secondary,
+                    totalQuestions: widget.details.questionCount.toDouble(),
+                    onChanged: (value) {
+                      final newCorrect = value.toInt();
+                      if (newCorrect + wrong > widget.details.questionCount) {
+                        final adjustedWrong = widget.details.questionCount - newCorrect;
+                        notifier.updateScores(widget.subjectName, correct: newCorrect, wrong: adjustedWrong);
+                      } else {
+                        notifier.updateScores(widget.subjectName, correct: newCorrect);
+                      }
+                    },
+                  ),
                 ),
               ),
               SizedBox(height: isCompact ? 8 : 12),
               GestureDetector(
-                onHorizontalDragStart: (_) {},
-                onHorizontalDragUpdate: (_) {},
-                child: ScoreSlider(
-                  label: "Yanlış",
-                  value: wrong.toDouble(),
-                  max: (details.questionCount - correct).toDouble(),
-                  color: Theme.of(context).colorScheme.error,
-                  totalQuestions: details.questionCount.toDouble(),
-                  onChanged: (value) {
-                    final newWrong = value.toInt();
-                    if (newWrong + correct > details.questionCount) {
-                      final adjustedCorrect = details.questionCount - newWrong;
-                      notifier.updateScores(subjectName, correct: adjustedCorrect, wrong: newWrong);
-                    } else {
-                      notifier.updateScores(subjectName, wrong: newWrong);
-                    }
-                  },
+                onHorizontalDragStart: (_) {
+                  _setSliding(true);
+                },
+                onHorizontalDragEnd: (_) {
+                  _setSliding(false);
+                },
+                onHorizontalDragCancel: () {
+                  _setSliding(false);
+                },
+                child: AbsorbPointer(
+                  absorbing: false,
+                  child: ScoreSlider(
+                    label: "Yanlış",
+                    value: wrong.toDouble(),
+                    max: (widget.details.questionCount - correct).toDouble(),
+                    color: Theme.of(context).colorScheme.error,
+                    totalQuestions: widget.details.questionCount.toDouble(),
+                    onChanged: (value) {
+                      final newWrong = value.toInt();
+                      if (newWrong + correct > widget.details.questionCount) {
+                        final adjustedCorrect = widget.details.questionCount - newWrong;
+                        notifier.updateScores(widget.subjectName, correct: adjustedCorrect, wrong: newWrong);
+                      } else {
+                        notifier.updateScores(widget.subjectName, wrong: newWrong);
+                      }
+                    },
+                  ),
                 ),
               ),
 
@@ -199,7 +253,7 @@ class _SubjectScoreCard extends ConsumerWidget {
               // Özet butonu (sadece son sayfada) - sabit yükseklik
               SizedBox(
                 height: isCompact ? 50 : 56,
-                child: isLast
+                child: widget.isLast
                     ? Center(
                         child: ElevatedButton.icon(
                           onPressed: () => notifier.nextStep(),
@@ -224,15 +278,15 @@ class _SubjectScoreCard extends ConsumerWidget {
                     SizedBox(
                       width: 48,
                       height: 48,
-                      child: !isFirst
+                      child: !widget.isFirst
                           ? IconButton(
                               icon: const Icon(Icons.arrow_back_ios),
-                              onPressed: onPrevious,
+                              onPressed: widget.onPrevious,
                             )
                           : null,
                     ),
                     Text(
-                      '${currentPage + 1} / $totalPages',
+                      '${widget.currentPage + 1} / ${widget.totalPages}',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
@@ -240,10 +294,10 @@ class _SubjectScoreCard extends ConsumerWidget {
                     SizedBox(
                       width: 48,
                       height: 48,
-                      child: !isLast
+                      child: !widget.isLast
                           ? IconButton(
                               icon: const Icon(Icons.arrow_forward_ios),
-                              onPressed: onNext,
+                              onPressed: widget.onNext,
                             )
                           : null,
                     ),
