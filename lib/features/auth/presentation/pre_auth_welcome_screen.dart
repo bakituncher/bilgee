@@ -79,7 +79,7 @@ class _PreAuthWelcomeScreenState extends ConsumerState<PreAuthWelcomeScreen>
             child: SlideTransition(
               position: _slideAnimation,
               child: Padding(
-                padding: const EdgeInsets.all(24.0),
+                padding: const EdgeInsets.all(20.0),
                 child: Column(
                   children: [
                     Expanded(
@@ -88,13 +88,13 @@ class _PreAuthWelcomeScreenState extends ConsumerState<PreAuthWelcomeScreen>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            const SizedBox(height: 40),
+                            const SizedBox(height: 24),
                             // Logo
                             Image.asset(
                               'assets/images/splash.png',
-                              height: 120,
+                              height: 90,
                             ),
-                            const SizedBox(height: 48),
+                            const SizedBox(height: 24),
                             // Title
                             ShaderMask(
                               shaderCallback: (bounds) => LinearGradient(
@@ -109,42 +109,42 @@ class _PreAuthWelcomeScreenState extends ConsumerState<PreAuthWelcomeScreen>
                                 style: textTheme.headlineLarge?.copyWith(
                                   fontWeight: FontWeight.w900,
                                   color: Colors.white,
-                                  fontSize: 32,
+                                  fontSize: 28,
                                   letterSpacing: -0.5,
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 12),
                             // Subtitle
                             Text(
                               'Kişisel koçunla tanışmaya hazır mısın?',
                               textAlign: TextAlign.center,
                               style: textTheme.bodyLarge?.copyWith(
                                 color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                                fontSize: 16,
-                                height: 1.5,
+                                fontSize: 15,
+                                height: 1.4,
                               ),
                             ),
-                            const SizedBox(height: 56),
+                            const SizedBox(height: 32),
                             // Features
                             _FeatureCard(
                               icon: Icons.auto_awesome_rounded,
                               title: 'Kişiye Özel Eğitim Koçu',
                               subtitle: 'Seni anlayan, zayıf yönlerini belirleyen ve sana özel stratejiler üreten koçun.',
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 12),
                             _FeatureCard(
                               icon: Icons.bar_chart_rounded,
                               title: 'Detaylı Performans Analizi',
                               subtitle: 'Her deneme sonrası netlerini, konu başarılarını ve gelişimini takip et.',
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 12),
                             _FeatureCard(
                               icon: Icons.checklist_rtl_rounded,
                               title: 'Haftalık Planlama',
                               subtitle: 'Haftalık ve günlük hedeflerini belirle, zamanını en verimli şekilde kullan.',
                             ),
-                            const SizedBox(height: 32),
+                            const SizedBox(height: 20),
                           ],
                         ),
                       ),
@@ -226,10 +226,10 @@ class _FeatureCard extends StatelessWidget {
     final textTheme = theme.textTheme;
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: theme.colorScheme.primary.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: theme.colorScheme.primary.withValues(alpha: 0.1),
           width: 1,
@@ -239,18 +239,18 @@ class _FeatureCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: theme.colorScheme.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
               icon,
               color: theme.colorScheme.primary,
-              size: 28,
+              size: 24,
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -259,16 +259,16 @@ class _FeatureCard extends StatelessWidget {
                   title,
                   style: textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                    fontSize: 15,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 Text(
                   subtitle,
                   style: textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
-                    fontSize: 14,
-                    height: 1.4,
+                    fontSize: 13,
+                    height: 1.3,
                   ),
                 ),
               ],
