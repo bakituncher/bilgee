@@ -104,100 +104,156 @@ class _SubjectScoreCard extends ConsumerWidget {
     int blank = details.questionCount - correct - wrong;
     double net = correct - (wrong * section.penaltyCoefficient);
 
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(subjectName, style: Theme.of(context).textTheme.displaySmall, textAlign: TextAlign.center,),
-          Text("${details.questionCount} Soru", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-          const SizedBox(height: 48),
-          ScoreSlider(
-            label: "Doğru",
-            value: correct.toDouble(),
-            max: details.questionCount.toDouble(),
-            color: Theme.of(context).colorScheme.secondary,
-            onChanged: (value) {
-              final newCorrect = value.toInt();
-              if (newCorrect + wrong > details.questionCount) {
-                final adjustedWrong = details.questionCount - newCorrect;
-                notifier.updateScores(subjectName, correct: newCorrect, wrong: adjustedWrong);
-              } else {
-                notifier.updateScores(subjectName, correct: newCorrect);
-              }
-            },
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Ekran yüksekliğine göre dinamik boşluk hesaplama
+        final availableHeight = constraints.maxHeight;
+        final bool isCompact = availableHeight < 600;
+
+        return Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: 16.0,
+            vertical: isCompact ? 8.0 : 16.0,
           ),
-          ScoreSlider(
-            label: "Yanlış",
-            value: wrong.toDouble(),
-            max: (details.questionCount - correct).toDouble(),
-            color: Theme.of(context).colorScheme.error,
-            onChanged: (value) {
-              notifier.updateScores(subjectName, wrong: value.toInt());
-            },
-          ),
-          const Spacer(),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+          child: Column(
             children: [
-              _StatDisplay(label: "Boş", value: blank.toString()),
-              _StatDisplay(label: "Net", value: net.toStringAsFixed(2)),
-            ],
-          ),
-          const Spacer(),
-          // Sabit yükseklikte alan - "Özeti Görüntüle" butonu için
-          SizedBox(
-            height: 80,
-            child: isLast
-                ? Center(
-                    child: ElevatedButton.icon(
-                      onPressed: () => notifier.nextStep(),
-                      icon: const Icon(Icons.summarize),
-                      label: const Text('Özeti Görüntüle'),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                      ),
-                    ),
-                  )
-                : null,
-          ),
-          const SizedBox(height: 16),
-          // Navigation butonları - her zaman aynı yerde
-          SizedBox(
-            height: 48,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                SizedBox(
-                  width: 48,
-                  child: !isFirst
-                      ? IconButton(
-                          icon: const Icon(Icons.arrow_back_ios),
-                          onPressed: onPrevious,
-                        )
-                      : null,
+              // Başlık bölümü
+              Text(
+                subjectName,
+                style: Theme.of(context).textTheme.headlineSmall,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              SizedBox(height: isCompact ? 2 : 4),
+              Text(
+                "${details.questionCount} Soru",
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
-                // Ortada sayfa göstergesi
-                Text(
-                  '${currentPage + 1} / $totalPages',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              ),
+
+              const Spacer(),
+
+              // Slider'lar
+              GestureDetector(
+                onHorizontalDragStart: (_) {},
+                onHorizontalDragUpdate: (_) {},
+                child: ScoreSlider(
+                  label: "Doğru",
+                  value: correct.toDouble(),
+                  max: details.questionCount.toDouble(),
+                  color: Theme.of(context).colorScheme.secondary,
+                  totalQuestions: details.questionCount.toDouble(),
+                  onChanged: (value) {
+                    final newCorrect = value.toInt();
+                    if (newCorrect + wrong > details.questionCount) {
+                      final adjustedWrong = details.questionCount - newCorrect;
+                      notifier.updateScores(subjectName, correct: newCorrect, wrong: adjustedWrong);
+                    } else {
+                      notifier.updateScores(subjectName, correct: newCorrect);
+                    }
+                  },
+                ),
+              ),
+              SizedBox(height: isCompact ? 8 : 12),
+              GestureDetector(
+                onHorizontalDragStart: (_) {},
+                onHorizontalDragUpdate: (_) {},
+                child: ScoreSlider(
+                  label: "Yanlış",
+                  value: wrong.toDouble(),
+                  max: (details.questionCount - correct).toDouble(),
+                  color: Theme.of(context).colorScheme.error,
+                  totalQuestions: details.questionCount.toDouble(),
+                  onChanged: (value) {
+                    final newWrong = value.toInt();
+                    if (newWrong + correct > details.questionCount) {
+                      final adjustedCorrect = details.questionCount - newWrong;
+                      notifier.updateScores(subjectName, correct: adjustedCorrect, wrong: newWrong);
+                    } else {
+                      notifier.updateScores(subjectName, wrong: newWrong);
+                    }
+                  },
+                ),
+              ),
+
+              const Spacer(),
+
+              // İstatistikler
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _StatDisplay(label: "Boş", value: blank.toString()),
+                  Container(
+                    height: 40,
+                    width: 1,
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                  ),
+                  _StatDisplay(label: "Net", value: net.toStringAsFixed(2)),
+                ],
+              ),
+
+              const Spacer(),
+
+              // Özet butonu (sadece son sayfada) - sabit yükseklik
+              SizedBox(
+                height: isCompact ? 50 : 56,
+                child: isLast
+                    ? Center(
+                        child: ElevatedButton.icon(
+                          onPressed: () => notifier.nextStep(),
+                          icon: const Icon(Icons.summarize, size: 20),
+                          label: const Text('Özeti Görüntüle'),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          ),
+                        ),
+                      )
+                    : null,
+              ),
+
+              SizedBox(height: isCompact ? 4 : 8),
+
+              // Sayfa göstergesi ve navigasyon - sabit alta
+              SizedBox(
+                height: 48,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    SizedBox(
+                      width: 48,
+                      height: 48,
+                      child: !isFirst
+                          ? IconButton(
+                              icon: const Icon(Icons.arrow_back_ios),
+                              onPressed: onPrevious,
+                            )
+                          : null,
+                    ),
+                    Text(
+                      '${currentPage + 1} / $totalPages',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
+                    ),
+                    SizedBox(
+                      width: 48,
+                      height: 48,
+                      child: !isLast
+                          ? IconButton(
+                              icon: const Icon(Icons.arrow_forward_ios),
+                              onPressed: onNext,
+                            )
+                          : null,
+                    ),
+                  ],
                 ),
-                SizedBox(
-                  width: 48,
-                  child: !isLast
-                      ? IconButton(
-                          icon: const Icon(Icons.arrow_forward_ios),
-                          onPressed: onNext,
-                        )
-                      : null,
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -210,9 +266,21 @@ class _StatDisplay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(value, style: Theme.of(context).textTheme.headlineMedium),
-        Text(label, style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+        Text(
+          value,
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
       ],
     );
   }

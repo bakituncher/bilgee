@@ -325,26 +325,41 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               const SizedBox(height: 16),
                               SizedBox(
                                 height: 48,
-                                child: ElevatedButton.icon(
-                                  icon: SvgPicture.asset('assets/images/google_logo.svg', height: 24),
-                                  onPressed: _isLoading ? null : _signInWithGoogle,
-                                  label: const Text(
-                                    'Google ile Giriş Yap',
-                                    style: TextStyle(
-                                      color: Color(0xFF1F1F1F),
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.white,
-                                    foregroundColor: const Color(0xFF1F1F1F),
-                                    disabledBackgroundColor: Colors.grey.shade100,
-                                    elevation: 1,
-                                    shadowColor: Colors.black26,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      side: BorderSide(color: Colors.grey.shade300, width: 1),
+                                child: Material(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  elevation: 1,
+                                  child: InkWell(
+                                    onTap: _isLoading ? null : _signInWithGoogle,
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Container(
+                                      height: 48,
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                          color: Colors.grey.shade300,
+                                          width: 1,
+                                        ),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          SvgPicture.asset(
+                                            'assets/images/google_logo.svg',
+                                            height: 24,
+                                          ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Google ile Giriş Yap',
+                            style: TextStyle(
+                              color: Color(0xFF1F1F1F),
+                              fontSize: 17,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.15,
+                            ),
+                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),

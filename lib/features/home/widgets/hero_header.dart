@@ -36,56 +36,61 @@ class HeroHeader extends ConsumerWidget {
     final now = DateTime.now();
     final countdowns = <Map<String, dynamic>>[];
 
-    switch (selectedExam.toLowerCase()) {
-      case 'lgs':
-        final examDate = DateTime(2026, 6, 14);
-        final diff = examDate.difference(now);
-        if (!diff.isNegative) {
-          countdowns.add({'days': diff.inDays, 'label': 'LGS', 'icon': Icons.school_rounded});
-        }
-        break;
+    Map<String, int> _daysHoursRemaining(DateTime target) {
+      final diff = target.difference(now);
+      if (diff.isNegative) return {'days': 0, 'hours': 0};
+      final secondsInDay = const Duration(days: 1).inSeconds;
+      final daysFloor = (diff.inSeconds / secondsInDay).floor();
+      final remaining = diff - Duration(days: daysFloor);
+      final hours = remaining.inHours; // tam saat
+      return {'days': daysFloor, 'hours': hours};
+    }
 
-      case 'yks':
-        final tytDate = DateTime(2026, 6, 20);
-        final tytDiff = tytDate.difference(now);
-        if (!tytDiff.isNegative) {
-          countdowns.add({'days': tytDiff.inDays, 'label': 'TYT', 'icon': Icons.menu_book_rounded});
-        }
+    // selectedExam Firestore'da ExamType.name olarak kaydediliyor (örn: "yks", "lgs", "kpssLisans")
+    final exam = selectedExam.toLowerCase();
 
-        final aytDate = DateTime(2026, 6, 21);
-        final aytDiff = aytDate.difference(now);
-        if (!aytDiff.isNegative) {
-          countdowns.add({'days': aytDiff.inDays, 'label': 'AYT', 'icon': Icons.auto_stories_rounded});
-        }
-        break;
+    if (exam == 'lgs') {
+      // LGS: 14 Haziran 2026, 09:30
+      final examDate = DateTime(2026, 6, 14, 9, 30);
+      final rem = _daysHoursRemaining(examDate);
+      if (rem['days']! > 0 || rem['hours']! > 0) {
+        countdowns.add({'days': rem['days'], 'hours': rem['hours'], 'label': 'LGS', 'icon': Icons.school_rounded});
+      }
+    } else if (exam == 'yks') {
+      // TYT: 20 Haziran 2026, 10:15
+      final tytDate = DateTime(2026, 6, 20, 10, 15);
+      final tytRem = _daysHoursRemaining(tytDate);
+      if (tytRem['days']! > 0 || tytRem['hours']! > 0) {
+        countdowns.add({'days': tytRem['days'], 'hours': tytRem['hours'], 'label': 'TYT', 'icon': Icons.menu_book_rounded});
+      }
 
-      case 'kpss':
-        DateTime? examDate;
-        String? examLabel;
-        IconData examIcon = Icons.workspace_premium_rounded;
-
-        if (selectedExamSection != null) {
-          final section = selectedExamSection.toLowerCase();
-          if (section.contains('lisans') && !section.contains('ön')) {
-            examDate = DateTime(2026, 9, 6);
-            examLabel = 'Lisans';
-          } else if (section.contains('önlisans') || section.contains('ön lisans')) {
-            examDate = DateTime(2026, 10, 4);
-            examLabel = 'Önlisans';
-          } else if (section.contains('ortaöğretim') || section.contains('orta')) {
-            examDate = DateTime(2026, 10, 25);
-            examLabel = 'Ortaöğretim';
-          }
-        }
-
-        examDate ??= DateTime(2026, 9, 6);
-        examLabel ??= 'Lisans';
-
-        final diff = examDate.difference(now);
-        if (!diff.isNegative) {
-          countdowns.add({'days': diff.inDays, 'label': examLabel, 'icon': examIcon});
-        }
-        break;
+      // AYT: 21 Haziran 2026, 10:15
+      final aytDate = DateTime(2026, 6, 21, 10, 15);
+      final aytRem = _daysHoursRemaining(aytDate);
+      if (aytRem['days']! > 0 || aytRem['hours']! > 0) {
+        countdowns.add({'days': aytRem['days'], 'hours': aytRem['hours'], 'label': 'AYT', 'icon': Icons.auto_stories_rounded});
+      }
+    } else if (exam == 'kpsslisans') {
+      // KPSS Lisans: 06 Eylül 2026, 10:15
+      final examDate = DateTime(2026, 9, 6, 10, 15);
+      final rem = _daysHoursRemaining(examDate);
+      if (rem['days']! > 0 || rem['hours']! > 0) {
+        countdowns.add({'days': rem['days'], 'hours': rem['hours'], 'label': 'Lisans', 'icon': Icons.workspace_premium_rounded});
+      }
+    } else if (exam == 'kpssonlisans') {
+      // KPSS Önlisans: 04 Ekim 2026, 10:15
+      final examDate = DateTime(2026, 10, 4, 10, 15);
+      final rem = _daysHoursRemaining(examDate);
+      if (rem['days']! > 0 || rem['hours']! > 0) {
+        countdowns.add({'days': rem['days'], 'hours': rem['hours'], 'label': 'Önlisans', 'icon': Icons.workspace_premium_rounded});
+      }
+    } else if (exam == 'kpssortaogretim') {
+      // KPSS Ortaöğretim: 25 Ekim 2026, 10:15
+      final examDate = DateTime(2026, 10, 25, 10, 15);
+      final rem = _daysHoursRemaining(examDate);
+      if (rem['days']! > 0 || rem['hours']! > 0) {
+        countdowns.add({'days': rem['days'], 'hours': rem['hours'], 'label': 'Ortaöğretim', 'icon': Icons.workspace_premium_rounded});
+      }
     }
 
     return countdowns;
@@ -190,7 +195,7 @@ class HeroHeader extends ConsumerWidget {
                                   fit: BoxFit.scaleDown,
                                   alignment: Alignment.centerLeft,
                                   child: Text(
-                                    '${_getGreeting()}, ${user.firstName ?? ''}',
+                                    '${_getGreeting()}, ${user.firstName}',
                                     style: theme.textTheme.titleMedium?.copyWith(
                                       fontWeight: FontWeight.w700,
                                       fontSize: 15,
@@ -211,80 +216,100 @@ class HeroHeader extends ConsumerWidget {
 
                     // Right side: Exam Countdown Badges (multiple if available)
                     if (examCountdowns.isNotEmpty)
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        mainAxisSize: MainAxisSize.min,
-                        children: examCountdowns.take(2).map((countdown) {
-                          return Padding(
-                            padding: EdgeInsets.only(
-                              top: examCountdowns.indexOf(countdown) > 0 ? 4 : 0,
-                            ),
-                            child: SizedBox(
-                              width: 105,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                    colors: [
-                                      theme.colorScheme.secondary,
-                                      theme.colorScheme.secondary.withValues(alpha: 0.85),
+                      Flexible(
+                        child: Align(
+                          alignment: Alignment.topRight,
+                          child: Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: examCountdowns.take(3).map((countdown) {
+                              return ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  // minWidth kaldırıldı, içerik kadar genişleyecek
+                                  maxWidth: 180,
+                                ),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        theme.colorScheme.secondary,
+                                        theme.colorScheme.secondary.withValues(alpha: 0.85),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(9),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: theme.colorScheme.secondary.withValues(alpha: 0.22),
+                                        blurRadius: 6,
+                                        offset: const Offset(0, 2),
+                                      ),
                                     ],
                                   ),
-                                  borderRadius: BorderRadius.circular(8),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: theme.colorScheme.secondary.withValues(alpha: 0.3),
-                                      blurRadius: 6,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      countdown['icon'],
-                                      size: 12,
-                                      color: Colors.white,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      countdown['label'],
-                                      style: theme.textTheme.labelSmall?.copyWith(
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        countdown['icon'],
+                                        size: 14,
                                         color: Colors.white,
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 10,
-                                        height: 1.2,
                                       ),
-                                    ),
-                                    const SizedBox(width: 3),
-                                    Text(
-                                      '•',
-                                      style: TextStyle(
-                                        color: Colors.white.withValues(alpha: 0.7),
-                                        fontSize: 9,
-                                        height: 1.2,
+                                      const SizedBox(width: 6),
+                                      // Expanded kaldırıldı; içerik kadar yer kaplasın
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Flexible(
+                                            child: Text(
+                                              countdown['label'],
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              softWrap: false,
+                                              style: theme.textTheme.labelSmall?.copyWith(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w700,
+                                                fontSize: 11,
+                                                height: 1.2,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 5),
+                                          Text(
+                                            '|',
+                                            style: TextStyle(
+                                              color: Colors.white.withValues(alpha: 0.7),
+                                              fontSize: 10,
+                                              height: 1.2,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 5),
+                                          // Gün metni de Flexible ama sıkı; fazla boşluk bırakmaz
+                                          Flexible(
+                                            child: Text(
+                                              // Sadece gün formatı (saat bilgisi gösterilmez)
+                                              '${countdown['days']} gün',
+                                              maxLines: 1,
+                                              overflow: TextOverflow.visible,
+                                              softWrap: false,
+                                              style: theme.textTheme.labelSmall?.copyWith(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w800,
+                                                fontSize: 11,
+                                                height: 1.2,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    ),
-                                    const SizedBox(width: 3),
-                                    Text(
-                                      '${countdown['days']} gün',
-                                      style: theme.textTheme.labelSmall?.copyWith(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 10,
-                                        height: 1.2,
-                                      ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ),
-                          );
-                        }).toList(),
+                              );
+                            }).toList(),
+                          ),
+                        ),
                       ),
                   ],
                 ),
@@ -469,7 +494,7 @@ class _UltraCompactRankCard extends StatelessWidget {
                 ),
               ),
               Text(
-                '${(rankInfo.progress * 100).toInt()}%',
+                '%${(rankInfo.progress * 100).toInt()}',
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
                   fontWeight: FontWeight.w600,
@@ -522,11 +547,12 @@ class _UltraCompactQuestCardState extends ConsumerState<_UltraCompactQuestCard>
   }
 
   String _formatRemaining(Duration d) {
-    final h = d.inHours;
+    final days = d.inDays;
     final m = d.inMinutes.remainder(60);
-    if (h == 0) return '${m}dk';
-    if (h < 24) return '${h}sa';
-    return '${h}s';
+
+    if (days >= 1) return '${days} gün';
+    if (d.inHours >= 1) return '${d.inHours} sa';
+    return '${m} dk';
   }
 
   @override

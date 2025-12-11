@@ -378,6 +378,7 @@ class _AnimatedBunnyButtonState extends State<_AnimatedBunnyButton> with TickerP
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final cardColor = Theme.of(context).cardColor;
     final isActive = widget.isActive;
 
     return GestureDetector(
@@ -432,7 +433,7 @@ class _AnimatedBunnyButtonState extends State<_AnimatedBunnyButton> with TickerP
                       child: Container(
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Colors.white.withOpacity(0.98),
+                          color: cardColor,
                           boxShadow: [
                             BoxShadow(
                               color: colorScheme.primary.withOpacity(0.2),
@@ -494,7 +495,7 @@ class _AnimatedBunnyButtonState extends State<_AnimatedBunnyButton> with TickerP
                       child: Container(
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Colors.white.withOpacity(0.98),
+                          color: cardColor,
                           boxShadow: [
                             BoxShadow(
                               color: colorScheme.primary.withOpacity(0.2),
