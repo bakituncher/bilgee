@@ -259,6 +259,7 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
             value: correct.toDouble(),
             max: sessionQuestions.toDouble(),
             color: Theme.of(context).colorScheme.secondary,
+            totalQuestions: sessionQuestions.toDouble(),
             onChanged: (value) {
               final newCorrect = value.toInt();
               ref.read(_correctCountProvider.notifier).state = newCorrect;
@@ -273,8 +274,13 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
             value: wrong.toDouble(),
             max: (sessionQuestions - correct).toDouble(),
             color: Theme.of(context).colorScheme.error,
+            totalQuestions: sessionQuestions.toDouble(),
             onChanged: (value) {
-              ref.read(_wrongCountProvider.notifier).state = value.toInt();
+              final newWrong = value.toInt();
+              ref.read(_wrongCountProvider.notifier).state = newWrong;
+              if (newWrong + ref.read(_correctCountProvider) > sessionQuestions) {
+                ref.read(_correctCountProvider.notifier).state = sessionQuestions - newWrong;
+              }
             },
           ),
         ],
