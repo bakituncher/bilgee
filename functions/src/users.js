@@ -357,73 +357,82 @@ const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, e
       logger.error("Quotas cleanup failed:", error);
     }
 
-    // === 8) PUSH BİLDİRİM KAMPANYA LOGLARI ===
-    try {
-      const campaignsSnap = await db.collection("push_campaigns").get();
-      let logsDeleted = 0;
-      for (const campaign of campaignsSnap.docs) {
-        const logsSnap = await campaign.ref.collection("logs")
-          .where("userId", "==", userId)
-          .get();
-        const batch = db.batch();
-        logsSnap.docs.forEach(doc => {
-          batch.delete(doc.ref);
-          logsDeleted++;
-        });
-        if (logsSnap.docs.length > 0) await batch.commit();
-      }
-      deletionLog.steps.push({ step: "Push campaign logs", deleted: logsDeleted, status: "success" });
-      logger.info(`Push campaign logs: ${logsDeleted} entries deleted`);
-    } catch (error) {
-      deletionLog.errors.push({ step: "Push campaign logs", error: String(error) });
-      logger.error("Push campaign logs cleanup failed:", error);
-    }
-
-    // === 9) LİDERLİK TABLOLARINDAN KULLANICIYI TEMİZLE ===
-    try {
-      const leaderboardsSnap = await db.collection("leaderboards").get();
-      let lbDeleted = 0;
-      for (const leaderboardDoc of leaderboardsSnap.docs) {
-        const userLeaderboardRef = leaderboardDoc.ref.collection("users").doc(userId);
-        if ((await userLeaderboardRef.get()).exists) {
-          await userLeaderboardRef.delete();
-          lbDeleted++;
+    // === 8-12) PARALEL İŞLEM GRUBU: PUSH KAMPANYA, LEADERBOARD, PROFIL, LOGS VE STORAGE ===
+    const miscellaneousDeletions = Promise.all([
+      // Push bildirim kampanya logları
+      (async () => {
+        try {
+          const campaignsSnap = await db.collection("push_campaigns").get();
+          let logsDeleted = 0;
+          for (const campaign of campaignsSnap.docs) {
+            const logsSnap = await campaign.ref.collection("logs")
+              .where("userId", "==", userId)
+              .get();
+            const batch = db.batch();
+            logsSnap.docs.forEach(doc => {
+              batch.delete(doc.ref);
+              logsDeleted++;
+            });
+            if (logsSnap.docs.length > 0) await batch.commit();
+          }
+          deletionLog.steps.push({ step: "Push campaign logs", deleted: logsDeleted, status: "success" });
+          logger.info(`Push campaign logs: ${logsDeleted} entries deleted`);
+        } catch (error) {
+          deletionLog.errors.push({ step: "Push campaign logs", error: String(error) });
+          logger.error("Push campaign logs cleanup failed:", error);
         }
-      }
-      deletionLog.steps.push({ step: "Leaderboards", deleted: lbDeleted, status: "success" });
-      logger.info(`Leaderboards: ${lbDeleted} entries deleted`);
-    } catch (error) {
-      deletionLog.errors.push({ step: "Leaderboards", error: String(error) });
-      logger.error("Leaderboards cleanup failed:", error);
-    }
+      })(),
+      // Liderlik tabloları
+      (async () => {
+        try {
+          const leaderboardsSnap = await db.collection("leaderboards").get();
+          let lbDeleted = 0;
+          for (const leaderboardDoc of leaderboardsSnap.docs) {
+            const userLeaderboardRef = leaderboardDoc.ref.collection("users").doc(userId);
+            if ((await userLeaderboardRef.get()).exists) {
+              await userLeaderboardRef.delete();
+              lbDeleted++;
+            }
+          }
+          deletionLog.steps.push({ step: "Leaderboards", deleted: lbDeleted, status: "success" });
+          logger.info(`Leaderboards: ${lbDeleted} entries deleted`);
+        } catch (error) {
+          deletionLog.errors.push({ step: "Leaderboards", error: String(error) });
+          logger.error("Leaderboards cleanup failed:", error);
+        }
+      })(),
+      // Public profile
+      (async () => {
+        try {
+          const publicProfileRef = db.collection("public_profiles").doc(userId);
+          if ((await publicProfileRef.get()).exists) {
+            await publicProfileRef.delete();
+            deletionLog.steps.push({ step: "Public profile", deleted: 1, status: "success" });
+          }
+        } catch (error) {
+          deletionLog.errors.push({ step: "Public profile", error: String(error) });
+          logger.error("Public profile cleanup failed:", error);
+        }
+      })(),
+      // Reset logları
+      (async () => {
+        try {
+          const resetLogRef = db.collection("reset_logs").doc(userId);
+          if ((await resetLogRef.get()).exists) {
+            await resetLogRef.delete();
+            deletionLog.steps.push({ step: "Reset logs", deleted: 1, status: "success" });
+          }
+        } catch (error) {
+          deletionLog.errors.push({ step: "Reset logs", error: String(error) });
+          logger.error("Reset logs cleanup failed:", error);
+        }
+      })(),
+      // Storage dosyaları (GDPR - kritik)
+      deleteStorageFolder(`avatars/${userId}/`, "Storage: avatars"),
+      deleteStorageFolder(`user_files/${userId}/`, "Storage: user_files"),
+    ]);
 
-    // === 10) PUBLIC PROFILE'I SİL ===
-    try {
-      const publicProfileRef = db.collection("public_profiles").doc(userId);
-      if ((await publicProfileRef.get()).exists) {
-        await publicProfileRef.delete();
-        deletionLog.steps.push({ step: "Public profile", deleted: 1, status: "success" });
-      }
-    } catch (error) {
-      deletionLog.errors.push({ step: "Public profile", error: String(error) });
-      logger.error("Public profile cleanup failed:", error);
-    }
-
-    // === 11) RESET VE DELETION LOGLARINI SİL ===
-    try {
-      const resetLogRef = db.collection("reset_logs").doc(userId);
-      if ((await resetLogRef.get()).exists) {
-        await resetLogRef.delete();
-        deletionLog.steps.push({ step: "Reset logs", deleted: 1, status: "success" });
-      }
-    } catch (error) {
-      deletionLog.errors.push({ step: "Reset logs", error: String(error) });
-      logger.error("Reset logs cleanup failed:", error);
-    }
-
-    // === 12) STORAGE DOSYALARINI SİL (KRİTİK - GDPR!) ===
-    await deleteStorageFolder(`avatars/${userId}/`, "Storage: avatars");
-    await deleteStorageFolder(`user_files/${userId}/`, "Storage: user_files");
+    await miscellaneousDeletions;
 
     // === 13) ANA KULLANICI DOKUMANI VE TÜM ALT KOLEKSİYONLARINI SİL (RECURSİVE DELETE) ===
     // ✨ YENİ: recursiveDelete() metodu kullanılıyor
