@@ -1169,18 +1169,36 @@ class FirestoreService {
       // Kullanıcı silinmiş, kendi listelerimizden temizle
       final batch = _firestore.batch();
 
+      // Hangi listelerde bu kullanıcı var kontrol et
+      final followingDoc = await _followingCollection(currentUserId).doc(deletedUserId).get();
+      final followerDoc = await _followersCollection(currentUserId).doc(deletedUserId).get();
+
+      final userRef = usersCollection.doc(currentUserId);
+
       // Current user'ın following listesinden sil (eğer varsa)
-      final followingRef = _followingCollection(currentUserId).doc(deletedUserId);
-      batch.delete(followingRef);
+      if (followingDoc.exists) {
+        final followingRef = _followingCollection(currentUserId).doc(deletedUserId);
+        batch.delete(followingRef);
+
+        // Following tetikleyicisi olmadığı için sayacı manuel düşür
+        batch.update(userRef, {
+          'followingCount': FieldValue.increment(-1),
+        });
+      }
 
       // Current user'ın followers listesinden sil (eğer varsa)
-      final followerRef = _followersCollection(currentUserId).doc(deletedUserId);
-      batch.delete(followerRef);
+      if (followerDoc.exists) {
+        final followerRef = _followersCollection(currentUserId).doc(deletedUserId);
+        batch.delete(followerRef);
 
-      await batch.commit();
+        // Followers için tetikleyici var (onFollowerDeleted) - sayacı otomatik düşürecek
+        // Bu nedenle burada manuel güncellemeye gerek yok
+      }
 
-      // Log (isteğe bağlı - production'da kaldırılabilir)
-      debugPrint('✅ Lazy cleanup: Deleted user $deletedUserId removed from $currentUserId lists');
+      if (followingDoc.exists || followerDoc.exists) {
+        await batch.commit();
+        debugPrint('✅ Lazy cleanup: Deleted user $deletedUserId removed from $currentUserId lists');
+      }
     } catch (e) {
       // Sessizce hata yut - bu bir background cleanup işlemi
       debugPrint('⚠️ Lazy cleanup failed for $deletedUserId: $e');

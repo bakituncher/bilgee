@@ -107,7 +107,8 @@ service cloud.firestore {
       match /followers/{followerId} {
         allow read, list: if request.auth != null;
         allow create: if request.auth != null && request.auth.uid == followerId;
-        allow delete: if request.auth != null && request.auth.uid == followerId;
+        // Profil sahibi (userId) veya takipçi (followerId) silebilir
+        allow delete: if request.auth != null && (request.auth.uid == followerId || request.auth.uid == userId);
       }
 
       match /following/{followingId} {
