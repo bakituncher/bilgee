@@ -1141,6 +1141,50 @@ class FirestoreService {
     return _followingCollection(userId).snapshots().map((qs) => qs.docs.map((d) => d.id).toList());
   }
 
+  // === SAYFALAMALI TAKİP LİSTESİ (MALİYET DOSTU) ===
+
+  /// Takipçileri parça parça getirir
+  Future<(List<String> ids, DocumentSnapshot? lastDoc)> getFollowersPaginated(
+    String userId, {
+    int limit = 20,
+    DocumentSnapshot? startAfter,
+  }) async {
+    Query query = _followersCollection(userId)
+        .orderBy('createdAt', descending: true) // En yeni takipçiler üstte
+        .limit(limit);
+
+    if (startAfter != null) {
+      query = query.startAfterDocument(startAfter);
+    }
+
+    final qs = await query.get();
+    final ids = qs.docs.map((d) => d.id).toList();
+    final lastDoc = qs.docs.isNotEmpty ? qs.docs.last : null;
+
+    return (ids, lastDoc);
+  }
+
+  /// Takip edilenleri parça parça getirir
+  Future<(List<String> ids, DocumentSnapshot? lastDoc)> getFollowingPaginated(
+    String userId, {
+    int limit = 20,
+    DocumentSnapshot? startAfter,
+  }) async {
+    Query query = _followingCollection(userId)
+        .orderBy('createdAt', descending: true)
+        .limit(limit);
+
+    if (startAfter != null) {
+      query = query.startAfterDocument(startAfter);
+    }
+
+    final qs = await query.get();
+    final ids = qs.docs.map((d) => d.id).toList();
+    final lastDoc = qs.docs.isNotEmpty ? qs.docs.last : null;
+
+    return (ids, lastDoc);
+  }
+
   /// Stream whether me is following target
   Stream<bool> streamIsFollowing(String meUserId, String targetUserId) {
     return _followersCollection(targetUserId)
