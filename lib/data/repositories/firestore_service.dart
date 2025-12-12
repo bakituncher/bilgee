@@ -801,29 +801,38 @@ class FirestoreService {
 
   // YENİ: Public profile oku (güvenli alanlar)
   Future<Map<String, dynamic>?> getPublicProfileRaw(String userId) async {
+    // 1. Önce Public Profile'a bak (En hızlı ve doğru yöntem)
     final snap = await _publicProfileDoc(userId).get();
     if (snap.exists) return snap.data();
 
-    // GERİYE DÖNÜK UYUMLULUK: public_profiles yoksa users + stats'tan güvenli alanları derle
-    try {
-      final userSnap = await usersCollection.doc(userId).get();
-      if (!userSnap.exists) return null;
-      final u = userSnap.data() ?? <String, dynamic>{};
-      final statsSnap = await _userStatsDoc(userId).get();
-      final s = statsSnap.data() ?? const <String, dynamic>{};
+    // 2. Eğer kendi profilimse, users koleksiyonundan okuyabilirim (Fallback)
+    // Başkasının 'users' dokümanını okumak YASAKTIR (Permission Denied verir).
+    final currentUid = getUserId();
+    if (userId == currentUid) {
+      try {
+        final userSnap = await usersCollection.doc(userId).get();
+        if (!userSnap.exists) return null;
 
-      return <String, dynamic>{
-        'name': (u['name'] ?? '') as String,
-        'testCount': ((s['testCount'] ?? u['testCount'] ?? 0) as num).toInt(),
-        'totalNetSum': ((s['totalNetSum'] ?? u['totalNetSum'] ?? 0.0) as num).toDouble(),
-        'engagementScore': ((s['engagementScore'] ?? u['engagementScore'] ?? 0) as num).toInt(),
-        'streak': ((s['streak'] ?? u['streak'] ?? 0) as num).toInt(),
-        'avatarStyle': u['avatarStyle'] as String?,
-        'avatarSeed': u['avatarSeed'] as String?,
-      };
-    } catch (_) {
-      return null;
+        final u = userSnap.data() ?? <String, dynamic>{};
+        final statsSnap = await _userStatsDoc(userId).get();
+        final s = statsSnap.data() ?? const <String, dynamic>{};
+
+        return <String, dynamic>{
+          'name': (u['name'] ?? '') as String,
+          'testCount': ((s['testCount'] ?? u['testCount'] ?? 0) as num).toInt(),
+          'totalNetSum': ((s['totalNetSum'] ?? u['totalNetSum'] ?? 0.0) as num).toDouble(),
+          'engagementScore': ((s['engagementScore'] ?? u['engagementScore'] ?? 0) as num).toInt(),
+          'streak': ((s['streak'] ?? u['streak'] ?? 0) as num).toInt(),
+          'avatarStyle': u['avatarStyle'] as String?,
+          'avatarSeed': u['avatarSeed'] as String?,
+        };
+      } catch (_) {
+        return null;
+      }
     }
+
+    // Başkasıysa ve public profile yoksa, kullanıcı silinmiş demektir.
+    return null;
   }
 
   Future<Map<String, dynamic>?> getLeaderboardUserRaw(String examType, String userId) async {
@@ -1204,11 +1213,12 @@ class FirestoreService {
     required String deletedUserId,
   }) async {
     try {
-      // Hedef kullanıcının var olup olmadığını kontrol et
-      final userDoc = await usersCollection.doc(deletedUserId).get();
+      // DÜZELTME: users koleksiyonuna değil, public_profiles koleksiyonuna bakıyoruz.
+      // Çünkü başkasının 'users' dokümanını okuma iznimiz yok, ama public_profiles herkese açık.
+      final publicProfileDoc = await _firestore.collection('public_profiles').doc(deletedUserId).get();
 
-      // Kullanıcı hala varsa temizlemeye gerek yok
-      if (userDoc.exists) return;
+      // Eğer public profil varsa kullanıcı silinmemiştir, temizlemeye gerek yok
+      if (publicProfileDoc.exists) return;
 
       // Kullanıcı silinmiş, kendi listelerimizden temizle
       final batch = _firestore.batch();

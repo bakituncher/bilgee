@@ -18,8 +18,9 @@ service cloud.firestore {
       allow create: if request.auth != null && request.auth.uid == userId;
 
       // Kullanıcı kendi profilini güncelleyebilir, ancak SADECE belirli alanları.
-      // Bu kural, 'followerCount', 'followingCount', 'isPremium' ve 'premiumUntil' gibi sunucu tarafından yönetilen
+      // Bu kural, 'followerCount', 'isPremium' ve 'premiumUntil' gibi sunucu tarafından yönetilen
       // alanların istemci tarafından manipüle edilmesini kesinlikle engeller.
+      // NOT: 'followingCount' lazy cleanup için izin verildi (silinmiş kullanıcı temizliği)
       allow update: if request.auth != null && request.auth.uid == userId &&
                        request.resource.data.diff(resource.data).affectedKeys()
                        .hasOnly(['name', 'firstName', 'lastName', 'username', 'gender', 'dateOfBirth',
@@ -28,7 +29,9 @@ service cloud.firestore {
                                  // Uygulama içi özelliği kullandı bilgisini tutar
                                  'usedFeatures',
                                  // Stratejik plan işaretleri
-                                 'hasCreatedStrategicPlan', 'lastStrategyCreationDate']);
+                                 'hasCreatedStrategicPlan', 'lastStrategyCreationDate',
+                                 // Lazy cleanup için izin verildi
+                                 'followingCount']);
 
       // --- ALT KOLEKSİYONLAR ---
       match /stars/{day} {
