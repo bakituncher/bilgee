@@ -450,7 +450,8 @@ class _GamifiedQuestCardState extends ConsumerState<GamifiedQuestCard> {
                     : _buildRewardChip(isClaimable),
               ],
             ),
-            if (!isCompleted || isClaimable) ...[
+            // Yükleme durumunda hiçbir şey gösterme, sadece sağ üstteki indicator yeterli
+            if (!_isClaimingReward && (!isCompleted || isClaimable)) ...[
               const SizedBox(height: 20),
               if (isClaimable)
                 _buildClaimRewardPrompt()
@@ -519,31 +520,6 @@ class _GamifiedQuestCardState extends ConsumerState<GamifiedQuestCard> {
   }
 
   Widget _buildClaimRewardPrompt() {
-    // ÇÖZÜM: Loading sırasında farklı mesaj göster
-    if (_isClaimingReward) {
-      return const Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.amber),
-            ),
-          ),
-          SizedBox(width: 12),
-          Text(
-            'Ödül toplanıyor...',
-            style: TextStyle(
-              color: Colors.amber,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
-          ),
-        ],
-      );
-    }
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
