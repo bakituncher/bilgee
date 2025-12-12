@@ -230,7 +230,7 @@ class TestResultSummaryScreen extends ConsumerWidget {
                           'color': Colors.amberAccent,
                           'heroTag': 'analysis-strategy-offer',
                           'marketingTitle': 'Akıllı Deneme Analizi',
-                          'marketingSubtitle': 'Deneme sınavlarınızı yapay zeka ile derinlemesine analiz edin. Hangi konulara odaklanmanız gerektiğini öğrenin, her zaman zirvede kalın.',
+                          'marketingSubtitle': 'Deneme sınavlarınızı derinlemesine analiz edin. Hangi konulara odaklanmanız gerektiğini öğrenin, her zaman zirvede kalın.',
                           'redirectRoute': '/ai-hub/analysis-strategy',
                         });
                       }
