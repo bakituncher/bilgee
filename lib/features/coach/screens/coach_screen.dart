@@ -158,6 +158,7 @@ class _CoachScreenState extends ConsumerState<CoachScreen>
             final keys = subjects.keys.toList();
             _applyInitialSubjectIfNeeded(keys);
             return Scaffold(
+                resizeToAvoidBottomInset: false,
                 appBar: AppBar(
                   title: const Text('Ders Netlerim'),
                   bottom: TabBar(
@@ -224,6 +225,19 @@ class _SubjectGalaxyView extends ConsumerStatefulWidget {
 
 class _SubjectGalaxyViewState extends ConsumerState<_SubjectGalaxyView> {
   final TextEditingController _searchCtrl = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Widget oluşturulduğunda filtreyi temizle
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(subjectFilterProvider(widget.subjectName).notifier).state = '';
+        _searchCtrl.clear();
+      }
+    });
+  }
+
   @override
   void dispose() { _searchCtrl.dispose(); super.dispose(); }
 
@@ -239,7 +253,16 @@ class _SubjectGalaxyViewState extends ConsumerState<_SubjectGalaxyView> {
     performances.forEach((_, v){ totalQuestions += v.questionCount; totalCorrect += v.correctCount; totalWrong += v.wrongCount; totalBlank += v.blankCount; });
     final overallNet = totalCorrect - (totalWrong * penaltyCoefficient);
     final double overallMastery = totalQuestions==0 ? 0.0 : ((overallNet/totalQuestions).clamp(0.0,1.0));
-    final auraColor = Color.lerp(Theme.of(context).colorScheme.error, Colors.green, overallMastery)!.withOpacity(0.12);
+
+    // Arka plan rengi - veri yoksa şeffaf, varsa yumuşak geçiş
+    final auraColor = totalQuestions == 0
+        ? Colors.transparent
+        : Color.lerp(
+            Theme.of(context).colorScheme.primary.withAlpha(30), // Daha nötr başlangıç
+            Colors.green.withAlpha(30), // Daha yumuşak yeşil
+            overallMastery,
+          )!;
+
     final viewMode = ref.watch(subjectViewModeProvider(subjectName));
     final filter = ref.watch(subjectFilterProvider(subjectName));
     final processed = widget.topics.map((t){
@@ -340,17 +363,21 @@ class _SubjectGalaxyViewState extends ConsumerState<_SubjectGalaxyView> {
       decoration: BoxDecoration(
         gradient: RadialGradient(center: Alignment.center, radius: 1, colors: [auraColor, Colors.transparent], stops: const [0,1]),
       ),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20,20,20,110),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children:[
-          _SubjectStatsCard(subjectName: subjectName, overallMastery: overallMastery, totalQuestions: totalQuestions, totalCorrect: totalCorrect, totalWrong: totalWrong, totalBlank: totalBlank),
-          const SizedBox(height:20),
-          _InstructionBanner(),
-          const SizedBox(height:20),
-          _GalaxyToolbar(controller: _searchCtrl, onChanged: (v)=> ref.read(subjectFilterProvider(subjectName).notifier).state = v, currentMode: viewMode, onModeChanged: (m)=> ref.read(subjectViewModeProvider(subjectName).notifier).state = m),
-          const SizedBox(height:24),
-          content.animate().fadeIn(duration:500.ms, delay:200.ms),
-        ]),
+      child: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: const EdgeInsets.fromLTRB(20,20,20,110),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children:[
+            _SubjectStatsCard(subjectName: subjectName, overallMastery: overallMastery, totalQuestions: totalQuestions, totalCorrect: totalCorrect, totalWrong: totalWrong, totalBlank: totalBlank),
+            const SizedBox(height:20),
+            _InstructionBanner(),
+            const SizedBox(height:20),
+            _GalaxyToolbar(controller: _searchCtrl, onChanged: (v)=> ref.read(subjectFilterProvider(subjectName).notifier).state = v, currentMode: viewMode, onModeChanged: (m)=> ref.read(subjectViewModeProvider(subjectName).notifier).state = m),
+            const SizedBox(height:24),
+            content.animate().fadeIn(duration:500.ms, delay:200.ms),
+          ]),
+        ),
       ),
     );
   }
@@ -716,35 +743,12 @@ class _GalaxyToolbar extends StatelessWidget {
     required this.onModeChanged
   });
 
-  double _calculateFontSize(BuildContext context, String text, double maxWidth) {
-    const minFontSize = 11.0;
-    const maxFontSize = 14.0;
-
-    // TextPainter ile metin genişliğini hesapla
-    for (double fontSize = maxFontSize; fontSize >= minFontSize; fontSize -= 0.5) {
-      final textPainter = TextPainter(
-        text: TextSpan(
-          text: text,
-          style: TextStyle(fontSize: fontSize),
-        ),
-        maxLines: 1,
-        textDirection: TextDirection.ltr,
-      )..layout();
-
-      if (textPainter.width <= maxWidth) {
-        return fontSize;
-      }
-    }
-
-    return minFontSize;
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     const chipHeight = 48.0; // Tüm öğeler için sabit yükseklik
 
-    Widget modeChip(GalaxyViewMode m, IconData icon, String label){
+    Widget modeChip(GalaxyViewMode m, IconData icon){
       final active = currentMode==m;
       final color = active ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).colorScheme.onSurfaceVariant;
       return InkWell(
@@ -753,7 +757,7 @@ class _GalaxyToolbar extends StatelessWidget {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           height: chipHeight,
-          padding: const EdgeInsets.symmetric(horizontal:16),
+          width: chipHeight, // Kare buton için
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             color: active 
@@ -775,11 +779,9 @@ class _GalaxyToolbar extends StatelessWidget {
               ),
             ] : null,
           ),
-          child: Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children:[
-            Icon(icon, size:18, color: color),
-            const SizedBox(width:8),
-            Text(label, style: TextStyle(fontSize:13, fontWeight: FontWeight.w600, color: color))
-          ]),
+          child: Center(
+            child: Icon(icon, size: 20, color: color),
+          ),
         ),
       );
     }
@@ -787,31 +789,38 @@ class _GalaxyToolbar extends StatelessWidget {
       Expanded(
         child: SizedBox(
           height: chipHeight,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              // Dinamik hint text boyutu hesaplama
-              final availableWidth = constraints.maxWidth - 70; // prefixIcon + padding için alan
-              final hintText = 'Ara...';
-              final fontSize = _calculateFontSize(context, hintText, availableWidth);
-
+          child: ValueListenableBuilder<TextEditingValue>(
+            valueListenable: controller,
+            builder: (context, value, child) {
               return TextField(
                 controller: controller,
                 onChanged: onChanged,
-                style: TextStyle(fontSize: fontSize),
+                style: const TextStyle(fontSize: 14),
                 textAlignVertical: TextAlignVertical.center,
                 decoration: InputDecoration(
                   isDense: true,
-                  hintText: hintText,
+                  hintText: 'Ara...',
                   filled: true,
                   fillColor: isDark
                     ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)
                     : Colors.white,
                   prefixIcon: Icon(Icons.search, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  suffixIcon: value.text.isNotEmpty
+                    ? IconButton(
+                        icon: Icon(Icons.clear, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        onPressed: () {
+                          controller.clear();
+                          onChanged('');
+                        },
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      )
+                    : null,
                   hintStyle: TextStyle(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontSize: fontSize,
+                    fontSize: 14,
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide(
@@ -832,14 +841,14 @@ class _GalaxyToolbar extends StatelessWidget {
                   ),
                 ),
               );
-            }
+            },
           ),
         ),
       ),
-      const SizedBox(width:12),
-      modeChip(GalaxyViewMode.grid, Icons.grid_view_rounded, 'Izgara'),
       const SizedBox(width:8),
-      modeChip(GalaxyViewMode.list, Icons.view_list_rounded, 'Liste'),
+      modeChip(GalaxyViewMode.grid, Icons.grid_view_rounded),
+      const SizedBox(width:8),
+      modeChip(GalaxyViewMode.list, Icons.view_list_rounded),
     ]);
   }
 }

@@ -241,7 +241,7 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
             label: "Toplam Soru",
             value: sessionQuestions.toDouble(),
             max: 200,
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            color: Theme.of(context).colorScheme.primary,
             onChanged: (value) {
               final int newTotal = value.toInt();
               ref.read(_sessionQuestionCountProvider.notifier).state = newTotal;

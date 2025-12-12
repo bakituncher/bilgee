@@ -46,15 +46,19 @@ class ScoreSlider extends StatelessWidget {
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          boxShadow: Theme.of(context).brightness == Brightness.dark
+              ? null
+              : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
           border: Border.all(
-            color: Colors.grey.withOpacity(0.1),
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(
+              Theme.of(context).brightness == Brightness.dark ? 0.1 : 0.08
+            ),
             width: 1,
           ),
         ),
@@ -71,7 +75,7 @@ class ScoreSlider extends StatelessWidget {
                     label,
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.8),
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.85),
                     ),
                   ),
                   _buildValueBadge(context),
@@ -104,19 +108,21 @@ class ScoreSlider extends StatelessWidget {
                   value: value,
                   min: 0,
                   max: visualMax,
-                  divisions: visualMax.toInt() > 0 ? visualMax.toInt() : 1,
+                  // divisions: null kullanarak sürekli (continuous) slider yap
+                  // Bu sayede her değer seçilebilir, sonra yuvarlarız
+                  divisions: null,
                   // Eğer interaktif değilse onChanged null olur ve slider kilitlenir.
                   onChanged: isInteractive
                       ? (newValue) {
-                    // Değeri gerçek max'a göre sınırla
-                    final double clampedValue = newValue.clamp(0, safeMax);
+                    // Değeri tam sayıya yuvarla ve gerçek max'a göre sınırla
+                    final double roundedValue = newValue.roundToDouble().clamp(0, safeMax);
 
                     // UX: Sadece tam sayı değiştiğinde titreşim ver (performans için)
-                    if (clampedValue.toInt() != value.toInt()) {
+                    if (roundedValue.toInt() != value.toInt()) {
                       HapticFeedback.selectionClick();
                     }
                     if (onChanged != null) {
-                      onChanged!(clampedValue);
+                      onChanged!(roundedValue);
                     }
                   }
                       : null,

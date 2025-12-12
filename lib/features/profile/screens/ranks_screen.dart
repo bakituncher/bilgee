@@ -95,7 +95,6 @@ class _RanksScreenState extends ConsumerState<RanksScreen> with SingleTickerProv
             children: [
               // Animated gradient background
               _AnimatedGradientBackground(
-                color: rankInfo.current.color,
                 progress: _scrollProgress,
               ),
 
@@ -133,7 +132,7 @@ class _RanksScreenState extends ConsumerState<RanksScreen> with SingleTickerProv
                             height: 24,
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
-                                colors: [rankInfo.current.color, rankInfo.current.color.withOpacity(0.3)],
+                                colors: [colorScheme.primary, colorScheme.primary.withOpacity(0.3)],
                                 begin: Alignment.topCenter,
                                 end: Alignment.bottomCenter,
                               ),
@@ -244,16 +243,17 @@ class _RanksScreenState extends ConsumerState<RanksScreen> with SingleTickerProv
 
 // Animated Gradient Background Widget
 class _AnimatedGradientBackground extends StatelessWidget {
-  final Color color;
   final double progress;
 
   const _AnimatedGradientBackground({
-    required this.color,
     required this.progress,
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 800),
       curve: Curves.easeInOut,
@@ -262,9 +262,9 @@ class _AnimatedGradientBackground extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            color.withOpacity(0.15 - (progress * 0.1)),
-            color.withOpacity(0.05 - (progress * 0.03)),
-            Theme.of(context).scaffoldBackgroundColor,
+            colorScheme.primary.withOpacity(0.08 - (progress * 0.05)),
+            colorScheme.secondary.withOpacity(0.05 - (progress * 0.02)),
+            theme.scaffoldBackgroundColor,
           ],
           stops: const [0.0, 0.4, 1.0],
         ),
@@ -307,7 +307,7 @@ class _HeroHeader extends StatelessWidget {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: rankInfo.current.color.withOpacity(0.3),
+                      color: theme.colorScheme.primary.withOpacity(0.3),
                       blurRadius: 40,
                       spreadRadius: 10,
                     ),
@@ -329,19 +329,19 @@ class _HeroHeader extends StatelessWidget {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      rankInfo.current.color.withOpacity(0.2),
-                      rankInfo.current.color.withOpacity(0.1),
+                      theme.colorScheme.primary.withOpacity(0.2),
+                      theme.colorScheme.primary.withOpacity(0.1),
                     ],
                   ),
                   border: Border.all(
-                    color: rankInfo.current.color.withOpacity(0.3),
+                    color: theme.colorScheme.primary.withOpacity(0.3),
                     width: 2,
                   ),
                 ),
                 child: Icon(
                   rankInfo.current.icon,
                   size: 60,
-                  color: rankInfo.current.color,
+                  color: theme.colorScheme.primary,
                 ),
               )
               .animate()
@@ -375,10 +375,10 @@ class _HeroHeader extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             decoration: BoxDecoration(
-              color: rankInfo.current.color.withOpacity(0.15),
+              color: theme.colorScheme.primary.withOpacity(0.15),
               borderRadius: BorderRadius.circular(30),
               border: Border.all(
-                color: rankInfo.current.color.withOpacity(0.3),
+                color: theme.colorScheme.primary.withOpacity(0.3),
                 width: 1,
               ),
             ),
@@ -387,7 +387,7 @@ class _HeroHeader extends StatelessWidget {
               children: [
                 Icon(
                   Icons.stars_rounded,
-                  color: rankInfo.current.color,
+                  color: theme.colorScheme.primary,
                   size: 20,
                 ),
                 const SizedBox(width: 8),
@@ -395,7 +395,7 @@ class _HeroHeader extends StatelessWidget {
                   '$currentScore TP',
                   style: textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: rankInfo.current.color,
+                    color: theme.colorScheme.primary,
                   ),
                 ),
               ],
@@ -479,12 +479,12 @@ class _StatsSection extends StatelessWidget {
                 color: theme.cardColor,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: rankInfo.next.color.withOpacity(0.2),
+                  color: colorScheme.primary.withOpacity(0.2),
                   width: 1.5,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: rankInfo.next.color.withOpacity(0.1),
+                    color: colorScheme.primary.withOpacity(0.1),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   ),
@@ -498,12 +498,12 @@ class _StatsSection extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: rankInfo.next.color.withOpacity(0.15),
+                          color: colorScheme.primary.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Icon(
                           rankInfo.next.icon,
-                          color: rankInfo.next.color,
+                          color: colorScheme.primary,
                           size: 24,
                         ),
                       ),
@@ -523,7 +523,7 @@ class _StatsSection extends StatelessWidget {
                               rankInfo.next.name,
                               style: textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.bold,
-                                color: rankInfo.next.color,
+                                color: colorScheme.primary,
                               ),
                             ),
                           ],
@@ -532,14 +532,14 @@ class _StatsSection extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: rankInfo.next.color.withOpacity(0.15),
+                          color: colorScheme.primary.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          '${(rankInfo.progress * 100).toInt()}%',
+                          '%${(rankInfo.progress * 100).toInt()}',
                           style: textTheme.labelLarge?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: rankInfo.next.color,
+                            color: colorScheme.primary,
                           ),
                         ),
                       ),
@@ -564,14 +564,14 @@ class _StatsSection extends StatelessWidget {
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                rankInfo.next.color,
-                                rankInfo.next.color.withOpacity(0.7),
+                                colorScheme.primary,
+                                colorScheme.primary.withOpacity(0.7),
                               ],
                             ),
                             borderRadius: BorderRadius.circular(4),
                             boxShadow: [
                               BoxShadow(
-                                color: rankInfo.next.color.withOpacity(0.4),
+                                color: colorScheme.primary.withOpacity(0.4),
                                 blurRadius: 8,
                               ),
                             ],
@@ -598,14 +598,14 @@ class _StatsSection extends StatelessWidget {
                           Icon(
                             Icons.trending_up,
                             size: 16,
-                            color: rankInfo.next.color,
+                            color: colorScheme.primary,
                           ),
                           const SizedBox(width: 6),
                           Text(
                             '${rankInfo.next.requiredScore - currentScore} TP kaldı',
                             style: textTheme.bodyMedium?.copyWith(
                               fontWeight: FontWeight.w600,
-                              color: rankInfo.next.color,
+                              color: colorScheme.primary,
                             ),
                           ),
                         ],
@@ -645,7 +645,7 @@ class _StatsSection extends StatelessWidget {
                   icon: Icons.lock_open_rounded,
                   label: 'Açılan',
                   value: '${currentRankIndex + 1}',
-                  color: Colors.green,
+                  color: colorScheme.secondary,
                 ),
               ),
               const SizedBox(width: 12),
@@ -701,20 +701,31 @@ class _StatCard extends StatelessWidget {
         children: [
           Icon(icon, color: color, size: 24),
           const SizedBox(height: 8),
-          Text(
-            value,
-            style: textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: color,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.center,
+            child: Text(
+              value,
+              style: textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+              maxLines: 1,
+              textAlign: TextAlign.center,
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            label,
-            style: textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.6),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.center,
+            child: Text(
+              label,
+              style: textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.6),
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
             ),
-            textAlign: TextAlign.center,
           ),
         ],
       ),
@@ -750,6 +761,9 @@ class _TimelineRankCard extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
 
+    // Use theme colors based on unlock status
+    final cardColor = isUnlocked ? colorScheme.primary : colorScheme.outline;
+
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -766,10 +780,10 @@ class _TimelineRankCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: isUnlocked
-                        ? rank.color.withOpacity(0.15)
+                        ? cardColor.withOpacity(0.15)
                         : colorScheme.surfaceContainerHighest,
                     border: Border.all(
-                      color: isUnlocked ? rank.color : colorScheme.outline.withOpacity(0.3),
+                      color: isUnlocked ? cardColor : colorScheme.outline.withOpacity(0.3),
                       width: isCurrent ? 3 : 2,
                     ),
                   ),
@@ -777,7 +791,7 @@ class _TimelineRankCard extends StatelessWidget {
                     child: isUnlocked
                         ? Icon(
                             isCurrent ? Icons.radio_button_checked : Icons.check_circle,
-                            color: rank.color,
+                            color: cardColor,
                             size: 20,
                           )
                         : Icon(
@@ -805,7 +819,7 @@ class _TimelineRankCard extends StatelessWidget {
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: isUnlocked
-                              ? [rank.color, rank.color.withOpacity(0.3)]
+                              ? [cardColor, cardColor.withOpacity(0.3)]
                               : [
                                   colorScheme.outline.withOpacity(0.3),
                                   colorScheme.outline.withOpacity(0.1),
@@ -829,16 +843,16 @@ class _TimelineRankCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: isCurrent
-                      ? rank.color
+                      ? cardColor
                       : isUnlocked
-                          ? rank.color.withOpacity(0.2)
+                          ? cardColor.withOpacity(0.2)
                           : colorScheme.outline.withOpacity(0.2),
                   width: isCurrent ? 2 : 1,
                 ),
                 boxShadow: isCurrent
                     ? [
                         BoxShadow(
-                          color: rank.color.withOpacity(0.2),
+                          color: cardColor.withOpacity(0.2),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
@@ -865,7 +879,7 @@ class _TimelineRankCard extends StatelessWidget {
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
                                 color: isUnlocked
-                                    ? rank.color.withOpacity(0.15)
+                                    ? cardColor.withOpacity(0.15)
                                     : colorScheme.surfaceContainerHighest,
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -873,7 +887,7 @@ class _TimelineRankCard extends StatelessWidget {
                                 rank.icon,
                                 size: 24,
                                 color: isUnlocked
-                                    ? rank.color
+                                    ? cardColor
                                     : colorScheme.onSurfaceVariant.withOpacity(0.5),
                               ),
                             ),
@@ -885,42 +899,14 @@ class _TimelineRankCard extends StatelessWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          rank.name,
-                                          style: textTheme.titleMedium?.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                            color: isUnlocked
-                                                ? colorScheme.onSurface
-                                                : colorScheme.onSurfaceVariant,
-                                          ),
-                                        ),
-                                      ),
-                                      if (isCurrent)
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 8,
-                                            vertical: 4,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            gradient: LinearGradient(
-                                              colors: [rank.color, rank.color.withOpacity(0.7)],
-                                            ),
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          child: Text(
-                                            'Mevcut',
-                                            style: textTheme.labelSmall?.copyWith(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        )
-                                        .animate(onPlay: (controller) => controller.repeat())
-                                        .shimmer(duration: 2000.ms),
-                                    ],
+                                  Text(
+                                    rank.name,
+                                    style: textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: isUnlocked
+                                          ? colorScheme.onSurface
+                                          : colorScheme.onSurfaceVariant,
+                                    ),
                                   ),
                                   const SizedBox(height: 6),
                                   Row(
@@ -929,7 +915,7 @@ class _TimelineRankCard extends StatelessWidget {
                                         Icons.stars_rounded,
                                         size: 14,
                                         color: isUnlocked
-                                            ? rank.color
+                                            ? cardColor
                                             : colorScheme.onSurfaceVariant.withOpacity(0.5),
                                       ),
                                       const SizedBox(width: 4),
@@ -942,26 +928,6 @@ class _TimelineRankCard extends StatelessWidget {
                                           fontWeight: FontWeight.w600,
                                         ),
                                       ),
-                                      if (isNext && !isUnlocked) ...[
-                                        const SizedBox(width: 8),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 8,
-                                            vertical: 2,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: colorScheme.secondaryContainer,
-                                            borderRadius: BorderRadius.circular(6),
-                                          ),
-                                          child: Text(
-                                            '${rank.requiredScore - currentScore} TP kaldı',
-                                            style: textTheme.labelSmall?.copyWith(
-                                              color: colorScheme.onSecondaryContainer,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
                                     ],
                                   ),
                                 ],
@@ -1010,6 +976,9 @@ class _TimelineRankCard extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
 
+    // Use theme colors
+    final displayColor = isUnlocked ? colorScheme.primary : colorScheme.outline;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -1053,7 +1022,7 @@ class _TimelineRankCard extends StatelessWidget {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: rank.color.withOpacity(0.3),
+                            color: displayColor.withOpacity(0.3),
                             blurRadius: 30,
                             spreadRadius: 5,
                           ),
@@ -1068,19 +1037,19 @@ class _TimelineRankCard extends StatelessWidget {
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            rank.color.withOpacity(0.2),
-                            rank.color.withOpacity(0.1),
+                            displayColor.withOpacity(0.2),
+                            displayColor.withOpacity(0.1),
                           ],
                         ),
                         border: Border.all(
-                          color: rank.color.withOpacity(0.3),
+                          color: displayColor.withOpacity(0.3),
                           width: 2,
                         ),
                       ),
                       child: Icon(
                         rank.icon,
                         size: 48,
-                        color: rank.color,
+                        color: displayColor,
                       ),
                     ),
                   ],
@@ -1096,7 +1065,7 @@ class _TimelineRankCard extends StatelessWidget {
                   rank.name,
                   style: textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: rank.color,
+                    color: displayColor,
                   ),
                   textAlign: TextAlign.center,
                 )
@@ -1111,14 +1080,14 @@ class _TimelineRankCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
                     gradient: isCurrent
-                        ? LinearGradient(colors: [rank.color, rank.color.withOpacity(0.7)])
+                        ? LinearGradient(colors: [displayColor, displayColor.withOpacity(0.7)])
                         : null,
                     color: isCurrent
                         ? null
                         : isNext
                             ? colorScheme.secondaryContainer
                             : isUnlocked
-                                ? Colors.green
+                                ? colorScheme.secondary
                                 : colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -1143,17 +1112,17 @@ class _TimelineRankCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: rank.color.withOpacity(0.1),
+                    color: displayColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: rank.color.withOpacity(0.3),
+                      color: displayColor.withOpacity(0.3),
                       width: 1,
                     ),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.stars_rounded, color: rank.color, size: 24),
+                      Icon(Icons.stars_rounded, color: displayColor, size: 24),
                       const SizedBox(width: 12),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1169,7 +1138,7 @@ class _TimelineRankCard extends StatelessWidget {
                             '${rank.requiredScore} TP',
                             style: textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.bold,
-                              color: rank.color,
+                              color: displayColor,
                             ),
                           ),
                         ],
@@ -1246,7 +1215,7 @@ class _TimelineRankCard extends StatelessWidget {
           ),
         ),
       ),
-    );
+      );
   }
 }
 

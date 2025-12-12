@@ -289,29 +289,15 @@ class _CurrentUserCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        getUsernameDisplay(),
-                        style: textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: colorScheme.onSurface,
-                          fontSize: 13,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                      ),
-                      Text(
-                        '${entry.testCount} Test',
-                        style: textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurface.withValues(alpha: 0.7),
-                          fontSize: 11,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                      ),
-                    ],
+                  child: Text(
+                    getUsernameDisplay(),
+                    style: textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onSurface,
+                      fontSize: 13,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -442,15 +428,6 @@ class _RankCard extends ConsumerWidget {
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,
                     ),
-                    Text(
-                      '${entry.testCount} Test',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: cs.onSurface.withValues(alpha: 0.7),
-                            fontSize: 11,
-                          ),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                    ),
                     const SizedBox(height: 6),
                     Row(
                       children: [
@@ -523,22 +500,10 @@ class _RankCard extends ConsumerWidget {
                                 currentUserId: currentUserId,
                                 targetUserId: entry.userId,
                               );
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('${entry.userName} takipten çıkarıldı'),
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
                             } else {
                               await firestore.followUser(
                                 currentUserId: currentUserId,
                                 targetUserId: entry.userId,
-                              );
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('${entry.userName} takip edildi'),
-                                  behavior: SnackBarBehavior.floating,
-                                ),
                               );
                             }
                           } catch (e) {
