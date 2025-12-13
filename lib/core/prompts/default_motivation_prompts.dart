@@ -173,7 +173,7 @@ Cevap:
     String conversationHistory = '',
     String lastUserMessage = '',
   }) {
-    final userName = user.name ?? 'Komutan';
+    final userName = user.firstName.isNotEmpty ? user.firstName : 'Komutan';
 
     final remote = RemotePrompts.get('user_chat');
     if (remote != null && remote.isNotEmpty) {

@@ -49,7 +49,7 @@ class StrategyConsultPrompt {
     String conversationHistory = '',
     String lastUserMessage = '',
   }) {
-    final userName = user.name ?? 'Komutan';
+    final userName = user.firstName.isNotEmpty ? user.firstName : 'Komutan';
     final avgNet = (analysis?.averageNet ?? 0).toStringAsFixed(2);
 
     final remote = RemotePrompts.get('strategy_consult');

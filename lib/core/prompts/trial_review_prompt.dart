@@ -49,7 +49,7 @@ class TrialReviewPrompt {
     String conversationHistory = '',
     String lastUserMessage = '',
   }) {
-    final userName = user.name ?? 'Komutan';
+    final userName = user.firstName.isNotEmpty ? user.firstName : 'Komutan';
     final lastTest = tests.isNotEmpty ? tests.first : null;
     final lastNet = lastTest?.totalNet.toStringAsFixed(2) ?? '—';
     final avgNet = (analysis?.averageNet ?? 0).toStringAsFixed(2);

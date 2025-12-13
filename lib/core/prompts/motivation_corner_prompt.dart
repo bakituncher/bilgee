@@ -10,7 +10,7 @@ class MotivationCornerPrompt {
     String conversationHistory = '',
     String lastUserMessage = '',
   }) {
-    final userName = user.name ?? 'Komutan';
+    final userName = user.firstName.isNotEmpty ? user.firstName : 'Komutan';
 
     final remote = RemotePrompts.get('motivation_corner');
     if (remote != null && remote.isNotEmpty) {

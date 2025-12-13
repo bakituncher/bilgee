@@ -11,7 +11,7 @@ class PsychSupportPrompt {
     String conversationHistory = '',
     String lastUserMessage = '',
   }) {
-    final userName = user.name ?? 'Komutan';
+    final userName = user.firstName.isNotEmpty ? user.firstName : 'Komutan';
 
     final remote = RemotePrompts.get('psych_support');
     if (remote != null && remote.isNotEmpty) {
