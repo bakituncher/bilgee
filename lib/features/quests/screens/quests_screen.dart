@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'package:taktik/core/analytics/analytics_logger.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:taktik/features/quests/logic/quest_service.dart';
 import 'package:taktik/features/quests/logic/optimized_quests_provider.dart';
 import 'package:taktik/features/quests/models/quest_model.dart';
@@ -9,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lottie/lottie.dart';
 
 class QuestsScreen extends ConsumerStatefulWidget {
   const QuestsScreen({super.key});
@@ -175,26 +177,54 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> with SingleTickerPr
   Widget _buildEmptyState() {
     return Expanded(
       child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.shield_moon_rounded,
-              size: 100,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'Tüm Görevler Tamamlandı!',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Theme.of(context).colorScheme.onSurface),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Yeni Görevler için yarını bekle, Savaşçı.',
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 16),
-            ),
-          ],
-        ).animate().fadeIn(duration: 500.ms),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Modern Lottie animasyonu
+              Lottie.asset(
+                'assets/lotties/Done.json',
+                width: 200,
+                height: 200,
+                fit: BoxFit.contain,
+              ),
+              const SizedBox(height: 32),
+              Text(
+                'Tüm Görevler Tamamlandı!',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurface,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 20),
+              // Modern card container
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withAlpha(100),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.outlineVariant.withAlpha(80),
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  'Harika iş çıkardın, Savaşçı! Yeni görevler için yarını bekle.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontSize: 16,
+                    height: 1.6,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ).animate().fadeIn(duration: 600.ms).scale(delay: 100.ms),
+        ),
       ),
     );
   }
@@ -218,12 +248,64 @@ class _GamifiedQuestCardState extends ConsumerState<GamifiedQuestCard> {
   // ÇÖZÜM: Race condition önleme için loading state
   bool _isClaimingReward = false;
 
+  // Premium gerektiren route'lar için özel offer verileri
+  Map<String, dynamic>? _getPremiumOfferData(String route) {
+    switch (route) {
+      case '/ai-hub/strategic-planning':
+        return {
+          'title': 'Haftalık Stratejist',
+          'subtitle': 'Hedefine giden en kısa yol.',
+          'icon': Icons.map_rounded,
+          'color': const Color(0xFF10B981),
+          'marketingTitle': 'Rotanı Çiz!',
+          'marketingSubtitle': 'Rastgele çalışarak vakit kaybetme. Taktik Tavşan senin için en verimli haftalık planı saniyeler içinde oluştursun.',
+          'redirectRoute': '/ai-hub/strategic-planning',
+        };
+      case '/ai-hub/weakness-workshop':
+        return {
+          'title': 'Cevher Atölyesi',
+          'subtitle': 'Zayıflıkları güce çevir.',
+          'icon': Icons.diamond_rounded,
+          'color': const Color(0xFF8B5CF6),
+          'heroTag': 'weakness-workshop-offer',
+          'marketingTitle': 'Ustalaşmadan Çıkma!',
+          'marketingSubtitle': 'Sadece eksik olduğun konuya odaklan. Taktik Tavşan sana özel sorularla o konuyu halletmeden seni bırakmasın.',
+          'redirectRoute': '/ai-hub/weakness-workshop',
+        };
+      case '/ai-hub/motivation-chat':
+        return {
+          'title': 'Taktik Tavşan',
+          'subtitle': 'Sadece ders değil, kriz anlarını yönet.',
+          'icon': Icons.psychology_rounded,
+          'color': Colors.indigoAccent,
+          'marketingTitle': 'Koçun Cebinde!',
+          'marketingSubtitle': 'Netlerin neden artmıyor? Stresle nasıl başa çıkarsın? Taktik Tavşan seni analiz edip nokta atışı yönlendirme yapsın.',
+          'redirectRoute': '/ai-hub/motivation-chat',
+          'imageAsset': 'assets/images/bunnyy.png',
+        };
+      case '/ai-hub/analysis-strategy':
+        return {
+          'title': 'Analiz & Strateji',
+          'subtitle': 'Verilerle konuşan koç.',
+          'icon': Icons.radar_rounded,
+          'color': const Color(0xFFF43F5E),
+          'heroTag': 'analysis-strategy-offer',
+          'marketingTitle': 'Tuzağı Fark Et!',
+          'marketingSubtitle': 'Denemelerde neden takılıyorsun? Detaylı analiz sistemi, seni aşağı çeken konuları nokta atışı tespit etsin.',
+          'redirectRoute': '/ai-hub/analysis-strategy',
+        };
+      default:
+        return null;
+    }
+  }
+
   void _handleQuestTap(BuildContext context) {
     ref.read(analyticsLoggerProvider).logQuestEvent(
       userId: widget.userId,
       event: 'quest_tap',
       data: {'questId': widget.quest.id, 'category': widget.quest.category.name}
     );
+
     String targetRoute = widget.quest.actionRoute;
     if (targetRoute == '/coach') {
       final subjectTag = widget.quest.tags.firstWhere((t) => t.startsWith('subject:'), orElse: () => '');
@@ -232,7 +314,22 @@ class _GamifiedQuestCardState extends ConsumerState<GamifiedQuestCard> {
         targetRoute = Uri(path: '/coach', queryParameters: {'subject': subject}).toString();
       }
     }
-    context.go(targetRoute);
+
+    // Premium kontrolü yap
+    final isPremium = ref.read(premiumStatusProvider);
+    final offerData = _getPremiumOfferData(targetRoute);
+
+    // Debug log
+    print('🎯 Quest tap - Route: $targetRoute, isPremium: $isPremium, hasOfferData: ${offerData != null}');
+
+    // Eğer premium gerektiren bir route ise ve kullanıcı premium değilse
+    if (!isPremium && offerData != null) {
+      print('📱 Redirecting to offer screen');
+      context.go('/ai-hub/offer', extra: offerData);
+    } else {
+      print('✅ Navigating directly to: $targetRoute');
+      context.go(targetRoute);
+    }
   }
 
   Future<void> _handleClaimReward(BuildContext context) async {
@@ -353,7 +450,8 @@ class _GamifiedQuestCardState extends ConsumerState<GamifiedQuestCard> {
                     : _buildRewardChip(isClaimable),
               ],
             ),
-            if (!isCompleted || isClaimable) ...[
+            // Yükleme durumunda hiçbir şey gösterme, sadece sağ üstteki indicator yeterli
+            if (!_isClaimingReward && (!isCompleted || isClaimable)) ...[
               const SizedBox(height: 20),
               if (isClaimable)
                 _buildClaimRewardPrompt()
@@ -422,31 +520,6 @@ class _GamifiedQuestCardState extends ConsumerState<GamifiedQuestCard> {
   }
 
   Widget _buildClaimRewardPrompt() {
-    // ÇÖZÜM: Loading sırasında farklı mesaj göster
-    if (_isClaimingReward) {
-      return const Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.amber),
-            ),
-          ),
-          SizedBox(width: 12),
-          Text(
-            'Ödül toplanıyor...',
-            style: TextStyle(
-              color: Colors.amber,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
-          ),
-        ],
-      );
-    }
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,

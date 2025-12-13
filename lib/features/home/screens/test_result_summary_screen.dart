@@ -62,7 +62,7 @@ class TestResultSummaryScreen extends ConsumerWidget {
       // Geri tuşuna basınca (Android fiziksel tuş) davranışı yönetmek için:
       body: PopScope(
         canPop: fromArchive, // Sadece arşivden gelindiyse fiziksel geri tuşu çalışsın
-        onPopInvoked: (didPop) {
+        onPopInvokedWithResult: (didPop, result) {
           if (didPop) return;
           if (!fromArchive) {
             context.go('/home'); // Yeni deneme ise home'a at
@@ -76,11 +76,11 @@ class TestResultSummaryScreen extends ConsumerWidget {
             colors: isDark
                 ? [
                     theme.scaffoldBackgroundColor,
-                    theme.cardColor.withOpacity(0.3),
+                    theme.cardColor.withValues(alpha: 0.3),
                   ]
                 : [
                     theme.scaffoldBackgroundColor,
-                    colorScheme.surfaceContainerHighest.withOpacity(0.2),
+                    colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
                   ],
           ),
         ),
@@ -88,96 +88,81 @@ class TestResultSummaryScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(16.0),
           physics: const BouncingScrollPhysics(),
           children: [
-            // Compact header card
+            // Compact header card (Overflow-safe, responsive)
             Container(
               decoration: BoxDecoration(
                 color: theme.cardColor,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: isDark
-                      ? colorScheme.surfaceContainerHighest.withOpacity(0.3)
-                      : colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                      ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3)
+                      : colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                   width: 1,
                 ),
                 boxShadow: isDark
                     ? []
                     : [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
+                          color: Colors.black.withValues(alpha: 0.04),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
                       ],
               ),
               padding: const EdgeInsets.all(14.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Hero(
-                    tag: 'test_title_${test.id}',
-                    child: Material(
-                      color: Colors.transparent,
-                      child: Text(
-                        test.testName,
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 20,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final isNarrow = constraints.maxWidth < 360; // küçük ekran algısı
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: colorScheme.primary.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(
-                            color: colorScheme.primary.withOpacity(0.3),
-                            width: 1,
+                      // Üstte: Sınav türü (KPSS/LGS/YKS vs) - ortalı
+                      Text(
+                        test.sectionName,
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.2,
+                          color: colorScheme.primary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 6),
+                      // Altında: Kullanıcının verdiği sınav adı - ortalı, büyük
+                      Hero(
+                        tag: 'test_title_${test.id}',
+                        child: Material(
+                          color: Colors.transparent,
+                          child: Text(
+                            test.testName,
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 20,
+                              height: 1.2,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.category_rounded, size: 14, color: colorScheme.primary),
-                            const SizedBox(width: 4),
-                            Text(
-                              test.sectionName,
-                              style: theme.textTheme.labelMedium?.copyWith(
-                                color: colorScheme.primary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
                       ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
-                          borderRadius: BorderRadius.circular(6),
+                      const SizedBox(height: 8),
+                      // En altta: Tarih - ortalı
+                      Text(
+                        DateFormat.yMMMMd('tr').format(test.date) + (isNarrow ? '' : ' • ' + DateFormat.Hm('tr').format(test.date)),
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w500,
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.event_rounded, size: 14, color: colorScheme.onSurfaceVariant),
-                            const SizedBox(width: 4),
-                            Text(
-                              DateFormat.yMd('tr').format(test.date),
-                              style: theme.textTheme.labelMedium?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
-                  ),
-                ],
+                  );
+                },
               ),
             ),
             const SizedBox(height: 12),
@@ -230,7 +215,7 @@ class TestResultSummaryScreen extends ConsumerWidget {
                           'color': Colors.amberAccent,
                           'heroTag': 'analysis-strategy-offer',
                           'marketingTitle': 'Akıllı Deneme Analizi',
-                          'marketingSubtitle': 'Deneme sınavlarınızı yapay zeka ile derinlemesine analiz edin. Hangi konulara odaklanmanız gerektiğini öğrenin, her zaman zirvede kalın.',
+                          'marketingSubtitle': 'Deneme sınavlarınızı derinlemesine analiz edin. Hangi konulara odaklanmanız gerektiğini öğrenin, her zaman zirvede kalın.',
                           'redirectRoute': '/ai-hub/analysis-strategy',
                         });
                       }
@@ -334,11 +319,11 @@ class _SubjectBreakdown extends StatelessWidget {
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      _chip(context, 'D: ${s['dogru'] ?? 0}', Theme.of(context).colorScheme.secondary.withOpacity(0.2), Theme.of(context).colorScheme.secondary),
+                      _chip(context, 'D: ${s['dogru'] ?? 0}', Theme.of(context).colorScheme.secondary.withValues(alpha: 0.2), Theme.of(context).colorScheme.secondary),
                       const SizedBox(width: 6),
-                      _chip(context, 'Y: ${s['yanlis'] ?? 0}', Theme.of(context).colorScheme.error.withOpacity(0.15), Theme.of(context).colorScheme.error),
+                      _chip(context, 'Y: ${s['yanlis'] ?? 0}', Theme.of(context).colorScheme.error.withValues(alpha: 0.15), Theme.of(context).colorScheme.error),
                       const SizedBox(width: 6),
-                      _chip(context, 'B: ${s['bos'] ?? 0}', Theme.of(context).colorScheme.onSurface.withOpacity(0.1), Theme.of(context).colorScheme.onSurfaceVariant),
+                      _chip(context, 'B: ${s['bos'] ?? 0}', Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1), Theme.of(context).colorScheme.onSurfaceVariant),
                       const Spacer(),
                       Icon(Icons.check_circle_outline_rounded, size: 16, color: Theme.of(context).colorScheme.primary),
                       const SizedBox(width: 4),
@@ -362,6 +347,51 @@ class _SubjectBreakdown extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
       child: Text(text, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: fg, fontWeight: FontWeight.w700)),
+    );
+  }
+}
+
+// Header bilgi chip'i: UI/UX ve taşma önleme için yeniden kullanılabilir widget
+class _InfoChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color bgColor;
+  final Color? borderColor;
+  final TextStyle? labelStyle;
+  const _InfoChip({
+    required this.icon,
+    required this.label,
+    required this.bgColor,
+    this.borderColor,
+    this.labelStyle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(8),
+        border: borderColor != null ? Border.all(color: borderColor!, width: 1) : null,
+      ),
+      constraints: const BoxConstraints(maxWidth: 220), // dar ekranlarda satıra sığmazsa sar
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: labelStyle?.color ?? Theme.of(context).colorScheme.onSurfaceVariant),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              label,
+              style: labelStyle ?? Theme.of(context).textTheme.labelMedium,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              softWrap: false,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -21,7 +21,7 @@ class _IntroScreenState extends ConsumerState<IntroScreen> {
   final List<_IntroContent> _contents = [
     _IntroContent(
       title: "Selam! Ben Taktik Tavşan",
-      description: "Sınav maratonunda senin en büyük destekçin, seni zirveye taşıyacak yapay zeka koçunum. Hazır mısın?",
+      description: "Sınav maratonunda senin en büyük destekçin, seni zirveye taşıyacak dijital koçunum. Hazır mısın?",
       imagePath: 'assets/images/bunnyy.png',
       isAssetImage: true,
       color: const Color(0xFF6366F1),

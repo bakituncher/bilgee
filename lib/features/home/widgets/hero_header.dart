@@ -54,42 +54,42 @@ class HeroHeader extends ConsumerWidget {
       final examDate = DateTime(2026, 6, 14, 9, 30);
       final rem = _daysHoursRemaining(examDate);
       if (rem['days']! > 0 || rem['hours']! > 0) {
-        countdowns.add({'days': rem['days'], 'hours': rem['hours'], 'label': 'LGS', 'icon': Icons.school_rounded});
+        countdowns.add({'days': rem['days'], 'hours': rem['hours'], 'label': 'LGS'});
       }
     } else if (exam == 'yks') {
       // TYT: 20 Haziran 2026, 10:15
       final tytDate = DateTime(2026, 6, 20, 10, 15);
       final tytRem = _daysHoursRemaining(tytDate);
       if (tytRem['days']! > 0 || tytRem['hours']! > 0) {
-        countdowns.add({'days': tytRem['days'], 'hours': tytRem['hours'], 'label': 'TYT', 'icon': Icons.menu_book_rounded});
+        countdowns.add({'days': tytRem['days'], 'hours': tytRem['hours'], 'label': 'TYT'});
       }
 
       // AYT: 21 Haziran 2026, 10:15
       final aytDate = DateTime(2026, 6, 21, 10, 15);
       final aytRem = _daysHoursRemaining(aytDate);
       if (aytRem['days']! > 0 || aytRem['hours']! > 0) {
-        countdowns.add({'days': aytRem['days'], 'hours': aytRem['hours'], 'label': 'AYT', 'icon': Icons.auto_stories_rounded});
+        countdowns.add({'days': aytRem['days'], 'hours': aytRem['hours'], 'label': 'AYT'});
       }
     } else if (exam == 'kpsslisans') {
       // KPSS Lisans: 06 Eylül 2026, 10:15
       final examDate = DateTime(2026, 9, 6, 10, 15);
       final rem = _daysHoursRemaining(examDate);
       if (rem['days']! > 0 || rem['hours']! > 0) {
-        countdowns.add({'days': rem['days'], 'hours': rem['hours'], 'label': 'Lisans', 'icon': Icons.workspace_premium_rounded});
+        countdowns.add({'days': rem['days'], 'hours': rem['hours'], 'label': 'Lisans'});
       }
     } else if (exam == 'kpssonlisans') {
       // KPSS Önlisans: 04 Ekim 2026, 10:15
       final examDate = DateTime(2026, 10, 4, 10, 15);
       final rem = _daysHoursRemaining(examDate);
       if (rem['days']! > 0 || rem['hours']! > 0) {
-        countdowns.add({'days': rem['days'], 'hours': rem['hours'], 'label': 'Önlisans', 'icon': Icons.workspace_premium_rounded});
+        countdowns.add({'days': rem['days'], 'hours': rem['hours'], 'label': 'Önlisans'});
       }
     } else if (exam == 'kpssortaogretim') {
       // KPSS Ortaöğretim: 25 Ekim 2026, 10:15
       final examDate = DateTime(2026, 10, 25, 10, 15);
       final rem = _daysHoursRemaining(examDate);
       if (rem['days']! > 0 || rem['hours']! > 0) {
-        countdowns.add({'days': rem['days'], 'hours': rem['hours'], 'label': 'Ortaöğretim', 'icon': Icons.workspace_premium_rounded});
+        countdowns.add({'days': rem['days'], 'hours': rem['hours'], 'label': 'Ortaöğretim'});
       }
     }
 
@@ -251,13 +251,8 @@ class HeroHeader extends ConsumerWidget {
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Icon(
-                                        countdown['icon'],
-                                        size: 14,
-                                        color: Colors.white,
-                                      ),
-                                      const SizedBox(width: 6),
-                                      // Expanded kaldırıldı; içerik kadar yer kaplasın
+                                      // Sayaç ikonları kaldırıldı
+                                      // const SizedBox(width: 6),
                                       Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
@@ -285,10 +280,8 @@ class HeroHeader extends ConsumerWidget {
                                             ),
                                           ),
                                           const SizedBox(width: 5),
-                                          // Gün metni de Flexible ama sıkı; fazla boşluk bırakmaz
                                           Flexible(
                                             child: Text(
-                                              // Sadece gün formatı (saat bilgisi gösterilmez)
                                               '${countdown['days']} gün',
                                               maxLines: 1,
                                               overflow: TextOverflow.visible,

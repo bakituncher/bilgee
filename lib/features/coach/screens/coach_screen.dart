@@ -18,6 +18,7 @@ final coachScreenTabProvider = StateProvider<int>((ref) => 0);
 enum GalaxyViewMode { grid, list }
 final subjectFilterProvider = StateProvider.family<String, String>((ref, subject) => '');
 final subjectViewModeProvider = StateProvider.family<GalaxyViewMode, String>((ref, subject) => GalaxyViewMode.grid);
+final subjectSearchActiveProvider = StateProvider.family<bool, String>((ref, subject) => false);
 
 class CoachScreen extends ConsumerStatefulWidget {
   final String? initialSubject;
@@ -158,6 +159,7 @@ class _CoachScreenState extends ConsumerState<CoachScreen>
             final keys = subjects.keys.toList();
             _applyInitialSubjectIfNeeded(keys);
             return Scaffold(
+                resizeToAvoidBottomInset: false,
                 appBar: AppBar(
                   title: const Text('Ders Netlerim'),
                   bottom: TabBar(
@@ -224,12 +226,32 @@ class _SubjectGalaxyView extends ConsumerStatefulWidget {
 
 class _SubjectGalaxyViewState extends ConsumerState<_SubjectGalaxyView> {
   final TextEditingController _searchCtrl = TextEditingController();
+  final FocusNode _searchFocus = FocusNode();
+
   @override
-  void dispose() { _searchCtrl.dispose(); super.dispose(); }
+  void initState() {
+    super.initState();
+    // Widget oluşturulduğunda filtreyi temizle
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(subjectFilterProvider(widget.subjectName).notifier).state = '';
+        ref.read(subjectSearchActiveProvider(widget.subjectName).notifier).state = false;
+        _searchCtrl.clear();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    _searchFocus.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final subjectName = widget.subjectName;
+    final isSearchActive = ref.watch(subjectSearchActiveProvider(subjectName));
     final firestoreService = ref.read(firestoreServiceProvider);
     final sanitizedSubjectName = firestoreService.sanitizeKey(subjectName);
     final performances = widget.performanceSummary.topicPerformances[sanitizedSubjectName] ?? {};
@@ -239,7 +261,16 @@ class _SubjectGalaxyViewState extends ConsumerState<_SubjectGalaxyView> {
     performances.forEach((_, v){ totalQuestions += v.questionCount; totalCorrect += v.correctCount; totalWrong += v.wrongCount; totalBlank += v.blankCount; });
     final overallNet = totalCorrect - (totalWrong * penaltyCoefficient);
     final double overallMastery = totalQuestions==0 ? 0.0 : ((overallNet/totalQuestions).clamp(0.0,1.0));
-    final auraColor = Color.lerp(Theme.of(context).colorScheme.error, Colors.green, overallMastery)!.withOpacity(0.12);
+
+    // Arka plan rengi - veri yoksa şeffaf, varsa yumuşak geçiş
+    final auraColor = totalQuestions == 0
+        ? Colors.transparent
+        : Color.lerp(
+            Theme.of(context).colorScheme.primary.withAlpha(30), // Daha nötr başlangıç
+            Colors.green.withAlpha(30), // Daha yumuşak yeşil
+            overallMastery,
+          )!;
+
     final viewMode = ref.watch(subjectViewModeProvider(subjectName));
     final filter = ref.watch(subjectFilterProvider(subjectName));
     final processed = widget.topics.map((t){
@@ -336,22 +367,75 @@ class _SubjectGalaxyViewState extends ConsumerState<_SubjectGalaxyView> {
     }
 
     final content = switch(viewMode){ GalaxyViewMode.grid=>buildGrid(), GalaxyViewMode.list=>buildList() };
-    return Container(
-      decoration: BoxDecoration(
-        gradient: RadialGradient(center: Alignment.center, radius: 1, colors: [auraColor, Colors.transparent], stops: const [0,1]),
-      ),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20,20,20,110),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children:[
-          _SubjectStatsCard(subjectName: subjectName, overallMastery: overallMastery, totalQuestions: totalQuestions, totalCorrect: totalCorrect, totalWrong: totalWrong, totalBlank: totalBlank),
-          const SizedBox(height:20),
-          _InstructionBanner(),
-          const SizedBox(height:20),
-          _GalaxyToolbar(controller: _searchCtrl, onChanged: (v)=> ref.read(subjectFilterProvider(subjectName).notifier).state = v, currentMode: viewMode, onModeChanged: (m)=> ref.read(subjectViewModeProvider(subjectName).notifier).state = m),
-          const SizedBox(height:24),
-          content.animate().fadeIn(duration:500.ms, delay:200.ms),
-        ]),
-      ),
+    return Stack(
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            gradient: RadialGradient(center: Alignment.center, radius: 1, colors: [auraColor, Colors.transparent], stops: const [0,1]),
+          ),
+          child: GestureDetector(
+            onTap: () {
+              FocusScope.of(context).unfocus();
+              if (isSearchActive && _searchCtrl.text.isEmpty) {
+                ref.read(subjectSearchActiveProvider(subjectName).notifier).state = false;
+              }
+            },
+            child: SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: const EdgeInsets.fromLTRB(20,20,20,110),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children:[
+                _SubjectStatsCard(subjectName: subjectName, overallMastery: overallMastery, totalQuestions: totalQuestions, totalCorrect: totalCorrect, totalWrong: totalWrong, totalBlank: totalBlank),
+                const SizedBox(height:20),
+                _InstructionBanner(),
+                const SizedBox(height:20),
+                _GalaxyToolbar(
+                  isSearchActive: isSearchActive,
+                  onSearchToggle: () {
+                    final newState = !isSearchActive;
+                    ref.read(subjectSearchActiveProvider(subjectName).notifier).state = newState;
+                    if (newState) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) _searchFocus.requestFocus();
+                      });
+                    } else {
+                      _searchCtrl.clear();
+                      ref.read(subjectFilterProvider(subjectName).notifier).state = '';
+                      FocusScope.of(context).unfocus();
+                    }
+                  },
+                  currentMode: viewMode,
+                  onModeChanged: (m)=> ref.read(subjectViewModeProvider(subjectName).notifier).state = m
+                ),
+                const SizedBox(height:24),
+                content.animate().fadeIn(duration:500.ms, delay:200.ms),
+              ]),
+            ),
+          ),
+        ),
+        // Üstte açılan arama çubuğu
+        if (isSearchActive)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: _SearchBar(
+              controller: _searchCtrl,
+              focusNode: _searchFocus,
+              onChanged: (v) => ref.read(subjectFilterProvider(subjectName).notifier).state = v,
+              onClose: () {
+                ref.read(subjectSearchActiveProvider(subjectName).notifier).state = false;
+                _searchCtrl.clear();
+                ref.read(subjectFilterProvider(subjectName).notifier).state = '';
+                FocusScope.of(context).unfocus();
+              },
+            ).animate().slideY(
+              begin: -1,
+              end: 0,
+              duration: 300.ms,
+              curve: Curves.easeOutCubic,
+            ).fadeIn(duration: 200.ms),
+          ),
+      ],
     );
   }
 
@@ -704,45 +788,22 @@ class _StatChip extends StatelessWidget {
 }
 
 class _GalaxyToolbar extends StatelessWidget {
-  final TextEditingController controller;
-  final ValueChanged<String> onChanged;
+  final bool isSearchActive;
+  final VoidCallback onSearchToggle;
   final GalaxyViewMode currentMode;
   final ValueChanged<GalaxyViewMode> onModeChanged;
 
   const _GalaxyToolbar({
-    required this.controller,
-    required this.onChanged,
+    required this.isSearchActive,
+    required this.onSearchToggle,
     required this.currentMode,
     required this.onModeChanged
   });
 
-  double _calculateFontSize(BuildContext context, String text, double maxWidth) {
-    const minFontSize = 11.0;
-    const maxFontSize = 14.0;
-
-    // TextPainter ile metin genişliğini hesapla
-    for (double fontSize = maxFontSize; fontSize >= minFontSize; fontSize -= 0.5) {
-      final textPainter = TextPainter(
-        text: TextSpan(
-          text: text,
-          style: TextStyle(fontSize: fontSize),
-        ),
-        maxLines: 1,
-        textDirection: TextDirection.ltr,
-      )..layout();
-
-      if (textPainter.width <= maxWidth) {
-        return fontSize;
-      }
-    }
-
-    return minFontSize;
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    const chipHeight = 48.0; // Tüm öğeler için sabit yükseklik
+    const chipHeight = 48.0;
 
     Widget modeChip(GalaxyViewMode m, IconData icon, String label){
       final active = currentMode==m;
@@ -753,17 +814,17 @@ class _GalaxyToolbar extends StatelessWidget {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           height: chipHeight,
-          padding: const EdgeInsets.symmetric(horizontal:16),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            color: active 
-              ? Theme.of(context).colorScheme.primary 
-              : (isDark 
+            color: active
+              ? Theme.of(context).colorScheme.primary
+              : (isDark
                   ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)
                   : Colors.white),
             border: Border.all(
-              color: active 
-                ? Theme.of(context).colorScheme.primary 
+              color: active
+                ? Theme.of(context).colorScheme.primary
                 : Theme.of(context).colorScheme.onSurface.withOpacity(isDark ? 0.1 : 0.2),
               width: isDark ? 1 : 1.5
             ),
@@ -775,72 +836,185 @@ class _GalaxyToolbar extends StatelessWidget {
               ),
             ] : null,
           ),
-          child: Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children:[
-            Icon(icon, size:18, color: color),
-            const SizedBox(width:8),
-            Text(label, style: TextStyle(fontSize:13, fontWeight: FontWeight.w600, color: color))
-          ]),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 20, color: color),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: color,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
-    return Row(crossAxisAlignment: CrossAxisAlignment.center, children:[
-      Expanded(
-        child: SizedBox(
-          height: chipHeight,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              // Dinamik hint text boyutu hesaplama
-              final availableWidth = constraints.maxWidth - 70; // prefixIcon + padding için alan
-              final hintText = 'Ara...';
-              final fontSize = _calculateFontSize(context, hintText, availableWidth);
 
-              return TextField(
-                controller: controller,
-                onChanged: onChanged,
-                style: TextStyle(fontSize: fontSize),
-                textAlignVertical: TextAlignVertical.center,
-                decoration: InputDecoration(
-                  isDense: true,
-                  hintText: hintText,
-                  filled: true,
-                  fillColor: isDark
-                    ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)
-                    : Colors.white,
-                  prefixIcon: Icon(Icons.search, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                  hintStyle: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontSize: fontSize,
+    Widget searchButton(){
+      final active = isSearchActive;
+      final textColor = active ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).colorScheme.onSurfaceVariant;
+      return InkWell(
+        onTap: onSearchToggle,
+        borderRadius: BorderRadius.circular(12),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          height: chipHeight,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            color: active
+              ? Theme.of(context).colorScheme.primary
+              : (isDark
+                  ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)
+                  : Colors.white),
+            border: Border.all(
+              color: active
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).colorScheme.onSurface.withOpacity(isDark ? 0.1 : 0.2),
+              width: isDark ? 1 : 1.5
+            ),
+            boxShadow: (!active && !isDark) ? [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ] : null,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.search, size: 20, color: textColor),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  'Ara...',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: textColor,
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(isDark ? 0.1 : 0.2),
-                      width: isDark ? 1 : 1.5
-                    )
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(isDark ? 0.1 : 0.2),
-                      width: isDark ? 1 : 1.5
-                    )
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2)
-                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
-              );
-            }
+              ),
+            ],
           ),
         ),
-      ),
-      const SizedBox(width:12),
-      modeChip(GalaxyViewMode.grid, Icons.grid_view_rounded, 'Izgara'),
+      );
+    }
+
+    return Row(crossAxisAlignment: CrossAxisAlignment.center, children:[
+      Expanded(child: searchButton()),
       const SizedBox(width:8),
-      modeChip(GalaxyViewMode.list, Icons.view_list_rounded, 'Liste'),
+      Expanded(child: modeChip(GalaxyViewMode.grid, Icons.grid_view_rounded, 'Izgara')),
+      const SizedBox(width:8),
+      Expanded(child: modeChip(GalaxyViewMode.list, Icons.view_list_rounded, 'Liste')),
     ]);
+  }
+}
+
+class _SearchBar extends StatelessWidget {
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onClose;
+
+  const _SearchBar({
+    required this.controller,
+    required this.focusNode,
+    required this.onChanged,
+    required this.onClose,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: isDark
+          ? Theme.of(context).colorScheme.surface.withOpacity(0.95)
+          : Colors.white.withOpacity(0.98),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.5 : 0.15),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: ValueListenableBuilder<TextEditingValue>(
+        valueListenable: controller,
+        builder: (context, value, child) {
+          return Row(
+            children: [
+              Icon(
+                Icons.search,
+                color: Theme.of(context).colorScheme.primary,
+                size: 24,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextField(
+                  controller: controller,
+                  focusNode: focusNode,
+                  onChanged: onChanged,
+                  autofocus: true,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Konu ara...',
+                    hintStyle: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                    ),
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: Icon(
+                  Icons.close,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 24,
+                ),
+                onPressed: onClose,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(
+                  minWidth: 36,
+                  minHeight: 36,
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
   }
 }
 
