@@ -443,11 +443,38 @@ class _UserSearchTileState extends ConsumerState<_UserSearchTile> {
                                 targetUserId: widget.userId,
                               );
                               // Başarılı takip için bildirim göster
+                              // 1. Önce varsa ekrandaki eski bildirimleri temizle (Seri basma sorunu çözümü)
+                              ScaffoldMessenger.of(context).clearSnackBars();
+
+                              // 2. Yeni ve şık bildirimi göster
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('${username.isNotEmpty ? "@$username" : "Kullanıcı"} takip edildi!'),
-                                  backgroundColor: Theme.of(context).colorScheme.primary,
-                                  duration: const Duration(seconds: 2),
+                                  // İçerik: İkon + Metin yan yana
+                                  content: Row(
+                                    children: [
+                                      const Icon(Icons.check_circle_rounded, color: Colors.white),
+                                      const SizedBox(width: 12), // İkon ile yazı arası boşluk
+                                      Expanded(
+                                        child: Text(
+                                          '${username.isNotEmpty ? "@$username" : "Kullanıcı"} takip edildi!',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w600, // Yazıyı biraz kalınlaştır
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  // Görünüm Ayarları
+                                  behavior: SnackBarBehavior.floating, // Alt tarafta havada asılı durur
+                                  backgroundColor: const Color(0xFF323232), // Koyu gri modern arka plan
+                                  elevation: 4, // Hafif gölge
+                                  margin: const EdgeInsets.all(16), // Kenarlardan boşluk bırakır
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12), // Kenarları yumuşat
+                                  ),
+                                  duration: const Duration(milliseconds: 1500), // 1.5 saniye (daha seri hissettirir)
                                 ),
                               );
                             } catch (e) {
