@@ -1,5 +1,5 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const { onDocumentWritten } = require("firebase-functions/v2/firestore");
+const { onDocumentWritten, onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions");
 const { db, admin } = require("./init");
@@ -209,6 +209,118 @@ function pickDailyQuestsForUser(userData, analysis, ctx) {
   return materializeTemplates(tpls, userData, analysis);
 }
 
+// --------------------------------------------------------------------------
+// YENİ KULLANICI İÇİN OTOMATİK GÖREV OLUŞTURUCU (TRIGGER)
+// Sorun Çözümü: Kullanıcı kaydolur kaydolmaz görevleri hazırlar. Boş ekran sorununu çözer.
+// --------------------------------------------------------------------------
+exports.generateInitialQuests = onDocumentCreated({
+  document: "users/{userId}",
+  region: "us-central1",
+}, async (event) => {
+  const snapshot = event.data;
+  if (!snapshot) return;
+
+  const userId = event.params.userId;
+  const userData = snapshot.data();
+
+  // Eğer eski bir veri geri yükleniyorsa veya zaten refresh tarihi varsa işlem yapma
+  if (userData.lastQuestRefreshDate) {
+    logger.info(`Initial quest generation skipped for ${userId}: already has refresh date`);
+    return;
+  }
+
+  try {
+    logger.info(`Generating initial quests for new user: ${userId}`);
+
+    // Başlangıç için basit bir analiz veya boş analiz ile görev seç
+    const ctx = {
+      analysis: null,
+      stats: null,
+      app: null,
+      user: userData,
+      yesterdayInactive: false,
+      examType: userData.selectedExam || null
+    };
+
+    // İlk gün için "Kolay/Tanışma" modunda 4 görev seç
+    const dailyList = pickDailyQuestsForUser(userData, null, ctx);
+
+    const batch = db.batch();
+    const dailyCol = db.collection("users").doc(userId).collection("daily_quests");
+
+    dailyList.forEach((q) => {
+      const docRef = dailyCol.doc(q.qid);
+      batch.set(docRef, q);
+    });
+
+    // Kullanıcıya "bugün yenilendi" damgası vur
+    batch.update(snapshot.ref, {
+      lastQuestRefreshDate: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    await batch.commit();
+    logger.info(`Initial quests generated successfully for user: ${userId}, count: ${dailyList.length}`);
+  } catch (error) {
+    logger.error(`Initial quest generation failed for ${userId}:`, error);
+    // Hata olsa bile client tarafındaki yedek mekanizma devreye girer
+  }
+});
+
+// --------------------------------------------------------------------------
+// ORTAK YENİLEME MANTIĞI (Helper Function)
+// Hem yeni hem eski fonksiyon bunu kullanacak. Kod tekrarını önler.
+// --------------------------------------------------------------------------
+async function _coreRegenerateLogic(uid, ip) {
+  // 1. Rate Limit & Kota
+  await Promise.all([
+    enforceRateLimit(`quests_regen_uid_${uid}`, 300, 1), // 5 dakikada 1
+    enforceDailyQuota(`quests_regen_daily_${uid}`, 10),  // Günde max 10 (biraz esnek)
+  ]);
+
+  const userRef = db.collection("users").doc(uid);
+  const userSnap = await userRef.get();
+  if (!userSnap.exists) throw new HttpsError("not-found", "Kullanıcı yok");
+
+  const userData = userSnap.data() || {};
+
+  // 2. Tarih Kontrolü (Server-Side Idempotency)
+  const lastRefresh = userData.lastQuestRefreshDate;
+  if (lastRefresh) {
+    const lastDate = lastRefresh.toDate();
+    const now = nowIstanbul();
+    if (lastDate.getDate() === now.getDate() &&
+        lastDate.getMonth() === now.getMonth() &&
+        lastDate.getFullYear() === now.getFullYear()) {
+      return { skipped: true, count: 0 };
+    }
+  }
+
+  // 3. Görev Üretimi
+  let analysis = null;
+  try {
+    const a = await userRef.collection("performance").doc("analysis_summary").get();
+    analysis = a.exists ? a.data() : null;
+  } catch (_) {}
+
+  const ctx = await getUserContext(userRef);
+  const dailyList = pickDailyQuestsForUser(userData, analysis, ctx);
+
+  // 4. Yazma İşlemi
+  const dailyCol = userRef.collection("daily_quests");
+  const existing = await dailyCol.get();
+  const batch = db.batch();
+
+  existing.docs.forEach((d) => batch.delete(d.ref));
+  dailyList.forEach((q) => batch.set(dailyCol.doc(q.qid), q));
+
+  batch.update(userRef, {
+    lastQuestRefreshDate: admin.firestore.FieldValue.serverTimestamp()
+  });
+
+  await batch.commit();
+  return { skipped: false, count: dailyList.length };
+}
+
 async function generateQuestsForAllUsers() {
   const usersSnap = await db.collection("users").get();
   const batchPromises = [];
@@ -247,54 +359,34 @@ async function generateQuestsForAllUsers() {
   await Promise.all(batchPromises);
 }
 
-// İSTEMCİDEN GÜNLÜK GÖREV YENİLEME (CALLABLE)
-exports.regenerateDailyQuests = onCall({ region: "us-central1", timeoutSeconds: 60, enforceAppCheck: true, maxInstances: 20 }, async (request) => {
+// --------------------------------------------------------------------------
+// 2. YENİ FONKSİYON (Flutter'daki yeni kodun çağırdığı)
+// İstemci tarafında tarih kontrolü yapılmış, buraya sadece gerekirse gelir
+// --------------------------------------------------------------------------
+exports.regenerateDailyQuests = onCall({
+  region: "us-central1",
+  timeoutSeconds: 60,
+  enforceAppCheck: true,
+  maxInstances: 20
+}, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Oturum gerekli");
   }
   const uid = request.auth.uid;
-
-  // Rate limit + günlük kota
   const ip = getClientIpFromRawRequest(request.rawRequest) || "unknown";
-  await Promise.all([
-    enforceRateLimit(`quests_regen_uid_${uid}`, 60, 4),
-    enforceRateLimit(`quests_regen_ip_${ip}`, 60, 40),
-    enforceDailyQuota(`quests_regen_daily_${uid}`, 20),
-  ]);
 
   try {
-    const userRef = db.collection("users").doc(uid);
-    const userSnap = await userRef.get();
-    if (!userSnap.exists) {
-      throw new HttpsError("failed-precondition", "Kullanıcı bulunamadı");
-    }
-    const userData = userSnap.data() || {};
+    const result = await _coreRegenerateLogic(uid, ip);
 
-    // Analiz özeti (kişiselleştirme için opsiyonel)
-    let analysis = null;
-    try {
-      const a = await userRef.collection("performance").doc("analysis_summary").get();
-      analysis = a.exists ? a.data() : null;
-    } catch (_) {
-      analysis = null;
+    if (result.skipped) {
+      logger.info(`Quest regeneration skipped for ${uid}: already fresh today`);
+      return { ok: true, message: "Zaten güncel", skipped: true };
     }
 
-    // Kullanıcı bağlamını hazırla ve şablonlardan günlük görevleri seç
-    const ctx = await getUserContext(userRef);
-    const dailyList = pickDailyQuestsForUser(userData, analysis, ctx);
-
-    // Mevcut günlük görevleri temizle ve yenilerini yaz
-    const dailyCol = userRef.collection("daily_quests");
-    const existing = await dailyCol.get();
-    const batch = db.batch();
-    existing.docs.forEach((d) => batch.delete(d.ref));
-    dailyList.forEach((q) => batch.set(dailyCol.doc(q.qid), q, { merge: true }));
-    batch.update(userRef, { lastQuestRefreshDate: admin.firestore.FieldValue.serverTimestamp() });
-    await batch.commit();
-
-    return { ok: true, dailyCount: dailyList.length };
+    logger.info(`Quests regenerated for ${uid}, count: ${result.count}`);
+    return { ok: true, dailyCount: result.count };
   } catch (e) {
-    // Hata durumunda anlamlı bir dönüş
+    logger.error(`Quest regeneration failed for ${uid}:`, e);
     if (e instanceof HttpsError) throw e;
     throw new HttpsError("internal", `Görev üretimi başarısız: ${String(e)}`);
   }
@@ -561,98 +653,48 @@ exports.claimQuestReward = onCall({
 });
 
 /**
- * Kullanıcı uygulamayı açtığında görevlerini kontrol eder ve gerekiyorsa yeniler.
- * Bu yaklaşım sadece AKTİF kullanıcılar için işlem yapar (Lazy Loading).
+ * LEGACY BRIDGE FUNCTION - Eski Kullanıcılar İçin Köprü
+ *
+ * Bu fonksiyon eski uygulama sürümlerindeki kullanıcılar için çalışmaya devam eder.
+ * Yeni mantığı kullanır ama eski formatı döner, böylece sorunsuz geçiş sağlanır.
  *
  * Avantajları:
- * - Hiç giriş yapmayan kullanıcılar için gereksiz işlem yapılmaz
- * - Firestore okuma/yazma maliyeti minimuma iner
- * - Zaman aşımı riski olmaz
- * - Ölçeklenebilir ve sürdürülebilir
+ * - Eski kullanıcılar güncellemeden görevleri yenileyebilir
+ * - Acil güncelleme gerekmez
+ * - Yeni kullanıcılar zamanla sistemi optimize eder
+ *
+ * @deprecated Yeni istemciler regenerateDailyQuests kullanmalı
  */
 exports.checkAndRefreshQuests = onCall({
   region: "us-central1",
   enforceAppCheck: true,
   timeoutSeconds: 60,
-  maxInstances: 50, // Yüksek trafikte birden fazla instance
+  maxInstances: 20,
 }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Oturum gerekli");
   }
-  const uid = request.auth.uid;
 
-  // Rate limit: Aynı kullanıcı sürekli çağıramasın
-  await enforceRateLimit(`check_quests_uid_${uid}`, 60, 10); // Dakikada 10 kontrol yeterli
+  const uid = request.auth.uid;
+  const ip = getClientIpFromRawRequest(request.rawRequest) || "unknown";
+
+  logger.info(`LEGACY CALL: checkAndRefreshQuests by ${uid}`);
 
   try {
-    const userRef = db.collection("users").doc(uid);
-    const userSnap = await userRef.get();
+    // Yeni mantığı çalıştır ama eski formatta cevap ver
+    const result = await _coreRegenerateLogic(uid, ip);
 
-    if (!userSnap.exists) {
-      throw new HttpsError("failed-precondition", "Kullanıcı bulunamadı");
-    }
-
-    const userData = userSnap.data() || {};
-    const lastRefresh = userData.lastQuestRefreshDate;
-
-    // Bugünün başlangıcını hesapla (İstanbul saati)
-    const now = nowIstanbul();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-    // Son yenileme bugün mü yapılmış?
-    let needsRefresh = true;
-    if (lastRefresh && lastRefresh.toDate) {
-      const lastRefreshDate = lastRefresh.toDate();
-      needsRefresh = lastRefreshDate < todayStart;
-    }
-
-    if (!needsRefresh) {
-      // Görevler zaten güncel, sadece mevcut görevleri döndür
-      const existingQuests = await userRef.collection("daily_quests").get();
-      return {
-        ok: true,
-        refreshed: false,
-        message: "Görevler zaten güncel",
-        questCount: existingQuests.size
-      };
-    }
-
-    // Görevlerin yenilenmesi gerekiyor
-    let analysis = null;
-    try {
-      const a = await userRef.collection("performance").doc("analysis_summary").get();
-      analysis = a.exists ? a.data() : null;
-    } catch (_) {
-      analysis = null;
-    }
-
-    const ctx = await getUserContext(userRef);
-    const dailyList = pickDailyQuestsForUser(userData, analysis, ctx);
-
-    // Eski görevleri temizle, yenilerini ekle
-    const dailyCol = userRef.collection("daily_quests");
-    const existing = await dailyCol.get();
-    const batch = db.batch();
-
-    existing.docs.forEach((d) => batch.delete(d.ref));
-    dailyList.forEach((q) => batch.set(dailyCol.doc(q.qid), q, { merge: true }));
-    batch.update(userRef, {
-      lastQuestRefreshDate: admin.firestore.FieldValue.serverTimestamp()
-    });
-
-    await batch.commit();
-
-    logger.info(`Görevler yenilendi - uid: ${uid}, questCount: ${dailyList.length}`);
-
+    // Eski istemci bu formatı bekliyor:
     return {
       ok: true,
-      refreshed: true,
-      message: "Görevler başarıyla yenilendi",
-      questCount: dailyList.length
+      refreshed: !result.skipped, // Eğer skip edildiyse refreshed=false
+      message: result.skipped ? "Görevler zaten güncel" : "Görevler başarıyla yenilendi",
+      questCount: result.count
     };
 
   } catch (e) {
-    logger.error("checkAndRefreshQuests hatası", { uid, error: String(e) });
+    logger.error("Legacy refresh failed:", e);
+    // Hata olsa bile eski app'in çökmemesi için anlamlı hata döndür
     if (e instanceof HttpsError) throw e;
     throw new HttpsError("internal", `Görev kontrolü başarısız: ${String(e)}`);
   }
