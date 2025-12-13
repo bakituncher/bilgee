@@ -195,7 +195,7 @@ class HeroHeader extends ConsumerWidget {
                                   fit: BoxFit.scaleDown,
                                   alignment: Alignment.centerLeft,
                                   child: Text(
-                                    '${_getGreeting()}, ${user.firstName}',
+                                    '${_getGreeting()}, ${user.firstName[0].toUpperCase()}${user.firstName.substring(1).toLowerCase()}',
                                     style: theme.textTheme.titleMedium?.copyWith(
                                       fontWeight: FontWeight.w700,
                                       fontSize: 15,
