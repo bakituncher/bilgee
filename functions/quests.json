@@ -177,7 +177,7 @@
   {
     "id": "daily_tes_02_analysis_pro",
     "title": "Analiz Profesyoneli",
-    "description": "TaktikAI ile deneme sonuçlarınızı detaylı analiz ettirin ve zayıf noktalarınızı belirleyin.",
+    "description": "Taktik Tavşan ile deneme sonuçlarınızı detaylı analiz ettirin ve zayıf noktalarınızı belirleyin.",
     "type": "daily",
     "category": "study",
     "reward": 90,

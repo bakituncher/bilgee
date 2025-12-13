@@ -167,7 +167,7 @@ class TopicStatsDialog extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("TaktikAI Yorumu",
+                Text("Taktik Tavşan Yorumu",
                     style: Theme.of(context)
                         .textTheme
                         .titleMedium

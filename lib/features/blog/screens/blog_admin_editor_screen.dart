@@ -28,7 +28,7 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
   final _coverUrlCtrl = TextEditingController();
   final _tagsCtrl = TextEditingController();
   final _contentCtrl = TextEditingController();
-  final _authorCtrl = TextEditingController(text: 'TaktikAI');
+  final _authorCtrl = TextEditingController(text: 'Taktik Tavşan');
   String _locale = 'tr';
   // Güvenli locale: yalnızca 'tr' veya 'en'
   String? get _safeLocale {
@@ -127,7 +127,7 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
         _coverUrlCtrl.text = (d['coverImageUrl'] ?? '').toString();
         _tagsCtrl.text = _normalizeTagsCsv((d['tags'] as List?)?.join(', ') ?? '');
         _contentCtrl.text = (d['contentMarkdown'] ?? '').toString();
-        _authorCtrl.text = (d['author'] ?? 'TaktikAI').toString();
+        _authorCtrl.text = (d['author'] ?? 'Taktik Tavşan').toString();
         final loc = (d['locale'] ?? 'tr').toString().trim().toLowerCase();
         _locale = (loc == 'tr' || loc == 'en') ? loc : 'tr';
         // Hedef kitleyi oku
@@ -275,7 +275,7 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
         'status': publish ? 'published' : 'draft',
         'publishedAt': publish ? Timestamp.fromDate(now) : null,
         'updatedAt': Timestamp.fromDate(now),
-        'author': _authorCtrl.text.trim().isEmpty ? 'TaktikAI' : _authorCtrl.text.trim(),
+        'author': _authorCtrl.text.trim().isEmpty ? 'Taktik Tavşan' : _authorCtrl.text.trim(),
         'readTime': readTime,
         'targetExams': targetArray,
         'expiryType': expiryType,
@@ -647,7 +647,7 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
               Row(children: [
                 Icon(Icons.person_outline_rounded, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
                 const SizedBox(width: 6),
-                Text(_authorCtrl.text.trim().isEmpty ? 'TaktikAI' : _authorCtrl.text.trim(), style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                Text(_authorCtrl.text.trim().isEmpty ? 'Taktik Tavşan' : _authorCtrl.text.trim(), style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                 const SizedBox(width: 12),
                 Icon(Icons.schedule_rounded, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
                 const SizedBox(width: 6),

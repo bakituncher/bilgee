@@ -76,7 +76,7 @@ class TrialReviewPrompt {
     final examSpecificTone = _getExamSpecificTone(examName);
 
     return '''
-# TaktikAI - Deneme Değerlendirme Koçu
+# Taktik Tavşan - Deneme Değerlendirme Koçu
 
 ## Kimlik & Rol
 Sen $userName'in kişisel koçusun. ${examName ?? 'Sınav'} yolculuğunda onun yanındasın.

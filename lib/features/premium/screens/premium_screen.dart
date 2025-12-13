@@ -174,7 +174,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
 
     final marketingSlides = [
       (
-      title: 'Sınırsız TaktikAI Koçu',
+      title: 'Sınırsız Taktik Tavşan Koçu',
       subtitle: 'Koçunuz Taktik Tavşan ile sınırsız strateji ve ders desteği.',
       icon: Icons.rocket_launch_rounded,
       color: const Color(0xFF5b3d88)

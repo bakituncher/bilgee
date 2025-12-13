@@ -583,7 +583,7 @@ class _BriefingView extends ConsumerWidget {
             Text("Stratejik Mola", style: Theme.of(context).textTheme.headlineMedium),
             const SizedBox(height: 8),
             Text(
-              "TaktikAI, performansını analiz etti ve gelişim için en parlak fırsatları belirledi. Aşağıdaki cevherlerden birini seçerek işlemeye başla.",
+              "Taktik Tavşan, performansını analiz etti ve gelişim için en parlak fırsatları belirledi. Aşağıdaki cevherlerden birini seçerek işlemeye başla.",
               style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 12), // 👈 Azaltıldı
@@ -607,7 +607,7 @@ class _BriefingView extends ConsumerWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      "TaktikAI hata yapabilir. Üretilen içerikleri kontrol et.",
+                      "Taktik Tavşan hata yapabilir. Üretilen içerikleri kontrol et.",
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontSize: 12, // 👈 Küçültüldü
@@ -706,7 +706,7 @@ class _EmptyStateView extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      "1. Ders netlerini ekle\n2. TaktikAI en zayıf konuları analiz edecek\n3. Özel çalışma materyallerine eriş!",
+                      "1. Ders netlerini ekle\n2. Taktik Tavşan en zayıf konuları analiz edecek\n3. Özel çalışma materyallerine eriş!",
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                         height: 1.5,
@@ -791,7 +791,7 @@ class _TopicCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), // 👈 Daha ince
                         decoration: BoxDecoration(color: colorScheme.secondary, borderRadius: BorderRadius.circular(6)),
                         child: Text(
-                          "TAKTİKAI ÖNERİSİ",
+                          "Taktik Tavşan ÖNERİSİ",
                           style: Theme.of(context).textTheme.labelSmall?.copyWith(
                               color: colorScheme.onSecondary, fontWeight: FontWeight.bold, letterSpacing: 0.8, fontSize: 10),
                         ),

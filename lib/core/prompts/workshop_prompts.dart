@@ -67,7 +67,7 @@ TARA. DOĞRULA. RİSKE ATMA.
 """;
 
   return """
-TaktikAI - Cevher İşleme Kiti oluştur.
+Taktik Tavşan - Cevher İşleme Kiti oluştur.
 $fiveChoiceRule
 $compactRules
 
