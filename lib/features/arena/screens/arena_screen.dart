@@ -302,7 +302,7 @@ class _CurrentUserCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
                 Text(
-                  '${entry.score} BP',
+                  '${entry.score} TP',
                   style: textTheme.titleSmall?.copyWith(
                     color: colorScheme.onSurface,
                     fontWeight: FontWeight.bold,
@@ -438,7 +438,7 @@ class _RankCard extends ConsumerWidget {
                             color: cs.primary.withValues(alpha: 0.18),
                           ),
                           child: Text(
-                            '${entry.score} BP',
+                            '${entry.score} TP',
                             style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                   fontWeight: FontWeight.w600,
                                   color: cs.onSurface,

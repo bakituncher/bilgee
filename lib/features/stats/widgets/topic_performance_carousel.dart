@@ -320,7 +320,7 @@ class _TopicStatCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '${stat.accuracy.toStringAsFixed(1)}%',
+                    '%${stat.accuracy.toStringAsFixed(1)}',
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.w900,
