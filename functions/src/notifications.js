@@ -172,7 +172,7 @@ exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => 
         },
         {
           title: 'Geri gelme zamanı! 🚀',
-          body: exam ? `${exam} rotanda 3 gün duraksadın. Bugün yeniden gaza bas, TaktikAI koçun seni bekliyor!` : 'Uzun aradan sonra en iyi açılış: kısa bir görevle başla, ritmi yakala! 🎯',
+          body: exam ? `${exam} rotanda 3 gün duraksadın. Bugün yeniden gaza bas, Taktik Tavşan koçun seni bekliyor!` : 'Uzun aradan sonra en iyi açılış: kısa bir görevle başla, ritmi yakala! 🎯',
           route: '/ai-hub',
         },
         {
@@ -202,7 +202,7 @@ exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => 
         },
         {
           title: 'AI Koçun merak ediyor! 🤖',
-          body: exam ? `${exam} hazırlığında nasıl gidiyor? Koçunla stratejini güncelle, yeni hedefler koy!` : 'Çalışma planını gözden geçirme zamanı. TaktikAI koçunla yeniden buluş! 🎓',
+          body: exam ? `${exam} hazırlığında nasıl gidiyor? Koçunla stratejini güncelle, yeni hedefler koy!` : 'Çalışma planını gözden geçirme zamanı. Taktik Tavşan koçunla yeniden buluş! 🎓',
           route: '/ai-hub',
         },
         {
@@ -249,7 +249,7 @@ exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => 
         },
         {
           title: 'Koçun seni çağırıyor! 🎓',
-          body: exam ? `${exam} için TaktikAI koçunla stratejini güncelle. 1 günlük ara yeter, devam et!` : 'Yeni bir strateji mi lazım? Koçunla konuş, planını tazele! 🗣️',
+          body: exam ? `${exam} için Taktik Tavşan koçunla stratejini güncelle. 1 günlük ara yeter, devam et!` : 'Yeni bir strateji mi lazım? Koçunla konuş, planını tazele! 🗣️',
           route: '/ai-hub',
         },
         {

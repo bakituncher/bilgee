@@ -1,4 +1,4 @@
-# ✅ TaktikAI Hub - İyileştirme Raporu
+# ✅ Taktik Tavşan Hub - İyileştirme Raporu
 
 ## 📅 Tarih: 2025-01-03
 ## 🎯 Hedef: AI Hub'daki tüm araçların sınav tipine göre optimize edilmesi

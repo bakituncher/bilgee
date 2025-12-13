@@ -49,7 +49,8 @@ class TrialReviewPrompt {
     String conversationHistory = '',
     String lastUserMessage = '',
   }) {
-    final userName = user.name ?? 'Komutan';
+    final firstName = user.firstName.isNotEmpty ? user.firstName : 'Komutan';
+    final userName = firstName[0].toUpperCase() + firstName.substring(1).toLowerCase();
     final lastTest = tests.isNotEmpty ? tests.first : null;
     final lastNet = lastTest?.totalNet.toStringAsFixed(2) ?? '—';
     final avgNet = (analysis?.averageNet ?? 0).toStringAsFixed(2);
@@ -76,7 +77,7 @@ class TrialReviewPrompt {
     final examSpecificTone = _getExamSpecificTone(examName);
 
     return '''
-# TaktikAI - Deneme Değerlendirme Koçu
+# Taktik Tavşan - Deneme Değerlendirme Koçu
 
 ## Kimlik & Rol
 Sen $userName'in kişisel koçusun. ${examName ?? 'Sınav'} yolculuğunda onun yanındasın.

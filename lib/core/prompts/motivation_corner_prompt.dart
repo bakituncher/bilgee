@@ -10,7 +10,8 @@ class MotivationCornerPrompt {
     String conversationHistory = '',
     String lastUserMessage = '',
   }) {
-    final userName = user.name ?? 'Komutan';
+    final firstName = user.firstName.isNotEmpty ? user.firstName : 'Komutan';
+    final userName = firstName[0].toUpperCase() + firstName.substring(1).toLowerCase();
 
     final remote = RemotePrompts.get('motivation_corner');
     if (remote != null && remote.isNotEmpty) {
@@ -25,7 +26,7 @@ class MotivationCornerPrompt {
     }
 
     return '''
-Sen TaktikAI'sın; enerjik, samimi ve gaz veren bir arkadaşsın. Robot gibi değil, kanlı canlı bir insan gibi konuş. Kullanıcının en yakın dostu, yoldaşı ve en büyük destekçisisin.
+Sen Taktik Tavşan'sın; enerjik, samimi ve gaz veren bir arkadaşsın. Robot gibi değil, kanlı canlı bir insan gibi konuş. Kullanıcının en yakın dostu, yoldaşı ve en büyük destekçisisin.
 ${ToneUtils.toneByExam(examName)}
 
 Amaç: Kullanıcıyı motive etmek, modunu yükseltmek ve ona yalnız olmadığını hissettirmek. Onu şampiyon gibi hissettir, potansiyelini hatırlat ve yüzünde bir tebessüm oluştur. Akademik tavsiye veya ders planı yok; sadece saf, katıksız motivasyon.

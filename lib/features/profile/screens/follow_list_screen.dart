@@ -4,27 +4,100 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // DocumentSnapshot için gerekli
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
 import 'package:taktik/features/profile/widgets/user_moderation_menu.dart';
 
-class FollowListScreen extends ConsumerWidget {
+class FollowListScreen extends ConsumerStatefulWidget {
   final String mode; // 'followers' | 'following'
   const FollowListScreen({super.key, required this.mode});
 
-  bool get _isFollowers => mode == 'followers';
+  @override
+  ConsumerState<FollowListScreen> createState() => _FollowListScreenState();
+}
+
+class _FollowListScreenState extends ConsumerState<FollowListScreen> {
+  final ScrollController _scrollController = ScrollController();
+
+  List<String> _userIds = [];
+  DocumentSnapshot? _lastDoc;
+  bool _isLoading = false;
+  bool _hasMore = true;
+  bool _isInitialLoad = true;
+
+  bool get _isFollowers => widget.mode == 'followers';
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final me = ref.watch(authControllerProvider).value;
-    final userId = me?.uid;
-    if (userId == null) {
-      return const Scaffold(body: Center(child: Text('Oturum bulunamadı.')));
-    }
+  void initState() {
+    super.initState();
+    _loadUsers();
 
-    final idsAsync = _isFollowers
-        ? ref.watch(followerIdsProvider(userId))
-        : ref.watch(followingIdsProvider(userId));
+    // Listenin sonuna gelince tetiklenen dinleyici
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200 &&
+          !_isLoading &&
+          _hasMore) {
+        _loadUsers();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadUsers() async {
+    if (_isLoading || !_hasMore) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final me = ref.read(authControllerProvider).value;
+      if (me == null) return;
+
+      final service = ref.read(firestoreServiceProvider);
+
+      // Hangi fonksiyonu çağıracağımızı seçiyoruz
+      final result = _isFollowers
+          ? await service.getFollowersPaginated(me.uid, startAfter: _lastDoc)
+          : await service.getFollowingPaginated(me.uid, startAfter: _lastDoc);
+
+      // Kendini listeden çıkar (ID'leri eklemeden önce filtrele)
+      final newIds = result.$1.where((id) => id != me.uid).toList();
+      final lastDoc = result.$2;
+
+      if (mounted) {
+        setState(() {
+          _userIds.addAll(newIds);
+          _lastDoc = lastDoc;
+          // Eğer gelen veri limiti doldurmuyorsa, daha fazla veri yok demektir
+          if (newIds.length < 20) {
+            _hasMore = false;
+          }
+          _isLoading = false;
+          _isInitialLoad = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _isInitialLoad = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Yükleme hatası: $e')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final me = ref.watch(authControllerProvider).value;
+    if (me == null) return const Scaffold(body: Center(child: Text('Oturum bulunamadı.')));
 
     return Scaffold(
       appBar: AppBar(
@@ -43,36 +116,59 @@ class FollowListScreen extends ConsumerWidget {
           ),
         ),
         child: SafeArea(
-          child: idsAsync.when(
-            data: (ids) {
-              if (ids.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.group_outlined, size: 56, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                      const SizedBox(height: 12),
-                      Text(
-                        _isFollowers ? 'Henüz takipçin yok.' : 'Henüz kimseyi takip etmiyorsun.',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                    ],
-                  ),
-                );
-              }
-              return ListView.separated(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                itemCount: ids.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  final uid = ids[index];
-                  if (uid == me!.uid) return const SizedBox.shrink();
-                  return _FollowListTile(targetUserId: uid);
-                },
-              );
+          child: RefreshIndicator(
+            onRefresh: () async {
+              setState(() {
+                _userIds.clear();
+                _lastDoc = null;
+                _hasMore = true;
+                _isInitialLoad = true;
+              });
+              await _loadUsers();
             },
-            loading: () => Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary)),
-            error: (e, s) => Center(child: Text('Liste yüklenemedi: $e')),
+            child: _isInitialLoad
+              ? Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary))
+              : _userIds.isEmpty
+                  ? ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: [
+                        SizedBox(height: MediaQuery.of(context).size.height * 0.3),
+                        Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.group_outlined, size: 56, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                              const SizedBox(height: 12),
+                              Text(
+                                _isFollowers ? 'Henüz takipçin yok.' : 'Henüz kimseyi takip etmiyorsun.',
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    )
+                  : ListView.separated(
+                      controller: _scrollController,
+                      physics: const AlwaysScrollableScrollPhysics(), // Liste boşken de yenileme çalışsın
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                      itemCount: _userIds.length + (_hasMore ? 1 : 0), // Loader için +1
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      itemBuilder: (context, index) {
+                        // Yükleme göstergesi (Listenin en altı)
+                        if (index == _userIds.length) {
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(16.0),
+                              child: CircularProgressIndicator.adaptive(),
+                            ),
+                          );
+                        }
+
+                        final uid = _userIds[index];
+                        return _FollowListTile(targetUserId: uid);
+                      },
+                    ),
           ),
         ),
       ),

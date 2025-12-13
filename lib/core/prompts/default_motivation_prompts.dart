@@ -7,7 +7,7 @@ import 'package:taktik/core/prompts/prompt_remote.dart';
 
 class DefaultMotivationPrompts {
   static String _commonHeader(String? examName) =>
-      "Sen TaktikAI'sın; kısa, net ve yetişkin bir koç gibi konuşursun. ${ToneUtils.toneByExam(examName)}\nKurallar: Duyguyu 1 cümlede yansıt; kullanıcının cümlelerini kelime kelime tekrarlama, kendi sözlerinle kısaca özetle. Konu dışına çıkma, abartı ve mikro hedef/ödül telkini verme. Düz metin; emoji/markdown yok.";
+      "Sen Taktik Tavşan'sın; kısa, net ve yetişkin bir koç gibi konuşursun. ${ToneUtils.toneByExam(examName)}\nKurallar: Duyguyu 1 cümlede yansıt; kullanıcının cümlelerini kelime kelime tekrarlama, kendi sözlerinle kısaca özetle. Konu dışına çıkma, abartı ve mikro hedef/ödül telkini verme. Düz metin; emoji/markdown yok.";
 
   static String welcome({
     required UserModel user,
@@ -173,7 +173,8 @@ Cevap:
     String conversationHistory = '',
     String lastUserMessage = '',
   }) {
-    final userName = user.name ?? 'Komutan';
+    final firstName = user.firstName.isNotEmpty ? user.firstName : 'Komutan';
+    final userName = firstName[0].toUpperCase() + firstName.substring(1).toLowerCase();
 
     final remote = RemotePrompts.get('user_chat');
     if (remote != null && remote.isNotEmpty) {

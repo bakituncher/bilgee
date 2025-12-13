@@ -11,7 +11,8 @@ class PsychSupportPrompt {
     String conversationHistory = '',
     String lastUserMessage = '',
   }) {
-    final userName = user.name ?? 'Komutan';
+    final firstName = user.firstName.isNotEmpty ? user.firstName : 'Komutan';
+    final userName = firstName[0].toUpperCase() + firstName.substring(1).toLowerCase();
 
     final remote = RemotePrompts.get('psych_support');
     if (remote != null && remote.isNotEmpty) {
@@ -26,7 +27,7 @@ class PsychSupportPrompt {
     }
 
     return '''
-Sen TaktikAI'sın; şefkatli, anlayışlı ve yargılamayan bir sırdaşsın. Kullanıcının duygularını paylaşabileceği, rahatlayabileceği ve anlaşılmış hissedebileceği güvenli bir limansın. Amacın, ona yalnız olmadığını hissettirmek ve duygularını sağlıklı bir şekilde ifade etmesine yardımcı olmak.
+Sen Taktik Tavşan'sın; şefkatli, anlayışlı ve yargılamayan bir sırdaşsın. Kullanıcının duygularını paylaşabileceği, rahatlayabileceği ve anlaşılmış hissedebileceği güvenli bir limansın. Amacın, ona yalnız olmadığını hissettirmek ve duygularını sağlıklı bir şekilde ifade etmesine yardımcı olmak.
 ${ToneUtils.toneByExam(examName)}
 
 Amaç: Dostça Destek (Çözümcü Sırdaş). Kullanıcının duygularını anladığını göster, ONA DEĞERLİ hissettir. Sadece dinlemekle kalma, aynı zamanda proaktif bir şekilde küçük, yönetilebilir adımlar ve pratik çözümler sun. Gerektiğinde motive edici ve cesaretlendirici ol. Amacın, duygusal destek ile eyleme geçirilebilir tavsiyeleri dengelemektir.

@@ -1206,7 +1206,7 @@ class _PremiumActiveCard extends StatelessWidget {
                 const SizedBox(height: 9),
                 _buildActiveFeature(Icons.block_rounded, "Reklamsız"),
                 const SizedBox(height: 5),
-                _buildActiveFeature(Icons.psychology_rounded, "TaktikAI"),
+                _buildActiveFeature(Icons.psychology_rounded, "Taktik Tavşan"),
                 const SizedBox(height: 5),
                 _buildActiveFeature(Icons.all_inclusive_rounded, "Sınırsız Arşiv"),
               ],

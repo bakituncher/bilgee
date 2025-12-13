@@ -49,7 +49,8 @@ class StrategyConsultPrompt {
     String conversationHistory = '',
     String lastUserMessage = '',
   }) {
-    final userName = user.name ?? 'Komutan';
+    final firstName = user.firstName.isNotEmpty ? user.firstName : 'Komutan';
+    final userName = firstName[0].toUpperCase() + firstName.substring(1).toLowerCase();
     final avgNet = (analysis?.averageNet ?? 0).toStringAsFixed(2);
 
     final remote = RemotePrompts.get('strategy_consult');
@@ -69,10 +70,10 @@ class StrategyConsultPrompt {
     final examStrategy = _getExamSpecificStrategy(examName);
 
     return '''
-# TaktikAI - Usta Stratejist 🎯
+# Taktik Tavşan - Usta Stratejist 🎯
 
 ## Kimlik
-Sen TaktikAI'sın; kimsenin görmediği detayları fark eden, ezber bozan ve sonuca giden en zeki yolları bulan bir stratejist. $userName için ${examName ?? 'sınav'} başarısına giden gizli yolları biliyorsun.
+Sen Taktik Tavşan'sın; kimsenin görmediği detayları fark eden, ezber bozan ve sonuca giden en zeki yolları bulan bir stratejist. $userName için ${examName ?? 'sınav'} başarısına giden gizli yolları biliyorsun.
 
 ## Sınava Özel Strateji Yaklaşımı
 $examStrategy

@@ -22,49 +22,92 @@ class QuestService {
 
   bool _inProgress = false;
 
-  /// LAZY LOADING: Kullanıcı uygulamayı açtığında görevlerini kontrol eder.
-  /// Eğer bugün için güncel değilse, backend'de otomatik yeniler.
-  /// Bu yaklaşım sürdürülebilir ve maliyet-efektiftir.
+  /// AKILLI İSTEMCİ: Tarih kontrolünü istemcide yapar, sadece gerekirse sunucuyu çağırır.
+  ///
+  /// Çalışma Mantığı:
+  /// 1. Kullanıcı profiline bakar (lastQuestRefreshDate kontrolü için)
+  /// 2. Tarih BUGÜN mü diye bakar
+  /// 3. Evetse: Firestore'dan direkt okur (Maliyet: Sadece okuma)
+  /// 4. Hayırsa: Cloud Function çağırır, sonra okur
+  ///
+  /// Bu yaklaşım maliyet ve performans açısından optimaldir.
   Future<List<Quest>> checkAndRefreshQuests(String userId) async {
     if (_inProgress) {
       return await _ref.read(firestoreServiceProvider).getDailyQuestsOnce(userId);
     }
     _inProgress = true;
     try {
-      // DÜZELTME: Debug modunda App Check'i atla
-      if (!kDebugMode) {
-        await ensureAppCheckTokenReady();
-      }
-      final functions = _ref.read(functionsProvider);
-      final callable = functions.httpsCallable('quests-checkAndRefreshQuests');
-
-      final result = await callable.call();
-      final data = result.data as Map<String, dynamic>;
-
-      if (data['refreshed'] == true) {
-        // Görevler yenilendi, session state'i temizle
-        _ref.read(sessionCompletedQuestsProvider.notifier).state = <String>{};
-        if (kDebugMode) {
-          debugPrint('[QuestService] Görevler yenilendi: ${data['questCount']} görev');
-        }
-      }
-
-      // Her iki durumda da (yenilendi ya da zaten güncel) güncel görevleri döndür
-      final quests = await _ref.read(firestoreServiceProvider).getDailyQuestsOnce(userId);
-      _ref.read(questGenerationIssueProvider.notifier).state = false;
-      return quests;
-
-    } catch (e, st) {
-      if (kDebugMode) {
-        debugPrint('[QuestService] checkAndRefreshQuests failed: $e');
-        debugPrint(st.toString());
-      }
-      _ref.read(questGenerationIssueProvider.notifier).state = true;
-      // Hata durumunda mevcut görevleri döndür
+      // 1. Önce mevcut görevleri oku (cache veya firestore'dan)
+      List<Quest> currentQuests = [];
       try {
-        return await _ref.read(firestoreServiceProvider).getDailyQuestsOnce(userId);
-      } catch (_) {
-        return [];
+        currentQuests = await _ref.read(firestoreServiceProvider).getDailyQuestsOnce(userId);
+      } catch (e) {
+        // Okuma hatası olursa boş liste ile devam et
+        currentQuests = [];
+      }
+
+      // 2. Kullanıcı verisini al (lastQuestRefreshDate kontrolü için)
+      final user = _ref.read(userProfileProvider).value;
+      if (user == null) return currentQuests;
+
+      // 3. Tarih Kontrolü: Görevler bugüne mi ait?
+      final now = DateTime.now();
+      final lastRefresh = user.lastQuestRefreshDate?.toDate();
+
+      bool isFresh = false;
+      if (lastRefresh != null) {
+        // Basit yerel tarih kontrolü
+        isFresh = lastRefresh.year == now.year &&
+                  lastRefresh.month == now.month &&
+                  lastRefresh.day == now.day;
+      }
+
+      // Eğer veri tazeyse ve liste boş değilse, sunucuyu rahatsız etme!
+      if (isFresh && currentQuests.isNotEmpty) {
+        if (kDebugMode) {
+          debugPrint('[QuestService] Görevler zaten güncel, sunucu çağrısı atlandı');
+        }
+        return currentQuests;
+      }
+
+      // 4. Veri bayat veya yok: Sunucudan yenileme iste
+      if (kDebugMode) {
+        debugPrint('[QuestService] Görevler yenileniyor... (isFresh: $isFresh, questCount: ${currentQuests.length})');
+      }
+
+      try {
+        // Debug modunda değilsek AppCheck token al
+        if (!kDebugMode) {
+          await ensureAppCheckTokenReady();
+        }
+
+        final functions = _ref.read(functionsProvider);
+        // Yeni optimized fonksiyonu çağır
+        final callable = functions.httpsCallable('quests-regenerateDailyQuests');
+        final result = await callable.call();
+
+        final data = result.data as Map<String, dynamic>?;
+
+        // Session state'i temizle (görevler yenilendiğinde)
+        if (data?['skipped'] != true) {
+          _ref.read(sessionCompletedQuestsProvider.notifier).state = <String>{};
+          if (kDebugMode) {
+            debugPrint('[QuestService] Görevler yenilendi: ${data?['dailyCount']} görev');
+          }
+        }
+
+        // Yenileme bitti, en güncel hali çek
+        final refreshedQuests = await _ref.read(firestoreServiceProvider).getDailyQuestsOnce(userId);
+        _ref.read(questGenerationIssueProvider.notifier).state = false;
+        return refreshedQuests;
+      } catch (e, st) {
+        if (kDebugMode) {
+          debugPrint('[QuestService] Yenileme hatası: $e');
+          debugPrint(st.toString());
+        }
+        _ref.read(questGenerationIssueProvider.notifier).state = true;
+        // Hata durumunda elimizdekini gösterelim
+        return currentQuests;
       }
     } finally {
       _inProgress = false;

@@ -801,29 +801,38 @@ class FirestoreService {
 
   // YENİ: Public profile oku (güvenli alanlar)
   Future<Map<String, dynamic>?> getPublicProfileRaw(String userId) async {
+    // 1. Önce Public Profile'a bak (En hızlı ve doğru yöntem)
     final snap = await _publicProfileDoc(userId).get();
     if (snap.exists) return snap.data();
 
-    // GERİYE DÖNÜK UYUMLULUK: public_profiles yoksa users + stats'tan güvenli alanları derle
-    try {
-      final userSnap = await usersCollection.doc(userId).get();
-      if (!userSnap.exists) return null;
-      final u = userSnap.data() ?? <String, dynamic>{};
-      final statsSnap = await _userStatsDoc(userId).get();
-      final s = statsSnap.data() ?? const <String, dynamic>{};
+    // 2. Eğer kendi profilimse, users koleksiyonundan okuyabilirim (Fallback)
+    // Başkasının 'users' dokümanını okumak YASAKTIR (Permission Denied verir).
+    final currentUid = getUserId();
+    if (userId == currentUid) {
+      try {
+        final userSnap = await usersCollection.doc(userId).get();
+        if (!userSnap.exists) return null;
 
-      return <String, dynamic>{
-        'name': (u['name'] ?? '') as String,
-        'testCount': ((s['testCount'] ?? u['testCount'] ?? 0) as num).toInt(),
-        'totalNetSum': ((s['totalNetSum'] ?? u['totalNetSum'] ?? 0.0) as num).toDouble(),
-        'engagementScore': ((s['engagementScore'] ?? u['engagementScore'] ?? 0) as num).toInt(),
-        'streak': ((s['streak'] ?? u['streak'] ?? 0) as num).toInt(),
-        'avatarStyle': u['avatarStyle'] as String?,
-        'avatarSeed': u['avatarSeed'] as String?,
-      };
-    } catch (_) {
-      return null;
+        final u = userSnap.data() ?? <String, dynamic>{};
+        final statsSnap = await _userStatsDoc(userId).get();
+        final s = statsSnap.data() ?? const <String, dynamic>{};
+
+        return <String, dynamic>{
+          'name': (u['name'] ?? '') as String,
+          'testCount': ((s['testCount'] ?? u['testCount'] ?? 0) as num).toInt(),
+          'totalNetSum': ((s['totalNetSum'] ?? u['totalNetSum'] ?? 0.0) as num).toDouble(),
+          'engagementScore': ((s['engagementScore'] ?? u['engagementScore'] ?? 0) as num).toInt(),
+          'streak': ((s['streak'] ?? u['streak'] ?? 0) as num).toInt(),
+          'avatarStyle': u['avatarStyle'] as String?,
+          'avatarSeed': u['avatarSeed'] as String?,
+        };
+      } catch (_) {
+        return null;
+      }
     }
+
+    // Başkasıysa ve public profile yoksa, kullanıcı silinmiş demektir.
+    return null;
   }
 
   Future<Map<String, dynamic>?> getLeaderboardUserRaw(String examType, String userId) async {
@@ -1141,6 +1150,50 @@ class FirestoreService {
     return _followingCollection(userId).snapshots().map((qs) => qs.docs.map((d) => d.id).toList());
   }
 
+  // === SAYFALAMALI TAKİP LİSTESİ (MALİYET DOSTU) ===
+
+  /// Takipçileri parça parça getirir
+  Future<(List<String> ids, DocumentSnapshot? lastDoc)> getFollowersPaginated(
+    String userId, {
+    int limit = 20,
+    DocumentSnapshot? startAfter,
+  }) async {
+    Query query = _followersCollection(userId)
+        .orderBy('createdAt', descending: true) // En yeni takipçiler üstte
+        .limit(limit);
+
+    if (startAfter != null) {
+      query = query.startAfterDocument(startAfter);
+    }
+
+    final qs = await query.get();
+    final ids = qs.docs.map((d) => d.id).toList();
+    final lastDoc = qs.docs.isNotEmpty ? qs.docs.last : null;
+
+    return (ids, lastDoc);
+  }
+
+  /// Takip edilenleri parça parça getirir
+  Future<(List<String> ids, DocumentSnapshot? lastDoc)> getFollowingPaginated(
+    String userId, {
+    int limit = 20,
+    DocumentSnapshot? startAfter,
+  }) async {
+    Query query = _followingCollection(userId)
+        .orderBy('createdAt', descending: true)
+        .limit(limit);
+
+    if (startAfter != null) {
+      query = query.startAfterDocument(startAfter);
+    }
+
+    final qs = await query.get();
+    final ids = qs.docs.map((d) => d.id).toList();
+    final lastDoc = qs.docs.isNotEmpty ? qs.docs.last : null;
+
+    return (ids, lastDoc);
+  }
+
   /// Stream whether me is following target
   Stream<bool> streamIsFollowing(String meUserId, String targetUserId) {
     return _followersCollection(targetUserId)
@@ -1160,27 +1213,46 @@ class FirestoreService {
     required String deletedUserId,
   }) async {
     try {
-      // Hedef kullanıcının var olup olmadığını kontrol et
-      final userDoc = await usersCollection.doc(deletedUserId).get();
+      // DÜZELTME: users koleksiyonuna değil, public_profiles koleksiyonuna bakıyoruz.
+      // Çünkü başkasının 'users' dokümanını okuma iznimiz yok, ama public_profiles herkese açık.
+      final publicProfileDoc = await _firestore.collection('public_profiles').doc(deletedUserId).get();
 
-      // Kullanıcı hala varsa temizlemeye gerek yok
-      if (userDoc.exists) return;
+      // Eğer public profil varsa kullanıcı silinmemiştir, temizlemeye gerek yok
+      if (publicProfileDoc.exists) return;
 
       // Kullanıcı silinmiş, kendi listelerimizden temizle
       final batch = _firestore.batch();
 
+      // Hangi listelerde bu kullanıcı var kontrol et
+      final followingDoc = await _followingCollection(currentUserId).doc(deletedUserId).get();
+      final followerDoc = await _followersCollection(currentUserId).doc(deletedUserId).get();
+
+      final userRef = usersCollection.doc(currentUserId);
+
       // Current user'ın following listesinden sil (eğer varsa)
-      final followingRef = _followingCollection(currentUserId).doc(deletedUserId);
-      batch.delete(followingRef);
+      if (followingDoc.exists) {
+        final followingRef = _followingCollection(currentUserId).doc(deletedUserId);
+        batch.delete(followingRef);
+
+        // Following tetikleyicisi olmadığı için sayacı manuel düşür
+        batch.update(userRef, {
+          'followingCount': FieldValue.increment(-1),
+        });
+      }
 
       // Current user'ın followers listesinden sil (eğer varsa)
-      final followerRef = _followersCollection(currentUserId).doc(deletedUserId);
-      batch.delete(followerRef);
+      if (followerDoc.exists) {
+        final followerRef = _followersCollection(currentUserId).doc(deletedUserId);
+        batch.delete(followerRef);
 
-      await batch.commit();
+        // Followers için tetikleyici var (onFollowerDeleted) - sayacı otomatik düşürecek
+        // Bu nedenle burada manuel güncellemeye gerek yok
+      }
 
-      // Log (isteğe bağlı - production'da kaldırılabilir)
-      debugPrint('✅ Lazy cleanup: Deleted user $deletedUserId removed from $currentUserId lists');
+      if (followingDoc.exists || followerDoc.exists) {
+        await batch.commit();
+        debugPrint('✅ Lazy cleanup: Deleted user $deletedUserId removed from $currentUserId lists');
+      }
     } catch (e) {
       // Sessizce hata yut - bu bir background cleanup işlemi
       debugPrint('⚠️ Lazy cleanup failed for $deletedUserId: $e');
