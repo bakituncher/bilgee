@@ -830,6 +830,7 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
     final routes = <Map<String, String>>[
       {'label': 'Ana Sayfa', 'path': '/home'},
       {'label': 'Görevler', 'path': '/home/quests'},
+      {'label': 'Mağaza (Update)', 'path': '/store'},
       {'label': 'Pomodoro', 'path': '/home/pomodoro'},
       {'label': 'Deneme Ekle', 'path': '/home/add-test'},
       {'label': 'İstatistik', 'path': '/stats/overview'},
