@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/shared/notifications/in_app_notification_model.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class NotificationCenterScreen extends ConsumerWidget {
   const NotificationCenterScreen({super.key});
@@ -362,9 +364,46 @@ class _NotificationDetailSheet extends ConsumerWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: FilledButton.icon(
-                  onPressed: () {
+                  onPressed: () async {
                     Navigator.of(context).maybePop();
-                    context.go(item.route);
+
+                    // 1. Mağaza Yönlendirmesi Kontrolü
+                    if (item.route == '/store' || item.route == 'UPDATE_APP') {
+                       final appId = Platform.isAndroid ? 'com.codenzi.taktik' : 'YOUR_IOS_APP_ID';
+                       final url = Uri.parse(
+                         Platform.isAndroid
+                           ? "market://details?id=$appId"
+                           : "https://apps.apple.com/app/id$appId"
+                       );
+                       if (await canLaunchUrl(url)) {
+                         await launchUrl(url, mode: LaunchMode.externalApplication);
+                       } else {
+                          // Fallback
+                          final webUrl = Uri.parse(
+                            Platform.isAndroid
+                              ? "https://play.google.com/store/apps/details?id=$appId"
+                              : "https://apps.apple.com/app/id$appId"
+                          );
+                          if (await canLaunchUrl(webUrl)) {
+                            await launchUrl(webUrl, mode: LaunchMode.externalApplication);
+                          }
+                       }
+                       return;
+                    }
+
+                    // 2. HTTP Link Kontrolü
+                    if (item.route.startsWith('http')) {
+                       final uri = Uri.parse(item.route);
+                       if (await canLaunchUrl(uri)) {
+                         await launchUrl(uri, mode: LaunchMode.externalApplication);
+                       }
+                       return;
+                    }
+
+                    // 3. Uygulama İçi Rota
+                    if (context.mounted) {
+                      context.go(item.route);
+                    }
                   },
                   icon: const Icon(Icons.open_in_new_rounded),
                   label: const Text('İlgili sayfayı aç'),
