@@ -148,6 +148,20 @@ exports.onUserUpdate = onDocumentUpdated("users/{userId}", async (event) => {
   }
 });
 
+// YENİ: Kullanıcı ana dökümanı silindiğinde public_profile'ı da temizle.
+// Bu, deleteUserAccount fonksiyonundaki manuel silme işleminden sonra
+// onUserUpdate tetikleyicisinin yanlışlıkla belgeyi tekrar oluşturması (zombi belge)
+// durumunu düzeltir.
+exports.onUserDeleted = onDocumentDeleted("users/{userId}", async (event) => {
+  const uid = event.params.userId;
+  try {
+    await db.collection("public_profiles").doc(uid).delete();
+    logger.info(`Public profile cleanup completed for deleted user ${uid}`);
+  } catch (e) {
+    logger.warn("onUserDeleted cleanup failed", { uid, error: String(e) });
+  }
+});
+
 module.exports = {
   ...exports,
   updatePublicProfile,
