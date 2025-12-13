@@ -445,7 +445,7 @@ class _UserSearchTileState extends ConsumerState<_UserSearchTile> {
                               // Başarılı takip için bildirim göster
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('$displayName takip edildi!'),
+                                  content: Text('${username.isNotEmpty ? "@$username" : "Kullanıcı"} takip edildi!'),
                                   backgroundColor: Theme.of(context).colorScheme.primary,
                                   duration: const Duration(seconds: 2),
                                 ),

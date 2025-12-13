@@ -218,6 +218,8 @@ class _FollowListTileState extends ConsumerState<_FollowListTile> {
         }
 
         final displayName = _safeDisplayName(data);
+        // Username verisini doğrudan kaynaktan alıyoruz
+        final usernameRaw = (data?['username'] as String?) ?? '';
         final avatarStyle = data?['avatarStyle'] as String?;
         final avatarSeed = data?['avatarSeed'] as String?;
         final isFollowing = _optimistic ?? (isFollowingAsync.valueOrNull ?? false);
@@ -365,9 +367,10 @@ class _FollowListTileState extends ConsumerState<_FollowListTile> {
                                     targetUserId: widget.targetUserId,
                                   );
                                   // Başarılı takip için bildirim göster
+                                  // Doğrudan ham username verisini kullanıyoruz
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text('$displayName takip edildi!'),
+                                      content: Text('${usernameRaw.isNotEmpty ? "@$usernameRaw" : "Kullanıcı"} takip edildi!'),
                                       backgroundColor: Theme.of(context).colorScheme.primary,
                                       duration: const Duration(seconds: 2),
                                     ),

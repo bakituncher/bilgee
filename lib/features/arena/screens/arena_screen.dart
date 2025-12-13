@@ -505,6 +505,18 @@ class _RankCard extends ConsumerWidget {
                                 currentUserId: currentUserId,
                                 targetUserId: entry.userId,
                               );
+                              // Başarılı takip bildirimi eklendi
+                              if (context.mounted) {
+                                final username = entry.username?.trim() ?? '';
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('${username.isNotEmpty ? "@$username" : "Kullanıcı"} takip edildi!'),
+                                    behavior: SnackBarBehavior.floating,
+                                    backgroundColor: Theme.of(context).colorScheme.primary,
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              }
                             }
                           } catch (e) {
                             ScaffoldMessenger.of(context).showSnackBar(
