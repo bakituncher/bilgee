@@ -700,7 +700,7 @@ class _PriceTransparencyFooter extends StatelessWidget {
       child: Text(
         'Abonelik, siz iptal edene kadar seçtiğiniz tarife (aylık/yıllık) üzerinden otomatik olarak yenilenir. '
             'Ücretsiz deneme süresi (varsa) sonunda ücretlendirme başlar. '
-            'Aboneliğinizi Google Play Store\'daki "Abonelikler" bölümünden istediğiniz zaman kolayca iptal edebilirsiniz. '
+            'Aboneliğinizi uygulamanın ayarlar sekmesinde bulunan "Abonelik Yönetimi" bölümünden istediğiniz zaman kolayca iptal edebilirsiniz. '
             'Fiyatlara tüm vergiler dahildir.',
         textAlign: TextAlign.center,
         style: textStyle,
