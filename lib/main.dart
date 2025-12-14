@@ -2,6 +2,7 @@
 //Rahman ve Rahim olan Allah'ın adıyla
 //Bismilahirrahmanirrahim
 import 'dart:async';
+import 'dart:io';
 import 'dart:ui';
 import 'package:taktik/core/navigation/app_router.dart';
 import 'package:taktik/core/theme/app_theme.dart';
@@ -23,6 +24,7 @@ import 'package:taktik/core/services/revenuecat_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:taktik/core/services/connectivity_service.dart';
 import 'package:taktik/shared/screens/no_internet_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -235,8 +237,51 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final router = ref.read(goRouterProvider);
-      NotificationService.instance.initialize(onNavigate: (route) {
-        router.go(route);
+      NotificationService.instance.initialize(onNavigate: (route) async {
+        // 1. Mağaza Yönlendirmesi Kontrolü
+        if (route == '/store' || route == 'UPDATE_APP') {
+          if (Platform.isAndroid || Platform.isIOS) {
+            // Android Paket Adınız: com.codenzi.taktik
+            // iOS ID'niz belli olunca buraya yazarsınız
+            final appId = Platform.isAndroid ? 'com.codenzi.taktik' : 'YOUR_IOS_APP_ID';
+
+            final url = Uri.parse(
+              Platform.isAndroid
+                ? "market://details?id=$appId"
+                : "https://apps.apple.com/app/id$appId"
+            );
+
+            // Önce market protokolü ile açmayı dene (Mağaza uygulaması açılır)
+            if (await canLaunchUrl(url)) {
+              await launchUrl(url, mode: LaunchMode.externalApplication);
+            } else {
+              // Olmazsa web linki olarak aç
+              final webUrl = Uri.parse(
+                Platform.isAndroid
+                  ? "https://play.google.com/store/apps/details?id=$appId"
+                  : "https://apps.apple.com/app/id$appId"
+              );
+              if (await canLaunchUrl(webUrl)) {
+                 await launchUrl(webUrl, mode: LaunchMode.externalApplication);
+              }
+            }
+          }
+          return;
+        }
+
+        // 2. HTTP Link Kontrolü (Web sitesine yönlendirme gerekirse)
+        if (route.startsWith('http')) {
+           final uri = Uri.parse(route);
+           if (await canLaunchUrl(uri)) {
+             await launchUrl(uri, mode: LaunchMode.externalApplication);
+           }
+           return;
+        }
+
+        // 3. Uygulama İçi Rota (Mevcut davranış)
+        if (route.isNotEmpty) {
+           router.go(route);
+        }
       });
     });
   }

@@ -235,8 +235,6 @@ const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, e
     await deleteQueryInBatches(db.collection("posts").where("userId", "==", userId), 300, "Posts collection");
     await deleteQueryInBatches(db.collection("questionReports").where("userId", "==", userId), 300, "Question reports collection");
 
-    // YENİ: Analitik olaylar
-    await deleteQueryInBatches(db.collection("analytics_events").where("userId", "==", userId), 300, "Analytics events collection");
 
     // === 4) TAKİP SİSTEMİ TEMİZLİĞİ (LAZY CLEANUP - PERFORMANS GÜVENLİĞİ) ===
     // ⚠️ ÖNCEKİ YÖNTEM:
@@ -434,11 +432,27 @@ const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, e
 
     await miscellaneousDeletions;
 
+    // === 12.5) KULLANICI ALT KOLEKSİYONLARINDAN KRİTİK VERİLERİ MANUEL SİL ===
+    // Not: recursiveDelete() güvenilir olsa da, kritik verileri önceden manuel silmek
+    //      hem log'da görünürlük sağlar hem de daha kontrollü bir silme işlemi yapar
+    try {
+      // Uygulama içi bildirimler (subcollection: users/{userId}/in_app_notifications)
+      await deleteQueryInBatches(
+        db.collection("users").doc(userId).collection("in_app_notifications"),
+        300,
+        "In-app notifications (subcollection)"
+      );
+    } catch (error) {
+      deletionLog.errors.push({ step: "In-app notifications subcollection", error: String(error) });
+      logger.error("In-app notifications subcollection cleanup failed:", error);
+      // Devam et, recursiveDelete yine de deneyecek
+    }
+
     // === 13) ANA KULLANICI DOKUMANI VE TÜM ALT KOLEKSİYONLARINI SİL (RECURSİVE DELETE) ===
     // ✨ YENİ: recursiveDelete() metodu kullanılıyor
     // Bu, users/{userId} dokümanını ve TÜM alt koleksiyonlarını otomatik olarak siler:
     // - state, user_activity, topic_performance, savedWorkshops
-    // - daily_quests, performance, plans, devices, in_app_notifications
+    // - daily_quests, performance, plans, devices, in_app_notifications (yukarıda manuel silindi)
     // - followers, following, blocked_users
     // - İç içe koleksiyonlar (user_activity/{day}/visits, completed_tasks, vb.)
     // - masteredTopics ve diğer tüm nested koleksiyonlar

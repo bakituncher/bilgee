@@ -31,7 +31,9 @@ service cloud.firestore {
                                  // Stratejik plan işaretleri
                                  'hasCreatedStrategicPlan', 'lastStrategyCreationDate',
                                  // Lazy cleanup için izin verildi
-                                 'followingCount']);
+                                 'followingCount',
+                                 // Global kampanyaları kapatma izni
+                                 'closedCampaignIds']);
 
       // --- ALT KOLEKSİYONLAR ---
       match /stars/{day} {
@@ -290,6 +292,25 @@ service cloud.firestore {
       allow read: if request.auth != null && request.auth.token.admin == true;
       allow write: if false;
     }
+
+    // =====================================================================
+    // GLOBAL KAMPANYALAR (PULL MODEL BİLDİRİMLER)
+    // =====================================================================
+    // Admin tarafından oluşturulan global kampanyalar
+    // Kullanıcılar okuyabilir, ancak yazamaz (sunucu tarafından yönetilir)
+    match /global_campaigns/{campaignId} {
+      // Tüm kullanıcılar aktif kampanyaları okuyabilir
+      // Not: Firestore kuralları WHERE koşullarını zorlamaz,
+      // bu yüzden uygulama tarafında isActive==true filtrelemesi yapılmalı
+      allow read: if request.auth != null;
+
+      // Sadece adminler yazabilir (genellikle cloud function üzerinden)
+      allow create, update: if request.auth != null && request.auth.token.admin == true;
+      allow delete: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    // Kullanıcıların kapatılan/görülen kampanya ID'leri
+    // users/{userId} altındaki closedCampaignIds array'i için kural zaten mevcut
 
     // =====================================================================
     // COLLECTION GROUP QUERIES

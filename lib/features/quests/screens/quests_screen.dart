@@ -1,6 +1,5 @@
 // lib/features/quests/screens/quests_screen.dart
 import 'dart:async';
-import 'package:taktik/core/analytics/analytics_logger.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:taktik/features/quests/logic/quest_service.dart';
@@ -300,11 +299,7 @@ class _GamifiedQuestCardState extends ConsumerState<GamifiedQuestCard> {
   }
 
   void _handleQuestTap(BuildContext context) {
-    ref.read(analyticsLoggerProvider).logQuestEvent(
-      userId: widget.userId,
-      event: 'quest_tap',
-      data: {'questId': widget.quest.id, 'category': widget.quest.category.name}
-    );
+    // Analytics logging kaldırıldı - artık başka bir analitik aracı kullanılıyor
 
     String targetRoute = widget.quest.actionRoute;
     if (targetRoute == '/coach') {

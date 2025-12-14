@@ -15,11 +15,17 @@ import 'package:taktik/shared/notifications/in_app_notification_model.dart';
 import 'package:taktik/data/models/user_stats_model.dart';
 import 'package:taktik/data/models/focus_session_model.dart';
 import 'package:taktik/data/providers/moderation_providers.dart';
+import 'package:taktik/shared/services/global_campaign_service.dart'; // YENİ
 
 final firestoreProvider = Provider<FirebaseFirestore>((ref) => FirebaseFirestore.instance);
 
 final firestoreServiceProvider = Provider<FirestoreService>((ref) {
   return FirestoreService(ref.watch(firestoreProvider));
+});
+
+// YENİ: Global Campaign Service
+final globalCampaignServiceProvider = Provider<GlobalCampaignService>((ref) {
+  return GlobalCampaignService();
 });
 
 final userProfileProvider = StreamProvider.autoDispose<UserModel?>((ref) {
@@ -95,20 +101,57 @@ final functionsProvider = Provider<FirebaseFunctions>((ref) {
   return FirebaseFunctions.instanceFor(region: 'us-central1');
 });
 
+// YENİ: Kullanıcı bildirimleri + Global kampanyalar (Birleşik Stream)
 final inAppNotificationsProvider = StreamProvider<List<InAppNotification>>((ref) {
   final user = ref.watch(authControllerProvider).value;
-  if (user != null) {
-    return ref.watch(firestoreServiceProvider).streamInAppNotifications(user.uid, limit: 100);
-  }
-  return const Stream<List<InAppNotification>>.empty();
+  if (user == null) return const Stream<List<InAppNotification>>.empty();
+
+  // Global kampanya servisini al
+  final globalService = ref.watch(globalCampaignServiceProvider);
+
+  // Kullanıcının özel bildirimlerini stream olarak dinle
+  final userNotificationsStream = ref
+      .watch(firestoreServiceProvider)
+      .streamInAppNotifications(user.uid, limit: 100);
+
+  // Global kampanyaları stream olarak dinle
+  final globalCampaignsStream = globalService.watchGlobalCampaigns();
+
+  // İki stream'i birleştir ve sırala
+  return userNotificationsStream.asyncMap((userNotifications) async {
+    // Global kampanyaların son halini al
+    final globalCampaigns = await globalCampaignsStream.first;
+
+    // Birleştir ve tarihe göre sırala
+    final allNotifications = [...globalCampaigns, ...userNotifications];
+    allNotifications.sort((a, b) {
+      final aTime = a.createdAt?.toDate() ?? DateTime.now();
+      final bTime = b.createdAt?.toDate() ?? DateTime.now();
+      return bTime.compareTo(aTime);
+    });
+
+    return allNotifications;
+  });
 });
 
+// YENİ: Okunmamış bildirim sayısı (kullanıcı bildirimleri + global kampanyalar)
 final unreadInAppCountProvider = StreamProvider<int>((ref) {
   final user = ref.watch(authControllerProvider).value;
-  if (user != null) {
-    return ref.watch(firestoreServiceProvider).streamUnreadInAppCount(user.uid);
-  }
-  return const Stream<int>.empty();
+  if (user == null) return const Stream<int>.empty();
+
+  // Kullanıcının okunmamış bildirimlerini dinle
+  final userUnreadStream = ref
+      .watch(firestoreServiceProvider)
+      .streamUnreadInAppCount(user.uid);
+
+  // Global kampanya sayısını al
+  final globalService = ref.watch(globalCampaignServiceProvider);
+
+  return userUnreadStream.asyncMap((userUnreadCount) async {
+    // Global kampanya sayısını al (hepsi okunmamış kabul edilir)
+    final globalCount = await globalService.getUnreadGlobalCampaignsCount();
+    return userUnreadCount + globalCount;
+  });
 });
 
 // YENİ: Kullanıcı istatistik akışı (streak, engagementScore, focusMinutes, bp, pomodoroSessions)

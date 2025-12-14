@@ -31,6 +31,9 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
   final _buildMinCtrl = TextEditingController();
   final _buildMaxCtrl = TextEditingController();
 
+  // YENİ: Premium filtresi
+  bool _onlyNonPremium = false;
+
   // Basit mod: sadece formu göster (önizleme + geçmiş gizli)
   bool _simpleMode = true;
 
@@ -178,6 +181,7 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
     _platformsSelected.clear();
     _buildMinCtrl.clear();
     _buildMaxCtrl.clear();
+    _onlyNonPremium = false; // YENİ: Premium filtresini sıfırla
     _audience = 'all';
     _examType = null;
     _selectedExams.clear();
@@ -194,6 +198,8 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
     required bool scheduled,
     int? totalUsers,
     int? totalSent,
+    String? writesSaved, // YENİ PARAMETRE: Global kampanya tasarruf bilgisi
+    String? readsSaved, // YENİ PARAMETRE: Okuma tasarrufu
   }) async {
     HapticFeedback.mediumImpact();
     if (!mounted) return;
@@ -225,7 +231,14 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
               Text(
                 scheduled
                     ? 'Zamanlamaya alındı. Kampanyayı kampanya geçmişinden takip edebilirsin.'
-                    : 'Gönderim tamamlandı. Kapsam: ${totalSent ?? '-'} / ${totalUsers ?? '-'}',
+                    : writesSaved != null
+                        ? 'Global kampanya başarıyla yayınlandı! 🚀\n'
+                          'Kullanıcılar uygulamayı açtıkça bildirimi görecekler.\n\n'
+                          '💰 Maliyet Tasarrufu:\n'
+                          '• Yazma: $writesSaved işlem\n'
+                          '${readsSaved != null ? '• Okuma: $readsSaved işlem' : ''}'
+                        : 'Gönderim tamamlandı. Kapsam: ${totalSent ?? '-'} / ${totalUsers ?? '-'}',
+                style: const TextStyle(height: 1.4),
               ),
               const SizedBox(height: 16),
               Row(
@@ -277,6 +290,7 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
         if (_imageUrl != null) 'imageUrl': _imageUrl,
         'audience': audience,
         'sendType': _sendType,
+        'onlyNonPremium': _onlyNonPremium, // YENİ: Premium filtresi
         if (_scheduleEnabled && _scheduledAt != null) 'scheduledAt': _scheduledAt!.millisecondsSinceEpoch,
       };
       final res = await callable.call(data);
@@ -285,7 +299,16 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
       final scheduled = m['scheduled'] == true;
       final total = (m['totalUsers'] as num?)?.toInt();
       final sent = (m['totalSent'] as num?)?.toInt();
-      await _showSuccessSheet(scheduled: scheduled, totalUsers: total, totalSent: sent);
+      final writesSaved = m['writesSaved']?.toString(); // Backend'den gelen global kampanya bilgisi
+      final readsSaved = m['readsSaved']?.toString(); // Backend'den gelen okuma tasarrufu
+
+      await _showSuccessSheet(
+        scheduled: scheduled,
+        totalUsers: total,
+        totalSent: sent,
+        writesSaved: writesSaved, // Global kampanya tasarruf göstergesi
+        readsSaved: readsSaved, // Okuma tasarrufu
+      );
     } catch (e) {
       if (!mounted) return;
       HapticFeedback.heavyImpact();
@@ -309,6 +332,7 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
         if (_imageUrl != null) 'imageUrl': _imageUrl,
         'audience': {'type': 'uids', 'uids': [uid]},
         'sendType': _sendType,
+        'onlyNonPremium': _onlyNonPremium, // YENİ: Premium filtresi
         if (_scheduleEnabled && _scheduledAt != null) 'scheduledAt': _scheduledAt!.millisecondsSinceEpoch,
       };
       final res = await callable.call(data);
@@ -317,7 +341,16 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
       final scheduled = m['scheduled'] == true;
       final total = (m['totalUsers'] as num?)?.toInt();
       final sent = (m['totalSent'] as num?)?.toInt();
-      await _showSuccessSheet(scheduled: scheduled, totalUsers: total, totalSent: sent);
+      final writesSaved = m['writesSaved']?.toString(); // Test için de global kampanya bilgisi
+      final readsSaved = m['readsSaved']?.toString(); // Test için okuma tasarrufu
+
+      await _showSuccessSheet(
+        scheduled: scheduled,
+        totalUsers: total,
+        totalSent: sent,
+        writesSaved: writesSaved,
+        readsSaved: readsSaved,
+      );
     } catch (e) {
       if (!mounted) return;
       HapticFeedback.heavyImpact();
@@ -830,6 +863,7 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
     final routes = <Map<String, String>>[
       {'label': 'Ana Sayfa', 'path': '/home'},
       {'label': 'Görevler', 'path': '/home/quests'},
+      {'label': 'Mağaza (Update)', 'path': '/store'},
       {'label': 'Pomodoro', 'path': '/home/pomodoro'},
       {'label': 'Deneme Ekle', 'path': '/home/add-test'},
       {'label': 'İstatistik', 'path': '/stats/overview'},
@@ -960,6 +994,20 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
               return null;
             },
           ),
+        // YENİ: PREMIUM FİLTRESİ
+        const SizedBox(height: 12),
+        const Divider(),
+        const SizedBox(height: 12),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Sadece Premium Olmayanlara Gönder'),
+          subtitle: const Text('Premium kullanıcılar bu bildirimi almaz (Yükseltme teklifleri için ideal).'),
+          value: _onlyNonPremium,
+          onChanged: (v) => setState(() => _onlyNonPremium = v),
+          activeColor: Theme.of(context).colorScheme.error,
+        ),
+        const SizedBox(height: 12),
+        const Divider(),
         // Platform & Sürüm (opsiyonel)
         const SizedBox(height: 12),
         const Text('Platform/Sürüm (opsiyonel)'),
