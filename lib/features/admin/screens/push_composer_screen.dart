@@ -194,6 +194,7 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
     required bool scheduled,
     int? totalUsers,
     int? totalSent,
+    String? writesSaved, // YENİ PARAMETRE: Global kampanya tasarruf bilgisi
   }) async {
     HapticFeedback.mediumImpact();
     if (!mounted) return;
@@ -225,7 +226,10 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
               Text(
                 scheduled
                     ? 'Zamanlamaya alındı. Kampanyayı kampanya geçmişinden takip edebilirsin.'
-                    : 'Gönderim tamamlandı. Kapsam: ${totalSent ?? '-'} / ${totalUsers ?? '-'}',
+                    : writesSaved != null
+                        ? 'Global kampanya başarıyla yayınlandı! 🚀\nKullanıcılar uygulamayı açtıkça bildirimi görecekler.\n(Veritabanı Tasarrufu: $writesSaved işlem)'
+                        : 'Gönderim tamamlandı. Kapsam: ${totalSent ?? '-'} / ${totalUsers ?? '-'}',
+                style: const TextStyle(height: 1.4),
               ),
               const SizedBox(height: 16),
               Row(
@@ -285,7 +289,14 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
       final scheduled = m['scheduled'] == true;
       final total = (m['totalUsers'] as num?)?.toInt();
       final sent = (m['totalSent'] as num?)?.toInt();
-      await _showSuccessSheet(scheduled: scheduled, totalUsers: total, totalSent: sent);
+      final writesSaved = m['writesSaved']?.toString(); // Backend'den gelen global kampanya bilgisi
+
+      await _showSuccessSheet(
+        scheduled: scheduled,
+        totalUsers: total,
+        totalSent: sent,
+        writesSaved: writesSaved, // Global kampanya tasarruf göstergesi
+      );
     } catch (e) {
       if (!mounted) return;
       HapticFeedback.heavyImpact();
@@ -317,7 +328,14 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
       final scheduled = m['scheduled'] == true;
       final total = (m['totalUsers'] as num?)?.toInt();
       final sent = (m['totalSent'] as num?)?.toInt();
-      await _showSuccessSheet(scheduled: scheduled, totalUsers: total, totalSent: sent);
+      final writesSaved = m['writesSaved']?.toString(); // Test için de global kampanya bilgisi
+
+      await _showSuccessSheet(
+        scheduled: scheduled,
+        totalUsers: total,
+        totalSent: sent,
+        writesSaved: writesSaved,
+      );
     } catch (e) {
       if (!mounted) return;
       HapticFeedback.heavyImpact();

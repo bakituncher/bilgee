@@ -342,6 +342,97 @@ exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => 
 
     if (!title || !body) throw new HttpsError("invalid-argument", "title ve body zorunludur");
 
+    // ---- YENİ: GLOBAL KAMPANYA SİSTEMİ (PULL MODELİ) ----
+    // Hedef kitle "all" (herkes) ise ve inapp içeriyorsa, tek tek yazmak yerine
+    // global kampanya oluştur. Bu 100.000 yazma yerine 1 yazma demektir!
+    if (audience.type === 'all' && (sendType === 'inapp' || sendType === 'both')) {
+
+        const expiryDays = request.data?.expiryDays || 7; // Kampanya kaç gün aktif kalacak?
+        const expiresAt = admin.firestore.Timestamp.fromDate(
+          new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000)
+        );
+
+        // 1. Global Kampanya Koleksiyonuna Tek Bir Kayıt At (Write Cost: 1)
+        const globalCampaignRef = db.collection('global_campaigns').doc();
+        await globalCampaignRef.set({
+            title,
+            body,
+            imageUrl,
+            route,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            createdBy: request.auth.uid,
+            isActive: true, // Mesaj aktif mi?
+            expiresAt, // Örn: 7 gün sonra otomatik kapanır
+            type: 'global_announcement',
+            priority: request.data?.priority || 'normal', // 'high', 'normal', 'low'
+        });
+
+        // 2. Sadece Push Bildirimleri İçin Topic Kullan (Write Cost: 0)
+        let pushResult = { successCount: 0, failureCount: 0 };
+        if (sendType === 'push' || sendType === 'both') {
+            const message = {
+                topic: 'general',
+                notification: {
+                  title,
+                  body,
+                  ...(imageUrl ? { imageUrl } : {})
+                },
+                data: {
+                    route,
+                    campaignId: globalCampaignRef.id,
+                    type: 'global_campaign',
+                    click_action: 'FLUTTER_NOTIFICATION_CLICK'
+                },
+                android: {
+                  priority: 'high',
+                  notification: {
+                    channelId: 'bilge_general',
+                    clickAction: 'FLUTTER_NOTIFICATION_CLICK',
+                    ...(imageUrl ? { imageUrl } : {})
+                  }
+                },
+                apns: {
+                  payload: {
+                    aps: {
+                      sound: 'default',
+                      'mutable-content': 1
+                    }
+                  },
+                  ...(imageUrl ? { fcmOptions: { imageUrl } } : {})
+                }
+            };
+
+            try {
+              const response = await messaging.send(message);
+              logger.info('Global campaign push sent via topic', { messageId: response, campaignId: globalCampaignRef.id });
+              pushResult.successCount = 1; // Topic başarılı
+            } catch(e) {
+              logger.error('Global campaign push failed', { error: String(e) });
+              pushResult.failureCount = 1;
+            }
+        }
+
+        // 3. Kampanya kaydını güncelle (istatistik için)
+        await globalCampaignRef.update({
+          status: 'active',
+          pushSent: sendType === 'push' || sendType === 'both',
+          pushSuccess: pushResult.successCount > 0,
+          method: 'global_broadcast'
+        });
+
+        return {
+            ok: true,
+            campaignId: globalCampaignRef.id,
+            method: 'global_broadcast',
+            collection: 'global_campaigns',
+            writesSaved: '100000+', // 🎉
+            message: 'Kampanya global olarak yayınlandı. Kullanıcılar uygulamayı açtıklarında görecekler.',
+            pushSent: pushResult.successCount > 0
+        };
+    }
+
+    // ---- ESKİ SİSTEM: Filtreleme varsa (belirli kullanıcı grubu) ----
+    // Eğer audience.type !== 'all' veya filtre varsa, eski mantık devam eder
     const campaignRef = db.collection("push_campaigns").doc();
     const baseDoc = {
       title,
@@ -370,7 +461,7 @@ exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => 
     await processAudienceInBatches(audience, async (uidBatch) => {
       totalUsers += uidBatch.length;
 
-      // In-app bildirimler
+      // In-app bildirimler (filtrelenmiş grup için)
       if (sendType === "inapp" || sendType === "both") {
         const inAppPromises = uidBatch.map((uid) =>
           createInAppForUser(uid, { title, body, imageUrl, route, type: "campaign", campaignId: campaignRef.id })
@@ -379,7 +470,7 @@ exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => 
         totalInApp += results.filter(Boolean).length;
       }
 
-      // Push bildirimler
+      // Push bildirimler (filtrelenmiş grup için)
       if (sendType === "push" || sendType === "both") {
         const allTokens = [];
         const batchSize = 100;
@@ -419,7 +510,7 @@ exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => 
       },
       { merge: true }
     );
-    return { ok: true, campaignId: campaignRef.id, totalUsers, totalSent, totalFail, totalInApp };
+    return { ok: true, campaignId: campaignRef.id, totalUsers, totalSent, totalFail, totalInApp, method: 'filtered_batch' };
   });
 
   exports.processScheduledCampaigns = onSchedule({ schedule: "*/5 * * * *", timeZone: "Europe/Istanbul" }, async () => {
@@ -528,3 +619,38 @@ exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => 
       return false;
     }
   }
+
+  // ---- GLOBAL KAMPANYA TEMİZLİĞİ ----
+  // Süresi dolan global kampanyaları otomatik olarak devre dışı bırak
+  exports.cleanupExpiredGlobalCampaigns = onSchedule({
+    schedule: "0 3 * * *", // Her gün saat 03:00'te çalış
+    timeZone: "Europe/Istanbul"
+  }, async () => {
+    const now = admin.firestore.Timestamp.now();
+
+    // Süresi dolmuş ama hala aktif olan kampanyaları bul
+    const expiredSnap = await db
+      .collection('global_campaigns')
+      .where('isActive', '==', true)
+      .where('expiresAt', '<=', now)
+      .limit(50)
+      .get();
+
+    if (expiredSnap.empty) {
+      logger.info('No expired global campaigns found');
+      return;
+    }
+
+    const batch = db.batch();
+    expiredSnap.docs.forEach(doc => {
+      batch.update(doc.ref, {
+        isActive: false,
+        deactivatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        deactivationReason: 'expired'
+      });
+    });
+
+    await batch.commit();
+    logger.info('Expired global campaigns deactivated', { count: expiredSnap.size });
+  });
+
