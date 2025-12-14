@@ -347,7 +347,7 @@ class _GamifiedQuestCardState extends ConsumerState<GamifiedQuestCard> {
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${widget.quest.reward} BP kazandın!'),
+            content: Text('${widget.quest.reward} TP kazandın!'),
             backgroundColor: Colors.green,
           ),
         );

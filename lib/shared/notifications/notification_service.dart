@@ -7,6 +7,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart' as ph;
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 
 class NotificationService {
   NotificationService._();
@@ -131,6 +132,32 @@ class NotificationService {
 
   Future<void> _requestPermission() async {
     try {
+      // iOS için önce App Tracking Transparency (ATT) iznini iste
+      if (Platform.isIOS) {
+        try {
+          final trackingStatus = await AppTrackingTransparency.trackingAuthorizationStatus;
+
+          if (trackingStatus == TrackingStatus.notDetermined) {
+            // Sistemin hazır olması için kısa bir bekleme
+            await Future.delayed(const Duration(milliseconds: 500));
+
+            // ATT izin penceresini göster
+            final newStatus = await AppTrackingTransparency.requestTrackingAuthorization();
+
+            if (kDebugMode) {
+              debugPrint('ATT izin durumu: $newStatus');
+            }
+          } else {
+            if (kDebugMode) {
+              debugPrint('ATT izin durumu (mevcut): $trackingStatus');
+            }
+          }
+        } catch (e) {
+          if (kDebugMode) debugPrint('ATT izin talebi hatası: $e');
+        }
+      }
+
+      // ATT izni alındıktan sonra bildirim iznini iste
       final settings = await FirebaseMessaging.instance.requestPermission(
         alert: true,
         announcement: true,

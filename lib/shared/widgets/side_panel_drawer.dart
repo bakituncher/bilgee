@@ -296,6 +296,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final bool selected = currentLocation.contains('weekly-plan') || currentLocation.contains('strategic-planning');
+    final bool userIsPremium = ref.watch(premiumStatusProvider);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 2),
@@ -303,6 +304,24 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
         borderRadius: BorderRadius.circular(12),
         onTap: () {
           Navigator.of(context).pop();
+
+          // Premium değilse: Haftalık Strateji paywall ("Rotanı çiz!")
+          if (!userIsPremium) {
+            context.go('/ai-hub/offer', extra: {
+              'title': 'Haftalık Stratejist',
+              'subtitle': 'Haftalık stratejist ile verimli planını saniyeler içinde oluştur',
+              'icon': Icons.map_rounded,
+              'color': const Color(0xFF10B981),
+              'heroTag': 'offer-weekly-strategist',
+              'marketingTitle': 'Rotanı Çiz!',
+              'marketingSubtitle': 'Rastgele çalışarak vakit kaybetme. Taktik Tavşan senin için en verimli haftalık planı saniyeler içinde oluştursun.',
+              'redirectRoute': '/home/weekly-plan',
+              // imageAsset kaldırıldı: JSON Lottie dosyası Image.asset ile yüklenemez
+            });
+            return;
+          }
+
+          // Premium kullanıcılar için mevcut davranış
           if (planDoc?.weeklyPlan != null) {
             context.push('/home/weekly-plan');
           } else {

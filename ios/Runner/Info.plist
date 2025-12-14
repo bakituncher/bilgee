@@ -76,7 +76,7 @@
 		<key>NSPhotoLibraryUsageDescription</key>
 		<string>Uygulama yönetimi ve içerik paylaşımı için görsel seçimi yapmanızı sağlar.</string>
 		<key>NSUserTrackingUsageDescription</key>
-		<string>Size daha iyi hizmet sunabilmek ve öğrenme deneyiminizi kişiselleştirmek için izin gerekiyor.</string>
+		<string>Bu izin, ilgi alanlarınıza uygun reklamlar gösterebilmemizi sağlar.</string>
 		<key>UIBackgroundModes</key>
 		<array>
 			<string>fetch</string>

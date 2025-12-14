@@ -38,18 +38,41 @@ class ToolOfferScreen extends ConsumerStatefulWidget {
   ConsumerState<ToolOfferScreen> createState() => _ToolOfferScreenState();
 }
 
+class _PriceTransparencyFooter extends StatelessWidget {
+  const _PriceTransparencyFooter();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textColor = theme.colorScheme.onSurface.withOpacity(0.6);
+    final textStyle = theme.textTheme.bodySmall?.copyWith(color: textColor, height: 1.25, fontSize: 9);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
+      child: Text(
+        'Abonelik, siz iptal edene kadar seçtiğiniz tarife (aylık/yıllık) üzerinden otomatik olarak yenilenir. '
+            'Ücretsiz deneme süresi (varsa) sonunda ücretlendirme başlar. '
+            'Aboneliğinizi uygulamanın ayarlar sekmesinde bulunan "Abonelik Yönetimi" bölümünden istediğiniz zaman kolayca iptal edebilirsiniz. '
+            'Fiyatlara tüm vergiler dahildir.',
+        textAlign: TextAlign.center,
+        style: textStyle,
+      ),
+    );
+  }
+}
+
 class _TrustBadges extends StatelessWidget {
   const _TrustBadges();
 
   @override
   Widget build(BuildContext context) {
     return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 6.0),
+      padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 5.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           _TrustRow(icon: Icons.lock_rounded, text: 'Güvenli Ödeme'),
-          SizedBox(width: 16),
+          SizedBox(width: 14),
           _TrustRow(icon: Icons.cancel_schedule_send_rounded, text: 'Kolay İptal'),
         ],
       ),
@@ -64,19 +87,14 @@ class _TrustRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white70 : Theme.of(context).colorScheme.onSurfaceVariant;
+    final color = Theme.of(context).colorScheme.onSurface.withOpacity(0.7);
     return Row(
       children: [
-        Icon(icon, color: textColor, size: 14),
-        const SizedBox(width: 5),
+        Icon(icon, color: color, size: 13),
+        const SizedBox(width: 3.5),
         Text(
           text,
-          style: TextStyle(
-            color: textColor,
-            fontWeight: FontWeight.w500,
-            fontSize: 11,
-          ),
+          style: TextStyle(color: color, fontWeight: FontWeight.w500, fontSize: 10.5),
         ),
       ],
     );
@@ -229,6 +247,50 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
     }
   }
 
+  Future<void> _restorePurchases() async {
+    if (_isPurchaseInProgress) return; // Zaten bir işlem varsa tekrar tetikleme
+    setState(() => _isPurchaseInProgress = true);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Satın alımlar kontrol ediliyor ve sunucuyla eşitleniyor...'),
+        backgroundColor: Colors.blueGrey,
+      ),
+    );
+
+    try {
+      // Önce RevenueCat'in kendi restore'unu çağır, bu lokal SDK'yı günceller.
+      await RevenueCatService.restorePurchases();
+
+      // Ardından, GÜVENİLİR KAYNAK olan sunucumuzu senkronize etmesi için tetikle.
+      final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
+      final callable = functions.httpsCallable('premium-syncRevenueCatPremiumCallable');
+      await callable.call();
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Kontrol tamamlandı. Premium durumunuz güncellendi.'),
+            backgroundColor: Theme.of(context).colorScheme.secondary,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Bir hata oluştu: ${e.toString()}'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    } finally {
+      setState(() => _isPurchaseInProgress = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final offeringsAsyncValue = ref.watch(offeringsProvider);
@@ -325,7 +387,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
                 _buildPurchaseButton(),
                 const SizedBox(height: 10),
                 const _TrustBadges(),
-                const SizedBox(height: 4),
+                const _PriceTransparencyFooter(),
                 const _LegalFooter(),
               ],
             ),
@@ -371,18 +433,10 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Stack(
+        alignment: Alignment.center,
         children: [
-          IconButton(
-            icon: Icon(
-              Icons.close_rounded,
-              size: 28,
-              color: isDark ? Colors.white70 : Theme.of(context).colorScheme.onSurface,
-            ),
-            tooltip: 'Kapat',
-            onPressed: _handleBack,
-          ),
+          // Orta - Başlık
           Text(
             'Özel Teklif',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -390,7 +444,33 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
               color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
-          const SizedBox(width: 48),
+          // Sol - Kapat Butonu
+          Align(
+            alignment: Alignment.centerLeft,
+            child: IconButton(
+              icon: Icon(
+                Icons.close_rounded,
+                size: 28,
+                color: isDark ? Colors.white70 : Theme.of(context).colorScheme.onSurface,
+              ),
+              tooltip: 'Kapat',
+              onPressed: _handleBack,
+            ),
+          ),
+          // Sağ - Geri Yükle Butonu
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: _restorePurchases,
+              child: Text(
+                'Geri Yükle',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -503,7 +583,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
               _PurchaseOptionCard(
                 animationController: _cardPopController,
                 package: yearly,
-                title: 'Yıllık Plan',
+                title: 'Yıllık PRO Plan',
                 price: yearly.storeProduct.priceString,
                 billingPeriod: '/ yıl',
                 tag: savePercent != null
@@ -513,22 +593,19 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
                 delay: const Duration(milliseconds: 0),
                 onSelected: (pkg) => setState(() => _selectedPackage = pkg),
                 color: widget.color,
-                trialSubtitle:
-                'Sonra ${yearly.storeProduct.priceString}/yıl',
               ),
             if (yearly != null && monthly != null) const SizedBox(height: 10),
             if (monthly != null)
               _PurchaseOptionCard(
                 animationController: _cardPopController,
                 package: monthly,
-                title: 'Aylık Plan',
+                title: 'Aylık PRO Plan',
                 price: monthly.storeProduct.priceString,
                 billingPeriod: '/ ay',
                 isSelected: _selectedPackage == monthly,
                 delay: const Duration(milliseconds: 100),
                 onSelected: (pkg) => setState(() => _selectedPackage = pkg),
                 color: widget.color,
-                trialSubtitle: '7 gün ücretsiz',
               ),
           ],
         ),
@@ -840,7 +917,6 @@ class _PurchaseOptionCard extends StatefulWidget {
     required this.onSelected,
     required this.delay,
     required this.color,
-    this.trialSubtitle,
   });
 
   final AnimationController animationController;
@@ -853,7 +929,6 @@ class _PurchaseOptionCard extends StatefulWidget {
   final ValueChanged<Package> onSelected;
   final Duration delay;
   final Color color;
-  final String? trialSubtitle;
 
   @override
   State<_PurchaseOptionCard> createState() => _PurchaseOptionCardState();
@@ -982,6 +1057,33 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
                                 ),
                               ),
                               const SizedBox(height: 4),
+                              // ÜCRETSİZ DENEME VURGUSU - SADECE AYLIK PAKETTE
+                              if (hasFreeTrial && widget.title.toLowerCase().contains('aylık'))
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 6),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 3,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF1BFFFF).withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(
+                                        color: const Color(0xFF1BFFFF).withOpacity(0.4),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      '🎁 İLK 7 GÜN ÜCRETSİZ DENE',
+                                      style: TextStyle(
+                                        color: const Color(0xFF1BFFFF),
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 9.5,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.baseline,
                                 textBaseline: TextBaseline.alphabetic,
@@ -1007,47 +1109,6 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
                                   ),
                                 ],
                               ),
-                              if (hasFreeTrial)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 6),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Theme.of(context).colorScheme.secondary.withOpacity(0.15),
-                                      borderRadius: BorderRadius.circular(6),
-                                      border: Border.all(
-                                        color: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
-                                      ),
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'İLK 7 GÜN ÜCRETSİZ',
-                                          style: TextStyle(
-                                            color: Theme.of(context).colorScheme.secondary,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 10,
-                                          ),
-                                        ),
-                                        if (widget.trialSubtitle != null) ...[
-                                          const SizedBox(height: 1),
-                                          Text(
-                                            widget.trialSubtitle!,
-                                            style: TextStyle(
-                                              color: Theme.of(context).colorScheme.secondary.withOpacity(0.8),
-                                              fontWeight: FontWeight.w500,
-                                              fontSize: 9,
-                                            ),
-                                          ),
-                                        ]
-                                      ],
-                                    ),
-                                  ),
-                                ),
                             ],
                           ),
                         ),
