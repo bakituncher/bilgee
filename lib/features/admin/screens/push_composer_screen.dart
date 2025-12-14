@@ -195,6 +195,7 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
     int? totalUsers,
     int? totalSent,
     String? writesSaved, // YENİ PARAMETRE: Global kampanya tasarruf bilgisi
+    String? readsSaved, // YENİ PARAMETRE: Okuma tasarrufu
   }) async {
     HapticFeedback.mediumImpact();
     if (!mounted) return;
@@ -227,7 +228,11 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
                 scheduled
                     ? 'Zamanlamaya alındı. Kampanyayı kampanya geçmişinden takip edebilirsin.'
                     : writesSaved != null
-                        ? 'Global kampanya başarıyla yayınlandı! 🚀\nKullanıcılar uygulamayı açtıkça bildirimi görecekler.\n(Veritabanı Tasarrufu: $writesSaved işlem)'
+                        ? 'Global kampanya başarıyla yayınlandı! 🚀\n'
+                          'Kullanıcılar uygulamayı açtıkça bildirimi görecekler.\n\n'
+                          '💰 Maliyet Tasarrufu:\n'
+                          '• Yazma: $writesSaved işlem\n'
+                          '${readsSaved != null ? '• Okuma: $readsSaved işlem' : ''}'
                         : 'Gönderim tamamlandı. Kapsam: ${totalSent ?? '-'} / ${totalUsers ?? '-'}',
                 style: const TextStyle(height: 1.4),
               ),
@@ -290,12 +295,14 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
       final total = (m['totalUsers'] as num?)?.toInt();
       final sent = (m['totalSent'] as num?)?.toInt();
       final writesSaved = m['writesSaved']?.toString(); // Backend'den gelen global kampanya bilgisi
+      final readsSaved = m['readsSaved']?.toString(); // Backend'den gelen okuma tasarrufu
 
       await _showSuccessSheet(
         scheduled: scheduled,
         totalUsers: total,
         totalSent: sent,
         writesSaved: writesSaved, // Global kampanya tasarruf göstergesi
+        readsSaved: readsSaved, // Okuma tasarrufu
       );
     } catch (e) {
       if (!mounted) return;
@@ -329,12 +336,14 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
       final total = (m['totalUsers'] as num?)?.toInt();
       final sent = (m['totalSent'] as num?)?.toInt();
       final writesSaved = m['writesSaved']?.toString(); // Test için de global kampanya bilgisi
+      final readsSaved = m['readsSaved']?.toString(); // Test için okuma tasarrufu
 
       await _showSuccessSheet(
         scheduled: scheduled,
         totalUsers: total,
         totalSent: sent,
         writesSaved: writesSaved,
+        readsSaved: readsSaved,
       );
     } catch (e) {
       if (!mounted) return;

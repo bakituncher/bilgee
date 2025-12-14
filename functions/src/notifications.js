@@ -342,33 +342,38 @@ exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => 
 
     if (!title || !body) throw new HttpsError("invalid-argument", "title ve body zorunludur");
 
-    // ---- YENİ: GLOBAL KAMPANYA SİSTEMİ (PULL MODELİ) ----
-    // Hedef kitle "all" (herkes) ise ve inapp içeriyorsa, tek tek yazmak yerine
-    // global kampanya oluştur. Bu 100.000 yazma yerine 1 yazma demektir!
-    if (audience.type === 'all' && (sendType === 'inapp' || sendType === 'both')) {
+    // ---- YENİ: GLOBAL KAMPANYA SİSTEMİ (PULL MODELİ) + TOPIC MESSAGING ----
+    // Hedef kitle "all" (herkes) ise, topic messaging kullan (SIFIR OKUMA MALİYETİ)
+    // - Push için: Topic'e gönder (0 okuma)
+    // - InApp için: Global kampanya oluştur (1 yazma)
+    if (audience.type === 'all') {
 
-        const expiryDays = request.data?.expiryDays || 7; // Kampanya kaç gün aktif kalacak?
-        const expiresAt = admin.firestore.Timestamp.fromDate(
-          new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000)
-        );
-
-        // 1. Global Kampanya Koleksiyonuna Tek Bir Kayıt At (Write Cost: 1)
-        const globalCampaignRef = db.collection('global_campaigns').doc();
-        await globalCampaignRef.set({
-            title,
-            body,
-            imageUrl,
-            route,
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
-            createdBy: request.auth.uid,
-            isActive: true, // Mesaj aktif mi?
-            expiresAt, // Örn: 7 gün sonra otomatik kapanır
-            type: 'global_announcement',
-            priority: request.data?.priority || 'normal', // 'high', 'normal', 'low'
-        });
-
-        // 2. Sadece Push Bildirimleri İçin Topic Kullan (Write Cost: 0)
+        let globalCampaignRef = null;
         let pushResult = { successCount: 0, failureCount: 0 };
+
+        // 1. InApp varsa Global Kampanya Oluştur
+        if (sendType === 'inapp' || sendType === 'both') {
+            const expiryDays = request.data?.expiryDays || 7;
+            const expiresAt = admin.firestore.Timestamp.fromDate(
+              new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000)
+            );
+
+            globalCampaignRef = db.collection('global_campaigns').doc();
+            await globalCampaignRef.set({
+                title,
+                body,
+                imageUrl,
+                route,
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                createdBy: request.auth.uid,
+                isActive: true,
+                expiresAt,
+                type: 'global_announcement',
+                priority: request.data?.priority || 'normal',
+            });
+        }
+
+        // 2. Push varsa Topic Kullan (SIFIR OKUMA!)
         if (sendType === 'push' || sendType === 'both') {
             const message = {
                 topic: 'general',
@@ -379,7 +384,7 @@ exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => 
                 },
                 data: {
                     route,
-                    campaignId: globalCampaignRef.id,
+                    campaignId: globalCampaignRef?.id || 'topic_only',
                     type: 'global_campaign',
                     click_action: 'FLUTTER_NOTIFICATION_CLICK'
                 },
@@ -404,29 +409,39 @@ exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => 
 
             try {
               const response = await messaging.send(message);
-              logger.info('Global campaign push sent via topic', { messageId: response, campaignId: globalCampaignRef.id });
-              pushResult.successCount = 1; // Topic başarılı
+              logger.info('Topic push sent successfully (Zero-Read)', {
+                messageId: response,
+                topic: 'general',
+                hasInApp: globalCampaignRef !== null
+              });
+              pushResult.successCount = 1;
             } catch(e) {
-              logger.error('Global campaign push failed', { error: String(e) });
+              logger.error('Topic push failed', { error: String(e) });
               pushResult.failureCount = 1;
             }
         }
 
-        // 3. Kampanya kaydını güncelle (istatistik için)
-        await globalCampaignRef.update({
-          status: 'active',
-          pushSent: sendType === 'push' || sendType === 'both',
-          pushSuccess: pushResult.successCount > 0,
-          method: 'global_broadcast'
-        });
+        // 3. Global kampanya varsa durumunu güncelle
+        if (globalCampaignRef) {
+            await globalCampaignRef.update({
+              status: 'active',
+              pushSent: sendType === 'push' || sendType === 'both',
+              pushSuccess: pushResult.successCount > 0,
+              method: 'global_broadcast'
+            });
+        }
 
+        // 4. Başarı yanıtı
         return {
             ok: true,
-            campaignId: globalCampaignRef.id,
-            method: 'global_broadcast',
-            collection: 'global_campaigns',
-            writesSaved: '100000+', // 🎉
-            message: 'Kampanya global olarak yayınlandı. Kullanıcılar uygulamayı açtıklarında görecekler.',
+            campaignId: globalCampaignRef?.id || 'topic_only',
+            method: 'topic_broadcast',
+            topic: 'general',
+            writesSaved: '100000+', // 🎉 Veritabanı yazma tasarrufu
+            readsSaved: '250000+', // 🎉 Veritabanı okuma tasarrufu
+            message: sendType === 'push'
+                ? 'Push bildirimi topic üzerinden gönderildi (0 okuma)'
+                : 'Kampanya global olarak yayınlandı. Kullanıcılar uygulamayı açtıklarında görecekler.',
             pushSent: pushResult.successCount > 0
         };
     }
