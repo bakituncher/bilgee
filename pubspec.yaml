@@ -88,6 +88,9 @@ dependencies:
   connectivity_plus: ^6.1.2
   font_awesome_flutter: ^10.12.0
 
+  # App Tracking Transparency (iOS)
+  app_tracking_transparency: ^2.0.4+1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
