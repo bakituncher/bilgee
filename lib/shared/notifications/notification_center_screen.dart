@@ -68,7 +68,22 @@ class NotificationCenterScreen extends ConsumerWidget {
                       );
                       if (ok == true) {
                         try {
+                          // 1. Kullanıcının özel bildirimlerini sil
                           await ref.read(firestoreServiceProvider).clearAllInAppNotifications(user.uid);
+
+                          // 2. Tüm görünür global kampanyaları kapat
+                          final notifications = ref.read(inAppNotificationsProvider).value ?? [];
+                          final globalCampaigns = notifications.where((n) => n.type == 'global_campaign').toList();
+                          final globalService = ref.read(globalCampaignServiceProvider);
+
+                          for (final campaign in globalCampaigns) {
+                            try {
+                              await globalService.closeGlobalCampaign(campaign.id);
+                            } catch (e) {
+                              // Tek bir kampanya hatasında devam et
+                            }
+                          }
+
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tüm bildirimler silindi')));
                           }
@@ -124,7 +139,14 @@ class NotificationCenterScreen extends ConsumerWidget {
                         return false;
                       }
                       try {
-                        await ref.read(firestoreServiceProvider).deleteInAppNotification(u.uid, n.id);
+                        // Global kampanya mı yoksa kullanıcıya özel bildirim mi kontrol et
+                        if (n.type == 'global_campaign') {
+                          // Global kampanyayı kapat
+                          await ref.read(globalCampaignServiceProvider).closeGlobalCampaign(n.id);
+                        } else {
+                          // Normal bildirimi sil
+                          await ref.read(firestoreServiceProvider).deleteInAppNotification(u.uid, n.id);
+                        }
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Bildirim silindi')));
                         }
