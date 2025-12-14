@@ -340,13 +340,24 @@ exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => 
     const sendTypeRaw = String(request.data?.sendType || "push").toLowerCase();
     const sendType = ["push", "inapp", "both"].includes(sendTypeRaw) ? sendTypeRaw : "push";
 
+    // YENİ: Premium olmayanlara gönderme isteği var mı?
+    const onlyNonPremium = request.data?.onlyNonPremium === true;
+
     if (!title || !body) throw new HttpsError("invalid-argument", "title ve body zorunludur");
 
+    // KRİTİK DÜZELTME: Herhangi bir filtre var mı kontrolü
+    // Platform, Build Version VEYA Premium Olmayanlar seçildiyse filtre var demektir.
+    const hasFilters = (Array.isArray(audience.platforms) && audience.platforms.length > 0) ||
+                       Number.isFinite(audience.buildMin) ||
+                       Number.isFinite(audience.buildMax) ||
+                       onlyNonPremium;
+
     // ---- YENİ: GLOBAL KAMPANYA SİSTEMİ (PULL MODELİ) + TOPIC MESSAGING ----
-    // Hedef kitle "all" (herkes) ise, topic messaging kullan (SIFIR OKUMA MALİYETİ)
+    // Hedef kitle "all" (herkes) ise VE hiçbir filtre yoksa, topic messaging kullan (SIFIR OKUMA MALİYETİ)
+    // Eğer iOS seçiliyse veya Premium filtre varsa buraya GİRMEZ.
     // - Push için: Topic'e gönder (0 okuma)
     // - InApp için: Global kampanya oluştur (1 yazma)
-    if (audience.type === 'all') {
+    if (audience.type === 'all' && !hasFilters) {
 
         let globalCampaignRef = null;
         let pushResult = { successCount: 0, failureCount: 0 };
@@ -448,6 +459,7 @@ exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => 
 
     // ---- ESKİ SİSTEM: Filtreleme varsa (belirli kullanıcı grubu) ----
     // Eğer audience.type !== 'all' veya filtre varsa, eski mantık devam eder
+    // Buraya düştüyse demek ki ya hedef kitle 'all' değil, ya da bir filtre (iOS, Non-Premium vb.) var.
     const campaignRef = db.collection("push_campaigns").doc();
     const baseDoc = {
       title,
@@ -455,6 +467,7 @@ exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => 
       imageUrl,
       route,
       audience,
+      onlyNonPremium, // YENİ: Premium filtresi bilgisini kaydet
       createdBy: request.auth.uid,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       sendType,
@@ -474,11 +487,34 @@ exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => 
     let totalFail = 0;
 
     await processAudienceInBatches(audience, async (uidBatch) => {
-      totalUsers += uidBatch.length;
+      // 1. Hedef UID Listesini Belirle
+      let targetUids = uidBatch;
+
+      // YENİ: PREMIUM FİLTRESİ MANTIĞI
+      if (onlyNonPremium) {
+        // Bu batch'teki kullanıcıların premium durumunu kontrol et
+        // Firestore'dan 100'lü paketler halinde verileri çek (getAll verimli okuma yapar)
+        const refs = uidBatch.map(uid => db.collection('users').doc(uid));
+        const snapshots = await db.getAll(...refs);
+
+        targetUids = snapshots
+          .filter(doc => {
+            const d = doc.data() || {};
+            // Premium kontrolü: isPremium alanı true ise hariç tut
+            // (Projenizdeki premium yapısına göre burayı 'premiumUntil' tarihiyle de değiştirebilirsiniz)
+            return d.isPremium !== true;
+          })
+          .map(doc => doc.id);
+      }
+
+      // Eğer filtreden sonra kimse kalmadıysa bu batch'i atla
+      if (targetUids.length === 0) return;
+
+      totalUsers += targetUids.length; // Kalan kullanıcıları sayıya ekle
 
       // In-app bildirimler (filtrelenmiş grup için)
       if (sendType === "inapp" || sendType === "both") {
-        const inAppPromises = uidBatch.map((uid) =>
+        const inAppPromises = targetUids.map((uid) => // uidBatch yerine targetUids kullan
           createInAppForUser(uid, { title, body, imageUrl, route, type: "campaign", campaignId: campaignRef.id })
         );
         const results = await Promise.all(inAppPromises);
@@ -489,8 +525,8 @@ exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => 
       if (sendType === "push" || sendType === "both") {
         const allTokens = [];
         const batchSize = 100;
-        for (let i = 0; i < uidBatch.length; i += batchSize) {
-          const batchUids = uidBatch.slice(i, i + batchSize);
+        for (let i = 0; i < targetUids.length; i += batchSize) { // uidBatch yerine targetUids kullan
+          const batchUids = targetUids.slice(i, i + batchSize); // uidBatch yerine targetUids kullan
           const tokenPromises = batchUids.map((uid) => getActiveTokensFiltered(uid, filters));
           const tokenBatches = await Promise.all(tokenPromises);
           tokenBatches.forEach((tokens) => allTokens.push(...tokens));
@@ -544,6 +580,7 @@ exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => 
         const { title, body, imageUrl, route, audience } = d;
         const sendTypeRaw = String(d.sendType || "push").toLowerCase();
         const sendType = ["push", "inapp", "both"].includes(sendTypeRaw) ? sendTypeRaw : "push";
+        const onlyNonPremium = d.onlyNonPremium === true; // YENİ: Scheduled campaign'de de premium filtresi
 
         const filters = {
           buildMin: audience?.buildMin,
@@ -556,8 +593,26 @@ exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => 
           totalInApp = 0;
 
         await processAudienceInBatches(audience, async (uidBatch) => {
-          totalUsers += uidBatch.length;
-          for (const uid of uidBatch) {
+          // YENİ: Premium filtresi mantığı (scheduled campaigns için)
+          let targetUids = uidBatch;
+
+          if (onlyNonPremium) {
+            const refs = uidBatch.map(uid => db.collection('users').doc(uid));
+            const snapshots = await db.getAll(...refs);
+
+            targetUids = snapshots
+              .filter(doc => {
+                const d = doc.data() || {};
+                return d.isPremium !== true;
+              })
+              .map(doc => doc.id);
+          }
+
+          if (targetUids.length === 0) return;
+
+          totalUsers += targetUids.length;
+
+          for (const uid of targetUids) { // uidBatch yerine targetUids kullan
             if (sendType === "inapp" || sendType === "both") {
               const ok = await createInAppForUser(uid, {
                 title,

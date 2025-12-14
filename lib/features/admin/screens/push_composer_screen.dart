@@ -31,6 +31,9 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
   final _buildMinCtrl = TextEditingController();
   final _buildMaxCtrl = TextEditingController();
 
+  // YENİ: Premium filtresi
+  bool _onlyNonPremium = false;
+
   // Basit mod: sadece formu göster (önizleme + geçmiş gizli)
   bool _simpleMode = true;
 
@@ -178,6 +181,7 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
     _platformsSelected.clear();
     _buildMinCtrl.clear();
     _buildMaxCtrl.clear();
+    _onlyNonPremium = false; // YENİ: Premium filtresini sıfırla
     _audience = 'all';
     _examType = null;
     _selectedExams.clear();
@@ -286,6 +290,7 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
         if (_imageUrl != null) 'imageUrl': _imageUrl,
         'audience': audience,
         'sendType': _sendType,
+        'onlyNonPremium': _onlyNonPremium, // YENİ: Premium filtresi
         if (_scheduleEnabled && _scheduledAt != null) 'scheduledAt': _scheduledAt!.millisecondsSinceEpoch,
       };
       final res = await callable.call(data);
@@ -327,6 +332,7 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
         if (_imageUrl != null) 'imageUrl': _imageUrl,
         'audience': {'type': 'uids', 'uids': [uid]},
         'sendType': _sendType,
+        'onlyNonPremium': _onlyNonPremium, // YENİ: Premium filtresi
         if (_scheduleEnabled && _scheduledAt != null) 'scheduledAt': _scheduledAt!.millisecondsSinceEpoch,
       };
       final res = await callable.call(data);
@@ -988,6 +994,20 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
               return null;
             },
           ),
+        // YENİ: PREMIUM FİLTRESİ
+        const SizedBox(height: 12),
+        const Divider(),
+        const SizedBox(height: 12),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Sadece Premium Olmayanlara Gönder'),
+          subtitle: const Text('Premium kullanıcılar bu bildirimi almaz (Yükseltme teklifleri için ideal).'),
+          value: _onlyNonPremium,
+          onChanged: (v) => setState(() => _onlyNonPremium = v),
+          activeColor: Theme.of(context).colorScheme.error,
+        ),
+        const SizedBox(height: 12),
+        const Divider(),
         // Platform & Sürüm (opsiyonel)
         const SizedBox(height: 12),
         const Text('Platform/Sürüm (opsiyonel)'),
