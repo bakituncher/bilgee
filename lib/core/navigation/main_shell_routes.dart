@@ -46,25 +46,30 @@ StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
       StatefulShellBranch(routes: [
         GoRoute(
             path: AppRoutes.home,
+            name: 'Home',
             pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: const DashboardScreen()),
             routes: [
               GoRoute(
                 path: AppRoutes.quests,
+                name: 'Quests',
                 parentNavigatorKey: rootNavigatorKey,
                 pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: const QuestsScreen()),
               ),
               GoRoute(
                 path: 'weekly-plan',
+                name: 'WeeklyPlan',
                 parentNavigatorKey: rootNavigatorKey,
                 pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: const WeeklyPlanScreen()),
               ),
               GoRoute(
                 path: AppRoutes.addTest,
+                name: 'AddTest',
                 parentNavigatorKey: rootNavigatorKey,
                 pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: const AddTestScreen()),
               ),
               GoRoute(
                 path: AppRoutes.testDetail,
+                name: 'TestDetail',
                 parentNavigatorKey: rootNavigatorKey,
                 pageBuilder: (context, state) {
                   final test = state.extra as TestModel?; // null güvenli
@@ -76,6 +81,7 @@ StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
               ),
               GoRoute(
                 path: AppRoutes.testResultSummary,
+                name: 'TestResultSummary',
                 parentNavigatorKey: rootNavigatorKey,
                 pageBuilder: (context, state) {
                   final test = state.extra as TestModel?; // null güvenli
@@ -84,11 +90,13 @@ StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
               ),
               GoRoute(
                 path: AppRoutes.pomodoro,
+                name: 'Pomodoro',
                 parentNavigatorKey: rootNavigatorKey,
                 pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: const PomodoroScreen()),
               ),
               GoRoute(
                 path: AppRoutes.stats,
+                name: 'Stats',
                 parentNavigatorKey: rootNavigatorKey,
                 pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: const StatsScreen()),
               ),
@@ -97,15 +105,18 @@ StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
       StatefulShellBranch(routes: [
         GoRoute(
             path: AppRoutes.coach,
+            name: 'Coach',
             pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: CoachScreen(initialSubject: state.uri.queryParameters['subject'])),
             routes: [
               GoRoute(
                 path: AppRoutes.selectSubject,
+                name: 'SelectSubject',
                 parentNavigatorKey: rootNavigatorKey,
                 pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: const SelectSubjectScreen()),
               ),
               GoRoute(
                 path: AppRoutes.updateTopicPerformance,
+                name: 'UpdateTopicPerformance',
                 parentNavigatorKey: rootNavigatorKey,
                 pageBuilder: (context, state) {
                   final args = state.extra as Map<String, dynamic>;
@@ -122,16 +133,19 @@ StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
       StatefulShellBranch(routes: [
         GoRoute(
             path: AppRoutes.aiHub,
+            name: 'AIHub',
             pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: const AiHubScreen()),
             routes: [
               GoRoute(
                   path: AppRoutes.strategicPlanning,
+                  name: 'StrategicPlanning',
                   parentNavigatorKey: rootNavigatorKey,
                   pageBuilder: (context, state) =>
                   buildPageWithFadeTransition(context: context, state: state, child: const StrategicPlanningScreen()),
                   routes: [
                     GoRoute(
                       path: AppRoutes.strategyReview,
+                      name: 'StrategyReview',
                       parentNavigatorKey: rootNavigatorKey,
                       pageBuilder: (context, state) {
                         final result = state.extra as Map<String, dynamic>;
@@ -141,24 +155,28 @@ StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
                   ]),
               GoRoute(
                   path: AppRoutes.weaknessWorkshop,
+                  name: 'WeaknessWorkshop',
                   parentNavigatorKey: rootNavigatorKey,
                   pageBuilder: (context, state) =>
                   buildPageWithFadeTransition(context: context, state: state, child: const WeaknessWorkshopScreen()),
                   routes: [
                     GoRoute(
                       path: 'stats',
+                      name: 'WorkshopStats',
                       parentNavigatorKey: rootNavigatorKey,
                       pageBuilder: (context, state) =>
                       buildPageWithFadeTransition(context: context, state: state, child: const WorkshopStatsScreen()),
                     ),
                     GoRoute(
                       path: AppRoutes.savedWorkshops,
+                      name: 'SavedWorkshops',
                       parentNavigatorKey: rootNavigatorKey,
                       pageBuilder: (context, state) =>
                       buildPageWithFadeTransition(context: context, state: state, child: const SavedWorkshopsScreen()),
                     ),
                     GoRoute(
                       path: AppRoutes.savedWorkshopDetail,
+                      name: 'SavedWorkshopDetail',
                       parentNavigatorKey: rootNavigatorKey,
                       pageBuilder: (context, state) {
                         final workshop =
@@ -170,6 +188,7 @@ StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
                   ]),
               GoRoute(
                 path: AppRoutes.motivationChat,
+                name: 'MotivationChat',
                 parentNavigatorKey: rootNavigatorKey,
                 pageBuilder: (context, state) {
                   final prompt = state.extra;
@@ -178,11 +197,13 @@ StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
               ),
               GoRoute(
                 path: AppRoutes.analysisStrategy, // YENİ rota
+                name: 'AnalysisStrategy',
                 parentNavigatorKey: rootNavigatorKey,
                 pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: const AnalysisStrategyScreen()),
               ),
               GoRoute(
                 path: AppRoutes.coachPushed,
+                name: 'CoachPushed',
                 parentNavigatorKey: rootNavigatorKey,
                 pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: CoachScreen(initialSubject: state.uri.queryParameters['subject'])),
               ),
@@ -192,10 +213,12 @@ StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
           routes: [
             GoRoute(
                 path: AppRoutes.arena,
+                name: 'Arena',
                 pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: const ArenaScreen()),
                 routes: [
                   GoRoute(
                     path: ':userId',
+                    name: 'PublicProfile',
                     parentNavigatorKey: rootNavigatorKey,
                     pageBuilder: (context, state) {
                       final userId = state.pathParameters['userId']!;
@@ -209,15 +232,18 @@ StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
           routes: [
             GoRoute(
                 path: AppRoutes.profile,
+                name: 'Profile',
                 pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: const ProfileScreen()),
                 routes: [
                   GoRoute(
                     path: 'edit',
+                    name: 'EditProfile',
                     parentNavigatorKey: rootNavigatorKey,
                     pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: const EditProfileScreen()),
                   ),
                   GoRoute(
                     path: 'honor-wall',
+                    name: 'HonorWall',
                     parentNavigatorKey: rootNavigatorKey,
                     pageBuilder: (context, state) {
                       final allBadges = state.extra as List<app_badge.Badge>;
@@ -227,11 +253,13 @@ StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
                   // YENİ EKLENEN AVATAR ROTASI
                   GoRoute(
                     path: 'avatar-selection',
+                    name: 'AvatarSelection',
                     parentNavigatorKey: rootNavigatorKey,
                     pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: const AvatarSelectionScreen()),
                   ),
                   GoRoute(
                     path: 'follow-list',
+                    name: 'FollowList',
                     parentNavigatorKey: rootNavigatorKey,
                     pageBuilder: (context, state) {
                       final mode = state.uri.queryParameters['mode'] ?? 'followers';
@@ -240,6 +268,7 @@ StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
                   ),
                   GoRoute(
                     path: 'ranks',
+                    name: 'Ranks',
                     parentNavigatorKey: rootNavigatorKey,
                     pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: const RanksScreen()),
                   ),

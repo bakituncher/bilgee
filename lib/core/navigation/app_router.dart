@@ -33,6 +33,7 @@ import 'package:taktik/shared/widgets/splash_screen.dart';
 import 'package:taktik/data/providers/admin_providers.dart';
 import 'transition_utils.dart';
 import 'package:taktik/features/home/screens/user_guide_screen.dart';
+import 'package:taktik/core/services/firebase_analytics_service.dart'; // added for analytics observer
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   final rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -46,6 +47,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     initialLocation: '/',
     debugLogDiagnostics: true,
     refreshListenable: listenable,
+    // Add Firebase Analytics observer so screen_view events are captured
+    observers: <NavigatorObserver>[
+      FirebaseAnalyticsService.observer,
+    ],
     redirect: (BuildContext context, GoRouterState state) {
       final authState = ref.read(authControllerProvider);
       final userProfileState = ref.read(userProfileProvider);
@@ -121,6 +126,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: '/',
+        name: 'Splash',
         pageBuilder: (context, state) => buildPageWithFadeTransition(
           context: context,
           state: state,
@@ -129,6 +135,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.loading,
+        name: 'Loading',
         pageBuilder: (context, state) => buildPageWithFadeTransition(
           context: context,
           state: state,
@@ -137,6 +144,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
           path: AppRoutes.library,
+          name: 'Library',
           parentNavigatorKey: rootNavigatorKey,
           pageBuilder: (context, state) => buildPageWithFadeTransition(
             context: context,
@@ -146,6 +154,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.settings,
+        name: 'Settings',
         parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) => buildPageWithFadeTransition(
           context: context,
@@ -156,6 +165,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       // Kullanım Kılavuzu
       GoRoute(
         path: AppRoutes.userGuide,
+        name: 'UserGuide',
         parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) => buildPageWithFadeTransition(
           context: context,
@@ -166,6 +176,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       // Blog ve Premium (üst seviye sayfalar)
       GoRoute(
         path: '/blog',
+        name: 'Blog',
         parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) => buildPageWithFadeTransition(
           context: context,
@@ -175,6 +186,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/blog/:slug',
+        name: 'BlogDetail',
         parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) {
           final slug = state.pathParameters['slug']!;
@@ -187,6 +199,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/premium',
+        name: 'Premium',
         parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) => buildPageWithFadeTransition(
           context: context,
@@ -196,6 +209,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/ai-hub/offer',
+        name: 'ToolOffer',
         parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) {
           final extra = state.extra;
@@ -219,6 +233,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/ai-tools-offer',
+        name: 'AIToolsOffer',
         parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) => buildPageWithFadeTransition(
           context: context,
@@ -228,6 +243,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/stats/overview',
+        name: 'StatsOverview',
         parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) => buildPageWithFadeTransition(
           context: context,
@@ -237,6 +253,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/stats-premium-offer',
+        name: 'StatsPremiumOffer',
         parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) => buildPageWithFadeTransition(
           context: context,
@@ -249,6 +266,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       // Bildirim Merkezi
       GoRoute(
         path: '/notifications',
+        name: 'Notifications',
         parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) => buildPageWithFadeTransition(
           context: context,
@@ -259,6 +277,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       // Admin: Cevher Bildirimleri
       GoRoute(
         path: '/admin/panel',
+        name: 'AdminPanel',
         parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) => buildPageWithFadeTransition(
           context: context,
@@ -268,6 +287,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/admin/user-management',
+        name: 'AdminUserManagement',
         parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) => buildPageWithFadeTransition(
           context: context,
@@ -277,6 +297,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/admin/user-reports',
+        name: 'AdminUserReports',
         parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) => buildPageWithFadeTransition(
           context: context,
@@ -286,6 +307,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/admin/reports',
+        name: 'AdminQuestionReports',
         parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) => buildPageWithFadeTransition(
           context: context,
@@ -295,6 +317,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/admin/reports/:qhash',
+        name: 'AdminQuestionReportDetail',
         parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) {
           final qhash = state.pathParameters['qhash']!;
@@ -307,6 +330,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/admin/push-composer',
+        name: 'AdminPushComposer',
         parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) => buildPageWithFadeTransition(
           context: context,
@@ -316,6 +340,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/blog/admin/new',
+        name: 'BlogAdminNew',
         parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) => buildPageWithFadeTransition(
           context: context,
@@ -325,6 +350,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/blog/admin/edit/:slug',
+        name: 'BlogAdminEdit',
         parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) {
           final slug = state.pathParameters['slug']!;
@@ -337,6 +363,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/user-search',
+        name: 'UserSearch',
         parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) => buildPageWithFadeTransition(
           context: context,
@@ -346,6 +373,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/blocked-users',
+        name: 'BlockedUsers',
         parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) => buildPageWithFadeTransition(
           context: context,
