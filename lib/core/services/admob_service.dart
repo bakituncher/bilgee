@@ -107,6 +107,7 @@ class AdMobService {
   /// Kullanıcı yaşına göre AdMob konfigürasyonunu güncelle
   /// Bu metot aynı zamanda yaş durumundaki değişiklik sonrası (özellikle çocuk -> yetişkin)
   /// interstitial ve rewarded reklamları yeniden yükler ki test cihazı kimliği alınabilsin.
+  /// Doğum tarihi olmayan kullanıcılar için de çocuk olarak işlem yapılır (COPPA uyumlu)
   Future<void> updateUserAgeConfiguration({DateTime? dateOfBirth}) async {
     if (!_initialized || _isPremium) return;
 
@@ -125,7 +126,7 @@ class AdMobService {
               : TagForUnderAgeOfConsent.no,
         ),
       );
-      debugPrint('✅ AdMob configuration updated for ${isUnder18 ? "child" : "adult"} user');
+      debugPrint('✅ AdMob configuration updated for ${isUnder18 || dateOfBirth == null ? "child/no-age" : "adult"} user');
 
       // Yaş durumunda değişiklik varsa veya artık yetişkin moduna geçildiyse reklamları yeniden yükle
       // Böylece çocuk modunda ilk alınan reklamlar yetişkin modunda ad id toplayıp test reklamı gösterebilir.
@@ -199,13 +200,15 @@ class AdMobService {
 
   /// Kullanıcının yaşına göre AdRequest oluştur
   /// 18 yaşından küçükler için COPPA uyumlu reklam
+  /// Doğum tarihi olmayan kullanıcılar için de COPPA uyumlu reklam (reklam kimliği toplanmaz)
   AdRequest _buildAdRequest({DateTime? dateOfBirth}) {
     // Parametre verilmezse saklanan kullanıcı doğum tarihini kullan
     dateOfBirth ??= _userDateOfBirth;
     final isUnder18 = _isUserUnder18(dateOfBirth);
 
-    if (isUnder18) {
-      // 18 yaşından küçükler için COPPA uyumlu ayarlar
+    if (isUnder18 || dateOfBirth == null) {
+      // 18 yaşından küçükler veya doğum tarihi olmayan kullanıcılar için COPPA uyumlu ayarlar
+      // Bu ayarlar reklam kimliği (AD ID) toplanmasını engeller
       return const AdRequest(
         extras: {
           'npa': '1', // Non-Personalized Ads
@@ -224,9 +227,10 @@ class AdMobService {
   }
 
   /// Kullanıcı 18 yaşından küçük mü kontrol et
+  /// Doğum tarihi yoksa güvenli tarafta olup çocuk muamelesi yap
   bool _isUserUnder18(DateTime? dateOfBirth) {
     if (dateOfBirth == null) {
-      // Yaş bilgisi yoksa güvenli tarafta olalım
+      // Yaş bilgisi yoksa güvenli tarafta olalım (COPPA uyumlu)
       return true;
     }
 
