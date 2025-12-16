@@ -774,6 +774,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         );
         ref.read(settingsNotifierProvider.notifier).resetOperationStatus();
         // signOut zaten notifier'da çağrıldı, burada ek işlem gerekmez
+
+        // Kullanıcıyı geri bildirim formuna yönlendir
+        final feedbackUrl = Uri.parse('https://docs.google.com/forms/d/e/1FAIpQLScT2SmlQHXiL17Yj_p2s3L8kwe3BwqffRPaTMtAP9shaW0cdQ/viewform?usp=dialog');
+        launchUrl(feedbackUrl, mode: LaunchMode.externalApplication);
       }
     });
 
