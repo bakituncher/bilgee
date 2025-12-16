@@ -13,9 +13,11 @@ import 'package:taktik/data/models/plan_model.dart';
 import 'package:taktik/data/models/plan_document.dart';
 import 'package:lottie/lottie.dart';
 import 'package:taktik/core/safety/ai_content_safety.dart';
+import 'package:taktik/features/strategic_planning/screens/weekly_topic_selection_screen.dart';
+import 'package:taktik/features/strategic_planning/screens/editable_plan_screen.dart';
 
 enum Pacing { relaxed, moderate, intense }
-enum PlanningStep { dataCheck, confirmation, pacing, loading }
+enum PlanningStep { dataCheck, confirmation, topicSelection, pacing, loading }
 
 final selectedPacingProvider = StateProvider<Pacing>((ref) => Pacing.moderate);
 final planningStepProvider = StateProvider.autoDispose<PlanningStep>((ref) => PlanningStep.dataCheck);
@@ -34,6 +36,7 @@ class StrategyGenerationNotifier extends StateNotifier<AsyncValue<void>> {
     final tests = _ref.read(testsProvider).value;
     final performance = _ref.read(performanceProvider).value;
     final planDoc = _ref.read(planProvider).value;
+    final selectedTopics = _ref.read(weeklySelectedTopicsProvider).toList();
 
     if (user == null || tests == null || performance == null) {
       state = AsyncValue.error("Kullanıcı, test veya performans verisi bulunamadı.", StackTrace.current);
@@ -48,6 +51,7 @@ class StrategyGenerationNotifier extends StateNotifier<AsyncValue<void>> {
         planDoc: planDoc,
         pacing: pacing.name,
         revisionRequest: revisionRequest,
+        selectedTopics: selectedTopics,
       );
 
       final decodedData = jsonDecode(resultJson);
@@ -56,17 +60,16 @@ class StrategyGenerationNotifier extends StateNotifier<AsyncValue<void>> {
         throw Exception(decodedData['error']);
       }
 
-      final result = {
-        // long-term strateji kaldırıldı
-        'weeklyPlan': decodedData['weeklyPlan'],
-        'pacing': pacing.name,
-      };
-
       if (context.mounted) {
-        context.push('/ai-hub/strategic-planning/${AppRoutes.strategyReview}', extra: result);
+         try {
+           final weeklyPlan = WeeklyPlan.fromJson(decodedData['weeklyPlan']);
+           Navigator.push(context, MaterialPageRoute(builder: (_) => EditablePlanScreen(initialPlan: weeklyPlan, isPreview: true)));
+         } catch (e) {
+           throw Exception("Plan parse edilemedi: $e");
+         }
       }
 
-      _ref.read(planningStepProvider.notifier).state = PlanningStep.dataCheck;
+      // _ref.read(planningStepProvider.notifier).state = PlanningStep.dataCheck; // No longer reset immediately
       state = const AsyncValue.data(null);
     } catch (e, s) {
       _ref.read(planningStepProvider.notifier).state = PlanningStep.pacing;
@@ -125,10 +128,19 @@ class StrategicPlanningScreen extends ConsumerWidget {
 
         final canPop = !(step == PlanningStep.pacing || step == PlanningStep.loading);
         return PopScope(
-          canPop: canPop,
+          canPop: false, // Handle pops manually
           onPopInvoked: (didPop) {
-            if (!canPop) {
+            if (didPop) return;
+
+            final currentStep = ref.read(planningStepProvider);
+            if (currentStep == PlanningStep.loading) return;
+
+            if (currentStep == PlanningStep.pacing) {
+              ref.read(planningStepProvider.notifier).state = PlanningStep.topicSelection;
+            } else if (currentStep == PlanningStep.topicSelection) {
               ref.read(planningStepProvider.notifier).state = PlanningStep.confirmation;
+            } else {
+              context.pop();
             }
           },
           child: Scaffold(
@@ -172,6 +184,12 @@ class StrategicPlanningScreen extends ConsumerWidget {
     switch (step) {
       case PlanningStep.confirmation:
         return _buildConfirmationView(context, ref);
+      case PlanningStep.topicSelection:
+        return WeeklyTopicSelectionScreen(
+          onContinue: () {
+            ref.read(planningStepProvider.notifier).state = PlanningStep.pacing;
+          },
+        );
       case PlanningStep.pacing:
         return _buildPacingView(context, ref);
       case PlanningStep.loading:
@@ -796,7 +814,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(16.0),
           child: ElevatedButton(
             onPressed: () {
-              ref.read(planningStepProvider.notifier).state = PlanningStep.pacing;
+              ref.read(planningStepProvider.notifier).state = PlanningStep.topicSelection;
             },
             child: const Text("Tüm Verilerim Güncel, İlerle"),
           ),

@@ -293,6 +293,7 @@ class AiService {
     required PlanDocument? planDoc,
     required String pacing,
     String? revisionRequest,
+    List<String>? selectedTopics,
   }) async {
     if (user.selectedExam == null) {
       return '{"error":"Analiz için önce bir sınav seçmelisiniz."}';
@@ -335,7 +336,8 @@ class AiService {
             completedTasksJson: completedTasksJson,
             curriculumJson: curriculumJson,
             guardrailsJson: guardrailsJson,
-            revisionRequest: revisionRequest
+            revisionRequest: revisionRequest,
+            selectedTopics: selectedTopics,
         );
         break;
       case ExamType.lgs:
@@ -348,7 +350,8 @@ class AiService {
             completedTasksJson: completedTasksJson,
             curriculumJson: curriculumJson,
             guardrailsJson: guardrailsJson,
-            revisionRequest: revisionRequest
+            revisionRequest: revisionRequest,
+            selectedTopics: selectedTopics,
         );
         break;
       default:
@@ -362,7 +365,8 @@ class AiService {
             completedTasksJson: completedTasksJson,
             curriculumJson: curriculumJson,
             guardrailsJson: guardrailsJson,
-            revisionRequest: revisionRequest
+            revisionRequest: revisionRequest,
+            selectedTopics: selectedTopics,
         );
         break;
     }

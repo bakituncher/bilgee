@@ -89,18 +89,36 @@ NOT: Bu bir revizyon talebidir, önceki planı unutun!
     required String curriculumJson,
     required String guardrailsJson,
     String? revisionRequest,
+    List<String>? selectedTopics,
   }) {
     assert(_yksTemplate != null, 'StrategyPrompts.preload() çağrılmalı');
     final template = _yksTemplate!;
     final currentDate = DateTime.now().toIso8601String();
     final currentWeek = _calculateCurrentWeek(weeklyPlanJson); // 👈 Dinamik hafta
+
+    final now = DateTime.now();
+    final dayNames = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
+    final dayName = dayNames[now.weekday - 1];
+
+    String timingInstruction = "\n\n[ZAMANLAMA VE TAKVİM]\nBugün: ${now.toString().substring(0, 10)} ($dayName).\n";
+    if (now.weekday == 7) {
+       timingInstruction += "Bugün Pazar. Lütfen planı YARINDAN (Pazartesi) başlatarak gelecek tam hafta için oluştur. Geçmiş günler için asla plan yapma.";
+    } else {
+       timingInstruction += "Planı bugünden veya yarından başlat. Geçmiş günler için görev yazma.";
+    }
+
+    String goalWithTopics = goal + timingInstruction;
+    if (selectedTopics != null && selectedTopics.isNotEmpty) {
+      goalWithTopics += "\n\n[ÖNEMLİ] KULLANICININ BU HAFTA ÇALIŞMAK İÇİN SEÇTİĞİ KONULAR (BUNLARI KESİNLİKLE PLANA DAHİL ET):\n${selectedTopics.join(', ')}";
+    }
+
     final replacements = <String, String>{
       'REVISION_BLOCK': _revisionBlock(revisionRequest),
       'AVAILABILITY_JSON': availabilityJson,
       'USER_ID': userId,
       'SELECTED_EXAM_SECTION': selectedExamSection,
       'DAYS_UNTIL_EXAM': daysUntilExam.toString(),
-      'GOAL': goal,
+      'GOAL': goalWithTopics,
       'CHALLENGES': challenges?.join(', ') ?? '—',
       'PACING': pacing,
       'TEST_COUNT': testCount.toString(),
@@ -130,17 +148,35 @@ NOT: Bu bir revizyon talebidir, önceki planı unutun!
     required String curriculumJson,
     required String guardrailsJson,
     String? revisionRequest,
+    List<String>? selectedTopics,
   }) {
     assert(_lgsTemplate != null, 'StrategyPrompts.preload() çağrılmalı');
     final template = _lgsTemplate!;
     final currentDate = DateTime.now().toIso8601String();
     final currentWeek = _calculateCurrentWeek(weeklyPlanJson); // 👈 Dinamik hafta
+
+    final now = DateTime.now();
+    final dayNames = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
+    final dayName = dayNames[now.weekday - 1];
+
+    String timingInstruction = "\n\n[ZAMANLAMA VE TAKVİM]\nBugün: ${now.toString().substring(0, 10)} ($dayName).\n";
+    if (now.weekday == 7) {
+       timingInstruction += "Bugün Pazar. Lütfen planı YARINDAN (Pazartesi) başlatarak gelecek tam hafta için oluştur. Geçmiş günler için asla plan yapma.";
+    } else {
+       timingInstruction += "Planı bugünden veya yarından başlat. Geçmiş günler için görev yazma.";
+    }
+
+    String goalWithTopics = (user.goal ?? '') + timingInstruction;
+    if (selectedTopics != null && selectedTopics.isNotEmpty) {
+      goalWithTopics += "\n\n[ÖNEMLİ] KULLANICININ BU HAFTA ÇALIŞMAK İÇİN SEÇTİĞİ KONULAR (BUNLARI KESİNLİKLE PLANA DAHİL ET):\n${selectedTopics.join(', ')}";
+    }
+
     final replacements = <String, String>{
       'REVISION_BLOCK': _revisionBlock(revisionRequest),
       'AVAILABILITY_JSON': availabilityJson,
       'USER_ID': user.id,
       'DAYS_UNTIL_EXAM': daysUntilExam.toString(),
-      'GOAL': user.goal ?? '',
+      'GOAL': goalWithTopics,
       'CHALLENGES': (user.challenges ?? []).join(', '),
       'PACING': pacing,
       'TEST_COUNT': user.testCount.toString(),
@@ -171,18 +207,36 @@ NOT: Bu bir revizyon talebidir, önceki planı unutun!
     required String curriculumJson,
     required String guardrailsJson,
     String? revisionRequest,
+    List<String>? selectedTopics,
   }) {
     assert(_kpssTemplate != null, 'StrategyPrompts.preload() çağrılmalı');
     final template = _kpssTemplate!;
     final currentDate = DateTime.now().toIso8601String();
     final currentWeek = _calculateCurrentWeek(weeklyPlanJson); // 👈 Dinamik hafta
+
+    final now = DateTime.now();
+    final dayNames = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
+    final dayName = dayNames[now.weekday - 1];
+
+    String timingInstruction = "\n\n[ZAMANLAMA VE TAKVİM]\nBugün: ${now.toString().substring(0, 10)} ($dayName).\n";
+    if (now.weekday == 7) {
+       timingInstruction += "Bugün Pazar. Lütfen planı YARINDAN (Pazartesi) başlatarak gelecek tam hafta için oluştur. Geçmiş günler için asla plan yapma.";
+    } else {
+       timingInstruction += "Planı bugünden veya yarından başlat. Geçmiş günler için görev yazma.";
+    }
+
+    String goalWithTopics = (user.goal ?? '') + timingInstruction;
+    if (selectedTopics != null && selectedTopics.isNotEmpty) {
+      goalWithTopics += "\n\n[ÖNEMLİ] KULLANICININ BU HAFTA ÇALIŞMAK İÇİN SEÇTİĞİ KONULAR (BUNLARI KESİNLİKLE PLANA DAHİL ET):\n${selectedTopics.join(', ')}";
+    }
+
     final replacements = <String, String>{
       'REVISION_BLOCK': _revisionBlock(revisionRequest),
       'AVAILABILITY_JSON': availabilityJson,
       'USER_ID': user.id,
       'EXAM_NAME': examName,
       'DAYS_UNTIL_EXAM': daysUntilExam.toString(),
-      'GOAL': user.goal ?? '',
+      'GOAL': goalWithTopics,
       'CHALLENGES': (user.challenges ?? []).join(', '),
       'PACING': pacing,
       'TEST_COUNT': user.testCount.toString(),
