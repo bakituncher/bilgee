@@ -255,15 +255,35 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
       void logCurrentRoute() {
         try {
           final config = router.routerDelegate.currentConfiguration;
-          String location = router.routeInformationProvider.value.location ?? '';
+          // Varsayılan bir değer atayalım
+          String screenName = router.routeInformationProvider.value.location ?? '/';
+
           if (config.isNotEmpty) {
             final last = config.last;
-            // Use matchedLocation as canonical screen identifier to avoid RouteBase.name access
-            location = last.matchedLocation;
+
+            // --- DEĞİŞİKLİK BURADA ---
+            // Öncelik: GoRouter'da tanımlı olan 'name' özelliğini kullan (Örn: 'Library', 'Settings')
+            // Bu sayede /blog/yazi-1 ve /blog/yazi-2 tek bir 'BlogDetail' olarak görünür.
+            if (last.route is GoRoute && (last.route as GoRoute).name != null) {
+              screenName = (last.route as GoRoute).name!;
+            } else {
+              // Eğer name yoksa, slash işaretini temizleyerek path'i kullan
+              // Örn: "/library" -> "library"
+              String location = last.matchedLocation;
+              if (location.startsWith('/')) {
+                location = location.substring(1);
+              }
+              // Kök dizin boş kalırsa 'Splash' veya 'Home' deyin
+              if (location.isEmpty) {
+                location = 'Splash';
+              }
+              screenName = location;
+            }
+            // -------------------------
           }
-          final String resolved = location.isNotEmpty ? location : '/';
+
           // screen_view (manual)
-          FirebaseAnalyticsService.logScreenView(screenName: resolved);
+          FirebaseAnalyticsService.logScreenView(screenName: screenName);
         } catch (e) {
           if (kDebugMode) {
             debugPrint('[Analytics] route log error: $e');
