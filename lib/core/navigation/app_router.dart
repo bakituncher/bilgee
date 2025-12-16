@@ -33,7 +33,6 @@ import 'package:taktik/shared/widgets/splash_screen.dart';
 import 'package:taktik/data/providers/admin_providers.dart';
 import 'transition_utils.dart';
 import 'package:taktik/features/home/screens/user_guide_screen.dart';
-import 'package:taktik/core/services/firebase_analytics_service.dart'; // added for analytics observer
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   final rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -47,10 +46,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     initialLocation: '/',
     debugLogDiagnostics: true,
     refreshListenable: listenable,
-    // Add Firebase Analytics observer so screen_view events are captured
-    observers: <NavigatorObserver>[
-      FirebaseAnalyticsService.observer,
-    ],
     redirect: (BuildContext context, GoRouterState state) {
       final authState = ref.read(authControllerProvider);
       final userProfileState = ref.read(userProfileProvider);

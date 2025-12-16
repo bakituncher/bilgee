@@ -262,12 +262,8 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
             location = last.matchedLocation;
           }
           final String resolved = location.isNotEmpty ? location : '/';
-          // screen_view (manual) and important marker
+          // screen_view (manual)
           FirebaseAnalyticsService.logScreenView(screenName: resolved);
-          FirebaseAnalyticsService.logEvent(name: 'important_screen_view', parameters: {
-            'screen_name': resolved,
-            'path': location,
-          });
         } catch (e) {
           if (kDebugMode) {
             debugPrint('[Analytics] route log error: $e');
