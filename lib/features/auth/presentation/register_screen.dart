@@ -1,4 +1,5 @@
 // lib/features/auth/presentation/register_screen.dart
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -88,13 +89,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     }
 
     if (_formKey.currentState!.validate()) {
-      final now = DateTime.now();
-      final thirteenYearsAgo = DateTime(now.year - 13, now.month, now.day);
-      if (_selectedDate != null && _selectedDate!.isAfter(thirteenYearsAgo)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Kayıt olmak için 13 yaşından büyük olmalısınız.')),
-        );
-        return;
+      // iOS kullanıcıları için doğum tarihi zorunlu değil
+      final isIOS = Platform.isIOS;
+      if (!isIOS || _selectedDate != null) {
+        final now = DateTime.now();
+        final thirteenYearsAgo = DateTime(now.year - 13, now.month, now.day);
+        if (_selectedDate != null && _selectedDate!.isAfter(thirteenYearsAgo)) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Kayıt olmak için 13 yaşından büyük olmalısınız.')),
+          );
+          return;
+        }
       }
 
       setState(() {
@@ -593,13 +598,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   Expanded(
                     child: TextFormField(
                       controller: _dateOfBirthController,
-                      decoration: const InputDecoration(
-                        labelText: 'Doğum Tarihi',
-                        prefixIcon: Icon(Icons.calendar_today_outlined),
+                      decoration: InputDecoration(
+                        labelText: Platform.isIOS ? 'Doğum Tarihi (Opsiyonel)' : 'Doğum Tarihi',
+                        prefixIcon: const Icon(Icons.calendar_today_outlined),
                       ),
                       readOnly: true,
                       onTap: () => _selectDate(context),
                       validator: (value) {
+                        // iOS kullanıcıları için doğum tarihi zorunlu değil
+                        if (Platform.isIOS) {
+                          return null;
+                        }
                         if (value == null || value.isEmpty) {
                           return 'Lütfen doğum tarihinizi seçin.';
                         }
@@ -805,3 +814,5 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     );
   }
 }
+
+

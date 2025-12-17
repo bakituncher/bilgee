@@ -413,14 +413,20 @@ class FirestoreService {
     required String userId,
     required String username,
     required String gender,
-    required DateTime dateOfBirth,
+    DateTime? dateOfBirth, // iOS kullanıcıları için nullable
   }) async {
-    await usersCollection.doc(userId).update({
+    final updateData = {
       'username': username,
       'gender': gender,
-      'dateOfBirth': Timestamp.fromDate(dateOfBirth),
       'profileCompleted': true,
-    });
+    };
+
+    // Doğum tarihi varsa ekle
+    if (dateOfBirth != null) {
+      updateData['dateOfBirth'] = Timestamp.fromDate(dateOfBirth);
+    }
+
+    await usersCollection.doc(userId).update(updateData);
   }
 
   Future<bool> checkUsernameAvailability(String username) async {

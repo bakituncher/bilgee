@@ -1,3 +1,4 @@
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
@@ -44,13 +45,17 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
     }
 
     if (_formKey.currentState!.validate()) {
-      final now = DateTime.now();
-      final thirteenYearsAgo = DateTime(now.year - 13, now.month, now.day);
-      if (_dateOfBirth != null && _dateOfBirth!.isAfter(thirteenYearsAgo)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Kayıt olmak için 13 yaşından büyük olmalısınız.')),
-        );
-        return;
+      // iOS kullanıcıları için doğum tarihi zorunlu değil
+      final isIOS = Platform.isIOS;
+      if (!isIOS || _dateOfBirth != null) {
+        final now = DateTime.now();
+        final thirteenYearsAgo = DateTime(now.year - 13, now.month, now.day);
+        if (_dateOfBirth != null && _dateOfBirth!.isAfter(thirteenYearsAgo)) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Kayıt olmak için 13 yaşından büyük olmalısınız.')),
+          );
+          return;
+        }
       }
 
       setState(() => _isLoading = true);
@@ -75,7 +80,7 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
           userId: userId,
           username: _usernameController.text.trim(),
           gender: _gender!,
-          dateOfBirth: _dateOfBirth!,
+          dateOfBirth: _dateOfBirth,
         );
         // On success, the router will automatically redirect
       } catch (e) {
@@ -190,12 +195,18 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
                               TextFormField(
                                 controller: _dateController,
                                 readOnly: true,
-                                decoration: const InputDecoration(
-                                  labelText: 'Doğum Tarihi',
-                                  prefixIcon: Icon(Icons.calendar_today_rounded),
+                                decoration: InputDecoration(
+                                  labelText: Platform.isIOS ? 'Doğum Tarihi (Opsiyonel)' : 'Doğum Tarihi',
+                                  prefixIcon: const Icon(Icons.calendar_today_rounded),
                                 ),
                                 onTap: () => _selectDate(context),
-                                validator: (value) => _dateOfBirth == null ? 'Lütfen doğum tarihinizi seçin.' : null,
+                                validator: (value) {
+                                  // iOS kullanıcıları için doğum tarihi zorunlu değil
+                                  if (Platform.isIOS) {
+                                    return null;
+                                  }
+                                  return _dateOfBirth == null ? 'Lütfen doğum tarihinizi seçin.' : null;
+                                },
                               ),
                               const SizedBox(height: 16),
                               Row(
