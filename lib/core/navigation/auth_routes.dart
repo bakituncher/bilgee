@@ -10,6 +10,7 @@ import 'transition_utils.dart';
 final authRoutes = [
   GoRoute(
     path: AppRoutes.preAuthWelcome,
+    name: 'PreAuthWelcome',
     pageBuilder: (context, state) => buildPageWithFadeTransition(
       context: context,
       state: state,
@@ -18,6 +19,7 @@ final authRoutes = [
   ),
   GoRoute(
     path: AppRoutes.login,
+    name: 'Login',
     pageBuilder: (context, state) => buildPageWithFadeTransition(
       context: context,
       state: state,
@@ -26,6 +28,7 @@ final authRoutes = [
   ),
   GoRoute(
     path: AppRoutes.register,
+    name: 'Register',
     pageBuilder: (context, state) => buildPageWithFadeTransition(
       context: context,
       state: state,
@@ -34,6 +37,7 @@ final authRoutes = [
   ),
   GoRoute(
     path: AppRoutes.verifyEmail,
+    name: 'VerifyEmail',
     pageBuilder: (context, state) => buildPageWithFadeTransition(
       context: context,
       state: state,

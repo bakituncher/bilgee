@@ -25,6 +25,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:taktik/core/services/connectivity_service.dart';
 import 'package:taktik/shared/screens/no_internet_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:taktik/core/services/firebase_analytics_service.dart';
+import 'package:go_router/go_router.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -89,6 +91,15 @@ void main() async {
     // Firebase servislerini yapılandır
     FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(!kDebugMode);
     FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(true);
+    if (kDebugMode) {
+      // DebugView için debug buildlerde etiket ve kısa oturum ayarı
+      try {
+        await FirebaseAnalytics.instance.setSessionTimeoutDuration(const Duration(minutes: 5));
+        await FirebaseAnalytics.instance.logEvent(name: 'debug_app_start', parameters: {
+          'ts': DateTime.now().millisecondsSinceEpoch,
+        });
+      } catch (_) {}
+    }
 
     // 3. REVENUECAT BAŞLATMA (KRİTİK - BURAYA TAŞINDI)
     // UI çizilmeden önce RevenueCat'in hazır olması şarttır, aksi takdirde iOS'ta çökme yaşanır.
@@ -231,12 +242,61 @@ class BilgeAiApp extends ConsumerStatefulWidget {
 }
 
 class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObserver {
+  VoidCallback? _routerListener;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final router = ref.read(goRouterProvider);
+
+      // Navigation analytics: listen to route changes and log screen views
+      void logCurrentRoute() {
+        try {
+          final config = router.routerDelegate.currentConfiguration;
+          // Varsayılan bir değer atayalım
+          String screenName = router.routeInformationProvider.value.location ?? '/';
+
+          if (config.isNotEmpty) {
+            final last = config.last;
+
+            // --- DEĞİŞİKLİK BURADA ---
+            // Öncelik: GoRouter'da tanımlı olan 'name' özelliğini kullan (Örn: 'Library', 'Settings')
+            // Bu sayede /blog/yazi-1 ve /blog/yazi-2 tek bir 'BlogDetail' olarak görünür.
+            if (last.route is GoRoute && (last.route as GoRoute).name != null) {
+              screenName = (last.route as GoRoute).name!;
+            } else {
+              // Eğer name yoksa, slash işaretini temizleyerek path'i kullan
+              // Örn: "/library" -> "library"
+              String location = last.matchedLocation;
+              if (location.startsWith('/')) {
+                location = location.substring(1);
+              }
+              // Kök dizin boş kalırsa 'Splash' veya 'Home' deyin
+              if (location.isEmpty) {
+                location = 'Splash';
+              }
+              screenName = location;
+            }
+            // -------------------------
+          }
+
+          // screen_view (manual)
+          FirebaseAnalyticsService.logScreenView(screenName: screenName);
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint('[Analytics] route log error: $e');
+          }
+        }
+      }
+
+      // Log initial
+      logCurrentRoute();
+      // Listen ongoing changes via routerDelegate (ChangeNotifier)
+      _routerListener = logCurrentRoute;
+      router.routerDelegate.addListener(_routerListener!);
+
       NotificationService.instance.initialize(onNavigate: (route) async {
         // 1. Mağaza Yönlendirmesi Kontrolü
         if (route == '/store' || route == 'UPDATE_APP') {
@@ -288,6 +348,13 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
 
   @override
   void dispose() {
+    // Detach router listener if attached
+    try {
+      final router = ref.read(goRouterProvider);
+      if (_routerListener != null) {
+        router.routerDelegate.removeListener(_routerListener!);
+      }
+    } catch (_) {}
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }

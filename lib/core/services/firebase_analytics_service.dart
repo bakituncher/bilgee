@@ -1,12 +1,16 @@
 // lib/core/services/firebase_analytics_service.dart
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 
 /// Firebase Analytics servisi
 /// AD_ID izni olmadan çalışacak şekilde yapılandırılmıştır
 class FirebaseAnalyticsService {
   static final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
-  static FirebaseAnalyticsObserver get observer => FirebaseAnalyticsObserver(analytics: _analytics);
+  static NavigatorObserver get observer => CompositeNavigatorObserver([
+        FirebaseAnalyticsObserver(analytics: _analytics),
+        ImportantScreenObserver(_analytics),
+      ]);
 
   /// Ekran görüntüleme olayı
   static Future<void> logScreenView({
@@ -150,3 +154,69 @@ class FirebaseAnalyticsService {
   }
 }
 
+/// Birden fazla NavigatorObserver'ı tek seferde eklemek için basit bir bileşik sınıf
+class CompositeNavigatorObserver extends NavigatorObserver {
+  CompositeNavigatorObserver(this._children);
+  final List<NavigatorObserver> _children;
+
+  @override
+  void didPush(Route route, Route? previousRoute) {
+    for (final o in _children) {
+      o.didPush(route, previousRoute);
+    }
+  }
+
+  @override
+  void didReplace({Route? newRoute, Route? oldRoute}) {
+    for (final o in _children) {
+      o.didReplace(newRoute: newRoute, oldRoute: oldRoute);
+    }
+  }
+
+  @override
+  void didPop(Route route, Route? previousRoute) {
+    for (final o in _children) {
+      o.didPop(route, previousRoute);
+    }
+  }
+
+  @override
+  void didRemove(Route route, Route? previousRoute) {
+    for (final o in _children) {
+      o.didRemove(route, previousRoute);
+    }
+  }
+}
+
+/// Önemli ekranlara girildiğinde ek bir 'important_screen_view' olayı yollayan observer
+class ImportantScreenObserver extends NavigatorObserver {
+  ImportantScreenObserver(this._analytics);
+  final FirebaseAnalytics _analytics;
+
+  static const Set<String> importantScreens = {
+    'Home', 'AIHub', 'Coach', 'Arena', 'Profile', 'Settings', 'Library',
+    'Premium', 'Stats', 'StatsOverview', 'Notifications', 'Pomodoro',
+    'TestDetail', 'TestResultSummary', 'StrategicPlanning', 'WeaknessWorkshop',
+    'SavedWorkshops', 'SavedWorkshopDetail', 'AnalysisStrategy', 'UserGuide',
+  };
+
+  void _maybeLog(Route? route) {
+    final name = route?.settings.name;
+    if (name != null && importantScreens.contains(name)) {
+      // Özel anlaşılır bir olay gönder
+      FirebaseAnalyticsService.logEvent(name: 'important_screen_view', parameters: {
+        'screen_name': name,
+      });
+    }
+  }
+
+  @override
+  void didPush(Route route, Route? previousRoute) {
+    _maybeLog(route);
+  }
+
+  @override
+  void didReplace({Route? newRoute, Route? oldRoute}) {
+    _maybeLog(newRoute);
+  }
+}
