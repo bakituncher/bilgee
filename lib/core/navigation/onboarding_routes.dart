@@ -12,6 +12,7 @@ List<RouteBase> onboardingRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
   return [
     GoRoute(
       path: '/intro', // Hardcoded path or add to AppRoutes if preferred
+      name: 'Intro',
       parentNavigatorKey: rootNavigatorKey,
       pageBuilder: (context, state) => buildPageWithFadeTransition(
         context: context,
@@ -21,6 +22,7 @@ List<RouteBase> onboardingRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
     ),
     GoRoute(
       path: AppRoutes.profileCompletion,
+      name: 'ProfileCompletion',
       pageBuilder: (context, state) => buildPageWithFadeTransition(
         context: context,
         state: state,
@@ -29,6 +31,7 @@ List<RouteBase> onboardingRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
     ),
     GoRoute(
       path: AppRoutes.examSelection,
+      name: 'ExamSelection',
       parentNavigatorKey: rootNavigatorKey,
       pageBuilder: (context, state) => buildPageWithFadeTransition(
         context: context,
@@ -38,6 +41,7 @@ List<RouteBase> onboardingRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
     ),
     GoRoute(
       path: AppRoutes.availability,
+      name: 'Availability',
       parentNavigatorKey: rootNavigatorKey,
       pageBuilder: (context, state) => buildPageWithFadeTransition(
         context: context,
