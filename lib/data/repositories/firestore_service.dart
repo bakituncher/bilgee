@@ -769,6 +769,27 @@ class FirestoreService {
     await updateEngagementScore(userId, 100);
   }
 
+  // Alias for updateStrategicPlan to match what's expected in EditablePlanScreen
+  Future<void> saveWeeklyPlan(String userId, Map<String, dynamic> weeklyPlan) async {
+    // In updateStrategicPlan, 'studyPacing' is used.
+    // If not provided in the map, default to 'moderate' or similar.
+    // However, EditablePlanScreen creates a map with 'planTitle', 'strategyFocus', 'creationDate', 'plan' keys.
+    // It calls saveWeeklyPlan(user.id, planMap).
+
+    // We should preserve existing studyPacing if possible, or accept a default.
+    // For now, let's just update the weeklyPlan field and keep other fields.
+    // But since the schema seems to be { weeklyPlan: {...}, studyPacing: '...' },
+    // we should be careful.
+
+    // The previous implementation of updateStrategicPlan overwrites the doc with merge=true.
+    // Let's implement saveWeeklyPlan to just update the 'weeklyPlan' field.
+
+    await _planDoc(userId).set({
+      'weeklyPlan': weeklyPlan,
+      'lastUpdated': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
   Future<void> markTopicAsMastered({required String userId, required String subject, required String topic}) async {
     final sanitizedSubject = sanitizeKey(subject);
     final sanitizedTopic = sanitizeKey(topic);
