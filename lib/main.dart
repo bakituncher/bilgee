@@ -301,9 +301,9 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
         // 1. Mağaza Yönlendirmesi Kontrolü
         if (route == '/store' || route == 'UPDATE_APP') {
           if (Platform.isAndroid || Platform.isIOS) {
-            // Android Paket Adınız: com.codenzi.taktik
-            // iOS ID'niz belli olunca buraya yazarsınız
-            final appId = Platform.isAndroid ? 'com.codenzi.taktik' : 'YOUR_IOS_APP_ID';
+            // Android Paket Adı: com.codenzi.taktik
+            // iOS App Store ID: 6755930518
+            final appId = Platform.isAndroid ? 'com.codenzi.taktik' : '6755930518';
 
             final url = Uri.parse(
               Platform.isAndroid
