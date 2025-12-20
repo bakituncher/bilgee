@@ -256,36 +256,64 @@ exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => 
   });
 
   // Admin gönderimleri için yardımcı (tekil token gönderimi)
+  // GÜNCELLENDİ: 500 token limitini aşmamak için batch (parçalama) işlemi eklendi.
   async function sendPushToTokens(tokens, payload) {
     if (!tokens || tokens.length === 0) return {successCount: 0, failureCount: 0};
+
+    // Tekrarlayan tokenları temizle
     const uniq = Array.from(new Set(tokens.filter(Boolean)));
     const collapseId = payload.campaignId || (payload.route || 'bilge_general');
-    const message = {
-      notification: { title: payload.title, body: payload.body, ...(payload.imageUrl ? { imageUrl: payload.imageUrl } : {}) },
-      data: { route: payload.route || '/home', campaignId: payload.campaignId || '', type: payload.type || 'admin_push', ...(payload.imageUrl ? { imageUrl: payload.imageUrl } : {}) },
-      android: {
-        collapseKey: collapseId,
+
+    // FCM Multicast limiti 500'dür.
+    const BATCH_LIMIT = 500;
+    let totalSuccess = 0;
+    let totalFailure = 0;
+
+    // Token listesini 500'lük parçalara böl ve döngüyle gönder
+    for (let i = 0; i < uniq.length; i += BATCH_LIMIT) {
+      const batchTokens = uniq.slice(i, i + BATCH_LIMIT);
+
+      const message = {
         notification: {
-          channelId: 'bilge_general',
-          clickAction: 'FLUTTER_NOTIFICATION_CLICK',
-          priority: 'HIGH',
-          ...(payload.imageUrl ? { imageUrl: payload.imageUrl } : {}),
+          title: payload.title,
+          body: payload.body,
+          ...(payload.imageUrl ? { imageUrl: payload.imageUrl } : {})
         },
-      },
-      apns: {
-        headers: { 'apns-collapse-id': collapseId },
-        payload: { aps: { sound: 'default', 'mutable-content': 1 } },
-        fcmOptions: payload.imageUrl ? { imageUrl: payload.imageUrl } : undefined,
-      },
-      tokens: uniq,
-    };
-    try {
-      const resp = await messaging.sendEachForMulticast(message);
-      return {successCount: resp.successCount, failureCount: resp.failureCount};
-    } catch (e) {
-      logger.error('FCM send failed', { error: String(e) });
-      return {successCount: 0, failureCount: uniq.length};
+        data: {
+          route: payload.route || '/home',
+          campaignId: payload.campaignId || '',
+          type: payload.type || 'admin_push',
+          ...(payload.imageUrl ? { imageUrl: payload.imageUrl } : {})
+        },
+        android: {
+          collapseKey: collapseId,
+          notification: {
+            channelId: 'bilge_general',
+            clickAction: 'FLUTTER_NOTIFICATION_CLICK',
+            priority: 'HIGH',
+            ...(payload.imageUrl ? { imageUrl: payload.imageUrl } : {}),
+          },
+        },
+        apns: {
+          headers: { 'apns-collapse-id': collapseId },
+          payload: { aps: { sound: 'default', 'mutable-content': 1 } },
+          fcmOptions: payload.imageUrl ? { imageUrl: payload.imageUrl } : undefined,
+        },
+        tokens: batchTokens, // Sadece bu parçadaki 500 token
+      };
+
+      try {
+        const resp = await messaging.sendEachForMulticast(message);
+        totalSuccess += resp.successCount;
+        totalFailure += resp.failureCount;
+      } catch (e) {
+        logger.error('FCM send failed for batch', { error: String(e), batchIndex: i, batchSize: batchTokens.length });
+        // Bu batch'teki tüm tokenları başarısız say
+        totalFailure += batchTokens.length;
+      }
     }
+
+    return {successCount: totalSuccess, failureCount: totalFailure};
   }
 
   // ---- ADMIN KAMPANYA SİSTEMİ (Mevcut haliyle korunuyor) ----
