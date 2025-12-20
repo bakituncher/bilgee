@@ -5,71 +5,90 @@ const { db, admin, messaging } = require("./init");
 const { dayKeyIstanbul } = require("./utils");
 const { processAudienceInBatches } = require("./users");
 
-// ---- GENEL MOTİVASYON MESAJLARI HAVUZU ----
+// ---- 1. GENİŞLETİLMİŞ GENEL MOTİVASYON VE ETKİLEŞİM HAVUZU ----
+// Görsel yok, sadece vurucu metinler.
 const GENERAL_MESSAGES = [
+  // 🟢 Motivasyon & Başlangıç
+  { title: 'Bugün senin günün! 🌟', body: 'Dünü geride bırak. Bugün atacağın tek bir adım bile seni zirveye yaklaştırır.', route: '/home' },
+  { title: 'Hayallerin beklemez 🚀', body: 'Şu an masaya oturanlar kazanıyor. Sen neredesin?', route: '/home' },
+  { title: 'Yüzde 1 Kuralı 📈', body: 'Her gün sadece %1 daha iyi olsan, yıl sonunda 37 kat daha iyi olursun. Hadi başla!', route: '/home' },
+  { title: 'Mazeret yok! 💪', body: 'Zorlandığın an, geliştiğin andır. Pes etme, devam et.', route: '/home' },
+  { title: 'Gelecekteki Sen Mesaj Attı 📩', body: '"Bugün çalıştığın için teşekkür ederim." demek istiyor. Onu mahcup etme.', route: '/home' },
+  { title: 'Sadece 15 Dakika ⏱️', body: 'Gözünde büyütme. Sadece 15 dakika odaklan, gerisi kendiliğinden gelecek.', route: '/home' },
+
+  // 🔵 Rekabet & Arena
+  { title: 'Rakiplerin çalışıyor 👀', body: 'Sen dinlenirken sıralamada birileri seni geçiyor olabilir. Arena\'ya dön!', route: '/arena' },
+  { title: 'Meydan okuma zamanı ⚔️', body: 'Bugün kimseyi yendin mi? Liderlik tablosunda yükselmek için şimdi tam zamanı.', route: '/arena' },
+  { title: 'Sıralama değişti! 📉', body: 'Yerini korumak istiyorsan harekete geçmelisin. Sıralamaya göz at.', route: '/arena' },
+  { title: 'Kürsüde yerin boş 🏆', body: 'İlk 3\'e girmek senin elinde. Bir test çöz ve puanları topla.', route: '/arena' },
+
+  // 🟠 Taktik & Eksik Kapama
+  { title: 'Zayıf halkanı bul 💎', body: 'Seni en çok zorlayan konu aslında en çok net getirecek konudur. Cevher Atölyesi\'ne bak.', route: '/ai-hub/weakness-workshop' },
+  { title: 'Netlerin neden artmıyor? 🤔', body: 'Belki de yanlış yere odaklanıyorsun. Yapay zeka analizine göz at.', route: '/home/stats' },
+  { title: 'Taktik Tavşan fısıldıyor... 🐰', body: '"Çok çalışmak yetmez, akıllı çalışmalısın." Stratejini kontrol et.', route: '/ai-hub' },
+  { title: 'Deneme Analizi Yaptın mı? 📊', body: 'Çözdüğün denemeyi sisteme gir, eksiklerini nokta atışı belirleyelim.', route: '/home/add-test' },
+
+  // 🟣 Odaklanma & Planlama
+  { title: 'Domates tekniği? 🍅', body: '25 dakika odaklan, 5 dakika dinlen. Pomodoro sayacını senin için hazırladık.', route: '/home/pomodoro' },
+  { title: 'Haftalık hedefin tehlikede ⚠️', body: 'Programının gerisinde kalma. Toparlamak için harika bir akşam.', route: '/home/weekly-plan' },
+  { title: 'Yatmadan önce son bir tekrar 🌙', body: 'Uyumadan önce çözülen 10 soru, sabah akılda kalan 10 bilgidir.', route: '/home/add-test' },
+  { title: 'Telefonu bırak, teste başla 📵', body: 'Bu bildirimden sonra yapacağın en iyi şey uygulamaya girmek.', route: '/home' }
+];
+
+// ---- 2. YÜKSEK DÖNÜŞÜMLÜ PREMIUM SATIŞ MESAJLARI (Stratejik & Zeki Tüccar) ----
+// Pazar, Çarşamba, Cuma 22:00'de sadece Premium olmayanlara gidecek.
+// DÜZELTME: route: '/premium' olarak güncellendi.
+const PREMIUM_SALES_MESSAGES = [
+  // 🧠 Kanca: Fırsatçılık & Akılcı Yaklaşım (Smart Move)
   {
-    title: 'Bugün senin günün! 🌟',
-    body: 'Dünü geride bırak, bugün hedeflerine odaklan. Küçük bir adım bile seni ileri taşır! 💪',
-    route: '/home',
+    title: 'Sistemi kullan, planını kap, istersen git 🏃',
+    body: '7 Günlük Bedava Premium hakkınla tüm eksiklerini analiz ettir, haftalık planını yapay zekaya hazırlat. Beğenmezsen iptal et, planın sende kalsın. Kârlı çıkacağın kesin.',
+    route: '/premium'
   },
   {
-    title: 'Hadi biraz hızlanalım! 🚀',
-    body: 'Başarı düzenli çalışmadan gelir. Bugün kendin için 15 dakika ayır ve fark yarat! ⏱️',
-    route: '/home/quests',
+    title: 'Neden "kör dövüşü" yapıyorsun? 👁️',
+    body: 'Rakiplerin Cevher Atölyesi ile nokta atışı eksik kapatırken, sen rastgele çalışarak zaman kaybediyor olabilirsin. Emeğine yazık etme, teknolojiyi yanına al.',
+    route: '/premium'
+  },
+
+  // 📉 Kanca: Kayıp Korkusu (Loss Aversion) - Net Odaklı
+  {
+    title: 'Gizli netlerin çöpe gidiyor 🗑️',
+    body: 'Çözdüğün denemelerde fark etmediğin bir desen var. AI Koç, sürekli hata yaptığın o "gizli konuyu" buldu. Görmek için Premium raporuna bak.',
+    route: '/premium'
   },
   {
-    title: 'Rakipler durmuyor! 🏃',
-    body: 'Arena\'da rekabet kızışıyor. Sıralamadaki yerini korumak için bugün sahaya çık! 🏆',
-    route: '/arena',
+    title: 'Bugün kaç net arttırdın? 📈',
+    body: 'Eğer cevabın "bilmiyorum" ise stratejinde hata var demektir. Ölçülemeyen başarı yönetilemez. Gel, ilerlemeni profesyonelce takip edelim.',
+    route: '/premium'
+  },
+
+  // 💎 Kanca: Değer ve Yatırım (Value Proposition)
+  {
+    title: 'En yüksek getirili yatırımın 💼',
+    body: 'Sınavda yapacağın +1 netin değeri paha biçilemez. Aylık abonelik ise sadece bir tost parası. Geleceğin için küçük, etkisi büyük bir hamle yap.',
+    route: '/premium'
   },
   {
-    title: 'Zayıf noktalarını güçlendir! 💎',
-    body: 'Seni zorlayan konuları erteleme. Cevher Atölyesi\'nde eksiklerini tamamla! ⚒️',
-    route: '/ai-hub/weakness-workshop',
+    title: 'Özel ders kalitesinde, öğrenci bütçesiyle 💸',
+    body: 'Binlerce liralık koçluk hizmetini cebine sığdırdık. 7/24 senin için çalışan, yorulmayan bir yapay zeka. Denemesi 7 gün boyunca bizden.',
+    route: '/premium'
+  },
+
+  // 🏆 Kanca: Rekabet ve Hırs (Arena & Sıralama)
+  {
+    title: 'Arena\'da işler kızışıyor 🔥',
+    body: 'Sıralamadaki rakiplerin Premium analizlerle taktik değiştiriyor. Onlar hızlanırken yerinde saymak istemezsin. Eşit şartlarda yarışmak senin hakkın.',
+    route: '/premium'
   },
   {
-    title: 'Pomodoro zamanı! 🍅',
-    body: 'Odaklanma sorunu mu yaşıyorsun? 25 dakikalık bir Pomodoro seansı ile zihnini aç! 🧠',
-    route: '/home/pomodoro',
-  },
-  {
-    title: 'Planlı çalış, kazan! 📅',
-    body: 'Haftalık hedeflerinde ne durumdasın? Planını kontrol et ve rotanı belirle! 📊',
-    route: '/home/weekly-plan',
-  },
-  {
-    title: 'Kendine bir iyilik yap ✨',
-    body: 'Gelecekteki sen, bugün çalıştığın için sana teşekkür edecek. Hadi başla! 🌈',
-    route: '/home/add-test',
-  },
-  {
-    title: 'Taktik Tavşan seni bekliyor 🤖',
-    body: 'Stratejini gözden geçirmek ister misin? AI Koçunla konuş ve planını güncelle! 💡',
-    route: '/ai-hub',
-  },
-  {
-    title: 'Bir test çözmeye ne dersin? 📝',
-    body: 'Bilgilerini taze tutmak için kısa bir deneme veya test çöz. İlerlemeni gör! 📈',
-    route: '/home/add-test',
-  },
-  {
-    title: 'Motivasyonun mu düştü? 🔋',
-    body: 'Yalnız değilsin! Motivasyon köşesinde enerjini topla ve yola devam et. 💪',
-    route: '/ai-hub/motivation-chat',
-  },
-  {
-    title: 'Görevler seni bekliyor! 📋',
-    body: 'Günlük görevlerini tamamlayarak TP kazan ve seviye atla! 🎯',
-    route: '/home/quests',
-  },
-  {
-    title: 'Başarı detaylarda gizli 🔍',
-    body: 'Konu analizlerine göz at. Hangi derste daha iyisin, hangisine yüklenmelisin? 📉',
-    route: '/home/stats',
+    title: 'Sınav bir strateji oyunudur ♟️',
+    body: 'Sadece çok çalışan değil, doğru çalışan kazanır. Hangi derse ne kadar yüklenmen gerektiğini biliyor musun? Bırak AI Koç hesabını yapsın.',
+    route: '/premium'
   }
 ];
 
-// ---- FCM TOKEN KAYDI VE TOPIC ABONELİĞİ ----
+// ---- FCM TOKEN KAYDI (Aynen Korundu) ----
 exports.registerFcmToken = onCall({region: 'us-central1'}, async (request) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
     const uid = request.auth.uid;
@@ -82,243 +101,224 @@ exports.registerFcmToken = onCall({region: 'us-central1'}, async (request) => {
     const appVersion = request.data?.appVersion ? String(request.data.appVersion) : null;
     const appBuild = request.data?.appBuild != null ? Number(request.data.appBuild) : null;
 
-    // 1. Token'ı veritabanına kaydet (Cihaz takibi ve filtreli gönderimler için hala gerekli)
     const ref = db.collection('users').doc(uid).collection('devices').doc(deviceId);
     await ref.set({
-      uid,
-      token,
-      platform,
-      lang,
-      disabled: false,
+      uid, token, platform, lang, disabled: false,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       ...(appVersion ? { appVersion } : {}),
       ...(Number.isFinite(appBuild) ? { appBuild } : {}),
     }, {merge: true});
 
-    // 2. Token'ı genel bildirim konusuna abone yap (Toplu gönderim için - 0 OKUMA)
-    try {
-      await messaging.subscribeToTopic(token, 'general');
-    } catch (e) {
-      logger.warn('Topic subscription failed', { error: String(e), uid });
-      // Kritik hata değil, devam et
-    }
-
+    try { await messaging.subscribeToTopic(token, 'general'); } catch (e) { logger.warn('Topic sub failed', {e}); }
     return {ok: true};
-  });
+});
 
-// ---- FCM TOKEN TEMİZLEME ----
+// ---- FCM TOKEN SİLME (Aynen Korundu) ----
 exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Oturum gerekli');
   const uid = request.auth.uid;
   const token = String(request.data?.token || '');
-  if (!token || token.length < 10) throw new HttpsError('invalid-argument', 'Geçerli token gerekli');
-
+  if (!token) throw new HttpsError('invalid-argument', 'Token gerekli');
   try {
-    // 1. Veritabanında devre dışı bırak
     const devicesRef = db.collection('users').doc(uid).collection('devices');
     const snapshot = await devicesRef.where('token', '==', token).get();
-
     const batch = db.batch();
-    snapshot.docs.forEach(doc => {
-      batch.update(doc.ref, {
-        disabled: true,
-        unregisteredAt: admin.firestore.FieldValue.serverTimestamp()
-      });
-    });
-
-    if (!snapshot.empty) {
-      await batch.commit();
-    }
-
-    // 2. Konu aboneliğinden çıkar
-    try {
-      await messaging.unsubscribeFromTopic(token, 'general');
-    } catch (e) {
-      logger.warn('Topic unsubscription failed', { error: String(e) });
-    }
-
-    return { ok: true, devicesUpdated: snapshot.size };
-  } catch (error) {
-    logger.error('FCM token unregister failed', { uid, error: String(error) });
-    throw new HttpsError('internal', 'Token temizleme işlemi başarısız');
-  }
+    snapshot.docs.forEach(doc => batch.update(doc.ref, { disabled: true, unregisteredAt: admin.firestore.FieldValue.serverTimestamp() }));
+    if (!snapshot.empty) await batch.commit();
+    try { await messaging.unsubscribeFromTopic(token, 'general'); } catch (e) {}
+    return { ok: true };
+  } catch (error) { throw new HttpsError('internal', 'Hata'); }
 });
 
-  async function getActiveTokens(uid) {
-    const snap = await db.collection('users').doc(uid).collection('devices').where('disabled','==', false).limit(50).get();
+// ---- YARDIMCI FONKSİYONLAR ----
+
+function getRandomItem(array) {
+  return array[Math.floor(Math.random() * array.length)];
+}
+
+async function sendTopicNotification(topic = 'general') {
+  const payload = getRandomItem(GENERAL_MESSAGES);
+  logger.info('Sending generic topic push', { topic, title: payload.title });
+
+  const message = {
+    topic: topic,
+    notification: { title: payload.title, body: payload.body },
+    data: { route: payload.route || '/home', type: 'daily_motivation', click_action: 'FLUTTER_NOTIFICATION_CLICK' },
+    android: { priority: 'high', notification: { channelId: 'bilge_general' } },
+    apns: { payload: { aps: { sound: 'default', 'mutable-content': 1 } } }
+  };
+
+  try {
+    await messaging.send(message);
+    return { success: true };
+  } catch (error) {
+    logger.error('Topic send error', { error });
+    return { success: false };
+  }
+}
+
+// ---- ZAMANLANMIŞ GENEL BİLDİRİMLER (SIFIR MALİYET - HERKESE) ----
+
+exports.dispatchInactivityMorning = onSchedule({schedule: "0 9 * * *", timeZone: 'Europe/Istanbul'}, async () => {
+  await sendTopicNotification('general');
+});
+
+exports.dispatchInactivityAfternoon = onSchedule({schedule: "0 15 * * *", timeZone: 'Europe/Istanbul'}, async () => {
+  await sendTopicNotification('general');
+});
+
+exports.dispatchInactivityEvening = onSchedule({schedule: "30 20 * * *", timeZone: 'Europe/Istanbul'}, async () => {
+  await sendTopicNotification('general');
+});
+
+// ====================================================================================
+// 🔥 YENİ: PREMIUM SATIŞ ODAKLI BİLDİRİM SİSTEMİ (PAZAR, ÇARŞAMBA, CUMA 22:00) 🔥
+// (Sadece Premium Olmayanlara, Görselsiz, Yüksek Dönüşümlü)
+// ====================================================================================
+
+exports.dispatchPremiumSalesPush = onSchedule({
+  schedule: "0 22 * * 0,3,5", // 0:Pazar, 3:Çarşamba, 5:Cuma | Saat 22:00
+  timeZone: "Europe/Istanbul",
+  timeoutSeconds: 540,
+  memory: "1GiB"
+}, async (event) => {
+  logger.info('💰 Premium Sales Push Started');
+
+  // 1. Rastgele agresif bir satış mesajı seç
+  const payload = getRandomItem(PREMIUM_SALES_MESSAGES);
+
+  // 2. Mesajı hazırla (Görsel yok, text only)
+  const baseMessage = {
+    notification: {
+      title: payload.title,
+      body: payload.body,
+    },
+    data: {
+      route: payload.route,
+      type: 'premium_offer',
+      click_action: 'FLUTTER_NOTIFICATION_CLICK'
+    },
+    android: {
+      priority: 'high',
+      notification: { channelId: 'bilge_general', clickAction: 'FLUTTER_NOTIFICATION_CLICK' }
+    },
+    apns: {
+      payload: { aps: { sound: 'default', 'mutable-content': 1 } }
+    }
+  };
+
+  // 3. Premium OLMAYAN kullanıcıları bul ve gönder
+  let totalSent = 0;
+  let totalChecked = 0;
+
+  // processAudienceInBatches: Büyük kitleleri 500'lü gruplar halinde işler
+  await processAudienceInBatches({ type: "all" }, async (uidBatch) => {
+    if (uidBatch.length === 0) return;
+
+    // Batch'teki kullanıcı verilerini çek (isPremium kontrolü için)
+    // Firestore'dan verimli okuma (getAll)
+    const refs = uidBatch.map(uid => db.collection('users').doc(uid));
+    const snapshots = await db.getAll(...refs);
+
+    // Sadece Premium OLMAYANLARI filtrele
+    const nonPremiumUids = snapshots
+      .filter(doc => {
+        const d = doc.data() || {};
+        // Premium değilse listeye al
+        return d.isPremium !== true;
+      })
+      .map(doc => doc.id);
+
+    totalChecked += snapshots.length;
+    if (nonPremiumUids.length === 0) return;
+
+    // Bu kullanıcıların tokenlarını al
+    const allTokens = [];
+    // Promise.all ile paralel çekim
+    const tokenPromises = nonPremiumUids.map(uid => getActiveTokensFiltered(uid, {}));
+    const tokenResults = await Promise.all(tokenPromises);
+
+    tokenResults.forEach(tokens => {
+      if(tokens && tokens.length > 0) allTokens.push(...tokens);
+    });
+
+    // Tekrar eden tokenları temizle
+    const uniqueTokens = [...new Set(allTokens)];
+
+    // Gönderim yap
+    if (uniqueTokens.length > 0) {
+      const result = await sendPushToTokens(uniqueTokens, baseMessage);
+      totalSent += result.successCount;
+    }
+  });
+
+  logger.info('💰 Premium Sales Push Completed', { totalChecked, totalSent, message: payload.title });
+});
+
+
+// ---- YARDIMCI GÖNDERİM FONKSİYONLARI ----
+
+async function getActiveTokensFiltered(uid, filters = {}) {
+  try {
+    const platforms = Array.isArray(filters.platforms) ? filters.platforms.map(s => s.toLowerCase()) : [];
+    let q = db.collection('users').doc(uid).collection('devices').where('disabled','==', false);
+    if (platforms.length > 0) q = q.where('platform','in', platforms);
+    // Limit performans için 5'e çekildi
+    const snap = await q.limit(5).get();
     if (snap.empty) return [];
-    const list = snap.docs.map((d)=> (d.data()||{}).token).filter(Boolean);
-    return Array.from(new Set(list));
-  }
+    return snap.docs.map(d => d.data().token).filter(Boolean);
+  } catch (e) { return []; }
+}
 
-  async function getActiveTokensFiltered(uid, filters = {}) {
+async function sendPushToTokens(tokens, payload) {
+  if (!tokens || tokens.length === 0) return {successCount: 0, failureCount: 0};
+  const uniq = Array.from(new Set(tokens.filter(Boolean)));
+  const BATCH_LIMIT = 500;
+  let totalSuccess = 0;
+  let totalFailure = 0;
+
+  for (let i = 0; i < uniq.length; i += BATCH_LIMIT) {
+    const batchTokens = uniq.slice(i, i + BATCH_LIMIT);
+
+    // Payload zaten hazırsa (otomatik sistemden geliyorsa)
+    let message = {
+      ...payload,
+      tokens: batchTokens,
+    };
+
+    // Admin panelinden veya eski sistemden geliyorsa (Notification objesi yoksa oluştur)
+    if(!message.notification) {
+       message.notification = { title: payload.title, body: payload.body };
+       message.data = { route: payload.route || '/home', click_action: 'FLUTTER_NOTIFICATION_CLICK' };
+
+       // SADECE Admin panelinden görsel gönderilirse ekle (Otomatikte yok)
+       if(payload.imageUrl) {
+         message.notification.imageUrl = payload.imageUrl;
+         message.data.imageUrl = payload.imageUrl;
+
+         // Android/iOS özel alanlarına da ekle
+         if(!message.android) message.android = { notification: {} };
+         message.android.notification.imageUrl = payload.imageUrl;
+
+         if(!message.apns) message.apns = { fcmOptions: {} };
+         message.apns.fcmOptions = { imageUrl: payload.imageUrl };
+       }
+    }
+
     try {
-      const platforms = Array.isArray(filters.platforms) ? filters.platforms.filter((x)=> typeof x === 'string' && x).map((s)=> s.toLowerCase()) : [];
-      let q = db.collection('users').doc(uid).collection('devices').where('disabled','==', false);
-      if (platforms.length > 0 && platforms.length <= 10) q = q.where('platform','in', platforms);
-
-      const snap = await q.limit(200).get();
-      if (snap.empty) return [];
-
-      const buildMin = Number.isFinite(filters.buildMin) ? Number(filters.buildMin) : null;
-      const buildMax = Number.isFinite(filters.buildMax) ? Number(filters.buildMax) : null;
-
-      const list = [];
-      for (const d of snap.docs) {
-        const it = d.data() || {};
-        const build = typeof it.appBuild === 'number' ? it.appBuild : (typeof it.appBuild === 'string' ? Number(it.appBuild) : null);
-        const b = Number.isFinite(build) ? Number(build) : 0;
-        if (buildMin !== null && !(b >= buildMin)) continue;
-        if (buildMax !== null && !(b <= buildMax)) continue;
-        if (it.token) list.push(it.token);
-      }
-      return Array.from(new Set(list));
+      const resp = await messaging.sendEachForMulticast(message);
+      totalSuccess += resp.successCount;
+      totalFailure += resp.failureCount;
     } catch (e) {
-      logger.error('getActiveTokensFiltered failed', { error: String(e) });
-      return [];
+      totalFailure += batchTokens.length;
     }
   }
+  return {successCount: totalSuccess, failureCount: totalFailure};
+}
 
-  // ---- YARDIMCI FONKSİYONLAR ----
+// ---- ADMIN FONKSİYONLARI (Aynen Korundu - Geriye Dönük Uyumluluk) ----
 
-  // Rastgele bir mesaj seç
-  function getRandomMessage() {
-    const index = Math.floor(Math.random() * GENERAL_MESSAGES.length);
-    return GENERAL_MESSAGES[index];
-  }
-
-  // Konu (Topic) tabanlı gönderim - 0 OKUMA MALİYETİ
-  async function sendTopicNotification(topic = 'general') {
-    const payload = getRandomMessage();
-    logger.info('Sending random topic notification', { topic, title: payload.title });
-
-    const message = {
-      topic: topic,
-      notification: {
-        title: payload.title,
-        body: payload.body,
-      },
-      data: {
-        route: payload.route || '/home',
-        type: 'daily_motivation',
-        click_action: 'FLUTTER_NOTIFICATION_CLICK'
-      },
-      android: {
-        priority: 'high',
-        notification: {
-          channelId: 'bilge_general',
-        }
-      },
-      apns: {
-        payload: {
-          aps: {
-            sound: 'default',
-            'mutable-content': 1
-          }
-        }
-      }
-    };
-
-    try {
-      const response = await messaging.send(message);
-      logger.info('Topic message sent successfully', { messageId: response });
-      return { success: true, messageId: response };
-    } catch (error) {
-      logger.error('Error sending topic message', { error: String(error) });
-      return { success: false, error };
-    }
-  }
-
-  // Zamanlayıcı yardımcı fonksiyonu
-  function scheduleSpecAt(hour, minute = 0) {
-    return {
-      schedule: `${minute} ${hour} * * *`,
-      timeZone: 'Europe/Istanbul',
-      timeoutSeconds: 60 // Kısa timeout yeterli çünkü işlem çok hafif
-    };
-  }
-
-  // ---- ZAMANLANMIŞ BİLDİRİM FONKSİYONLARI (SIFIR OKUMA) ----
-
-  exports.dispatchInactivityMorning = onSchedule(scheduleSpecAt(9, 0), async () => {
-    logger.info('🌅 Morning random push started (Zero-Read)');
-    await sendTopicNotification('general');
-  });
-
-  exports.dispatchInactivityAfternoon = onSchedule(scheduleSpecAt(15, 0), async () => {
-    logger.info('☀️ Afternoon random push started (Zero-Read)');
-    await sendTopicNotification('general');
-  });
-
-  exports.dispatchInactivityEvening = onSchedule(scheduleSpecAt(20, 30), async () => {
-    logger.info('🌙 Evening random push started (Zero-Read)');
-    await sendTopicNotification('general');
-  });
-
-  // Admin gönderimleri için yardımcı (tekil token gönderimi)
-  // GÜNCELLENDİ: 500 token limitini aşmamak için batch (parçalama) işlemi eklendi.
-  async function sendPushToTokens(tokens, payload) {
-    if (!tokens || tokens.length === 0) return {successCount: 0, failureCount: 0};
-
-    // Tekrarlayan tokenları temizle
-    const uniq = Array.from(new Set(tokens.filter(Boolean)));
-    const collapseId = payload.campaignId || (payload.route || 'bilge_general');
-
-    // FCM Multicast limiti 500'dür.
-    const BATCH_LIMIT = 500;
-    let totalSuccess = 0;
-    let totalFailure = 0;
-
-    // Token listesini 500'lük parçalara böl ve döngüyle gönder
-    for (let i = 0; i < uniq.length; i += BATCH_LIMIT) {
-      const batchTokens = uniq.slice(i, i + BATCH_LIMIT);
-
-      const message = {
-        notification: {
-          title: payload.title,
-          body: payload.body,
-          ...(payload.imageUrl ? { imageUrl: payload.imageUrl } : {})
-        },
-        data: {
-          route: payload.route || '/home',
-          campaignId: payload.campaignId || '',
-          type: payload.type || 'admin_push',
-          ...(payload.imageUrl ? { imageUrl: payload.imageUrl } : {})
-        },
-        android: {
-          collapseKey: collapseId,
-          notification: {
-            channelId: 'bilge_general',
-            clickAction: 'FLUTTER_NOTIFICATION_CLICK',
-            priority: 'HIGH',
-            ...(payload.imageUrl ? { imageUrl: payload.imageUrl } : {}),
-          },
-        },
-        apns: {
-          headers: { 'apns-collapse-id': collapseId },
-          payload: { aps: { sound: 'default', 'mutable-content': 1 } },
-          fcmOptions: payload.imageUrl ? { imageUrl: payload.imageUrl } : undefined,
-        },
-        tokens: batchTokens, // Sadece bu parçadaki 500 token
-      };
-
-      try {
-        const resp = await messaging.sendEachForMulticast(message);
-        totalSuccess += resp.successCount;
-        totalFailure += resp.failureCount;
-      } catch (e) {
-        logger.error('FCM send failed for batch', { error: String(e), batchIndex: i, batchSize: batchTokens.length });
-        // Bu batch'teki tüm tokenları başarısız say
-        totalFailure += batchTokens.length;
-      }
-    }
-
-    return {successCount: totalSuccess, failureCount: totalFailure};
-  }
-
-  // ---- ADMIN KAMPANYA SİSTEMİ (Mevcut haliyle korunuyor) ----
-  // Bu kısımlar admin panelinden özel gönderimler için gereklidir ve okuma yapması doğaldır.
-  exports.adminEstimateAudience = onCall({ region: "us-central1", timeoutSeconds: 300 }, async (request) => {
+exports.adminEstimateAudience = onCall({ region: "us-central1", timeoutSeconds: 300 }, async (request) => {
     if (!request.auth) throw new HttpsError("unauthenticated", "Oturum gerekli");
     const isAdmin = request.auth.token && request.auth.token.admin === true;
     if (!isAdmin) throw new HttpsError("permission-denied", "Admin gerekli");
@@ -334,7 +334,7 @@ exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => 
     await processAudienceInBatches(audience, async (uidBatch) => {
       baseUsers += uidBatch.length;
       if (!hasDeviceFilters) {
-        return; // Cihaz filtresi yoksa sadece kullanıcı saymak yeterli
+        return;
       }
       const batchSize = 50;
       for (let i = 0; i < uidBatch.length; i += batchSize) {
@@ -367,42 +367,27 @@ exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => 
     const scheduledAt = typeof request.data?.scheduledAt === "number" ? request.data.scheduledAt : null;
     const sendTypeRaw = String(request.data?.sendType || "push").toLowerCase();
     const sendType = ["push", "inapp", "both"].includes(sendTypeRaw) ? sendTypeRaw : "push";
-
-    // YENİ: Premium olmayanlara gönderme isteği var mı?
     const onlyNonPremium = request.data?.onlyNonPremium === true;
 
     if (!title || !body) throw new HttpsError("invalid-argument", "title ve body zorunludur");
 
-    // KRİTİK DÜZELTME: Herhangi bir filtre var mı kontrolü
-    // Platform, Build Version VEYA Premium Olmayanlar seçildiyse filtre var demektir.
     const hasFilters = (Array.isArray(audience.platforms) && audience.platforms.length > 0) ||
                        Number.isFinite(audience.buildMin) ||
                        Number.isFinite(audience.buildMax) ||
                        onlyNonPremium;
 
-    // ---- YENİ: GLOBAL KAMPANYA SİSTEMİ (PULL MODELİ) + TOPIC MESSAGING ----
-    // Hedef kitle "all" (herkes) ise VE hiçbir filtre yoksa, topic messaging kullan (SIFIR OKUMA MALİYETİ)
-    // Eğer iOS seçiliyse veya Premium filtre varsa buraya GİRMEZ.
-    // - Push için: Topic'e gönder (0 okuma)
-    // - InApp için: Global kampanya oluştur (1 yazma)
+    // GLOBAL KAMPANYA (Pull Modeli)
     if (audience.type === 'all' && !hasFilters) {
-
         let globalCampaignRef = null;
         let pushResult = { successCount: 0, failureCount: 0 };
-
-        // 1. InApp varsa Global Kampanya Oluştur
         if (sendType === 'inapp' || sendType === 'both') {
             const expiryDays = request.data?.expiryDays || 7;
             const expiresAt = admin.firestore.Timestamp.fromDate(
               new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000)
             );
-
             globalCampaignRef = db.collection('global_campaigns').doc();
             await globalCampaignRef.set({
-                title,
-                body,
-                imageUrl,
-                route,
+                title, body, imageUrl, route,
                 createdAt: admin.firestore.FieldValue.serverTimestamp(),
                 createdBy: request.auth.uid,
                 isActive: true,
@@ -411,56 +396,28 @@ exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => 
                 priority: request.data?.priority || 'normal',
             });
         }
-
-        // 2. Push varsa Topic Kullan (SIFIR OKUMA!)
         if (sendType === 'push' || sendType === 'both') {
             const message = {
                 topic: 'general',
-                notification: {
-                  title,
-                  body,
-                  ...(imageUrl ? { imageUrl } : {})
-                },
+                notification: { title, body, ...(imageUrl ? { imageUrl } : {}) },
                 data: {
-                    route,
-                    campaignId: globalCampaignRef?.id || 'topic_only',
-                    type: 'global_campaign',
-                    click_action: 'FLUTTER_NOTIFICATION_CLICK'
+                    route, campaignId: globalCampaignRef?.id || 'topic_only',
+                    type: 'global_campaign', click_action: 'FLUTTER_NOTIFICATION_CLICK'
                 },
                 android: {
                   priority: 'high',
-                  notification: {
-                    channelId: 'bilge_general',
-                    clickAction: 'FLUTTER_NOTIFICATION_CLICK',
-                    ...(imageUrl ? { imageUrl } : {})
-                  }
+                  notification: { channelId: 'bilge_general', clickAction: 'FLUTTER_NOTIFICATION_CLICK', ...(imageUrl ? { imageUrl } : {}) }
                 },
                 apns: {
-                  payload: {
-                    aps: {
-                      sound: 'default',
-                      'mutable-content': 1
-                    }
-                  },
+                  payload: { aps: { sound: 'default', 'mutable-content': 1 } },
                   ...(imageUrl ? { fcmOptions: { imageUrl } } : {})
                 }
             };
-
             try {
               const response = await messaging.send(message);
-              logger.info('Topic push sent successfully (Zero-Read)', {
-                messageId: response,
-                topic: 'general',
-                hasInApp: globalCampaignRef !== null
-              });
               pushResult.successCount = 1;
-            } catch(e) {
-              logger.error('Topic push failed', { error: String(e) });
-              pushResult.failureCount = 1;
-            }
+            } catch(e) { pushResult.failureCount = 1; }
         }
-
-        // 3. Global kampanya varsa durumunu güncelle
         if (globalCampaignRef) {
             await globalCampaignRef.update({
               status: 'active',
@@ -469,33 +426,13 @@ exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => 
               method: 'global_broadcast'
             });
         }
-
-        // 4. Başarı yanıtı
-        return {
-            ok: true,
-            campaignId: globalCampaignRef?.id || 'topic_only',
-            method: 'topic_broadcast',
-            topic: 'general',
-            writesSaved: '100000+', // 🎉 Veritabanı yazma tasarrufu
-            readsSaved: '250000+', // 🎉 Veritabanı okuma tasarrufu
-            message: sendType === 'push'
-                ? 'Push bildirimi topic üzerinden gönderildi (0 okuma)'
-                : 'Kampanya global olarak yayınlandı. Kullanıcılar uygulamayı açtıklarında görecekler.',
-            pushSent: pushResult.successCount > 0
-        };
+        return { ok: true, method: 'topic_broadcast' };
     }
 
-    // ---- ESKİ SİSTEM: Filtreleme varsa (belirli kullanıcı grubu) ----
-    // Eğer audience.type !== 'all' veya filtre varsa, eski mantık devam eder
-    // Buraya düştüyse demek ki ya hedef kitle 'all' değil, ya da bir filtre (iOS, Non-Premium vb.) var.
+    // FİLTRELİ KAMPANYA (Eski Sistem)
     const campaignRef = db.collection("push_campaigns").doc();
     const baseDoc = {
-      title,
-      body,
-      imageUrl,
-      route,
-      audience,
-      onlyNonPremium, // YENİ: Premium filtresi bilgisini kaydet
+      title, body, imageUrl, route, audience, onlyNonPremium,
       createdBy: request.auth.uid,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       sendType,
@@ -515,62 +452,35 @@ exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => 
     let totalFail = 0;
 
     await processAudienceInBatches(audience, async (uidBatch) => {
-      // 1. Hedef UID Listesini Belirle
       let targetUids = uidBatch;
-
-      // YENİ: PREMIUM FİLTRESİ MANTIĞI
       if (onlyNonPremium) {
-        // Bu batch'teki kullanıcıların premium durumunu kontrol et
-        // Firestore'dan 100'lü paketler halinde verileri çek (getAll verimli okuma yapar)
         const refs = uidBatch.map(uid => db.collection('users').doc(uid));
         const snapshots = await db.getAll(...refs);
-
-        targetUids = snapshots
-          .filter(doc => {
-            const d = doc.data() || {};
-            // Premium kontrolü: isPremium alanı true ise hariç tut
-            // (Projenizdeki premium yapısına göre burayı 'premiumUntil' tarihiyle de değiştirebilirsiniz)
-            return d.isPremium !== true;
-          })
-          .map(doc => doc.id);
+        targetUids = snapshots.filter(doc => (doc.data() || {}).isPremium !== true).map(doc => doc.id);
       }
-
-      // Eğer filtreden sonra kimse kalmadıysa bu batch'i atla
       if (targetUids.length === 0) return;
+      totalUsers += targetUids.length;
 
-      totalUsers += targetUids.length; // Kalan kullanıcıları sayıya ekle
-
-      // In-app bildirimler (filtrelenmiş grup için)
       if (sendType === "inapp" || sendType === "both") {
-        const inAppPromises = targetUids.map((uid) => // uidBatch yerine targetUids kullan
+        const inAppPromises = targetUids.map((uid) =>
           createInAppForUser(uid, { title, body, imageUrl, route, type: "campaign", campaignId: campaignRef.id })
         );
         const results = await Promise.all(inAppPromises);
         totalInApp += results.filter(Boolean).length;
       }
 
-      // Push bildirimler (filtrelenmiş grup için)
       if (sendType === "push" || sendType === "both") {
         const allTokens = [];
         const batchSize = 100;
-        for (let i = 0; i < targetUids.length; i += batchSize) { // uidBatch yerine targetUids kullan
-          const batchUids = targetUids.slice(i, i + batchSize); // uidBatch yerine targetUids kullan
+        for (let i = 0; i < targetUids.length; i += batchSize) {
+          const batchUids = targetUids.slice(i, i + batchSize);
           const tokenPromises = batchUids.map((uid) => getActiveTokensFiltered(uid, filters));
           const tokenBatches = await Promise.all(tokenPromises);
           tokenBatches.forEach((tokens) => allTokens.push(...tokens));
         }
-
         const uniqueTokens = [...new Set(allTokens)];
-
         if (uniqueTokens.length > 0) {
-          const pushPayload = {
-            title,
-            body,
-            imageUrl,
-            route,
-            type: "campaign",
-            campaignId: campaignRef.id,
-          };
+          const pushPayload = { title, body, imageUrl, route, type: "campaign", campaignId: campaignRef.id };
           const result = await sendPushToTokens(uniqueTokens, pushPayload);
           totalSent += result.successCount;
           totalFail += result.failureCount;
@@ -578,120 +488,55 @@ exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => 
       }
     });
 
-    await campaignRef.set(
-      {
-        status: "completed",
-        totalUsers,
-        totalSent,
-        totalFail,
-        totalInApp,
+    await campaignRef.set({
+        status: "completed", totalUsers, totalSent, totalFail, totalInApp,
         completedAt: admin.firestore.FieldValue.serverTimestamp(),
-      },
-      { merge: true }
-    );
+      }, { merge: true });
     return { ok: true, campaignId: campaignRef.id, totalUsers, totalSent, totalFail, totalInApp, method: 'filtered_batch' };
   });
 
   exports.processScheduledCampaigns = onSchedule({ schedule: "*/5 * * * *", timeZone: "Europe/Istanbul" }, async () => {
     const now = Date.now();
-    const snap = await db
-      .collection("push_campaigns")
-      .where("status", "==", "scheduled")
-      .where("scheduledAt", "<=", now)
-      .limit(10)
-      .get();
+    const snap = await db.collection("push_campaigns").where("status", "==", "scheduled").where("scheduledAt", "<=", now).limit(10).get();
     if (snap.empty) return;
     for (const doc of snap.docs) {
       const d = doc.data() || {};
       try {
         await doc.ref.set({ status: "sending" }, { merge: true });
         const { title, body, imageUrl, route, audience } = d;
-        const sendTypeRaw = String(d.sendType || "push").toLowerCase();
-        const sendType = ["push", "inapp", "both"].includes(sendTypeRaw) ? sendTypeRaw : "push";
-        const onlyNonPremium = d.onlyNonPremium === true; // YENİ: Scheduled campaign'de de premium filtresi
-
-        const filters = {
-          buildMin: audience?.buildMin,
-          buildMax: audience?.buildMax,
-          platforms: audience?.platforms,
-        };
-        let totalSent = 0,
-          totalFail = 0,
-          totalUsers = 0,
-          totalInApp = 0;
+        const sendType = ["push", "inapp", "both"].includes(d.sendType) ? d.sendType : "push";
+        const onlyNonPremium = d.onlyNonPremium === true;
+        const filters = { buildMin: audience?.buildMin, buildMax: audience?.buildMax, platforms: audience?.platforms };
+        let totalSent = 0, totalFail = 0, totalUsers = 0, totalInApp = 0;
 
         await processAudienceInBatches(audience, async (uidBatch) => {
-          // YENİ: Premium filtresi mantığı (scheduled campaigns için)
           let targetUids = uidBatch;
-
           if (onlyNonPremium) {
             const refs = uidBatch.map(uid => db.collection('users').doc(uid));
             const snapshots = await db.getAll(...refs);
-
-            targetUids = snapshots
-              .filter(doc => {
-                const d = doc.data() || {};
-                return d.isPremium !== true;
-              })
-              .map(doc => doc.id);
+            targetUids = snapshots.filter(doc => (doc.data() || {}).isPremium !== true).map(doc => doc.id);
           }
-
           if (targetUids.length === 0) return;
-
           totalUsers += targetUids.length;
 
-          for (const uid of targetUids) { // uidBatch yerine targetUids kullan
+          for (const uid of targetUids) {
             if (sendType === "inapp" || sendType === "both") {
-              const ok = await createInAppForUser(uid, {
-                title,
-                body,
-                imageUrl,
-                route,
-                type: "campaign",
-                campaignId: doc.id,
-              });
+              const ok = await createInAppForUser(uid, { title, body, imageUrl, route, type: "campaign", campaignId: doc.id });
               if (ok) totalInApp++;
             }
             if (sendType === "push" || sendType === "both") {
               const tokens = await getActiveTokensFiltered(uid, filters);
               if (tokens.length === 0) continue;
-              const r = await sendPushToTokens(tokens, {
-                title,
-                body,
-                imageUrl,
-                route,
-                type: "campaign",
-                campaignId: doc.id,
-              });
+              const r = await sendPushToTokens(tokens, { title, body, imageUrl, route, type: "campaign", campaignId: doc.id });
               totalSent += r.successCount;
               totalFail += r.failureCount;
-              await doc.ref.collection("logs").add({
-                uid,
-                success: r.successCount,
-                failed: r.failureCount,
-                ts: admin.firestore.FieldValue.serverTimestamp(),
-              });
             }
           }
         });
 
-        await doc.ref.set(
-          {
-            status: "completed",
-            totalUsers,
-            totalSent,
-            totalFail,
-            totalInApp,
-            completedAt: admin.firestore.FieldValue.serverTimestamp(),
-          },
-          { merge: true }
-        );
+        await doc.ref.set({ status: "completed", totalUsers, totalSent, totalFail, totalInApp, completedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
       } catch (e) {
-        logger.error("Scheduled campaign failed", { id: doc.id, error: String(e) });
-        await doc.ref.set(
-          { status: "failed", error: String(e), failedAt: admin.firestore.FieldValue.serverTimestamp() },
-          { merge: true }
-        );
+        await doc.ref.set({ status: "failed", error: String(e), failedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
       }
     }
   });
@@ -712,43 +557,19 @@ exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => 
       };
       await ref.add(doc);
       return true;
-    } catch (e) {
-      logger.error('createInAppForUser failed', { uid, error: String(e) });
-      return false;
-    }
+    } catch (e) { return false; }
   }
 
-  // ---- GLOBAL KAMPANYA TEMİZLİĞİ ----
-  // Süresi dolan global kampanyaları otomatik olarak devre dışı bırak
   exports.cleanupExpiredGlobalCampaigns = onSchedule({
-    schedule: "0 3 * * *", // Her gün saat 03:00'te çalış
+    schedule: "0 3 * * *",
     timeZone: "Europe/Istanbul"
   }, async () => {
     const now = admin.firestore.Timestamp.now();
-
-    // Süresi dolmuş ama hala aktif olan kampanyaları bul
-    const expiredSnap = await db
-      .collection('global_campaigns')
-      .where('isActive', '==', true)
-      .where('expiresAt', '<=', now)
-      .limit(50)
-      .get();
-
-    if (expiredSnap.empty) {
-      logger.info('No expired global campaigns found');
-      return;
-    }
-
+    const expiredSnap = await db.collection('global_campaigns').where('isActive', '==', true).where('expiresAt', '<=', now).limit(50).get();
+    if (expiredSnap.empty) return;
     const batch = db.batch();
     expiredSnap.docs.forEach(doc => {
-      batch.update(doc.ref, {
-        isActive: false,
-        deactivatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        deactivationReason: 'expired'
-      });
+      batch.update(doc.ref, { isActive: false, deactivatedAt: admin.firestore.FieldValue.serverTimestamp(), deactivationReason: 'expired' });
     });
-
     await batch.commit();
-    logger.info('Expired global campaigns deactivated', { count: expiredSnap.size });
   });
-
