@@ -73,11 +73,21 @@ async function computeInactivityHours(userRef) {
  */
 async function processAudienceInBatches(audience, batchCallback) {
   const BATCH_SIZE = 1000;
-  // Sadece ID ve filtreleme alanlarını çekerek veriyi küçültüyoruz
-  let query = db.collection("users").select("selectedExam");
+  // Varsayılan olarak sadece gerekli alanları çekelim (performans için)
+  let query = db.collection("users").select("selectedExam", "isPremium");
 
   // --- Filtreleme Mantığı ---
   const lc = (s) => (typeof s === "string" ? s.toLowerCase() : s);
+
+  // 🔥 YENİ: GLOBAL FİLTRE (Hem otomatik hem manuel gönderimler için)
+  // Eğer audience içinde 'onlyNonPremium' varsa veya tip 'non_premium' ise filtreyi en başa ekle.
+  // Bu sayede "Sadece YKS seçili" olsa bile bu filtre üzerine eklenir (AND mantığı).
+  if (audience && (audience.type === "non_premium" || audience.onlyNonPremium === true)) {
+    // isPremium değeri true OLMAYAN her şeyi getir (false veya null)
+    // Not: Firestore'da '!=' sorgusu bazen alanı hiç olmayanları getirmeyebilir,
+    // ama uygulamanızda alanlar tutarlıysa bu en performanslı yoldur.
+    query = query.where("isPremium", "!=", true);
+  }
 
   // 1. Tekil Sınav Filtresi
   if (audience && audience.type === "exam" && audience.examType) {
@@ -91,10 +101,9 @@ async function processAudienceInBatches(audience, batchCallback) {
     if (exams.length > 0 && exams.length <= 10) {
       query = query.where("selectedExam", "in", exams);
     }
-    // Not: 10'dan fazla sınav türü varsa 'in' sorgusu çalışmaz,
-    // bu durumda client-side filtreleme veya batchCallback içinde kontrol gerekir.
   }
-  // 3. Özel UID Listesi (Database sorgusu gerektirmez)
+
+  // 3. Özel UID Listesi
   else if (audience && audience.type === "uids" && Array.isArray(audience.uids)) {
     const cleanUids = audience.uids.filter((x) => typeof x === "string");
     for (let i = 0; i < cleanUids.length; i += BATCH_SIZE) {
@@ -103,40 +112,30 @@ async function processAudienceInBatches(audience, batchCallback) {
     return;
   }
 
-  // --- Batch (Sayfalama) Döngüsü ---
+  // --- Batch Döngüsü ---
   let lastDoc = null;
   let totalProcessed = 0;
 
   while (true) {
     let currentQuery = query.limit(BATCH_SIZE);
-
-    // Bir önceki sayfanın son dökümanından sonrasını getir
-    if (lastDoc) {
-      currentQuery = currentQuery.startAfter(lastDoc);
-    }
+    if (lastDoc) currentQuery = currentQuery.startAfter(lastDoc);
 
     const snapshot = await currentQuery.get();
+    if (snapshot.empty) break;
 
-    if (snapshot.empty) {
-      break; // Veri bitti
-    }
-
-    // UID listesini oluştur
     const uids = snapshot.docs.map((doc) => doc.id);
 
-    // İşleyiciye (callback) gönder (Örn: Push bildirimi at)
     if (uids.length > 0) {
       await batchCallback(uids);
     }
 
     totalProcessed += uids.length;
     lastDoc = snapshot.docs[snapshot.docs.length - 1];
-
-    // İşlemciyi boğmamak için kısa bir bekleme (Throttling)
     await new Promise((resolve) => setTimeout(resolve, 50));
   }
 
-  console.log(`Batch işlemi tamamlandı. Toplam işlenen kullanıcı: ${totalProcessed}`);
+  // Sadece log bas, return etme (void)
+  console.log(`Batch işlemi tamamlandı. Toplam: ${totalProcessed}`);
 }
 
 /**
@@ -432,7 +431,7 @@ const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, e
 
     await miscellaneousDeletions;
 
-    // === 12.5) KULLANICI ALT KOLEKSİYONLARINDAN KRİTİK VERİLERİ MANUEL SİL ===
+    // === 12.5) KULLANICI ALT KOLEKSİYONLARDAN KRİTİK VERİLERİ MANUEL SİL ===
     // Not: recursiveDelete() güvenilir olsa da, kritik verileri önceden manuel silmek
     //      hem log'da görünürlük sağlar hem de daha kontrollü bir silme işlemi yapar
     try {

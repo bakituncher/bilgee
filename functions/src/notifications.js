@@ -177,82 +177,47 @@ exports.dispatchInactivityEvening = onSchedule({schedule: "30 20 * * *", timeZon
 // ====================================================================================
 
 exports.dispatchPremiumSalesPush = onSchedule({
-  schedule: "0 22 * * 0,3,5", // 0:Pazar, 3:Çarşamba, 5:Cuma | Saat 22:00
+  schedule: "0 22 * * 0,3,5",
   timeZone: "Europe/Istanbul",
   timeoutSeconds: 540,
   memory: "1GiB"
 }, async (event) => {
   logger.info('💰 Premium Sales Push Started');
 
-  // 1. Rastgele agresif bir satış mesajı seç
   const payload = getRandomItem(PREMIUM_SALES_MESSAGES);
 
-  // 2. Mesajı hazırla (Görsel yok, text only)
   const baseMessage = {
-    notification: {
-      title: payload.title,
-      body: payload.body,
-    },
-    data: {
-      route: payload.route,
-      type: 'premium_offer',
-      click_action: 'FLUTTER_NOTIFICATION_CLICK'
-    },
-    android: {
-      priority: 'high',
-      notification: { channelId: 'bilge_general', clickAction: 'FLUTTER_NOTIFICATION_CLICK' }
-    },
-    apns: {
-      payload: { aps: { sound: 'default', 'mutable-content': 1 } }
-    }
+    notification: { title: payload.title, body: payload.body },
+    data: { route: payload.route, type: 'premium_offer', click_action: 'FLUTTER_NOTIFICATION_CLICK' },
+    android: { priority: 'high', notification: { channelId: 'bilge_general', clickAction: 'FLUTTER_NOTIFICATION_CLICK' } },
+    apns: { payload: { aps: { sound: 'default', 'mutable-content': 1 } } }
   };
 
-  // 3. Premium OLMAYAN kullanıcıları bul ve gönder
   let totalSent = 0;
-  let totalChecked = 0;
 
-  // processAudienceInBatches: Büyük kitleleri 500'lü gruplar halinde işler
-  await processAudienceInBatches({ type: "all" }, async (uidBatch) => {
+  // 🔥 TEK DEĞİŞİKLİK BURADA: type: "non_premium" gönderiyoruz
+  // users.js bizim için filtreliyor. Ekstra DB sorgusu yok!
+  await processAudienceInBatches({ type: "non_premium" }, async (uidBatch) => {
     if (uidBatch.length === 0) return;
 
-    // Batch'teki kullanıcı verilerini çek (isPremium kontrolü için)
-    // Firestore'dan verimli okuma (getAll)
-    const refs = uidBatch.map(uid => db.collection('users').doc(uid));
-    const snapshots = await db.getAll(...refs);
-
-    // Sadece Premium OLMAYANLARI filtrele
-    const nonPremiumUids = snapshots
-      .filter(doc => {
-        const d = doc.data() || {};
-        // Premium değilse listeye al
-        return d.isPremium !== true;
-      })
-      .map(doc => doc.id);
-
-    totalChecked += snapshots.length;
-    if (nonPremiumUids.length === 0) return;
-
-    // Bu kullanıcıların tokenlarını al
-    const allTokens = [];
-    // Promise.all ile paralel çekim
-    const tokenPromises = nonPremiumUids.map(uid => getActiveTokensFiltered(uid, {}));
+    // Doğrudan tokenları çek (Premium kontrolü zaten yapıldı)
+    const tokenPromises = uidBatch.map(uid => getActiveTokensFiltered(uid, {}));
     const tokenResults = await Promise.all(tokenPromises);
 
+    const allTokens = [];
     tokenResults.forEach(tokens => {
-      if(tokens && tokens.length > 0) allTokens.push(...tokens);
+      if (tokens && tokens.length > 0) allTokens.push(...tokens);
     });
 
-    // Tekrar eden tokenları temizle
     const uniqueTokens = [...new Set(allTokens)];
 
-    // Gönderim yap
     if (uniqueTokens.length > 0) {
       const result = await sendPushToTokens(uniqueTokens, baseMessage);
       totalSent += result.successCount;
     }
   });
 
-  logger.info('💰 Premium Sales Push Completed', { totalChecked, totalSent, message: payload.title });
+  logger.info('💰 Premium Sales Push Completed', { totalSent, message: payload.title });
 });
 
 
@@ -451,13 +416,13 @@ exports.adminEstimateAudience = onCall({ region: "us-central1", timeoutSeconds: 
     let totalSent = 0;
     let totalFail = 0;
 
-    await processAudienceInBatches(audience, async (uidBatch) => {
-      let targetUids = uidBatch;
-      if (onlyNonPremium) {
-        const refs = uidBatch.map(uid => db.collection('users').doc(uid));
-        const snapshots = await db.getAll(...refs);
-        targetUids = snapshots.filter(doc => (doc.data() || {}).isPremium !== true).map(doc => doc.id);
-      }
+    // 🔥 DÜZELTME: onlyNonPremium bilgisini audience içine gömüyoruz.
+    // users.js bunu görüp otomatik filtreleyecek.
+    const effectiveAudience = { ...audience, onlyNonPremium: onlyNonPremium };
+
+    await processAudienceInBatches(effectiveAudience, async (uidBatch) => {
+      // Artık uidBatch bize zaten filtreli geliyor.
+      const targetUids = uidBatch;
       if (targetUids.length === 0) return;
       totalUsers += targetUids.length;
 
@@ -506,16 +471,15 @@ exports.adminEstimateAudience = onCall({ region: "us-central1", timeoutSeconds: 
         const { title, body, imageUrl, route, audience } = d;
         const sendType = ["push", "inapp", "both"].includes(d.sendType) ? d.sendType : "push";
         const onlyNonPremium = d.onlyNonPremium === true;
+
+        // 🔥 DÜZELTME: onlyNonPremium'u audience'a ekle
+        const effectiveAudience = { ...(audience || {}), onlyNonPremium: onlyNonPremium };
+
         const filters = { buildMin: audience?.buildMin, buildMax: audience?.buildMax, platforms: audience?.platforms };
         let totalSent = 0, totalFail = 0, totalUsers = 0, totalInApp = 0;
 
-        await processAudienceInBatches(audience, async (uidBatch) => {
-          let targetUids = uidBatch;
-          if (onlyNonPremium) {
-            const refs = uidBatch.map(uid => db.collection('users').doc(uid));
-            const snapshots = await db.getAll(...refs);
-            targetUids = snapshots.filter(doc => (doc.data() || {}).isPremium !== true).map(doc => doc.id);
-          }
+        await processAudienceInBatches(effectiveAudience, async (uidBatch) => {
+          const targetUids = uidBatch;
           if (targetUids.length === 0) return;
           totalUsers += targetUids.length;
 
