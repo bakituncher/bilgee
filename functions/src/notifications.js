@@ -23,14 +23,14 @@ const GENERAL_MESSAGES = [
   { title: 'Kürsüde yerin boş 🏆', body: 'İlk 3\'e girmek senin elinde. Bir test çöz ve puanları topla.', route: '/arena' },
 
   // 🟠 Taktik & Eksik Kapama
-  { title: 'Zayıf halkanı bul 💎', body: 'Seni en çok zorlayan konu aslında en çok net getirecek konudur. Cevher Atölyesi\'ne bak.', route: '/ai-hub/weakness-workshop' },
+  { title: 'Zayıf halkanı bul 💎', body: 'Seni en çok zorlayan konu aslında en çok net getirecek konudur. Cevher Atölyesi\'ne bak.', route: '/ai-hub' },
   { title: 'Netlerin neden artmıyor? 🤔', body: 'Belki de yanlış yere odaklanıyorsun. Yapay zeka analizine göz at.', route: '/home/stats' },
   { title: 'Taktik Tavşan fısıldıyor... 🐰', body: '"Çok çalışmak yetmez, akıllı çalışmalısın." Stratejini kontrol et.', route: '/ai-hub' },
   { title: 'Deneme Analizi Yaptın mı? 📊', body: 'Çözdüğün denemeyi sisteme gir, eksiklerini nokta atışı belirleyelim.', route: '/home/add-test' },
 
   // 🟣 Odaklanma & Planlama
   { title: 'Domates tekniği? 🍅', body: '25 dakika odaklan, 5 dakika dinlen. Pomodoro sayacını senin için hazırladık.', route: '/home/pomodoro' },
-  { title: 'Haftalık hedefin tehlikede ⚠️', body: 'Programının gerisinde kalma. Toparlamak için harika bir akşam.', route: '/home/weekly-plan' },
+  { title: 'Haftalık hedefin tehlikede ⚠️', body: 'Programının gerisinde kalma. Toparlamak için harika bir akşam.', route: '/ai-hub' },
   { title: 'Yatmadan önce son bir tekrar 🌙', body: 'Uyumadan önce çözülen 10 soru, sabah akılda kalan 10 bilgidir.', route: '/home/add-test' },
   { title: 'Telefonu bırak, teste başla 📵', body: 'Bu bildirimden sonra yapacağın en iyi şey uygulamaya girmek.', route: '/home' }
 ];
@@ -39,51 +39,51 @@ const GENERAL_MESSAGES = [
 // Pazar, Çarşamba, Cuma 22:00'de sadece Premium olmayanlara gidecek.
 // DÜZELTME: route: '/premium' olarak güncellendi.
 const PREMIUM_SALES_MESSAGES = [
-  // 🧠 Kanca: Fırsatçılık & Akılcı Yaklaşım (Smart Move)
+  // 💎 Kanca: CEVHER ATÖLYESİ & DEĞER (Uygulamanın kalbi burası)
   {
-    title: 'Sistemi kullan, planını kap, istersen git 🏃',
-    body: '7 Günlük Bedava Premium hakkınla tüm eksiklerini analiz ettir, haftalık planını yapay zekaya hazırlat. Beğenmezsen iptal et, planın sende kalsın. Kârlı çıkacağın kesin.',
+    title: 'Taktik Tavşan ile tanış, planını kap, istersen iptal et 🏃',
+    body: '7 Günlük Bedava Taktik Pro hakkınla tüm eksiklerini analiz ettir, haftalık planını hazırlat. Beğenmezsen iptal et.',
     route: '/premium'
   },
   {
-    title: 'Neden "kör dövüşü" yapıyorsun? 👁️',
-    body: 'Rakiplerin Cevher Atölyesi ile nokta atışı eksik kapatırken, sen rastgele çalışarak zaman kaybediyor olabilirsin. Emeğine yazık etme, teknolojiyi yanına al.',
-    route: '/premium'
-  },
-
-  // 📉 Kanca: Kayıp Korkusu (Loss Aversion) - Net Odaklı
-  {
-    title: 'Gizli netlerin çöpe gidiyor 🗑️',
-    body: 'Çözdüğün denemelerde fark etmediğin bir desen var. AI Koç, sürekli hata yaptığın o "gizli konuyu" buldu. Görmek için Premium raporuna bak.',
-    route: '/premium'
-  },
-  {
-    title: 'Bugün kaç net arttırdın? 📈',
-    body: 'Eğer cevabın "bilmiyorum" ise stratejinde hata var demektir. Ölçülemeyen başarı yönetilemez. Gel, ilerlemeni profesyonelce takip edelim.',
+    title: 'Sırrımız bu analizlerde saklı 🤫',
+    body: 'Herkes körü körüne çalışırken, biz senin "gizli desenini" çözdük. Taktik Tavşan koçluğunu aç, hangi konuya yüklenmen gerektiğini şıp diye söyleyeyim. 🐰',
     route: '/premium'
   },
 
-  // 💎 Kanca: Değer ve Yatırım (Value Proposition)
+  // 🌸 Kanca: PLANLAMA & KONFOR (Bestie desteği: "Sen yorulma ben yaparım")
   {
-    title: 'En yüksek getirili yatırımın 💼',
-    body: 'Sınavda yapacağın +1 netin değeri paha biçilemez. Aylık abonelik ise sadece bir tost parası. Geleceğin için küçük, etkisi büyük bir hamle yap.',
+    title: 'Plan yapmakla yorulma dostum 📅',
+    body: 'Sen kahveni iç, dersine odaklan; en verimli haftalık planını ben saniyeler içinde hazırlayayım. Enerjini sadece başarmaya sakla, gerisi bende! ☕',
     route: '/premium'
   },
   {
-    title: 'Özel ders kalitesinde, öğrenci bütçesiyle 💸',
-    body: 'Binlerce liralık koçluk hizmetini cebine sığdırdık. 7/24 senin için çalışan, yorulmayan bir yapay zeka. Denemesi 7 gün boyunca bizden.',
+    title: 'Bırak yükünü hafifleteyim ✨',
+    body: 'Sınav maratonu zaten zor, bir de planlama ile uğraşma. Pro\'a geç, kişisel koçun olarak rotanı ben çizeyim. Sen sadece gaza bas! 🚀',
     route: '/premium'
   },
 
-  // 🏆 Kanca: Rekabet ve Hırs (Arena & Sıralama)
+  // 🚀 Kanca: POTANSİYEL & İNANÇ (Saygılı ve Motive Edici Baskı)
   {
-    title: 'Arena\'da işler kızışıyor 🔥',
-    body: 'Sıralamadaki rakiplerin Premium analizlerle taktik değiştiriyor. Onlar hızlanırken yerinde saymak istemezsin. Eşit şartlarda yarışmak senin hakkın.',
+    title: 'Sende o ışığı görüyorum! 🌟',
+    body: 'Potansiyelin o kadar yüksek ki, harcanmasına gönlüm razı değil. Gel şu işi profesyonelce yapalım, hak ettiğin o yere ismini yazdıralım. Hadi!',
     route: '/premium'
   },
   {
-    title: 'Sınav bir strateji oyunudur ♟️',
-    body: 'Sadece çok çalışan değil, doğru çalışan kazanır. Hangi derse ne kadar yüklenmen gerektiğini biliyor musun? Bırak AI Koç hesabını yapsın.',
+    title: 'Kendine bu iyiliği yapmalısın 💖',
+    body: 'Geleceğin için attığın her adım kıymetli. Küçük bir yatırımla sınırsız Taktik Tavşan desteğini yanına al. Beraber çok daha güçlü olacağız.',
+    route: '/premium'
+  },
+
+  // 🐰 Kanca: TAKTİK TAVŞAN & AİDİYET (Marka Yüzüyle Bağ Kurma)
+  {
+    title: 'Taktik Tavşan yanında! 🐰',
+    body: 'Sadece bir uygulama değil, sınav yolculuğundaki en sadık yol arkadaşınım. Premium ile tüm güçlerimi senin için açıyorum. Bu takımı bozmayalım! 💪',
+    route: '/premium'
+  },
+  {
+    title: 'Zirve sana çok yakışacak 👑',
+    body: 'Arena\'da rakiplerin hızlanırken biz de vites artıralım. Gelişmiş analiz raporlarını aç, farkını ortaya koy. Şampiyonlar ligine hoş geldin!',
     route: '/premium'
   }
 ];
