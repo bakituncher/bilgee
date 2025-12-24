@@ -7,112 +7,129 @@ class SubjectHighlights extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Row(
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: _HighlightCard(
-                icon: Icons.shield_rounded,
-                iconColor: Colors.green,
-                title: "Kalen (En Güçlü Alan)",
-                subject: keySubjects['strongest']!.key,
-                net: keySubjects['strongest']!.value,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _HighlightCard(
-                icon: Icons.construction_rounded,
-                iconColor: Theme.of(context).colorScheme.primary,
-                title: "Cevher (Gelişim Fırsatı)",
-                subject: keySubjects['weakest']!.key,
-                net: keySubjects['weakest']!.value,
-              ),
-            ),
-          ],
+        Expanded(
+          child: _PremiumHighlightCard(
+            icon: Icons.shield_rounded,
+            iconColor: const Color(0xFF00C853),
+            label: "Güçlü Alan",
+            subject: keySubjects['strongest']!.key,
+            value: keySubjects['strongest']!.value,
+            isDark: isDark,
+          ),
         ),
-        const SizedBox(height: 16),
-        Text(
-          "En zayıf alanına odaklanmak, netlerini en hızlı artıracak stratejidir.",
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-        )
+        const SizedBox(width: 14),
+        Expanded(
+          child: _PremiumHighlightCard(
+            icon: Icons.trending_up_rounded,
+            iconColor: const Color(0xFFFF9800),
+            label: "Gelişim Fırsatı",
+            subject: keySubjects['weakest']!.key,
+            value: keySubjects['weakest']!.value,
+            isDark: isDark,
+          ),
+        ),
       ],
     );
   }
 }
 
-class _HighlightCard extends StatelessWidget {
+class _PremiumHighlightCard extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
-  final String title;
+  final String label;
   final String subject;
-  final double net; // Artık yüzde değeri tutuyor
+  final double value;
+  final bool isDark;
 
-  const _HighlightCard({
+  const _PremiumHighlightCard({
     required this.icon,
     required this.iconColor,
-    required this.title,
+    required this.label,
     required this.subject,
-    required this.net,
+    required this.value,
+    required this.isDark,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: iconColor, size: 32),
-            const SizedBox(height: 8),
-            SizedBox(
-              height: 32,
-              child: Center(
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E2230) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.2 : 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: iconColor.withOpacity(isDark ? 0.2 : 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: iconColor, size: 18),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
                 child: Text(
-                  title,
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontSize: 11,
-                    height: 1.2,
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white54 : Colors.black45,
                   ),
                 ),
               ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            subject,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: isDark ? Colors.white : Colors.black87,
             ),
-            const SizedBox(height: 8),
-            SizedBox(
-              height: 40,
-              child: Center(
-                child: Text(
-                  subject,
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    height: 1.2,
-                  ),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Text(
+                "%${value.toStringAsFixed(0)}",
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  color: iconColor,
                 ),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              "%${net.toStringAsFixed(1)} Başarı",
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: iconColor,
-                fontSize: 18,
+              const SizedBox(width: 6),
+              Text(
+                "başarı",
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark ? Colors.white38 : Colors.black38,
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ),
     );
   }

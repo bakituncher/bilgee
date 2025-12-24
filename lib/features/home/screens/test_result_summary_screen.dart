@@ -108,7 +108,12 @@ class TestResultSummaryScreen extends ConsumerWidget {
 
             // Ana İçerik
             ListView(
-              padding: EdgeInsets.fromLTRB(16, MediaQuery.of(context).padding.top + 56, 16, 100),
+              padding: EdgeInsets.fromLTRB(
+                20, // Kenarlardan daha uzak
+                MediaQuery.of(context).padding.top + 70,
+                20,
+                MediaQuery.of(context).padding.bottom + 100,
+              ),
               physics: const BouncingScrollPhysics(),
               children: [
 
@@ -158,9 +163,9 @@ class TestResultSummaryScreen extends ConsumerWidget {
 
                 // 3. İstatistik ve Yorum Kartları
                 VerdictCard(verdict: verdict, wisdomScore: wisdomScore),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 KeyStatsRow(test: test),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
 
                 // 4. Ders Listesi (Visual & Balanced)
                 if (test.scores.isNotEmpty)
@@ -179,24 +184,36 @@ class TestResultSummaryScreen extends ConsumerWidget {
         ),
       ),
       bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         decoration: BoxDecoration(
-          color: theme.scaffoldBackgroundColor.withOpacity(0.95),
-          border: Border(top: BorderSide(color: theme.dividerColor.withOpacity(0.1))),
+          color: isDark
+              ? const Color(0xFF1E2230).withOpacity(0.98)
+              : Colors.white.withOpacity(0.98),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.2 : 0.06),
+              blurRadius: 10,
+              offset: const Offset(0, -4),
+            ),
+          ],
         ),
         child: SafeArea(
           child: SizedBox(
-            height: 52, // Standart rahat basılabilir buton yüksekliği
+            height: 50,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: theme.colorScheme.primary,
-                foregroundColor: theme.colorScheme.onPrimary,
-                elevation: 4,
-                shadowColor: theme.colorScheme.primary.withOpacity(0.3),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                backgroundColor: isDark
+                    ? const Color(0xFF4A4EBD)
+                    : theme.colorScheme.primary,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
               onPressed: () => context.go('/home'),
-              child: const Text("Ana Panele Dön", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              child: const Text(
+                "Ana Panele Dön",
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+              ),
             ),
           ),
         ),
@@ -205,7 +222,7 @@ class TestResultSummaryScreen extends ConsumerWidget {
   }
 }
 
-// --- 1. HEADER (Dengeli & Şık) ---
+// --- 1. HEADER (Premium & Şık) ---
 class _MediumHeaderCard extends StatelessWidget {
   final TestModel test;
   final bool isDark;
@@ -214,81 +231,82 @@ class _MediumHeaderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Kart görünümü yerine temiz bir zemin üstü yerleşim daha ferah durur
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E2230) : Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: Theme.of(context).dividerColor.withOpacity(0.05),
-        ),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
-            blurRadius: 15,
+            color: Colors.black.withOpacity(isDark ? 0.2 : 0.06),
+            blurRadius: 16,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          // Üst Satır: Sınav Tipi
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2E3192).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  test.sectionName.toUpperCase(),
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFF2E3192),
-                    letterSpacing: 0.8,
+          // Sol: Badge + İsim
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2E3192).withOpacity(isDark ? 0.2 : 0.08),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    test.sectionName.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? const Color(0xFF8B8FFF) : const Color(0xFF2E3192),
+                      letterSpacing: 0.5,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-
-          // Alt Satır: İsim (Sol) ve Tarih (Sağ) - Yan Yana
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                child: Text(
+                const SizedBox(height: 10),
+                Text(
                   test.testName,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 18,
-                    height: 1.2,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 17,
+                    height: 1.3,
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Icon(Icons.calendar_today_rounded, size: 16, color: Theme.of(context).colorScheme.primary.withOpacity(0.7)),
-                  const SizedBox(height: 4),
-                  Text(
-                    DateFormat.MMMd('tr').format(test.date),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          // Sağ: Tarih
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF2A2E3D) : const Color(0xFFF5F5F7),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Column(
+              children: [
+                Icon(
+                  Icons.calendar_today_rounded,
+                  size: 16,
+                  color: isDark ? Colors.white54 : Colors.black45,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  DateFormat.MMMd('tr').format(test.date),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white70 : Colors.black54,
                   ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -296,7 +314,7 @@ class _MediumHeaderCard extends StatelessWidget {
   }
 }
 
-// --- 2. AKSİYON KARTI (Orta Ölçekli) ---
+// --- 2. AKSİYON KARTI (Premium & Şık) ---
 class _MediumActionCard extends StatelessWidget {
   final TestModel test;
   final bool isPremium;
@@ -320,97 +338,88 @@ class _MediumActionCard extends StatelessWidget {
     const cyan = Color(0xFF1BFFFF);
 
     return Container(
-      padding: const EdgeInsets.all(16), // Rahat padding (önceki 12, orijinal 20 idi)
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1A1A2E) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: deepBlue.withOpacity(0.12),
-          width: 1.5,
-        ),
+        color: isDark ? const Color(0xFF1E2230) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: deepBlue.withOpacity(0.06),
-            blurRadius: 20,
-            offset: const Offset(0, 6),
+            color: Colors.black.withOpacity(isDark ? 0.2 : 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Üst Satır: İkon ve Başlık
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  gradient: const LinearGradient(
-                    colors: [deepBlue, cyan],
+                  borderRadius: BorderRadius.circular(12),
+                  gradient: LinearGradient(
+                    colors: isDark
+                        ? [const Color(0xFF4A4EBD), const Color(0xFF6B6FD6)]
+                        : [deepBlue, cyan],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                 ),
                 child: const Icon(Icons.bolt_rounded, color: Colors.white, size: 20),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Hızlı Aksiyon',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: isDark ? Colors.white : deepBlue,
+                      isGoodResult ? 'Harika performans!' : 'Gelişim fırsatı',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : Colors.black87,
                       ),
                     ),
-                    if (!isPremium)
-                      const Text(
-                        'Premium avantajları keşfet',
-                        style: TextStyle(fontSize: 11, color: deepBlue, fontWeight: FontWeight.w600),
+                    const SizedBox(height: 2),
+                    Text(
+                      isGoodResult
+                          ? 'Detaylara inip ustalığını pekiştir'
+                          : 'Stratejik planla netleri artır',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark ? Colors.white54 : Colors.black45,
                       ),
+                    ),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            isGoodResult
-                ? 'Sonuçlar gayet iyi. Detaylara inip ustalığını pekiştirmek için harika bir zaman.'
-                : 'Eksikleri tespit ettik. Stratejik bir planla netleri artırabiliriz.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-              height: 1.35,
-            ),
-          ),
           const SizedBox(height: 16),
+          // Butonlar
           Row(
             children: [
               Expanded(
-                child: SizedBox(
-                  height: 44, // İdeal buton yüksekliği
-                  child: _MediumGradientButton(
-                    text: 'Detaylı Analiz',
-                    icon: Icons.analytics_rounded,
-                    onPressed: onDetailedPressed,
-                    gradient: const LinearGradient(
-                      colors: [deepBlue, Color(0xFF4A4EBD)],
-                    ),
-                  ),
+                child: _PremiumButton(
+                  text: 'Detaylı Analiz',
+                  icon: Icons.analytics_rounded,
+                  onPressed: onDetailedPressed,
+                  isDark: isDark,
+                  isPrimary: true,
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: SizedBox(
-                  height: 44,
-                  child: _MediumGradientButton(
-                    text: 'Koçluk Al',
-                    icon: Icons.chat_bubble_outline_rounded,
-                    onPressed: onCoachPressed,
-                    isOutlined: true,
-                    gradient: const LinearGradient(colors: [deepBlue, deepBlue]),
-                  ),
+                child: _PremiumButton(
+                  text: 'Koça Danış',
+                  emoji: '💎',
+                  icon: Icons.auto_awesome,
+                  onPressed: onCoachPressed,
+                  isDark: isDark,
+                  isPrimary: false,
                 ),
               ),
             ],
@@ -421,62 +430,100 @@ class _MediumActionCard extends StatelessWidget {
   }
 }
 
-class _MediumGradientButton extends StatelessWidget {
+class _PremiumButton extends StatelessWidget {
   final String text;
   final IconData icon;
+  final String? emoji;
   final VoidCallback onPressed;
-  final LinearGradient gradient;
-  final bool isOutlined;
+  final bool isDark;
+  final bool isPrimary;
 
-  const _MediumGradientButton({
+  const _PremiumButton({
     required this.text,
     required this.icon,
+    this.emoji,
     required this.onPressed,
-    required this.gradient,
-    this.isOutlined = false,
+    required this.isDark,
+    required this.isPrimary,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (isOutlined) {
-      return OutlinedButton.icon(
-        onPressed: onPressed,
-        icon: Icon(icon, size: 18),
-        label: Text(text, style: const TextStyle(fontWeight: FontWeight.w600)),
-        style: OutlinedButton.styleFrom(
-          side: BorderSide(color: gradient.colors.first.withOpacity(0.3), width: 1.5),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          foregroundColor: Theme.of(context).colorScheme.onSurface,
+    const deepBlue = Color(0xFF2E3192);
+
+    if (!isPrimary) {
+      return SizedBox(
+        height: 44,
+        child: OutlinedButton(
+          onPressed: onPressed,
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            side: BorderSide(
+              color: isDark ? Colors.white24 : deepBlue.withOpacity(0.2),
+              width: 1.5,
+            ),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            foregroundColor: isDark ? Colors.white : deepBlue,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (emoji != null) ...[
+                Text(emoji!, style: const TextStyle(fontSize: 14)),
+                const SizedBox(width: 6),
+              ],
+              Text(
+                text,
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
         ),
       );
     }
-    return Container(
-      decoration: BoxDecoration(
-        gradient: gradient,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: gradient.colors.first.withOpacity(0.25),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
+
+    return SizedBox(
+      height: 44,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: isDark
+                ? [const Color(0xFF4A4EBD), const Color(0xFF5A5EC9)]
+                : [deepBlue, const Color(0xFF4A4EBD)],
           ),
-        ],
-      ),
-      child: ElevatedButton.icon(
-        onPressed: onPressed,
-        icon: Icon(icon, size: 18, color: Colors.white),
-        label: Text(text, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: deepBlue.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: ElevatedButton.icon(
+          onPressed: onPressed,
+          icon: Icon(icon, size: 16, color: Colors.white),
+          label: Text(
+            text,
+            style: const TextStyle(
+              fontSize: 13,
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            backgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
         ),
       ),
     );
   }
 }
 
-// --- 3. DERS LİSTESİ (Dengeli Görünüm) ---
+// --- 3. DERS LİSTESİ (Premium & Şık) ---
 class _BalancedSubjectList extends StatelessWidget {
   final TestModel test;
   final double Function(Map<String, int>) subjectNet;
@@ -501,98 +548,132 @@ class _BalancedSubjectList extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(left: 4, bottom: 12),
           child: Text(
-            "Performans Detayı",
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: Theme.of(context).colorScheme.onSurface,
+            "Ders Performansı",
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: isDark ? Colors.white : Colors.black87,
             ),
           ),
         ),
-        ...entries.map((e) {
-          final s = e.value;
-          final net = subjectNet(s);
-          final d = s['dogru'] ?? 0;
-          final y = s['yanlis'] ?? 0;
-
-          return Container(
-            margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E2230) : Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: Theme.of(context).dividerColor.withOpacity(0.05),
+        Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E2230) : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(isDark ? 0.2 : 0.06),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
+            ],
+          ),
+          child: Column(
+            children: entries.asMap().entries.map((entry) {
+              final index = entry.key;
+              final e = entry.value;
+              final s = e.value;
+              final net = subjectNet(s);
+              final d = s['dogru'] ?? 0;
+              final y = s['yanlis'] ?? 0;
+              final b = s['bos'] ?? 0;
+              final isFirst = index == 0;
+              final isLast = index == entries.length - 1;
+
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  border: !isLast ? Border(
+                    bottom: BorderSide(
+                      color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.04),
+                    ),
+                  ) : null,
                 ),
-              ],
-            ),
-            child: Row(
-              children: [
-                // Sol: Ders ve Bar
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
+                child: Row(
+                  children: [
+                    // Ders İsmi
+                    Expanded(
+                      flex: 5,
+                      child: Text(
                         e.key,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                          color: isDark ? Colors.white : Colors.black87,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 8),
-                      // Visual Bar (Orta kalınlıkta)
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: SizedBox(
-                          height: 6,
-                          child: Row(
-                            children: [
-                              Flexible(flex: d, child: Container(color: const Color(0xFF00C853))), // Yeşil
-                              Flexible(flex: y, child: Container(color: const Color(0xFFFF3D00))), // Kırmızı
-                              Flexible(flex: (s['bos'] ?? 0), child: Container(color: Theme.of(context).disabledColor.withOpacity(0.2))),
-                              if ((d+y+(s['bos']??0)) == 0) Flexible(child: Container(color: Theme.of(context).disabledColor.withOpacity(0.2))),
-                            ],
-                          ),
-                        ),
+                    ),
+                    // D/Y/B Mini İstatistik
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _StatChip(value: d, color: const Color(0xFF00C853), isDark: isDark),
+                        const SizedBox(width: 8),
+                        _StatChip(value: y, color: const Color(0xFFFF5252), isDark: isDark),
+                        const SizedBox(width: 8),
+                        _StatChip(value: b, color: isDark ? Colors.white38 : Colors.grey.shade400, isDark: isDark),
+                      ],
+                    ),
+                    const SizedBox(width: 12),
+                    // Net Badge
+                    Container(
+                      width: 48,
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF2E3192).withOpacity(0.2)
+                            : const Color(0xFF2E3192).withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 16),
-                // Sağ: Net Bilgisi
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2E3192).withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
+                      child: Text(
                         net.toStringAsFixed(1),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 15,
-                          color: Color(0xFF2E3192),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                          color: isDark ? const Color(0xFF8B8FFF) : const Color(0xFF2E3192),
                         ),
                       ),
-                      const Text(
-                        "NET",
-                        style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF2E3192)),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          );
-        }),
+              );
+            }).toList(),
+          ),
+        ),
       ],
+    );
+  }
+}
+
+class _StatChip extends StatelessWidget {
+  final int value;
+  final Color color;
+  final bool isDark;
+
+  const _StatChip({required this.value, required this.color, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 24,
+      height: 24,
+      decoration: BoxDecoration(
+        color: color.withOpacity(isDark ? 0.2 : 0.1),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Center(
+        child: Text(
+          '$value',
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: color,
+          ),
+        ),
+      ),
     );
   }
 }

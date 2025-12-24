@@ -13,52 +13,108 @@ class VerdictCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    return Card(
-      elevation: 4,
-      shadowColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          children: [
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(verdict['title']!, style: textTheme.headlineSmall?.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
-            ),
-            const SizedBox(height: 16),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                "Taktik Puanın: ${wisdomScore.toStringAsFixed(1)}",
-                style: textTheme.titleLarge?.copyWith(color: Theme.of(context).colorScheme.onSurface),
-              ),
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              width: 200,
-              child: LinearProgressIndicator(
-                value: wisdomScore / 100,
-                minHeight: 8,
-                borderRadius: BorderRadius.circular(4),
-                backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                color: Colors.green,
-              ),
-            ),
-            const SizedBox(height: 20),
-            ConstrainedBox(
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.25,
-              ),
-              child: SingleChildScrollView(
-                child: Text(
-                  "\"${verdict['verdict']}\"",
-                  textAlign: TextAlign.center,
-                  style: textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, fontStyle: FontStyle.italic, height: 1.5),
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textTheme = theme.textTheme;
+
+    // Skor bazlı renk
+    final scoreColor = wisdomScore >= 70
+        ? const Color(0xFF00C853)
+        : wisdomScore >= 40
+            ? const Color(0xFFFFB300)
+            : const Color(0xFFFF5252);
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E2230) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.2 : 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Üst Kısım: Başlık ve Skor
+          Row(
+            children: [
+              // Başlık Badge
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: scoreColor.withOpacity(isDark ? 0.2 : 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    verdict['title'] ?? '',
+                    style: textTheme.labelLarge?.copyWith(
+                      color: scoreColor,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ),
+              const SizedBox(width: 14),
+              // Skor Göstergesi
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF2A2E3D) : const Color(0xFFF5F5F7),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.insights_rounded, size: 18, color: scoreColor),
+                    const SizedBox(width: 6),
+                    Text(
+                      wisdomScore.toStringAsFixed(0),
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: scoreColor,
+                        fontSize: 17,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          // Progress Bar
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: wisdomScore / 100,
+              minHeight: 6,
+              backgroundColor: isDark
+                  ? Colors.white.withOpacity(0.08)
+                  : Colors.black.withOpacity(0.06),
+              valueColor: AlwaysStoppedAnimation<Color>(scoreColor),
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 14),
+          // Yorum Metni
+          Text(
+            verdict['verdict'] ?? '',
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: textTheme.bodyMedium?.copyWith(
+              color: isDark ? Colors.white70 : Colors.black54,
+              height: 1.5,
+              fontSize: 13,
+            ),
+          ),
+        ],
       ),
     );
   }
