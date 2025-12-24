@@ -683,8 +683,8 @@ Future<bool> _showPremiumDetailGateDialog({
   required WidgetRef ref,
   required bool isDark,
 }) async {
-  final theme = Theme.of(context);
   const deepBlue = Color(0xFF2E3192);
+  const accentCyan = Color(0xFF1BFFFF);
 
   Future<bool> goPaywallAndCheck() async {
     await context.push('/premium');
@@ -695,68 +695,158 @@ Future<bool> _showPremiumDetailGateDialog({
     context: context,
     barrierDismissible: true,
     barrierLabel: 'PremiumGate',
-    barrierColor: Colors.black.withOpacity(isDark ? 0.6 : 0.4),
-    transitionDuration: const Duration(milliseconds: 200),
+    barrierColor: Colors.black.withOpacity(isDark ? 0.7 : 0.5),
+    transitionDuration: const Duration(milliseconds: 280),
+    transitionBuilder: (ctx, a1, a2, child) {
+      return ScaleTransition(
+        scale: CurvedAnimation(parent: a1, curve: Curves.easeOutBack),
+        child: FadeTransition(opacity: a1, child: child),
+      );
+    },
     pageBuilder: (ctx, a1, a2) {
       return Center(
         child: Material(
           type: MaterialType.transparency,
           child: Container(
             width: double.infinity,
-            margin: const EdgeInsets.symmetric(horizontal: 24),
-            padding: const EdgeInsets.all(24),
+            margin: const EdgeInsets.symmetric(horizontal: 28),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF161A1F) : Colors.white,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDark
+                    ? [const Color(0xFF1E2230), const Color(0xFF161A1F)]
+                    : [Colors.white, const Color(0xFFF5F7FF)],
+              ),
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: deepBlue.withOpacity(0.2)),
+              border: Border.all(
+                color: isDark ? deepBlue.withOpacity(0.3) : deepBlue.withOpacity(0.15),
+                width: 1.5,
+              ),
               boxShadow: [
-                BoxShadow(color: deepBlue.withOpacity(0.1), blurRadius: 40, offset: const Offset(0, 10)),
+                BoxShadow(
+                  color: deepBlue.withOpacity(isDark ? 0.25 : 0.12),
+                  blurRadius: 30,
+                  offset: const Offset(0, 8),
+                ),
               ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: deepBlue.withOpacity(0.1),
-                      shape: BoxShape.circle,
+                // Compact ikon
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: isDark
+                          ? [const Color(0xFF4A4EBD), const Color(0xFF6B6FD6)]
+                          : [deepBlue, const Color(0xFF4A4EBD)],
                     ),
-                    child: const Icon(Icons.lock_person_rounded, color: deepBlue, size: 24),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: deepBlue.withOpacity(0.35),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(Icons.analytics_rounded, color: Colors.white, size: 24),
+                ),
+                const SizedBox(height: 14),
+
+                // Başlık
+                Text(
+                  'Detaylı Analiz',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: isDark ? Colors.white : deepBlue,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Hatalarının kök nedenlerini keşfet',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: isDark ? Colors.white54 : Colors.black54,
                   ),
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  'Detaylı analiz kilitli',
-                  style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800, fontSize: 20, color: isDark ? Colors.white : deepBlue),
+
+                // Özellikler - tek satırda kompakt
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _CompactFeatureChip(icon: Icons.pie_chart_rounded, label: 'Hata Dağılımı', isDark: isDark),
+                    _CompactFeatureChip(icon: Icons.psychology_rounded, label: 'Zayıf Noktalar', isDark: isDark),
+                    _CompactFeatureChip(icon: Icons.trending_up_rounded, label: 'Öneriler', isDark: isDark),
+                  ],
                 ),
-                const SizedBox(height: 10),
-                Text(
-                  'Bu denemedeki hatalarının kök nedenlerini ve kırılımlarını detaylı görmek için Pro\'ya geç.',
-                  style: theme.textTheme.bodyMedium?.copyWith(height: 1.4),
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: deepBlue,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    elevation: 0,
+                const SizedBox(height: 18),
+
+                // CTA Butonu
+                SizedBox(
+                  width: double.infinity,
+                  height: 46,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: isDark
+                            ? [const Color(0xFF4A4EBD), const Color(0xFF5A5EC9)]
+                            : [deepBlue, const Color(0xFF4A4EBD)],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: deepBlue.withOpacity(0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: () async {
+                        final unlocked = await goPaywallAndCheck();
+                        if (ctx.mounted) Navigator.of(ctx).pop(unlocked);
+                      },
+                      child: const Text(
+                        'Pro ile Aç',
+                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: Colors.white),
+                      ),
+                    ),
                   ),
-                  onPressed: () async {
-                    final unlocked = await goPaywallAndCheck();
-                    if (ctx.mounted) Navigator.of(ctx).pop(unlocked);
-                  },
-                  child: const Text('Taktik Pro’ya Geç', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
                 ),
                 const SizedBox(height: 8),
+
+                // İptal
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(false),
-                  child: Text('Avantajı Kaybet', style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.5))),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
+                    'Şimdi değil',
+                    style: TextStyle(
+                      color: isDark ? Colors.white38 : Colors.black38,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -766,6 +856,49 @@ Future<bool> _showPremiumDetailGateDialog({
     },
   );
   return result ?? false;
+}
+
+class _CompactFeatureChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isDark;
+
+  const _CompactFeatureChip({
+    required this.icon,
+    required this.label,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const deepBlue = Color(0xFF2E3192);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: isDark ? deepBlue.withOpacity(0.2) : deepBlue.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            icon,
+            size: 18,
+            color: isDark ? const Color(0xFF8B8FFF) : deepBlue,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+            color: isDark ? Colors.white60 : Colors.black54,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class TestResultSummaryEntry extends ConsumerWidget {
@@ -800,3 +933,5 @@ class TestResultSummaryEntry extends ConsumerWidget {
     );
   }
 }
+
+
