@@ -12,6 +12,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
 import 'package:lottie/lottie.dart';
+import 'dart:ui';
 
 class LibraryScreen extends ConsumerStatefulWidget {
   const LibraryScreen({super.key});
@@ -122,6 +123,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     }
   }
 
+  // Premium Renk Paleti
+  static const Color _colDeepBlue = Color(0xFF2E3192);
+  static const Color _colCyan = Color(0xFF1BFFFF);
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
@@ -129,9 +134,14 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            size: 22,
+            color: theme.colorScheme.onSurface.withOpacity(0.9),
+          ),
           onPressed: () {
             if (context.canPop()) {
               context.pop();
@@ -140,36 +150,59 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             }
           },
         ),
-        title: const Text('Deneme Arşivi'),
+        title: Text(
+          'Deneme Arşivi',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w800,
+            fontSize: 17,
+            letterSpacing: 0.5,
+          ),
+        ),
+        centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
+        flexibleSpace: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(color: Colors.transparent),
+          ),
+        ),
         actions: [
-          // Sıralama
           IconButton(
             tooltip: 'Sırala',
-            icon: const Icon(Icons.sort_rounded),
+            icon: Icon(
+              Icons.sort_rounded,
+              color: theme.colorScheme.onSurface.withOpacity(0.9),
+            ),
             onPressed: _showSortSheet,
           ),
         ],
       ),
       backgroundColor: theme.scaffoldBackgroundColor,
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: isDark
-                ? [
-                    theme.scaffoldBackgroundColor,
-                    theme.cardColor.withValues(alpha: 0.5),
-                  ]
-                : [
-                    theme.scaffoldBackgroundColor,
-                    theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-                  ],
+      body: Stack(
+        children: [
+          // Arka Plan Gradient
+          Container(
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                center: const Alignment(0, -0.8),
+                radius: 1.6,
+                colors: isDark
+                    ? [
+                        _colDeepBlue.withOpacity(0.12),
+                        theme.scaffoldBackgroundColor,
+                      ]
+                    : [
+                        _colCyan.withOpacity(0.08),
+                        theme.scaffoldBackgroundColor,
+                      ],
+                stops: const [0.0, 1.0],
+              ),
+            ),
           ),
-        ),
-        child: _buildBody(textTheme),
+          // İçerik
+          _buildBody(textTheme),
+        ],
       ),
     );
   }
@@ -480,76 +513,76 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
 
     return Column(
       children: [
-        // Arama ve filtre barı - compact ve elegant
+        // Arama ve filtre barı - Premium tarzı
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + 70, 20, 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Container(
                 decoration: BoxDecoration(
-                  color: theme.cardColor,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isDark
-                        ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3)
-                        : colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                    width: 1,
-                  ),
-                  boxShadow: isDark
-                      ? []
-                      : [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.03),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
+                  color: isDark ? const Color(0xFF1E2230) : Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(isDark ? 0.2 : 0.06),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: TextField(
                   decoration: InputDecoration(
-                    prefixIcon: Icon(Icons.search_rounded, color: colorScheme.primary),
+                    prefixIcon: Icon(
+                      Icons.search_rounded,
+                      color: isDark ? const Color(0xFF8B8FFF) : const Color(0xFF2E3192),
+                    ),
                     hintText: 'Deneme adı ara...',
+                    hintStyle: TextStyle(
+                      color: isDark ? Colors.white38 : Colors.black38,
+                    ),
                     filled: false,
                     border: InputBorder.none,
                     enabledBorder: InputBorder.none,
                     focusedBorder: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   ),
                   onChanged: (v) => setState(() => _searchQuery = v),
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: _availableSections().map((s) {
                     final selected = _selectedSection == s;
                     return Padding(
-                      padding: const EdgeInsets.only(right: 6.0),
+                      padding: const EdgeInsets.only(right: 8.0),
                       child: FilterChip(
                         label: Text(
                           s,
-                          style: textTheme.labelMedium?.copyWith(
+                          style: TextStyle(
                             fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
                             fontSize: 12,
+                            color: selected
+                                ? (isDark ? const Color(0xFF8B8FFF) : const Color(0xFF2E3192))
+                                : (isDark ? Colors.white70 : Colors.black54),
                           ),
                         ),
                         selected: selected,
                         onSelected: (_) => setState(() => _selectedSection = s),
-                        backgroundColor: theme.cardColor,
-                        selectedColor: colorScheme.primary.withValues(alpha: 0.15),
-                        checkmarkColor: colorScheme.primary,
+                        backgroundColor: isDark ? const Color(0xFF1E2230) : Colors.white,
+                        selectedColor: isDark
+                            ? const Color(0xFF2E3192).withOpacity(0.2)
+                            : const Color(0xFF2E3192).withOpacity(0.08),
+                        checkmarkColor: isDark ? const Color(0xFF8B8FFF) : const Color(0xFF2E3192),
                         side: BorderSide(
                           color: selected
-                              ? colorScheme.primary.withValues(alpha: 0.5)
-                              : colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+                              ? (isDark ? const Color(0xFF8B8FFF).withOpacity(0.5) : const Color(0xFF2E3192).withOpacity(0.3))
+                              : (isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.08)),
                           width: 1,
                         ),
-                        labelStyle: TextStyle(
-                          color: selected ? colorScheme.primary : colorScheme.onSurface,
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                     );
@@ -559,7 +592,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         Expanded(
           child: RefreshIndicator(
             onRefresh: () async {
@@ -571,10 +604,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
               // Liste kısa olsa bile aşağı çekilmesine izin verir (RefreshIndicator için gerekli)
               physics: const AlwaysScrollableScrollPhysics(),
               controller: _scrollController,
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
               // Sadece _isLoading true ve liste boş değilse alttaki çark için yer ayır
               itemCount: filtered.length + (_isLoading && filtered.isNotEmpty ? 1 : 0),
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 if (index >= filtered.length) {
                   return Padding(
@@ -771,23 +804,15 @@ class _ArchiveListTile extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: theme.cardColor,
+        color: isDark ? const Color(0xFF1E2230) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark
-              ? colorScheme.outline.withValues(alpha: 0.2)
-              : colorScheme.outline.withValues(alpha: 0.1),
-          width: 1,
-        ),
-        boxShadow: isDark
-            ? []
-            : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.2 : 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Material(
         color: Colors.transparent,
@@ -802,15 +827,15 @@ class _ArchiveListTile extends ConsumerWidget {
             }
           },
           child: Padding(
-            padding: const EdgeInsets.all(12.0),
+            padding: const EdgeInsets.all(14.0),
             child: Row(
               children: [
                 // 1. SOL ROZET (NET Puanı)
                 Container(
-                  width: 52,
-                  height: 52,
+                  width: 56,
+                  height: 56,
                   decoration: BoxDecoration(
-                    color: colorScheme.primaryContainer.withValues(alpha: 0.4),
+                    color: const Color(0xFF2E3192).withOpacity(isDark ? 0.2 : 0.08),
                     borderRadius: BorderRadius.circular(14),
                   ),
                   alignment: Alignment.center,
@@ -819,18 +844,20 @@ class _ArchiveListTile extends ConsumerWidget {
                     children: [
                       Text(
                         test.totalNet.toStringAsFixed(1),
-                        style: textTheme.titleMedium?.copyWith(
+                        style: TextStyle(
+                          fontSize: 17,
                           fontWeight: FontWeight.w900,
-                          color: colorScheme.primary,
+                          color: isDark ? const Color(0xFF8B8FFF) : const Color(0xFF2E3192),
                           height: 1.0,
                         ),
                       ),
+                      const SizedBox(height: 2),
                       Text(
                         'NET',
-                        style: textTheme.labelSmall?.copyWith(
-                          fontSize: 8,
-                          color: colorScheme.primary.withValues(alpha: 0.8),
-                          fontWeight: FontWeight.bold
+                        style: TextStyle(
+                          fontSize: 9,
+                          color: isDark ? const Color(0xFF8B8FFF).withOpacity(0.7) : const Color(0xFF2E3192).withOpacity(0.7),
+                          fontWeight: FontWeight.w700,
                         ),
                       )
                     ],
@@ -849,36 +876,37 @@ class _ArchiveListTile extends ConsumerWidget {
                         style: textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w700,
                           fontSize: 15,
+                          color: isDark ? Colors.white : Colors.black87,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
                       Row(
                         children: [
-                          Icon(Icons.calendar_today_rounded, size: 12, color: colorScheme.onSurfaceVariant),
+                          Icon(Icons.calendar_today_rounded, size: 12, color: isDark ? Colors.white54 : Colors.black45),
                           const SizedBox(width: 4),
                           Text(
                             DateFormat.yMMMd('tr').format(test.date),
-                            style: textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
+                            style: TextStyle(
                               fontSize: 12,
+                              color: isDark ? Colors.white54 : Colors.black45,
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 10),
                           // Doğruluk Oranı Rozeti
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
-                              color: colorScheme.secondary.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(4),
+                              color: const Color(0xFF00C853).withOpacity(isDark ? 0.2 : 0.1),
+                              borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
-                              '%${acc.toStringAsFixed(0)} Doğruluk',
-                              style: textTheme.labelSmall?.copyWith(
-                                color: colorScheme.secondary,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 10,
+                              '%${acc.toStringAsFixed(0)}',
+                              style: const TextStyle(
+                                color: Color(0xFF00C853),
+                                fontWeight: FontWeight.w700,
+                                fontSize: 11,
                               ),
                             ),
                           ),
@@ -890,8 +918,10 @@ class _ArchiveListTile extends ConsumerWidget {
 
                 // 3. SEKTÖR STANDARDI THREE-DOTS MENU BUTONU
                 IconButton(
-                  icon: const Icon(Icons.more_vert_rounded),
-                  color: colorScheme.onSurfaceVariant,
+                  icon: Icon(
+                    Icons.more_vert_rounded,
+                    color: isDark ? Colors.white54 : Colors.black45,
+                  ),
                   onPressed: () => _showOptionsSheet(context, ref),
                   tooltip: 'Seçenekler',
                 ),

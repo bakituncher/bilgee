@@ -2,16 +2,15 @@
 import 'package:taktik/data/models/test_model.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-
+import 'dart:ui';
 class TestDetailScreen extends StatelessWidget {
   final TestModel test;
   const TestDetailScreen({super.key, required this.test});
-
-  // En düşük netli dersi bulan fonksiyon
+  static const Color _colDeepBlue = Color(0xFF2E3192);
+  static const Color _colCyan = Color(0xFF1BFFFF);
   MapEntry<String, double> _findWeakestSubject() {
     double minNet = double.maxFinite;
     String weakestSubject = '';
-
     test.scores.forEach((subject, scores) {
       final net = scores['dogru']! - (scores['yanlis']! * test.penaltyCoefficient);
       if (net < minNet) {
@@ -19,347 +18,363 @@ class TestDetailScreen extends StatelessWidget {
         weakestSubject = subject;
       }
     });
-
     return MapEntry(weakestSubject, minNet);
   }
-
+  MapEntry<String, double> _findStrongestSubject() {
+    double maxNet = double.negativeInfinity;
+    String strongestSubject = '';
+    test.scores.forEach((subject, scores) {
+      final net = scores['dogru']! - (scores['yanlis']! * test.penaltyCoefficient);
+      if (net > maxNet) {
+        maxNet = net;
+        strongestSubject = subject;
+      }
+    });
+    return MapEntry(strongestSubject, maxNet);
+  }
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final pieChartSections = _createPieChartSections(context);
     final weakestSubjectEntry = _findWeakestSubject();
-
+    final strongestSubjectEntry = _findStrongestSubject();
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text(test.testName),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 22, color: theme.colorScheme.onSurface.withOpacity(0.9)),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text("Detayli Analiz", style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, fontSize: 17, letterSpacing: 0.5)),
+        centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
+        flexibleSpace: ClipRect(
+          child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10), child: Container(color: Colors.transparent)),
+        ),
       ),
       backgroundColor: theme.scaffoldBackgroundColor,
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: isDark
-                ? [
-                    theme.scaffoldBackgroundColor,
-                    theme.cardColor.withOpacity(0.3),
-                  ]
-                : [
-                    theme.scaffoldBackgroundColor,
-                    colorScheme.surfaceContainerHighest.withOpacity(0.2),
-                  ],
+      body: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                center: const Alignment(0, -0.8),
+                radius: 1.6,
+                colors: isDark ? [_colDeepBlue.withOpacity(0.12), theme.scaffoldBackgroundColor] : [_colCyan.withOpacity(0.08), theme.scaffoldBackgroundColor],
+                stops: const [0.0, 1.0],
+              ),
+            ),
           ),
-        ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Compact stats card
-              Container(
-                decoration: BoxDecoration(
-                  color: theme.cardColor,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: isDark
-                        ? colorScheme.surfaceContainerHighest.withOpacity(0.3)
-                        : colorScheme.surfaceContainerHighest.withOpacity(0.5),
-                    width: 1,
-                  ),
-                  boxShadow: isDark
-                      ? []
-                      : [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.04),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                ),
-                padding: const EdgeInsets.all(14.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildStatColumn('Toplam Net', test.totalNet.toStringAsFixed(2), context, isHeader: true),
-                    _buildStatColumn('Doğru', test.totalCorrect.toString(), context),
-                    _buildStatColumn('Yanlış', test.totalWrong.toString(), context),
-                    _buildStatColumn('Boş', test.totalBlank.toString(), context),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Pie Chart with Legend - Fixed overlapping text
-              Container(
-                decoration: BoxDecoration(
-                  color: theme.cardColor,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: isDark
-                        ? colorScheme.surfaceContainerHighest.withOpacity(0.3)
-                        : colorScheme.surfaceContainerHighest.withOpacity(0.5),
-                    width: 1,
-                  ),
-                  boxShadow: isDark
-                      ? []
-                      : [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.04),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                ),
-                padding: const EdgeInsets.all(14.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Derslerin Net Dağılımı', style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      height: 220,
-                      child: Row(
-                        children: [
-                          Expanded(
-                            flex: 3,
-                            child: PieChart(
-                              PieChartData(
-                                sections: pieChartSections,
-                                centerSpaceRadius: 35,
-                                sectionsSpace: 2,
-                                pieTouchData: PieTouchData(
-                                  touchCallback: (FlTouchEvent event, pieTouchResponse) {},
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            flex: 2,
-                            child: _buildLegend(context, pieChartSections),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Compact AI Analysis Card
-              Container(
-                decoration: BoxDecoration(
-                  color: colorScheme.primary.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: colorScheme.primary.withOpacity(0.2),
-                    width: 1,
-                  ),
-                ),
-                padding: const EdgeInsets.all(14.0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.lightbulb_outline, color: colorScheme.secondary, size: 28),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Analiz ve Tavsiye',
-                            style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 4),
-                          Text.rich(
-                            TextSpan(
-                              children: [
-                                const TextSpan(text: 'En çok zorlandığın ders '),
-                                TextSpan(
-                                  text: '${weakestSubjectEntry.key} ',
-                                  style: const TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                                const TextSpan(text: 'görünüyor. Bu derse ağırlık vererek netlerini artırabilirsin!'),
-                              ],
-                            ),
-                            style: textTheme.bodyMedium?.copyWith(height: 1.4),
-                          ),
-                        ],
-                      ),
-                    )
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Compact subject results list
-              Text('Ders Sonuçları', style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 10),
-              ...test.scores.entries.map((entry) {
-                final subject = entry.key;
-                final scores = entry.value;
-                final net = scores['dogru']! - (scores['yanlis']! * test.penaltyCoefficient);
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  decoration: BoxDecoration(
-                    color: theme.cardColor,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isDark
-                          ? colorScheme.surfaceContainerHighest.withOpacity(0.3)
-                          : colorScheme.surfaceContainerHighest.withOpacity(0.5),
-                      width: 1,
-                    ),
-                  ),
-                  child: ListTile(
-                    dense: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                    title: Text(
-                      subject,
-                      style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700, fontSize: 14),
-                    ),
-                    subtitle: Text(
-                      'D: ${scores['dogru']} / Y: ${scores['yanlis']} / B: ${scores['bos']}',
-                      style: textTheme.bodySmall?.copyWith(fontSize: 12),
-                    ),
-                    trailing: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: colorScheme.secondary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: colorScheme.secondary.withOpacity(0.3),
-                          width: 1,
-                        ),
-                      ),
-                      child: Text(
-                        net.toStringAsFixed(2),
-                        style: textTheme.titleSmall?.copyWith(
-                          color: colorScheme.secondary,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }),
-            ],
+          SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + 70, 20, MediaQuery.of(context).padding.bottom + 24),
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _TestHeaderCard(test: test, isDark: isDark),
+                const SizedBox(height: 16),
+                _StatsCard(test: test, isDark: isDark),
+                const SizedBox(height: 16),
+                _InsightCard(weakestSubject: weakestSubjectEntry, strongestSubject: strongestSubjectEntry, isDark: isDark),
+                const SizedBox(height: 20),
+                if (pieChartSections.isNotEmpty) _ChartCard(pieChartSections: pieChartSections, test: test, isDark: isDark),
+                const SizedBox(height: 20),
+                _SubjectDetailsList(test: test, isDark: isDark),
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
-
-  // Color palette for charts - extracted as constant to avoid duplication
-  static const List<Color> _chartColors = [
-    Colors.blue, Colors.green, Colors.orange, Colors.purple, Colors.red,
-    Colors.teal, Colors.pink, Colors.amber, Colors.indigo, Colors.brown
-  ];
-
-  // Pasta grafiği dilimlerini oluşturan fonksiyon - TEXT REMOVED to prevent overlap
+  static const List<Color> _chartColors = [Color(0xFF2E3192), Color(0xFF00C853), Color(0xFFFF9800), Color(0xFF9C27B0), Color(0xFFFF5252), Color(0xFF00BCD4), Color(0xFFE91E63), Color(0xFFFFB300), Color(0xFF3F51B5), Color(0xFF795548)];
   List<PieChartSectionData> _createPieChartSections(BuildContext context) {
     int colorIndex = 0;
-
     return test.scores.entries.map((entry) {
       final subjectNet = entry.value['dogru']! - (entry.value['yanlis']! * test.penaltyCoefficient);
       if (subjectNet <= 0) return null;
-
-      final section = PieChartSectionData(
-        value: subjectNet,
-        title: '', // Remove text to prevent overlapping
-        radius: 70,
-        color: _chartColors[colorIndex % _chartColors.length],
-        titleStyle: null, // Cleaner than fontSize: 0
-        badgeWidget: null,
-      );
+      final section = PieChartSectionData(value: subjectNet, title: '', radius: 65, color: _chartColors[colorIndex % _chartColors.length]);
       colorIndex++;
       return section;
     }).where((section) => section != null).cast<PieChartSectionData>().toList();
   }
-
-  // Build legend for pie chart to show subject names without overlap
-  Widget _buildLegend(BuildContext context, List<PieChartSectionData> sections) {
-    final textTheme = Theme.of(context).textTheme;
+}
+class _TestHeaderCard extends StatelessWidget {
+  final TestModel test;
+  final bool isDark;
+  const _TestHeaderCard({required this.test, required this.isDark});
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E2230) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(isDark ? 0.2 : 0.06), blurRadius: 16, offset: const Offset(0, 4))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(color: const Color(0xFF2E3192).withOpacity(isDark ? 0.2 : 0.08), borderRadius: BorderRadius.circular(8)),
+                child: Text(test.sectionName.toUpperCase(), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: isDark ? const Color(0xFF8B8FFF) : const Color(0xFF2E3192), letterSpacing: 0.5)),
+              ),
+              const Spacer(),
+              Icon(Icons.calendar_today_rounded, size: 14, color: isDark ? Colors.white54 : Colors.black45),
+              const SizedBox(width: 6),
+              Text('${test.date.day}/${test.date.month}/${test.date.year}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isDark ? Colors.white70 : Colors.black54)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(test.testName, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700, fontSize: 20, height: 1.3)),
+        ],
+      ),
+    );
+  }
+}
+class _StatsCard extends StatelessWidget {
+  final TestModel test;
+  final bool isDark;
+  const _StatsCard({required this.test, required this.isDark});
+  Widget _divider() => Container(width: 1, height: 40, margin: const EdgeInsets.symmetric(horizontal: 4), color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.06));
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E2230) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(isDark ? 0.2 : 0.06), blurRadius: 16, offset: const Offset(0, 4))],
+      ),
+      child: Row(
+        children: [
+          Expanded(child: _StatItem(label: "Toplam Net", value: test.totalNet.toStringAsFixed(1), color: const Color(0xFF2E3192), isDark: isDark, isHighlighted: true)),
+          _divider(),
+          Expanded(child: _StatItem(label: "Dogru", value: test.totalCorrect.toString(), color: const Color(0xFF00C853), isDark: isDark)),
+          _divider(),
+          Expanded(child: _StatItem(label: "Yanlis", value: test.totalWrong.toString(), color: const Color(0xFFFF5252), isDark: isDark)),
+          _divider(),
+          Expanded(child: _StatItem(label: "Bos", value: test.totalBlank.toString(), color: isDark ? Colors.white54 : Colors.grey, isDark: isDark)),
+        ],
+      ),
+    );
+  }
+}
+class _StatItem extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+  final bool isDark;
+  final bool isHighlighted;
+  const _StatItem({required this.label, required this.value, required this.color, required this.isDark, this.isHighlighted = false});
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(value, style: TextStyle(fontSize: isHighlighted ? 22 : 20, fontWeight: FontWeight.w800, color: color)),
+        const SizedBox(height: 4),
+        Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: isDark ? Colors.white54 : Colors.black54)),
+      ],
+    );
+  }
+}
+class _InsightCard extends StatelessWidget {
+  final MapEntry<String, double> weakestSubject;
+  final MapEntry<String, double> strongestSubject;
+  final bool isDark;
+  const _InsightCard({required this.weakestSubject, required this.strongestSubject, required this.isDark});
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark ? [const Color(0xFF2E3192).withOpacity(0.15), const Color(0xFF1BFFFF).withOpacity(0.08)] : [const Color(0xFF2E3192).withOpacity(0.06), const Color(0xFF1BFFFF).withOpacity(0.04)],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF2E3192).withOpacity(isDark ? 0.2 : 0.1)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(color: const Color(0xFF2E3192).withOpacity(isDark ? 0.2 : 0.1), borderRadius: BorderRadius.circular(12)),
+            child: const Text('??', style: TextStyle(fontSize: 20)),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Analiz ve Tavsiye', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: isDark ? Colors.white : Colors.black87)),
+                const SizedBox(height: 8),
+                RichText(
+                  text: TextSpan(
+                    style: TextStyle(fontSize: 13, height: 1.5, color: isDark ? Colors.white70 : Colors.black54),
+                    children: [
+                      const TextSpan(text: 'En guclu alanin '),
+                      TextSpan(text: strongestSubject.key, style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF00C853))),
+                      const TextSpan(text: ', devam et! En cok gelisim firsati ise '),
+                      TextSpan(text: weakestSubject.key, style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFFFF9800))),
+                      const TextSpan(text: ' dersinde. Bu derse odaklanarak netlerini hizla artirabilirsin!'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+class _ChartCard extends StatelessWidget {
+  final List<PieChartSectionData> pieChartSections;
+  final TestModel test;
+  final bool isDark;
+  const _ChartCard({required this.pieChartSections, required this.test, required this.isDark});
+  static const List<Color> _chartColors = [Color(0xFF2E3192), Color(0xFF00C853), Color(0xFFFF9800), Color(0xFF9C27B0), Color(0xFFFF5252), Color(0xFF00BCD4), Color(0xFFE91E63), Color(0xFFFFB300), Color(0xFF3F51B5), Color(0xFF795548)];
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E2230) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(isDark ? 0.2 : 0.06), blurRadius: 16, offset: const Offset(0, 4))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Net Dagilimi', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: isDark ? Colors.white : Colors.black87)),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 200,
+            child: Row(
+              children: [
+                Expanded(flex: 3, child: PieChart(PieChartData(sections: pieChartSections, centerSpaceRadius: 40, sectionsSpace: 2))),
+                const SizedBox(width: 16),
+                Expanded(flex: 2, child: _buildLegend()),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  Widget _buildLegend() {
     final entries = test.scores.entries.toList();
     final legendItems = <Widget>[];
     int colorIndex = 0;
-
-    for (var i = 0; i < entries.length; i++) {
-      final entry = entries[i];
+    for (var entry in entries) {
       final subjectNet = entry.value['dogru']! - (entry.value['yanlis']! * test.penaltyCoefficient);
       if (subjectNet <= 0) continue;
-
       legendItems.add(
         Padding(
-          padding: const EdgeInsets.only(bottom: 6),
+          padding: const EdgeInsets.only(bottom: 8),
           child: Row(
-            mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(
-                  color: _chartColors[colorIndex % _chartColors.length],
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  '${entry.key}: ${subjectNet.toStringAsFixed(1)}',
-                  style: textTheme.bodySmall?.copyWith(fontSize: 11),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
+              Container(width: 12, height: 12, decoration: BoxDecoration(color: _chartColors[colorIndex % _chartColors.length], borderRadius: BorderRadius.circular(3))),
+              const SizedBox(width: 8),
+              Expanded(child: Text(entry.key, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: isDark ? Colors.white70 : Colors.black54), maxLines: 1, overflow: TextOverflow.ellipsis)),
+              Text(subjectNet.toStringAsFixed(1), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: isDark ? Colors.white : Colors.black87)),
             ],
           ),
         ),
       );
       colorIndex++;
     }
-
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: legendItems,
-      ),
-    );
+    return SingleChildScrollView(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: legendItems));
   }
-
-  // İstatistik kolonu oluşturan yardımcı widget - compact
-  Widget _buildStatColumn(String label, String value, BuildContext context, {bool isHeader = false}) {
-    final textTheme = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
-    final style = isHeader ? textTheme.titleMedium : textTheme.titleSmall;
-    final color = isHeader ? colorScheme.secondary : colorScheme.onSurface;
-
+}
+class _SubjectDetailsList extends StatelessWidget {
+  final TestModel test;
+  final bool isDark;
+  const _SubjectDetailsList({required this.test, required this.isDark});
+  @override
+  Widget build(BuildContext context) {
+    final entries = test.scores.entries.toList()..sort((a, b) {
+      final netA = a.value['dogru']! - (a.value['yanlis']! * test.penaltyCoefficient);
+      final netB = b.value['dogru']! - (b.value['yanlis']! * test.penaltyCoefficient);
+      return netB.compareTo(netA);
+    });
     return Column(
-      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: textTheme.labelSmall?.copyWith(fontSize: 10),
-          textAlign: TextAlign.center,
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 12),
+          child: Text("Ders Bazli Sonuclar", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: isDark ? Colors.white : Colors.black87)),
         ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: style?.copyWith(
-            color: color,
-            fontWeight: FontWeight.bold,
-            fontSize: isHeader ? 16 : 14,
+        Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E2230) : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(isDark ? 0.2 : 0.06), blurRadius: 16, offset: const Offset(0, 4))],
           ),
-          textAlign: TextAlign.center,
+          child: Column(
+            children: entries.asMap().entries.map((entry) {
+              final index = entry.key;
+              final e = entry.value;
+              final scores = e.value;
+              final net = scores['dogru']! - (scores['yanlis']! * test.penaltyCoefficient);
+              final d = scores['dogru'] ?? 0;
+              final y = scores['yanlis'] ?? 0;
+              final b = scores['bos'] ?? 0;
+              final isLast = index == entries.length - 1;
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(border: !isLast ? Border(bottom: BorderSide(color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.04))) : null),
+                child: Row(
+                  children: [
+                    Expanded(flex: 4, child: Text(e.key, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: isDark ? Colors.white : Colors.black87), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _MiniChip(value: d, color: const Color(0xFF00C853), isDark: isDark),
+                        const SizedBox(width: 6),
+                        _MiniChip(value: y, color: const Color(0xFFFF5252), isDark: isDark),
+                        const SizedBox(width: 6),
+                        _MiniChip(value: b, color: isDark ? Colors.white38 : Colors.grey.shade400, isDark: isDark),
+                      ],
+                    ),
+                    const SizedBox(width: 12),
+                    Container(
+                      width: 50,
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                      decoration: BoxDecoration(color: isDark ? const Color(0xFF2E3192).withOpacity(0.2) : const Color(0xFF2E3192).withOpacity(0.08), borderRadius: BorderRadius.circular(8)),
+                      child: Text(net.toStringAsFixed(1), textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: isDark ? const Color(0xFF8B8FFF) : const Color(0xFF2E3192))),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
         ),
       ],
+    );
+  }
+}
+class _MiniChip extends StatelessWidget {
+  final int value;
+  final Color color;
+  final bool isDark;
+  const _MiniChip({required this.value, required this.color, required this.isDark});
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 26,
+      height: 26,
+      decoration: BoxDecoration(color: color.withOpacity(isDark ? 0.2 : 0.1), borderRadius: BorderRadius.circular(6)),
+      child: Center(child: Text('$value', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: color))),
     );
   }
 }
