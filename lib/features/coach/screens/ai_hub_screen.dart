@@ -208,6 +208,17 @@ class _HeroCoachCard extends StatelessWidget {
         ),
         child: Stack(
           children: [
+            // Animated arrows background
+            Positioned.fill(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(32),
+                child: const _AnimatedArrowsBackground(
+                  arrowColor: Color(0xFF6366F1),
+                  arrowCount: 6,
+                ),
+              ),
+            ),
+
             Positioned(
               right: -40,
               bottom: -40,
@@ -343,7 +354,6 @@ class _FeatureCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         height: 200,
-        padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           color: theme.cardColor,
           borderRadius: BorderRadius.circular(24),
@@ -356,47 +366,65 @@ class _FeatureCard extends StatelessWidget {
             ),
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Stack(
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(icon, color: color, size: 24),
+            // Animated arrows background
+            Positioned.fill(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: _AnimatedArrowsBackground(
+                  arrowColor: color,
+                  arrowCount: 4,
                 ),
-                if (!isPremium)
-                  Icon(Icons.lock_rounded, size: 18, color: theme.colorScheme.onSurface.withOpacity(0.2)),
-              ],
-            ),
-
-            const SizedBox(height: 14),
-
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-                color: theme.colorScheme.onSurface,
-                height: 1.1,
               ),
             ),
-            const SizedBox(height: 6),
-            Expanded(
-              child: Text(
-                subtitle,
-                style: TextStyle(
-                  fontSize: 11.5,
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
-                  height: 1.3,
-                ),
-                maxLines: 4,
-                overflow: TextOverflow.ellipsis,
+            // Content
+            Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: color.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(icon, color: color, size: 24),
+                      ),
+                      if (!isPremium)
+                        Icon(Icons.lock_rounded, size: 18, color: theme.colorScheme.onSurface.withOpacity(0.2)),
+                    ],
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: theme.colorScheme.onSurface,
+                      height: 1.1,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Expanded(
+                    child: Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                        height: 1.3,
+                      ),
+                      maxLines: 4,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -431,7 +459,6 @@ class _WideFeatureCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
         decoration: BoxDecoration(
           color: theme.cardColor,
           borderRadius: BorderRadius.circular(24),
@@ -444,45 +471,63 @@ class _WideFeatureCard extends StatelessWidget {
             ),
           ],
         ),
-        child: Row(
+        child: Stack(
           children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(14),
+            // Animated arrows background
+            Positioned.fill(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: _AnimatedArrowsBackground(
+                  arrowColor: color,
+                  arrowCount: 5,
+                ),
               ),
-              child: Icon(icon, color: color, size: 26),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            // Content
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+              child: Row(
                 children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: theme.colorScheme.onSurface,
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: color.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Icon(icon, color: color, size: 26),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          subtitle,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: theme.colorScheme.onSurface.withOpacity(0.6),
+                            height: 1.3,
+                          ),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: theme.colorScheme.onSurface.withOpacity(0.6),
-                      height: 1.3,
-                    ),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  if (!isPremium)
+                    Icon(Icons.lock_rounded, size: 18, color: theme.colorScheme.onSurface.withOpacity(0.2)),
                 ],
               ),
             ),
-            if (!isPremium)
-              Icon(Icons.lock_rounded, size: 18, color: theme.colorScheme.onSurface.withOpacity(0.2)),
           ],
         ),
       ),
@@ -671,3 +716,77 @@ class _AiDisclaimerFooter extends StatelessWidget {
     );
   }
 }
+
+// -----------------------------------------------------------------------------
+// STATIC ARROW BACKGROUND
+// -----------------------------------------------------------------------------
+class _AnimatedArrowsBackground extends StatelessWidget {
+  final Color arrowColor;
+  final int arrowCount; // artık kullanılmıyor ama uyumluluk için tutuluyor
+
+  const _AnimatedArrowsBackground({
+    required this.arrowColor,
+    this.arrowCount = 5,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      painter: _SingleArrowPainter(arrowColor: arrowColor),
+      size: Size.infinite,
+    );
+  }
+}
+
+class _SingleArrowPainter extends CustomPainter {
+  final Color arrowColor;
+
+  _SingleArrowPainter({required this.arrowColor});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Gradient efekti için shader
+    final gradient = LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [
+        arrowColor.withOpacity(0.06),
+        arrowColor.withOpacity(0.15),
+      ],
+    );
+
+    final rect = Rect.fromLTWH(0, 0, size.width, size.height);
+
+    final paint = Paint()
+      ..shader = gradient.createShader(rect)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size.height * 0.08 // Orantılı kalınlık
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    // Sağ alt köşeye hizalı, orantılı ok
+    final arrowHeight = size.height * 0.5;
+    final arrowWidth = arrowHeight * 0.5;
+
+    // Sağ alt köşeden padding
+    final rightPadding = size.width * 0.08;
+    final bottomPadding = size.height * 0.18;
+
+    final tipX = size.width - rightPadding;
+    final tipY = size.height - bottomPadding;
+
+    final path = Path();
+    // Chevron ok sağa bakıyor (>)
+    path.moveTo(tipX - arrowWidth, tipY - arrowHeight * 0.5);
+    path.lineTo(tipX, tipY);
+    path.lineTo(tipX - arrowWidth, tipY + arrowHeight * 0.5);
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _SingleArrowPainter oldDelegate) {
+    return oldDelegate.arrowColor != arrowColor;
+  }
+}
+
