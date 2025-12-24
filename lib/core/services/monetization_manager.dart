@@ -6,8 +6,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Reklam ve paywall gösterimini optimize eder
 class MonetizationManager {
   final SharedPreferences _prefs;
+  final bool _disableCooldownForTesting;
 
-  MonetizationManager(this._prefs);
+  MonetizationManager(
+    this._prefs, {
+    bool disableCooldownForTesting = false,
+  }) : _disableCooldownForTesting = disableCooldownForTesting;
 
   // Keys
   static const String _testSubmissionCountKey = 'monetization_test_count';
@@ -17,14 +21,17 @@ class MonetizationManager {
   static const String _paywallShowCountKey = 'monetization_paywall_count';
   static const String _adShowCountKey = 'monetization_ad_count';
 
-  // Strateji: Her 5 test eklemenin 4'ü reklam, 1'i paywall
-  // Örnek: Test 1-4: Reklam, Test 5: Paywall, Test 6-9: Reklam, Test 10: Paywall
-  static const int _cycleLength = 5;
-  static const int _paywallPosition = 5; // Her 5. testte paywall
+  // --- GÜNCELLENDİ: STRATEJİ 1 REKLAM / 1 PAYWALL ---
+  // Tek sayılarda (1, 3, 5...) reklam
+  // Çift sayılarda (2, 4, 6...) paywall
+  static const int _cycleLength = 2;
 
   // Minimum bekleme süreleri (spam önleme)
-  static const Duration _minAdInterval = Duration(seconds: 30);
-  static const Duration _minPaywallInterval = Duration(minutes: 5);
+  // Debug'da hızlı test için düşük, prod'da daha korumacı.
+  static const Duration _minAdInterval =
+      kDebugMode ? Duration(seconds: 5) : Duration(seconds: 30);
+  static const Duration _minPaywallInterval =
+      kDebugMode ? Duration(seconds: 5) : Duration(minutes: 5);
 
   /// Test eklendikten sonra ne gösterileceğine karar verir
   MonetizationAction getActionAfterTestSubmission() {
@@ -34,31 +41,29 @@ class MonetizationManager {
     // Sayacı güncelle
     _setTestSubmissionCount(newCount);
 
-    // Her 5. test paywall göster
+    debugPrint('💰 Monetization: Test Submission #$newCount');
+
+    // Çift sayı -> paywall
     if (newCount % _cycleLength == 0) {
-      // Paywall için minimum süre kontrolü
       if (_canShowPaywall()) {
         _recordPaywallShow();
         debugPrint('💰 Monetization: Showing PAYWALL (test #$newCount)');
         return MonetizationAction.showPaywall;
-      } else {
-        // Paywall çok yakın zamanda gösterildi, reklam göster
-        debugPrint('⏰ Monetization: Paywall cooldown active, showing AD instead');
-        _recordAdShow();
-        return MonetizationAction.showAd;
       }
-    } else {
-      // Diğer testlerde reklam göster
-      if (_canShowAd()) {
-        _recordAdShow();
-        debugPrint('📺 Monetization: Showing AD (test #$newCount)');
-        return MonetizationAction.showAd;
-      } else {
-        // Reklam çok yakın zamanda gösterildi, hiçbir şey gösterme
-        debugPrint('⏰ Monetization: Ad cooldown active, skipping');
-        return MonetizationAction.showNothing;
-      }
+
+      debugPrint('⏰ Monetization: Paywall cooldown active, skipping');
+      return MonetizationAction.showNothing;
     }
+
+    // Tek sayı -> reklam
+    if (_canShowAd()) {
+      _recordAdShow();
+      debugPrint('📺 Monetization: Showing AD (test #$newCount)');
+      return MonetizationAction.showAd;
+    }
+
+    debugPrint('⏰ Monetization: Ad cooldown active, skipping');
+    return MonetizationAction.showNothing;
   }
 
   /// Test ekleme sayacını al
@@ -79,31 +84,29 @@ class MonetizationManager {
     // Sayacı güncelle
     _setLessonNetSubmissionCount(newCount);
 
-    // Her 5. ders neti paywall göster
+    debugPrint('💰 Monetization: Lesson Net Submission #$newCount');
+
+    // Çift sayı -> paywall
     if (newCount % _cycleLength == 0) {
-      // Paywall için minimum süre kontrolü
       if (_canShowPaywall()) {
         _recordPaywallShow();
         debugPrint('💰 Monetization: Showing PAYWALL (lesson net #$newCount)');
         return MonetizationAction.showPaywall;
-      } else {
-        // Paywall çok yakın zamanda gösterildi, reklam göster
-        debugPrint('⏰ Monetization: Paywall cooldown active, showing AD instead');
-        _recordAdShow();
-        return MonetizationAction.showAd;
       }
-    } else {
-      // Diğer ders netlerinde reklam göster
-      if (_canShowAd()) {
-        _recordAdShow();
-        debugPrint('📺 Monetization: Showing AD (lesson net #$newCount)');
-        return MonetizationAction.showAd;
-      } else {
-        // Reklam çok yakın zamanda gösterildi, hiçbir şey gösterme
-        debugPrint('⏰ Monetization: Ad cooldown active, skipping');
-        return MonetizationAction.showNothing;
-      }
+
+      debugPrint('⏰ Monetization: Paywall cooldown active, skipping');
+      return MonetizationAction.showNothing;
     }
+
+    // Tek sayı -> reklam
+    if (_canShowAd()) {
+      _recordAdShow();
+      debugPrint('📺 Monetization: Showing AD (lesson net #$newCount)');
+      return MonetizationAction.showAd;
+    }
+
+    debugPrint('⏰ Monetization: Ad cooldown active, skipping');
+    return MonetizationAction.showNothing;
   }
 
   /// Ders neti ekleme sayacını al
@@ -118,6 +121,8 @@ class MonetizationManager {
 
   /// Reklam gösterilebilir mi kontrol et
   bool _canShowAd() {
+    if (_disableCooldownForTesting) return true;
+
     final lastShowTime = _prefs.getInt(_lastAdShowTimeKey);
     if (lastShowTime == null) return true;
 
@@ -130,6 +135,8 @@ class MonetizationManager {
 
   /// Paywall gösterilebilir mi kontrol et
   bool _canShowPaywall() {
+    if (_disableCooldownForTesting) return true;
+
     final lastShowTime = _prefs.getInt(_lastPaywallShowTimeKey);
     if (lastShowTime == null) return true;
 
@@ -216,4 +223,3 @@ class MonetizationStats {
     return 'MonetizationStats(tests: $totalTests, lessonNets: $totalLessonNets, ads: $adsShown, paywalls: $paywallsShown)';
   }
 }
-

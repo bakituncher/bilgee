@@ -119,7 +119,7 @@ class Step3Summary extends ConsumerWidget {
                   switch (action) {
                     case MonetizationAction.showPaywall:
                       // Paywall göster
-                      await context.push(AppRoutes.aiToolsOffer);
+                      await context.push(AppRoutes.premium);
                       break;
                     case MonetizationAction.showAd:
                       // Reklam göster

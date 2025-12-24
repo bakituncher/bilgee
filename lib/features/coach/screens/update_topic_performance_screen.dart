@@ -363,7 +363,7 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
                     switch (action) {
                       case MonetizationAction.showPaywall:
                         // Paywall göster
-                        await context.push(AppRoutes.aiToolsOffer);
+                        await context.push(AppRoutes.premium);
                         break;
                       case MonetizationAction.showAd:
                         // Reklam göster
@@ -558,3 +558,4 @@ class _QuickStat extends StatelessWidget {
     );
   }
 }
+
