@@ -735,7 +735,7 @@ Future<bool> _showPremiumDetailGateDialog({
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'Bu denemedeki hatalarının kök nedenlerini ve konu kırılımlarını görmek için Pro\'ya geç.',
+                  'Bu denemedeki hatalarının kök nedenlerini ve kırılımlarını detaylı görmek için Pro\'ya geç.',
                   style: theme.textTheme.bodyMedium?.copyWith(height: 1.4),
                 ),
                 const SizedBox(height: 20),
@@ -756,7 +756,7 @@ Future<bool> _showPremiumDetailGateDialog({
                 const SizedBox(height: 8),
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(false),
-                  child: Text('Şimdilik İnceleme', style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.5))),
+                  child: Text('Avantajı Kaybet', style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.5))),
                 ),
               ],
             ),
