@@ -18,24 +18,33 @@ class ChartData {
     required this.baseColor,
   });
 
-  /// Performans trendini hesapla (son 3 test vs önceki 3 test)
+  /// Performans trendini hesapla (son testler vs önceki testler)
+  /// Yeterli veri yoksa 0 döndürür (stabil kabul edilir)
   double get performanceTrend {
-    if (tests.length < 2) return 0.0;
+    // En az 3 test olmalı ki anlamlı bir trend hesaplanabilsin
+    if (tests.length < 3) return 0.0;
 
     final sortedTests = tests.toList()..sort((a, b) => a.date.compareTo(b.date));
-    final halfPoint = (sortedTests.length / 2).floor();
 
-    final firstHalf = sortedTests.take(halfPoint);
-    final secondHalf = sortedTests.skip(halfPoint);
+    // Son 3 test ile önceki testleri karşılaştır
+    final recentCount = (sortedTests.length / 3).ceil().clamp(1, 5);
+    final olderCount = (sortedTests.length - recentCount).clamp(1, sortedTests.length - 1);
 
-    final firstAvg = firstHalf.isEmpty
-        ? 0.0
-        : firstHalf.fold<double>(0.0, (sum, t) => sum + t.totalNet) / firstHalf.length;
-    final secondAvg = secondHalf.isEmpty
-        ? 0.0
-        : secondHalf.fold<double>(0.0, (sum, t) => sum + t.totalNet) / secondHalf.length;
+    final olderTests = sortedTests.take(olderCount);
+    final recentTests = sortedTests.skip(sortedTests.length - recentCount);
 
-    return (secondAvg - firstAvg).toDouble();
+    if (olderTests.isEmpty || recentTests.isEmpty) return 0.0;
+
+    final olderAvg = olderTests.fold<double>(0.0, (sum, t) => sum + t.totalNet) / olderTests.length;
+    final recentAvg = recentTests.fold<double>(0.0, (sum, t) => sum + t.totalNet) / recentTests.length;
+
+    // Yüzdelik değişim hesapla (daha dengeli)
+    if (olderAvg == 0) return recentAvg > 0 ? 5.0 : 0.0;
+
+    final percentChange = ((recentAvg - olderAvg) / olderAvg) * 100;
+
+    // Makul bir aralığa sınırla (-10 ile +10 arası)
+    return percentChange.clamp(-10.0, 10.0);
   }
 
   /// Ortalama net

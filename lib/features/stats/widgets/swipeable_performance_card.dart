@@ -20,43 +20,43 @@ class SwipeablePerformanceCard extends StatelessWidget {
     final trend = data.performanceTrend;
     final avgNet = data.averageNet;
 
-    // Trend durumuna göre renk belirle
+    // Trend durumuna göre renk belirle (yüzdelik değişime göre)
     Color trendColor;
     Color gradientStart;
     Color gradientEnd;
     IconData trendIcon;
     String trendText;
 
-    if (trend > 5) {
+    if (trend > 8) {
       trendColor = const Color(0xFF10B981); // Yeşil - Harika yükseliş
       gradientStart = const Color(0xFF10B981);
       gradientEnd = const Color(0xFF059669);
       trendIcon = Icons.trending_up_rounded;
       trendText = 'Harika Yükseliş!';
-    } else if (trend > 2) {
+    } else if (trend > 3) {
       trendColor = const Color(0xFF3B82F6); // Mavi - İyi yükseliş
       gradientStart = const Color(0xFF3B82F6);
       gradientEnd = const Color(0xFF2563EB);
       trendIcon = Icons.trending_up_rounded;
       trendText = 'İyi Gidiyor';
-    } else if (trend > -2) {
+    } else if (trend >= -3) {
       trendColor = AppTheme.goldBrandColor; // Sarı - Stabil
       gradientStart = AppTheme.goldBrandColor;
       gradientEnd = const Color(0xFFD97706);
       trendIcon = Icons.trending_flat_rounded;
       trendText = 'Stabil';
-    } else if (trend > -5) {
+    } else if (trend >= -8) {
+      trendColor = const Color(0xFFF59E0B); // Turuncu - Hafif düşüş
+      gradientStart = const Color(0xFFF59E0B);
+      gradientEnd = const Color(0xFFD97706);
+      trendIcon = Icons.trending_down_rounded;
+      trendText = 'Biraz Dikkat';
+    } else {
       trendColor = const Color(0xFFEF4444); // Kırmızı - Düşüş
       gradientStart = const Color(0xFFEF4444);
       gradientEnd = const Color(0xFFDC2626);
       trendIcon = Icons.trending_down_rounded;
-      trendText = 'Dikkat Et';
-    } else {
-      trendColor = const Color(0xFF991B1B); // Koyu kırmızı - Ciddi düşüş
-      gradientStart = const Color(0xFFEF4444);
-      gradientEnd = const Color(0xFF991B1B);
-      trendIcon = Icons.trending_down_rounded;
-      trendText = 'Çalışman Lazım';
+      trendText = 'Odaklan';
     }
 
     return Container(
