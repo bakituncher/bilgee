@@ -1,10 +1,13 @@
 // lib/features/stats/widgets/topic_performance_carousel.dart
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/models/performance_summary.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/data/providers/premium_provider.dart';
 
 /// Yatay kaydırılabilir konu performansı kartları
 /// Kullanıcının coach screen'den girdiği konu performanslarını gösterir
@@ -26,6 +29,7 @@ class _TopicPerformanceCarouselState extends ConsumerState<TopicPerformanceCarou
   @override
   Widget build(BuildContext context) {
     final performanceAsync = ref.watch(performanceProvider);
+    final isPremium = ref.watch(premiumStatusProvider);
 
     return performanceAsync.when(
       data: (performance) {
@@ -37,10 +41,268 @@ class _TopicPerformanceCarouselState extends ConsumerState<TopicPerformanceCarou
 
         if (topicStats.isEmpty) return const SizedBox.shrink();
 
-        return _buildCarousel(context, topicStats);
+        // Premium kullanıcılar için normal görünüm
+        if (isPremium) {
+          return _buildCarousel(context, topicStats);
+        }
+
+        // Ücretsiz kullanıcılar için kilitli görünüm
+        return _buildLockedCarousel(context, topicStats);
       },
       loading: () => const SizedBox.shrink(),
       error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+
+  /// Ücretsiz kullanıcılar için kilitli ve bulanık görünüm
+  Widget _buildLockedCarousel(BuildContext context, List<_TopicStat> topicStats) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Başlık
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppTheme.secondaryBrandColor.withOpacity(0.2),
+                      AppTheme.primaryBrandColor.withOpacity(0.1),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.topic_rounded,
+                  color: AppTheme.secondaryBrandColor,
+                  size: 16,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          'Konu Performansı',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w900,
+                            color: widget.isDark ? Colors.white : const Color(0xFF0F172A),
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                            ),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.workspace_premium_rounded, size: 10, color: Colors.black87),
+                              SizedBox(width: 2),
+                              Text(
+                                'PRO',
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    Text(
+                      'Detaylı konu analizi',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: widget.isDark
+                            ? Colors.white.withOpacity(0.5)
+                            : Colors.black.withOpacity(0.45),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Kilitli içerik
+        SizedBox(
+          height: 220,
+          child: Stack(
+            children: [
+              // Bulanık arka plan - gerçek kartların önizlemesi
+              ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                scrollDirection: Axis.horizontal,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: topicStats.take(3).length,
+                itemBuilder: (context, index) {
+                  final stat = topicStats[index];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: ImageFiltered(
+                      imageFilter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+                      child: Opacity(
+                        opacity: 0.6,
+                        child: _TopicStatCard(
+                          stat: stat,
+                          isDark: widget.isDark,
+                          index: index,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+
+              // Üstte kilit overlay
+              Positioned.fill(
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        (widget.isDark ? const Color(0xFF0F172A) : Colors.white).withOpacity(0.3),
+                        (widget.isDark ? const Color(0xFF0F172A) : Colors.white).withOpacity(0.8),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              // Kilit ve CTA
+              Positioned.fill(
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.amber.withOpacity(0.2),
+                              Colors.orange.withOpacity(0.1),
+                            ],
+                          ),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.amber.withOpacity(0.4),
+                            width: 2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.amber.withOpacity(0.3),
+                              blurRadius: 20,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.lock_rounded,
+                          color: Colors.amber,
+                          size: 32,
+                        ),
+                      ).animate(onPlay: (c) => c.repeat(reverse: true))
+                        .scale(
+                          begin: const Offset(1, 1),
+                          end: const Offset(1.05, 1.05),
+                          duration: 1500.ms,
+                        ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Hangi konuda zayıfsın?',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: widget.isDark ? Colors.white : const Color(0xFF0F172A),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Konu bazlı detaylı analiz için\nTaktik Pro\'ya geç',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: widget.isDark
+                              ? Colors.white.withOpacity(0.6)
+                              : Colors.black.withOpacity(0.5),
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      GestureDetector(
+                        onTap: () => context.push('/premium'),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.amber.withOpacity(0.4),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.rocket_launch_rounded,
+                                color: Colors.black87,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'Pro\'ya Geç',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ).animate()
+                        .fadeIn(delay: 200.ms)
+                        .slideY(begin: 0.2, duration: 400.ms)
+                        .then()
+                        .shimmer(duration: 2000.ms, delay: 500.ms),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ).animate()
+          .fadeIn(duration: 400.ms)
+          .slideY(begin: 0.05, curve: Curves.easeOutCubic),
+      ],
     );
   }
 

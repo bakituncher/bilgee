@@ -251,17 +251,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
     final isPremium = ref.watch(premiumStatusProvider);
     final hasTemporaryAccess = ref.watch(hasPremiumFeaturesAccessProvider);
 
-    // Premium ve geçici erişim kontrolü - ikisi de yoksa teklif ekranına yönlendir
-    if (!isPremium && !hasTemporaryAccess) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          context.go('/stats-premium-offer');
-        }
-      });
-      return const Scaffold(
-        body: Center(child: LogoLoader()),
-      );
-    }
+    // Artık herkes ekrana girebilir - premium kontrol sekme bazında yapılacak
 
     final testsAsyncValue = ref.watch(testsProvider);
     final userAsyncValue = ref.watch(userProfileProvider);
@@ -360,59 +350,119 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
     return Scaffold(
       extendBodyBehindAppBar: false,
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
+        preferredSize: const Size.fromHeight(kToolbarHeight + 8),
         child: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                Theme.of(context).colorScheme.surface.withOpacity(0.05),
-                Theme.of(context).colorScheme.primary.withOpacity(0.05),
+                Theme.of(context).scaffoldBackgroundColor,
+                Theme.of(context).scaffoldBackgroundColor.withOpacity(0.95),
               ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
             ),
           ),
           child: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
+            scrolledUnderElevation: 0,
             centerTitle: true,
             title: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(6),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                       colors: [
                         Theme.of(context).colorScheme.primary,
-                        Theme.of(context).colorScheme.primary.withOpacity(0.7),
+                        Theme.of(context).colorScheme.secondary,
                       ],
                     ),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.25),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
+                        color: Theme.of(context).colorScheme.primary.withOpacity(0.35),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.insights_rounded,
-                    color: Theme.of(context).colorScheme.onPrimary,
+                    color: Colors.white,
                     size: 20,
                   ),
                 ),
-                const SizedBox(width: 10),
-                const Text(
-                  'Deneme Gelişimi',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Deneme Gelişimi',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 18,
+                        letterSpacing: -0.5,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    Text(
+                      'Performans takibi',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 11,
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
+            actions: [
+              if (!isPremium)
+                Container(
+                  margin: const EdgeInsets.only(right: 12),
+                  child: GestureDetector(
+                    onTap: () => context.push('/premium'),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.amber.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.workspace_premium_rounded, size: 14, color: Colors.black87),
+                          SizedBox(width: 4),
+                          Text(
+                            'PRO',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.black87,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ),
