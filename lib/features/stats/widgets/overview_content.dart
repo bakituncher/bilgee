@@ -66,56 +66,108 @@ class OverviewContent extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
                   child: Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(5),
+                        padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                             colors: [
-                              AppTheme.primaryBrandColor.withOpacity(0.2),
-                              AppTheme.secondaryBrandColor.withOpacity(0.1),
+                              AppTheme.primaryBrandColor,
+                              AppTheme.secondaryBrandColor,
                             ],
                           ),
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.primaryBrandColor.withOpacity(0.35),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
-                        child: Icon(
+                        child: const Icon(
                           Icons.insights_rounded,
-                          color: AppTheme.primaryBrandColor,
-                          size: 14,
+                          color: Colors.white,
+                          size: 16,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Performans Trendleri',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w800,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
-                              letterSpacing: -0.3,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Performans Trendleri',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w800,
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                letterSpacing: -0.3,
+                              ),
                             ),
-                          ),
-                          Text(
-                            'Gelişimini takip et',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: isDark
-                                  ? Colors.white.withOpacity(0.45)
-                                  : Colors.black.withOpacity(0.4),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Gelişimini grafiklerle takip et',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: isDark
+                                    ? Colors.white.withOpacity(0.5)
+                                    : Colors.black.withOpacity(0.45),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
+                      // Kaydırma ipucu
+                      if (user.selectedExam == 'YKS')
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? Colors.white.withOpacity(0.08)
+                                : AppTheme.primaryBrandColor.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: isDark
+                                  ? Colors.white.withOpacity(0.12)
+                                  : AppTheme.primaryBrandColor.withOpacity(0.15),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.swipe_rounded,
+                                size: 14,
+                                color: isDark
+                                    ? Colors.white.withOpacity(0.6)
+                                    : AppTheme.primaryBrandColor.withOpacity(0.7),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Kaydır',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark
+                                      ? Colors.white.withOpacity(0.6)
+                                      : AppTheme.primaryBrandColor.withOpacity(0.7),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                     ],
                   ).animate(delay: 300.ms).fadeIn().slideX(begin: -0.05),
                 ),
                 SizedBox(
-                  height: 200,
+                  height: 220,
                   child: SmartPerformanceCharts(
                     tests: tests,
                     isDark: isDark,
@@ -135,7 +187,7 @@ class OverviewContent extends ConsumerWidget {
             .slideY(begin: 0.05, curve: Curves.easeOutCubic),
         ),
 
-        const SliverToBoxAdapter(child: SizedBox(height: 2)),
+        const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
         // Daily Activity & Subject Performance - Kompakt
         if (tests.isNotEmpty)
@@ -144,7 +196,7 @@ class OverviewContent extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 children: [
-                  // Aktivite Haritası
+                  // Aktivite Haritası (üstte)
                   EnhancedActivityCard(
                     userId: user.id,
                     isDark: isDark,
@@ -153,9 +205,9 @@ class OverviewContent extends ConsumerWidget {
                     .fadeIn(duration: 300.ms)
                     .slideY(begin: 0.05, curve: Curves.easeOutCubic),
 
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 12),
 
-                  // Ders Performansı
+                  // Ders Performansı (altta)
                   EnhancedSubjectBreakdown(
                     tests: tests,
                     isDark: isDark,
@@ -171,7 +223,7 @@ class OverviewContent extends ConsumerWidget {
         if (tests.isNotEmpty)
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 6, 16, 12),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
               child: MotivationalFooter(
                 tests: tests,
                 streak: streak,

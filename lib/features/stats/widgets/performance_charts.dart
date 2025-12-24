@@ -7,7 +7,7 @@ import 'package:taktik/features/stats/models/chart_data.dart';
 import 'package:taktik/features/stats/widgets/swipeable_performance_card.dart';
 
 /// Akıllı performans grafik sistemi - Kaydırılabilir şık kartlar
-class SmartPerformanceCharts extends StatelessWidget {
+class SmartPerformanceCharts extends StatefulWidget {
   final List<TestModel> tests;
   final bool isDark;
   final String examType;
@@ -20,7 +20,39 @@ class SmartPerformanceCharts extends StatelessWidget {
   });
 
   @override
+  State<SmartPerformanceCharts> createState() => _SmartPerformanceChartsState();
+}
+
+class _SmartPerformanceChartsState extends State<SmartPerformanceCharts> {
+  late PageController _pageController;
+  int _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(viewportFraction: 0.92);
+    _pageController.addListener(_onPageChanged);
+  }
+
+  @override
+  void dispose() {
+    _pageController.removeListener(_onPageChanged);
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _onPageChanged() {
+    final page = _pageController.page?.round() ?? 0;
+    if (page != _currentPage) {
+      setState(() => _currentPage = page);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final isDark = widget.isDark;
+    final tests = widget.tests;
+    final examType = widget.examType;
     final List<ChartData> chartDataList = [];
 
     // YKS için TYT ve AYT'yi ayır
@@ -100,28 +132,100 @@ class SmartPerformanceCharts extends StatelessWidget {
       }
     }
 
-    return SizedBox(
-      height: 300,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: chartDataList.length,
-        itemBuilder: (context, index) {
-          final data = chartDataList[index];
-          return Padding(
-            padding: EdgeInsets.only(right: index < chartDataList.length - 1 ? 16 : 0),
-            child: SizedBox(
-              width: MediaQuery.of(context).size.width - 32,
-              child: SwipeablePerformanceCard(
-                data: data,
-                isDark: isDark,
-              ).animate(delay: (200 + index * 50).ms)
-                .fadeIn(duration: 250.ms)
-                .slideX(begin: 0.1),
+    // Birden fazla grafik varsa kaydırma göstergesi göster
+    final showIndicator = chartDataList.length > 1;
+
+    return Column(
+      children: [
+        Expanded(
+          child: PageView.builder(
+            controller: _pageController,
+            physics: const BouncingScrollPhysics(),
+            itemCount: chartDataList.length,
+            itemBuilder: (context, index) {
+              final data = chartDataList[index];
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                child: SwipeablePerformanceCard(
+                  data: data,
+                  isDark: isDark,
+                ).animate(delay: (200 + index * 50).ms)
+                  .fadeIn(duration: 250.ms)
+                  .slideX(begin: 0.1),
+              );
+            },
+          ),
+        ),
+        // Şık kaydırma göstergesi
+        if (showIndicator)
+          Padding(
+            padding: const EdgeInsets.only(top: 12, bottom: 4),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Sol ok göstergesi
+                AnimatedOpacity(
+                  duration: const Duration(milliseconds: 200),
+                  opacity: _currentPage > 0 ? 0.6 : 0.0,
+                  child: Icon(
+                    Icons.chevron_left_rounded,
+                    size: 16,
+                    color: isDark ? Colors.white.withOpacity(0.5) : Colors.black.withOpacity(0.3),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                // Dot göstergeleri
+                ...List.generate(chartDataList.length, (index) {
+                  final isActive = index == _currentPage;
+                  final data = chartDataList[index];
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOutCubic,
+                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                    height: 6,
+                    width: isActive ? 24 : 6,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(3),
+                      gradient: isActive
+                          ? LinearGradient(
+                              colors: [
+                                data.baseColor,
+                                data.baseColor.withOpacity(0.7),
+                              ],
+                            )
+                          : null,
+                      color: isActive
+                          ? null
+                          : isDark
+                              ? Colors.white.withOpacity(0.2)
+                              : Colors.black.withOpacity(0.15),
+                      boxShadow: isActive
+                          ? [
+                              BoxShadow(
+                                color: data.baseColor.withOpacity(0.4),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ]
+                          : null,
+                    ),
+                  );
+                }),
+                const SizedBox(width: 4),
+                // Sağ ok göstergesi
+                AnimatedOpacity(
+                  duration: const Duration(milliseconds: 200),
+                  opacity: _currentPage < chartDataList.length - 1 ? 0.6 : 0.0,
+                  child: Icon(
+                    Icons.chevron_right_rounded,
+                    size: 16,
+                    color: isDark ? Colors.white.withOpacity(0.5) : Colors.black.withOpacity(0.3),
+                  ),
+                ),
+              ],
             ),
-          );
-        },
-      ),
+          ),
+      ],
     );
   }
 }
