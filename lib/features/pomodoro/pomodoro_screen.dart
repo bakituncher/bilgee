@@ -36,10 +36,10 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen> with TickerProv
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive || state == AppLifecycleState.detached) {
-      // Arka plana geçince sayaç otomatik duraklatılsın
-      ref.read(pomodoroProvider.notifier).pause();
-    }
+    // Pomodoro arka planda da devam etmeli.
+    // Not: Timer callback'leri arka planda kısıtlanabilir; PomodoroNotifier zaten epoch/baseline ile
+    // geri gelince kalan süreyi doğru hesaplıyor.
+    // Bu yüzden burada otomatik pause yapmıyoruz.
   }
 
   @override
