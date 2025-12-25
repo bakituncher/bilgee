@@ -56,6 +56,11 @@ class StrategyGenerationNotifier extends StateNotifier<AsyncValue<void>> {
         throw Exception(decodedData['error']);
       }
 
+      // KÖK NEDEN ÇÖZÜMÜ: AI bazen creationDate alanını eski/random gönderiyor; planın anında expired görünmesini engellemek için şimdi ile ez.
+      if (decodedData['weeklyPlan'] is Map<String, dynamic>) {
+        (decodedData['weeklyPlan'] as Map<String, dynamic>)['creationDate'] = DateTime.now().toIso8601String();
+      }
+
       final result = {
         // long-term strateji kaldırıldı
         'weeklyPlan': decodedData['weeklyPlan'],
