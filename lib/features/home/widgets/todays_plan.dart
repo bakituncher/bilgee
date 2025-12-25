@@ -66,7 +66,8 @@ class _TodaysPlanState extends ConsumerState<TodaysPlan> {
     if (weeklyPlan != null) {
       final today = DateTime.now();
       final currentDayIndex = today.weekday - 1;
-      final startOfWeek = today.subtract(Duration(days: currentDayIndex));
+      final creation = weeklyPlan.creationDate;
+      final startOfWeek = DateTime(creation.year, creation.month, creation.day).subtract(Duration(days: creation.weekday - 1));
 
       final relevantDays = weeklyPlan.plan.take(currentDayIndex + 1).toList();
       totalTasksSoFar = relevantDays.expand((day) => day.schedule).length;
@@ -80,7 +81,7 @@ class _TodaysPlanState extends ConsumerState<TodaysPlan> {
           final completedForThisDay = ref.watch(completedTasksForDateProvider(dateForDay)).maybeWhen(data: (list)=> list, orElse: ()=> const <String>[]);
 
           for (var task in dailyPlan.schedule) {
-            final taskIdentifier = '${task.time}-${task.activity}';
+            final taskIdentifier = task.id;
             if (completedForThisDay.contains(taskIdentifier)) {
               completedTasksSoFar++;
             }

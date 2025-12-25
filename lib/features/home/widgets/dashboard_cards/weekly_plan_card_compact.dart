@@ -59,9 +59,9 @@ class _CompactPlanContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Calculate weekly progress
-    final now = DateTime.now();
-    final dayStart = DateTime(now.year, now.month, now.day);
-    final startOfWeek = dayStart.subtract(Duration(days: dayStart.weekday - 1));
+    final creation = weeklyPlan.creationDate;
+    final creationStart = DateTime(creation.year, creation.month, creation.day);
+    final startOfWeek = creationStart.subtract(Duration(days: creationStart.weekday - 1));
 
     final weeklyCompletedMap = ref.watch(completedTasksForWeekProvider(startOfWeek)).maybeWhen(
       data: (m) => m,
@@ -78,7 +78,7 @@ class _CompactPlanContent extends ConsumerWidget {
       final dk = DateFormat('yyyy-MM-dd').format(d);
       final completedList = weeklyCompletedMap[dk] ?? const <String>[];
       for (final s in dp.schedule) {
-        final id = '${s.time}-${s.activity}';
+        final id = s.id;
         if (completedList.contains(id)) done++;
       }
     }
@@ -90,6 +90,7 @@ class _CompactPlanContent extends ConsumerWidget {
         : null;
 
     // Today's completed tasks
+    final now = DateTime.now();
     final todayDate = DateFormat('yyyy-MM-dd').format(now);
     final todayCompleted = weeklyCompletedMap[todayDate] ?? const <String>[];
 
@@ -245,7 +246,7 @@ class _CompactPlanContent extends ConsumerWidget {
             )
           else
             ...todayTasks.map((task) {
-              final taskId = '${task.time}-${task.activity}';
+              final taskId = task.id;
               final isCompleted = todayCompleted.contains(taskId);
               return Container(
                 padding: const EdgeInsets.all(10),
