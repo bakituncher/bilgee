@@ -43,7 +43,7 @@ class _AiHubWelcomeSheetState extends State<AiHubWelcomeSheet>
         left: 20,
         right: 20,
         top: 12,
-        bottom: MediaQuery.of(context).viewPadding.bottom + 20,
+        bottom: MediaQuery.of(context).viewPadding.bottom + 32,
       ),
       decoration: BoxDecoration(
         color: bgColor,
@@ -202,7 +202,7 @@ class _AiHubWelcomeSheetState extends State<AiHubWelcomeSheet>
 
           const SizedBox(height: 20),
 
-          // Trial Banner
+          // Trial Banner - Urgency & Social Proof
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -223,13 +223,13 @@ class _AiHubWelcomeSheetState extends State<AiHubWelcomeSheet>
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF6366F1).withOpacity(0.2),
+                    color: const Color(0xFFEF4444).withOpacity(0.15),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
-                    Icons.card_giftcard_rounded,
+                    Icons.local_fire_department_rounded,
                     size: 18,
-                    color: Color(0xFF6366F1),
+                    color: Color(0xFFEF4444),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -237,29 +237,44 @@ class _AiHubWelcomeSheetState extends State<AiHubWelcomeSheet>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        '7 Gün Ücretsiz Dene',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: textPrimary,
-                        ),
+                      Row(
+                        children: [
+                          Text(
+                            'Bugüne Özel ',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: textPrimary,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEF4444),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              '7 GÜN ÜCRETSİZ',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 3),
                       Text(
-                        'Tüm PRO özelliklere sınırsız erişim',
+                        '847 öğrenci bu hafta başladı',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 11,
                           color: textSecondary,
                         ),
                       ),
                     ],
                   ),
-                ),
-                Icon(
-                  Icons.verified_rounded,
-                  size: 20,
-                  color: const Color(0xFFFFD700),
                 ),
               ],
             ),
@@ -309,23 +324,26 @@ class _AiHubWelcomeSheetState extends State<AiHubWelcomeSheet>
             },
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
 
-          // Skip
+          // Skip - FOMO & Loss Aversion
           TextButton(
             onPressed: () => context.pop(),
             style: TextButton.styleFrom(
-              foregroundColor: textSecondary,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              foregroundColor: textSecondary.withOpacity(0.5),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
             child: const Text(
-              'Şimdi değil',
+              'Rakiplerime avantaj bırak',
               style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
+                fontSize: 11,
+                fontWeight: FontWeight.w400,
               ),
             ),
           ),
+          const SizedBox(height: 16),
         ],
       ),
     );
