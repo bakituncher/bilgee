@@ -313,7 +313,8 @@ class AiService {
     final weeklyPlanJson = planDoc?.weeklyPlan != null ? jsonEncode(planDoc!.weeklyPlan!) : null;
 
     // Son 28 gün tamamlanan görevler
-    final recentCompleted = await _loadRecentCompletedTasks(user.id, days: 28);
+    final recentCompleted = await _loadRecentCompletedTasks(user.id, days: 14);
+
     final completedTasksJson = jsonEncode(recentCompleted);
 
     // MÜFREDAT SIRASI: Seçili sınav ve bölüm için konu listesini sırayla çıkar

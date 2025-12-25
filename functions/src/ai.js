@@ -22,7 +22,7 @@ function sanitizeOutput(text) {
 
 // Güvenlik ve kötüye kullanım önleme ayarları
 // Varsayılanlar maliyeti düşürecek şekilde daraltıldı; env ile aşılabilir.
-const GEMINI_PROMPT_MAX_CHARS = parseInt(process.env.GEMINI_PROMPT_MAX_CHARS || "20000", 10);
+const GEMINI_PROMPT_MAX_CHARS = parseInt(process.env.GEMINI_PROMPT_MAX_CHARS || "120000", 10);
 const DEFAULT_JSON_TOKENS = parseInt(process.env.GEMINI_MAX_OUTPUT_TOKENS_JSON || "8192", 10);
 const DEFAULT_TEXT_TOKENS = parseInt(process.env.GEMINI_MAX_OUTPUT_TOKENS_TEXT || "2048", 10);
 const GEMINI_RATE_LIMIT_WINDOW_SEC = parseInt(process.env.GEMINI_RATE_LIMIT_WINDOW_SEC || "60", 10);
@@ -117,7 +117,8 @@ exports.generateGemini = onCall(
       throw new HttpsError("invalid-argument", "Geçerli bir prompt gerekli");
     }
     if (prompt.length > GEMINI_PROMPT_MAX_CHARS) {
-      throw new HttpsError("invalid-argument", `Prompt çok uzun (>${GEMINI_PROMPT_MAX_CHARS}).`);
+      logger.warn("Prompt length exceeded", { length: prompt.length, limit: GEMINI_PROMPT_MAX_CHARS, uid: request.auth.uid });
+      throw new HttpsError("invalid-argument", `Prompt çok uzun (${prompt.length} > ${GEMINI_PROMPT_MAX_CHARS}).`);
     }
 
     const normalizedPrompt = prompt.replace(/\s+/g, " ").trim();
