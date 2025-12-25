@@ -1,18 +1,67 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:taktik/data/providers/premium_provider.dart';
+import 'package:taktik/data/providers/shared_prefs_provider.dart';
+import 'package:taktik/features/coach/widgets/ai_hub_welcome_sheet.dart';
 
-class AiHubScreen extends ConsumerWidget {
+// ConsumerWidget -> ConsumerStatefulWidget'a çevrildi
+class AiHubScreen extends ConsumerStatefulWidget {
   const AiHubScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AiHubScreen> createState() => _AiHubScreenState();
+}
+
+class _AiHubScreenState extends ConsumerState<AiHubScreen> {
+  static const String _prefsKeyHasSeenOffer = 'has_seen_ai_hub_offer';
+
+  bool _welcomeSheetTriggeredThisSession = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Ekran çizildikten sonra kontrolü başlat
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndShowWelcomeOffer();
+    });
+  }
+
+  Future<void> _checkAndShowWelcomeOffer() async {
+    if (_welcomeSheetTriggeredThisSession) return;
+
+    final isPremium = ref.read(premiumStatusProvider);
+
+    // Eğer kullanıcı zaten Premium ise gösterme
+    if (isPremium) return;
+
+    final prefs = await ref.read(sharedPreferencesProvider.future);
+    final hasSeenOffer = prefs.getBool(_prefsKeyHasSeenOffer) ?? false;
+
+    // Eğer daha önce görmediyse GÖSTER
+    if (!hasSeenOffer) {
+      _welcomeSheetTriggeredThisSession = true;
+      if (!mounted) return;
+
+      // Gösterildi olarak işaretle (Böylece her girişte çıkmaz)
+      await prefs.setBool(_prefsKeyHasSeenOffer, true);
+      if (!mounted) return;
+
+      showModalBottomSheet<void>(
+        context: context,
+        backgroundColor: Colors.transparent,
+        isScrollControlled: true,
+        builder: (context) => const AiHubWelcomeSheet(),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final isPremium = ref.watch(premiumStatusProvider);
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -789,4 +838,3 @@ class _SingleArrowPainter extends CustomPainter {
     return oldDelegate.arrowColor != arrowColor;
   }
 }
-
