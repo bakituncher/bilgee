@@ -310,15 +310,20 @@ class AiService {
     final topicPerformancesJson = _encodeTopicPerformances(performance.topicPerformances);
     final availabilityJson = jsonEncode(user.weeklyAvailability);
 
-    // DÜZELTME 2: Taze plan için anchoring bias önleme
+    // DÜZELTME 2: Anchoring bias önleme
+    // Sadece revizyon istendiyse veya plan çok yeniyse (bağlam kopmasın diye) gönder.
+    // Plan eskiyse gönderme ki AI geçmişe takılmadan sıfırdan düşünsün.
     String? weeklyPlanJson;
     if (planDoc?.weeklyPlan != null) {
       try {
         final planMap = planDoc!.weeklyPlan!;
         final creation = DateTime.tryParse(planMap['creationDate'] ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
         final isFresh = DateTime.now().difference(creation).inHours < 24;
-        if (!isFresh || revisionRequest != null) {
+
+        if (isFresh || revisionRequest != null) {
           weeklyPlanJson = jsonEncode(planMap);
+        } else {
+          weeklyPlanJson = null;
         }
       } catch (_) {}
     }

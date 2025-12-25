@@ -14,7 +14,13 @@ class ScheduleItem {
     final time = map['time'] ?? 'Belirsiz';
     final activity = map['activity'] ?? 'Görev Belirtilmemiş';
     final type = map['type'] ?? 'study';
-    final id = (map['id'] ?? map['uid']) ?? '${time}_${activity.hashCode}_$type';
+
+    // DÜZELTME: hashCode kalıcı değildir. ID üretirken metinden deterministik bir parça üret.
+    final cleanAct = activity.toString().replaceAll(RegExp(r'\s+'), '').toLowerCase();
+    final safeAct = cleanAct.length > 30 ? cleanAct.substring(0, 30) : cleanAct;
+    final generatedId = '${time}_${safeAct}_$type';
+
+    final id = (map['id'] ?? map['uid']) ?? generatedId;
     return ScheduleItem(
       id: id,
       time: time,
@@ -110,7 +116,11 @@ class WeeklyPlan {
     } else {
       date = DateTime.now();
     }
-    final planSalt = date.millisecondsSinceEpoch.toString();
+
+    // DÜZELTME: Salt'ı timezone'dan etkilenmeyen ham string üzerinden al.
+    // Not: Timestamp geliyorsa string olmadığından, önceki davranış (epoch) korunur.
+    final dateStr = json['creationDate']?.toString() ?? '';
+    final planSalt = (json['creationDate'] is String) ? dateStr.hashCode.toString() : date.millisecondsSinceEpoch.toString();
 
     var list = (json['plan'] as List?) ?? [];
     List<DailyPlan> dailyPlans = [];
