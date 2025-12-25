@@ -79,10 +79,12 @@ async function processAudienceInBatches(audience, batchCallback) {
   // --- Filtreleme Mantığı ---
   const lc = (s) => (typeof s === "string" ? s.toLowerCase() : s);
 
-  // 🔥 YENİ: GLOBAL FİLTRE (Hem otomatik hem manuel gönderimler için)
+  // 🔥 GLOBAL FİLTRE (Hem otomatik hem manuel gönderimler için)
   // Eğer audience içinde 'onlyNonPremium' varsa veya tip 'non_premium' ise filtreyi en başa ekle.
   // Bu sayede "Sadece YKS seçili" olsa bile bu filtre üzerine eklenir (AND mantığı).
-  if (audience && (audience.type === "non_premium" || audience.onlyNonPremium === true)) {
+  const shouldFilterPremium = audience && (audience.type === "non_premium" || audience.onlyNonPremium === true);
+
+  if (shouldFilterPremium) {
     // isPremium değeri true OLMAYAN her şeyi getir (false veya null)
     // Not: Firestore'da '!=' sorgusu bazen alanı hiç olmayanları getirmeyebilir,
     // ama uygulamanızda alanlar tutarlıysa bu en performanslı yoldur.
@@ -103,11 +105,35 @@ async function processAudienceInBatches(audience, batchCallback) {
     }
   }
 
-  // 3. Özel UID Listesi
+  // 3. Özel UID Listesi (🔥 DÜZELTİLDİ: Premium filtresi desteği eklendi)
   else if (audience && audience.type === "uids" && Array.isArray(audience.uids)) {
     const cleanUids = audience.uids.filter((x) => typeof x === "string");
-    for (let i = 0; i < cleanUids.length; i += BATCH_SIZE) {
-      await batchCallback(cleanUids.slice(i, i + BATCH_SIZE));
+
+    // 🔥 DÜZELTME: Eğer premium filtresi varsa, UID'leri kontrol et
+    if (shouldFilterPremium) {
+      // UID'leri batch'ler halinde Firestore'dan kontrol et
+      for (let i = 0; i < cleanUids.length; i += BATCH_SIZE) {
+        const batchUids = cleanUids.slice(i, i + BATCH_SIZE);
+
+        // Bu batch'teki kullanıcıların premium durumunu kontrol et
+        // Performans için sadece isPremium alanını çekiyoruz
+        const refs = batchUids.map(uid => db.collection("users").doc(uid));
+        const snapshots = await db.getAll(...refs, { fieldMask: ['isPremium'] });
+
+        // Filtreleme: Belge var mı VE isPremium != true mi?
+        const filteredUids = snapshots
+          .filter(snap => snap.exists && snap.data().isPremium !== true)
+          .map(snap => snap.id);
+
+        if (filteredUids.length > 0) {
+          await batchCallback(filteredUids);
+        }
+      }
+    } else {
+      // Filtre yoksa eski hızlı yöntem
+      for (let i = 0; i < cleanUids.length; i += BATCH_SIZE) {
+        await batchCallback(cleanUids.slice(i, i + BATCH_SIZE));
+      }
     }
     return;
   }
