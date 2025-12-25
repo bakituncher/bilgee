@@ -100,6 +100,17 @@ class WeeklyPlan {
   WeeklyPlan({required this.planTitle, required this.strategyFocus, required this.plan, required this.creationDate});
 
   factory WeeklyPlan.fromJson(Map<String, dynamic> json) {
+    // Salt: plan oluşturulma anı bazlı parmak izi
+    DateTime date;
+    if (json['creationDate'] is Timestamp) {
+      date = (json['creationDate'] as Timestamp).toDate();
+    } else if (json['creationDate'] is String) {
+      date = DateTime.tryParse(json['creationDate']) ?? DateTime.now();
+    } else {
+      date = DateTime.now();
+    }
+    final planSalt = date.millisecondsSinceEpoch.toString();
+
     var list = (json['plan'] as List?) ?? [];
     List<DailyPlan> dailyPlans = [];
     for (var i = 0; i < list.length; i++) {
@@ -111,7 +122,13 @@ class WeeklyPlan {
           'schedule': (dayJson['schedule'] is List)
               ? List.generate((dayJson['schedule'] as List).length, (j) {
                   final item = (dayJson['schedule'] as List)[j];
-                  if (item is Map<String, dynamic>) return {...item, 'id': item['id'] ?? '${dayJson['day'] ?? 'gun'}_${j}'};
+                  if (item is Map<String, dynamic>) {
+                    final baseId = item['id'] ?? '${dayJson['day'] ?? 'gun'}_${j}';
+                    return {...item, 'id': '${planSalt}_$baseId'};
+                  } else if (item is String) {
+                    final baseId = '${dayJson['day'] ?? 'gun'}_${j}';
+                    return {'id': '${planSalt}_$baseId', 'activity': item, 'time': 'Görev', 'type': 'study'};
+                  }
                   return item;
                 })
               : dayJson['schedule'],
@@ -120,14 +137,6 @@ class WeeklyPlan {
       }
     }
 
-    DateTime date;
-    if (json['creationDate'] is Timestamp) {
-      date = (json['creationDate'] as Timestamp).toDate();
-    } else if (json['creationDate'] is String) {
-      date = DateTime.parse(json['creationDate']);
-    } else {
-      date = DateTime.now(); // Fallback
-    }
 
     return WeeklyPlan(
       planTitle: json['planTitle'] ?? "Haftalık Stratejik Plan",
