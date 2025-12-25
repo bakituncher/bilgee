@@ -303,16 +303,27 @@ class AiService {
     final examType = ExamType.values.byName(user.selectedExam!);
     final daysUntilExam = _getDaysUntilExam(examType);
 
-    // Önbellekli analiz varsa kullan
-    final cachedAnalysis = _ref.read(overallStatsAnalysisProvider).value;
-    final String avgNet = (cachedAnalysis?.averageNet ?? _quickAverageNet(tests)).toStringAsFixed(2);
-    final Map<String, double> subjectAverages = cachedAnalysis?.subjectAverages ?? _computeSubjectAveragesQuick(tests);
+    // DÜZELTME 1: Önbellek yerine anlık hesap; yeni denemeler hemen yansısın.
+    final String avgNet = _quickAverageNet(tests).toStringAsFixed(2);
+    final Map<String, double> subjectAverages = _computeSubjectAveragesQuick(tests);
 
     final topicPerformancesJson = _encodeTopicPerformances(performance.topicPerformances);
     final availabilityJson = jsonEncode(user.weeklyAvailability);
-    final weeklyPlanJson = planDoc?.weeklyPlan != null ? jsonEncode(planDoc!.weeklyPlan!) : null;
 
-    // Son 28 gün tamamlanan görevler
+    // DÜZELTME 2: Taze plan için anchoring bias önleme
+    String? weeklyPlanJson;
+    if (planDoc?.weeklyPlan != null) {
+      try {
+        final planMap = planDoc!.weeklyPlan!;
+        final creation = DateTime.tryParse(planMap['creationDate'] ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final isFresh = DateTime.now().difference(creation).inHours < 24;
+        if (!isFresh || revisionRequest != null) {
+          weeklyPlanJson = jsonEncode(planMap);
+        }
+      } catch (_) {}
+    }
+
+    // Son 14 gün tamamlanan görevler (Limit optimizasyonu yapılmış hali)
     final recentCompleted = await _loadRecentCompletedTasks(user.id, days: 14);
 
     final completedTasksJson = jsonEncode(recentCompleted);
@@ -367,6 +378,10 @@ class AiService {
         );
         break;
     }
+
+    // DÜZELTME 3: AI cache kırıcı varyasyon etiketi ekle
+    prompt += "\n\n[System: Generate a UNIQUE plan. Variation: ${DateTime.now().millisecondsSinceEpoch}]";
+
     return _callGemini(prompt, expectJson: true, requestType: 'weekly_plan');
   }
 
