@@ -154,7 +154,7 @@ class _AiHubWelcomeSheetState extends State<AiHubWelcomeSheet>
                     Expanded(
                       child: _FeatureItem(
                         icon: Icons.chat_bubble_outline_rounded,
-                        title: 'Birebir Koçluk',
+                        title: 'Bire Bir Koçluk',
                         color: const Color(0xFF6366F1),
                         textColor: textPrimary,
                         subtitleColor: textSecondary,
@@ -202,10 +202,10 @@ class _AiHubWelcomeSheetState extends State<AiHubWelcomeSheet>
 
           const SizedBox(height: 20),
 
-          // Trial Banner - Urgency & Social Proof
+          // Trial Banner
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
@@ -213,67 +213,30 @@ class _AiHubWelcomeSheetState extends State<AiHubWelcomeSheet>
                   const Color(0xFF8B5CF6).withOpacity(isDark ? 0.2 : 0.1),
                 ],
               ),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: const Color(0xFF6366F1).withOpacity(0.3),
               ),
             ),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEF4444).withOpacity(0.15),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.local_fire_department_rounded,
-                    size: 18,
-                    color: Color(0xFFEF4444),
-                  ),
+                Icon(
+                  Icons.verified_outlined,
+                  size: 16,
+                  color: const Color(0xFF10B981),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            'Bugüne Özel ',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: textPrimary,
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFEF4444),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: const Text(
-                              '7 GÜN ÜCRETSİZ',
-                              style: TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                                letterSpacing: 0.3,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        '847 öğrenci bu hafta başladı',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: textSecondary,
-                        ),
-                      ),
-                    ],
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    '7 gün ücretsiz dene, beğenmezsen iptal et',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: textPrimary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
@@ -336,7 +299,7 @@ class _AiHubWelcomeSheetState extends State<AiHubWelcomeSheet>
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
             child: const Text(
-              'Rakiplerime avantaj bırak',
+              'Avantajı Kaybet',
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w400,
