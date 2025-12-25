@@ -422,12 +422,12 @@ class StrategicPlanningScreen extends ConsumerWidget {
   }
 
   Widget _ActionCard(
-    BuildContext context, {
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
+      BuildContext context, {
+        required String title,
+        required String subtitle,
+        required IconData icon,
+        required VoidCallback onTap,
+      }) {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -615,13 +615,13 @@ class StrategicPlanningScreen extends ConsumerWidget {
                         gradient: LinearGradient(
                           colors: isDark
                               ? [
-                                  const Color(0xFF1A1F3A),
-                                  const Color(0xFF0F1729),
-                                ]
+                            const Color(0xFF1A1F3A),
+                            const Color(0xFF0F1729),
+                          ]
                               : [
-                                  Colors.white,
-                                  const Color(0xFFF8F9FF),
-                                ],
+                            Colors.white,
+                            const Color(0xFFF8F9FF),
+                          ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
@@ -642,13 +642,13 @@ class StrategicPlanningScreen extends ConsumerWidget {
                               gradient: LinearGradient(
                                 colors: isDark
                                     ? [
-                                        const Color(0xFF4D5FD1),
-                                        const Color(0xFF1BFFFF),
-                                      ]
+                                  const Color(0xFF4D5FD1),
+                                  const Color(0xFF1BFFFF),
+                                ]
                                     : [
-                                        const Color(0xFF2E3192),
-                                        const Color(0xFF1BFFFF),
-                                      ],
+                                  const Color(0xFF2E3192),
+                                  const Color(0xFF1BFFFF),
+                                ],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
@@ -679,13 +679,13 @@ class StrategicPlanningScreen extends ConsumerWidget {
                             shaderCallback: (bounds) => LinearGradient(
                               colors: isDark
                                   ? [
-                                      const Color(0xFF6B7FFF),
-                                      const Color(0xFF1BFFFF),
-                                    ]
+                                const Color(0xFF6B7FFF),
+                                const Color(0xFF1BFFFF),
+                              ]
                                   : [
-                                      const Color(0xFF2E3192),
-                                      const Color(0xFF1BFFFF),
-                                    ],
+                                const Color(0xFF2E3192),
+                                const Color(0xFF1BFFFF),
+                              ],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ).createShader(bounds),
@@ -736,8 +736,14 @@ class StrategicPlanningScreen extends ConsumerWidget {
 
     final totalHours = user.weeklyAvailability.values.expand((slots) => slots).length * 2;
     final analyzedTopicsCount = performance.topicPerformances.values.expand((subject) => subject.values).where((topic) => topic.questionCount > 3).length;
-    final isTimeMapOk = totalHours >= 10;
-    final isGalaxyOk = analyzedTopicsCount >= 5;
+
+    // DÜZELTME: Eskiden totalHours >= 10 kuralı vardı. Bu durum az saat seçen kullanıcıları engelliyordu.
+    // Şimdi > 0 kontrolü ile en az bir slot seçilmesi yeterli.
+    final isTimeMapOk = totalHours > 0;
+
+    // DÜZELTME: Konu analizi (Galaxy) zorunluluğu kaldırıldı.
+    // Kullanıcı henüz analiz yapmadıysa bile devam edebilir.
+    final isGalaxyOk = true;
 
     final lastTestDate = tests.isNotEmpty ? tests.first.date : null;
     String testStatusText;
@@ -793,6 +799,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
                   description: "Stratejin, haftalık olarak ayırdığın zamana göre şekillenecek.",
                   statusText: "$totalHours Saat",
                   statusDescription: "Haftalık Plan",
+                  // isTimeMapOk artık > 0 olduğu için kullanıcı az saat seçse de yeşil yanacak
                   statusColor: isTimeMapOk ? Theme.of(context).colorScheme.secondary : Colors.amber,
                   buttonText: "Güncelle",
                   onTap: () => context.push(AppRoutes.availability),
@@ -804,7 +811,8 @@ class StrategicPlanningScreen extends ConsumerWidget {
                   description: "Konu hakimiyetin, bu hafta hangi konulara odaklanacağımızı belirleyecek.",
                   statusText: "$analyzedTopicsCount",
                   statusDescription: "Konu Analiz Edildi",
-                  statusColor: isGalaxyOk ? Theme.of(context).colorScheme.secondary : Colors.amber,
+                  // Her zaman yeşil yanar (zorunluluk kalktı)
+                  statusColor: Theme.of(context).colorScheme.secondary,
                   buttonText: "Ziyaret Et",
                   onTap: () => context.push('/ai-hub/${AppRoutes.coachPushed}'),
                 ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.2),
@@ -830,20 +838,28 @@ class StrategicPlanningScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               ElevatedButton(
+                // Buton artık totalHours > 0 ise direkt aktif olacak
+                // isGalaxyOk her zaman true olduğu için bloklamayacak
                 onPressed: isTimeMapOk && isGalaxyOk
                     ? () {
-                        ref.read(planningStepProvider.notifier).state = PlanningStep.pacing;
-                      }
+                  ref.read(planningStepProvider.notifier).state = PlanningStep.pacing;
+                }
                     : null,
                 child: const Text("Tüm Verilerim Güncel, İlerle"),
               ),
+              // Eğer zaman haritası eksikse bu kısım çalışır
               if (!(isTimeMapOk && isGalaxyOk))
                 Padding(
                   padding: const EdgeInsets.only(top: 8.0),
                   child: InkWell(
                     onTap: () {
-                      // Basit yönlendirme: zamanı ve analiz ekranlarını aç
-                      context.push(AppRoutes.availability);
+                      if (!isTimeMapOk) {
+                        context.push(AppRoutes.availability);
+                      } else {
+                        // Bu kısım teknik olarak artık erişilemez (çünkü isGalaxyOk=true)
+                        // ama güvenli kod için tutuluyor
+                        context.push('/ai-hub/${AppRoutes.coachPushed}');
+                      }
                     },
                     child: Text(
                       "Eksik verileri tamamlamak için tıkla",
@@ -1111,4 +1127,3 @@ class _PacingCard extends StatelessWidget {
     );
   }
 }
-
