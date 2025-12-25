@@ -225,12 +225,22 @@ class UserModel {
   factory UserModel.fromSnapshot(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data()!;
 
-    // Bu alanlar artık alt koleksiyonlardan okunacak, bu yüzden burada parse etmeye gerek yok.
-    // final Map<String, Map<String, TopicPerformanceModel>> safeTopicPerformances = {};
+    // --- Null/type-safe helpers (Firestore şema drift/eksik alanlar için) ---
+    String _asString(dynamic v, {String fallback = ''}) {
+      if (v == null) return fallback;
+      if (v is String) return v;
+      return v.toString();
+    }
+
+    String? _asNullableString(dynamic v) {
+      if (v == null) return null;
+      if (v is String) return v;
+      return v.toString();
+    }
 
     // KALDIRILDI: completedDailyTasks parse
 
-    // KALDIRILDI: activeDailyQuests parse
+    // KALDIRILDI: activeDailyQuests
     Quest? weeklyCampaign;
     if (data['activeWeeklyCampaign'] is Map<String, dynamic>) {
       final campaignData = data['activeWeeklyCampaign'] as Map<String, dynamic>;
@@ -241,32 +251,37 @@ class UserModel {
     }
 
     // Geriye dönük uyumluluk için name'den firstName/lastName türetme
-    String fName = data['firstName'] ?? '';
-    String lName = data['lastName'] ?? '';
-    if (fName.isEmpty && lName.isEmpty && data['name'] != null) {
-      final parts = data['name'].split(' ');
+    String fName = _asString(data['firstName']);
+    String lName = _asString(data['lastName']);
+    final legacyName = _asNullableString(data['name']);
+    if (fName.isEmpty && lName.isEmpty && legacyName != null && legacyName.isNotEmpty) {
+      final parts = legacyName.split(' ');
       fName = parts.isNotEmpty ? parts.first : '';
       lName = parts.length > 1 ? parts.sublist(1).join(' ') : '';
     }
 
+    // Bazı eski/bozuk dokümanlarda email/name null olabiliyor. UI/stream çökmesin diye güvenli parse.
+    final email = _asString(data['email']);
+    final name = _asString(data['name'], fallback: legacyName ?? '');
+
     return UserModel(
       id: doc.id,
-      email: data['email'],
-      name: data['name'],
+      email: email,
+      name: name,
       firstName: fName,
       lastName: lName,
-      username: data['username'] ?? '',
-      gender: data['gender'],
+      username: _asString(data['username']),
+      gender: _asNullableString(data['gender']),
       dateOfBirth: (data['dateOfBirth'] as Timestamp?)?.toDate(),
-      goal: data['goal'],
+      goal: _asNullableString(data['goal']),
       challenges: List<String>.from(data['challenges'] ?? []),
       weeklyStudyGoal: (data['weeklyStudyGoal'] as num?)?.toDouble(),
       profileCompleted: data['profileCompleted'] ?? false,
       tutorialCompleted: data['tutorialCompleted'] ?? false,
       streak: data['streak'] ?? 0,
       lastStreakUpdate: (data['lastStreakUpdate'] as Timestamp?)?.toDate(),
-      selectedExam: data['selectedExam'] as String?,
-      selectedExamSection: data['selectedExamSection'] as String?,
+      selectedExam: _asNullableString(data['selectedExam']),
+      selectedExamSection: _asNullableString(data['selectedExamSection']),
       testCount: data['testCount'] ?? 0,
       totalNetSum: (data['totalNetSum'] as num?)?.toDouble() ?? 0.0,
       engagementScore: data['engagementScore'] ?? 0,
@@ -286,17 +301,17 @@ class UserModel {
       lastQuestRefreshDate: data['lastQuestRefreshDate'] as Timestamp?,
       unlockedAchievements: Map<String, Timestamp>.from(data['unlockedAchievements'] ?? {}),
       // dailyVisits: List<Timestamp>.from(data['dailyVisits'] ?? []), // KALDIRILDI
-      avatarStyle: data['avatarStyle'],
-      avatarSeed: data['avatarSeed'],
-      dailyQuestPlanSignature: data['dailyQuestPlanSignature'],
+      avatarStyle: _asString(data['avatarStyle'], fallback: 'bottts'),
+      avatarSeed: _asString(data['avatarSeed'], fallback: doc.id),
+      dailyQuestPlanSignature: _asNullableString(data['dailyQuestPlanSignature']),
       lastScheduleCompletionRatio: (data['lastScheduleCompletionRatio'] as num?)?.toDouble(),
       // KALDIRILDI: dailyPlanBonuses
       dailyScheduleStreak: data['dailyScheduleStreak'] ?? 0,
       lastWeeklyReport: data['lastWeeklyReport'] as Map<String,dynamic>?,
       dynamicDifficultyFactorToday: (data['dynamicDifficultyFactorToday'] as num?)?.toDouble(),
       weeklyPlanCompletedAt: data['weeklyPlanCompletedAt'] as Timestamp?,
-      workshopStreak: data['workshopStreak'] ?? 0, // yeni
-      lastWorkshopDate: data['lastWorkshopDate'] as Timestamp?, // yeni
+      workshopStreak: data['workshopStreak'] ?? 0,
+      lastWorkshopDate: data['lastWorkshopDate'] as Timestamp?,
 
       // GÖREV KİŞİSELLEŞTİRME İÇİN YENİ ALANLAR
       hasCreatedStrategicPlan: data['hasCreatedStrategicPlan'] ?? false,
