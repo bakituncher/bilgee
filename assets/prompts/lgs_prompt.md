@@ -51,7 +51,15 @@ Her görevin tipi şunlardan biri olmalı:
 - **test**: Deneme sınavı (120 dk, LGS formatı)
 - **break**: Mola (isteğe bağlı, kısa)
 
-### 7. ORTAOKUL ÖĞRENCİSİ PRENSİPLERİ
+### 7. MOTİVASYONEL SÖZ ÜRETİMİ
+- Her plan için öğrencinin mevcut durumuna ve hedeflerine özel, özgün ve motive edici bir söz oluştur
+- Söz, öğrencinin zorluklarını, hedeflerini ve bu haftanın stratejik odağını yansıtmalı
+- Uzunluk: Maksimum 150 karakter
+- Ton: İlham verici, destekleyici, güçlendirici, ortaokul öğrencisine uygun
+- Kişiselleştir: Genel sözler değil, öğrenciye özel mesajlar
+- Örnek: "Bu hafta matematik konularında büyük adımlar atacaksın. Her çözdüğün soru seni hedefine yaklaştırıyor!"
+
+### 8. ORTAOKUL ÖĞRENCİSİ PRENSİPLERİ
 - Akşam saatleri (okul sonrası) odaklı
 - Hafta sonu daha uzun oturumlar (ama aşırıya kaçma)
 - Motivasyon ve disiplini korumaya özen
@@ -113,6 +121,7 @@ Sadece aşağıdaki JSON formatında çıktı ver. Açıklama, yorum YOK:
   "weeklyPlan": {
     "planTitle": "LGS Haftalık Çalışma Planı",
     "strategyFocus": "Bu haftanın ana stratejisi: [MAKSIMUM 100 KARAKTER, kısa ve öz, motive edici]",
+    "motivationalQuote": "Bu haftaya özel, öğrencinin durumuna göre kişiselleştirilmiş motive edici söz (max 150 karakter)",
     "weekNumber": {{CURRENT_WEEK}},
     "creationDate": "{{CURRENT_DATE}}",
     "plan": [

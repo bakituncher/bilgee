@@ -142,15 +142,49 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Stratejik Odak:",
+                      "Bu haftanın odağı",
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
-                    Text(
-                      weeklyPlan.strategyFocus,
-                      maxLines: 2, // 👈 Maksimum 2 satır
-                      overflow: TextOverflow.ellipsis, // 👈 Uzunsa "..." ekle
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Theme.of(context).colorScheme.primary, fontStyle: FontStyle.italic),
-                    ),
+                    if (weeklyPlan.motivationalQuote != null && weeklyPlan.motivationalQuote!.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+                              Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.2),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.format_quote,
+                              size: 16,
+                              color: Theme.of(context).colorScheme.primary.withOpacity(0.7),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                weeklyPlan.motivationalQuote!,
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  fontStyle: FontStyle.italic,
+                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                                  height: 1.3,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ).animate().fadeIn(duration: 500.ms),
               ),

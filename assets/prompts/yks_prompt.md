@@ -45,7 +45,15 @@ Her görevin tipi şunlardan biri olmalı:
 - **test**: Deneme sınavı (180 dk)
 - **break**: Mola (isteğe bağlı, kısa)
 
-### 7. KRİTİK UYARI: PLAN YENİLEME KURALI
+### 7. MOTİVASYONEL SÖZ ÜRETİMİ
+- Her plan için öğrencinin mevcut durumuna ve hedeflerine özel, özgün ve motive edici bir söz oluştur
+- Söz, öğrencinin zorluklarını, hedeflerini ve bu haftanın stratejik odağını yansıtmalı
+- Uzunluk: Maksimum 150 karakter
+- Ton: İlham verici, destekleyici, güçlendirici
+- Kişiselleştir: Genel sözler değil, öğrenciye özel mesajlar
+- Örnek: "Bu hafta türev konusunda ustalaşacaksın. Her soru, hedefine bir adım daha yaklaştırıyor!"
+
+### 8. KRİTİK UYARI: PLAN YENİLEME KURALI
 ⚠️ **ASLA AYNI PLANI TEKRARLAMA!**
 - Eğer geçmiş haftanın planı verilmişse ({{WEEKLY_PLAN_TEXT}}), birebir aynı görevleri ASLA üretme
 - Kullanıcı gelişim gösteriyor, görevlerin zorluğunu ARTIR
@@ -101,6 +109,7 @@ Sadece aşağıdaki JSON formatında çıktı ver. Açıklama, yorum YOK:
   "weeklyPlan": {
     "planTitle": "YKS {{SELECTED_EXAM_SECTION}} - Haftalık Çalışma Planı",
     "strategyFocus": "Bu haftanın ana stratejisi: [MAKSIMUM 100 KARAKTER, kısa ve öz, motive edici strateji]",
+    "motivationalQuote": "Bu haftaya özel, öğrencinin durumuna göre kişiselleştirilmiş motive edici söz (max 150 karakter)",
     "weekNumber": {{CURRENT_WEEK}},
     "creationDate": "{{CURRENT_DATE}}",
     "plan": [

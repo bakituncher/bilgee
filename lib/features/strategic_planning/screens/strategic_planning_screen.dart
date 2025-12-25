@@ -337,20 +337,47 @@ class StrategicPlanningScreen extends ConsumerWidget {
                                   "Bu haftanın odağı",
                                   style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                                 ),
-                                const SizedBox(height: 6),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35),
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)),
+                                if (weeklyPlan.motivationalQuote != null && weeklyPlan.motivationalQuote!.isNotEmpty) ...[
+                                  const SizedBox(height: 12),
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+                                          Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.2),
+                                        ],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.auto_awesome,
+                                          size: 20,
+                                          color: Theme.of(context).colorScheme.primary,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            weeklyPlan.motivationalQuote!,
+                                            textAlign: TextAlign.center,
+                                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                              fontStyle: FontStyle.italic,
+                                              color: Theme.of(context).colorScheme.onSurface,
+                                              height: 1.3,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  child: Text(
-                                    weeklyPlan.strategyFocus,
-                                    textAlign: TextAlign.center,
-                                    style: Theme.of(context).textTheme.bodyLarge,
-                                  ),
-                                ),
+                                ],
                                 const SizedBox(height: 12),
                                 Text(
                                   "Oluşturulma: ${DateFormat.yMMMMd('tr').format(weeklyPlan.creationDate)}",

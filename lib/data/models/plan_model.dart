@@ -91,13 +91,14 @@ class WeeklyPlan {
   final String strategyFocus;
   final List<DailyPlan> plan;
   final DateTime creationDate;
+  final String? motivationalQuote; // AI tarafından üretilen motive edici söz
 
   // Planın süresinin dolup dolmadığını kontrol eder (7 günden eski mi?)
   bool get isExpired {
     return DateTime.now().difference(creationDate).inDays >= 7;
   }
 
-  WeeklyPlan({required this.planTitle, required this.strategyFocus, required this.plan, required this.creationDate});
+  WeeklyPlan({required this.planTitle, required this.strategyFocus, required this.plan, required this.creationDate, this.motivationalQuote});
 
   factory WeeklyPlan.fromJson(Map<String, dynamic> json) {
     // Salt: plan oluşturulma anı bazlı parmak izi
@@ -143,6 +144,7 @@ class WeeklyPlan {
       strategyFocus: json['strategyFocus'] ?? "Strateji belirlenemedi.",
       plan: dailyPlans,
       creationDate: date,
+      motivationalQuote: json['motivationalQuote'] as String?,
     );
   }
 }

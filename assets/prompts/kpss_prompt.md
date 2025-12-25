@@ -111,6 +111,7 @@ Sadece aşağıdaki JSON formatında çıktı ver. Açıklama, yorum YOK:
   "weeklyPlan": {
     "planTitle": "KPSS Haftalık Plan - Atanma Yolunda",
     "strategyFocus": "Bu haftanın ana stratejisi: [MAKSIMUM 100 KARAKTER, kısa ve öz, motive edici]",
+    "motivationalQuote": "Bu haftaya özel, adayın durumuna göre kişiselleştirilmiş motive edici söz (max 150 karakter)",
     "weekNumber": {{CURRENT_WEEK}},
     "creationDate": "{{CURRENT_DATE}}",
     "plan": [
