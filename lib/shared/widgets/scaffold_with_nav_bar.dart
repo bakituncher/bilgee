@@ -194,22 +194,22 @@ final weeklyPlanCompletionProvider = Provider<bool>((ref){
     final weekly = WeeklyPlan.fromJson(planMap);
     DateTime startOfWeek(DateTime d)=> d.subtract(Duration(days: d.weekday-1));
     String dateKey(DateTime d) => '${d.year.toString().padLeft(4,'0')}-${d.month.toString().padLeft(2,'0')}-${d.day.toString().padLeft(2,'0')}';
-    final now = DateTime.now();
-    final thisWeekStart = startOfWeek(now);
-    final dates = List.generate(7, (i) => thisWeekStart.add(Duration(days: i)));
+    final creation = weekly.creationDate;
+    final weekStart = startOfWeek(DateTime(creation.year, creation.month, creation.day));
+    final dates = List.generate(7, (i) => weekStart.add(Duration(days: i)));
 
-    final weekMap = ref.watch(completedTasksForWeekProvider(thisWeekStart))
+    final weekMap = ref.watch(completedTasksForWeekProvider(weekStart))
         .maybeWhen(data: (m)=> m, orElse: ()=> const <String, List<String>>{});
 
     int planned = 0; int completed = 0;
     for(int i=0;i<weekly.plan.length;i++){
       final dp = weekly.plan[i];
       planned += dp.schedule.length;
-      final dayDate = dates[i];
+      final dayDate = i < dates.length ? dates[i] : weekStart.add(Duration(days: i));
       final completedList = weekMap[dateKey(dayDate)] ?? const <String>[];
       int comp = 0;
       for (final s in dp.schedule) {
-        final id='${s.time}-${s.activity}';
+        final id=s.id;
         if (completedList.contains(id)) comp++;
       }
       completed += comp;
@@ -217,7 +217,7 @@ final weeklyPlanCompletionProvider = Provider<bool>((ref){
     if(planned>0 && completed>=planned) {
       if(user.weeklyPlanCompletedAt == null) return true;
       final saved = user.weeklyPlanCompletedAt!.toDate();
-      if(startOfWeek(saved).isBefore(thisWeekStart)) return true;
+      if(startOfWeek(saved).isBefore(weekStart)) return true;
     }
     return false;
   } catch(_){ return false; }

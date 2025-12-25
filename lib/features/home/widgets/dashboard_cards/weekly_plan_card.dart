@@ -96,10 +96,9 @@ class _PlanView extends ConsumerWidget {
     final dayName = _daysOfWeek[selectedDayIndex];
     final dailyPlan = weeklyPlan!.plan.firstWhere((p) => p.day == dayName, orElse: () => DailyPlan(day: dayName, schedule: []));
 
-    // Normalize edilmiş hafta başlangıcı (00:00)
-    final now = DateTime.now();
-    final dayStart = DateTime(now.year, now.month, now.day);
-    final startOfWeek = dayStart.subtract(Duration(days: dayStart.weekday - 1));
+    final creationDate = weeklyPlan!.creationDate;
+    final creationDayStart = DateTime(creationDate.year, creationDate.month, creationDate.day);
+    final startOfWeek = creationDayStart.subtract(Duration(days: creationDayStart.weekday - 1));
     final dateForTab = startOfWeek.add(Duration(days: selectedDayIndex));
     final dateKey = DateFormat('yyyy-MM-dd').format(dateForTab);
 
@@ -110,7 +109,7 @@ class _PlanView extends ConsumerWidget {
     );
 
     return Column(children: [
-      _HeaderBar(dateForTab: dateForTab, weeklyPlan: weeklyPlan!, userId: userId, completedByDate: weeklyCompletedMap),
+      _HeaderBar(dateForTab: dateForTab, weeklyPlan: weeklyPlan!, userId: userId, completedByDate: weeklyCompletedMap, startOfWeek: startOfWeek),
       _DaySelector(days: _daysOfWeekShort),
       const SizedBox(height: 8),
       Expanded(
@@ -127,12 +126,13 @@ class _PlanView extends ConsumerWidget {
                   itemBuilder: (context, index) {
                     final scheduleItem = dailyPlan.schedule[index];
                     return _TaskTile(
-                      key: ValueKey('$dateKey-${scheduleItem.time}-${scheduleItem.activity}'),
+                      key: ValueKey('$dateKey-${scheduleItem.id}'),
                       item: scheduleItem,
                       dateForTile: dateForTab,
                       dateKey: dateKey,
                       userId: userId,
                       completedByDate: weeklyCompletedMap,
+                      startOfWeek: startOfWeek,
                     ).animate().fadeIn(delay: (40 * index).ms).slideX(begin: .15, curve: Curves.easeOutCubic);
                   },
                 ),
@@ -143,23 +143,21 @@ class _PlanView extends ConsumerWidget {
 }
 
 class _HeaderBar extends ConsumerWidget {
-  final DateTime dateForTab; final WeeklyPlan weeklyPlan; final String userId; final Map<String, List<String>> completedByDate;
-  const _HeaderBar({required this.dateForTab, required this.weeklyPlan, required this.userId, required this.completedByDate});
+  final DateTime dateForTab; final WeeklyPlan weeklyPlan; final String userId; final Map<String, List<String>> completedByDate; final DateTime startOfWeek;
+  const _HeaderBar({required this.dateForTab, required this.weeklyPlan, required this.userId, required this.completedByDate, required this.startOfWeek});
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isExpired = weeklyPlan.isExpired;
     int total=0; int done=0;
-    final now=DateTime.now();
-    final sow=now.subtract(Duration(days: now.weekday-1));
     for(int i=0;i<weeklyPlan.plan.length;i++){
       final dp=weeklyPlan.plan[i];
       total+=dp.schedule.length;
-      final d=sow.add(Duration(days:i));
+      final d=startOfWeek.add(Duration(days:i));
       final dk = DateFormat('yyyy-MM-dd').format(d);
       final completedList = completedByDate[dk] ?? const <String>[];
       for (final s in dp.schedule) {
-        final id='${s.time}-${s.activity}';
+        final id=s.id;
         if (completedList.contains(id)) done++;
       }
     }
@@ -284,8 +282,9 @@ class _TaskTile extends ConsumerWidget {
   final String userId;
   final DateTime dateForTile;
   final Map<String, List<String>> completedByDate;
+  final DateTime startOfWeek;
 
-  const _TaskTile({super.key, required this.item, required this.dateKey, required this.userId, required this.dateForTile, required this.completedByDate});
+  const _TaskTile({super.key, required this.item, required this.dateKey, required this.userId, required this.dateForTile, required this.completedByDate, required this.startOfWeek});
 
   IconData _getIconForTaskType(String type) {
     switch (type.toLowerCase()) {
@@ -300,7 +299,7 @@ class _TaskTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final taskIdentifier = '${item.time}-${item.activity}';
+    final taskIdentifier = item.id;
     final completedList = completedByDate[dateKey] ?? const <String>[];
     final isCompleted = completedList.contains(taskIdentifier);
 
@@ -429,15 +428,9 @@ class _TaskTile extends ConsumerWidget {
                   task: taskIdentifier,
                   isCompleted: !isCompleted,
                 );
-                // Normalize edilmiş hafta başlangıcı ile weekly provider’ı yenile ve bekle
-                final now = DateTime.now();
-                final dayStart = DateTime(now.year, now.month, now.day);
-                final startOfWeek = dayStart.subtract(Duration(days: dayStart.weekday - 1));
                 await ref.refresh(completedTasksForWeekProvider(startOfWeek).future);
-                // İsteğe bağlı: günlük provider kullanan diğer yerler için
                 ref.invalidate(completedTasksForDateProvider(dateForTile));
                 if(!isCompleted){
-                  // Görev güncellemesi quest_notifier.dart'taki listener tarafından otomatik yapılıyor
                   if(context.mounted){
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Plan görevi fethedildi: ${item.activity}')));
                   }

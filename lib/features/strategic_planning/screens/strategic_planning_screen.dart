@@ -794,11 +794,33 @@ class StrategicPlanningScreen extends ConsumerWidget {
         ),
         Padding(
           padding: const EdgeInsets.all(16.0),
-          child: ElevatedButton(
-            onPressed: () {
-              ref.read(planningStepProvider.notifier).state = PlanningStep.pacing;
-            },
-            child: const Text("Tüm Verilerim Güncel, İlerle"),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ElevatedButton(
+                onPressed: isTimeMapOk && isGalaxyOk
+                    ? () {
+                        ref.read(planningStepProvider.notifier).state = PlanningStep.pacing;
+                      }
+                    : null,
+                child: const Text("Tüm Verilerim Güncel, İlerle"),
+              ),
+              if (!(isTimeMapOk && isGalaxyOk))
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: InkWell(
+                    onTap: () {
+                      // Basit yönlendirme: zamanı ve analiz ekranlarını aç
+                      context.push(AppRoutes.availability);
+                    },
+                    child: Text(
+                      "Eksik verileri tamamlamak için tıkla",
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ],

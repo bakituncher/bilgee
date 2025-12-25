@@ -3,17 +3,23 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 // Bir günlük plandaki tek bir görevi (saat, aktivite, tür) temsil eder.
 class ScheduleItem {
+  final String id;
   final String time;
   final String activity;
   final String type;
 
-  ScheduleItem({required this.time, required this.activity, required this.type});
+  ScheduleItem({required this.id, required this.time, required this.activity, required this.type});
 
   factory ScheduleItem.fromMap(Map<String, dynamic> map) {
+    final time = map['time'] ?? 'Belirsiz';
+    final activity = map['activity'] ?? 'Görev Belirtilmemiş';
+    final type = map['type'] ?? 'study';
+    final id = (map['id'] ?? map['uid']) ?? '${time}_${activity.hashCode}_$type';
     return ScheduleItem(
-      time: map['time'] ?? 'Belirsiz',
-      activity: map['activity'] ?? 'Görev Belirtilmemiş',
-      type: map['type'] ?? 'study',
+      id: id,
+      time: time,
+      activity: activity,
+      type: type,
     );
   }
 
@@ -38,24 +44,38 @@ class DailyPlan {
     if (json['schedule'] is List) {
       var list = (json['schedule'] as List);
       // GÜNCELLENMİŞ, SAĞLAMLAŞTIRILMIŞ PARSER
-      for (var item in list) {
+      for (var i = 0; i < list.length; i++) {
+        final item = list[i];
+        final fallbackId = '${json['day'] ?? 'gun'}_$i';
         if (item is Map<String, dynamic>) {
-          scheduleItems.add(ScheduleItem.fromMap(item));
+          final itemWithId = {...item, 'id': item['id'] ?? fallbackId};
+          scheduleItems.add(ScheduleItem.fromMap(itemWithId));
         }
         // AI'ın bazen harita yerine sadece bir metin gönderme ihtimaline karşı
         else if (item is String) {
-          scheduleItems.add(ScheduleItem(time: "Görev", activity: item, type: "study"));
+          scheduleItems.add(ScheduleItem(id: fallbackId, time: "Görev", activity: item, type: "study"));
         }
       }
     } else if (json['schedule'] is String) {
       rawString = json['schedule'] as String;
     }
 
-    if (json.containsKey('tasks') && json['tasks'] is List) {
+    if (scheduleItems.isEmpty && json.containsKey('tasks') && json['tasks'] is List) {
       var taskList = (json['tasks'] as List).cast<String>();
-      scheduleItems.addAll(taskList.map((task) => ScheduleItem(time: "Görev", activity: task, type: "study")));
+      for (var i = 0; i < taskList.length; i++) {
+        final fallbackId = '${json['day'] ?? 'gun'}_$i';
+        scheduleItems.add(ScheduleItem(id: fallbackId, time: "Görev", activity: taskList[i], type: "study"));
+      }
     }
 
+    // Sağlam parser: schedule boş veya stringse placeholderlarla doldur
+    if (scheduleItems.isEmpty) {
+      rawString = rawString ?? (json['schedule']?.toString());
+      scheduleItems = [
+        ScheduleItem(id: '${json['day'] ?? 'gun'}_0', time: '09:00', activity: 'Mola', type: 'break'),
+        ScheduleItem(id: '${json['day'] ?? 'gun'}_1', time: '21:00', activity: 'Genel Tekrar', type: 'review'),
+      ];
+    }
 
     return DailyPlan(
       day: json['day'] ?? 'Bilinmeyen Gün',
@@ -81,7 +101,24 @@ class WeeklyPlan {
 
   factory WeeklyPlan.fromJson(Map<String, dynamic> json) {
     var list = (json['plan'] as List?) ?? [];
-    List<DailyPlan> dailyPlans = list.map((i) => DailyPlan.fromJson(i)).toList();
+    List<DailyPlan> dailyPlans = [];
+    for (var i = 0; i < list.length; i++) {
+      final dayJson = list[i];
+      if (dayJson is Map<String, dynamic>) {
+        final withIndexId = {
+          ...dayJson,
+          'day': dayJson['day'],
+          'schedule': (dayJson['schedule'] is List)
+              ? List.generate((dayJson['schedule'] as List).length, (j) {
+                  final item = (dayJson['schedule'] as List)[j];
+                  if (item is Map<String, dynamic>) return {...item, 'id': item['id'] ?? '${dayJson['day'] ?? 'gun'}_${j}'};
+                  return item;
+                })
+              : dayJson['schedule'],
+        };
+        dailyPlans.add(DailyPlan.fromJson(withIndexId));
+      }
+    }
 
     DateTime date;
     if (json['creationDate'] is Timestamp) {
