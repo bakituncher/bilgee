@@ -3,7 +3,7 @@
 <plist version="1.0">
 	<dict>
 		<key>CFBundleDevelopmentRegion</key>
-		<string>$(DEVELOPMENT_LANGUAGE)</string>
+		<string>tr</string>
 		<key>CFBundleDisplayName</key>
 		<string>Taktik</string>
 		<key>CFBundleExecutable</key>
@@ -46,7 +46,7 @@
 		<key>UIApplicationSupportsIndirectInputEvents</key>
 		<true/>
 		<key>GADApplicationIdentifier</key>
-		<string>ca-app-pub-1946344990254156~1929977929</string>
+		<string>ca-app-pub-3940256099942544~1458002511</string>
 		<key>SKAdNetworkItems</key>
 		<array>
 			<dict>
