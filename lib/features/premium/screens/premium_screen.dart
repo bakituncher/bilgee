@@ -166,7 +166,6 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     final bottomInset = MediaQuery.of(context).padding.bottom;
     final colorScheme = Theme.of(context).colorScheme;
     final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
 
     // Responsive değerler
     final isSmallScreen = screenHeight < 700;
@@ -216,90 +215,179 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
             child: Container(color: colorScheme.surface.withOpacity(0.3)),
           ),
 
-          Column(
-            children: [
-              // 1. ÜST KISIM (Sabit)
-              _buildCustomHeader(context),
+          // SCROLLABLE CONTENT
+          SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              children: [
+                // Safe Area Padding + Space for floating buttons
+                SizedBox(height: MediaQuery.of(context).padding.top + 68),
 
-              // 2. SCROLLABLE CONTENT
-              Expanded(
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: Column(
-                    children: [
-                      // PAZARLAMA ALANI - Header
-                      Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: isSmallScreen ? 6 : 10,
-                        ),
-                        child: _AnimatedHeader(
-                          slideController: _headerSlideController,
-                          fadeController: _fadeController,
-                          isSmallScreen: isSmallScreen,
-                        ),
-                      ),
-                      SizedBox(height: isSmallScreen ? 6 : 10),
+                // PAZARLAMA ALANI - Header
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: isSmallScreen ? 4 : 6,
+                  ),
+                  child: _AnimatedHeader(
+                    slideController: _headerSlideController,
+                    fadeController: _fadeController,
+                    isSmallScreen: isSmallScreen,
+                  ),
+                ),
+                SizedBox(height: isSmallScreen ? 4 : 6),
 
-                      // PageView (Özellik Carousel - DYNAMIC)
-                      _buildMarketingCarousel(marketingSlides, isSmallScreen, isMediumScreen),
-                      SizedBox(height: isSmallScreen ? 8 : 12),
+                // PageView (Özellik Carousel - DYNAMIC)
+                _buildMarketingCarousel(marketingSlides, isSmallScreen, isMediumScreen),
+                SizedBox(height: isSmallScreen ? 4 : 6),
 
-                      // Page Indicator
-                      _buildPageIndicator(marketingSlides),
-                      SizedBox(height: isSmallScreen ? 12 : 18),
+                // Page Indicator
+                _buildPageIndicator(marketingSlides),
+                SizedBox(height: isSmallScreen ? 8 : 12),
 
-                      // 3. FİYATLANDIRMA ALANI
-                      Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).cardColor,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Theme.of(context).brightness == Brightness.dark
-                                  ? Colors.black.withOpacity(0.5)
-                                  : Colors.black.withOpacity(0.15),
-                              spreadRadius: 5,
-                              blurRadius: 15,
-                              offset: const Offset(0, -5),
-                            ),
-                          ],
-                        ),
-                        child: offeringsAsyncValue.when(
-                          data: (offerings) => Column(
-                            children: [
-                              _buildPurchaseOptions(context, ref, offerings, isSmallScreen),
-                              // Güven Rozetleri ve Yasal Metin
-                              FadeTransition(
-                                opacity: _fadeController,
-                                child: Column(
-                                  children: [
-                                    const _TrustBadges(),
-                                    const _PriceTransparencyFooter(),
-                                    Padding(
-                                      padding: EdgeInsets.only(bottom: bottomInset > 0 ? bottomInset + 2 : 8),
-                                      child: const _LegalFooter(isCompact: true),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                          loading: () => Padding(
-                            padding: const EdgeInsets.all(32.0),
-                            child: CircularProgressIndicator(strokeWidth: 3, color: Theme.of(context).colorScheme.secondary),
-                          ),
-                          error: (error, stack) => Padding(
-                            padding: const EdgeInsets.all(32.0),
-                            child: Text('Hata: $error', style: TextStyle(color: Theme.of(context).colorScheme.error)),
-                          ),
-                        ),
+                // 3. FİYATLANDIRMA ALANI
+                Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardColor,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.black.withOpacity(0.5)
+                            : Colors.black.withOpacity(0.15),
+                        spreadRadius: 5,
+                        blurRadius: 15,
+                        offset: const Offset(0, -5),
                       ),
                     ],
                   ),
+                  child: offeringsAsyncValue.when(
+                    data: (offerings) => Column(
+                      children: [
+                        _buildPurchaseOptions(context, ref, offerings, isSmallScreen),
+                        // Güven Rozetleri ve Yasal Metin
+                        FadeTransition(
+                          opacity: _fadeController,
+                          child: Column(
+                            children: [
+                              const _TrustBadges(),
+                              const _PriceTransparencyFooter(),
+                              Padding(
+                                padding: EdgeInsets.only(bottom: bottomInset > 0 ? bottomInset + 2 : 8),
+                                child: const _LegalFooter(isCompact: true),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    loading: () => Padding(
+                      padding: const EdgeInsets.all(32.0),
+                      child: CircularProgressIndicator(strokeWidth: 3, color: Theme.of(context).colorScheme.secondary),
+                    ),
+                    error: (error, stack) => Padding(
+                      padding: const EdgeInsets.all(32.0),
+                      child: Text('Hata: $error', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
+          ),
+
+          // Floating Buttons
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 12,
+            left: 16,
+            right: 16,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Close Button
+                Container(
+                  decoration: BoxDecoration(
+                    color: colorScheme.surface.withAlpha(230),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: colorScheme.outline.withAlpha(60),
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withAlpha(40),
+                        blurRadius: 16,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.close_rounded,
+                      size: 24,
+                      color: colorScheme.onSurface,
+                    ),
+                    tooltip: 'Kapat',
+                    onPressed: _handleBack,
+                  ),
+                ),
+
+                // Restore Button
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF2E3192), Color(0xFF1BFFFF)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF2E3192).withAlpha(100),
+                        blurRadius: 16,
+                        spreadRadius: 0,
+                        offset: const Offset(0, 4),
+                      ),
+                      BoxShadow(
+                        color: const Color(0xFF1BFFFF).withAlpha(60),
+                        blurRadius: 20,
+                        spreadRadius: -2,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(24),
+                      onTap: _restorePurchases,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.restore_rounded,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Geri Yükle',
+                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 15,
+                                letterSpacing: 0.2,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -307,32 +395,6 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
   }
 
   // --- SUB-WIDGET BUILDERS ---
-
-  Widget _buildCustomHeader(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top, left: 16, right: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          IconButton(
-            icon: Icon(Icons.close_rounded, size: 30, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
-            tooltip: 'Kapat',
-            onPressed: _handleBack,
-          ),
-          TextButton(
-            onPressed: _restorePurchases,
-            child: Text(
-              'Geri Yükle',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          )
-        ],
-      ),
-    );
-  }
 
   Widget _buildAnimatedGradientBackground() {
     return AnimatedBuilder(
@@ -369,24 +431,44 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
       bool isSmallScreen,
       bool isMediumScreen,
       ) {
-    final carouselHeight = isSmallScreen ? 85.0 : (isMediumScreen ? 100.0 : 115.0);
+    final carouselHeight = isSmallScreen ? 75.0 : (isMediumScreen ? 85.0 : 95.0);
 
     return FadeTransition(
       opacity: _fadeController,
-      child: Container(
+      child: SizedBox(
         height: carouselHeight,
-        margin: const EdgeInsets.symmetric(horizontal: 10),
         child: PageView.builder(
           controller: _pageController,
           itemCount: marketingSlides.length,
+          physics: const BouncingScrollPhysics(),
           itemBuilder: (context, index) {
             final slide = marketingSlides[index];
-            return _MarketingSlideCard(
-              title: slide.title,
-              subtitle: slide.subtitle,
-              icon: slide.icon,
-              color: slide.color,
-              isSmallScreen: isSmallScreen,
+            return AnimatedBuilder(
+              animation: _pageController,
+              builder: (context, child) {
+                double value = 1.0;
+                if (_pageController.position.haveDimensions) {
+                  value = _pageController.page! - index;
+                  value = (1 - (value.abs() * 0.3)).clamp(0.7, 1.0);
+                }
+
+                return Center(
+                  child: Transform.scale(
+                    scale: value,
+                    child: Opacity(
+                      opacity: value,
+                      child: child,
+                    ),
+                  ),
+                );
+              },
+              child: _MarketingSlideCard(
+                title: slide.title,
+                subtitle: slide.subtitle,
+                icon: slide.icon,
+                color: slide.color,
+                isSmallScreen: isSmallScreen,
+              ),
             );
           },
         ),
@@ -400,7 +482,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         width: double.infinity,
-        padding: EdgeInsets.symmetric(vertical: isSmallScreen ? 15 : 19),
+        padding: EdgeInsets.symmetric(vertical: isSmallScreen ? 14 : 18),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             colors: [
@@ -413,16 +495,16 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
           borderRadius: BorderRadius.circular(isSmallScreen ? 16 : 20),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF2E3192).withOpacity(0.5),
-              blurRadius: 24,
+              color: const Color(0xFF2E3192).withOpacity(0.6),
+              blurRadius: 28,
               spreadRadius: 0,
-              offset: const Offset(0, 8),
+              offset: const Offset(0, 10),
             ),
             BoxShadow(
-              color: const Color(0xFF1BFFFF).withOpacity(0.3),
-              blurRadius: 32,
+              color: const Color(0xFF1BFFFF).withOpacity(0.4),
+              blurRadius: 36,
               spreadRadius: -4,
-              offset: const Offset(0, 12),
+              offset: const Offset(0, 14),
             ),
           ],
         ),
@@ -436,39 +518,60 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
             child: Center(
               child: _isPurchasing
                   ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              )
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 3,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
                   : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.check_circle_rounded,
-                    color: Colors.white,
-                    size: isSmallScreen ? 22 : 26,
-                  ),
-                  SizedBox(width: isSmallScreen ? 8 : 12),
-                  Text(
-                    'Hemen Başla',
-                    style: TextStyle(
-                      fontSize: isSmallScreen ? 16.5 : 19.0,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                      letterSpacing: 0.5,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.check_circle_rounded,
+                            color: Colors.white,
+                            size: isSmallScreen ? 20 : 24,
+                          ),
+                        ),
+                        SizedBox(width: isSmallScreen ? 10 : 14),
+                        Text(
+                          'Hemen Başla',
+                          style: TextStyle(
+                            fontSize: isSmallScreen ? 16.0 : 19.0,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            letterSpacing: 0.5,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black.withOpacity(0.25),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(width: isSmallScreen ? 10 : 14),
+                        Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.arrow_forward_rounded,
+                            color: Colors.white,
+                            size: isSmallScreen ? 20 : 24,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  SizedBox(width: isSmallScreen ? 8 : 12),
-                  Icon(
-                    Icons.arrow_forward_rounded,
-                    color: Colors.white,
-                    size: isSmallScreen ? 22 : 26,
-                  ),
-                ],
-              ),
             ),
           ),
         ),
@@ -481,42 +584,55 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
       animation: _pageController,
       builder: (context, child) {
         double currentPage = _pageController.hasClients ? _pageController.page ?? 0 : 0;
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(marketingSlides.length, (index) {
-            final double scale = 1.0 - (index - currentPage).abs().clamp(0.0, 1.0) * 0.3;
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.4),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(marketingSlides.length, (index) {
+              final isActive = index == currentPage.round();
 
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4.0),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                width: index == currentPage.round() ? 24.0 : 8.0,
-                height: 8.0,
-                decoration: BoxDecoration(
-                  gradient: index == currentPage.round()
-                      ? const LinearGradient(
-                    colors: [Color(0xFF2E3192), Color(0xFF1BFFFF)],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                  )
-                      : null,
-                  color: index == currentPage.round()
-                      ? null
-                      : Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(4),
-                  boxShadow: index == currentPage.round()
-                      ? [
-                    BoxShadow(
-                      color: const Color(0xFF2E3192).withOpacity(0.4),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ]
-                      : null,
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 3.0),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                  width: isActive ? 28.0 : 8.0,
+                  height: 8.0,
+                  decoration: BoxDecoration(
+                    gradient: isActive
+                        ? const LinearGradient(
+                            colors: [Color(0xFF2E3192), Color(0xFF1BFFFF)],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                          )
+                        : null,
+                    color: isActive
+                        ? null
+                        : Theme.of(context).colorScheme.onSurface.withOpacity(0.25),
+                    borderRadius: BorderRadius.circular(4),
+                    boxShadow: isActive
+                        ? [
+                            BoxShadow(
+                              color: const Color(0xFF2E3192).withOpacity(0.5),
+                              blurRadius: 10,
+                              offset: const Offset(0, 3),
+                            ),
+                          ]
+                        : null,
+                  ),
                 ),
-              ),
-            );
-          }),
+              );
+            }),
+          ),
         );
       },
     );
@@ -556,7 +672,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     return FadeTransition(
       opacity: _fadeController,
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 20, vertical: isSmallScreen ? 10 : 14),
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: isSmallScreen ? 8 : 12),
         child: Column(
           children: [
             if (yearly != null)
@@ -575,7 +691,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                 },
               ),
             if (yearly != null && monthly != null)
-              SizedBox(height: isSmallScreen ? 8 : 10),
+              SizedBox(height: isSmallScreen ? 6 : 8),
             if (monthly != null)
               _PurchaseOptionCard(
                 animationController: _cardPopController,
@@ -592,7 +708,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                 },
               ),
             // Ana Abone Ol Butonu
-            SizedBox(height: isSmallScreen ? 16 : 20),
+            SizedBox(height: isSmallScreen ? 12 : 16),
             _buildSubscribeButton(context, ref, isSmallScreen),
           ],
         ),
@@ -692,11 +808,25 @@ class _PriceTransparencyFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final textColor = theme.colorScheme.onSurface.withOpacity(0.6);
-    final textStyle = theme.textTheme.bodySmall?.copyWith(color: textColor, height: 1.25, fontSize: 9);
+    final textColor = theme.colorScheme.onSurface.withOpacity(0.65);
+    final textStyle = theme.textTheme.bodySmall?.copyWith(
+      color: textColor,
+      height: 1.4,
+      fontSize: 10,
+      fontWeight: FontWeight.w500,
+    );
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
+      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      padding: const EdgeInsets.all(12.0),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: theme.colorScheme.outline.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
       child: Text(
         'Abonelik, siz iptal edene kadar seçtiğiniz tarife (aylık/yıllık) üzerinden otomatik olarak yenilenir. '
             'Ücretsiz deneme süresi (varsa) sonunda ücretlendirme başlar. '
@@ -711,7 +841,7 @@ class _PriceTransparencyFooter extends StatelessWidget {
 
 // --- 1. ANIMATED HEADER (No Change) ---
 
-class _AnimatedHeader extends StatelessWidget {
+class _AnimatedHeader extends StatefulWidget {
   final AnimationController slideController;
   final AnimationController fadeController;
   final bool isSmallScreen;
@@ -723,65 +853,22 @@ class _AnimatedHeader extends StatelessWidget {
   });
 
   @override
+  State<_AnimatedHeader> createState() => _AnimatedHeaderState();
+}
+
+class _AnimatedHeaderState extends State<_AnimatedHeader> {
+  @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final iconSize = isSmallScreen ? 28.0 : 36.0;
-    final titleSize = isSmallScreen ? 24.0 : 30.0;
-    final subtitleSize = isSmallScreen ? 13.0 : 15.0;
-    final iconPadding = isSmallScreen ? 8.0 : 10.0;
+    final titleSize = widget.isSmallScreen ? 24.0 : 28.0;
+    final subtitleSize = widget.isSmallScreen ? 13.0 : 15.0;
 
     return Column(
       children: [
         SlideTransition(
           position: Tween<Offset>(begin: const Offset(0, 0.4), end: Offset.zero)
-              .animate(CurvedAnimation(parent: slideController, curve: Curves.easeOutCubic)),
+              .animate(CurvedAnimation(parent: widget.slideController, curve: Curves.easeOutCubic)),
           child: FadeTransition(
-            opacity: fadeController,
-            child: Container(
-              padding: EdgeInsets.all(iconPadding),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: const LinearGradient(
-                  colors: [
-                    Color(0xFF2E3192),
-                    Color(0xFF1BFFFF),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF2E3192).withOpacity(0.4),
-                    blurRadius: isSmallScreen ? 20 : 24,
-                    spreadRadius: isSmallScreen ? 1 : 2,
-                  ),
-                  BoxShadow(
-                    color: const Color(0xFF1BFFFF).withOpacity(0.3),
-                    blurRadius: isSmallScreen ? 24 : 32,
-                    spreadRadius: -4,
-                  ),
-                ],
-              ),
-              child: Icon(
-                Icons.diamond_rounded,
-                size: iconSize,
-                color: Colors.white,
-                shadows: const [
-                  Shadow(
-                    color: Colors.black26,
-                    blurRadius: 8,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        SizedBox(height: isSmallScreen ? 10 : 14),
-        SlideTransition(
-          position: Tween<Offset>(begin: const Offset(0, 0.4), end: Offset.zero)
-              .animate(CurvedAnimation(parent: slideController, curve: const Interval(0.2, 1, curve: Curves.easeOutCubic))),
-          child: FadeTransition(
-            opacity: CurvedAnimation(parent: fadeController, curve: const Interval(0.2, 1)),
+            opacity: widget.fadeController,
             child: ShaderMask(
               shaderCallback: (bounds) => const LinearGradient(
                 colors: [
@@ -798,28 +885,35 @@ class _AnimatedHeader extends StatelessWidget {
                   fontWeight: FontWeight.w900,
                   color: Colors.white,
                   fontSize: titleSize,
-                  letterSpacing: -1,
+                  letterSpacing: -1.2,
                   height: 1,
+                  shadows: [
+                    Shadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
         ),
-        SizedBox(height: isSmallScreen ? 5 : 8),
+        SizedBox(height: widget.isSmallScreen ? 4 : 8),
         SlideTransition(
           position: Tween<Offset>(begin: const Offset(0, 0.4), end: Offset.zero)
-              .animate(CurvedAnimation(parent: slideController, curve: const Interval(0.4, 1, curve: Curves.easeOutCubic))),
+              .animate(CurvedAnimation(parent: widget.slideController, curve: const Interval(0.2, 1, curve: Curves.easeOutCubic))),
           child: FadeTransition(
-            opacity: CurvedAnimation(parent: fadeController, curve: const Interval(0.4, 1)),
+            opacity: CurvedAnimation(parent: widget.fadeController, curve: const Interval(0.2, 1)),
             child: Text(
               'Rakiplerine fark at, hedefe koş',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.75),
-                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                fontWeight: FontWeight.w700,
                 fontSize: subtitleSize,
                 height: 1.3,
-                letterSpacing: -0.2,
+                letterSpacing: -0.3,
               ),
             ),
           ),
@@ -829,9 +923,7 @@ class _AnimatedHeader extends StatelessWidget {
   }
 }
 
-// --- 2. MARKETING SLIDE CARD (Geniş ve Etkileyici) ---
-
-class _MarketingSlideCard extends StatelessWidget {
+class _MarketingSlideCard extends StatefulWidget {
   final String title;
   final String subtitle;
   final IconData icon;
@@ -847,121 +939,175 @@ class _MarketingSlideCard extends StatelessWidget {
   });
 
   @override
+  State<_MarketingSlideCard> createState() => _MarketingSlideCardState();
+}
+
+class _MarketingSlideCardState extends State<_MarketingSlideCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _glowController;
+  late Animation<double> _glowAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _glowController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2500),
+    )..repeat(reverse: true);
+
+    _glowAnimation = Tween<double>(begin: 0.6, end: 1.0).animate(
+      CurvedAnimation(parent: _glowController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _glowController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final cardPadding = isSmallScreen ? 12.0 : 16.0;
-    final iconSize = isSmallScreen ? 32.0 : 38.0;
-    final iconInnerSize = isSmallScreen ? 18.0 : 22.0;
-    final titleSize = isSmallScreen ? 13.0 : 15.0;
-    final subtitleSize = isSmallScreen ? 10.5 : 12.0;
-    final spacing = isSmallScreen ? 9.0 : 12.0;
+    final cardPadding = widget.isSmallScreen ? 14.0 : 16.0;
+    final iconSize = widget.isSmallScreen ? 40.0 : 46.0;
+    final titleSize = widget.isSmallScreen ? 13.5 : 15.0;
+    final subtitleSize = widget.isSmallScreen ? 11.0 : 12.0;
 
-    return Container(
-      padding: EdgeInsets.all(cardPadding),
-      margin: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isDark
-                ? [
-              colorScheme.surface,
-              Color.lerp(colorScheme.surface, color, 0.08)!,
-            ]
-                : [
-              Colors.white,
-              Color.lerp(Colors.white, color, 0.08)!,
+    return AnimatedBuilder(
+      animation: _glowAnimation,
+      builder: (context, child) {
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: widget.color.withOpacity(0.15 * _glowAnimation.value),
+                blurRadius: 20 * _glowAnimation.value,
+                spreadRadius: 2 * _glowAnimation.value,
+                offset: const Offset(0, 4),
+              ),
+              BoxShadow(
+                color: isDark
+                  ? Colors.black.withOpacity(0.3)
+                  : Colors.black.withOpacity(0.06),
+                blurRadius: 12,
+                offset: const Offset(0, 2),
+              ),
             ],
           ),
-          borderRadius: BorderRadius.circular(isSmallScreen ? 16 : 20),
-          border: Border.all(
-            color: color.withOpacity(isDark ? 0.4 : 0.3),
-            width: 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: color.withOpacity(0.2),
-              blurRadius: isSmallScreen ? 16 : 20,
-              spreadRadius: 0,
-              offset: Offset(0, isSmallScreen ? 6 : 8),
-            ),
-            BoxShadow(
-              color: isDark
-                  ? Colors.black.withOpacity(0.3)
-                  : Colors.black.withOpacity(0.05),
-              blurRadius: 12,
-              spreadRadius: -2,
-              offset: const Offset(0, 4),
-            ),
-          ]),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: iconSize,
-                height: iconSize,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Container(
+                padding: EdgeInsets.all(cardPadding),
                 decoration: BoxDecoration(
-                  shape: BoxShape.circle,
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [
-                      color,
-                      color.withOpacity(0.7),
-                    ],
+                    colors: isDark
+                        ? [
+                            widget.color.withOpacity(0.15),
+                            widget.color.withOpacity(0.05),
+                            colorScheme.surface.withOpacity(0.8),
+                          ]
+                        : [
+                            widget.color.withOpacity(0.08),
+                            Colors.white.withOpacity(0.9),
+                            Colors.white.withOpacity(0.95),
+                          ],
+                    stops: const [0.0, 0.5, 1.0],
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: color.withOpacity(0.4),
-                      blurRadius: isSmallScreen ? 10 : 12,
-                      spreadRadius: 0,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+                  border: Border.all(
+                    color: widget.color.withOpacity(isDark ? 0.3 : 0.2),
+                    width: 1.5,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                child: Icon(icon, color: Colors.white, size: iconInnerSize),
-              ),
-              SizedBox(width: spacing),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                        fontWeight: FontWeight.w900,
-                        color: colorScheme.onSurface,
-                        fontSize: titleSize,
-                        letterSpacing: -0.3,
-                        height: 1.2,
+                    // Icon Container
+                    Container(
+                      width: iconSize,
+                      height: iconSize,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            widget.color,
+                            widget.color.withOpacity(0.7),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: widget.color.withOpacity(0.4 * _glowAnimation.value),
+                            blurRadius: 12 * _glowAnimation.value,
+                            spreadRadius: 2,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                      child: Icon(
+                        widget.icon,
+                        color: Colors.white,
+                        size: widget.isSmallScreen ? 22 : 26,
+                      ),
                     ),
-                    SizedBox(height: isSmallScreen ? 3 : 5),
-                    Text(
-                      subtitle,
-                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                        color: colorScheme.onSurface.withOpacity(0.7),
-                        fontSize: subtitleSize,
-                        height: 1.3,
-                        fontWeight: FontWeight.w500,
+                    const SizedBox(width: 14),
+
+                    // Text Content
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            widget.title,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              color: colorScheme.onSurface,
+                              fontSize: titleSize,
+                              letterSpacing: -0.3,
+                              height: 1.2,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            widget.subtitle,
+                            style: TextStyle(
+                              color: colorScheme.onSurface.withOpacity(0.7),
+                              fontSize: subtitleSize,
+                              height: 1.3,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                    ),
+
+                    // Arrow Icon
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: widget.isSmallScreen ? 16 : 18,
+                      color: widget.color.withOpacity(0.5),
                     ),
                   ],
                 ),
               ),
-            ],
+            ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -1046,9 +1192,6 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final borderColor = widget.highlight ? colorScheme.secondary : colorScheme.surfaceContainerHighest;
-    final backgroundColor = widget.highlight ? colorScheme.secondary.withOpacity(0.2) : colorScheme.surface;
-
     // --- SEKTÖR STANDARDI TASARIM İYİLEŞTİRMELERİ ---
     return SlideTransition(
       position: _slideAnimation,
@@ -1065,64 +1208,64 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
               decoration: BoxDecoration(
                 gradient: widget.highlight
                     ? const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFF2E3192),
-                    Color(0xFF1BFFFF),
-                  ],
-                )
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Color(0xFF2E3192),
+                          Color(0xFF1BFFFF),
+                        ],
+                      )
                     : LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: isDark
-                      ? [
-                    Color(0xFF1A1A2E),
-                    Color(0xFF16213E),
-                  ]
-                      : [
-                    Colors.white,
-                    Color(0xFFF8F9FA),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(20),
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: isDark
+                            ? [
+                                Color(0xFF1F1F2E),
+                                Color(0xFF1A1A2E),
+                              ]
+                            : [
+                                Colors.white,
+                                Color(0xFFF8FAFC),
+                              ],
+                      ),
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: widget.highlight
-                      ? Colors.white.withOpacity(0.4)
-                      : const Color(0xFF2E3192).withOpacity(0.15),
-                  width: widget.highlight ? 3 : 1.5,
+                      ? Colors.white.withOpacity(0.5)
+                      : const Color(0xFF2E3192).withOpacity(0.2),
+                  width: widget.highlight ? 2 : 1.5,
                 ),
                 boxShadow: widget.highlight
                     ? [
-                  BoxShadow(
-                    color: const Color(0xFF2E3192).withOpacity(0.6),
-                    blurRadius: 32,
-                    spreadRadius: 0,
-                    offset: const Offset(0, 10),
-                  ),
-                  BoxShadow(
-                    color: const Color(0xFF1BFFFF).withOpacity(0.4),
-                    blurRadius: 48,
-                    spreadRadius: -4,
-                    offset: const Offset(0, 16),
-                  ),
-                ]
+                        BoxShadow(
+                          color: const Color(0xFF2E3192).withOpacity(0.5),
+                          blurRadius: 20,
+                          spreadRadius: 0,
+                          offset: const Offset(0, 6),
+                        ),
+                        BoxShadow(
+                          color: const Color(0xFF1BFFFF).withOpacity(0.3),
+                          blurRadius: 28,
+                          spreadRadius: -4,
+                          offset: const Offset(0, 10),
+                        ),
+                      ]
                     : [
-                  BoxShadow(
-                    color: isDark
-                        ? Colors.black.withOpacity(0.3)
-                        : Colors.black.withOpacity(0.06),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
-                    spreadRadius: -2,
-                  ),
-                ],
+                        BoxShadow(
+                          color: isDark
+                              ? Colors.black.withOpacity(0.4)
+                              : Colors.black.withOpacity(0.08),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                          spreadRadius: -2,
+                        ),
+                      ],
               ),
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
                   Padding(
-                    padding: EdgeInsets.all(widget.isSmallScreen ? 14.0 : 18.0),
+                    padding: EdgeInsets.all(widget.isSmallScreen ? 12.0 : 14.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -1133,7 +1276,7 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                                 widget.title,
                                 style: TextStyle(
                                   fontWeight: FontWeight.w900,
-                                  fontSize: widget.isSmallScreen ? 15.0 : 18.0,
+                                  fontSize: widget.isSmallScreen ? 14.0 : 15.5,
                                   color: widget.highlight ? Colors.white : colorScheme.onSurface,
                                   letterSpacing: -0.5,
                                 ),
@@ -1145,7 +1288,7 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: widget.highlight
-                                    ? Colors.white.withOpacity(0.2)
+                                    ? Colors.white.withOpacity(0.25)
                                     : Colors.transparent,
                                 border: Border.all(
                                   color: widget.highlight
@@ -1153,40 +1296,70 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                                       : colorScheme.onSurface.withOpacity(0.3),
                                   width: 2,
                                 ),
+                                boxShadow: widget.highlight
+                                    ? [
+                                        BoxShadow(
+                                          color: Colors.white.withOpacity(0.3),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ]
+                                    : null,
                               ),
                               child: Icon(
                                 widget.highlight ? Icons.check_circle : Icons.circle_outlined,
                                 color: widget.highlight
                                     ? Colors.white
                                     : colorScheme.onSurface.withOpacity(0.4),
-                                size: widget.isSmallScreen ? 20 : 24,
+                                size: widget.isSmallScreen ? 18 : 20,
                               ),
                             ),
                           ],
                         ),
-                        SizedBox(height: widget.isSmallScreen ? 3 : 5),
+                        SizedBox(height: widget.isSmallScreen ? 2 : 4),
                         // ÜCRETSİZ DENEME VURGUSU
                         if (hasFreeTrial && !widget.highlight)
                           Padding(
-                            padding: EdgeInsets.only(bottom: widget.isSmallScreen ? 6 : 8),
+                            padding: EdgeInsets.only(bottom: widget.isSmallScreen ? 5 : 6),
                             child: Container(
                               padding: EdgeInsets.symmetric(
-                                horizontal: widget.isSmallScreen ? 8 : 10,
+                                horizontal: widget.isSmallScreen ? 7 : 9,
                                 vertical: widget.isSmallScreen ? 3 : 4,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF1BFFFF).withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(widget.isSmallScreen ? 6 : 8),
-                                border: Border.all(color: const Color(0xFF1BFFFF).withOpacity(0.4)),
-                              ),
-                              child: Text(
-                                '🎁 İLK 7 GÜN ÜCRETSİZ DENE',
-                                style: TextStyle(
-                                  color: const Color(0xFF1BFFFF),
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: widget.isSmallScreen ? 9.5 : 11.0,
-                                  letterSpacing: 0.5,
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFF1BFFFF), Color(0xFF2E3192)],
+                                  begin: Alignment.centerLeft,
+                                  end: Alignment.centerRight,
                                 ),
+                                borderRadius: BorderRadius.circular(widget.isSmallScreen ? 5 : 7),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF1BFFFF).withOpacity(0.4),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.card_giftcard_rounded,
+                                    color: Colors.white,
+                                    size: 12,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'İLK 7 GÜN ÜCRETSİZ DENE',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: widget.isSmallScreen ? 9.0 : 10.0,
+                                      letterSpacing: 0.4,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
@@ -1198,49 +1371,48 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                             Text(
                               widget.price,
                               style: TextStyle(
-                                fontSize: widget.isSmallScreen ? 24.0 : 28.0,
+                                fontSize: widget.isSmallScreen ? 22.0 : 26.0,
                                 fontWeight: FontWeight.w900,
                                 color: widget.highlight ? Colors.white : colorScheme.onSurface,
-                                letterSpacing: -1,
+                                letterSpacing: -1.0,
                               ),
                             ),
-                            SizedBox(width: widget.isSmallScreen ? 3 : 5),
+                            SizedBox(width: widget.isSmallScreen ? 3 : 4),
                             Text(
                               widget.billingPeriod,
                               style: TextStyle(
-                                fontSize: widget.isSmallScreen ? 12.0 : 14.0,
-                                fontWeight: FontWeight.w600,
+                                fontSize: widget.isSmallScreen ? 11.0 : 13.0,
+                                fontWeight: FontWeight.w700,
                                 color: widget.highlight
-                                    ? Colors.white.withOpacity(0.85)
-                                    : colorScheme.onSurface.withOpacity(0.6),
+                                    ? Colors.white.withOpacity(0.9)
+                                    : colorScheme.onSurface.withOpacity(0.65),
                               ),
                             ),
                           ],
                         ),
-
                       ],
                     ),
                   ),
-                  // TASARRUF ETiketinin Konumlandırılması
+                  // TASARRUF ETİKETİ
                   if (widget.tag != null)
                     Positioned(
-                      top: -14,
-                      right: 16,
+                      top: -12,
+                      right: 14,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           gradient: widget.highlight
                               ? const LinearGradient(
-                            colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          )
+                                  colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                )
                               : const LinearGradient(
-                            colors: [Color(0xFF1BFFFF), Color(0xFF2E3192)],
-                          ),
-                          borderRadius: BorderRadius.circular(20),
+                                  colors: [Color(0xFF1BFFFF), Color(0xFF2E3192)],
+                                ),
+                          borderRadius: BorderRadius.circular(18),
                           border: Border.all(
-                            color: Colors.white.withOpacity(0.3),
+                            color: Colors.white.withOpacity(0.4),
                             width: 1.5,
                           ),
                           boxShadow: [
@@ -1248,8 +1420,8 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                               color: widget.highlight
                                   ? const Color(0xFFFFD700).withOpacity(0.5)
                                   : const Color(0xFF1BFFFF).withOpacity(0.5),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
+                              blurRadius: 10,
+                              offset: const Offset(0, 3),
                             ),
                           ],
                         ),
@@ -1259,7 +1431,7 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                             Icon(
                               widget.highlight ? Icons.local_fire_department_rounded : Icons.star_rounded,
                               color: Colors.white,
-                              size: 14,
+                              size: 13,
                             ),
                             const SizedBox(width: 4),
                             Text(
@@ -1267,8 +1439,15 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w900,
-                                fontSize: 11,
-                                letterSpacing: 0.5,
+                                fontSize: 10.5,
+                                letterSpacing: 0.4,
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.black26,
+                                    blurRadius: 4,
+                                    offset: Offset(0, 2),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -1293,37 +1472,62 @@ class _TrustBadges extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 5.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _TrustRow(icon: Icons.lock_rounded, text: 'Güvenli Ödeme'),
-          SizedBox(width: 14),
-          _TrustRow(icon: Icons.cancel_schedule_send_rounded, text: 'Kolay İptal'),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        spacing: 10,
+        runSpacing: 6,
+        children: const [
+          _TrustBadge(icon: Icons.lock_rounded, text: 'Güvenli Ödeme', color: Color(0xFF4CAF50)),
+          _TrustBadge(icon: Icons.cancel_schedule_send_rounded, text: 'Kolay İptal', color: Color(0xFF2196F3)),
         ],
       ),
     );
   }
 }
 
-class _TrustRow extends StatelessWidget {
-  const _TrustRow({required this.icon, required this.text});
+class _TrustBadge extends StatelessWidget {
+  const _TrustBadge({required this.icon, required this.text, required this.color});
   final IconData icon;
   final String text;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
-    final color = Theme.of(context).colorScheme.onSurface.withOpacity(0.7);
-    return Row(
-      children: [
-        Icon(icon, color: color, size: 13),
-        const SizedBox(width: 3.5),
-        Text(
-          text,
-          style: TextStyle(color: color, fontWeight: FontWeight.w500, fontSize: 10.5),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            color.withOpacity(isDark ? 0.15 : 0.1),
+            color.withOpacity(isDark ? 0.08 : 0.05),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-      ],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 16),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+              fontWeight: FontWeight.w700,
+              fontSize: 11.5,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1335,18 +1539,25 @@ class _LegalFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 3.0),
-      child: Column(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 6.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const _FooterLink(text: 'Kullanım Şartları', targetUrl: 'https://www.codenzi.com/taktik-kullanim-sozlesmesi.html'),
-              const SizedBox(width: 7),
-              Text('|', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.38), fontSize: 9)),
-              const SizedBox(width: 7),
-              const _FooterLink(text: 'Gizlilik Politikası', targetUrl: 'https://www.codenzi.com/taktik-gizlilik-politikasi.html'),
-            ],
+          const _FooterLink(
+            text: 'Kullanım Şartları',
+            targetUrl: 'https://www.codenzi.com/taktik-kullanim-sozlesmesi.html'
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Container(
+              width: 1,
+              height: 12,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+            ),
+          ),
+          const _FooterLink(
+            text: 'Gizlilik Politikası',
+            targetUrl: 'https://www.codenzi.com/taktik-gizlilik-politikasi.html'
           ),
         ],
       ),
@@ -1373,15 +1584,15 @@ class _FooterLink extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = Theme.of(context).colorScheme.onSurface.withOpacity(0.7);
+    final color = Theme.of(context).colorScheme.primary;
     return GestureDetector(
       onTap: () => _launchURL(context),
       child: Text(
         text,
         style: TextStyle(
           color: color,
-          fontSize: 9,
-          fontWeight: FontWeight.w600,
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
           decoration: TextDecoration.underline,
           decorationColor: color,
         ),
