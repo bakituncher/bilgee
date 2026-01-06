@@ -1523,7 +1523,6 @@ class _TrustBadges extends StatelessWidget {
           _TrustBadge(icon: Icons.verified_user_rounded, text: '10.000+ Mutlu Öğrenci', color: Color(0xFF2E7D32)),
           _TrustBadge(icon: Icons.lock_rounded, text: 'Güvenli Ödeme', color: Color(0xFF4CAF50)),
           _TrustBadge(icon: Icons.cancel_schedule_send_rounded, text: '1 Tıkla İptal', color: Color(0xFF2196F3)),
-          _TrustBadge(icon: Icons.trending_up_rounded, text: '%40 Not Artışı', color: Color(0xFFFF6F00)),
         ],
       ),
     );
