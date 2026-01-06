@@ -173,33 +173,39 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
 
     final marketingSlides = [
       (
-      title: 'Sınırsız Taktik Tavşan Koçu',
-      subtitle: 'Koçunuz Taktik Tavşan ile sınırsız strateji ve ders desteği.',
-      icon: Icons.rocket_launch_rounded,
+      title: 'Sınırsız AI Özel Ders Koçu',
+      subtitle: 'Özel ders yerine ayda 5.000₺+ tasarruf! Taktik Tavşan 7/24 yanınızda.',
+      icon: Icons.school_rounded,
       color: const Color(0xFF5b3d88)
       ),
       (
-      title: 'Reklamlardan Arındırılmış Deneyim',
-      subtitle: 'Hiç reklam olmadan kesintisiz çalışma ve odaklanma.',
+      title: '%300 Daha Hızlı Öğren',
+      subtitle: 'Kişiselleştirilmiş öğrenme ile zamanını 3 kat daha verimli kullan.',
+      icon: Icons.speed_rounded,
+      color: const Color(0xFF2E7D32)
+      ),
+      (
+      title: 'Reklamlardan Tamamen Kurtul',
+      subtitle: 'Hiç kesinti yok! Saatte 12 dakika reklam = ayda 6 saat tasarruf.',
       icon: Icons.block_rounded,
       color: const Color(0xFFE63946)
       ),
       (
-      title: 'Kişiselleştirilmiş Yol Haritası',
-      subtitle: 'Hedeflerinize göre otomatik ayarlanan haftalık plan.',
-      icon: Icons.map_rounded,
+      title: 'Hedef Odaklı Çalışma Planı',
+      subtitle: 'AI ile her gün ne çalışacağını bilen başarılı öğrenciler gibi.',
+      icon: Icons.military_tech_rounded,
       color: Theme.of(context).colorScheme.secondary
       ),
       (
-      title: 'Cevher Atölyesi Full Erişim',
-      subtitle: 'Hata analizi, özel ders notları ve testler.',
-      icon: Icons.diamond_outlined,
+      title: 'Cevher Atölyesi: Hata Analizin',
+      subtitle: 'Her hatadan ders çıkar, aynı soruları bir daha çözme.',
+      icon: Icons.diamond_rounded,
       color: const Color(0xFFFFB020)
       ),
       (
-      title: 'Gelişmiş Test Analizi',
-      subtitle: "Taktik Tavşan'ın yorumlarıyla detaylı performans raporları.",
-      icon: Icons.analytics_rounded,
+      title: 'Akıllı Test Analizi & Tahmin',
+      subtitle: 'Hangi konular sınavda çıkacak? AI zayıf noktalarını gösterir.',
+      icon: Icons.insights_rounded,
       color: Theme.of(context).colorScheme.tertiary
       ),
     ];
@@ -542,7 +548,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                         ),
                         SizedBox(width: isSmallScreen ? 10 : 14),
                         Text(
-                          'Hemen Başla',
+                          'Şimdi PRO\'ya Geç',
                           style: TextStyle(
                             fontSize: isSmallScreen ? 16.0 : 19.0,
                             fontWeight: FontWeight.w900,
@@ -669,6 +675,15 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     // Eğer hiç seçim yapılmadıysa, aylık planı varsayılan olarak seç
     _selectedPackage ??= monthly;
 
+    // Yıllık paket için aylık eşdeğer fiyatı hesapla
+    String? monthlyEquiv;
+    if (yearly != null) {
+      final monthlyPrice = yearly.storeProduct.price / 12;
+      monthlyEquiv = monthlyPrice % 1 == 0
+        ? '${monthlyPrice.toStringAsFixed(0)}₺'
+        : '${monthlyPrice.toStringAsFixed(2)}₺';
+    }
+
     return FadeTransition(
       opacity: _fadeController,
       child: Padding(
@@ -679,10 +694,11 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
               _PurchaseOptionCard(
                 animationController: _cardPopController,
                 package: yearly,
-                title: 'Yıllık PRO Plan',
+                title: 'Yıllık - En Akıllı Seçim',
                 price: yearly.storeProduct.priceString,
                 billingPeriod: '/ yıl',
-                tag: savePercent != null ? '%${savePercent.toStringAsFixed(0)} İNDİRİM' : 'EN POPÜLER',
+                monthlyEquivalent: monthlyEquiv,
+                tag: savePercent != null ? '%${savePercent.toStringAsFixed(0)} TASARRUF' : '🔥 EN ÇOK TERCİH EDİLEN',
                 highlight: _selectedPackage?.identifier == yearly.identifier,
                 delay: const Duration(milliseconds: 0),
                 isSmallScreen: isSmallScreen,
@@ -696,10 +712,10 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
               _PurchaseOptionCard(
                 animationController: _cardPopController,
                 package: monthly,
-                title: 'Aylık PRO Plan',
+                title: 'Aylık - Risk Almadan Dene',
                 price: monthly.storeProduct.priceString,
                 billingPeriod: '/ ay',
-                tag: 'ESNEKLİK',
+                tag: '💪 TAM KONTROL',
                 highlight: _selectedPackage?.identifier == monthly.identifier,
                 delay: const Duration(milliseconds: 100),
                 isSmallScreen: isSmallScreen,
@@ -828,10 +844,10 @@ class _PriceTransparencyFooter extends StatelessWidget {
         ),
       ),
       child: Text(
-        'Abonelik, siz iptal edene kadar seçtiğiniz tarife (aylık/yıllık) üzerinden otomatik olarak yenilenir. '
-            'Ücretsiz deneme süresi (varsa) sonunda ücretlendirme başlar. '
-            'Aboneliğinizi uygulamanın ayarlar sekmesinde bulunan "Abonelik Yönetimi" bölümünden istediğiniz zaman kolayca iptal edebilirsiniz. '
-            'Fiyatlara tüm vergiler dahildir.',
+        '✨ İlk 7 gün tamamen ÜCRETSİZ! Beğenmezsen istediğin zaman iptal et. '
+            'Yüzbinlerce öğrenci Taktik PRO ile hedeflerine ulaştı. '
+            'Aboneliğini istediğin an Ayarlar > Abonelik Yönetimi\'nden kolayca iptal edebilirsin. '
+            'Tüm fiyatlar vergiler dahil, şeffaf ve net.',
         textAlign: TextAlign.center,
         style: textStyle,
       ),
@@ -906,7 +922,7 @@ class _AnimatedHeaderState extends State<_AnimatedHeader> {
           child: FadeTransition(
             opacity: CurvedAnimation(parent: widget.fadeController, curve: const Interval(0.2, 1)),
             child: Text(
-              'Rakiplerine fark at, hedefe koş',
+              '1 kahve fiyatına başarının anahtarı',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
@@ -1121,6 +1137,7 @@ class _PurchaseOptionCard extends StatefulWidget {
     required this.title,
     required this.price,
     required this.billingPeriod,
+    this.monthlyEquivalent,
     this.tag,
     this.highlight = false,
     required this.onTap,
@@ -1133,6 +1150,7 @@ class _PurchaseOptionCard extends StatefulWidget {
   final String title;
   final String price;
   final String billingPeriod;
+  final String? monthlyEquivalent;
   final String? tag;
   final bool highlight;
   final VoidCallback onTap;
@@ -1317,26 +1335,30 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                           ],
                         ),
                         SizedBox(height: widget.isSmallScreen ? 2 : 4),
-                        // ÜCRETSİZ DENEME VURGUSU
-                        if (hasFreeTrial && !widget.highlight)
+                        // ÜCRETSİZ DENEME VURGUSU - Her iki pakette de göster
+                        if (hasFreeTrial)
                           Padding(
                             padding: EdgeInsets.only(bottom: widget.isSmallScreen ? 5 : 6),
                             child: Container(
                               padding: EdgeInsets.symmetric(
-                                horizontal: widget.isSmallScreen ? 7 : 9,
-                                vertical: widget.isSmallScreen ? 3 : 4,
+                                horizontal: widget.isSmallScreen ? 8 : 10,
+                                vertical: widget.isSmallScreen ? 4 : 5,
                               ),
                               decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [Color(0xFF1BFFFF), Color(0xFF2E3192)],
+                                gradient: LinearGradient(
+                                  colors: widget.highlight
+                                    ? [const Color(0xFFFFD700), const Color(0xFFFFA500)]
+                                    : [const Color(0xFF1BFFFF), const Color(0xFF2E3192)],
                                   begin: Alignment.centerLeft,
                                   end: Alignment.centerRight,
                                 ),
-                                borderRadius: BorderRadius.circular(widget.isSmallScreen ? 5 : 7),
+                                borderRadius: BorderRadius.circular(widget.isSmallScreen ? 6 : 8),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xFF1BFFFF).withOpacity(0.4),
-                                    blurRadius: 8,
+                                    color: widget.highlight
+                                      ? const Color(0xFFFFD700).withOpacity(0.5)
+                                      : const Color(0xFF1BFFFF).withOpacity(0.4),
+                                    blurRadius: 10,
                                     offset: const Offset(0, 2),
                                   ),
                                 ],
@@ -1345,18 +1367,18 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   const Icon(
-                                    Icons.card_giftcard_rounded,
+                                    Icons.celebration_rounded,
                                     color: Colors.white,
-                                    size: 12,
+                                    size: 13,
                                   ),
-                                  const SizedBox(width: 4),
+                                  const SizedBox(width: 5),
                                   Text(
-                                    'İLK 7 GÜN ÜCRETSİZ DENE',
+                                    '7 GÜN BEDAVA DENE 🎁',
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.w900,
-                                      fontSize: widget.isSmallScreen ? 9.0 : 10.0,
-                                      letterSpacing: 0.4,
+                                      fontSize: widget.isSmallScreen ? 9.5 : 10.5,
+                                      letterSpacing: 0.5,
                                     ),
                                   ),
                                 ],
@@ -1378,15 +1400,34 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard> with SingleTic
                               ),
                             ),
                             SizedBox(width: widget.isSmallScreen ? 3 : 4),
-                            Text(
-                              widget.billingPeriod,
-                              style: TextStyle(
-                                fontSize: widget.isSmallScreen ? 11.0 : 13.0,
-                                fontWeight: FontWeight.w700,
-                                color: widget.highlight
-                                    ? Colors.white.withOpacity(0.9)
-                                    : colorScheme.onSurface.withOpacity(0.65),
-                              ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  widget.billingPeriod,
+                                  style: TextStyle(
+                                    fontSize: widget.isSmallScreen ? 11.0 : 13.0,
+                                    fontWeight: FontWeight.w700,
+                                    color: widget.highlight
+                                        ? Colors.white.withOpacity(0.9)
+                                        : colorScheme.onSurface.withOpacity(0.65),
+                                  ),
+                                ),
+                                // Yıllık pakette aylık eşdeğeri göster
+                                if (widget.monthlyEquivalent != null) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Aylık ${widget.monthlyEquivalent}',
+                                    style: TextStyle(
+                                      fontSize: widget.isSmallScreen ? 9.0 : 10.0,
+                                      fontWeight: FontWeight.w800,
+                                      color: widget.highlight
+                                          ? const Color(0xFFFFD700)
+                                          : colorScheme.secondary,
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ],
                         ),
@@ -1473,14 +1514,16 @@ class _TrustBadges extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Wrap(
         alignment: WrapAlignment.center,
-        spacing: 10,
+        spacing: 8,
         runSpacing: 6,
         children: const [
+          _TrustBadge(icon: Icons.verified_user_rounded, text: '10.000+ Mutlu Öğrenci', color: Color(0xFF2E7D32)),
           _TrustBadge(icon: Icons.lock_rounded, text: 'Güvenli Ödeme', color: Color(0xFF4CAF50)),
-          _TrustBadge(icon: Icons.cancel_schedule_send_rounded, text: 'Kolay İptal', color: Color(0xFF2196F3)),
+          _TrustBadge(icon: Icons.cancel_schedule_send_rounded, text: '1 Tıkla İptal', color: Color(0xFF2196F3)),
+          _TrustBadge(icon: Icons.trending_up_rounded, text: '%40 Not Artışı', color: Color(0xFFFF6F00)),
         ],
       ),
     );
