@@ -48,248 +48,146 @@ class PomodoroTimerView extends ConsumerWidget {
   }
 
   Widget _buildHeader(BuildContext context, String title, String message, PomodoroModel pomodoro, WidgetRef ref) {
-    final endTime = DateTime.now().add(Duration(seconds: pomodoro.timeRemaining));
-    final endStr = DateFormat('HH:mm').format(endTime);
     final textTheme = Theme.of(context).textTheme;
 
     return Column(
       children: [
-        // Başlık - Gradient Text
-        ShaderMask(
-          shaderCallback: (bounds) => const LinearGradient(
-            colors: [Colors.white, Color(0xFFE0E0E0)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ).createShader(bounds),
-          child: Text(
-            title,
-            style: textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              letterSpacing: -0.5,
+        // Minimalist Başlık
+        Text(
+          title,
+          style: textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: Colors.white.withOpacity(0.95),
+            letterSpacing: 0.5,
+          ),
+        ),
+        const SizedBox(height: 8),
+        // Görev Bilgisi
+        GestureDetector(
+          onTap: () => _showTaskSelectionSheet(context, ref),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.white.withOpacity(0.15)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.task_alt, size: 16, color: Colors.white.withOpacity(0.9)),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    pomodoro.currentTask,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(Icons.edit_outlined, size: 14, color: Colors.white.withOpacity(0.7)),
+              ],
             ),
           ),
         ),
-        const SizedBox(height: 6),
-        // Alt mesaj
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity(0.2)),
-          ),
-          child: Text(
-            message,
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.95),
-              fontStyle: FontStyle.italic,
-              fontWeight: FontWeight.w600,
-              fontSize: 13,
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        // Modern Bilgi Chip'leri
-        Wrap(
-          alignment: WrapAlignment.center,
-          spacing: 10,
-          runSpacing: 10,
-          children: [
-            _PremiumChip(
-              icon: Icons.assignment_outlined,
-              label: pomodoro.currentTask,
-              onTap: () => _showTaskSelectionSheet(context, ref),
-            ),
-            _PremiumChip(
-              icon: Icons.schedule_rounded,
-              label: "Bitiş: $endStr",
-            ),
-            _PremiumChip(
-              icon: Icons.flag_rounded,
-              label: "Tur: ${pomodoro.currentRound} / ${pomodoro.longBreakInterval}",
-            ),
-          ],
-        ).animate().fadeIn(duration: 500.ms),
       ],
-    ).animate().fadeIn(duration: 500.ms);
+    ).animate().fadeIn(duration: 400.ms);
   }
 
   Widget _buildControls(BuildContext context, PomodoroModel pomodoro, PomodoroNotifier notifier, WidgetRef ref) {
     final onBreak = pomodoro.sessionState == PomodoroSessionState.shortBreak || pomodoro.sessionState == PomodoroSessionState.longBreak;
     final canPromptReset = pomodoro.sessionState != PomodoroSessionState.idle;
+
     return Column(
       children: [
+        // Minimalist Kontroller
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // Settings Button
-            Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.white.withOpacity(0.2),
-                    Colors.white.withOpacity(0.1),
+            _ModernIconButton(
+              icon: Icons.settings_outlined,
+              onPressed: () => _showSettingsSheet(context, ref),
+              size: 48,
+            ),
+            const SizedBox(width: 32),
+            // Ana Play/Pause Button
+            GestureDetector(
+              onTap: pomodoro.isPaused ? notifier.start : notifier.pause,
+              child: Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.15),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
                   ],
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: IconButton.filled(
-                onPressed: () => _showSettingsSheet(context, ref),
-                icon: const Icon(Icons.settings, color: Colors.white),
-                style: IconButton.styleFrom(backgroundColor: Colors.transparent),
-              ),
-            ),
-            const SizedBox(width: 24),
-            // Play/Pause Button - Main Action
-            Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: const LinearGradient(
-                  colors: [Colors.white, Color(0xFFE0E0E0)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
-                    blurRadius: 16,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: IconButton.filled(
-                iconSize: 56,
-                onPressed: pomodoro.isPaused ? notifier.start : notifier.pause,
-                icon: Icon(
+                child: Icon(
                   pomodoro.isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
                   color: const Color(0xFF2E3192),
+                  size: 40,
                 ),
-                style: IconButton.styleFrom(backgroundColor: Colors.transparent),
               ),
+            ).animate(target: pomodoro.isPaused ? 0 : 1).scale(
+              duration: 300.ms,
+              curve: Curves.easeOutBack,
+              begin: const Offset(1, 1),
+              end: const Offset(0.95, 0.95),
             ),
-            const SizedBox(width: 24),
+            const SizedBox(width: 32),
             // Reset Button
-            Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.white.withOpacity(0.2),
-                    Colors.white.withOpacity(0.1),
-                  ],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: IconButton.filled(
-                onPressed: () => _confirmAndReset(context, notifier, prompt: canPromptReset),
-                icon: const Icon(Icons.replay_rounded, color: Colors.white),
-                style: IconButton.styleFrom(backgroundColor: Colors.transparent),
-              ),
+            _ModernIconButton(
+              icon: Icons.refresh_rounded,
+              onPressed: () => _confirmAndReset(context, notifier, prompt: canPromptReset),
+              size: 48,
             ),
           ],
         ),
+        const SizedBox(height: 24),
+
+        // Tur göstergesi
+        _RoundIndicator(
+          currentRound: pomodoro.currentRound,
+          totalRounds: pomodoro.longBreakInterval,
+        ),
+
+        const SizedBox(height: 24),
+
+        // Aksiyon butonları
         if (onBreak)
-          Padding(
-            padding: const EdgeInsets.only(top: 12.0),
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.white.withOpacity(0.15),
-                    Colors.white.withOpacity(0.1),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withOpacity(0.25)),
-              ),
-              child: TextButton.icon(
-                onPressed: notifier.skipBreakAndStartWork,
-                icon: const Icon(Icons.skip_next_rounded, color: Colors.white),
-                label: const Text(
-                  "Molayı atla ve çalışmaya başla",
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
-                ),
-              ),
-            ),
+          _ActionButton(
+            icon: Icons.skip_next_rounded,
+            label: "Molayı atla",
+            onPressed: notifier.skipBreakAndStartWork,
           ),
         if (pomodoro.sessionState == PomodoroSessionState.work && pomodoro.currentTaskIdentifier != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 12.0),
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.white.withOpacity(0.15),
-                    Colors.white.withOpacity(0.1),
-                  ],
+          _ActionButton(
+            icon: Icons.check_circle_outline,
+            label: "Görevi tamamla",
+            onPressed: () {
+              notifier.markTaskAsCompleted();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text("'${pomodoro.currentTask}' tamamlandı!"),
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withOpacity(0.25)),
-              ),
-              child: TextButton.icon(
-                onPressed: () {
-                  notifier.markTaskAsCompleted();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text("'${pomodoro.currentTask}' tamamlandı olarak işaretlendi!"),
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.check_circle, color: Colors.white),
-                label: Text(
-                  "'${pomodoro.currentTask}' görevini tamamla",
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
-                ),
-              ),
-            ),
+              );
+            },
           ),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Colors.white.withOpacity(0.12),
-                Colors.white.withOpacity(0.08),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white.withOpacity(0.2)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.lightbulb_outline_rounded, size: 16, color: Colors.white.withOpacity(0.9)),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  'Çift dokun: Başlat/Duraklat • Uzun bas: Ayarlar',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white.withOpacity(0.9),
-                    fontWeight: FontWeight.w600,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ],
-          ),
-        ),
+
         const SizedBox(height: 16),
         // Banner Reklam
         Consumer(
@@ -304,7 +202,7 @@ class PomodoroTimerView extends ConsumerWidget {
           },
         ),
       ],
-    ).animate().fadeIn(duration: 500.ms);
+    ).animate().fadeIn(duration: 400.ms);
   }
 
   Future<void> _confirmAndReset(BuildContext context, PomodoroNotifier notifier, {bool prompt = false}) async {
@@ -518,22 +416,16 @@ class _TimerDialState extends State<_TimerDial> with SingleTickerProviderStateMi
                 );
               },
             ),
-            // Merkez metin ve mini bilgi
+            // Merkez metin - Minimalist
             Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('$minutes:$seconds', style: Theme.of(context).textTheme.displayLarge?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 2)),
-                  const SizedBox(height: 6),
-                  // küçük ipucu
-                  Opacity(
-                    opacity: 0.8,
-                    child: Text(
-                      pomodoro.isPaused ? 'Çift dokun: Başlat' : 'Çift dokun: Duraklat',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                    ),
-                  ),
-                ],
+              child: Text(
+                '$minutes:$seconds',
+                style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                  fontWeight: FontWeight.w300,
+                  letterSpacing: 4,
+                  fontSize: 72,
+                  color: Colors.white,
+                ),
               ),
             ),
           ],
@@ -568,70 +460,54 @@ class _DialPainter extends CustomPainter {
     final radius = size.width / 2;
     final rect = Rect.fromCircle(center: center, radius: radius);
 
-    // Let's assume the color scheme is passed to the painter.
-    final surfaceVariant = colorScheme.surfaceContainerHighest;
-    final onSurface = colorScheme.onSurface;
-
-    // Arkaplan çemberi
+    // Arkaplan çemberi - daha ince ve minimal
     final backgroundPaint = Paint()
-      ..color = colorScheme.surfaceContainerHighest.withOpacity(0.2)
+      ..color = colorScheme.surfaceContainerHighest.withOpacity(0.15)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 12;
+      ..strokeWidth = 8;
     canvas.drawCircle(center, radius, backgroundPaint);
 
     if (progress > 0.0) {
       final progressPaint = Paint()
-        ..shader = SweepGradient(
-          colors: [
-            color.withOpacity(0.15),
-            color.withOpacity(0.6),
-            color,
-            color.withOpacity(0.6),
-          ],
-          stops: const [0.0, 0.3, 0.6, 1.0],
-          startAngle: -pi / 2 + rotationAngle,
-          endAngle: (3 * pi / 2) + rotationAngle,
-        ).createShader(rect)
+        ..color = color
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 16 * finalPulse
+        ..strokeWidth = 10 * finalPulse
         ..strokeCap = StrokeCap.round;
 
-      // Glow katmanı
-      final glowPaint = Paint()
-        ..color = color.withOpacity(isPaused ? 0.08 : 0.15)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 22 * finalPulse
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 24);
+      // Hafif glow sadece aktif durumlarda
+      if (!isPaused) {
+        final glowPaint = Paint()
+          ..color = color.withOpacity(0.3)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 14 * finalPulse
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
 
-      canvas.drawArc(rect, -pi / 2, 2 * pi * progress, false, glowPaint);
+        canvas.drawArc(rect, -pi / 2, 2 * pi * progress, false, glowPaint);
+      }
+
       canvas.drawArc(rect, -pi / 2, 2 * pi * progress, false, progressPaint);
     }
 
-    // Tur noktaları
-    const dotRadius = 6.0;
-    final dotDistance = radius - 8;
+    // Tur noktaları - daha minimal
+    const dotRadius = 4.0;
+    final dotDistance = radius - 6;
     for (int i = 0; i < interval; i++) {
       final angle = -pi / 2 + 2 * pi * (i / interval);
       final dx = center.dx + cos(angle) * dotDistance;
       final dy = center.dy + sin(angle) * dotDistance;
       final paint = Paint()
-        ..color = i < completedInCycle ? color : colorScheme.surfaceContainerHighest.withOpacity(0.4)
+        ..color = i < completedInCycle ? color.withOpacity(0.9) : colorScheme.surfaceContainerHighest.withOpacity(0.3)
         ..style = PaintingStyle.fill;
       canvas.drawCircle(Offset(dx, dy), dotRadius, paint);
-      final stroke = Paint()
-        ..color = colorScheme.onSurface.withOpacity(0.08)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1;
-      canvas.drawCircle(Offset(dx, dy), dotRadius, stroke);
     }
 
-    // Nefes/pulse arka katman - rotationAngle kullanarak sürekli çizimi önle
-    final breath = sin(rotationAngle * (isPaused ? 0.5 : 1.5)) * 5;
+    // Nefes/pulse arka katman - daha subtil
+    final breath = sin(rotationAngle * (isPaused ? 0.5 : 1.5)) * 3;
     final breathPaint = Paint()
-      ..color = color.withOpacity(isPaused ? 0.05 : 0.1)
+      ..color = color.withOpacity(isPaused ? 0.03 : 0.06)
       ..style = PaintingStyle.fill
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
-    canvas.drawCircle(center, (radius - 20 + breath) * finalPulse, breathPaint);
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 15);
+    canvas.drawCircle(center, (radius - 25 + breath) * finalPulse, breathPaint);
   }
 
   @override
@@ -646,64 +522,125 @@ class _DialPainter extends CustomPainter {
   }
 }
 
-
-// Premium Chip Widget
-class _PremiumChip extends StatelessWidget {
+// Modern Icon Button
+class _ModernIconButton extends StatelessWidget {
   final IconData icon;
-  final String label;
-  final VoidCallback? onTap;
+  final VoidCallback? onPressed;
+  final double size;
 
-  const _PremiumChip({
+  const _ModernIconButton({
     required this.icon,
-    required this.label,
-    this.onTap,
+    required this.onPressed,
+    this.size = 48,
   });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Colors.white.withOpacity(0.25),
-              Colors.white.withOpacity(0.15),
-            ],
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.white.withOpacity(0.15),
+        border: Border.all(color: Colors.white.withOpacity(0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.15),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
+        ],
+      ),
+      child: IconButton(
+        icon: Icon(icon, color: Colors.white),
+        onPressed: onPressed,
+        iconSize: size * 0.45,
+      ),
+    );
+  }
+}
+
+// Round Indicator
+class _RoundIndicator extends StatelessWidget {
+  final int currentRound;
+  final int totalRounds;
+
+  const _RoundIndicator({
+    required this.currentRound,
+    required this.totalRounds,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.15)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.flag_rounded, size: 16, color: Colors.white.withOpacity(0.9)),
+          const SizedBox(width: 8),
+          Text(
+            'Tur $currentRound / $totalRounds',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.9),
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
             ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 18, color: Colors.white),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Action Button
+class _ActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback? onPressed;
+
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.2)),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, color: Colors.white, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
                 ),
-                overflow: TextOverflow.ellipsis,
-              ),
+              ],
             ),
-            if (onTap != null) ...[
-              const SizedBox(width: 4),
-              Icon(Icons.edit, size: 14, color: Colors.white.withOpacity(0.8)),
-            ],
-          ],
+          ),
         ),
       ),
     );

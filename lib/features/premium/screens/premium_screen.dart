@@ -321,6 +321,26 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
 
                                 // Price Transparency Footer
                                 const SizedBox(height: 24),
+
+                                // Güvenli Ödeme & Kolay İptal (Küçük)
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    _TrustBadgeSmall(
+                                      icon: Icons.lock_outline_rounded,
+                                      label: "Güvenli Ödeme",
+                                      color: _successColor,
+                                    ),
+                                    const SizedBox(width: 24),
+                                    _TrustBadgeSmall(
+                                      icon: Icons.cancel_outlined,
+                                      label: "Kolay İptal",
+                                      color: _accentBrand,
+                                    ),
+                                  ],
+                                ),
+
+                                const SizedBox(height: 16),
                                 const _PriceTransparencyText(),
                                 const SizedBox(height: 120), // Bottom spacer
                               ]),
@@ -754,3 +774,35 @@ class _FooterLink extends StatelessWidget {
     );
   }
 }
+
+class _TrustBadgeSmall extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  const _TrustBadgeSmall({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, color: color, size: 16),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.6),
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
