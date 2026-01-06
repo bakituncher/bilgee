@@ -7,6 +7,7 @@ import 'package:taktik/core/services/revenuecat_service.dart';
 import 'package:collection/collection.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:taktik/data/providers/shared_prefs_provider.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
 import 'dart:ui';
 import 'dart:async';
 import 'package:taktik/core/navigation/app_routes.dart';
@@ -152,6 +153,20 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
   Widget build(BuildContext context) {
     final offeringsAsync = ref.watch(offeringsProvider);
     final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final user = ref.watch(userProfileProvider).valueOrNull;
+
+    // Kullanıcının sınavına göre başlığı belirle
+    String examSuffix = "";
+    if (user?.selectedExam != null) {
+      final exam = user!.selectedExam!.toLowerCase();
+      if (exam == 'yks') {
+        examSuffix = " YKS";
+      } else if (exam == 'lgs') {
+        examSuffix = " LGS";
+      } else if (exam.startsWith('kpss')) {
+        examSuffix = " KPSS";
+      }
+    }
 
     return Scaffold(
       backgroundColor: _bgDark,
@@ -201,9 +216,9 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ).createShader(bounds),
-                              child: const Text(
-                                "TAKTİK PRO",
-                                style: TextStyle(
+                              child: Text(
+                                "TAKTİK PRO$examSuffix",
+                                style: const TextStyle(
                                   fontSize: 38,
                                   fontWeight: FontWeight.w900,
                                   color: Colors.white,
