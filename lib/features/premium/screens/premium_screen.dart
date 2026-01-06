@@ -30,13 +30,13 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
   Package? _selectedPackage;
   int _currentCarouselIndex = 0;
 
-  // Modern Brand Colors (1. Koddan)
+  // Modern Brand Colors
   final Color _bgDark = const Color(0xFF0F1115);
   final Color _primaryBrand = const Color(0xFF4C4DDC); // Modern İndigo
   final Color _accentBrand = const Color(0xFF00E5FF); // Neon Cyan
   final Color _successColor = const Color(0xFF00D26A); // Yeşil
 
-  // Feature Data (1. Koddan)
+  // Feature Data
   final List<Map<String, dynamic>> _features = [
     {
       'icon': Icons.school_rounded,
@@ -74,12 +74,12 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     super.dispose();
   }
 
-  // --- LOGIC (2. KODDAN ALINAN GÜÇLENDİRİLMİŞ BACKEND) ---
+  // --- LOGIC ---
 
   Future<void> _handleBack() async {
     try {
       final prefs = await ref.read(sharedPreferencesProvider.future);
-      // Bugünü kaydet, bugün bir daha gösterme (2. Kod mantığı)
+      // Bugünü kaydet, bugün bir daha gösterme logic'i için
       await prefs.setString('premium_screen_last_shown', DateTime.now().toString().split(' ')[0]);
     } catch (_) {}
 
@@ -101,7 +101,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
       if (!context.mounted) return;
 
       if (outcome.success) {
-        // Optimistic Update: Cloud Function ile sunucuyu anında senkronize et (2. Kodun özelliği)
+        // Optimistic Update: Cloud Function ile sunucuyu anında senkronize et
         try {
           await FirebaseFunctions.instanceFor(region: 'us-central1')
               .httpsCallable('premium-syncRevenueCatPremiumCallable')
@@ -132,7 +132,6 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
 
     try {
       await RevenueCatService.restorePurchases();
-      // Restore işleminde de Cloud Function tetikleniyor (2. kod mantığı)
       final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
       await functions.httpsCallable('premium-syncRevenueCatPremiumCallable').call();
 
@@ -158,7 +157,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
       backgroundColor: _bgDark,
       body: Stack(
         children: [
-          // 1. Animated Mesh Background (1. Kodun Görseli)
+          // 1. Animated Mesh Background
           _buildModernBackground(),
 
           // 2. Content
@@ -189,7 +188,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                   child: CustomScrollView(
                     physics: const BouncingScrollPhysics(),
                     slivers: [
-                      // HERO SECTION (1. Kodun Tasarımı)
+                      // HERO SECTION
                       SliverToBoxAdapter(
                         child: Column(
                           children: [
@@ -258,13 +257,14 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
 
                       const SliverToBoxAdapter(child: SizedBox(height: 40)),
 
-                      // PRICING SECTION (2. Kodun Logic'i ile Entegre Edildi)
+                      // PRICING SECTION (OPTIMIZE EDİLMİŞ)
                       offeringsAsync.when(
                         data: (offerings) {
                           Package? monthly, yearly;
                           double? savePercent;
+                          double? monthlyPriceVal;
 
-                          // --- REVENUECAT PACKAGE EXTRACTION (2. Koddan Alındı - Daha Güvenilir) ---
+                          // --- REVENUECAT PACKAGE EXTRACTION ---
                           if (offerings != null) {
                             final current = offerings.current ?? offerings.all.values.firstWhereOrNull((o) => o.availablePackages.isNotEmpty);
                             if (current != null) {
@@ -281,6 +281,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                               if (monthly != null && yearly != null) {
                                 final mPrice = monthly.storeProduct.price;
                                 final yPrice = yearly.storeProduct.price;
+                                monthlyPriceVal = mPrice; // Aylık fiyatı sakla
                                 if (mPrice > 0 && yPrice > 0) {
                                   savePercent = (1 - (yPrice / (mPrice * 12))) * 100;
                                 }
@@ -300,7 +301,8 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                                     package: yearly,
                                     isSelected: _selectedPackage == yearly,
                                     isBestValue: true,
-                                    savingsPercent: savePercent, // Hesaplanan oran
+                                    savingsPercent: savePercent,
+                                    compareMonthlyPrice: monthlyPriceVal, // Karşılaştırma fiyatı
                                     onTap: () => setState(() => _selectedPackage = yearly),
                                     accentColor: _primaryBrand,
                                     badgeColor: _successColor,
@@ -317,7 +319,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                                     badgeColor: _successColor,
                                   ),
 
-                                // Price Transparency Footer (2. Koddan eklendi)
+                                // Price Transparency Footer
                                 const SizedBox(height: 24),
                                 const _PriceTransparencyText(),
                                 const SizedBox(height: 120), // Bottom spacer
@@ -335,7 +337,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
             ),
           ),
 
-          // 3. STICKY BOTTOM BAR (Dynamic Trial Logic Eklendi)
+          // 3. STICKY BOTTOM BAR
           Positioned(
             bottom: 0, left: 0, right: 0,
             child: ClipRRect(
@@ -354,8 +356,9 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Disclaimer & Trial Logic (7 Gün Deneme Kontrolü)
-                      if (_selectedPackage != null)
+                      // Disclaimer & Trial Logic (GÜNCELLENDİ)
+                      // Sadece ücretsiz deneme varsa bu satırı göster, yoksa gizle.
+                      if (_selectedPackage != null && _selectedPackage!.storeProduct.introductoryPrice?.price == 0)
                         Padding(
                           padding: const EdgeInsets.only(bottom: 12),
                           child: Row(
@@ -363,11 +366,8 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                             children: [
                               const Icon(Icons.shield_outlined, size: 14, color: Colors.white54),
                               const SizedBox(width: 6),
-                              // Eğer introductoryPrice 0 ise deneme var demektir (2. Kod Mantığı).
                               Text(
-                                (_selectedPackage!.storeProduct.introductoryPrice?.price == 0)
-                                    ? "7 Gün Ücretsiz Deneme, sonra ${_selectedPackage!.storeProduct.priceString}"
-                                    : "İstediğin zaman iptal et",
+                                "7 Gün Ücretsiz Deneme, sonra ${_selectedPackage!.storeProduct.priceString}",
                                 style: const TextStyle(color: Colors.white54, fontSize: 11),
                               ),
                             ],
@@ -404,7 +404,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                                         ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 3)
                                         : Text(
                                       (_selectedPackage?.storeProduct.introductoryPrice?.price == 0)
-                                          ? "ÜCRETSİZ DENE" // Trial varsa
+                                          ? "ÜCRETSİZ DENE"
                                           : "HEMEN BAŞLA",
                                       style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800, letterSpacing: 0.5),
                                     ),
@@ -437,7 +437,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     );
   }
 
-  // --- VISUAL HELPER METHODS (1. KODDAN AYNEN KORUNDU) ---
+  // --- VISUAL HELPER METHODS ---
 
   Widget _buildModernBackground() {
     return AnimatedBuilder(
@@ -525,7 +525,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
   }
 }
 
-// --- UPDATED PRICING CARD (Görsel 1. Koddan, Veri İşleme 2. Koddan) ---
+// --- UPDATED PRICING CARD (DÖNÜŞÜM ODAKLI YENİ TASARIM) ---
 
 class _ModernPricingCard extends StatelessWidget {
   final Package package;
@@ -534,7 +534,8 @@ class _ModernPricingCard extends StatelessWidget {
   final VoidCallback onTap;
   final Color accentColor;
   final Color badgeColor;
-  final double? savingsPercent; // Değişiklik: Direkt oranı alıyoruz
+  final double? savingsPercent;
+  final double? compareMonthlyPrice; // Çapalama için
 
   const _ModernPricingCard({
     required this.package,
@@ -544,20 +545,38 @@ class _ModernPricingCard extends StatelessWidget {
     required this.accentColor,
     required this.badgeColor,
     this.savingsPercent,
+    this.compareMonthlyPrice,
   });
 
   @override
   Widget build(BuildContext context) {
-    // 2. Kodun Logic'i: Trial ve Annual kontrolü
     final isAnnual = package.packageType == PackageType.annual ||
         package.identifier.toLowerCase().contains('annual') ||
         package.identifier.toLowerCase().contains('year');
 
     final hasTrial = package.storeProduct.introductoryPrice?.price == 0;
 
-    final pricePerMonth = isAnnual
-        ? "${(package.storeProduct.price / 12).toStringAsFixed(2)}₺ / ay"
-        : "";
+    // Fiyat Hesaplamaları
+    String bigPriceDisplay = "";
+    String smallSubtext = "";
+    String? strikeThroughPrice;
+
+    if (isAnnual) {
+      // Yıllık ise: Büyük fontla AYLIK eşdeğerini göster
+      final monthlyEq = package.storeProduct.price / 12;
+      bigPriceDisplay = "${monthlyEq.toStringAsFixed(2)}₺ /ay";
+      smallSubtext = "Yıllık ${package.storeProduct.priceString} faturalanır";
+
+      // Çapalama: Eğer elimizde aylık paketin fiyatı varsa, "Normalde X TL" diyerek üstünü çizelim
+      if (compareMonthlyPrice != null) {
+        final totalYearlyIfPaidMonthly = compareMonthlyPrice! * 12;
+        strikeThroughPrice = "${totalYearlyIfPaidMonthly.toStringAsFixed(2)}₺";
+      }
+    } else {
+      // Aylık ise: Direkt fiyatı göster
+      bigPriceDisplay = package.storeProduct.priceString;
+      smallSubtext = "Her ay yenilenir";
+    }
 
     return GestureDetector(
       onTap: () {
@@ -567,72 +586,136 @@ class _ModernPricingCard extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeInOut,
-        padding: const EdgeInsets.all(2),
+        padding: EdgeInsets.all(isSelected ? 2 : 0),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
+          // Seçili ise Gradient Border, değilse şeffaf
           gradient: isSelected
-              ? LinearGradient(colors: [accentColor, accentColor.withOpacity(0.5)])
-              : LinearGradient(colors: [Colors.white10, Colors.white.withOpacity(0.05)]),
+              ? LinearGradient(colors: [accentColor, const Color(0xFF00E5FF)])
+              : LinearGradient(colors: [Colors.white.withOpacity(0.1), Colors.white.withOpacity(0.05)]),
+          boxShadow: isSelected
+              ? [BoxShadow(color: accentColor.withOpacity(0.25), blurRadius: 12, spreadRadius: 0)]
+              : [],
         ),
         child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(color: const Color(0xFF16181E), borderRadius: BorderRadius.circular(18)),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFF1A1D25) : const Color(0xFF16181E),
+            borderRadius: BorderRadius.circular(18),
+          ),
           child: Row(
             children: [
-              // Seçim Radio Button
+              // 1. Radio Icon
               Container(
                 width: 24, height: 24,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: isSelected ? accentColor : Colors.grey.withOpacity(0.5), width: 2),
-                  color: isSelected ? accentColor.withOpacity(0.2) : Colors.transparent,
+                  color: isSelected ? accentColor : Colors.transparent,
+                  border: Border.all(
+                      color: isSelected ? accentColor : Colors.grey.withOpacity(0.4),
+                      width: 2
+                  ),
                 ),
-                child: isSelected ? Center(child: Container(width: 10, height: 10, decoration: BoxDecoration(color: accentColor, shape: BoxShape.circle))) : null,
+                child: isSelected
+                    ? const Icon(Icons.check, size: 16, color: Colors.white)
+                    : null,
               ),
               const SizedBox(width: 16),
 
-              // İçerik
+              // 2. Orta Kısım
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    // Üst Başlık ve Badge
                     Row(
                       children: [
-                        Text(isAnnual ? "Yıllık Plan" : "Aylık Plan", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                        // Best Value veya İndirim Badge'i
-                        if (isBestValue) ...[
+                        Text(
+                          isAnnual ? "Yıllık Plan" : "Aylık Plan",
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                              fontSize: 16
+                          ),
+                        ),
+                        if (isBestValue && savingsPercent != null) ...[
                           const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(color: badgeColor, borderRadius: BorderRadius.circular(4)),
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: badgeColor,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
                             child: Text(
-                                savingsPercent != null
-                                    ? "%${savingsPercent!.toStringAsFixed(0)} İNDİRİM"
-                                    : "EN POPÜLER",
-                                style: const TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.bold)
+                              "%${savingsPercent!.toStringAsFixed(0)} KAZANÇ",
+                              style: const TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w900
+                              ),
                             ),
                           )
-                        ]
+                        ],
                       ],
                     ),
-                    const SizedBox(height: 4),
-                    // Trial Vurgusu
+                    const SizedBox(height: 6),
+                    // Alt Metin
                     if (hasTrial)
-                      Text("7 GÜN ÜCRETSİZ DENE", style: TextStyle(color: accentColor, fontSize: 12, fontWeight: FontWeight.w900))
-                    else if (isAnnual)
-                      const Text("Tüm özelliklere 1 yıl erişim", style: TextStyle(color: Colors.grey, fontSize: 12))
+                      Text(
+                        "7 GÜN ÜCRETSİZ, SONRA",
+                        style: TextStyle(
+                            color: accentColor,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.5
+                        ),
+                      )
                     else
-                      const Text("İstediğin zaman iptal et", style: TextStyle(color: Colors.grey, fontSize: 12)),
+                      Text(
+                        smallSubtext,
+                        style: TextStyle(
+                            color: Colors.white.withOpacity(0.5),
+                            fontSize: 12
+                        ),
+                      ),
                   ],
                 ),
               ),
 
-              // Fiyat
+              // 3. Fiyat Kısmı (Sağ)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(package.storeProduct.priceString, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                  if (pricePerMonth.isNotEmpty) Text(pricePerMonth, style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12)),
+                  // Çizik Eski Fiyat (Yıllık için)
+                  if (isAnnual && strikeThroughPrice != null)
+                    Text(
+                      strikeThroughPrice,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.3),
+                        fontSize: 13,
+                        decoration: TextDecoration.lineThrough,
+                        decorationColor: Colors.white.withOpacity(0.3),
+                      ),
+                    ),
+                  // Ana Fiyat
+                  Text(
+                    bigPriceDisplay,
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : Colors.white.withOpacity(0.9),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  if (!isAnnual)
+                    Text(
+                      "/ay",
+                      style: TextStyle(
+                          color: Colors.white.withOpacity(0.5),
+                          fontSize: 12
+                      ),
+                    ),
                 ],
               ),
             ],
@@ -643,7 +726,6 @@ class _ModernPricingCard extends StatelessWidget {
   }
 }
 
-// --- NEW WIDGET (2. KODDAN ALINAN YASAL METİN) ---
 class _PriceTransparencyText extends StatelessWidget {
   const _PriceTransparencyText();
 
@@ -652,9 +734,7 @@ class _PriceTransparencyText extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10),
       child: Text(
-        'Abonelik, siz iptal edene kadar seçtiğiniz tarife üzerinden otomatik olarak yenilenir. '
-            'Varsa ücretsiz deneme süresi sonunda ücretlendirme başlar. '
-            'Ayarlardan istediğiniz zaman iptal edebilirsiniz.',
+        'Abonelik otomatik yenilenir, dilediğin zaman iptal edebilirsin.',
         textAlign: TextAlign.center,
         style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 10, height: 1.4),
       ),
