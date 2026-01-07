@@ -402,7 +402,11 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            if (_selectedPackage != null && _selectedPackage!.storeProduct.introductoryPrice?.price == 0)
+                            if (_selectedPackage != null &&
+                                _selectedPackage!.storeProduct.introductoryPrice?.price == 0 &&
+                                (_selectedPackage!.packageType == PackageType.monthly ||
+                                 (!_selectedPackage!.identifier.toLowerCase().contains('annual') &&
+                                  !_selectedPackage!.identifier.toLowerCase().contains('year'))))
                               Padding(
                                 padding: const EdgeInsets.only(bottom: 12),
                                 child: Row(
@@ -411,7 +415,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                                     const Icon(Icons.shield_outlined, size: 14, color: Colors.white54),
                                     const SizedBox(width: 6),
                                     Text(
-                                      "7 Gün Ücretsiz Deneme, sonra ${_selectedPackage!.storeProduct.priceString}",
+                                      "7 Gün Ücretsiz Deneme ${_selectedPackage!.storeProduct.priceString}",
                                       style: const TextStyle(color: Colors.white54, fontSize: 11),
                                     ),
                                   ],
@@ -717,12 +721,12 @@ class _ModernPricingCard extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 4),
-                      if (hasTrial)
+                      if (hasTrial && !isAnnual)
                         FittedBox(
                           fit: BoxFit.scaleDown,
                           alignment: Alignment.centerLeft,
                           child: Text(
-                            "7 GÜN ÜCRETSİZ, SONRA",
+                            "7 GÜN ÜCRETSİZ DENE!",
                             style: TextStyle(
                                 color: accentColor,
                                 fontSize: 11,
@@ -858,3 +862,4 @@ class _TrustBadgeSmall extends StatelessWidget {
     );
   }
 }
+
