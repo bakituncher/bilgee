@@ -158,7 +158,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     final isSmallScreen = size.height < 700;
 
     // Bottom Bar yüksekliğini hesapla (Scroll Padding için gerekli)
-    final bottomBarHeight = 112.0 + bottomPadding + (isSmallScreen ? 10 : 30);
+    final bottomBarHeight = 100.0 + bottomPadding + (isSmallScreen ? 8 : 20);
 
     String examSuffix = "";
     if (user?.selectedExam != null) {
@@ -210,9 +210,9 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                           SliverToBoxAdapter(
                             child: Column(
                               children: [
-                                SizedBox(height: isSmallScreen ? 5 : 10),
-                                const Icon(Icons.diamond_rounded, size: 48, color: Color(0xFF00E5FF)),
-                                SizedBox(height: isSmallScreen ? 8 : 12),
+                                SizedBox(height: isSmallScreen ? 2 : 5),
+                                const Icon(Icons.diamond_rounded, size: 40, color: Color(0xFF00E5FF)),
+                                SizedBox(height: isSmallScreen ? 6 : 8),
                                 ShaderMask(
                                   shaderCallback: (bounds) => LinearGradient(
                                     colors: [_primaryBrand, _accentBrand],
@@ -223,7 +223,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                                     "TAKTİK PRO$examSuffix",
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
-                                      fontSize: isSmallScreen ? 32 : 38,
+                                      fontSize: isSmallScreen ? 30 : 34,
                                       fontWeight: FontWeight.w900,
                                       color: Colors.white,
                                       letterSpacing: 1,
@@ -231,9 +231,9 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                                     ),
                                   ),
                                 ),
-                                SizedBox(height: isSmallScreen ? 8 : 12),
+                                SizedBox(height: isSmallScreen ? 6 : 8),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                                   decoration: BoxDecoration(
                                     color: Colors.white.withOpacity(0.05),
                                     borderRadius: BorderRadius.circular(20),
@@ -242,10 +242,10 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                                   child: const Text(
                                     "1 kahve fiyatına başarının anahtarı",
                                     textAlign: TextAlign.center,
-                                    style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
+                                    style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
                                   ),
                                 ),
-                                SizedBox(height: isSmallScreen ? 20 : 30),
+                                SizedBox(height: isSmallScreen ? 12 : 18),
 
                                 // Feature Carousel (Fix: SizedBox yerine Container kullanıldı)
                                 Container(
@@ -425,7 +425,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                                   scale: 1.0 + (_pulseController.value * 0.02),
                                   child: Container(
                                     width: double.infinity,
-                                    height: 56,
+                                    height: 52,
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(16),
                                       gradient: LinearGradient(colors: [_primaryBrand, _primaryBrand.withOpacity(0.8)]),
@@ -533,8 +533,8 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
       scale: isActive ? 1.0 : 0.9,
       duration: const Duration(milliseconds: 300),
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: isActive ? Colors.white.withOpacity(0.08) : Colors.white.withOpacity(0.03),
           borderRadius: BorderRadius.circular(24),
@@ -546,14 +546,14 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: isActive ? _primaryBrand.withOpacity(0.2) : Colors.white.withOpacity(0.05),
                 shape: BoxShape.circle,
               ),
-              child: Icon(item['icon'], color: isActive ? _accentBrand : Colors.white54, size: 24),
+              child: Icon(item['icon'], color: isActive ? _accentBrand : Colors.white54, size: 22),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -619,12 +619,12 @@ class _ModernPricingCard extends StatelessWidget {
 
     if (isAnnual) {
       final monthlyEq = package.storeProduct.price / 12;
-      bigPriceDisplay = "${monthlyEq.toStringAsFixed(2)}₺ /ay";
+      bigPriceDisplay = "₺${monthlyEq.toStringAsFixed(2)} /ay";
       smallSubtext = "Yıllık ${package.storeProduct.priceString} faturalanır";
 
       if (compareMonthlyPrice != null) {
         final totalYearlyIfPaidMonthly = compareMonthlyPrice! * 12;
-        strikeThroughPrice = "${totalYearlyIfPaidMonthly.toStringAsFixed(2)}₺";
+        strikeThroughPrice = "₺${totalYearlyIfPaidMonthly.toStringAsFixed(2)}";
       }
     } else {
       bigPriceDisplay = package.storeProduct.priceString;
