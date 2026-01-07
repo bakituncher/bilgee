@@ -619,12 +619,12 @@ class FirestoreService {
     required String userId,
     required ExamType examType,
     required String sectionName,
+    String? language,
   }) async {
-    // Yalnızca kullanıcı belgesini güncelle. Leaderboard/public_profiles
-    // senkronizasyonu Cloud Function (onUserUpdate) tarafından yapılır.
     await usersCollection.doc(userId).update({
       'selectedExam': examType.name,
       'selectedExamSection': sectionName,
+      'selectedYdtLanguage': language,
       'updatedAt': FieldValue.serverTimestamp(),
     });
   }

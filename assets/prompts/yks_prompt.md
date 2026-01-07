@@ -18,6 +18,7 @@ Bu adayın {{SELECTED_EXAM_SECTION}} başarısı için mevcut zamanını maksimu
 - {{SELECTED_EXAM_SECTION}} için uygun konular seç
 - TYT için: Temel Matematik, Geometri, Türkçe, Sosyal, Fen
 - AYT için: Mat, Fizik, Kimya, Biyoloji, Edebiyat, Tarih, Coğrafya (alana göre)
+- YDT için: İngilizce, Almanca, Fransızca, Arapça veya Rusça - Kelime, Gramer, Reading, Çeviri
 - Konu isimleri tam ve net olmalı: "Türev" ✓, "Matematik" ✗
 
 ### 3. STRATEJİK TEKRAR SİSTEMİ

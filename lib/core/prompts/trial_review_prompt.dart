@@ -18,13 +18,14 @@ class TrialReviewPrompt {
 - Süre yönetimi önerileri
 - GY-GK stratejileri
 ''';
-    } else if (exam.contains('yks') || exam.contains('tyt') || exam.contains('ayt')) {
+    } else if (exam.contains('yks') || exam.contains('tyt') || exam.contains('ayt') || exam.contains('ydt')) {
       return '''
 **YKS Koçluk Tonu:**
 - Akademik, motive edici
 - "Hedef üniversite" odaklı
 - Konu derinliği vurgusu
 - Strateji ve taktik önerileri
+- YDT için: Dil becerisi geliştirme, günlük pratik, kelime ezber stratejileri
 - Genç, enerjik dil
 ''';
     } else if (exam.contains('lgs')) {

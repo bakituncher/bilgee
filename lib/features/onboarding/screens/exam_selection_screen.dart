@@ -156,6 +156,72 @@ class ExamSelectionScreen extends ConsumerWidget {
     );
   }
 
+  void _showLanguageSelection(
+    BuildContext context,
+    WidgetRef ref,
+    Exam exam,
+    ExamSection section,
+    ExamType examType,
+    String userId,
+    dynamic firestoreService,
+  ) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) {
+        final theme = Theme.of(context);
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'Hangi dil sınavına hazırlanıyorsun?',
+                    style: theme.textTheme.headlineSmall,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  ...section.availableLanguages!.map(
+                    (language) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          Navigator.pop(ctx);
+
+                          final ok = await _confirmInitialExamSelection(
+                            context,
+                            examDisplayName: exam.name,
+                            sectionDisplayName: 'YDT - $language',
+                          );
+                          if (!ok) return;
+
+                          await _handleSelection(
+                            context,
+                            ref,
+                            () => firestoreService.saveExamSelection(
+                              userId: userId,
+                              examType: examType,
+                              sectionName: section.name,
+                              language: language,
+                            ),
+                          );
+                        },
+                        child: Text(language),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void _onExamTypeSelected(BuildContext context, WidgetRef ref, ExamType examType) async {
     final exam = await ExamData.getExamByType(examType);
     final userId = ref.read(authControllerProvider).value!.uid;
@@ -180,6 +246,7 @@ class ExamSelectionScreen extends ConsumerWidget {
           userId: userId,
           examType: examType,
           sectionName: exam.sections.first.name,
+          language: null,
         ),
       );
       return;
@@ -193,47 +260,57 @@ class ExamSelectionScreen extends ConsumerWidget {
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  'Hangi alana hazırlanıyorsun?',
-                  style: Theme.of(context).textTheme.headlineSmall,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                ...exam.sections
-                    .where((section) => section.name != 'TYT')
-                    .map(
-                      (section) => Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0),
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            Navigator.pop(ctx);
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'Hangi alana hazırlanıyorsun?',
+                    style: Theme.of(context).textTheme.headlineSmall,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  ...exam.sections
+                      .where((section) => section.name != 'TYT')
+                      .map(
+                        (section) => Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0),
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              Navigator.pop(ctx);
 
-                            final ok = await _confirmInitialExamSelection(
-                              context,
-                              examDisplayName: exam.name,
-                              sectionDisplayName: section.name,
-                            );
-                            if (!ok) return;
+                              // YDT seçildiyse önce dil seçimi yap
+                              if (section.name == 'YDT' && section.availableLanguages != null) {
+                                _showLanguageSelection(context, ref, exam, section, examType, userId, firestoreService);
+                                return;
+                              }
 
-                            await _handleSelection(
-                              context,
-                              ref,
-                              () => firestoreService.saveExamSelection(
-                                userId: userId,
-                                examType: examType,
-                                sectionName: section.name,
-                              ),
-                            );
-                          },
-                          child: Text(section.name),
+                              final ok = await _confirmInitialExamSelection(
+                                context,
+                                examDisplayName: exam.name,
+                                sectionDisplayName: section.name,
+                              );
+                              if (!ok) return;
+
+                              await _handleSelection(
+                                context,
+                                ref,
+                                () => firestoreService.saveExamSelection(
+                                  userId: userId,
+                                  examType: examType,
+                                  sectionName: section.name,
+                                  // YDT dışı seçimlerde dil bilgisini sıfırla
+                                  language: null,
+                                ),
+                              );
+                            },
+                            child: Text(section.name),
+                          ),
                         ),
                       ),
-                    ),
-              ],
+                ],
+              ),
             ),
           ),
         );
@@ -315,4 +392,3 @@ class ExamSelectionScreen extends ConsumerWidget {
     );
   }
 }
-

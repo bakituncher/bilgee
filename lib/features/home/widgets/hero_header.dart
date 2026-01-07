@@ -57,18 +57,36 @@ class HeroHeader extends ConsumerWidget {
         countdowns.add({'days': rem['days'], 'hours': rem['hours'], 'label': 'LGS'});
       }
     } else if (exam == 'yks') {
-      // TYT: 20 Haziran 2026, 10:15
-      final tytDate = DateTime(2026, 6, 20, 10, 15);
-      final tytRem = _daysHoursRemaining(tytDate);
-      if (tytRem['days']! > 0 || tytRem['hours']! > 0) {
-        countdowns.add({'days': tytRem['days'], 'hours': tytRem['hours'], 'label': 'TYT'});
-      }
+      // YDT seçildiyse TYT ve YDT geri sayımını göster (her ikisine de girecekler)
+      if (selectedExamSection == 'YDT') {
+        // TYT: 20 Haziran 2026, 10:15
+        final tytDate = DateTime(2026, 6, 20, 10, 15);
+        final tytRem = _daysHoursRemaining(tytDate);
+        if (tytRem['days']! > 0 || tytRem['hours']! > 0) {
+          countdowns.add({'days': tytRem['days'], 'hours': tytRem['hours'], 'label': 'TYT'});
+        }
 
-      // AYT: 21 Haziran 2026, 10:15
-      final aytDate = DateTime(2026, 6, 21, 10, 15);
-      final aytRem = _daysHoursRemaining(aytDate);
-      if (aytRem['days']! > 0 || aytRem['hours']! > 0) {
-        countdowns.add({'days': aytRem['days'], 'hours': aytRem['hours'], 'label': 'AYT'});
+        // YDT: 21 Haziran 2026, 15:30
+        final ydtDate = DateTime(2026, 6, 21, 15, 30);
+        final ydtRem = _daysHoursRemaining(ydtDate);
+        if (ydtRem['days']! > 0 || ydtRem['hours']! > 0) {
+          countdowns.add({'days': ydtRem['days'], 'hours': ydtRem['hours'], 'label': 'YDT'});
+        }
+      } else {
+        // Diğer AYT alanları için TYT ve AYT göster
+        // TYT: 20 Haziran 2026, 10:15
+        final tytDate = DateTime(2026, 6, 20, 10, 15);
+        final tytRem = _daysHoursRemaining(tytDate);
+        if (tytRem['days']! > 0 || tytRem['hours']! > 0) {
+          countdowns.add({'days': tytRem['days'], 'hours': tytRem['hours'], 'label': 'TYT'});
+        }
+
+        // AYT: 21 Haziran 2026, 10:15
+        final aytDate = DateTime(2026, 6, 21, 10, 15);
+        final aytRem = _daysHoursRemaining(aytDate);
+        if (aytRem['days']! > 0 || aytRem['hours']! > 0) {
+          countdowns.add({'days': aytRem['days'], 'hours': aytRem['hours'], 'label': 'AYT'});
+        }
       }
     } else if (exam == 'kpsslisans') {
       // KPSS Lisans: 06 Eylül 2026, 10:15

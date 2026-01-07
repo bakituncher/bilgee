@@ -25,6 +25,7 @@ class UserModel {
   final DateTime? lastStreakUpdate;
   final String? selectedExam;
   final String? selectedExamSection;
+  final String? selectedYdtLanguage;
   final int testCount;
   final double totalNetSum;
   final int engagementScore;
@@ -90,6 +91,7 @@ class UserModel {
     this.lastStreakUpdate,
     this.selectedExam,
     this.selectedExamSection,
+    this.selectedYdtLanguage,
     this.testCount = 0,
     this.totalNetSum = 0.0,
     this.engagementScore = 0,
@@ -141,6 +143,7 @@ class UserModel {
     DateTime? lastStreakUpdate,
     String? selectedExam,
     String? selectedExamSection,
+    String? selectedYdtLanguage,
     int? testCount,
     double? totalNetSum,
     int? engagementScore,
@@ -190,6 +193,7 @@ class UserModel {
       lastStreakUpdate: lastStreakUpdate ?? this.lastStreakUpdate,
       selectedExam: selectedExam ?? this.selectedExam,
       selectedExamSection: selectedExamSection ?? this.selectedExamSection,
+      selectedYdtLanguage: selectedYdtLanguage ?? this.selectedYdtLanguage,
       testCount: testCount ?? this.testCount,
       totalNetSum: totalNetSum ?? this.totalNetSum,
       engagementScore: engagementScore ?? this.engagementScore,
@@ -282,6 +286,7 @@ class UserModel {
       lastStreakUpdate: (data['lastStreakUpdate'] as Timestamp?)?.toDate(),
       selectedExam: _asNullableString(data['selectedExam']),
       selectedExamSection: _asNullableString(data['selectedExamSection']),
+      selectedYdtLanguage: _asNullableString(data['selectedYdtLanguage']),
       testCount: data['testCount'] ?? 0,
       totalNetSum: (data['totalNetSum'] as num?)?.toDouble() ?? 0.0,
       engagementScore: data['engagementScore'] ?? 0,
@@ -355,6 +360,7 @@ class UserModel {
       'lastStreakUpdate': lastStreakUpdate != null ? Timestamp.fromDate(lastStreakUpdate!) : null,
       'selectedExam': selectedExam,
       'selectedExamSection': selectedExamSection,
+      'selectedYdtLanguage': selectedYdtLanguage,
       'testCount': testCount,
       'totalNetSum': totalNetSum,
       'engagementScore': engagementScore,

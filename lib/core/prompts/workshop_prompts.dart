@@ -29,12 +29,13 @@ String getStudyGuideAndQuizPrompt(
 - Paragraf analizi, mantık çıkarımı ve hızlı eleme tekniklerine odaklan
 - Çalışan adaylar için: Verimli, yoğun, ezbere dayalı içerik
 """;
-  } else if (examLower.contains('yks') || examLower.contains('tyt') || examLower.contains('ayt')) {
+  } else if (examLower.contains('yks') || examLower.contains('tyt') || examLower.contains('ayt') || examLower.contains('ydt')) {
     examGuidelines = """
 **YKS ÖZEL TALİMATLAR:**
 - Akademik, motive edici ton
 - TYT için: Temel kavramlar, hız ve doğruluk dengesi, tuzak soruları
 - AYT için: Derin kavram ilişkileri, modelleme, analiz, çoklu adım çözümler
+- YDT için: Dil becerisi, kelime dağarcığı, gramer yapıları, okuma stratejileri, çeviri teknikleri
 - Grafik/tablo yorumlama, veri analizi, karmaşık senaryolar
 - Lise öğrencilerine uygun: Zorlu ama anlaşılır, cesaretlendirici
 """;
