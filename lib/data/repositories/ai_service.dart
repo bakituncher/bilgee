@@ -368,6 +368,19 @@ class AiService {
             revisionRequest: revisionRequest
         );
         break;
+      case ExamType.ags:
+        prompt = StrategyPrompts.getAgsPrompt(
+            user: user,
+            avgNet: avgNet, subjectAverages: subjectAverages,
+            pacing: pacing, daysUntilExam: daysUntilExam,
+            topicPerformancesJson: topicPerformancesJson, availabilityJson: availabilityJson,
+            weeklyPlanJson: weeklyPlanJson,
+            completedTasksJson: completedTasksJson,
+            curriculumJson: curriculumJson,
+            guardrailsJson: guardrailsJson,
+            revisionRequest: revisionRequest
+        );
+        break;
       default:
         prompt = StrategyPrompts.getKpssPrompt(
             user: user,

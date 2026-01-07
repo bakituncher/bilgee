@@ -40,7 +40,7 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
   String _audience = 'all'; // all | exam | uids | inactive
   String? _examType; // e.g., YKS, LGS, KPSS
   // Çoklu sınav seçimi
-  final List<String> _examOptions = const ['YKS','KPSS','LGS'];
+  final List<String> _examOptions = const ['YKS','LGS','AGS','KPSS'];
   final Set<String> _selectedExams = {};
   String? _imageUrl;
   bool _sending = false;

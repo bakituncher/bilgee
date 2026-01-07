@@ -10,6 +10,7 @@ enum ExamType {
   kpssLisans,
   kpssOnlisans,
   kpssOrtaogretim,
+  ags,
 }
 
 extension ExamTypeExtension on ExamType {
@@ -25,6 +26,8 @@ extension ExamTypeExtension on ExamType {
         return 'KPSS Önlisans';
       case ExamType.kpssOrtaogretim:
         return 'KPSS Ortaöğretim';
+      case ExamType.ags:
+        return 'AGS';
     }
   }
 }
@@ -142,6 +145,10 @@ class ExamData {
         return exam;
       case ExamType.lgs:
         final exam = await _loadExam(type, 'assets/data/lgs.json');
+        _cache[type] = exam;
+        return exam;
+      case ExamType.ags:
+        final exam = await _loadExam(type, 'assets/data/ags.json');
         _cache[type] = exam;
         return exam;
       case ExamType.kpssLisans:

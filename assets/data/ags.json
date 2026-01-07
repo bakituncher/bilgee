@@ -1,0 +1,43 @@
+{
+  "type": "ags",
+  "name": "Akademiye Giriş Sınavı",
+  "sections": [
+    {
+      "name": "Genel Yetenek",
+      "penaltyCoefficient": 0.25,
+      "subjects": {
+        "Sözel Yetenek": {
+          "questionCount": 15,
+          "topics": ["Sözcükte Anlam", "Cümlede Anlam", "Anlatımın Oluşması", "Paragrafta Anlam", "Sözel Mantık", "Anlam İlişkileri", "Kelime Türleri", "Cümle Çözümlemesi", "Okuma Anlama", "Mantıksal Çıkarım"]
+        },
+        "Sayısal Yetenek": {
+          "questionCount": 15,
+          "topics": ["Temel Matematik", "Dört İşlem", "Oran-Orantı", "Yüzde Hesaplamaları", "Grafik ve Tablo Yorumlama", "Mantıksal Muhakeme", "Problem Çözme", "Veri Analizi", "Sayısal Akıl Yürütme", "Örüntü Tanıma"]
+        }
+      }
+    },
+    {
+      "name": "Alan Bilgisi",
+      "penaltyCoefficient": 0.25,
+      "subjects": {
+        "Tarih": {
+          "questionCount": 10,
+          "topics": ["Osmanlı Öncesi Türk Devletleri Tarihi", "Osmanlı Tarihi (XIII-XX. yy)", "Atatürk İlkeleri ve İnkılap Tarihi", "Türk İnkılap Tarihi", "Çağdaş Türk ve Dünya Tarihi", "Milli Mücadele Dönemi", "Cumhuriyet Dönemi Gelişmeleri", "Dünya Savaşları", "Soğuk Savaş Dönemi", "Günümüz Dünya Tarihi"]
+        },
+        "Türkiye Coğrafyası": {
+          "questionCount": 8,
+          "topics": ["Türkiye Fiziki Coğrafyası", "Türkiye Beşeri Coğrafyası", "Türkiye Ekonomik Coğrafyası", "Bölgeler Coğrafyası", "İklim Özellikleri", "Doğal Kaynaklar", "Nüfus ve Yerleşme", "Ekonomik Faaliyetler"]
+        },
+        "Eğitimin Temelleri ve Türk Milli Eğitim Sistemi": {
+          "questionCount": 24,
+          "topics": ["Eğitimin Temel Kavram ve Kuramları", "Eğitim Tarihi", "Eğitim Felsefesi", "Eğitimin Toplumsal Temelleri", "Eğitimin Psikolojik Temelleri", "Eğitimin Ekonomik ve Politik Temelleri", "Türk Milli Eğitim Sistemi'nin Genel Yapısı", "Türkiye Yüzyılı Maarif Modeli", "Eğitim ve Öğretimde Etik", "Eğitim ve Öğretim Teknolojileri", "Öğretim İlke ve Yöntemleri", "Ölçme ve Değerlendirme", "Sınıf Yönetimi", "Rehberlik"]
+        },
+        "Mevzuat": {
+          "questionCount": 8,
+          "topics": ["Türkiye Cumhuriyeti Anayasası", "1739 Sayılı Milli Eğitim Temel Kanunu", "222 Sayılı İlköğretim ve Eğitim Kanunu", "7528 Sayılı Öğretmenlik Mesleği Kanunu", "Temel Hak ve Özgürlükler", "Eğitim Hakkı", "Milli Eğitim Bakanlığı Teşkilat Kanunu", "Öğretmenlik Mesleği Yeterlilik ve Etik İlkeleri"]
+        }
+      }
+    }
+  ]
+}
+

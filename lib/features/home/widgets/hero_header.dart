@@ -56,6 +56,13 @@ class HeroHeader extends ConsumerWidget {
       if (rem['days']! > 0 || rem['hours']! > 0) {
         countdowns.add({'days': rem['days'], 'hours': rem['hours'], 'label': 'LGS'});
       }
+    } else if (exam == 'ags') {
+      // AGS: 12 Temmuz 2026, 10:15
+      final examDate = DateTime(2026, 7, 12, 10, 15);
+      final rem = _daysHoursRemaining(examDate);
+      if (rem['days']! > 0 || rem['hours']! > 0) {
+        countdowns.add({'days': rem['days'], 'hours': rem['hours'], 'label': 'AGS'});
+      }
     } else if (exam == 'yks') {
       // YDT seçildiyse TYT ve YDT geri sayımını göster (her ikisine de girecekler)
       if (selectedExamSection == 'YDT') {
