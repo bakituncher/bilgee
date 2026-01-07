@@ -18,14 +18,15 @@ class StrategyConsultPrompt {
 - Çeldirici eleme teknikleri
 - Son 30 gün sprint planı
 ''';
-    } else if (exam.contains('yks') || exam.contains('tyt') || exam.contains('ayt')) {
+    } else if (exam.contains('yks') || exam.contains('tyt') || exam.contains('ayt') || exam.contains('ydt')) {
       return '''
 **YKS Strateji Odağı:**
 - Konu önceliklendirme matrisi
-- TYT-AYT denge stratejisi
+- TYT-AYT-YDT denge stratejisi
 - Hızlı çözüm teknikleri
 - Soru bankası optimizasyonu
 - Deneme analiz sistemi
+- YDT için: Günlük dil pratiği, kelime ezber stratejileri, okuma hızı artırma
 ''';
     } else if (exam.contains('lgs')) {
       return '''

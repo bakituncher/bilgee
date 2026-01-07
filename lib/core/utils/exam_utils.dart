@@ -10,6 +10,16 @@ class ExamUtils {
       return exam.sections;
     } else if (user.selectedExam == ExamType.yks.name) {
       final tytSection = exam.sections.firstWhere((s) => s.name == 'TYT');
+
+      // YDT seçildiyse TYT ve YDT'yi döndür (YDT öğrencileri her ikisine de girer)
+      if (user.selectedExamSection == 'YDT') {
+        final ydtSection = exam.sections.firstWhere(
+          (s) => s.name == 'YDT',
+          orElse: () => exam.sections.first,
+        );
+        return [tytSection, ydtSection];
+      }
+
       final userAytSection = exam.sections.firstWhere(
         (s) => s.name == user.selectedExamSection,
         orElse: () => exam.sections.first,

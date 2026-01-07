@@ -58,21 +58,30 @@ class ExamSection {
   final String name;
   final Map<String, SubjectDetails> subjects;
   final double penaltyCoefficient;
+  final List<String>? availableLanguages; // YDT için dil seçenekleri
 
   ExamSection({
     required this.name,
     required this.subjects,
     this.penaltyCoefficient = 0.25,
+    this.availableLanguages,
   });
 
   factory ExamSection.fromJson(Map<String, dynamic> json) {
     var subjectMap = (json['subjects'] as Map<String, dynamic>).map(
           (key, value) => MapEntry(key, SubjectDetails.fromJson(value)),
     );
+
+    List<String>? languages;
+    if (json.containsKey('availableLanguages')) {
+      languages = (json['availableLanguages'] as List).cast<String>();
+    }
+
     return ExamSection(
       name: json['name'],
       subjects: subjectMap,
       penaltyCoefficient: (json['penaltyCoefficient'] as num).toDouble(),
+      availableLanguages: languages,
     );
   }
 }

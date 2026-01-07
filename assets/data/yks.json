@@ -121,6 +121,17 @@
           "topics": ["İslam ve Bilim, Estetik, Ekonomi", "Anadolu'da İslam", "Tasavvufi Düşünce ve Yorumlar", "Güncel Dini Meseleler", "Yaşayan Dinler (Yahudilik, Hristiyanlık)", "Hint ve Çin Dinleri (Hinduizm, Budizm, Konfüçyanizm, Taoizm)"]
         }
       }
+    },
+    {
+      "name": "YDT",
+      "penaltyCoefficient": 0.25,
+      "subjects": {
+        "Yabancı Dil": {
+          "questionCount": 80,
+          "topics": ["Reading Comprehension (Okuduğunu Anlama)", "Vocabulary (Kelime Bilgisi)", "Grammar (Dilbilgisi)", "Cloze Test (Boşluk Doldurma)", "Paragraph Completion (Paragraf Tamamlama)", "Dialogue Completion (Diyalog Tamamlama)", "Translation (Çeviri)", "Idioms and Phrases (Deyimler ve İfadeler)", "Sentence Completion (Cümle Tamamlama)", "Text Analysis (Metin Analizi)"]
+        }
+      },
+      "availableLanguages": ["İngilizce", "Almanca", "Fransızca", "Arapça", "Rusça"]
     }
   ]
 }
