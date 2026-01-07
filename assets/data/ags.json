@@ -52,11 +52,10 @@
           "Eğitimin Temelleri ve Türk Milli Eğitim Sistemi": {
             "questionCount": 24,
             "topics": [
-              "Eğitim Biliminin Genel Kavramları ve Kuramları",
-              "Eğitimin Tarihi, Felsefi ve Toplumsal Temelleri",
-              "Eğitim Psikolojisi",
+              "Eğitimin Temel Kavram ve Kuramları",
+              "Eğitimin Tarihi, Felsefi, Toplumsal, Psikolojik, Ekonomik ve Politik Temelleri",
               "Türk Milli Eğitim Sisteminin Genel Yapısı",
-              "Türkiye Yüzyılı Maarif Modeli",
+              "Türkiye Yüzyılı Maarif Modeli'nin Genel Yapısı ve Temelleri",
               "Eğitim ve Öğretimde Etik",
               "Eğitim ve Öğretim Teknolojileri"
             ]
@@ -157,9 +156,11 @@
             "Siyaset Bilimi",
             "Sosyal Bilgilerin Temelleri",
             "Bilim Teknoloji ve Toplum",
-            "Sosyal Antropoloji",
+            "Sosyal Antropoloji ve Medeniyet Tarihi",
             "Ekonomi",
-            "Sosyoloji"
+            "İnsan İlişkileri ve İletişim",
+            "Sosyoloji",
+            "Sosyal Proje Geliştirme"
           ]
         }
       }
@@ -282,7 +283,7 @@
             "Bireyi Tanıma Teknikleri",
             "Bireyle ve Grupla Psikolojik Danışma",
             "Mesleki Rehberlik ve Kariyer Danışmanlığı",
-            "Araştırma ve Program Geliştirme",
+            "Psikolojik Danışma ve Rehberlikte Araştırma ve Program Geliştirme",
             "Meslek Etiği ve Yasal Konular"
           ]
         }
@@ -309,6 +310,7 @@
           "topics": [
             "Hayat Bilgisi Öğretimi",
             "Sosyal Bilgiler Öğretimi",
+            "Din Kültürü ve Ahlak Bilgisi Öğretimi",
             "Fen Bilgisi Öğretimi",
             "Matematik Öğretimi",
             "İlk Okuma ve Yazma Öğretimi",
@@ -333,7 +335,7 @@
             "Erken Çocukluk Döneminde Gelişim",
             "Çocuk Ruh Sağlığı",
             "Erken Çocukluk Dönemi Edebiyatı",
-            "Program, Yöntem ve Yaklaşımlar",
+            "Erken Çocuklukta Program, Yöntem ve Yaklaşımlar",
             "Anne-Baba Eğitimi",
             "Çocuk Hakları"
           ]
@@ -343,9 +345,12 @@
           "topics": [
             "Erken Çocuklukta Fen Eğitimi",
             "Erken Çocuklukta Matematik Eğitimi",
-            "Erken Çocuklukta Sanat/Müzik Eğitimi",
-            "Oyun ve Drama",
-            "Okula Uyum ve Erken Okuryazarlık"
+            "Erken Çocuklukta Güzel Sanatlar Eğitimi",
+            "Erken Çocuklukta Müzik Eğitimi",
+            "Erken Çocukluk Eğitiminde Oyun",
+            "Erken Çocukluk Eğitiminde Drama",
+            "Erken Çocukluk Eğitiminde Öğrenme Yaklaşımları",
+            "Okula Uyum ve Erken Okuryazarlık Eğitimi"
           ]
         }
       }
@@ -363,11 +368,17 @@
             "Sağlık Bilgisi ve İlk Yardım",
             "Egzersiz Fizyolojisi",
             "Antrenman Bilgisi",
-            "Fiziksel Uygunluk ve Beslenme",
+            "Fiziksel Uygunluk",
+            "Egzersiz ve Beslenme",
+            "Engelliler İçin Beden Eğitimi ve Spor",
             "Psikomotor Gelişim",
-            "Spor Yönetimi",
+            "Beden Eğitimi ve Spor Yönetimi",
             "Beceri Öğrenimi",
-            "Takım ve Bireysel Sporlar"
+            "Atletizm",
+            "Takım Sporları",
+            "Ritim Eğitimi ve Dans, Halk Oyunları",
+            "Jimnastik",
+            "Eğitsel Oyunlar"
           ]
         }
       }
@@ -384,11 +395,15 @@
             "Tefsir",
             "Hadis",
             "Fıkıh",
-            "Akaid ve Kelam",
-            "İslam Mezhepleri",
-            "Siyer ve İslam Tarihi",
+            "Akaid",
+            "Kelam",
+            "İslam Mezhepleri ve Akımları",
+            "Siyer",
+            "İslam Tarihi, Kültür ve Medeniyeti",
             "İslam Felsefesi",
-            "Din Felsefesi, Sosyolojisi ve Psikolojisi",
+            "Din Felsefesi",
+            "Din Sosyolojisi",
+            "Din Psikolojisi",
             "Din Eğitimi",
             "Dinler Tarihi"
           ]

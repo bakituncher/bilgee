@@ -494,7 +494,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
         channelUrl = 'https://whatsapp.com/channel/0029VbBVIRTKbYMJI3tqsl3u';
         examType = 'LGS';
       } else if (exam.contains('ags')) {
-        channelUrl = 'https://whatsapp.com/channel/0029VbBVIRTKbYMJI3tqsl3u'; // AGS için kanal belirlenecek
+        channelUrl = 'https://whatsapp.com/channel/0029VbBdCY96BIEo5XqCbK1V'; // AGS için kanal belirlenecek
         examType = 'AGS';
       } else if (exam.contains('kpss')) {
         channelUrl = 'https://whatsapp.com/channel/0029VbBdCY96BIEo5XqCbK1V';
