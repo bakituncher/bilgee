@@ -356,7 +356,7 @@ class ExamSelectionScreen extends ConsumerWidget {
                       ),
                       Animate(
                         effects: const [FadeEffect(), SlideEffect(begin: Offset(0, 0.2))],
-                        child: _buildExamCard(context, "AGS", () => _onExamTypeSelected(context, ref, ExamType.ags)),
+                        child: _buildExamCard(context, "AGS - ÖABT", () => _onExamTypeSelected(context, ref, ExamType.ags)),
                       ),
                       Animate(
                         effects: const [FadeEffect(), SlideEffect(begin: Offset(0, 0.2))],
