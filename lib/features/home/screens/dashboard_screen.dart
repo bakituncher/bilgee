@@ -41,6 +41,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   // Liste animasyonlarını sadece ilk yüklemede çalıştırmak için bayrak
   bool _animateSectionsOnce = true;
 
+  // GÜNCELLEME: Plan kontrolünün sadece bir kez yapılmasını sağlayan bayrak
+  bool _hasCheckedExpiredPlan = false;
+
   void _onScroll() {
     final offset = _scrollController.hasClients ? _scrollController.offset : 0.0;
     double target = (offset / _opacityTrigger).clamp(0, 1);
@@ -66,7 +69,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   void initState() {
     super.initState();
     _scrollController = ScrollController()..addListener(_onScroll);
-    // Öğretici tetikleme (orijinal mantık)
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final user = ref.read(userProfileProvider).value;
       if (user != null && !user.tutorialCompleted) {
@@ -75,37 +78,48 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       // İlk çizimden sonra liste animasyonlarını kapat (kaydırma akıcılığı)
       if (mounted) setState(() => _animateSectionsOnce = false);
 
-      // Premium kontrolü yap (18+ kullanıcılar için)
+      // GÜNCELLEME: Kontrolleri initState içinde ve bir kez yapıyoruz.
+      // build metodu içinde yapıldığında sürekli tetiklenip üst üste bindiriyordu.
+      _checkAndShowExpiredPlanNudge();
       _checkAndShowPremiumForAdults();
     });
   }
 
-  void _checkAndShowExpiredPlanDialog() {
-    final planAsync = ref.watch(planProvider);
+  // GÜNCELLEME: İsim değişikliği ve mantık düzeltmesi.
+  // Artık local flag kontrolü ile çalışıyor ve bir kez çalıştıktan sonra kilitleniyor.
+  Future<void> _checkAndShowExpiredPlanNudge() async {
+    // Eğer daha önce kontrol edildiyse veya widget mount edilmediyse dur.
+    if (_hasCheckedExpiredPlan || !mounted) return;
 
-    planAsync.whenData((planDoc) async {
-      if (planDoc?.weeklyPlan == null) return;
-      final weeklyPlan = WeeklyPlan.fromJson(planDoc!.weeklyPlan!);
-      if (!weeklyPlan.isExpired) return;
+    // Burada watch değil read kullanıyoruz, çünkü sadece tek seferlik kontrol istiyoruz.
+    // Watch kullanırsak her plan güncellemesinde tekrar çalışır.
+    final planDoc = ref.read(planProvider).value;
 
-      // SharedPreferences üzerinden en son ne zaman gösterildiğine bak
-      try {
-        final prefs = await ref.read(sharedPreferencesProvider.future);
-        final lastMs = prefs.getInt('weekly_plan_nudge_last') ?? 0;
-        final nowMs = DateTime.now().millisecondsSinceEpoch;
-        final diffH = (nowMs - lastMs) / (1000 * 60 * 60);
-        if (diffH >= _weeklyPlanNudgeIntervalHours) {
-          // Göster ve zaman damgasını güncelle
-          Future.microtask(() async {
-            if (!mounted) return;
-            await _showExpiredPlanNudge(context);
-            await prefs.setInt('weekly_plan_nudge_last', DateTime.now().millisecondsSinceEpoch);
-          });
+    if (planDoc?.weeklyPlan == null) return;
+    final weeklyPlan = WeeklyPlan.fromJson(planDoc!.weeklyPlan!);
+
+    if (!weeklyPlan.isExpired) return;
+
+    try {
+      final prefs = await ref.read(sharedPreferencesProvider.future);
+      final lastMs = prefs.getInt('weekly_plan_nudge_last') ?? 0;
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      final diffH = (nowMs - lastMs) / (1000 * 60 * 60);
+
+      if (diffH >= _weeklyPlanNudgeIntervalHours) {
+        // Flag'i hemen true yapıyoruz ki asenkron işlem bitene kadar tekrar girmesin.
+        _hasCheckedExpiredPlan = true;
+
+        if (mounted) {
+          // Bottom sheet'i göster
+          await _showExpiredPlanNudgeView(context);
+          // Gösterim zamanını güncelle
+          await prefs.setInt('weekly_plan_nudge_last', DateTime.now().millisecondsSinceEpoch);
         }
-      } catch (_) {
-        // prefs alınamazsa sessiz geç
       }
-    });
+    } catch (_) {
+      // Hata durumunda sessiz kal
+    }
   }
 
   // 18+ kullanıcılar için premium kontrolü ve yönlendirme
@@ -165,7 +179,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     }
   }
 
-  Future<void> _showExpiredPlanNudge(BuildContext context) async {
+  Future<void> _showExpiredPlanNudgeView(BuildContext context) async {
     if (!mounted) return;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -241,38 +255,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     super.dispose();
   }
 
-  void _showExpiredPlanDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Haftalık Planın Sona Erdi'),
-          content: const Text('Yeni bir haftalık plan oluşturarak hedeflerine odaklanmaya ne dersin?'),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Daha Sonra'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: const Text('Plan Oluştur'),
-              onPressed: () {
-                Navigator.of(context).pop();
-                context.go('/home/weekly-plan');
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
+  // _showExpiredPlanDialog metodunu tamamen kaldırdık çünkü artık _checkAndShowExpiredPlanNudgeView kullanıyoruz.
 
   @override
   Widget build(BuildContext context) {
     final userAsync = ref.watch(userProfileProvider);
-    _checkAndShowExpiredPlanDialog();
-    _checkAndShowPremiumForAdults(); // 18+ kullanıcılar için premium ekran kontrolü
+
+    // GÜNCELLEME: Buradaki sürekli çağrılan fonksiyonları kaldırdık.
+    // _checkAndShowExpiredPlanDialog();  <-- SİLİNDİ (Build loop yaratıyordu)
+    // _checkAndShowPremiumForAdults(); <-- SİLİNDİ (InitState'e taşındı)
 
     return userAsync.when(
       data: (user) {
