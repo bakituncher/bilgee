@@ -8,12 +8,14 @@ class StrategyPrompts {
   static String? _yksTemplate;
   static String? _lgsTemplate;
   static String? _kpssTemplate;
+  static String? _agsTemplate;
 
   static Future<void> preload() async {
     // Önce Firestore'daki uzaktan içerikleri dene; yoksa asset'e geri dön
     _yksTemplate = RemotePrompts.get('yks_prompt') ?? await rootBundle.loadString('assets/prompts/yks_prompt.md');
     _lgsTemplate = RemotePrompts.get('lgs_prompt') ?? await rootBundle.loadString('assets/prompts/lgs_prompt.md');
     _kpssTemplate = RemotePrompts.get('kpss_prompt') ?? await rootBundle.loadString('assets/prompts/kpss_prompt.md');
+    _agsTemplate = RemotePrompts.get('ags_prompt') ?? await rootBundle.loadString('assets/prompts/ags_prompt.md');
   }
 
   static String _revisionBlock(String? revisionRequest) {
@@ -195,6 +197,46 @@ NOT: Bu bir revizyon talebidir, önceki planı unutun!
       'GUARDRAILS_JSON': guardrailsJson,
       'CURRENT_DATE': currentDate,
       'CURRENT_WEEK': currentWeek, // 👈 Hafta numarası prompt'a gidiyor
+    };
+    return _fillTemplate(template, replacements);
+  }
+
+  static String getAgsPrompt({
+    required UserModel user,
+    required String avgNet,
+    required Map<String, double> subjectAverages,
+    required String pacing,
+    required int daysUntilExam,
+    required String topicPerformancesJson,
+    required String availabilityJson,
+    required String? weeklyPlanJson,
+    required String completedTasksJson,
+    required String curriculumJson,
+    required String guardrailsJson,
+    String? revisionRequest,
+  }) {
+    assert(_agsTemplate != null, 'StrategyPrompts.preload() çağrılmalı');
+    final template = _agsTemplate!;
+    final currentDate = DateTime.now().toIso8601String();
+    final currentWeek = _calculateCurrentWeek(weeklyPlanJson);
+    final replacements = <String, String>{
+      'REVISION_BLOCK': _revisionBlock(revisionRequest),
+      'AVAILABILITY_JSON': availabilityJson,
+      'USER_ID': user.id,
+      'DAYS_UNTIL_EXAM': daysUntilExam.toString(),
+      'GOAL': user.goal ?? '',
+      'CHALLENGES': (user.challenges ?? []).join(', '),
+      'PACING': pacing,
+      'TEST_COUNT': user.testCount.toString(),
+      'AVG_NET': avgNet,
+      'SUBJECT_AVERAGES': jsonEncode(subjectAverages),
+      'TOPIC_PERFORMANCES_JSON': topicPerformancesJson,
+      'WEEKLY_PLAN_TEXT': weeklyPlanJson ?? 'YOK. AGS HAREKÂTI BAŞLIYOR.',
+      'COMPLETED_TASKS_JSON': completedTasksJson,
+      'CURRICULUM_JSON': curriculumJson,
+      'GUARDRAILS_JSON': guardrailsJson,
+      'CURRENT_DATE': currentDate,
+      'CURRENT_WEEK': currentWeek,
     };
     return _fillTemplate(template, replacements);
   }

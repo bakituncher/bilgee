@@ -43,10 +43,17 @@ class AddTestScreen extends ConsumerWidget {
           if (selectedExamType == ExamType.yks) {
             final tytSection = exam.sections.firstWhere((s) => s.name == 'TYT');
             final userAytSection = exam.sections.firstWhere(
-                  (s) => s.name == userProfile.selectedExamSection,
+              (s) => s.name == userProfile.selectedExamSection,
               orElse: () => exam.sections.first,
             );
             availableSections = (tytSection.name == userAytSection.name) ? [tytSection] : [tytSection, userAytSection];
+          } else if (selectedExamType == ExamType.ags) {
+            // AGS - ÖABT: Kullanıcının seçtiği branşı tek bölüm olarak kullan.
+            final userBranchSection = exam.sections.firstWhere(
+              (s) => s.name == userProfile.selectedExamSection,
+              orElse: () => exam.sections.first,
+            );
+            availableSections = [userBranchSection];
           } else {
             // LGS ve diğer sınavlar için tüm bölümleri al.
             availableSections = exam.sections;

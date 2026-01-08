@@ -1,0 +1,414 @@
+{
+  "type": "ags",
+  "name": "AGS - ÖABT",
+  "common": {
+    "id": "ags_common",
+    "name": "Akademi Giriş Sınavı (AGS - Ortak)",
+    "totalQuestionCount": 80,
+    "penaltyCoefficient": 0.25,
+    "sections": [
+      {
+        "name": "Genel Yetenek",
+        "subjects": {
+          "Sözel Yetenek": {
+            "questionCount": 15,
+            "topics": [
+              "Sözcükte Anlam",
+              "Cümlede Anlam",
+              "Anlatımın Oluşması",
+              "Paragrafta Anlam",
+              "Sözel Mantık"
+            ]
+          },
+          "Sayısal Yetenek": {
+            "questionCount": 15,
+            "topics": [
+              "Temel Matematik",
+              "Grafik ve Tablo Yorumlama",
+              "Mantıksal Muhakeme Problemleri"
+            ]
+          }
+        }
+      },
+      {
+        "name": "Genel Kültür ve Eğitim Bilgisi",
+        "subjects": {
+          "Tarih": {
+            "questionCount": 10,
+            "topics": [
+              "Osmanlı Öncesi Türk Devletleri Tarihi",
+              "Osmanlı Tarihi (XIII-XX. yy)",
+              "Atatürk İlkeleri ve İnkılap Tarihi",
+              "Çağdaş Türk ve Dünya Tarihi"
+            ]
+          },
+          "Türkiye Coğrafyası": {
+            "questionCount": 8,
+            "topics": [
+              "Türkiye Fiziki Coğrafyası",
+              "Türkiye Beşerî ve Ekonomik Coğrafyası"
+            ]
+          },
+          "Eğitimin Temelleri ve Türk Milli Eğitim Sistemi": {
+            "questionCount": 24,
+            "topics": [
+              "Eğitimin Temel Kavram ve Kuramları",
+              "Eğitimin Tarihi, Felsefi, Toplumsal, Psikolojik, Ekonomik ve Politik Temelleri",
+              "Türk Milli Eğitim Sisteminin Genel Yapısı",
+              "Türkiye Yüzyılı Maarif Modeli'nin Genel Yapısı ve Temelleri",
+              "Eğitim ve Öğretimde Etik",
+              "Eğitim ve Öğretim Teknolojileri"
+            ]
+          },
+          "Mevzuat": {
+            "questionCount": 8,
+            "topics": [
+              "Türkiye Cumhuriyeti Anayasası",
+              "1739 Sayılı Milli Eğitim Temel Kanunu",
+              "222 Sayılı İlköğretim ve Eğitim Kanunu",
+              "7528 Sayılı Öğretmenlik Mesleği Kanunu"
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "branches": [
+    {
+      "id": "turkce",
+      "name": "Türkçe Öğretmenliği",
+      "totalQuestionCount": 50,
+      "subjects": {
+        "Alan Bilgisi": {
+          "questionCount": 50,
+          "topics": [
+            "Anlama ve Anlatma Teknikleri",
+            "Dil Bilgisi ve Dil Bilimi",
+            "Çocuk Edebiyatı",
+            "Türk Halk Edebiyatı",
+            "Eski Türk Edebiyatı",
+            "Yeni Türk Edebiyatı",
+            "Edebiyat Bilgi ve Kuramları"
+          ]
+        }
+      }
+    },
+    {
+      "id": "ilkogretim_matematik",
+      "name": "İlköğretim Matematik",
+      "totalQuestionCount": 50,
+      "subjects": {
+        "Alan Bilgisi": {
+          "questionCount": 50,
+          "topics": [
+            "Analiz",
+            "Cebir",
+            "Geometri",
+            "Uygulamalı Matematik"
+          ]
+        }
+      }
+    },
+    {
+      "id": "lise_matematik",
+      "name": "Matematik (Lise)",
+      "totalQuestionCount": 50,
+      "subjects": {
+        "Alan Bilgisi": {
+          "questionCount": 50,
+          "topics": [
+            "Analiz",
+            "Cebir",
+            "Geometri",
+            "Uygulamalı Matematik"
+          ]
+        }
+      }
+    },
+    {
+      "id": "fen_bilimleri",
+      "name": "Fen Bilimleri",
+      "totalQuestionCount": 50,
+      "subjects": {
+        "Alan Bilgisi": {
+          "questionCount": 50,
+          "topics": [
+            "Fizik",
+            "Kimya",
+            "Biyoloji",
+            "Jeoloji (Yer Bilimi)",
+            "Astronomi",
+            "Çevre Bilimi"
+          ]
+        }
+      }
+    },
+    {
+      "id": "sosyal_bilgiler",
+      "name": "Sosyal Bilgiler",
+      "totalQuestionCount": 50,
+      "subjects": {
+        "Alan Bilgisi": {
+          "questionCount": 50,
+          "topics": [
+            "Tarih",
+            "Coğrafya",
+            "Siyaset Bilimi",
+            "Sosyal Bilgilerin Temelleri",
+            "Bilim Teknoloji ve Toplum",
+            "Sosyal Antropoloji ve Medeniyet Tarihi",
+            "Ekonomi",
+            "İnsan İlişkileri ve İletişim",
+            "Sosyoloji",
+            "Sosyal Proje Geliştirme"
+          ]
+        }
+      }
+    },
+    {
+      "id": "turk_dili_edebiyati",
+      "name": "Türk Dili ve Edebiyatı",
+      "totalQuestionCount": 50,
+      "subjects": {
+        "Alan Bilgisi": {
+          "questionCount": 50,
+          "topics": [
+            "Eski Türk Dili ve Yeni Türk Dili",
+            "Türk Halk Edebiyatı",
+            "Eski Türk Edebiyatı",
+            "Yeni Türk Edebiyatı"
+          ]
+        }
+      }
+    },
+    {
+      "id": "tarih",
+      "name": "Tarih",
+      "totalQuestionCount": 50,
+      "subjects": {
+        "Alan Bilgisi": {
+          "questionCount": 50,
+          "topics": [
+            "Tarih Metodolojisi",
+            "Osmanlı Türkçesi",
+            "Eski Çağ Tarihi",
+            "İlk Türk Devletleri Tarihi",
+            "Orta Çağ İslam Tarihi",
+            "Osmanlı Tarihi",
+            "Türkiye Cumhuriyeti Tarihi",
+            "Orta Çağ'dan XX. Yüzyıl'a Dünya Tarihi",
+            "XX. Yüzyıl Türk ve Dünya Tarihi"
+          ]
+        }
+      }
+    },
+    {
+      "id": "cografya",
+      "name": "Coğrafya",
+      "totalQuestionCount": 50,
+      "subjects": {
+        "Alan Bilgisi": {
+          "questionCount": 50,
+          "topics": [
+            "Fiziki Coğrafya",
+            "Beşerî ve Ekonomik Coğrafya",
+            "Kıtalar ve Ülkeler Coğrafyası"
+          ]
+        }
+      }
+    },
+    {
+      "id": "fizik",
+      "name": "Fizik",
+      "totalQuestionCount": 50,
+      "subjects": {
+        "Alan Bilgisi": {
+          "questionCount": 50,
+          "topics": [
+            "Mekanik",
+            "Elektrik ve Manyetizma",
+            "Maddenin Mekanik ve Isıl Özellikleri",
+            "Dalgalar ve Optik",
+            "Modern Fizik"
+          ]
+        }
+      }
+    },
+    {
+      "id": "kimya",
+      "name": "Kimya / Kimya Teknolojisi",
+      "totalQuestionCount": 50,
+      "subjects": {
+        "Alan Bilgisi": {
+          "questionCount": 50,
+          "topics": [
+            "Temel Kimya",
+            "Analitik Kimya",
+            "Anorganik Kimya",
+            "Organik Kimya",
+            "Fizikokimya"
+          ]
+        }
+      }
+    },
+    {
+      "id": "biyoloji",
+      "name": "Biyoloji",
+      "totalQuestionCount": 50,
+      "subjects": {
+        "Alan Bilgisi": {
+          "questionCount": 50,
+          "topics": [
+            "Hücre ve Metabolizma",
+            "Bitki Biyolojisi",
+            "İnsan ve Hayvan Biyolojisi",
+            "Ekoloji",
+            "Canlıların Sınıflandırılması",
+            "Genetik"
+          ]
+        }
+      }
+    },
+    {
+      "id": "rehberlik",
+      "name": "Rehberlik (PDR)",
+      "totalQuestionCount": 50,
+      "subjects": {
+        "Alan Bilgisi": {
+          "questionCount": 50,
+          "topics": [
+            "Temel Psikolojik Kavramlar",
+            "Psikolojik Danışma Kuram İlke ve Teknikleri",
+            "Davranış ve Uyum Problemleri",
+            "Bireyi Tanıma Teknikleri",
+            "Bireyle ve Grupla Psikolojik Danışma",
+            "Mesleki Rehberlik ve Kariyer Danışmanlığı",
+            "Psikolojik Danışma ve Rehberlikte Araştırma ve Program Geliştirme",
+            "Meslek Etiği ve Yasal Konular"
+          ]
+        }
+      }
+    },
+    {
+      "id": "sinif_ogretmenligi",
+      "name": "Sınıf Öğretmenliği",
+      "totalQuestionCount": 50,
+      "subjects": {
+        "Temel Alan Bilgisi": {
+          "questionCount": 17,
+          "topics": [
+            "İlkokulda Temel Matematik",
+            "İlkokulda Temel Fen Bilimleri",
+            "Türk Dili",
+            "Türk Tarihi ve Kültürü",
+            "Türkiye Coğrafyası ve Jeopolitiği",
+            "Çocuk Edebiyatı"
+          ]
+        },
+        "Alan Eğitimi": {
+          "questionCount": 33,
+          "topics": [
+            "Hayat Bilgisi Öğretimi",
+            "Sosyal Bilgiler Öğretimi",
+            "Din Kültürü ve Ahlak Bilgisi Öğretimi",
+            "Fen Bilgisi Öğretimi",
+            "Matematik Öğretimi",
+            "İlk Okuma ve Yazma Öğretimi",
+            "Görsel Sanatlar Öğretimi",
+            "Müzik Öğretimi",
+            "Beden Eğitimi ve Oyun",
+            "Drama"
+          ]
+        }
+      }
+    },
+    {
+      "id": "okul_oncesi",
+      "name": "Okul Öncesi",
+      "totalQuestionCount": 50,
+      "subjects": {
+        "Alan Bilgisi": {
+          "questionCount": 30,
+          "topics": [
+            "Erken Çocukluk Eğitimine Giriş",
+            "Çocuk Sağlığı ve İlk Yardım",
+            "Erken Çocukluk Döneminde Gelişim",
+            "Çocuk Ruh Sağlığı",
+            "Erken Çocukluk Dönemi Edebiyatı",
+            "Erken Çocuklukta Program, Yöntem ve Yaklaşımlar",
+            "Anne-Baba Eğitimi",
+            "Çocuk Hakları"
+          ]
+        },
+        "Alan Eğitimi": {
+          "questionCount": 20,
+          "topics": [
+            "Erken Çocuklukta Fen Eğitimi",
+            "Erken Çocuklukta Matematik Eğitimi",
+            "Erken Çocuklukta Güzel Sanatlar Eğitimi",
+            "Erken Çocuklukta Müzik Eğitimi",
+            "Erken Çocukluk Eğitiminde Oyun",
+            "Erken Çocukluk Eğitiminde Drama",
+            "Erken Çocukluk Eğitiminde Öğrenme Yaklaşımları",
+            "Okula Uyum ve Erken Okuryazarlık Eğitimi"
+          ]
+        }
+      }
+    },
+    {
+      "id": "beden_egitimi",
+      "name": "Beden Eğitimi",
+      "totalQuestionCount": 50,
+      "subjects": {
+        "Alan Bilgisi": {
+          "questionCount": 50,
+          "topics": [
+            "Beden Eğitimi ve Sporun Temelleri",
+            "İnsan Anatomisi ve Kinesiyoloji",
+            "Sağlık Bilgisi ve İlk Yardım",
+            "Egzersiz Fizyolojisi",
+            "Antrenman Bilgisi",
+            "Fiziksel Uygunluk",
+            "Egzersiz ve Beslenme",
+            "Engelliler İçin Beden Eğitimi ve Spor",
+            "Psikomotor Gelişim",
+            "Beden Eğitimi ve Spor Yönetimi",
+            "Beceri Öğrenimi",
+            "Atletizm",
+            "Takım Sporları",
+            "Ritim Eğitimi ve Dans, Halk Oyunları",
+            "Jimnastik",
+            "Eğitsel Oyunlar"
+          ]
+        }
+      }
+    },
+    {
+      "id": "din_kulturu",
+      "name": "Din Kültürü ve Ahlak Bilgisi / İHL Meslek Dersleri",
+      "totalQuestionCount": 50,
+      "subjects": {
+        "Alan Bilgisi": {
+          "questionCount": 50,
+          "topics": [
+            "Kur'an-ı Kerim ve Tecvid",
+            "Tefsir",
+            "Hadis",
+            "Fıkıh",
+            "Akaid",
+            "Kelam",
+            "İslam Mezhepleri ve Akımları",
+            "Siyer",
+            "İslam Tarihi, Kültür ve Medeniyeti",
+            "İslam Felsefesi",
+            "Din Felsefesi",
+            "Din Sosyolojisi",
+            "Din Psikolojisi",
+            "Din Eğitimi",
+            "Dinler Tarihi"
+          ]
+        }
+      }
+    }
+  ]
+}

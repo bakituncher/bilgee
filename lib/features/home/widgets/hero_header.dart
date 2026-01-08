@@ -56,6 +56,13 @@ class HeroHeader extends ConsumerWidget {
       if (rem['days']! > 0 || rem['hours']! > 0) {
         countdowns.add({'days': rem['days'], 'hours': rem['hours'], 'label': 'LGS'});
       }
+    } else if (exam == 'ags') {
+      // AGS: 12 Temmuz 2026, 10:15
+      final examDate = DateTime(2026, 7, 12, 10, 15);
+      final rem = _daysHoursRemaining(examDate);
+      if (rem['days']! > 0 || rem['hours']! > 0) {
+        countdowns.add({'days': rem['days'], 'hours': rem['hours'], 'label': 'AGS - ÖABT'});
+      }
     } else if (exam == 'yks') {
       // YDT seçildiyse TYT ve YDT geri sayımını göster (her ikisine de girecekler)
       if (selectedExamSection == 'YDT') {
@@ -243,7 +250,6 @@ class HeroHeader extends ConsumerWidget {
                             children: examCountdowns.take(3).map((countdown) {
                               return ConstrainedBox(
                                 constraints: const BoxConstraints(
-                                  // minWidth kaldırıldı, içerik kadar genişleyecek
                                   maxWidth: 180,
                                 ),
                                 child: Container(
@@ -266,55 +272,57 @@ class HeroHeader extends ConsumerWidget {
                                       ),
                                     ],
                                   ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      // Sayaç ikonları kaldırıldı
-                                      // const SizedBox(width: 6),
-                                      Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Flexible(
-                                            child: Text(
-                                              countdown['label'],
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              softWrap: false,
-                                              style: theme.textTheme.labelSmall?.copyWith(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.w700,
-                                                fontSize: 11,
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerLeft,
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Flexible(
+                                              child: Text(
+                                                countdown['label'],
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                softWrap: false,
+                                                style: theme.textTheme.labelSmall?.copyWith(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.w700,
+                                                  fontSize: 11,
+                                                  height: 1.2,
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 5),
+                                            Text(
+                                              '|',
+                                              style: TextStyle(
+                                                color: Colors.white.withValues(alpha: 0.7),
+                                                fontSize: 10,
                                                 height: 1.2,
                                               ),
                                             ),
-                                          ),
-                                          const SizedBox(width: 5),
-                                          Text(
-                                            '|',
-                                            style: TextStyle(
-                                              color: Colors.white.withValues(alpha: 0.7),
-                                              fontSize: 10,
-                                              height: 1.2,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 5),
-                                          Flexible(
-                                            child: Text(
-                                              '${countdown['days']} gün',
-                                              maxLines: 1,
-                                              overflow: TextOverflow.visible,
-                                              softWrap: false,
-                                              style: theme.textTheme.labelSmall?.copyWith(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.w800,
-                                                fontSize: 11,
-                                                height: 1.2,
+                                            const SizedBox(width: 5),
+                                            Flexible(
+                                              child: Text(
+                                                '${countdown['days']} gün',
+                                                maxLines: 1,
+                                                overflow: TextOverflow.visible,
+                                                softWrap: false,
+                                                style: theme.textTheme.labelSmall?.copyWith(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.w800,
+                                                  fontSize: 11,
+                                                  height: 1.2,
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
+                                          ],
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               );

@@ -103,6 +103,9 @@ class ExamSelectionScreen extends ConsumerWidget {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.75,
+      ),
       builder: (ctx) {
         final theme = Theme.of(context);
         return SafeArea(
@@ -168,6 +171,9 @@ class ExamSelectionScreen extends ConsumerWidget {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.75,
+      ),
       builder: (ctx) {
         final theme = Theme.of(context);
         return SafeArea(
@@ -256,6 +262,9 @@ class ExamSelectionScreen extends ConsumerWidget {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.75,
+      ),
       builder: (ctx) {
         return SafeArea(
           child: Padding(
@@ -353,6 +362,10 @@ class ExamSelectionScreen extends ConsumerWidget {
                       Animate(
                         effects: const [FadeEffect(), SlideEffect(begin: Offset(0, 0.2))],
                         child: _buildExamCard(context, "LGS", () => _onExamTypeSelected(context, ref, ExamType.lgs)),
+                      ),
+                      Animate(
+                        effects: const [FadeEffect(), SlideEffect(begin: Offset(0, 0.2))],
+                        child: _buildExamCard(context, "AGS - ÖABT", () => _onExamTypeSelected(context, ref, ExamType.ags)),
                       ),
                       Animate(
                         effects: const [FadeEffect(), SlideEffect(begin: Offset(0, 0.2))],

@@ -10,6 +10,7 @@ enum ExamType {
   kpssLisans,
   kpssOnlisans,
   kpssOrtaogretim,
+  ags,
 }
 
 extension ExamTypeExtension on ExamType {
@@ -25,6 +26,8 @@ extension ExamTypeExtension on ExamType {
         return 'KPSS Önlisans';
       case ExamType.kpssOrtaogretim:
         return 'KPSS Ortaöğretim';
+      case ExamType.ags:
+        return 'AGS - ÖABT';
     }
   }
 }
@@ -98,9 +101,48 @@ class Exam {
   });
 
   factory Exam.fromJson(Map<String, dynamic> json, ExamType type) {
-    var sectionList = (json['sections'] as List)
-        .map((section) => ExamSection.fromJson(section))
-        .toList();
+    List<ExamSection> sectionList;
+
+    // AGS için özel parsing - common ve branches yapısını sections'a dönüştür
+    if (type == ExamType.ags && json.containsKey('common') && json.containsKey('branches')) {
+      sectionList = [];
+
+      // Her branch'i bir section olarak ekle
+      final branches = json['branches'] as List;
+      for (var branch in branches) {
+        final branchName = branch['name'] as String;
+
+        // Common bölümün subjects'lerini al
+        final commonSubjects = (json['common']['sections'] as List)
+            .map((section) => section['subjects'] as Map<String, dynamic>)
+            .expand((subjects) => subjects.entries)
+            .fold<Map<String, dynamic>>({}, (map, entry) {
+              map[entry.key] = entry.value;
+              return map;
+            });
+
+        // Branch'e özgü subjects'leri al
+        final branchSubjects = branch['subjects'] as Map<String, dynamic>;
+
+        // Tüm subjects'leri birleştir
+        final allSubjects = {...commonSubjects, ...branchSubjects};
+
+        // ExamSection oluştur
+        sectionList.add(ExamSection(
+          name: branchName,
+          subjects: allSubjects.map(
+            (key, value) => MapEntry(key, SubjectDetails.fromJson(value)),
+          ),
+          penaltyCoefficient: (json['common']['penaltyCoefficient'] as num?)?.toDouble() ?? 0.25,
+        ));
+      }
+    } else {
+      // Standart parsing
+      sectionList = (json['sections'] as List)
+          .map((section) => ExamSection.fromJson(section))
+          .toList();
+    }
+
     return Exam(
       type: type,
       name: json['name'],
@@ -142,6 +184,10 @@ class ExamData {
         return exam;
       case ExamType.lgs:
         final exam = await _loadExam(type, 'assets/data/lgs.json');
+        _cache[type] = exam;
+        return exam;
+      case ExamType.ags:
+        final exam = await _loadExam(type, 'assets/data/ags.json');
         _cache[type] = exam;
         return exam;
       case ExamType.kpssLisans:
