@@ -16,15 +16,15 @@
         },
         "Tarih (Genel Kültür)": {
           "questionCount": 27,
-          "topics": ["İslamiyet Öncesi Türk Tarihi", "İlk Müslüman Türk Devletleri ve Beylikleri", "Osmanlı Devleti Siyasi Tarihi", "Osmanlı Devleti Kültür ve Medeniyeti", "20. Yüzyılda Osmanlı Devleti", "Milli Mücadele Hazırlık Dönemi", "Kurtuluş Savaşı (Cepheler)", "Atatürk İlke ve İnkılapları", "Atatürk Dönemi İç Politika", "Atatürk Dönemi Dış Politika", "Çağdaş Türk ve Dünya Tarihi"]
+          "topics": ["İslamiyet Öncesi Türk Tarihi", "İlk Müslüman Türk Devletleri ve Beylikleri", "Osmanlı Devleti Siyasi Tarihi", "Osmanlı Devleti Kültür ve Medeniyeti", "20. Yüzyılda Osmanlı Devleti", "Milli Mücadele Hazırlık Dönemi", "Kurtuluş Savaşı (Cepheler)", "Atatürk İlke ve İnkılapları", "Atatürk Dönemi İç Politika", "Atatürk Dönemi Dış Politika", "Atatürk'ün Hayatı ve Kişiliği", "Çağdaş Türk ve Dünya Tarihi"]
         },
         "Coğrafya (Genel Kültür)": {
           "questionCount": 18,
-          "topics": ["Türkiye'nin Coğrafi Konumu", "Türkiye'nin Yer Şekilleri", "Türkiye'nin İklimi ve Bitki Örtüsü", "Türkiye'de Nüfus, Yerleşme ve Göç", "Türkiye'de Tarım", "Türkiye'de Hayvancılık", "Türkiye'de Madenler ve Enerji Kaynakları", "Türkiye'de Sanayi", "Türkiye'de Ticaret", "Türkiye'de Ulaşım", "Türkiye'de Turizm", "Türkiye'nin Coğrafi Bölgeleri"]
+          "topics": ["Türkiye'nin Coğrafi Konumu", "Türkiye'nin Yer Şekilleri", "Türkiye'nin Su Varlığı ve Toprak Tipleri", "Türkiye'de Doğal Afetler", "Türkiye'nin İklimi ve Bitki Örtüsü", "Türkiye'de Nüfus, Yerleşme ve Göç", "Türkiye'de Tarım", "Türkiye'de Hayvancılık", "Türkiye'de Ormancılık", "Türkiye'de Madenler ve Enerji Kaynakları", "Türkiye'de Sanayi", "Türkiye'de Ticaret", "Türkiye'de Ulaşım", "Türkiye'de Turizm", "Türkiye'nin Coğrafi Bölgeleri", "Bölgesel Kalkınma Projeleri"]
         },
         "Vatandaşlık (Genel Kültür)": {
           "questionCount": 9,
-          "topics": ["Temel Hukuk Kavramları", "Anayasa Hukukuna Giriş", "1982 Anayasası (Temel İlkeler, Hak ve Hürriyetler)", "Yasama", "Yürütme", "Yargı", "İdare Hukuku", "İnsan Hakları Hukuku"]
+          "topics": ["Temel Hukuk Kavramları", "Devlet Biçimleri ve Hükümet Sistemleri", "Anayasa Hukukuna Giriş", "Türk Anayasa Tarihi", "1982 Anayasası (Temel İlkeler, Hak ve Hürriyetler)", "Yasama", "Yürütme", "Yargı", "İdare Hukuku", "İnsan Hakları Hukuku"]
         },
         "Güncel Bilgiler (Genel Kültür)": {
           "questionCount": 6,
