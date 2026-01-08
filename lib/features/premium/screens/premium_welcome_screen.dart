@@ -38,17 +38,17 @@ class _PremiumWelcomeScreenState extends ConsumerState<PremiumWelcomeScreen>
 
     _mainController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2000),
+      duration: const Duration(milliseconds: 1800),
     );
 
     _particleController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 8),
+      duration: const Duration(seconds: 10),
     )..repeat();
 
     _glowController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 2000),
     )..repeat(reverse: true);
 
     _mainController.forward();
@@ -109,13 +109,14 @@ class _PremiumWelcomeScreenState extends ConsumerState<PremiumWelcomeScreen>
                     colors: isDark
                         ? [
                             const Color(0xFF0A0E27),
-                            Color.lerp(const Color(0xFF1A1F3A), _accentPurple.withValues(alpha: 0.2),
+                            Color.lerp(const Color(0xFF1A1F3A), _deepPurple.withValues(alpha: 0.2),
                                 _glowController.value * 0.3)!,
-                            const Color(0xFF0A0E27),
+                            Color.lerp(const Color(0xFF0A0E27), _accentPurple.withValues(alpha: 0.15),
+                                _glowController.value * 0.2)!,
                           ]
                         : [
                             Colors.white,
-                            Color.lerp(Colors.white, _primaryGold.withValues(alpha: 0.05),
+                            Color.lerp(Colors.white, _secondaryGold.withValues(alpha: 0.08),
                                 _glowController.value * 0.5)!,
                             Colors.white,
                           ],
@@ -125,35 +126,43 @@ class _PremiumWelcomeScreenState extends ConsumerState<PremiumWelcomeScreen>
             },
           ),
 
-          // Floating Particles
-          ...List.generate(12, (index) {
+          // Floating Particles - Enhanced
+          ...List.generate(20, (index) {
             return AnimatedBuilder(
               animation: _particleController,
               builder: (context, child) {
-                final progress = (_particleController.value + (index * 0.08)) % 1.0;
-                final x = size.width * (0.1 + (index % 4) * 0.25);
+                final progress = (_particleController.value + (index * 0.05)) % 1.0;
+                final x = size.width * (0.05 + (index % 5) * 0.2);
                 final y = size.height * progress;
-                final opacity = (1 - progress) * 0.4;
+                final opacity = (1 - progress) * 0.6;
+                final sineWave = math.sin(progress * math.pi * 6) * 40;
 
                 return Positioned(
-                  left: x + math.sin(progress * math.pi * 4) * 30,
+                  left: x + sineWave,
                   top: y,
                   child: Opacity(
                     opacity: opacity,
                     child: Container(
-                      width: 4 + (index % 3) * 2,
-                      height: 4 + (index % 3) * 2,
+                      width: 3 + (index % 4) * 1.5,
+                      height: 3 + (index % 4) * 1.5,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: index % 2 == 0 ? _primaryGold : _accentPurple,
-                      boxShadow: [
-                        BoxShadow(
-                          color: (index % 2 == 0 ? _primaryGold : _accentPurple)
-                              .withValues(alpha: 0.5),
-                          blurRadius: 8,
-                          spreadRadius: 2,
-                        ),
-                      ],
+                        color: index % 3 == 0
+                          ? _primaryGold
+                          : index % 3 == 1
+                            ? _accentPurple
+                            : _accentBlue,
+                        boxShadow: [
+                          BoxShadow(
+                            color: (index % 3 == 0
+                              ? _primaryGold
+                              : index % 3 == 1
+                                ? _accentPurple
+                                : _accentBlue).withValues(alpha: 0.6),
+                            blurRadius: 12,
+                            spreadRadius: 3,
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -222,27 +231,47 @@ class _PremiumWelcomeScreenState extends ConsumerState<PremiumWelcomeScreen>
                               curve: Curves.easeInOut,
                             ),
 
-                        const SizedBox(height: 40),
+                        const SizedBox(height: 32),
 
                         // Lottie Celebration Animation
                         SizedBox(
-                          height: 200,
-                          child: Lottie.asset(
-                            'assets/lotties/Done.json',
-                            fit: BoxFit.contain,
-                            repeat: true,
-                            animate: true,
+                          height: 220,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              // Glow effect behind lottie
+                              Container(
+                                width: 200,
+                                height: 200,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: _primaryGold.withValues(alpha: 0.3),
+                                      blurRadius: 60,
+                                      spreadRadius: 20,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Lottie.asset(
+                                'assets/lotties/Done.json',
+                                fit: BoxFit.contain,
+                                repeat: true,
+                                animate: true,
+                              ),
+                            ],
                           ),
                         )
                             .animate()
                             .fadeIn(duration: 600.ms)
                             .scale(
                               begin: const Offset(0.8, 0.8),
-                              duration: 600.ms,
+                              duration: 800.ms,
                               curve: Curves.elasticOut,
                             ),
 
-                        const SizedBox(height: 40),
+                        const SizedBox(height: 32),
 
                         // Welcome Message
                         ShaderMask(
