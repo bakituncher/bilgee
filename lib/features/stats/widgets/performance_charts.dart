@@ -58,7 +58,7 @@ class _SmartPerformanceChartsState extends State<SmartPerformanceCharts> {
     // YKS için TYT ve AYT'yi ayır
     if (examType == 'YKS') {
       final tytTests = tests.where((t) => t.sectionName.toUpperCase() == 'TYT').toList();
-      final aytTests = tests.where((t) => t.sectionName.toUpperCase() == 'AYT').toList();
+      final aytTests = tests.where((t) => t.sectionName.toUpperCase().startsWith('AYT')).toList();
 
       if (tytTests.isNotEmpty) {
         chartDataList.add(ChartData(

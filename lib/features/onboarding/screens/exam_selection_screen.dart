@@ -280,9 +280,7 @@ class ExamSelectionScreen extends ConsumerWidget {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
-                  ...exam.sections
-                      .where((section) => section.name != 'TYT')
-                      .map(
+                  ...exam.sections.map(
                         (section) => Padding(
                           padding: const EdgeInsets.only(bottom: 8.0),
                           child: ElevatedButton(
