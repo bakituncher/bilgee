@@ -165,7 +165,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
       final exam = user!.selectedExam!.toLowerCase();
       if (exam == 'yks') examSuffix = " YKS";
       else if (exam == 'lgs') examSuffix = " LGS";
-      else if (exam == 'ags') examSuffix = " AGS";
+      else if (exam == 'ags') examSuffix = " AGS - ÖABT";
       else if (exam.startsWith('kpss')) examSuffix = " KPSS";
     }
 
@@ -220,15 +220,22 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
                                   ).createShader(bounds),
-                                  child: Text(
-                                    "TAKTİK PRO$examSuffix",
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      fontSize: isSmallScreen ? 30 : 34,
-                                      fontWeight: FontWeight.w900,
-                                      color: Colors.white,
-                                      letterSpacing: 1,
-                                      height: 1,
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      "TAKTİK PRO$examSuffix",
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      softWrap: false,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: isSmallScreen ? 30 : 34,
+                                        fontWeight: FontWeight.w900,
+                                        color: Colors.white,
+                                        letterSpacing: 1,
+                                        height: 1,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -460,7 +467,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                                       ),
                                     ),
                                   ),
-                                );
+                                  );
                               },
                             ),
 
@@ -800,7 +807,7 @@ class _ModernPricingCard extends StatelessWidget {
           ),
         ),
       ),
-    );
+      );
   }
 }
 
