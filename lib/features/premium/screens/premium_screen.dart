@@ -154,11 +154,12 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     final bottomPadding = MediaQuery.of(context).padding.bottom;
     final user = ref.watch(userProfileProvider).valueOrNull;
 
-    // Responsive: Ekran çok küçükse (iPhone SE gibi) bazı boşlukları kıs
+    // Responsive: Ekran boyutuna göre boşlukları optimize et
     final isSmallScreen = size.height < 700;
+    final isMediumScreen = size.height >= 700 && size.height < 850;
 
     // Bottom Bar yüksekliğini hesapla (Scroll Padding için gerekli)
-    final bottomBarHeight = 100.0 + bottomPadding + (isSmallScreen ? 8 : 20);
+    final bottomBarHeight = 90.0 + bottomPadding + (isSmallScreen ? 6 : 12);
 
     String examSuffix = "";
     if (user?.selectedExam != null) {
@@ -187,7 +188,10 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                   children: [
                     // Header
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: isSmallScreen ? 4 : 8,
+                      ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -211,9 +215,13 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                           SliverToBoxAdapter(
                             child: Column(
                               children: [
-                                SizedBox(height: isSmallScreen ? 2 : 5),
-                                const Icon(Icons.diamond_rounded, size: 40, color: Color(0xFF00E5FF)),
-                                SizedBox(height: isSmallScreen ? 6 : 8),
+                                SizedBox(height: isSmallScreen ? 4 : (isMediumScreen ? 8 : 12)),
+                                Icon(
+                                  Icons.diamond_rounded,
+                                  size: isSmallScreen ? 36 : 40,
+                                  color: const Color(0xFF00E5FF),
+                                ),
+                                SizedBox(height: isSmallScreen ? 8 : 10),
                                 ShaderMask(
                                   shaderCallback: (bounds) => LinearGradient(
                                     colors: [_primaryBrand, _accentBrand],
@@ -239,9 +247,9 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                                     ),
                                   ),
                                 ),
-                                SizedBox(height: isSmallScreen ? 6 : 8),
+                                SizedBox(height: isSmallScreen ? 8 : 10),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                                   decoration: BoxDecoration(
                                     color: Colors.white.withOpacity(0.05),
                                     borderRadius: BorderRadius.circular(20),
@@ -253,12 +261,12 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                                     style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
                                   ),
                                 ),
-                                SizedBox(height: isSmallScreen ? 12 : 18),
+                                SizedBox(height: isSmallScreen ? 16 : 20),
 
                                 // Feature Carousel (Fix: SizedBox yerine Container kullanıldı)
                                 Container(
-                                  height: size.height * 0.18,
-                                  constraints: const BoxConstraints(minHeight: 120, maxHeight: 160),
+                                  height: size.height * 0.17,
+                                  constraints: const BoxConstraints(minHeight: 115, maxHeight: 150),
                                   child: PageView.builder(
                                     controller: PageController(viewportFraction: 0.85),
                                     itemCount: _features.length,
@@ -266,7 +274,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                                     itemBuilder: (ctx, index) => _buildModernFeatureCard(_features[index], index == _currentCarouselIndex),
                                   ),
                                 ),
-                                const SizedBox(height: 10),
+                                const SizedBox(height: 8),
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: List.generate(_features.length, (index) => AnimatedContainer(
@@ -284,7 +292,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                             ),
                           ),
 
-                          SliverToBoxAdapter(child: SizedBox(height: isSmallScreen ? 20 : 40)),
+                          SliverToBoxAdapter(child: SizedBox(height: isSmallScreen ? 16 : (isMediumScreen ? 24 : 32))),
 
                           // PRICING SECTION
                           offeringsAsync.when(
@@ -333,7 +341,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                                         accentColor: _primaryBrand,
                                         badgeColor: _successColor,
                                       ),
-                                    const SizedBox(height: 16),
+                                    const SizedBox(height: 12),
                                     if (monthly != null)
                                       _ModernPricingCard(
                                         package: monthly,
@@ -345,13 +353,13 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                                         badgeColor: _successColor,
                                       ),
 
-                                    const SizedBox(height: 24),
+                                    const SizedBox(height: 20),
 
                                     // Trust Badges
                                     const Wrap(
                                       alignment: WrapAlignment.center,
-                                      spacing: 24,
-                                      runSpacing: 10,
+                                      spacing: 20,
+                                      runSpacing: 8,
                                       children: [
                                         _TrustBadgeSmall(
                                           icon: Icons.lock_outline_rounded,
@@ -366,7 +374,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                                       ],
                                     ),
 
-                                    const SizedBox(height: 16),
+                                    const SizedBox(height: 14),
                                     const _PriceTransparencyText(),
                                     // Bottom Bar kadar boşluk bırak
                                     SizedBox(height: bottomBarHeight),
@@ -406,7 +414,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 600),
                       child: Padding(
-                        padding: EdgeInsets.fromLTRB(24, 20, 24, bottomPadding + 10),
+                        padding: EdgeInsets.fromLTRB(20, isSmallScreen ? 14 : 18, 20, bottomPadding + (isSmallScreen ? 8 : 10)),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -416,7 +424,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                                  (!_selectedPackage!.identifier.toLowerCase().contains('annual') &&
                                   !_selectedPackage!.identifier.toLowerCase().contains('year'))))
                               Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
+                                padding: const EdgeInsets.only(bottom: 10),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
@@ -437,7 +445,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                                   scale: 1.0 + (_pulseController.value * 0.02),
                                   child: Container(
                                     width: double.infinity,
-                                    height: 52,
+                                    height: 50,
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(16),
                                       gradient: LinearGradient(colors: [_primaryBrand, _primaryBrand.withOpacity(0.8)]),
@@ -471,12 +479,12 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                               },
                             ),
 
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 10),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 _FooterLink(text: "Kullanım Koşulları", url: "https://www.codenzi.com/terms"),
-                                Container(height: 12, width: 1, color: Colors.white24, margin: const EdgeInsets.symmetric(horizontal: 12)),
+                                Container(height: 12, width: 1, color: Colors.white24, margin: const EdgeInsets.symmetric(horizontal: 10)),
                                 _FooterLink(text: "Gizlilik", url: "https://www.codenzi.com/privacy"),
                               ],
                             ),
@@ -545,8 +553,8 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
       scale: isActive ? 1.0 : 0.9,
       duration: const Duration(milliseconds: 300),
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        padding: const EdgeInsets.all(14),
+        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: isActive ? Colors.white.withOpacity(0.08) : Colors.white.withOpacity(0.03),
           borderRadius: BorderRadius.circular(24),
@@ -558,14 +566,14 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: isActive ? _primaryBrand.withOpacity(0.2) : Colors.white.withOpacity(0.05),
                 shape: BoxShape.circle,
               ),
-              child: Icon(item['icon'], color: isActive ? _accentBrand : Colors.white54, size: 22),
+              child: Icon(item['icon'], color: isActive ? _accentBrand : Colors.white54, size: 20),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -575,14 +583,14 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                       item['title'],
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: isActive ? Colors.white : Colors.white70)
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isActive ? Colors.white : Colors.white70)
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                       item['desc'],
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 11, color: Colors.white54, height: 1.2)
+                      style: const TextStyle(fontSize: 10.5, color: Colors.white54, height: 1.2)
                   ),
                 ],
               ),
@@ -662,7 +670,7 @@ class _ModernPricingCard extends StatelessWidget {
               : [],
         ),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           decoration: BoxDecoration(
             color: isSelected ? const Color(0xFF1A1D25) : const Color(0xFF16181E),
             borderRadius: BorderRadius.circular(18),
