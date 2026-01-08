@@ -13,6 +13,7 @@ import 'onboarding_routes.dart';
 import 'main_shell_routes.dart';
 import 'package:taktik/features/blog/screens/blog_screen.dart';
 import 'package:taktik/features/premium/screens/premium_screen.dart' as premium;
+import 'package:taktik/features/premium/screens/premium_welcome_screen.dart';
 import 'package:taktik/features/premium/screens/tool_offer_screen.dart';
 import 'package:taktik/features/premium/screens/ai_tools_offer_screen.dart';
 import 'package:taktik/features/stats/screens/general_overview_screen.dart';
@@ -28,7 +29,6 @@ import 'package:taktik/features/admin/screens/user_reports_screen.dart';
 import 'package:taktik/shared/notifications/notification_center_screen.dart';
 import 'package:taktik/features/profile/screens/blocked_users_screen.dart';
 import 'package:taktik/features/profile/screens/user_search_screen.dart';
-import 'package:taktik/features/profile/screens/blocked_users_screen.dart';
 import 'package:taktik/shared/widgets/splash_screen.dart';
 import 'package:taktik/data/providers/admin_providers.dart';
 import 'transition_utils.dart';
@@ -200,6 +200,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           context: context,
           state: state,
           child: const premium.PremiumScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/premium-welcome',
+        name: 'PremiumWelcome',
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) => buildPageWithFadeTransition(
+          context: context,
+          state: state,
+          child: const PremiumWelcomeScreen(),
         ),
       ),
       GoRoute(

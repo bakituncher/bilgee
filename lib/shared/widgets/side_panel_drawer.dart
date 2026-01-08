@@ -143,7 +143,14 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                 Padding(
                   padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
                   child: isPremium
-                      ? _PremiumActiveCard(colorScheme: colorScheme, theme: theme)
+                      ? _PremiumActiveCard(
+                    colorScheme: colorScheme,
+                    theme: theme,
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      context.go('/premium-welcome');
+                    },
+                  )
                       : _PremiumOfferCard(
                     onTap: () {
                       Navigator.of(context).pop();
@@ -1150,91 +1157,97 @@ class _PremiumOfferCard extends StatelessWidget {
 class _PremiumActiveCard extends StatelessWidget {
   final ColorScheme colorScheme;
   final ThemeData theme;
+  final VoidCallback onTap;
 
   const _PremiumActiveCard({
     required this.colorScheme,
     required this.theme,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            const Color(0xFFFFD700).withOpacity(0.15),
-            colorScheme.primary.withOpacity(0.05),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFFFD700).withOpacity(0.4),
-          width: 1.5,
-        ),
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: -10,
-            top: -10,
-            child: Icon(
-              Icons.verified_rounded,
-              size: 60,
-              color: Colors.amber.withOpacity(0.08),
-            ),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              const Color(0xFFFFD700).withOpacity(0.15),
+              colorScheme.primary.withOpacity(0.05),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          'Taktik PRO',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: colorScheme.onSurface,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 15,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: const Color(0xFFFFD700).withOpacity(0.4),
+            width: 1.5,
+          ),
+        ),
+        child: Stack(
+          children: [
+            Positioned(
+              right: -10,
+              top: -10,
+              child: Icon(
+                Icons.verified_rounded,
+                size: 60,
+                color: Colors.amber.withOpacity(0.08),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'Taktik PRO',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: colorScheme.onSurface,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 15,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(Icons.verified, color: Colors.amber, size: 15),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.green.withOpacity(0.3)),
+                        ),
+                        child: Text(
+                          'AKTİF',
+                          style: TextStyle(
+                            color: Colors.green.shade700,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 9,
                           ),
                         ),
-                        const SizedBox(width: 4),
-                        const Icon(Icons.verified, color: Colors.amber, size: 15),
-                      ],
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: Colors.green.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.green.withOpacity(0.3)),
                       ),
-                      child: Text(
-                        'AKTİF',
-                        style: TextStyle(
-                          color: Colors.green.shade700,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 9,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 9),
-                _buildActiveFeature(Icons.block_rounded, "Reklamsız"),
-                const SizedBox(height: 5),
-                _buildActiveFeature(Icons.psychology_rounded, "Taktik Tavşan"),
-                const SizedBox(height: 5),
-                _buildActiveFeature(Icons.all_inclusive_rounded, "Sınırsız Arşiv"),
-              ],
+                    ],
+                  ),
+                  const SizedBox(height: 9),
+                  _buildActiveFeature(Icons.block_rounded, "Reklamsız"),
+                  const SizedBox(height: 5),
+                  _buildActiveFeature(Icons.psychology_rounded, "Taktik Tavşan"),
+                  const SizedBox(height: 5),
+                  _buildActiveFeature(Icons.all_inclusive_rounded, "Sınırsız Arşiv"),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
