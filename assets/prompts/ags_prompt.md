@@ -34,18 +34,25 @@ Bu adayın AGS başarısı için zamanını maksimum verimle kullanmasını sağ
 - Her konuda en az 20-30 soru çözümü
 - Türkiye Yüzyılı Maarif Modeli mutlaka işlensin
 
-### 4. ZAMAN YÖNETİMİ
+### 4. PERFORMANS VE DENEME ODAKLI PLANLAMA
+- {{TOPIC_PERFORMANCES_JSON}} içindeki verileri kullan: en zayıf 3-5 konuya ekstra süre/practice (60-90 dk, soru sayısı belirt), güçlü konulara kısa review (20-30 soru)
+- Yanlış oranı yüksek konuları haftanın erken günlerinde çift dokunuşla planla (study + practice ya da practice + review)
+- Kullanıcının eklediği denemeleri öncele: Haftada min 1 tam deneme (test) + min 1 mini deneme (60-90 dk) ekle, her deneme sonrası aynı gün 30-60 dk analiz/review zorunlu
+- Tamamlanan görevler ({{COMPLETED_TASKS_JSON}}) ile çakışma yaratma; aynı denemeyi kopyalama
+- Performans verisi yoksa guardrails ve müfredat sırasına göre dengeli dağıtım yap
+
+### 5. ZAMAN YÖNETİMİ
 - Günlük toplam çalışma: min 3 saat, maks 8 saat
 - Tek oturum maks 90 dk (50+10 Pomodoro)
 - Her gün mutlaka farklı derslerden 3-4 görev
 - Hafta sonu deneme + analiz
 
-### 5. PLAN ÇEŞİTLİLİĞİ
+### 6. PLAN ÇEŞİTLİLİĞİ
 - Haftada en az 1 tam deneme
 - Zayıf konulara ekstra süre, güçlü konulara kısa review
 - Monotonluk yasak: günler birbirinin aynısı olmasın
 
-### 6. DERS DAĞILIMI (Ağırlıklara Göre)
+### 7. DERS DAĞILIMI (Ağırlıklara Göre)
 - Eğitimin Temelleri (%30): Haftada 4-5 gün, 60-90 dk
 - Sözel Yetenek (%18.75): Haftada 4 gün, 30-45 dk
 - Sayısal Yetenek (%18.75): Haftada 4 gün, 30-45 dk
@@ -53,14 +60,14 @@ Bu adayın AGS başarısı için zamanını maksimum verimle kullanmasını sağ
 - Türkiye Coğrafyası (%10): Haftada 2-3 gün, 30-40 dk
 - Mevzuat (%10): Haftada 3 gün, 30-40 dk
 
-### 7. GÖREV TİPLERİ
+### 8. GÖREV TİPLERİ
 - **study**: Yeni konu öğrenme (45-90 dk)
 - **practice**: Soru çözme (60-120 dk, soru sayısı belirt)
 - **review**: Tekrar/pekiştirme (30-45 dk)
 - **test**: Deneme/mini deneme (60-180 dk)
 - **break**: Mola (kısa, opsiyonel)
 
-### 8. KRİTİK UYARI: PLAN YENİLEME
+### 9. KRİTİK UYARI: PLAN YENİLEME
 - Önceki plan ({{WEEKLY_PLAN_TEXT}}) varsa ASLA kopyalama; çeşitlendir, zorlaştır
 - Tempo: {{PACING}} (intense %90, moderate %70-80, relaxed %50-60 doluluk)
 
@@ -129,7 +136,8 @@ Bu adayın AGS başarısı için zamanını maksimum verimle kullanmasını sağ
 - `plan` dizisinde 7 gün olmalı; her günün `schedule` listesi boş olamaz
 - Her activity net konu/soru sayısı içermeli; belirsiz ifadeler yasak
 - Müsaitlik dışında saat vermek yasak; tempo oranına uy
-- Deneme + analiz mutlaka ekle (genelde hafta sonu)
+- Deneme + analiz mutlaka ekle (genelde hafta sonu); eklenen denemeleri takvime yerleştir
+- Zayıf konu önceliği: {{TOPIC_PERFORMANCES_JSON}}'daki en düşük performanslı konuları haftanın ilk 3 gününde işle
 - MotivationalQuote ve strategyFocus kısa ve özgün olmalı
 
 ## EXECUTION
