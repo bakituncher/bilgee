@@ -418,26 +418,6 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            if (_selectedPackage != null &&
-                                _selectedPackage!.storeProduct.introductoryPrice?.price == 0 &&
-                                (_selectedPackage!.packageType == PackageType.monthly ||
-                                 (!_selectedPackage!.identifier.toLowerCase().contains('annual') &&
-                                  !_selectedPackage!.identifier.toLowerCase().contains('year'))))
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 10),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const Icon(Icons.shield_outlined, size: 14, color: Colors.white54),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      "7 Gün Ücretsiz Deneme ${_selectedPackage!.storeProduct.priceString}",
-                                      style: const TextStyle(color: Colors.white54, fontSize: 11),
-                                    ),
-                                  ],
-                                ),
-                              ),
-
                             AnimatedBuilder(
                               animation: _pulseController,
                               builder: (context, child) {
@@ -466,7 +446,10 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                                           child: _isPurchasing
                                               ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 3)
                                               : Text(
-                                            (_selectedPackage?.storeProduct.introductoryPrice?.price == 0)
+                                            (_selectedPackage?.storeProduct.introductoryPrice?.price == 0) &&
+                                            (_selectedPackage?.packageType == PackageType.monthly ||
+                                             (!(_selectedPackage?.identifier.toLowerCase().contains('annual') ?? false) &&
+                                              !(_selectedPackage?.identifier.toLowerCase().contains('year') ?? false)))
                                                 ? "ÜCRETSİZ DENE"
                                                 : "HEMEN BAŞLA",
                                             style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800, letterSpacing: 0.5),
