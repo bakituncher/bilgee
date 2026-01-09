@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/core/utils/exam_utils.dart';
 import '../logic/add_test_notifier.dart';
 import '../widgets/add_test_step1.dart';
 import '../widgets/add_test_step2.dart';
@@ -39,35 +40,15 @@ class AddTestScreen extends ConsumerWidget {
           final exam = snapshot.data!;
           List<ExamSection> availableSections;
 
-          // DEĞİŞİKLİK: YKS ve LGS için bölüm mantığı ayrıldı.
-          if (selectedExamType == ExamType.yks) {
-            final tytSection = exam.sections.firstWhere((s) => s.name == 'TYT');
-
-            // TYT seçildiyse sadece TYT
-            if (userProfile.selectedExamSection == 'TYT') {
-              availableSections = [tytSection];
-            } else {
-              final userAytSection = exam.sections.firstWhere(
-                (s) => s.name == userProfile.selectedExamSection,
-                orElse: () => exam.sections.first,
-              );
-              availableSections = (tytSection.name == userAytSection.name) ? [tytSection] : [tytSection, userAytSection];
-            }
-          } else if (selectedExamType == ExamType.ags) {
-            // AGS - ÖABT: Kullanıcının seçtiği branşı tek bölüm olarak kullan.
-            final userBranchSection = exam.sections.firstWhere(
-              (s) => s.name == userProfile.selectedExamSection,
-              orElse: () => exam.sections.first,
-            );
-            availableSections = [userBranchSection];
-          } else {
-            // LGS ve diğer sınavlar için tüm bölümleri al.
-            availableSections = exam.sections;
-          }
+          // DEĞİŞİKLİK: İlgili bölümleri tek bir kaynaktan belirle.
+          // - LGS: tüm sections (notifier içinde zaten birleştiriliyor)
+          // - YKS: TYT + kullanıcının alanı / YDT
+          // - AGS: "AGS Ortak" + kullanıcının branşı
+          // - Diğerleri: kullanıcı alanı vb.
+          availableSections = ExamUtils.getRelevantSectionsForUser(userProfile, exam);
 
           // Veri hazır olduğunda, beyni (Notifier) anında bilgilendir.
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            // DEĞİŞİKLİK: Notifier'a hangi sınav türüyle çalıştığı bilgisi gönderiliyor.
             ref.read(addTestProvider.notifier).initialize(availableSections, selectedExamType);
           });
         }

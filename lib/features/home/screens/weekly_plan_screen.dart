@@ -27,34 +27,7 @@ class WeeklyPlanScreen extends ConsumerStatefulWidget {
 }
 
 class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
-  void _maybeShowExpiredDialog(BuildContext context, WeeklyPlan weeklyPlan) {
-    final alreadyShown = ref.read(_isExpiredWarningShownProvider);
-    if (!weeklyPlan.isExpired || alreadyShown) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!mounted) return;
-      await showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('⚠️ Planınızın Süresi Doldu'),
-          content: const Text('Haftalık planınızın süresi doldu. Yeni bir plan oluşturmanız önerilir.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Şimdi Değil'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(ctx).pop();
-                context.go('/ai-hub/strategic-planning');
-              },
-              child: const Text('Yeni Plan Oluştur'),
-            ),
-          ],
-        ),
-      );
-      if (mounted) ref.read(_isExpiredWarningShownProvider.notifier).state = true;
-    });
-  }
+  // Plan süresi doldu dialog kontrolünü kaldırdık çünkü artık direkt Empty State gösteriyoruz.
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +35,9 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
     final planDoc = ref.watch(planProvider).value;
     final weeklyPlan = planDoc?.weeklyPlan != null ? WeeklyPlan.fromJson(planDoc!.weeklyPlan!) : null;
 
-    if (user == null || weeklyPlan == null) {
+    // GÜNCELLEME: weeklyPlan.isExpired kontrolü buraya eklendi.
+    // Eğer plan yoksa VEYA planın süresi dolmuşsa direkt Empty State (Boş Durum) gösterilir.
+    if (user == null || weeklyPlan == null || weeklyPlan.isExpired) {
       return Scaffold(
         appBar: AppBar(title: const Text('Haftalık Plan')),
         body: Center(
@@ -71,9 +46,15 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
             children: [
               Icon(Icons.calendar_today_outlined, size: 64, color: Theme.of(context).colorScheme.primary.withOpacity(0.3)),
               const SizedBox(height: 16),
-              Text("Aktif bir haftalık plan bulunamadı.", style: Theme.of(context).textTheme.titleMedium),
+              // Mesajı duruma göre özelleştirdik
+              Text(
+                (weeklyPlan != null && weeklyPlan.isExpired)
+                   ? "Haftalık planının süresi doldu."
+                   : "Aktif bir haftalık plan bulunamadı.",
+                 style: Theme.of(context).textTheme.titleMedium
+              ),
               const SizedBox(height: 8),
-              Text("Yeni bir plan oluşturmak için Strateji bölümünü ziyaret edin.", textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodySmall),
+              Text("Yeni bir strateji belirlemek için plan oluşturun.", textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodySmall),
               const SizedBox(height: 24),
               ElevatedButton.icon(
                 onPressed: () {
@@ -85,15 +66,13 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
                   }
                 },
                 icon: const Icon(Icons.add),
-                label: const Text('Plan Oluştur'),
+                label: const Text('Yeni Plan Oluştur'),
               ),
             ],
           ),
         ),
       );
     }
-
-    _maybeShowExpiredDialog(context, weeklyPlan);
 
     final creationDate = weeklyPlan.creationDate;
     final creationDayStart = DateTime(creationDate.year, creationDate.month, creationDate.day);
@@ -118,24 +97,7 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (weeklyPlan.isExpired)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.orange.withOpacity(0.5)),
-                  ),
-                  child: Row(
-                    children: const [
-                      Icon(Icons.info_outline, color: Colors.orange),
-                      SizedBox(width: 8),
-                      Expanded(child: Text('Bu planın süresi doldu', style: TextStyle(fontWeight: FontWeight.w600))),
-                    ],
-                  ),
-                ),
+              // isExpired banner'ını kaldırdık çünkü artık o duruma yukarıdaki if bloğunda düşüyor.
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
                 child: Column(

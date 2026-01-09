@@ -55,40 +55,60 @@ class _TodaysPlanState extends ConsumerState<TodaysPlan> {
 
     final weeklyPlan = planDoc?.weeklyPlan != null ? WeeklyPlan.fromJson(planDoc!.weeklyPlan!) : null;
 
-    if (weeklyPlan != null && DateTime.now().difference(weeklyPlan.creationDate).inDays >= 7) {
-      return const _NewPlanPromptCard();
+    // GÜNCELLEME: Plan yoksa VEYA süresi dolmuşsa ikili kart göster (sanki plan hiç yokmuş gibi)
+    // weeklyPlan == null kontrolünü weeklyPlan.isExpired ile birleştirdik
+    if (weeklyPlan == null || weeklyPlan.isExpired) {
+      // Plan yok veya süresi dolmuş - normal iki kartlı görünüm
+      List<Widget> pages = [
+        const MissionCard(),
+        const WeeklyPlanCardCompact(),
+      ];
+
+      return Column(
+        children: [
+          SizedBox(
+            height: 180,
+            child: PageView(
+              controller: _pageController,
+              padEnds: false,
+              children: pages,
+            ),
+          ),
+          const SizedBox(height: 6),
+          _buildPageIndicator(pages.length),
+        ],
+      );
     }
 
+    // Plan var ve geçerli - normal akış devam eder
     int totalTasksSoFar = 0;
     int completedTasksSoFar = 0;
     bool isPlanBehind = false;
 
-    if (weeklyPlan != null) {
-      final today = DateTime.now();
-      final currentDayIndex = today.weekday - 1;
-      final creation = weeklyPlan.creationDate;
-      final startOfWeek = DateTime(creation.year, creation.month, creation.day).subtract(Duration(days: creation.weekday - 1));
+    final today = DateTime.now();
+    final currentDayIndex = today.weekday - 1;
+    final creation = weeklyPlan.creationDate;
+    final startOfWeek = DateTime(creation.year, creation.month, creation.day).subtract(Duration(days: creation.weekday - 1));
 
-      final relevantDays = weeklyPlan.plan.take(currentDayIndex + 1).toList();
-      totalTasksSoFar = relevantDays.expand((day) => day.schedule).length;
+    final relevantDays = weeklyPlan.plan.take(currentDayIndex + 1).toList();
+    totalTasksSoFar = relevantDays.expand((day) => day.schedule).length;
 
-      if (totalTasksSoFar > 0) {
-        for (int i = 0; i <= currentDayIndex; i++) {
-          if (i >= weeklyPlan.plan.length) continue;
+    if (totalTasksSoFar > 0) {
+      for (int i = 0; i <= currentDayIndex; i++) {
+        if (i >= weeklyPlan.plan.length) continue;
 
-          final dailyPlan = weeklyPlan.plan[i];
-          final dateForDay = startOfWeek.add(Duration(days: i));
-          final completedForThisDay = ref.watch(completedTasksForDateProvider(dateForDay)).maybeWhen(data: (list)=> list, orElse: ()=> const <String>[]);
+        final dailyPlan = weeklyPlan.plan[i];
+        final dateForDay = startOfWeek.add(Duration(days: i));
+        final completedForThisDay = ref.watch(completedTasksForDateProvider(dateForDay)).maybeWhen(data: (list)=> list, orElse: ()=> const <String>[]);
 
-          for (var task in dailyPlan.schedule) {
-            final taskIdentifier = task.id;
-            if (completedForThisDay.contains(taskIdentifier)) {
-              completedTasksSoFar++;
-            }
+        for (var task in dailyPlan.schedule) {
+          final taskIdentifier = task.id;
+          if (completedForThisDay.contains(taskIdentifier)) {
+            completedTasksSoFar++;
           }
         }
-        isPlanBehind = (completedTasksSoFar / totalTasksSoFar) < 0.5;
       }
+      isPlanBehind = (completedTasksSoFar / totalTasksSoFar) < 0.5;
     }
 
     List<Widget> pages = [

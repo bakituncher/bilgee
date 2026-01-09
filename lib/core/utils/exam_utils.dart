@@ -31,6 +31,29 @@ class ExamUtils {
       );
       if (tytSection.name == userAytSection.name) return [tytSection];
       return [tytSection, userAytSection];
+    } else if (user.selectedExam == ExamType.ags.name) {
+      // --- AGS GÜNCELLEMESİ ---
+
+      // 1. Ortak Oturumu Bul
+      final commonSection = exam.sections.firstWhere(
+        (s) => s.name == 'AGS Ortak',
+        orElse: () => exam.sections.first,
+      );
+
+      // 2. Kullanıcının Branşını (Alan Oturumu) Bul
+      // user.selectedExamSection kullanıcının branş ismini tutar (Örn: "Türkçe Öğretmenliği")
+      final branchSection = exam.sections.firstWhere(
+        (s) => s.name == user.selectedExamSection,
+        orElse: () => commonSection,
+      );
+
+      // Eğer branş bulunamazsa veya bir hata varsa sadece ortak oturumu dön
+      if (commonSection.name == branchSection.name) {
+        return [commonSection];
+      }
+
+      // 3. Her iki oturumu da listede döndür (UI'da iki kart çıkmasını sağlar)
+      return [commonSection, branchSection];
     } else {
       final relevantSection = exam.sections.firstWhere(
         (s) => s.name == user.selectedExamSection,
@@ -40,4 +63,3 @@ class ExamUtils {
     }
   }
 }
-
