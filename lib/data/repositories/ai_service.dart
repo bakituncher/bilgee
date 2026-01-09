@@ -227,8 +227,8 @@ class AiService {
     } on FirebaseFunctionsException catch (e) {
       // Backend'den "resource-exhausted" gelirse (kota doldu), mesajı kullanıcıya göster
       final isRateLimit = e.code == 'resource-exhausted' ||
-                          e.code == 'unavailable' ||
-                          (e.message?.contains('429') ?? false);
+          e.code == 'unavailable' ||
+          (e.message?.contains('429') ?? false);
 
       // Kota dolmuş mesajı içeriyorsa retry yapma (aylık limit)
       final isQuotaExceeded = e.message?.contains('limitinize') ?? false;
@@ -342,8 +342,14 @@ class AiService {
     String prompt;
     switch (examType) {
       case ExamType.yks:
+      // FIX: YDT öğrencileri için başlığı "TYT ve YDT" olarak güncelle ki AI her ikisini de kapsasın
+        String displaySection = user.selectedExamSection ?? '';
+        if (displaySection == 'YDT') {
+          displaySection = 'TYT ve YDT';
+        }
+
         prompt = StrategyPrompts.getYksPrompt(
-            userId: user.id, selectedExamSection: user.selectedExamSection ?? '',
+            userId: user.id, selectedExamSection: displaySection,
             daysUntilExam: daysUntilExam, goal: user.goal ?? '',
             challenges: user.challenges, pacing: pacing,
             testCount: user.testCount, avgNet: avgNet,
@@ -406,9 +412,18 @@ class AiService {
   Future<String> _buildCurriculumOrderJson(ExamType examType, String? selectedSection) async {
     try {
       final exam = await ExamData.getExamByType(examType);
-      final sections = (selectedSection != null && selectedSection.isNotEmpty)
-          ? exam.sections.where((s) => s.name.toLowerCase() == selectedSection.toLowerCase()).toList()
-          : exam.sections;
+
+      List<ExamSection> sections;
+
+      // YDT ve YKS FIX: Eğer bölüm YDT ise, TYT'yi de listeye ekle (YDT öğrencileri TYT + YDT sorumludur)
+      if (examType == ExamType.yks && selectedSection == 'YDT') {
+        sections = exam.sections.where((s) => s.name == 'TYT' || s.name == 'YDT').toList();
+      } else {
+        sections = (selectedSection != null && selectedSection.isNotEmpty)
+            ? exam.sections.where((s) => s.name.toLowerCase() == selectedSection.toLowerCase()).toList()
+            : exam.sections;
+      }
+
       final Map<String, List<String>> subjects = {};
       for (final sec in sections) {
         sec.subjects.forEach((subject, details) {
@@ -565,9 +580,9 @@ class AiService {
     // HAFIZA OPTİMİZASYONU: Sadece derinlemesine sohbet gerektiren modlar hafıza kullanır
     final bool shouldUseMemory =
         promptType == 'strategy_consult' ||
-        promptType == 'psych_support' ||
-        promptType == 'user_chat' ||
-        promptType == 'trial_review';
+            promptType == 'psych_support' ||
+            promptType == 'user_chat' ||
+            promptType == 'trial_review';
 
     // Kalıcı bellek: Sadece gerekli modlar için yükle
     String mem = '';
@@ -716,7 +731,7 @@ class AiService {
     return raw;
   }
 
-  // Hafif yardımcılar: UI dış�� tek seferlik hesaplamalarda kullanılabilir
+  // Hafif yardımcılar: UI dış tek seferlik hesaplamalarda kullanılabilir
   double _quickAverageNet(List<TestModel> tests) {
     if (tests.isEmpty) return 0.0;
     final total = tests.fold<double>(0.0, (acc, t) => acc + t.totalNet);
