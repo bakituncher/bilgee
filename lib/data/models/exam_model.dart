@@ -120,7 +120,7 @@ class Exam {
       });
 
       sectionList.add(ExamSection(
-        name: 'AGS Ortak',
+        name: 'AGS',
         subjects: commonSubjects.map(
           (key, value) => MapEntry(key, SubjectDetails.fromJson(value)),
         ),

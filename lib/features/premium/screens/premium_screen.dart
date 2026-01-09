@@ -626,8 +626,7 @@ class _ModernPricingCard extends StatelessWidget {
       smallSubtext = "Yıllık ${package.storeProduct.priceString} faturalanır";
 
       if (compareMonthlyPrice != null) {
-        final totalYearlyIfPaidMonthly = compareMonthlyPrice! * 12;
-        strikeThroughPrice = "₺${totalYearlyIfPaidMonthly.toStringAsFixed(2)}";
+        strikeThroughPrice = "₺${compareMonthlyPrice!.toStringAsFixed(2)}";
       }
     } else {
       bigPriceDisplay = package.storeProduct.priceString;

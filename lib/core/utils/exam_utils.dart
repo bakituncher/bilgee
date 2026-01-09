@@ -36,7 +36,7 @@ class ExamUtils {
 
       // 1. Ortak Oturumu Bul
       final commonSection = exam.sections.firstWhere(
-        (s) => s.name == 'AGS Ortak',
+        (s) => s.name == 'AGS',
         orElse: () => exam.sections.first,
       );
 
