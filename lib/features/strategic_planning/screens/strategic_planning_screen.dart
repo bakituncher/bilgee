@@ -1224,17 +1224,6 @@ class StrategicPlanningScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: 12),
-                TextButton.icon(
-                  onPressed: () {
-                    ref.read(planningStepProvider.notifier).state = PlanningStep.confirmation;
-                  },
-                  icon: const Icon(Icons.arrow_back_rounded, size: 18),
-                  label: const Text("Geri Dön"),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                ),
               ],
             ),
           ),
