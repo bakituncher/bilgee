@@ -128,7 +128,18 @@
       "subjects": {
         "Yabancı Dil": {
           "questionCount": 80,
-          "topics": ["Reading Comprehension (Okuduğunu Anlama)", "Vocabulary (Kelime Bilgisi)", "Grammar (Dilbilgisi)", "Cloze Test (Boşluk Doldurma)", "Paragraph Completion (Paragraf Tamamlama)", "Dialogue Completion (Diyalog Tamamlama)", "Translation (Çeviri)", "Idioms and Phrases (Deyimler ve İfadeler)", "Sentence Completion (Cümle Tamamlama)", "Text Analysis (Metin Analizi)"]
+          "topics": [
+            "Kelime ve Phrasal Verb",
+            "Tense, Preposition ve Dilbilgisi",
+            "Cloze Test",
+            "Cümle Tamamlama",
+            "Çeviri",
+            "Paragraf (Okuma Parçası)",
+            "Diyalog Tamamlama",
+            "Yakın Anlamlı Cümleler",
+            "Paragraf Tamamlama",
+            "Anlam Bütünlüğünü Bozan Cümle"
+          ]
         }
       },
       "availableLanguages": ["İngilizce", "Almanca", "Fransızca", "Arapça", "Rusça"]
