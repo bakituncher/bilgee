@@ -45,6 +45,7 @@ Her görevin tipi şunlardan biri olmalı:
 - **review**: Tekrar/pekiştirme (30-45 dk)
 - **test**: Deneme sınavı (180 dk)
 - **break**: Mola (isteğe bağlı, kısa)
+- ⚠️ **ÖNEMLİ:** `activity` metnine görev tipini YAZMA! Sadece `type` alanında olmalı (örn: "Türev - 35 soru" ✓, "Türev (practice)" ✗)
 
 ### 7. MOTİVASYONEL SÖZ ÜRETİMİ
 - Her plan için öğrencinin mevcut durumuna ve hedeflerine özel, özgün ve motive edici bir söz oluştur

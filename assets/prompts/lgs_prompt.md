@@ -50,6 +50,7 @@ Her görevin tipi şunlardan biri olmalı:
 - **review**: Tekrar/pekiştirme (30-40 dk)
 - **test**: Deneme sınavı (120 dk, LGS formatı)
 - **break**: Mola (isteğe bağlı, kısa)
+- ⚠️ **ÖNEMLİ:** `activity` metnine görev tipini YAZMA! Sadece `type` alanında olmalı (örn: "Çarpanlar-Katlar - 40 soru" ✓, "Çarpanlar-Katlar (practice)" ✗)
 
 ### 7. MOTİVASYONEL SÖZ ÜRETİMİ
 - Her plan için öğrencinin mevcut durumuna ve hedeflerine özel, özgün ve motive edici bir söz oluştur

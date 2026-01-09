@@ -66,6 +66,7 @@ Bu adayın AGS başarısı için zamanını maksimum verimle kullanmasını sağ
 - **review**: Tekrar/pekiştirme (30-45 dk)
 - **test**: Deneme/mini deneme (60-180 dk)
 - **break**: Mola (kısa, opsiyonel)
+- ⚠️ **KRİTİK:** `activity` metnine görev tipini YAZMA (örn: "Eğitim Temelleri (study)" ✗, "Eğitim Temelleri: Eğitim kuramları" ✓)
 
 ### 9. KRİTİK UYARI: PLAN YENİLEME
 - Önceki plan ({{WEEKLY_PLAN_TEXT}}) varsa ASLA kopyalama; çeşitlendir, zorlaştır
@@ -135,6 +136,7 @@ Bu adayın AGS başarısı için zamanını maksimum verimle kullanmasını sağ
 ### FORMAT ZORUNLULUKLARI
 - `plan` dizisinde 7 gün olmalı; her günün `schedule` listesi boş olamaz
 - Her activity net konu/soru sayısı içermeli; belirsiz ifadeler yasak
+- ⚠️ **ÖNEMLI:** `activity` metnine görev tipi ekleme! Sadece `type` alanında olmalı (örn: "Sözel Yetenek: Paragraf 30 soru" ✓, "Sözel Yetenek (practice)" ✗)
 - Müsaitlik dışında saat vermek yasak; tempo oranına uy
 - Deneme + analiz mutlaka ekle (genelde hafta sonu); eklenen denemeleri takvime yerleştir
 - Zayıf konu önceliği: {{TOPIC_PERFORMANCES_JSON}}'daki en düşük performanslı konuları haftanın ilk 3 gününde işle

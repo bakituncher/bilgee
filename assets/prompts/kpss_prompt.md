@@ -48,6 +48,7 @@ Her görevin tipi şunlardan biri olmalı:
 - **review**: Tekrar/pekiştirme (30-45 dk)
 - **test**: Deneme sınavı (90-120 dk, KPSS formatı)
 - **break**: Mola (isteğe bağlı, kısa)
+- ⚠️ **ÖNEMLİ:** `activity` metnine görev tipini YAZMA! Sadece `type` alanında olmalı (örn: "Anayasa - 40 soru" ✓, "Anayasa (practice)" ✗)
 
 ### 7. YETİŞKİN ÖĞRENME PRENSİPLERİ
 - Akşam saatlerine yoğunlaşma (çalışanlar için)

@@ -134,9 +134,7 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
             ),
             indicatorSize: TabBarIndicatorSize.tab,
             dividerColor: Colors.transparent,
-            labelColor: isDark 
-                ? Colors.black
-                : Colors.black,
+            labelColor: isDark ? Colors.black : Colors.black,
             unselectedLabelColor: isDark
                 ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)
                 : Theme.of(context).colorScheme.onSurfaceVariant,
@@ -153,43 +151,52 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
             tabs: [
               const Tab(
                 height: 44,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.analytics_rounded, size: 18),
-                    SizedBox(width: 6),
-                    Text('Özet'),
-                  ],
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.analytics_rounded, size: 18),
+                      SizedBox(width: 6),
+                      Text('Özet'),
+                    ],
+                  ),
                 ),
               ),
               Tab(
                 height: 44,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.auto_awesome_rounded, size: 18),
-                    const SizedBox(width: 6),
-                    const Text('Taktik'),
-                    if (!isPremium) ...[
-                      const SizedBox(width: 4),
-                      const Icon(Icons.lock_rounded, size: 12, color: Colors.amber),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.auto_awesome_rounded, size: 18),
+                      const SizedBox(width: 6),
+                      const Text('Taktik'),
+                      if (!isPremium) ...[
+                        const SizedBox(width: 4),
+                        const Icon(Icons.lock_rounded, size: 12, color: Colors.amber),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
               Tab(
                 height: 44,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.menu_book_rounded, size: 18),
-                    const SizedBox(width: 6),
-                    const Text('Dersler'),
-                    if (!isPremium) ...[
-                      const SizedBox(width: 4),
-                      const Icon(Icons.lock_rounded, size: 12, color: Colors.amber),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.menu_book_rounded, size: 18),
+                      const SizedBox(width: 6),
+                      const Text('Dersler'),
+                      if (!isPremium) ...[
+                        const SizedBox(width: 4),
+                        const Icon(Icons.lock_rounded, size: 12, color: Colors.amber),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
             ],
@@ -499,6 +506,3 @@ class _FeatureItem {
 
   _FeatureItem(this.icon, this.title, this.subtitle);
 }
-
-
-
