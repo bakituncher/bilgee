@@ -34,7 +34,7 @@
         "name": "Genel Kültür ve Eğitim Bilgisi",
         "subjects": {
           "Tarih": {
-            "questionCount": 10,
+            "questionCount": 6,
             "topics": [
               "Osmanlı Öncesi Türk Devletleri Tarihi",
               "Osmanlı Tarihi (XIII-XX. yy)",
@@ -43,21 +43,26 @@
             ]
           },
           "Türkiye Coğrafyası": {
-            "questionCount": 8,
+            "questionCount": 6,
             "topics": [
               "Türkiye Fiziki Coğrafyası",
               "Türkiye Beşerî ve Ekonomik Coğrafyası"
             ]
           },
-          "Eğitimin Temelleri ve Türk Milli Eğitim Sistemi": {
-            "questionCount": 24,
+          "Eğitim Bilimleri ve Türk Milli Eğitim Sistemi": {
+            "questionCount": 30,
             "topics": [
-              "Eğitimin Temel Kavram ve Kuramları",
-              "Eğitimin Tarihi, Felsefi, Toplumsal, Psikolojik, Ekonomik ve Politik Temelleri",
+              "Eğitimin Tarihi, Felsefi, Toplumsal, Ekonomik ve Politik Temelleri",
+              "Öğretim Yöntem ve Teknikleri",
+              "Sınıf Yönetimi",
+              "Program Okuryazarlığı",
+              "Eğitimde Ölçme ve Değerlendirme",
+              "Öğrenme Psikolojisi",
+              "Gelişim Psikolojisi",
+              "Rehberlik",
+              "Eğitim ve Öğretim Teknolojileri",
               "Türk Milli Eğitim Sisteminin Genel Yapısı",
-              "Türkiye Yüzyılı Maarif Modeli'nin Genel Yapısı ve Temelleri",
-              "Eğitim ve Öğretimde Etik",
-              "Eğitim ve Öğretim Teknolojileri"
+              "Türkiye Yüzyılı Maarif Modeli"
             ]
           },
           "Mevzuat": {
@@ -406,6 +411,42 @@
             "Din Psikolojisi",
             "Din Eğitimi",
             "Dinler Tarihi"
+          ]
+        }
+      }
+    },
+    {
+      "id": "ozel_egitim",
+      "name": "Özel Eğitim Öğretmenliği",
+      "totalQuestionCount": 50,
+      "subjects": {
+        "Alan Bilgisi": {
+          "questionCount": 30,
+          "topics": [
+            "Zihin Yetersizliği ve Otizm Spektrum Bozukluğu",
+            "Öğrenme Güçlüğü ve Özel Yetenek",
+            "İşitme ve Görme Yetersizliği",
+            "Erken Çocuklukta Özel Eğitim",
+            "Uygulamalı Davranış Analizi",
+            "Bireyselleştirilmiş Eğitim Programları",
+            "Özel Eğitimde Değerlendirme",
+            "Dil ve İletişim Becerilerinin Desteklenmesi",
+            "Özel Eğitim Politikaları ve Yasal Düzenlemeler"
+          ]
+        },
+        "Alan Eğitimi": {
+          "questionCount": 20,
+          "topics": [
+            "2024 TYMM Özel Eğitim Programları",
+            "Özel Eğitimde Okuma-Yazma Öğretimi",
+            "Özel Eğitimde Fen ve Sosyal Bilgiler Öğretimi",
+            "Özel Eğitimde Matematik Öğretimi",
+            "Özel Eğitimde Sanatsal Becerilerin Öğretimi",
+            "Özel Eğitimde Fiziksel Eğitim ve Spor",
+            "Özel Eğitimde Sosyal Uyum Becerilerinin Öğretimi",
+            "Özel Eğitimde Türkçe Öğretimi",
+            "Özel Eğitimde Oyun ve Müzik",
+            "Özel Eğitimde Aile Eğitimi"
           ]
         }
       }
