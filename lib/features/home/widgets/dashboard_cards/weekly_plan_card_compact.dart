@@ -33,7 +33,8 @@ class WeeklyPlanCardCompact extends ConsumerWidget {
         ? WeeklyPlan.fromJson(planDoc!.weeklyPlan!)
         : null;
 
-    if (weeklyPlan == null || weeklyPlan.plan.isEmpty) {
+    // GÜNCELLEME: Plan yoksa veya süresi dolmuşsa Empty State göster
+    if (weeklyPlan == null || weeklyPlan.plan.isEmpty || weeklyPlan.isExpired) {
       return _EmptyPlanCard(isDark: isDark);
     }
 

@@ -57,7 +57,6 @@ class AdMobService {
       // RequestConfiguration ayarları
       await MobileAds.instance.updateRequestConfiguration(
         RequestConfiguration(
-          maxAdContentRating: MaxAdContentRating.g, // Genel izleyici için
           tagForChildDirectedTreatment: TagForChildDirectedTreatment.unspecified,
           tagForUnderAgeOfConsent: TagForUnderAgeOfConsent.unspecified,
         ),
@@ -117,7 +116,6 @@ class AdMobService {
     try {
       await MobileAds.instance.updateRequestConfiguration(
         RequestConfiguration(
-          maxAdContentRating: isUnder18 ? MaxAdContentRating.g : MaxAdContentRating.t,
           tagForChildDirectedTreatment: isUnder18
               ? TagForChildDirectedTreatment.yes
               : TagForChildDirectedTreatment.no,
@@ -213,7 +211,6 @@ class AdMobService {
         extras: {
           'npa': '1', // Non-Personalized Ads
           'tag_for_child_directed_treatment': '1', // COPPA - Child Directed
-          'max_ad_content_rating': 'G', // Genel izleyici (Everyone)
         },
       );
     }

@@ -180,11 +180,28 @@ class StrategicPlanningScreen extends ConsumerWidget {
       case PlanningStep.pacing:
         return _buildPacingView(context, ref);
       case PlanningStep.loading:
-        return Center(
-            key: const ValueKey('loading'),
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return Container(
+          key: const ValueKey('loading'),
+          decoration: BoxDecoration(
+            gradient: RadialGradient(
+              center: const Alignment(0, -0.5),
+              radius: 1.5,
+              colors: isDark
+                  ? [
+                      const Color(0xFF1A1F3A).withOpacity(0.4),
+                      const Color(0xFF0A0E27),
+                    ]
+                  : [
+                      Theme.of(context).colorScheme.primary.withOpacity(0.05),
+                      const Color(0xFFF8F9FE),
+                    ],
+            ),
+          ),
+          child: Center(
             child: Container(
-              constraints: const BoxConstraints(maxWidth: 400),
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              constraints: const BoxConstraints(maxWidth: 480),
+              padding: const EdgeInsets.symmetric(horizontal: 32.0),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -199,14 +216,26 @@ class StrategicPlanningScreen extends ConsumerWidget {
                         duration: Duration(milliseconds: 600),
                       ),
                     ],
-                    child: Lottie.asset(
-                      'assets/lotties/Data Analysis.json',
-                      width: 220,
-                      height: 220,
-                      fit: BoxFit.contain,
+                    child: Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+                            Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.2),
+                          ],
+                        ),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Lottie.asset(
+                        'assets/lotties/Data Analysis.json',
+                        width: 200,
+                        height: 200,
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 32),
                   // Başlık
                   Animate(
                     effects: const [
@@ -218,12 +247,13 @@ class StrategicPlanningScreen extends ConsumerWidget {
                     child: Text(
                       "Strateji Oluşturuluyor",
                       textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.5,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   // Alt metin
                   Animate(
                     effects: const [
@@ -233,17 +263,17 @@ class StrategicPlanningScreen extends ConsumerWidget {
                       ),
                     ],
                     child: Text(
-                      "Verileriniz analiz ediliyor ve size özel haftalık plan hazırlanıyor...",
+                      "Verileriniz analiz ediliyor ve size özel haftalık plan hazırlanıyor",
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontSize: 14,
-                        height: 1.4,
+                        height: 1.5,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  // İlerleme çubuğu
+                  const SizedBox(height: 32),
+                  // İlerleme çubuğu - Modern stil
                   Animate(
                     onPlay: (controller) => controller.repeat(),
                     effects: [
@@ -256,19 +286,30 @@ class StrategicPlanningScreen extends ConsumerWidget {
                         color: Theme.of(context).colorScheme.secondary.withOpacity(0.3),
                       ),
                     ],
-                    child: SizedBox(
-                      width: 200,
-                      child: LinearProgressIndicator(
-                        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
-                        valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
-                        borderRadius: BorderRadius.circular(8),
-                        minHeight: 5,
+                    child: Container(
+                      width: 240,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(2),
+                        color: isDark
+                            ? const Color(0xFF1E2147)
+                            : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(2),
+                        child: LinearProgressIndicator(
+                          backgroundColor: Colors.transparent,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ],
               ),
-            )
+            ),
+          ),
         );
       default:
         return const SizedBox.shrink();
@@ -277,20 +318,36 @@ class StrategicPlanningScreen extends ConsumerWidget {
 
   Widget _buildStrategyDisplay(BuildContext context, WidgetRef ref, UserModel user, PlanDocument planDoc) {
     final weeklyPlan = WeeklyPlan.fromJson(planDoc.weeklyPlan!);
+    final isExpired = weeklyPlan.isExpired;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF0A0E27) : const Color(0xFFF8F9FE),
       appBar: AppBar(
-        title: const Text("Stratejik Plan"),
+        title: Text(
+          "Stratejik Plan",
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.5,
+          ),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
       body: Container(
         decoration: BoxDecoration(
           gradient: RadialGradient(
-            center: const Alignment(0, -1.2),
-            radius: 1.5,
-            colors: [Theme.of(context).colorScheme.primary.withOpacity(0.1), Theme.of(context).colorScheme.surface],
-            stops: const [0.0, 0.7],
+            center: const Alignment(0, -1.5),
+            radius: 2.0,
+            colors: isDark
+                ? [
+                    const Color(0xFF1A1F3A).withOpacity(0.4),
+                    const Color(0xFF0A0E27),
+                  ]
+                : [
+                    Theme.of(context).colorScheme.primary.withOpacity(0.04),
+                    const Color(0xFFF8F9FE),
+                  ],
           ),
         ),
         child: Column(
@@ -303,112 +360,297 @@ class StrategicPlanningScreen extends ConsumerWidget {
             Expanded(
               child: Center(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(20.0),
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 520),
+                    constraints: const BoxConstraints(maxWidth: 560),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Card(
-                          elevation: 0,
-                          clipBehavior: Clip.antiAlias,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 16.0),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
-                                    shape: BoxShape.circle,
+                        // Ana Kart - Modern Tasarım
+                        Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: isExpired
+                                  ? (isDark
+                                      ? [
+                                          const Color(0xFF2D1F1F),
+                                          const Color(0xFF1A1212),
+                                        ]
+                                      : [
+                                          const Color(0xFFFFF3E0),
+                                          const Color(0xFFFFE0B2),
+                                        ])
+                                  : (isDark
+                                      ? [
+                                          const Color(0xFF1E2147),
+                                          const Color(0xFF141729),
+                                        ]
+                                      : [
+                                          Colors.white,
+                                          const Color(0xFFF5F7FF),
+                                        ]),
+                            ),
+                            borderRadius: BorderRadius.circular(28),
+                            border: Border.all(
+                              color: isExpired
+                                  ? (isDark ? Colors.amber.withOpacity(0.2) : Colors.orange.withOpacity(0.3))
+                                  : (isDark
+                                      ? Theme.of(context).colorScheme.primary.withOpacity(0.15)
+                                      : Theme.of(context).colorScheme.primary.withOpacity(0.1)),
+                              width: 1.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: isExpired
+                                    ? Colors.orange.withOpacity(isDark ? 0.1 : 0.08)
+                                    : Theme.of(context).colorScheme.primary.withOpacity(isDark ? 0.15 : 0.08),
+                                blurRadius: 32,
+                                offset: const Offset(0, 12),
+                                spreadRadius: 0,
+                              ),
+                            ],
+                          ),
+                          padding: const EdgeInsets.all(32.0),
+                          child: Column(
+                            children: [
+                              // Icon Container - Gradient Style
+                              Container(
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: isExpired
+                                        ? [
+                                            Colors.orange.withOpacity(0.8),
+                                            Colors.deepOrange.withOpacity(0.9),
+                                          ]
+                                        : [
+                                            Theme.of(context).colorScheme.primary,
+                                            Theme.of(context).colorScheme.secondary,
+                                          ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
                                   ),
-                                  child: Icon(Icons.calendar_month_rounded, size: 32, color: Theme.of(context).colorScheme.primary),
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  "Stratejik Plan Hazır",
-                                  textAlign: TextAlign.center,
-                                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  "Bu haftanın odağı",
-                                  style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                                ),
-                                if (weeklyPlan.motivationalQuote != null && weeklyPlan.motivationalQuote!.isNotEmpty) ...[
-                                  const SizedBox(height: 12),
-                                  Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
-                                          Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.2),
-                                        ],
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                      ),
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                                      ),
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: (isExpired ? Colors.orange : Theme.of(context).colorScheme.primary)
+                                          .withOpacity(0.4),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 8),
                                     ),
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.auto_awesome,
+                                  ],
+                                ),
+                                child: Icon(
+                                  isExpired ? Icons.refresh_rounded : Icons.verified_rounded,
+                                  size: 48,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+
+                              // Başlık
+                              Text(
+                                isExpired ? "Plan Yenileme Zamanı!" : "Stratejik Plan Aktif",
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: -0.5,
+                                      color: isExpired
+                                          ? (isDark ? Colors.amber : Colors.orange.shade800)
+                                          : null,
+                                    ),
+                              ),
+                              const SizedBox(height: 8),
+
+                              Text(
+                                isExpired
+                                    ? "Planın 7 günlük süresi doldu"
+                                    : "Bu haftanın odağı",
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                              ),
+
+                              // Motivasyon Alıntısı - Sadece aktif planda
+                              if (!isExpired &&
+                                  weeklyPlan.motivationalQuote != null &&
+                                  weeklyPlan.motivationalQuote!.isNotEmpty) ...[
+                                const SizedBox(height: 20),
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: isDark
+                                          ? [
+                                              Theme.of(context).colorScheme.primaryContainer.withOpacity(0.2),
+                                              Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.15),
+                                            ]
+                                          : [
+                                              Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+                                              Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.2),
+                                            ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        child: Icon(
+                                          Icons.format_quote_rounded,
                                           size: 20,
                                           color: Theme.of(context).colorScheme.primary,
                                         ),
-                                        const SizedBox(width: 8),
-                                        Expanded(
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(top: 4),
                                           child: Text(
                                             weeklyPlan.motivationalQuote!,
-                                            textAlign: TextAlign.center,
                                             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                              fontStyle: FontStyle.italic,
-                                              color: Theme.of(context).colorScheme.onSurface,
-                                              height: 1.3,
-                                            ),
+                                                  fontStyle: FontStyle.italic,
+                                                  height: 1.5,
+                                                  fontWeight: FontWeight.w500,
+                                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.9),
+                                                ),
                                           ),
                                         ),
-                                      ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+
+                              // Süre doldu mesajı
+                              if (isExpired) ...[
+                                const SizedBox(height: 20),
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: (isDark ? Colors.orange.shade900 : Colors.orange.shade50).withOpacity(0.5),
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: Colors.orange.withOpacity(0.3),
                                     ),
                                   ),
-                                ],
-                                const SizedBox(height: 12),
-                                Text(
-                                  "Oluşturulma: ${DateFormat.yMMMMd('tr').format(weeklyPlan.creationDate)}",
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.info_outline_rounded,
+                                        color: isDark ? Colors.orange.shade300 : Colors.orange.shade800,
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          "Yeni bir haftalık plan oluşturarak güncel hedeflerinle devam edin",
+                                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                                color: isDark ? Colors.orange.shade200 : Colors.orange.shade900,
+                                                fontWeight: FontWeight.w500,
+                                                height: 1.4,
+                                              ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
+                              ],
+
+                              const SizedBox(height: 20),
+
+                              // Tarih Bilgisi
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.calendar_today_rounded,
+                                      size: 16,
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      "Oluşturulma: ${DateFormat.yMMMMd('tr').format(weeklyPlan.creationDate)}",
+                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ).animate().fadeIn(duration: 400.ms).scale(
+                              begin: const Offset(0.95, 0.95),
+                              curve: Curves.easeOutCubic,
+                            ),
+
+                        const SizedBox(height: 24),
+
+                        // Butonlar - Modern Instagram/Spotify Tarzı
+                        if (isExpired) ...[
+                          // Yeni Plan Oluştur - Primary Button
+                          _ModernButton(
+                            onPressed: () {
+                              ref.read(planningStepProvider.notifier).state = PlanningStep.confirmation;
+                            },
+                            icon: Icons.auto_awesome_rounded,
+                            label: "Yeni Strateji Oluştur",
+                            isPrimary: true,
+                            gradient: LinearGradient(
+                              colors: [
+                                Theme.of(context).colorScheme.primary,
+                                Theme.of(context).colorScheme.secondary,
                               ],
                             ),
                           ),
-                        ).animate().fadeIn(duration: 300.ms).scale(begin: const Offset(0.98, 0.98), curve: Curves.easeOut),
-
-                        const SizedBox(height: 16),
-
-                        ElevatedButton.icon(
-                          onPressed: () => context.push('/home/weekly-plan'),
-                          icon: const Icon(Icons.playlist_add_check_rounded, size: 20),
-                          label: const Text("Haftalık Planı Aç"),
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
+                        ] else ...[
+                          // Haftalık Planı Aç - Primary Button
+                          _ModernButton(
+                            onPressed: () => context.push('/home/weekly-plan'),
+                            icon: Icons.playlist_play_rounded,
+                            label: "Haftalık Planı Aç",
+                            isPrimary: true,
+                            gradient: LinearGradient(
+                              colors: [
+                                Theme.of(context).colorScheme.primary,
+                                Theme.of(context).colorScheme.secondary,
+                              ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 10),
-                        OutlinedButton.icon(
-                          onPressed: () {
-                            ref.read(planningStepProvider.notifier).state = PlanningStep.confirmation;
-                          },
-                          icon: const Icon(Icons.auto_awesome, size: 20),
-                          label: const Text("Yeni Strateji Oluştur"),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          const SizedBox(height: 12),
+                          // Yeni Strateji - Secondary Button
+                          _ModernButton(
+                            onPressed: () {
+                              ref.read(planningStepProvider.notifier).state = PlanningStep.confirmation;
+                            },
+                            icon: Icons.refresh_rounded,
+                            label: "Yeni Strateji Oluştur",
+                            isPrimary: false,
                           ),
-                        ),
+                        ],
                       ],
                     ),
                   ),
@@ -731,6 +973,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
     final user = ref.watch(userProfileProvider).value;
     final tests = ref.watch(testsProvider).valueOrNull ?? [];
     final performance = ref.watch(performanceProvider).value;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if(user == null || performance == null) return const Center(child: CircularProgressIndicator());
 
@@ -764,194 +1007,347 @@ class StrategicPlanningScreen extends ConsumerWidget {
       isTestsOk = daysSinceLastTest <= 7;
     }
 
-    return Column(
-      children: [
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
+    return Container(
+      decoration: BoxDecoration(
+        gradient: RadialGradient(
+          center: const Alignment(0, -1.2),
+          radius: 2.0,
+          colors: isDark
+              ? [
+                  const Color(0xFF1A1F3A).withOpacity(0.3),
+                  const Color(0xFF0A0E27),
+                ]
+              : [
+                  Theme.of(context).colorScheme.primary.withOpacity(0.03),
+                  const Color(0xFFF8F9FE),
+                ],
+        ),
+      ),
+      child: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 12),
+                  Text(
                     "Harekat Öncesi Son Kontrol",
-                    style: Theme.of(context).textTheme.headlineSmall,
-                    maxLines: 1,
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.5,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Tüm verilerin güncel olduğundan emin olalım",
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w500,
+                        ),
+                  ),
+                  const SizedBox(height: 28),
+
+                  _ChecklistItemCard(
+                    icon: Icons.schedule_rounded,
+                    title: "Zaman Haritası",
+                    description: "Stratejin, haftalık olarak ayırdığın zamana göre şekillenecek.",
+                    statusText: "$totalHours Saat",
+                    statusDescription: "Haftalık Plan",
+                    // isTimeMapOk artık > 0 olduğu için kullanıcı az saat seçse de yeşil yanacak
+                    statusColor: isTimeMapOk ? Theme.of(context).colorScheme.secondary : Colors.amber,
+                    buttonText: "Güncelle",
+                    onTap: () => context.push(AppRoutes.availability),
+                  ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.15, curve: Curves.easeOut),
+
+                  _ChecklistItemCard(
+                    icon: Icons.insights_rounded,
+                    title: "Ders Netlerim",
+                    description: "Konu hakimiyetin, bu hafta hangi konulara odaklanacağımızı belirleyecek.",
+                    statusText: "$analyzedTopicsCount",
+                    statusDescription: "Konu Analiz Edildi",
+                    // Her zaman yeşil yanar (zorunluluk kalktı)
+                    statusColor: Theme.of(context).colorScheme.secondary,
+                    buttonText: "Ziyaret Et",
+                    onTap: () => context.push('/ai-hub/${AppRoutes.coachPushed}'),
+                  ).animate().fadeIn(delay: 200.ms).slideX(begin: -0.15, curve: Curves.easeOut),
+
+                  _ChecklistItemCard(
+                    icon: Icons.history_edu_rounded,
+                    title: "Deneme Arşivi",
+                    description: "Güncel deneme sonuçların, planın isabet oranını doğrudan etkiler.",
+                    statusText: "Son Deneme",
+                    statusDescription: testStatusText,
+                    statusColor: isTestsOk ? Theme.of(context).colorScheme.secondary : Colors.amber,
+                    buttonText: "Yeni Ekle",
+                    onTap: () => context.push('/home/add-test'),
+                  ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.15, curve: Curves.easeOut),
+
+                ],
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _ModernButton(
+                  onPressed: isTimeMapOk && isGalaxyOk
+                      ? () {
+                          ref.read(planningStepProvider.notifier).state = PlanningStep.pacing;
+                        }
+                      : () {
+                          if (!isTimeMapOk) {
+                            context.push(AppRoutes.availability);
+                          }
+                        },
+                  icon: isTimeMapOk && isGalaxyOk ? Icons.arrow_forward_rounded : Icons.info_outline_rounded,
+                  label: isTimeMapOk && isGalaxyOk ? "Tüm Verilerim Güncel, İlerle" : "Zaman Haritasını Tamamla",
+                  isPrimary: true,
+                  gradient: LinearGradient(
+                    colors: [
+                      Theme.of(context).colorScheme.primary,
+                      Theme.of(context).colorScheme.secondary,
+                    ],
                   ),
                 ),
-                const SizedBox(height: 6),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    "Tüm verilerin güncel olduğundan emin olalım.",
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                    maxLines: 1,
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                _ChecklistItemCard(
-                  icon: Icons.map_rounded,
-                  title: "Zaman Haritası",
-                  description: "Stratejin, haftalık olarak ayırdığın zamana göre şekillenecek.",
-                  statusText: "$totalHours Saat",
-                  statusDescription: "Haftalık Plan",
-                  // isTimeMapOk artık > 0 olduğu için kullanıcı az saat seçse de yeşil yanacak
-                  statusColor: isTimeMapOk ? Theme.of(context).colorScheme.secondary : Colors.amber,
-                  buttonText: "Güncelle",
-                  onTap: () => context.push(AppRoutes.availability),
-                ).animate().fadeIn(delay: 200.ms).slideX(begin: -0.2),
-
-                _ChecklistItemCard(
-                  icon: Icons.insights_rounded,
-                  title: "Ders Netlerim",
-                  description: "Konu hakimiyetin, bu hafta hangi konulara odaklanacağımızı belirleyecek.",
-                  statusText: "$analyzedTopicsCount",
-                  statusDescription: "Konu Analiz Edildi",
-                  // Her zaman yeşil yanar (zorunluluk kalktı)
-                  statusColor: Theme.of(context).colorScheme.secondary,
-                  buttonText: "Ziyaret Et",
-                  onTap: () => context.push('/ai-hub/${AppRoutes.coachPushed}'),
-                ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.2),
-
-                _ChecklistItemCard(
-                  icon: Icons.history_edu_rounded,
-                  title: "Deneme Arşivi",
-                  description: "Güncel deneme sonuçların, planın isabet oranını doğrudan etkiler.",
-                  statusText: "Son Deneme",
-                  statusDescription: testStatusText,
-                  statusColor: isTestsOk ? Theme.of(context).colorScheme.secondary : Colors.amber,
-                  buttonText: "Yeni Ekle",
-                  onTap: () => context.push('/home/add-test'),
-                ).animate().fadeIn(delay: 400.ms).slideX(begin: -0.2),
-
               ],
             ),
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 32.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              ElevatedButton(
-                // Buton artık totalHours > 0 ise direkt aktif olacak
-                // isGalaxyOk her zaman true olduğu için bloklamayacak
-                onPressed: isTimeMapOk && isGalaxyOk
-                    ? () {
-                  ref.read(planningStepProvider.notifier).state = PlanningStep.pacing;
-                }
-                    : null,
-                child: const Text("Tüm Verilerim Güncel, İlerle"),
-              ),
-              // Eğer zaman haritası eksikse bu kısım çalışır
-              if (!(isTimeMapOk && isGalaxyOk))
-                Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: InkWell(
-                    onTap: () {
-                      if (!isTimeMapOk) {
-                        context.push(AppRoutes.availability);
-                      } else {
-                        // Bu kısım teknik olarak artık erişilemez (çünkü isGalaxyOk=true)
-                        // ama güvenli kod için tutuluyor
-                        context.push('/ai-hub/${AppRoutes.coachPushed}');
-                      }
-                    },
-                    child: Text(
-                      "Eksik verileri tamamlamak için tıkla",
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ],
+        ],
+      ),
     ).animate().fadeIn();
   }
 
   Widget _buildPacingView(BuildContext context, WidgetRef ref) {
-    return Column(
-      children: [
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20.0),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: RadialGradient(
+          center: const Alignment(0, -1.2),
+          radius: 2.0,
+          colors: isDark
+              ? [
+                  const Color(0xFF1A1F3A).withOpacity(0.3),
+                  const Color(0xFF0A0E27),
+                ]
+              : [
+                  Theme.of(context).colorScheme.primary.withOpacity(0.03),
+                  const Color(0xFFF8F9FE),
+                ],
+        ),
+      ),
+      child: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 20),
+                  // Başlık Bölümü
+                  Text(
+                    "Haftalık Tempo Seçin",
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.5,
+                        ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    "Planınız seçtiğiniz tempoya göre optimize edilecek",
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w500,
+                        ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Pacing Cards
+                  _PacingCard(
+                    pacing: Pacing.relaxed,
+                    icon: Icons.directions_walk_rounded,
+                    title: "Rahat Tempo",
+                    subtitle: "Temel tekrar ve konu pekiştirme odaklı yaklaşım",
+                    isSelected: ref.watch(selectedPacingProvider) == Pacing.relaxed,
+                    onTap: () => ref.read(selectedPacingProvider.notifier).state = Pacing.relaxed,
+                  ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.15, curve: Curves.easeOut),
+
+                  const SizedBox(height: 12),
+
+                  _PacingCard(
+                    pacing: Pacing.moderate,
+                    icon: Icons.directions_run_rounded,
+                    title: "Dengeli Tempo",
+                    subtitle: "Sağlam ve istikrarlı ilerleme stratejisi",
+                    isSelected: ref.watch(selectedPacingProvider) == Pacing.moderate,
+                    onTap: () => ref.read(selectedPacingProvider.notifier).state = Pacing.moderate,
+                  ).animate().fadeIn(delay: 200.ms).slideX(begin: -0.15, curve: Curves.easeOut),
+
+                  const SizedBox(height: 12),
+
+                  _PacingCard(
+                    pacing: Pacing.intense,
+                    icon: Icons.rocket_launch_rounded,
+                    title: "Yoğun Tempo",
+                    subtitle: "Maksimum verimlilik ve yoğun çalışma programı",
+                    isSelected: ref.watch(selectedPacingProvider) == Pacing.intense,
+                    onTap: () => ref.read(selectedPacingProvider.notifier).state = Pacing.intense,
+                  ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.15, curve: Curves.easeOut),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
+          ),
+
+          // Alt Butonlar
+          Padding(
+            padding: const EdgeInsets.all(24.0),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _ModernButton(
+                  onPressed: () => ref.read(strategyGenerationProvider.notifier).generatePlan(context),
+                  icon: Icons.auto_awesome_rounded,
+                  label: "Stratejiyi Oluştur",
+                  isPrimary: true,
+                  gradient: LinearGradient(
+                    colors: [
+                      Theme.of(context).colorScheme.primary,
+                      Theme.of(context).colorScheme.secondary,
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextButton.icon(
+                  onPressed: () {
+                    ref.read(planningStepProvider.notifier).state = PlanningStep.confirmation;
+                  },
+                  icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                  label: const Text("Geri Dön"),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Modern Buton Widget - Instagram/Spotify Tarzı
+class _ModernButton extends StatelessWidget {
+  final VoidCallback onPressed;
+  final IconData icon;
+  final String label;
+  final bool isPrimary;
+  final Gradient? gradient;
+
+  const _ModernButton({
+    required this.onPressed,
+    required this.icon,
+    required this.label,
+    this.isPrimary = false,
+    this.gradient,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    if (isPrimary) {
+      return Container(
+        decoration: BoxDecoration(
+          gradient: gradient ??
+              LinearGradient(
+                colors: [
+                  Theme.of(context).colorScheme.primary,
+                  Theme.of(context).colorScheme.secondary,
+                ],
+              ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onPressed,
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, color: Colors.white, size: 22),
+                  const SizedBox(width: 12),
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.2, curve: Curves.easeOut);
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E2147).withOpacity(0.5) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+          width: 1.5,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    "Haftalık Taarruz Temponu Seç",
-                    style: Theme.of(context).textTheme.headlineSmall,
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
+                Icon(icon, color: Theme.of(context).colorScheme.primary, size: 22),
+                const SizedBox(width: 12),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -0.3,
                   ),
                 ),
-                const SizedBox(height: 8),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    "Planın yoğunluğu, seçtiğin tempoya göre ayarlanacak.",
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                _PacingCard(
-                  pacing: Pacing.relaxed,
-                  icon: Icons.directions_walk_rounded,
-                  title: "Rahat Tempo",
-                  subtitle: "Temel tekrar ve konu pekiştirme.",
-                  isSelected: ref.watch(selectedPacingProvider) == Pacing.relaxed,
-                  onTap: () => ref.read(selectedPacingProvider.notifier).state = Pacing.relaxed,
-                ).animate().fadeIn(delay: 200.ms).slideX(begin: -0.2),
-                _PacingCard(
-                  pacing: Pacing.moderate,
-                  icon: Icons.directions_run_rounded,
-                  title: "Dengeli Tempo",
-                  subtitle: "Sağlam ve istikrarlı ilerleme.",
-                  isSelected: ref.watch(selectedPacingProvider) == Pacing.moderate,
-                  onTap: () => ref.read(selectedPacingProvider.notifier).state = Pacing.moderate,
-                ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.2),
-                _PacingCard(
-                  pacing: Pacing.intense,
-                  icon: Icons.rocket_launch_rounded,
-                  title: "Yoğun Tempo",
-                  subtitle: "Maksimum odaklanma ve tam taarruz.",
-                  isSelected: ref.watch(selectedPacingProvider) == Pacing.intense,
-                  onTap: () => ref.read(selectedPacingProvider.notifier).state = Pacing.intense,
-                ).animate().fadeIn(delay: 400.ms).slideX(begin: -0.2),
               ],
             ),
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              ElevatedButton.icon(
-                onPressed: () => ref.read(strategyGenerationProvider.notifier).generatePlan(context),
-                icon: const Icon(Icons.auto_awesome),
-                label: const Text("Stratejiyi Oluştur"),
-              ),
-              TextButton(
-                  onPressed: () {
-                    ref.read(planningStepProvider.notifier).state = PlanningStep.confirmation;
-                  },
-                  child: const Text("Geri Dön")),
-            ],
-          ),
-        )
-      ],
-    );
+      ),
+    ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.2, curve: Curves.easeOut);
   }
 }
 
@@ -979,39 +1375,94 @@ class _ChecklistItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [
+                  const Color(0xFF1E2147).withOpacity(0.6),
+                  const Color(0xFF141729).withOpacity(0.4),
+                ]
+              : [
+                  Colors.white,
+                  const Color(0xFFF8F9FE),
+                ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(12.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(icon, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 22),
-                const SizedBox(width: 10),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Theme.of(context).colorScheme.primary.withOpacity(0.15),
+                        Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: Theme.of(context).colorScheme.primary, size: 24),
+                ),
+                const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title, style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 2),
+                      Text(
+                        title,
+                        style: textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
                       Text(
                         description,
-                        style: textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.2, fontSize: 12),
+                        style: textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          height: 1.4,
+                          fontSize: 13,
+                        ),
                       ),
                     ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 14),
             Container(
-              padding: const EdgeInsets.all(10.0),
+              padding: const EdgeInsets.all(14.0),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(8),
+                color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.4),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: statusColor.withOpacity(0.2),
+                  width: 1,
+                ),
               ),
               child: Row(
                 children: [
@@ -1024,28 +1475,56 @@ class _ChecklistItemCard extends StatelessWidget {
                           statusText,
                           style: textTheme.titleSmall?.copyWith(
                             color: statusColor,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.2,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
+                        const SizedBox(height: 2),
                         Text(
                           statusDescription,
-                          style: textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 11),
+                          style: textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            fontSize: 12,
+                          ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                   Expanded(
                     flex: 2,
-                    child: TextButton(
-                      onPressed: onTap,
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                            Theme.of(context).colorScheme.secondary.withOpacity(0.05),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Text(buttonText, style: const TextStyle(fontSize: 12)),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: onTap,
+                          borderRadius: BorderRadius.circular(10),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            child: Text(
+                              buttonText,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: Theme.of(context).colorScheme.primary,
+                                letterSpacing: -0.2,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -1077,50 +1556,139 @@ class _PacingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
-          width: 2,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        gradient: isSelected
+            ? LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Theme.of(context).colorScheme.primary.withOpacity(isDark ? 0.25 : 0.15),
+                  Theme.of(context).colorScheme.secondary.withOpacity(isDark ? 0.2 : 0.1),
+                ],
+              )
+            : LinearGradient(
+                colors: isDark
+                    ? [
+                        const Color(0xFF1E2147).withOpacity(0.5),
+                        const Color(0xFF141729).withOpacity(0.3),
+                      ]
+                    : [
+                        Colors.white,
+                        const Color(0xFFF8F9FE),
+                      ],
+              ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isSelected
+              ? Theme.of(context).colorScheme.primary
+              : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+          width: isSelected ? 2.5 : 1.5,
         ),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            children: [
-              Icon(icon, size: 28, color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                    ),
-                  ],
+        boxShadow: isSelected
+            ? [
+                BoxShadow(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.25),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
                 ),
-              ),
-              const SizedBox(width: 12),
-              AnimatedOpacity(
-                opacity: isSelected ? 1.0 : 0.0,
-                duration: 200.ms,
-                child: Icon(Icons.check_circle_rounded, color: Theme.of(context).colorScheme.primary, size: 24),
-              ),
-            ],
+              ]
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(isDark ? 0.1 : 0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Row(
+              children: [
+                // Icon Container
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    gradient: isSelected
+                        ? LinearGradient(
+                            colors: [
+                              Theme.of(context).colorScheme.primary,
+                              Theme.of(context).colorScheme.secondary,
+                            ],
+                          )
+                        : LinearGradient(
+                            colors: [
+                              Theme.of(context).colorScheme.surfaceContainerHighest,
+                              Theme.of(context).colorScheme.surfaceContainerHigh,
+                            ],
+                          ),
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: Theme.of(context).colorScheme.primary.withOpacity(0.4),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Icon(
+                    icon,
+                    color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                // Text Content
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.3,
+                              color: isSelected ? Theme.of(context).colorScheme.primary : null,
+                            ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              height: 1.4,
+                              fontSize: 13,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Selection Indicator
+                if (isSelected)
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.check_rounded,
+                      color: Colors.white,
+                      size: 16,
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),

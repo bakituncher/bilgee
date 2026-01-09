@@ -103,41 +103,49 @@ class Exam {
   factory Exam.fromJson(Map<String, dynamic> json, ExamType type) {
     List<ExamSection> sectionList;
 
-    // AGS için özel parsing - common ve branches yapısını sections'a dönüştür
+    // AGS İÇİN GÜNCELLENMİŞ MANTIK
+    // Ortak ve Branş oturumlarını birleştirmek yerine AYRI section'lar olarak oluşturuyoruz.
     if (type == ExamType.ags && json.containsKey('common') && json.containsKey('branches')) {
       sectionList = [];
 
-      // Her branch'i bir section olarak ekle
+      // 1. ADIM: "AGS Ortak" Bölümünü Oluştur (GY + GK + Eğitim)
+      // Common altındaki tüm alt bölümleri tek bir havuzda topluyoruz.
+      final commonSections = (json['common'] as Map<String, dynamic>)['sections'];
+      final commonSubjects = (commonSections as List)
+          .map((section) => section['subjects'] as Map<String, dynamic>)
+          .expand((subjects) => subjects.entries)
+          .fold<Map<String, dynamic>>({}, (map, entry) {
+        map[entry.key] = entry.value;
+        return map;
+      });
+
+      sectionList.add(ExamSection(
+        name: 'AGS Ortak',
+        subjects: commonSubjects.map(
+          (key, value) => MapEntry(key, SubjectDetails.fromJson(value)),
+        ),
+        penaltyCoefficient:
+            (json['common']['penaltyCoefficient'] as num?)?.toDouble() ?? 0.25,
+      ));
+
+      // 2. ADIM: Branş (Alan) Bölümlerini Oluştur
+      // Her branşı, sadece kendi konularını içeren ayrı bir section olarak ekliyoruz.
       final branches = json['branches'] as List;
       for (var branch in branches) {
         final branchName = branch['name'] as String;
-
-        // Common bölümün subjects'lerini al
-        final commonSubjects = (json['common']['sections'] as List)
-            .map((section) => section['subjects'] as Map<String, dynamic>)
-            .expand((subjects) => subjects.entries)
-            .fold<Map<String, dynamic>>({}, (map, entry) {
-              map[entry.key] = entry.value;
-              return map;
-            });
-
-        // Branch'e özgü subjects'leri al
         final branchSubjects = branch['subjects'] as Map<String, dynamic>;
 
-        // Tüm subjects'leri birleştir
-        final allSubjects = {...commonSubjects, ...branchSubjects};
-
-        // ExamSection oluştur
         sectionList.add(ExamSection(
-          name: branchName,
-          subjects: allSubjects.map(
+          name: branchName, // Örn: "Türkçe Öğretmenliği"
+          subjects: branchSubjects.map(
             (key, value) => MapEntry(key, SubjectDetails.fromJson(value)),
           ),
-          penaltyCoefficient: (json['common']['penaltyCoefficient'] as num?)?.toDouble() ?? 0.25,
+          penaltyCoefficient:
+              (json['common']['penaltyCoefficient'] as num?)?.toDouble() ?? 0.25,
         ));
       }
     } else {
-      // Standart parsing
+      // Diğer sınavlar (YKS, LGS, KPSS) için standart parsing
       sectionList = (json['sections'] as List)
           .map((section) => ExamSection.fromJson(section))
           .toList();
