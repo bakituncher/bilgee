@@ -127,6 +127,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final user = ref.read(userProfileProvider).value;
     if (user == null) return;
 
+    // Premium kullanıcılar için gösterilmez
+    if (user.isPremium) return;
+
     // Kullanıcının yaşını hesapla
     if (user.dateOfBirth == null) return;
 
@@ -143,37 +146,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       final prefs = await ref.read(sharedPreferencesProvider.future);
       final today = DateTime.now().toString().split(' ')[0]; // YYYY-MM-DD formatı
 
-      // Premium kullanıcılar için özel kontrol
-      if (user.isPremium) {
-        final premiumWelcomeShown = prefs.getString('premium_welcome_last_shown') ?? '';
+      // Premium olmayan kullanıcılar için satış ekranı
+      final lastShownDate = prefs.getString('premium_screen_last_shown') ?? '';
 
-        // Bugün zaten gösterildiyse tekrar gösterme
-        if (premiumWelcomeShown == today) return;
+      // Bugün zaten gösterildiyse tekrar gösterme
+      if (lastShownDate == today) return;
 
-        // Premium hoş geldiniz ekranını göster ve tarihi kaydet
-        Future.microtask(() async {
-          if (!mounted) return;
-          await prefs.setString('premium_welcome_last_shown', today);
-          if (mounted) {
-            context.go(AppRoutes.premiumWelcome);
-          }
-        });
-      } else {
-        // Premium olmayan kullanıcılar için satış ekranı
-        final lastShownDate = prefs.getString('premium_screen_last_shown') ?? '';
-
-        // Bugün zaten gösterildiyse tekrar gösterme
-        if (lastShownDate == today) return;
-
-        // Premium satış ekranını göster ve tarihi kaydet
-        Future.microtask(() async {
-          if (!mounted) return;
-          await prefs.setString('premium_screen_last_shown', today);
-          if (mounted) {
-            context.go(AppRoutes.premium);
-          }
-        });
-      }
+      // Premium satış ekranını göster ve tarihi kaydet
+      Future.microtask(() async {
+        if (!mounted) return;
+        await prefs.setString('premium_screen_last_shown', today);
+        if (mounted) {
+          context.go(AppRoutes.premium);
+        }
+      });
     } catch (_) {
       // prefs alınamazsa sessiz geç
     }
