@@ -136,42 +136,71 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
   }
 
   Future<void> _restorePurchases() async {
-    if (_isPurchasing) return;
+    if (_isPurchasing) return; // Zaten bir işlem varsa tekrar tetikleme
     setState(() => _isPurchasing = true);
+    HapticFeedback.mediumImpact();
+
+    // Kullanıcıya işlemin başladığını bildir
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Satın alımlar kontrol ediliyor ve sunucuyla eşitleniyor...'),
+        backgroundColor: Colors.blueGrey,
+        duration: Duration(milliseconds: 1500),
+      ),
+    );
 
     try {
-      // Önce RevenueCat tarafını geri yükle
+      // 1. RevenueCat SDK ile lokal geri yükleme
       await RevenueCatService.restorePurchases();
 
-      // Sonra Backend ile senkronize et
+      // 2. Backend senkronizasyonu (Rate Limit Korumalı)
       final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
       await functions.httpsCallable('premium-syncRevenueCatPremiumCallable').call();
 
       if(mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: const Text('Üyelikler geri yüklendi ve eşitlendi.'), backgroundColor: Color(0xFF4CAF50))
+            SnackBar(
+              content: const Text('Kontrol tamamlandı. Premium durumunuz güncellendi.'),
+              backgroundColor: _successColor
+            )
         );
       }
     } on FirebaseFunctionsException catch (e) {
-      // Firebase Functions özel hatası yakalama
+      // ✅ ÖZEL HATA YAKALAMA: Rate Limit (resource-exhausted)
       if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
         if (e.code == 'resource-exhausted') {
-          // Backend'den gelen "Lütfen 45 saniye bekleyin" mesajını gösterir
+          // Backend'den gelen "Lütfen XX saniye bekleyin" mesajını göster
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(e.message ?? 'Çok sık deneme yaptınız, lütfen bekleyin.'),
-              backgroundColor: Colors.orange, // Uyarı rengi
+              content: Text(e.message ?? 'Çok sık işlem yaptınız. Lütfen biraz bekleyin.'),
+              backgroundColor: Colors.orange, // Uyarı rengi (Kırmızı değil)
               duration: const Duration(seconds: 4),
             ),
           );
         } else {
+          // Diğer Firebase hataları
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Hata: ${e.message}'), backgroundColor: Colors.red),
+            SnackBar(
+              content: Text('Sunucu hatası: ${e.message}'),
+              backgroundColor: Colors.red
+            ),
           );
         }
       }
     } catch(e) {
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $e')));
+      // ✅ GENEL HATA
+      if(mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Bir hata oluştu: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } finally {
       if(mounted) setState(() => _isPurchasing = false);
     }
