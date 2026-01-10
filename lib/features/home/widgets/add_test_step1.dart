@@ -12,95 +12,145 @@ class Step1TestInfo extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(addTestProvider);
     final notifier = ref.read(addTestProvider.notifier);
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
 
-    // Butonun aktif olup olmayacağını kontrol eden mantık.
     final isButtonEnabled =
-        state.testName.isNotEmpty && state.selectedSection != null;
+        state.testName.trim().isNotEmpty && state.selectedSection != null;
 
     return ListView(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
       children: [
-        // 1. Başlık ve İkon
-        Icon(Icons.edit_document,
-            size: 64, color: Theme.of(context).colorScheme.secondary),
-        const SizedBox(height: 16),
-        Text(
-          "Yeni Deneme Sonucu Ekle",
-          textAlign: TextAlign.center,
-          style: textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+        /// HEADER
+        Column(
+          children: [
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: theme.colorScheme.surfaceVariant,
+              ),
+              child: Icon(
+                Icons.edit_note_rounded,
+                size: 36,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              "Yeni Deneme Ekle",
+              style: textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "Denemenin temel bilgilerini girerek başlayalım.",
+              textAlign: TextAlign.center,
+              style: textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 8),
-        Text(
-          "Kaydedilecek denemenin temel bilgilerini girerek ilk adımı at.",
-          textAlign: TextAlign.center,
-          style: textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-        ),
+
         const SizedBox(height: 48),
 
-        // 2. Deneme Adı Girişi
-        Text("Deneme Adı", style: textTheme.titleLarge),
+        /// TEST NAME
+        Text(
+          "Deneme Adı",
+          style: textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         const SizedBox(height: 12),
         TextFormField(
           initialValue: state.testName,
           decoration: InputDecoration(
-            hintText: 'Örn: 3D Genel Deneme Sınavı',
-            prefixIcon:
-            Icon(Icons.label_important_outline, color: Theme.of(context).colorScheme.onSurfaceVariant),
-            // Odaklanıldığında ve normal durumda kenarlık rengi
+            hintText: "Örn: 3D Türkiye Geneli",
+            prefixIcon: Icon(
+              Icons.description_outlined,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            filled: true,
+            fillColor: theme.colorScheme.surfaceVariant,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16.0),
-              borderSide: BorderSide(color: Theme.of(context).colorScheme.secondary, width: 2),
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(
+                color: theme.colorScheme.primary,
+                width: 2,
+              ),
             ),
           ),
-          onChanged: (value) => notifier.setTestName(value),
+          onChanged: notifier.setTestName,
         ),
-        const SizedBox(height: 32),
 
-        // 3. Deneme Türü Seçimi (Yeniden Tasarlandı)
+        const SizedBox(height: 40),
+
+        /// SECTION SELECTION
         if (state.availableSections.length > 1) ...[
-          Text("Deneme Türü", style: textTheme.titleLarge),
-          const SizedBox(height: 12),
-          ...state.availableSections
-              .map((section) => _SectionSelectionCard(
-            section: section,
-            isSelected: state.selectedSection == section,
-            onTap: () => notifier.setSection(section),
-          ))
-          ,
-        ],
-        const SizedBox(height: 32),
-
-        // 4. İlerleme Butonu
-        ElevatedButton(
-          onPressed: isButtonEnabled ? () => notifier.nextStep() : null,
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            // Buton pasifken farklı bir görünüm
-            backgroundColor: isButtonEnabled
-                ? Theme.of(context).colorScheme.secondary
-                : Theme.of(context).colorScheme.surfaceContainerHighest,
-            foregroundColor:
-            isButtonEnabled ? Theme.of(context).primaryColor : Theme.of(context).colorScheme.onSurfaceVariant,
+          Text(
+            "Deneme Türü",
+            style: textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
           ),
-          child: const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('Netleri Girmeye Başla'),
-              SizedBox(width: 8),
-              Icon(Icons.arrow_forward_ios_rounded, size: 16),
-            ],
+          const SizedBox(height: 16),
+          ...state.availableSections.map(
+                (section) => _SectionSelectionCard(
+              section: section,
+              isSelected: state.selectedSection == section,
+              onTap: () => notifier.setSection(section),
+            ),
+          ),
+        ],
+
+        const SizedBox(height: 48),
+
+        /// CTA
+        SafeArea(
+          top: false,
+          child: SizedBox(
+            height: 52,
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: isButtonEnabled ? notifier.nextStep : null,
+              style: ElevatedButton.styleFrom(
+                elevation: isButtonEnabled ? 2 : 0,
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: theme.colorScheme.onPrimary,
+                disabledBackgroundColor:
+                theme.colorScheme.surfaceVariant,
+                disabledForegroundColor:
+                theme.colorScheme.onSurfaceVariant,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              child: const Text(
+                "Netleri Girmeye Başla",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
           ),
         ),
       ]
-          .animate(interval: 80.ms)
-          .fadeIn(duration: 400.ms)
-          .slideY(begin: 0.2, curve: Curves.easeOutCubic),
+          .animate(interval: 70.ms)
+          .fadeIn(duration: 300.ms)
+          .slideY(begin: 0.12),
     );
   }
 }
 
-// Deneme türlerini seçmek için özel olarak tasarlanmış kart widget'ı
+/// SECTION CARD (RENK ÇAKIŞMASI YOK)
 class _SectionSelectionCard extends StatelessWidget {
   final ExamSection section;
   final bool isSelected;
@@ -114,36 +164,45 @@ class _SectionSelectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    final theme = Theme.of(context);
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
       margin: const EdgeInsets.only(bottom: 12),
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
+      decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: isSelected ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.surfaceContainerHighest,
+        color: isSelected
+            ? theme.colorScheme.surfaceVariant
+            : theme.colorScheme.surface,
+        border: Border.all(
+          color: isSelected
+              ? theme.colorScheme.primary
+              : theme.colorScheme.surfaceVariant,
           width: 2,
         ),
       ),
       child: InkWell(
+        borderRadius: BorderRadius.circular(16),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
           child: Row(
             children: [
-              // Seçili olduğunda gösterilecek ikon
-              AnimatedOpacity(
-                opacity: isSelected ? 1.0 : 0.0,
-                duration: 200.ms,
-                child: Icon(Icons.check_circle_rounded,
-                    color: Theme.of(context).colorScheme.secondary),
+              Icon(
+                isSelected
+                    ? Icons.check_circle_rounded
+                    : Icons.radio_button_unchecked,
+                color: isSelected
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurfaceVariant,
               ),
-              if (isSelected) const SizedBox(width: 12),
+              const SizedBox(width: 16),
               Text(
                 section.name,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(fontWeight: FontWeight.bold),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.onSurface,
+                ),
               ),
             ],
           ),
