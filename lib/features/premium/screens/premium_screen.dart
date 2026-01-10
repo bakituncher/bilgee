@@ -102,15 +102,20 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
 
       if (outcome.success) {
         try {
+          // Backend sync işlemi
           await FirebaseFunctions.instanceFor(region: 'us-central1')
               .httpsCallable('premium-syncRevenueCatPremiumCallable')
               .call();
         } catch (_) {}
 
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: const Text('Harika! Premium özellikler aktif ediliyor...'), backgroundColor: _successColor)
-        );
-        _handleBack();
+        // --- DÜZELTME BURADA YAPILDI ---
+        // Eski kod: _handleBack();
+        // Yeni kod: Başarılı satın alımdan sonra karşılama ekranına git
+        if (mounted) {
+          context.go(AppRoutes.premiumWelcome);
+        }
+        // -------------------------------
+
       } else if (outcome.error != null && !outcome.cancelled) {
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Hata: ${outcome.error}', style: const TextStyle(color: Colors.white)), backgroundColor: Colors.red)

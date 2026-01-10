@@ -266,6 +266,11 @@ class ExamSelectionScreen extends ConsumerWidget {
         maxHeight: MediaQuery.of(context).size.height * 0.75,
       ),
       builder: (ctx) {
+        // AGS için "AGS" ortak bölümünü filtrele, sadece branşları göster
+        final sectionsToShow = examType == ExamType.ags
+            ? exam.sections.where((s) => s.name != 'AGS').toList()
+            : exam.sections;
+
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -280,7 +285,7 @@ class ExamSelectionScreen extends ConsumerWidget {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
-                  ...exam.sections.map(
+                  ...sectionsToShow.map(
                         (section) => Padding(
                           padding: const EdgeInsets.only(bottom: 8.0),
                           child: ElevatedButton(
