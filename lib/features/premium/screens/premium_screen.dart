@@ -31,33 +31,42 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
   Package? _selectedPackage;
   int _currentCarouselIndex = 0;
 
-  // Modern Brand Colors
-  final Color _bgDark = const Color(0xFF0F1115);
-  final Color _primaryBrand = const Color(0xFF4C4DDC);
-  final Color _accentBrand = const Color(0xFF00E5FF);
-  final Color _successColor = const Color(0xFF00D26A);
+  // Modern Brand Colors - Premium Pink Theme (Instagram/Google Level)
+  final Color _bgLight = const Color(0xFFFFFBFE);
+  final Color _bgSecondary = const Color(0xFFFFF0F5);
+  final Color _primaryPink = const Color(0xFFFF4D8D);
+  final Color _accentPink = const Color(0xFFFF6BA5);
+  final Color _deepPink = const Color(0xFFE91E63);
+  final Color _purpleAccent = const Color(0xFF9C27B0);
+  final Color _successColor = const Color(0xFF4CAF50);
+  final Color _textPrimary = const Color(0xFF1A1A1A);
+  final Color _textSecondary = const Color(0xFF666666);
 
-  // Feature Data
+  // Feature Data - Premium Benefits
   final List<Map<String, dynamic>> _features = [
     {
-      'icon': Icons.school_rounded,
-      'title': "Sınırsız Özel Ders Koçu",
-      'desc': "Taktik Tavşan 7/24 yanınızda, her soruna çözüm."
+      'icon': Icons.auto_awesome_rounded,
+      'title': "✨ Yapay Zeka Koçu",
+      'desc': "Sana özel öğrenme planı oluştur, 7/24 yanında",
+      'gradient': [const Color(0xFFFF6BA5), const Color(0xFFFF4D8D)]
     },
     {
-      'icon': Icons.bolt_rounded,
-      'title': "%300 Daha Hızlı Öğren",
-      'desc': "Yapay zeka ile kişiselleştirilmiş hızlandırılmış plan."
+      'icon': Icons.rocket_launch_rounded,
+      'title': "🚀 Süper Hızlı Öğren",
+      'desc': "Akıllı sistem ile %300 daha hızlı ilerle",
+      'gradient': [const Color(0xFF9C27B0), const Color(0xFFE91E63)]
     },
     {
-      'icon': Icons.block_rounded,
-      'title': "Reklamları Yok Et",
-      'desc': "Kesintisiz odaklanma. Sadece dersine odaklan."
+      'icon': Icons.visibility_off_rounded,
+      'title': "🎯 Reklamsız Deneyim",
+      'desc': "Sıfır kesinti, tam odaklanma",
+      'gradient': [const Color(0xFFFF4D8D), const Color(0xFF9C27B0)]
     },
     {
-      'icon': Icons.analytics_rounded,
-      'title': "Detaylı Hata Analizi",
-      'desc': "Nerede yanlış yaptığını gör, netlerini artır."
+      'icon': Icons.insights_rounded,
+      'title': "📊 Gelişmiş Analiz",
+      'desc': "Hatalarını gör, hedefine ulaş",
+      'gradient': [const Color(0xFFE91E63), const Color(0xFFFF6BA5)]
     },
   ];
 
@@ -159,7 +168,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     final isMediumScreen = size.height >= 700 && size.height < 850;
 
     // Bottom Bar yüksekliğini hesapla (Scroll Padding için gerekli)
-    final bottomBarHeight = 90.0 + bottomPadding + (isSmallScreen ? 6 : 12);
+    final bottomBarHeight = 80.0 + bottomPadding + (isSmallScreen ? 4 : 8);
 
     String examSuffix = "";
     if (user?.selectedExam != null) {
@@ -171,7 +180,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     }
 
     return Scaffold(
-      backgroundColor: _bgDark,
+      backgroundColor: _bgLight,
       body: Stack(
         children: [
           // 1. Animated Mesh Background
@@ -190,19 +199,44 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                     Padding(
                       padding: EdgeInsets.symmetric(
                         horizontal: 16,
-                        vertical: isSmallScreen ? 4 : 8,
+                        vertical: isSmallScreen ? 8 : 12,
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          IconButton(
-                            onPressed: _handleBack,
-                            icon: const Icon(Icons.close_rounded, color: Colors.white70, size: 28),
-                            style: IconButton.styleFrom(backgroundColor: Colors.white.withOpacity(0.1)),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: _textPrimary.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: IconButton(
+                              onPressed: _handleBack,
+                              icon: Icon(Icons.close_rounded, color: _textPrimary, size: 24),
+                              style: IconButton.styleFrom(
+                                padding: EdgeInsets.zero,
+                              ),
+                            ),
                           ),
-                          TextButton(
-                            onPressed: _restorePurchases,
-                            child: const Text("Geri Yükle", style: TextStyle(color: Colors.white60, fontSize: 13, fontWeight: FontWeight.w600)),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [_primaryPink.withOpacity(0.1), _purpleAccent.withOpacity(0.1)],
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: _primaryPink.withOpacity(0.2)),
+                            ),
+                            child: GestureDetector(
+                              onTap: _restorePurchases,
+                              child: Text(
+                                "Geri Yükle",
+                                style: TextStyle(
+                                  color: _deepPink,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
                           )
                         ],
                       ),
@@ -216,74 +250,124 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                             child: Column(
                               children: [
                                 SizedBox(height: isSmallScreen ? 4 : (isMediumScreen ? 8 : 12)),
-                                Icon(
-                                  Icons.diamond_rounded,
-                                  size: isSmallScreen ? 36 : 40,
-                                  color: const Color(0xFF00E5FF),
+                                // Premium Badge/Icon
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [_primaryPink, _purpleAccent],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: _primaryPink.withOpacity(0.3),
+                                        blurRadius: 20,
+                                        spreadRadius: 5,
+                                      )
+                                    ],
+                                  ),
+                                  child: Icon(
+                                    Icons.diamond_rounded,
+                                    size: isSmallScreen ? 28 : 32,
+                                    color: Colors.white,
+                                  ),
                                 ),
                                 SizedBox(height: isSmallScreen ? 8 : 10),
+                                // Title with Gradient
                                 ShaderMask(
                                   shaderCallback: (bounds) => LinearGradient(
-                                    colors: [_primaryBrand, _accentBrand],
+                                    colors: [_primaryPink, _purpleAccent, _deepPink],
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
                                   ).createShader(bounds),
-                                  child: FittedBox(
-                                    fit: BoxFit.scaleDown,
-                                    alignment: Alignment.center,
-                                    child: Text(
-                                      "TAKTİK PRO$examSuffix",
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      softWrap: false,
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontSize: isSmallScreen ? 30 : 34,
-                                        fontWeight: FontWeight.w900,
-                                        color: Colors.white,
-                                        letterSpacing: 1,
-                                        height: 1,
-                                      ),
+                                  child: Text(
+                                    "TAKTİK PRO$examSuffix",
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: isSmallScreen ? 26 : 30,
+                                      fontWeight: FontWeight.w900,
+                                      color: Colors.white,
+                                      letterSpacing: 0.5,
+                                      height: 1.1,
                                     ),
                                   ),
                                 ),
-                                SizedBox(height: isSmallScreen ? 8 : 10),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.05),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(color: Colors.white.withOpacity(0.1)),
-                                  ),
-                                  child: const Text(
-                                    "1 kahve fiyatına başarının anahtarı",
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
+                                SizedBox(height: isSmallScreen ? 6 : 8),
+                                // Subtitle
+                                Text(
+                                  "Başarının anahtarı artık senin elinde",
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: _textSecondary,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    letterSpacing: 0.2,
                                   ),
                                 ),
-                                SizedBox(height: isSmallScreen ? 16 : 20),
-
-                                // Feature Carousel (Fix: SizedBox yerine Container kullanıldı)
+                                SizedBox(height: isSmallScreen ? 6 : 8),
+                                // Coffee Price Badge
                                 Container(
-                                  height: size.height * 0.17,
-                                  constraints: const BoxConstraints(minHeight: 115, maxHeight: 150),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        _primaryPink.withOpacity(0.1),
+                                        _purpleAccent.withOpacity(0.1)
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: _primaryPink.withOpacity(0.3),
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.local_cafe_rounded,
+                                        color: _deepPink,
+                                        size: 14
+                                      ),
+                                      const SizedBox(width: 5),
+                                      Text(
+                                        "1 kahve fiyatına",
+                                        style: TextStyle(
+                                          color: _deepPink,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                SizedBox(height: isSmallScreen ? 12 : (isMediumScreen ? 14 : 16)),
+
+                                // Feature Carousel - Modern Cards
+                                SizedBox(
+                                  height: size.height * 0.12,
                                   child: PageView.builder(
-                                    controller: PageController(viewportFraction: 0.85),
+                                    controller: PageController(viewportFraction: 0.88),
                                     itemCount: _features.length,
                                     onPageChanged: (i) => setState(() => _currentCarouselIndex = i),
                                     itemBuilder: (ctx, index) => _buildModernFeatureCard(_features[index], index == _currentCarouselIndex),
                                   ),
                                 ),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 6),
+                                // Page Indicators - Pink Theme
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: List.generate(_features.length, (index) => AnimatedContainer(
                                     duration: const Duration(milliseconds: 300),
                                     margin: const EdgeInsets.symmetric(horizontal: 4),
                                     height: 6,
-                                    width: _currentCarouselIndex == index ? 24 : 6,
+                                    width: _currentCarouselIndex == index ? 28 : 6,
                                     decoration: BoxDecoration(
-                                      color: _currentCarouselIndex == index ? _accentBrand : Colors.white24,
+                                      gradient: _currentCarouselIndex == index
+                                        ? LinearGradient(colors: [_primaryPink, _purpleAccent])
+                                        : null,
+                                      color: _currentCarouselIndex == index ? null : _textSecondary.withOpacity(0.2),
                                       borderRadius: BorderRadius.circular(3),
                                     ),
                                   )),
@@ -292,7 +376,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                             ),
                           ),
 
-                          SliverToBoxAdapter(child: SizedBox(height: isSmallScreen ? 16 : (isMediumScreen ? 24 : 32))),
+                          SliverToBoxAdapter(child: SizedBox(height: isSmallScreen ? 12 : (isMediumScreen ? 16 : 20))),
 
                           // PRICING SECTION
                           offeringsAsync.when(
@@ -338,7 +422,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                                         savingsPercent: savePercent,
                                         compareMonthlyPrice: monthlyPriceVal,
                                         onTap: () => setState(() => _selectedPackage = yearly),
-                                        accentColor: _primaryBrand,
+                                        accentColor: _primaryPink,
                                         badgeColor: _successColor,
                                       ),
                                     const SizedBox(height: 12),
@@ -349,32 +433,32 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                                         isBestValue: false,
                                         savingsPercent: null,
                                         onTap: () => setState(() => _selectedPackage = monthly),
-                                        accentColor: _primaryBrand,
+                                        accentColor: _primaryPink,
                                         badgeColor: _successColor,
                                       ),
 
-                                    const SizedBox(height: 20),
+                                    const SizedBox(height: 16),
 
-                                    // Trust Badges
-                                    const Wrap(
+                                    // Trust Badges - Modern Design
+                                    Wrap(
                                       alignment: WrapAlignment.center,
-                                      spacing: 20,
+                                      spacing: 12,
                                       runSpacing: 8,
                                       children: [
                                         _TrustBadgeSmall(
-                                          icon: Icons.lock_outline_rounded,
+                                          icon: Icons.verified_user_rounded,
                                           label: "Güvenli Ödeme",
-                                          color: Color(0xFF00D26A),
+                                          color: _successColor,
                                         ),
                                         _TrustBadgeSmall(
-                                          icon: Icons.cancel_outlined,
-                                          label: "Kolay İptal",
-                                          color: Color(0xFF00E5FF),
+                                          icon: Icons.event_available_rounded,
+                                          label: "İstediğin Zaman İptal",
+                                          color: _deepPink,
                                         ),
                                       ],
                                     ),
 
-                                    const SizedBox(height: 14),
+                                    const SizedBox(height: 12),
                                     const _PriceTransparencyText(),
                                     // Bottom Bar kadar boşluk bırak
                                     SizedBox(height: bottomBarHeight),
@@ -382,7 +466,16 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                                 ),
                               );
                             },
-                            loading: () => const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator())),
+                            loading: () => SliverToBoxAdapter(
+                              child: Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(40),
+                                  child: CircularProgressIndicator(
+                                    valueColor: AlwaysStoppedAnimation<Color>(_primaryPink),
+                                  ),
+                                ),
+                              ),
+                            ),
                             error: (_, __) => const SliverToBoxAdapter(child: SizedBox()),
                           ),
                         ],
@@ -394,86 +487,129 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
             ),
           ),
 
-          // 3. STICKY BOTTOM BAR
+          // 3. STICKY BOTTOM BAR - Premium Pink Theme
           Positioned(
             bottom: 0, left: 0, right: 0,
-            child: ClipRRect(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [_bgDark.withOpacity(0.8), _bgDark],
-                    ),
-                    border: Border(top: BorderSide(color: Colors.white.withOpacity(0.1))),
+            child: Container(
+              decoration: BoxDecoration(
+                color: _bgLight.withOpacity(0.95),
+                border: Border(
+                  top: BorderSide(
+                    color: _primaryPink.withOpacity(0.1),
+                    width: 1,
                   ),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 600),
-                      child: Padding(
-                        padding: EdgeInsets.fromLTRB(20, isSmallScreen ? 14 : 18, 20, bottomPadding + (isSmallScreen ? 8 : 10)),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            AnimatedBuilder(
-                              animation: _pulseController,
-                              builder: (context, child) {
-                                return Transform.scale(
-                                  scale: 1.0 + (_pulseController.value * 0.02),
-                                  child: Container(
-                                    width: double.infinity,
-                                    height: 50,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(16),
-                                      gradient: LinearGradient(colors: [_primaryBrand, _primaryBrand.withOpacity(0.8)]),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: _primaryBrand.withOpacity(0.4 + (_pulseController.value * 0.2)),
-                                          blurRadius: 20,
-                                          offset: const Offset(0, 8),
-                                        )
-                                      ],
-                                    ),
-                                    child: Material(
-                                      color: Colors.transparent,
-                                      child: InkWell(
-                                        onTap: _selectedPackage != null ? () => _purchasePackage(_selectedPackage!) : null,
-                                        borderRadius: BorderRadius.circular(16),
-                                        child: Center(
-                                          child: _isPurchasing
-                                              ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 3)
-                                              : Text(
-                                            (_selectedPackage?.storeProduct.introductoryPrice?.price == 0) &&
-                                            (_selectedPackage?.packageType == PackageType.monthly ||
-                                             (!(_selectedPackage?.identifier.toLowerCase().contains('annual') ?? false) &&
-                                              !(_selectedPackage?.identifier.toLowerCase().contains('year') ?? false)))
-                                                ? "ÜCRETSİZ DENE"
-                                                : "HEMEN BAŞLA",
-                                            style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800, letterSpacing: 0.5),
-                                          ),
-                                        ),
-                                      ),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: _primaryPink.withOpacity(0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, -5),
+                  )
+                ],
+              ),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 600),
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(20, isSmallScreen ? 12 : 14, 20, bottomPadding + (isSmallScreen ? 6 : 8)),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        AnimatedBuilder(
+                          animation: _pulseController,
+                          builder: (context, child) {
+                            return Transform.scale(
+                              scale: 1.0 + (_pulseController.value * 0.015),
+                              child: Container(
+                                width: double.infinity,
+                                height: 52,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(26),
+                                  gradient: LinearGradient(
+                                    colors: [_primaryPink, _purpleAccent, _deepPink],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: _primaryPink.withOpacity(0.4 + (_pulseController.value * 0.2)),
+                                      blurRadius: 20,
+                                      spreadRadius: 2,
+                                      offset: const Offset(0, 4),
+                                    )
+                                  ],
+                                ),
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: _selectedPackage != null ? () => _purchasePackage(_selectedPackage!) : null,
+                                    borderRadius: BorderRadius.circular(26),
+                                    child: Center(
+                                      child: _isPurchasing
+                                          ? const SizedBox(
+                                              width: 24,
+                                              height: 24,
+                                              child: CircularProgressIndicator(
+                                                color: Colors.white,
+                                                strokeWidth: 3,
+                                              ),
+                                            )
+                                          : Row(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                const Icon(
+                                                  Icons.diamond_rounded,
+                                                  color: Colors.white,
+                                                  size: 22,
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Text(
+                                                  (_selectedPackage?.storeProduct.introductoryPrice?.price == 0) &&
+                                                  (_selectedPackage?.packageType == PackageType.monthly ||
+                                                   (!(_selectedPackage?.identifier.toLowerCase().contains('annual') ?? false) &&
+                                                    !(_selectedPackage?.identifier.toLowerCase().contains('year') ?? false)))
+                                                      ? "ÜCRETSİZ DENE"
+                                                      : "HEMEN BAŞLA",
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 17,
+                                                    fontWeight: FontWeight.w800,
+                                                    letterSpacing: 0.5,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
                                     ),
                                   ),
-                                  );
-                              },
-                            ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
 
-                            const SizedBox(height: 10),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                _FooterLink(text: "Kullanım Koşulları", url: "https://www.codenzi.com/terms"),
-                                Container(height: 12, width: 1, color: Colors.white24, margin: const EdgeInsets.symmetric(horizontal: 10)),
-                                _FooterLink(text: "Gizlilik", url: "https://www.codenzi.com/privacy"),
-                              ],
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _FooterLink(
+                              text: "Kullanım Koşulları",
+                              url: "https://www.codenzi.com/terms",
+                              color: _textSecondary,
+                            ),
+                            Container(
+                              height: 12,
+                              width: 1,
+                              color: _textSecondary.withOpacity(0.3),
+                              margin: const EdgeInsets.symmetric(horizontal: 12),
+                            ),
+                            _FooterLink(
+                              text: "Gizlilik",
+                              url: "https://www.codenzi.com/privacy",
+                              color: _textSecondary,
                             ),
                           ],
                         ),
-                      ),
+                      ],
                     ),
                   ),
                 ),
@@ -493,36 +629,68 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
       builder: (context, child) {
         return Stack(
           children: [
-            Container(color: _bgDark),
+            // Base Light Background
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [_bgLight, _bgSecondary, _bgLight],
+                ),
+              ),
+            ),
+            // Animated Pink Gradient Blob - Top Right
             Positioned(
-              top: -size.height * 0.1,
+              top: -size.height * 0.15,
               right: -size.width * 0.2,
               child: Transform.rotate(
-                angle: _backgroundController.value * 2 * math.pi,
+                angle: _backgroundController.value * 2 * math.pi * 0.5,
                 child: Container(
-                  width: size.width * 0.8, height: size.width * 0.8,
+                  width: size.width * 0.9,
+                  height: size.width * 0.9,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    gradient: RadialGradient(colors: [_primaryBrand.withOpacity(0.2), Colors.transparent]),
+                    gradient: RadialGradient(
+                      colors: [
+                        _primaryPink.withOpacity(0.15),
+                        _accentPink.withOpacity(0.08),
+                        Colors.transparent,
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
+            // Animated Purple Gradient Blob - Bottom Left
             Positioned(
-              bottom: size.height * 0.1,
-              left: -size.width * 0.1,
+              bottom: size.height * 0.05,
+              left: -size.width * 0.15,
               child: Transform.translate(
-                offset: Offset(0, math.sin(_backgroundController.value * 2 * math.pi) * 50),
+                offset: Offset(
+                  math.sin(_backgroundController.value * 2 * math.pi) * 30,
+                  math.cos(_backgroundController.value * 2 * math.pi) * 20,
+                ),
                 child: Container(
-                  width: size.width * 0.6, height: size.width * 0.6,
+                  width: size.width * 0.7,
+                  height: size.width * 0.7,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    gradient: RadialGradient(colors: [_accentBrand.withOpacity(0.15), Colors.transparent]),
+                    gradient: RadialGradient(
+                      colors: [
+                        _purpleAccent.withOpacity(0.12),
+                        _deepPink.withOpacity(0.06),
+                        Colors.transparent,
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-            BackdropFilter(filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80), child: Container(color: Colors.transparent)),
+            // Subtle blur effect for modern feel
+            BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 60, sigmaY: 60),
+              child: Container(color: Colors.transparent),
+            ),
           ],
         );
       },
@@ -530,54 +698,96 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
   }
 
   Widget _buildModernFeatureCard(Map<String, dynamic> item, bool isActive) {
-    // Burada constraints hatası almamak için LayoutBuilder kullanılabilir ama
-    // basitçe Container ile yapıyoruz.
+    final gradient = item['gradient'] as List<Color>? ?? [_primaryPink, _purpleAccent];
+
     return AnimatedScale(
-      scale: isActive ? 1.0 : 0.9,
-      duration: const Duration(milliseconds: 300),
+      scale: isActive ? 1.0 : 0.94,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeOutCubic,
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isActive ? Colors.white.withOpacity(0.08) : Colors.white.withOpacity(0.03),
-          borderRadius: BorderRadius.circular(24),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: isActive ? Colors.white.withOpacity(0.2) : Colors.transparent,
-            width: 1,
+            color: isActive ? gradient[0].withOpacity(0.3) : _textSecondary.withOpacity(0.1),
+            width: 2,
           ),
+          boxShadow: [
+            if (isActive)
+              BoxShadow(
+                color: gradient[0].withOpacity(0.15),
+                blurRadius: 20,
+                spreadRadius: 2,
+                offset: const Offset(0, 4),
+              )
+            else
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+          ],
         ),
         child: Row(
           children: [
+            // Icon with gradient background
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: isActive ? _primaryBrand.withOpacity(0.2) : Colors.white.withOpacity(0.05),
-                shape: BoxShape.circle,
+                gradient: isActive
+                    ? LinearGradient(
+                        colors: gradient,
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      )
+                    : LinearGradient(
+                        colors: [
+                          _textSecondary.withOpacity(0.1),
+                          _textSecondary.withOpacity(0.05),
+                        ],
+                      ),
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(item['icon'], color: isActive ? _accentBrand : Colors.white54, size: 20),
+              child: Icon(
+                item['icon'],
+                color: isActive ? Colors.white : _textSecondary,
+                size: 18,
+              ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
+            // Text Content
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                      item['title'],
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isActive ? Colors.white : Colors.white70)
+                    item['title'],
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12,
+                      color: isActive ? _textPrimary : _textSecondary,
+                      letterSpacing: 0.2,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
-                      item['desc'],
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 10.5, color: Colors.white54, height: 1.2)
+                    item['desc'],
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: _textSecondary,
+                      height: 1.3,
+                    ),
                   ),
                 ],
               ),
-            )
+            ),
           ],
         ),
       ),
@@ -639,48 +849,77 @@ class _ModernPricingCard extends StatelessWidget {
         onTap();
       },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
-        padding: EdgeInsets.all(isSelected ? 2 : 0),
+        padding: EdgeInsets.all(isSelected ? 3 : 0),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(24),
           gradient: isSelected
-              ? LinearGradient(colors: [accentColor, const Color(0xFF00E5FF)])
-              : LinearGradient(colors: [Colors.white.withOpacity(0.1), Colors.white.withOpacity(0.05)]),
+              ? LinearGradient(
+                  colors: [accentColor, const Color(0xFF9C27B0)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          border: !isSelected
+              ? Border.all(
+                  color: const Color(0xFFE0E0E0),
+                  width: 1.5,
+                )
+              : null,
           boxShadow: isSelected
-              ? [BoxShadow(color: accentColor.withOpacity(0.25), blurRadius: 12, spreadRadius: 0)]
-              : [],
+              ? [
+                  BoxShadow(
+                    color: accentColor.withOpacity(0.3),
+                    blurRadius: 20,
+                    spreadRadius: 2,
+                    offset: const Offset(0, 4),
+                  )
+                ]
+              : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  )
+                ],
         ),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF1A1D25) : const Color(0xFF16181E),
-            borderRadius: BorderRadius.circular(18),
+            color: isSelected ? Colors.white : const Color(0xFFFAFAFA),
+            borderRadius: BorderRadius.circular(21),
           ),
           child: IntrinsicHeight(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // 1. Radio Icon
+                // 1. Radio Icon - Modern Checkbox Style
                 Center(
                   child: Container(
-                    width: 24, height: 24,
+                    width: 26,
+                    height: 26,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: isSelected ? accentColor : Colors.transparent,
+                      gradient: isSelected
+                          ? LinearGradient(
+                              colors: [accentColor, const Color(0xFF9C27B0)],
+                            )
+                          : null,
+                      color: isSelected ? null : Colors.transparent,
                       border: Border.all(
-                          color: isSelected ? accentColor : Colors.grey.withOpacity(0.4),
-                          width: 2
+                        color: isSelected ? Colors.transparent : const Color(0xFFBDBDBD),
+                        width: 2,
                       ),
                     ),
                     child: isSelected
-                        ? const Icon(Icons.check, size: 16, color: Colors.white)
+                        ? const Icon(Icons.check_rounded, size: 18, color: Colors.white)
                         : null,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 14),
 
-                // 2. Orta Kısım
+                // 2. Orta Kısım - Plan Details
                 Expanded(
                   flex: 3,
                   child: Column(
@@ -689,47 +928,62 @@ class _ModernPricingCard extends StatelessWidget {
                     children: [
                       Wrap(
                         crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 8,
                         children: [
                           Text(
                             isAnnual ? "Yıllık Plan" : "Aylık Plan",
                             style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                                fontSize: 16
+                              color: const Color(0xFF1A1A1A),
+                              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w700,
+                              fontSize: 16,
+                              letterSpacing: 0.2,
                             ),
                           ),
-                          if (isBestValue && savingsPercent != null) ...[
-                            const SizedBox(width: 8),
+                          if (isBestValue && savingsPercent != null)
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: badgeColor,
-                                borderRadius: BorderRadius.circular(4),
+                                gradient: LinearGradient(
+                                  colors: [badgeColor, badgeColor.withOpacity(0.8)],
+                                ),
+                                borderRadius: BorderRadius.circular(6),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: badgeColor.withOpacity(0.3),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  )
+                                ],
                               ),
                               child: Text(
-                                "%${savingsPercent!.toStringAsFixed(0)} KAZANÇ",
+                                "%${savingsPercent!.toStringAsFixed(0)} TASARRUF",
                                 style: const TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w900
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 0.5,
                                 ),
                               ),
-                            )
-                          ],
+                            ),
                         ],
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
                       if (hasTrial && !isAnnual)
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          alignment: Alignment.centerLeft,
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [accentColor.withOpacity(0.15), accentColor.withOpacity(0.05)],
+                            ),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
                           child: Text(
-                            "7 GÜN ÜCRETSİZ DENE!",
+                            "🎁 7 GÜN ÜCRETSİZ DENE!",
                             style: TextStyle(
-                                color: accentColor,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.5
+                              color: accentColor,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.3,
                             ),
                           ),
                         )
@@ -738,18 +992,19 @@ class _ModernPricingCard extends StatelessWidget {
                           smallSubtext,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                              color: Colors.white.withOpacity(0.5),
-                              fontSize: 11
+                          style: const TextStyle(
+                            color: Color(0xFF666666),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                     ],
                   ),
                 ),
 
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
 
-                // 3. Fiyat Kısmı
+                // 3. Fiyat Kısmı - Premium Style
                 Expanded(
                   flex: 2,
                   child: Column(
@@ -757,36 +1012,47 @@ class _ModernPricingCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       if (isAnnual && strikeThroughPrice != null)
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            strikeThroughPrice,
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.3),
-                              fontSize: 12,
-                              decoration: TextDecoration.lineThrough,
-                              decorationColor: Colors.white.withOpacity(0.3),
-                            ),
+                        Text(
+                          strikeThroughPrice,
+                          style: TextStyle(
+                            color: const Color(0xFF999999),
+                            fontSize: 13,
+                            decoration: TextDecoration.lineThrough,
+                            decorationColor: const Color(0xFF999999),
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       FittedBox(
                         fit: BoxFit.scaleDown,
                         alignment: Alignment.centerRight,
-                        child: Text(
-                          bigPriceDisplay,
-                          style: TextStyle(
-                            color: isSelected ? Colors.white : Colors.white.withOpacity(0.9),
-                            fontSize: 18,
-                            fontWeight: FontWeight.w900,
+                        child: ShaderMask(
+                          shaderCallback: (bounds) => isSelected
+                              ? LinearGradient(
+                                  colors: [accentColor, const Color(0xFF9C27B0)],
+                                ).createShader(bounds)
+                              : const LinearGradient(
+                                  colors: [Color(0xFF1A1A1A), Color(0xFF1A1A1A)],
+                                ).createShader(bounds),
+                          child: Text(
+                            bigPriceDisplay,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 19,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.3,
+                            ),
                           ),
                         ),
                       ),
                       if (!isAnnual)
+                        const SizedBox(height: 2),
+                      if (!isAnnual)
                         Text(
                           "/ay",
                           style: TextStyle(
-                              color: Colors.white.withOpacity(0.5),
-                              fontSize: 10
+                            color: const Color(0xFF666666),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                     ],
@@ -807,11 +1073,16 @@ class _PriceTransparencyText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Text(
         'Abonelik otomatik yenilenir, dilediğin zaman iptal edebilirsin.',
         textAlign: TextAlign.center,
-        style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 10, height: 1.4),
+        style: TextStyle(
+          color: const Color(0xFF666666),
+          fontSize: 11,
+          height: 1.5,
+          fontWeight: FontWeight.w500,
+        ),
       ),
     );
   }
@@ -820,12 +1091,27 @@ class _PriceTransparencyText extends StatelessWidget {
 class _FooterLink extends StatelessWidget {
   final String text;
   final String url;
-  const _FooterLink({required this.text, required this.url});
+  final Color color;
+
+  const _FooterLink({
+    required this.text,
+    required this.url,
+    required this.color,
+  });
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => launchUrl(Uri.parse(url)),
-      child: Text(text, style: const TextStyle(color: Colors.white38, fontSize: 11, decoration: TextDecoration.underline)),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          decoration: TextDecoration.underline,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
     );
   }
 }
@@ -843,20 +1129,32 @@ class _TrustBadgeSmall extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, color: color, size: 16),
-        const SizedBox(width: 6),
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.6),
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-          ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: color.withOpacity(0.2),
+          width: 1,
         ),
-      ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 16),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.2,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
