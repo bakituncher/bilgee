@@ -37,30 +37,33 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
   final Color _accentBrand = const Color(0xFF00E5FF);
   final Color _successColor = const Color(0xFF00D26A);
 
-  // Feature Data
+  // Feature Data - Premium Benefits
   final List<Map<String, dynamic>> _features = [
     {
-      'icon': Icons.school_rounded,
-      'title': "Sınırsız Özel Ders Koçu",
-      'desc': "Taktik Tavşan 7/24 yanınızda, her soruna çözüm."
+      'icon': Icons.auto_awesome_rounded,
+      'title': "Kişisel Başarı Koçun",
+      'desc': "Sana özel stratejiyle rakiplerine fark at, zirveye oyna.",
+      'gradient': [const Color(0xFFFF6BA5), const Color(0xFFFF4D8D)]
     },
     {
-      'icon': Icons.bolt_rounded,
-      'title': "%300 Daha Hızlı Öğren",
-      'desc': "Yapay zeka ile kişiselleştirilmiş hızlandırılmış plan."
+      'icon': Icons.rocket_launch_rounded,
+      'title': "Rakiplerinden Hızlı Ol",
+      'desc': "Boşa çalışma! Nokta atışı analizlerle 3 kat hızlı ilerle.",
+      'gradient': [const Color(0xFF9C27B0), const Color(0xFFE91E63)]
     },
     {
-      'icon': Icons.block_rounded,
-      'title': "Reklamları Yok Et",
-      'desc': "Kesintisiz odaklanma. Sadece dersine odaklan."
+      'icon': Icons.visibility_off_rounded,
+      'title': "%100 Saf Odaklanma",
+      'desc': "Dikkatin dağılmasın. Reklam yok, sadece sen ve hedeflerin var.",
+      'gradient': [const Color(0xFFFF4D8D), const Color(0xFF9C27B0)]
     },
     {
-      'icon': Icons.analytics_rounded,
-      'title': "Detaylı Hata Analizi",
-      'desc': "Nerede yanlış yaptığını gör, netlerini artır."
+      'icon': Icons.insights_rounded,
+      'title': "Stratejik Analiz",
+      'desc': "Taktik Tavşan zayıf yönlerini bulsun, sınavda sürpriz yaşama.",
+      'gradient': [const Color(0xFFE91E63), const Color(0xFFFF6BA5)]
     },
   ];
-
   @override
   void initState() {
     super.initState();
