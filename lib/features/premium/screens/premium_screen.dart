@@ -135,8 +135,10 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
   }
 
   Future<void> _restorePurchases() async {
-    if (_isPurchasing) return;
+    if (_isPurchasing) return; // Zaten bir işlem yapılıyorsa engelle
+
     setState(() => _isPurchasing = true);
+    HapticFeedback.mediumImpact();
 
     try {
       await RevenueCatService.restorePurchases();
@@ -149,7 +151,14 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
         );
       }
     } catch(e) {
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $e')));
+      if(mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Hata: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } finally {
       if(mounted) setState(() => _isPurchasing = false);
     }
@@ -227,15 +236,30 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                               border: Border.all(color: _primaryPink.withOpacity(0.2)),
                             ),
                             child: GestureDetector(
-                              onTap: _restorePurchases,
-                              child: Text(
-                                "Geri Yükle",
-                                style: TextStyle(
-                                  color: _deepPink,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
+                              onTap: _isPurchasing ? null : _restorePurchases,
+                              child: _isPurchasing
+                                  ? SizedBox(
+                                      width: 60,
+                                      height: 16,
+                                      child: Center(
+                                        child: SizedBox(
+                                          width: 14,
+                                          height: 14,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            valueColor: AlwaysStoppedAnimation<Color>(_deepPink),
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                  : Text(
+                                      "Geri Yükle",
+                                      style: TextStyle(
+                                        color: _deepPink,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
                             ),
                           )
                         ],

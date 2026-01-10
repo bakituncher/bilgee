@@ -249,6 +249,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
 
   Future<void> _restorePurchases() async {
     if (_isPurchaseInProgress) return; // Zaten bir işlem varsa tekrar tetikleme
+
     setState(() => _isPurchaseInProgress = true);
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -287,7 +288,9 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
         );
       }
     } finally {
-      setState(() => _isPurchaseInProgress = false);
+      if (mounted) {
+        setState(() => _isPurchaseInProgress = false);
+      }
     }
   }
 
@@ -461,14 +464,25 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
           Align(
             alignment: Alignment.centerRight,
             child: TextButton(
-              onPressed: _restorePurchases,
-              child: Text(
-                'Geri Yükle',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              onPressed: _isPurchaseInProgress ? null : _restorePurchases,
+              child: _isPurchaseInProgress
+                  ? SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                        ),
+                      ),
+                    )
+                  : Text(
+                      'Geri Yükle',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
             ),
           ),
         ],
