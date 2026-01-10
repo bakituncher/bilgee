@@ -46,26 +46,26 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
   final List<Map<String, dynamic>> _features = [
     {
       'icon': Icons.auto_awesome_rounded,
-      'title': "✨ Yapay Zeka Koçu",
-      'desc': "Sana özel öğrenme planı oluştur, 7/24 yanında",
+      'title': "Kişisel Başarı Koçun",
+      'desc': "Sana özel stratejiyle rakiplerine fark at, zirveye oyna.",
       'gradient': [const Color(0xFFFF6BA5), const Color(0xFFFF4D8D)]
     },
     {
       'icon': Icons.rocket_launch_rounded,
-      'title': "🚀 Süper Hızlı Öğren",
-      'desc': "Akıllı sistem ile %300 daha hızlı ilerle",
+      'title': "Rakiplerinden Hızlı Ol",
+      'desc': "Boşa çalışma! Nokta atışı analizlerle 3 kat hızlı ilerle.",
       'gradient': [const Color(0xFF9C27B0), const Color(0xFFE91E63)]
     },
     {
       'icon': Icons.visibility_off_rounded,
-      'title': "🎯 Reklamsız Deneyim",
-      'desc': "Sıfır kesinti, tam odaklanma",
+      'title': "%100 Saf Odaklanma",
+      'desc': "Dikkatin dağılmasın. Reklam yok, sadece sen ve hedeflerin var.",
       'gradient': [const Color(0xFFFF4D8D), const Color(0xFF9C27B0)]
     },
     {
       'icon': Icons.insights_rounded,
-      'title': "📊 Gelişmiş Analiz",
-      'desc': "Hatalarını gör, hedefine ulaş",
+      'title': "Stratejik Analiz",
+      'desc': "Taktik Tavşan zayıf yönlerini bulsun, sınavda sürpriz yaşama.",
       'gradient': [const Color(0xFFE91E63), const Color(0xFFFF6BA5)]
     },
   ];
