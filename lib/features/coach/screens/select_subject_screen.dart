@@ -353,10 +353,22 @@ class _SectionHeader extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: isDark ? cs.surfaceContainerHighest : cs.surface,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [
+                  const Color(0xFF34D399).withValues(alpha: 0.18),
+                  const Color(0xFF10B981).withValues(alpha: 0.18),
+                ]
+              : [
+                  const Color(0xFF34D399).withValues(alpha: 0.12),
+                  const Color(0xFF10B981).withValues(alpha: 0.12),
+                ],
+        ),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: cs.outlineVariant.withValues(alpha: 0.3),
+          color: const Color(0xFF10B981).withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -365,12 +377,12 @@ class _SectionHeader extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFF6366F1).withValues(alpha: 0.15),
+              color: const Color(0xFF10B981).withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
-              Icons.category_rounded,
-              color: Color(0xFF6366F1),
+              Icons.layers_rounded,
+              color: Color(0xFF10B981),
               size: 20,
             ),
           ),
@@ -490,51 +502,14 @@ class _SubjectCard extends StatefulWidget {
 class _SubjectCardState extends State<_SubjectCard> {
   bool _isHovered = false;
 
-  // Ders başına farklı renk ikonları
-  IconData _getSubjectIcon(String subject) {
-    final subjectLower = subject.toLowerCase();
-    if (subjectLower.contains('matematik') || subjectLower.contains('geometri')) {
-      return Icons.calculate_rounded;
-    } else if (subjectLower.contains('fizik')) {
-      return Icons.science_rounded;
-    } else if (subjectLower.contains('kimya')) {
-      return Icons.biotech_rounded;
-    } else if (subjectLower.contains('biyoloji')) {
-      return Icons.eco_rounded;
-    } else if (subjectLower.contains('türkçe') || subjectLower.contains('edebiyat')) {
-      return Icons.menu_book_rounded;
-    } else if (subjectLower.contains('tarih')) {
-      return Icons.history_edu_rounded;
-    } else if (subjectLower.contains('coğrafya')) {
-      return Icons.public_rounded;
-    } else if (subjectLower.contains('felsefe') || subjectLower.contains('din')) {
-      return Icons.psychology_rounded;
-    } else if (subjectLower.contains('ingilizce') || subjectLower.contains('yabancı')) {
-      return Icons.translate_rounded;
-    }
-    return Icons.school_rounded;
-  }
-
-  Color _getSubjectColor(int index) {
-    final colors = [
-      const Color(0xFF22D3EE), // Cyan
-      const Color(0xFF6366F1), // Indigo
-      const Color(0xFF34D399), // Emerald
-      const Color(0xFFF59E0B), // Amber
-      const Color(0xFFEC4899), // Pink
-      const Color(0xFF8B5CF6), // Purple
-      const Color(0xFF10B981), // Green
-      const Color(0xFFF43F5E), // Rose
-    ];
-    return colors[index % colors.length];
-  }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final subjectColor = _getSubjectColor(widget.index);
-    final subjectIcon = _getSubjectIcon(widget.subject);
+    // Tüm dersler için tek tip renk ve ikon
+    final subjectColor = const Color(0xFF22D3EE); // Cyan
+    final subjectIcon = Icons.school_rounded;
 
     final scale = _isHovered ? 1.01 : 1.0;
 
