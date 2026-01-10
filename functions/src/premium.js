@@ -149,29 +149,54 @@ exports.syncRevenueCatPremiumCallable = onCall(
     const userRef = db.collection("users").doc(uid);
 
     try {
-      // --- RATE LIMITING BAŞLANGICI ---
+      // --- YENİ RATE LIMIT SİSTEMİ (2 HAK / 2 DAKİKA) ---
       const userDoc = await userRef.get();
       const userData = userDoc.data();
-      const lastSync = userData?.lastSyncRequestAt?.toDate(); // Firestore Timestamp'ını Date objesine çevir
       const now = new Date();
 
-      // 5 dakikadan daha kısa süre önce senkronizasyon yapılmışsa reddet
-      const COOLDOWN_MS = 5 * 60 * 1000;
-      if (lastSync && (now.getTime() - lastSync.getTime()) < COOLDOWN_MS) {
-        logger.warn(`Rate limit aşıldı: Kullanıcı ${uid} çok sık senkronizasyon denedi.`);
-        throw new HttpsError("resource-exhausted", "Lütfen tekrar denemeden önce birkaç dakika bekleyin.");
+      // AYARLAR
+      const WINDOW_MS = 2 * 60 * 1000; // 2 Dakikalık pencere
+      const MAX_ATTEMPTS = 2;          // İzin verilen deneme sayısı
+
+      // Mevcut durumu veritabanından al
+      // Eğer daha önce hiç kayıt yoksa 'now' varsayıyoruz
+      const windowStart = userData?.rateLimitWindowStart?.toDate() || now;
+      let attemptCount = userData?.rateLimitAttemptCount || 0;
+
+      // 1. KONTROL: Eğer son işlemden bu yana 2 dakika geçmişse sayacı sıfırla
+      if ((now.getTime() - windowStart.getTime()) > WINDOW_MS) {
+        attemptCount = 0;
       }
 
-      // Yarış koşullarını (race conditions) önlemek için API çağrısından ÖNCE zaman damgasını güncelle
-      await userRef.set({ lastSyncRequestAt: now }, { merge: true });
-      // --- RATE LIMITING SONU ---
+      // 2. KONTROL: Limit doldu mu?
+      if (attemptCount >= MAX_ATTEMPTS) {
+        logger.warn(`Rate limit aşıldı: Kullanıcı ${uid} limiti doldurdu.`);
+
+        // Kalan süreyi hesapla (saniye cinsinden)
+        const timePassed = now.getTime() - windowStart.getTime();
+        const remainingSeconds = Math.ceil((WINDOW_MS - timePassed) / 1000);
+
+        throw new HttpsError(
+          "resource-exhausted",
+          `Çok sık işlem yaptınız. Lütfen ${remainingSeconds} saniye bekleyin.`
+        );
+      }
+
+      // İŞLEM İZNİ VAR: Sayacı artır ve güncelle
+      // Eğer bu ilk denemeyse (attemptCount 0 ise), pencere başlangıcını şu an yap.
+      const newWindowStart = (attemptCount === 0) ? now : windowStart;
+
+      await userRef.set({
+        rateLimitAttemptCount: attemptCount + 1,
+        rateLimitWindowStart: newWindowStart,
+        lastSyncRequestAt: now
+      }, { merge: true });
+      // --- RATE LIMIT SONU ---
 
       return await _updatePremiumStatusFromRevenueCatAPI(uid, "manual_sync_callable");
     } catch (e) {
       logger.error("Callable premium senkronizasyon hatası", { uid, error: String(e) });
-      // Hata zaten HttpsError ise, istemciye olduğu gibi gönder
       if (e instanceof HttpsError) throw e;
-      // Diğer hataları genel bir mesaja sar
       throw new HttpsError("internal", "Sunucuda bir iç hata oluştu.");
     }
   },

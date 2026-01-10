@@ -140,7 +140,10 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     setState(() => _isPurchasing = true);
 
     try {
+      // Önce RevenueCat tarafını geri yükle
       await RevenueCatService.restorePurchases();
+
+      // Sonra Backend ile senkronize et
       final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
       await functions.httpsCallable('premium-syncRevenueCatPremiumCallable').call();
 
@@ -148,6 +151,24 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: const Text('Üyelikler geri yüklendi ve eşitlendi.'), backgroundColor: Color(0xFF4CAF50))
         );
+      }
+    } on FirebaseFunctionsException catch (e) {
+      // Firebase Functions özel hatası yakalama
+      if (mounted) {
+        if (e.code == 'resource-exhausted') {
+          // Backend'den gelen "Lütfen 45 saniye bekleyin" mesajını gösterir
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(e.message ?? 'Çok sık deneme yaptınız, lütfen bekleyin.'),
+              backgroundColor: Colors.orange, // Uyarı rengi
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Hata: ${e.message}'), backgroundColor: Colors.red),
+          );
+        }
       }
     } catch(e) {
       if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $e')));
