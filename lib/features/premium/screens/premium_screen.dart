@@ -281,8 +281,8 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
 
                                 // Feature Carousel (Fix: SizedBox yerine Container kullanıldı)
                                 Container(
-                                  height: size.height * 0.14,
-                                  constraints: const BoxConstraints(minHeight: 95, maxHeight: 120),
+                                  height: size.height * 0.17,
+                                  constraints: const BoxConstraints(minHeight: 115, maxHeight: 150),
                                   child: PageView.builder(
                                     controller: PageController(viewportFraction: 0.85),
                                     itemCount: _features.length,
@@ -569,10 +569,10 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
       duration: const Duration(milliseconds: 300),
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: isActive ? Colors.white : Colors.white.withOpacity(0.6),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(24),
           border: Border.all(
             color: isActive ? _primaryPink.withOpacity(0.5) : Colors.transparent,
             width: 1,
@@ -585,15 +585,15 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 gradient: isActive ? LinearGradient(colors: [_primaryPink, _purpleAccent]) : null,
                 color: isActive ? null : _textSecondary.withOpacity(0.05),
                 shape: BoxShape.circle,
               ),
-              child: Icon(item['icon'], color: isActive ? Colors.white : _textSecondary, size: 18),
+              child: Icon(item['icon'], color: isActive ? Colors.white : _textSecondary, size: 20),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -603,14 +603,14 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                       item['title'],
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: isActive ? _textPrimary : _textSecondary)
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isActive ? _textPrimary : _textSecondary)
                   ),
                   const SizedBox(height: 2),
                   Text(
                       item['desc'],
-                      maxLines: 2,
+                      maxLines: 3,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 10, color: _textSecondary, height: 1.2)
+                      style: TextStyle(fontSize: 10.5, color: _textSecondary, height: 1.2)
                   ),
                 ],
               ),
