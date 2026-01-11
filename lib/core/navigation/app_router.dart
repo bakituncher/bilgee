@@ -34,6 +34,9 @@ import 'package:taktik/data/providers/admin_providers.dart';
 import 'transition_utils.dart';
 import 'package:taktik/features/home/screens/user_guide_screen.dart';
 import 'package:taktik/features/coach/screens/question_solver_screen.dart';
+import 'package:taktik/features/coach/screens/saved_questions_screen.dart';
+import 'package:taktik/features/coach/screens/saved_question_detail_screen.dart';
+import 'package:taktik/features/coach/services/saved_questions_service.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   final rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -256,6 +259,31 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           state: state,
           child: const QuestionSolverScreen(),
         ),
+      ),
+      GoRoute(
+        path: '/ai-hub/saved-questions',
+        name: 'SavedQuestions',
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) => buildPageWithFadeTransition(
+          context: context,
+          state: state,
+          child: const SavedQuestionsScreen(),
+        ),
+        routes: [
+          GoRoute(
+            path: 'detail',
+            name: 'SavedQuestionDetail',
+            parentNavigatorKey: rootNavigatorKey,
+            pageBuilder: (context, state) {
+              final question = state.extra as SavedQuestion;
+              return buildPageWithFadeTransition(
+                context: context,
+                state: state,
+                child: SavedQuestionDetailScreen(question: question),
+              );
+            },
+          ),
+        ],
       ),
       GoRoute(
         path: '/stats/overview',

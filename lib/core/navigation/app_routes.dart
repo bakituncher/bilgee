@@ -12,6 +12,8 @@ class AppRoutes {
   static const String home = '/home';
   static const String coach = '/coach';
   static const String aiHub = '/ai-hub';
+  static const String savedQuestions = '/ai-hub/saved-questions';
+  static const String savedQuestionDetail = 'saved-question-detail';
   static const String arena = '/arena';
   static const String profile = '/profile';
   static const String editProfile = '/profile/edit';
