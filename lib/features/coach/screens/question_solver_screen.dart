@@ -6,6 +6,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:lottie/lottie.dart';
 import 'package:taktik/features/coach/services/question_solver_service.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
@@ -60,18 +61,70 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
     try {
       final XFile? image = await _picker.pickImage(source: source);
       if (image != null) {
-        setState(() {
-          _selectedImage = image;
-          _solution = null;
-          _error = null;
-        });
-        // Auto-start solving process
-        _solveQuestion();
+        // Kırpma işlemi
+        final croppedFile = await _cropImage(image.path);
+
+        if (croppedFile != null) {
+          setState(() {
+            _selectedImage = XFile(croppedFile.path);
+            _solution = null;
+            _error = null;
+          });
+          // Auto-start solving process
+          _solveQuestion();
+        }
       }
     } catch (e) {
       setState(() {
-        _error = 'Görsel seçilemedi: \$e';
+        _error = 'Görsel seçilemedi: $e';
       });
+    }
+  }
+
+  Future<CroppedFile?> _cropImage(String imagePath) async {
+    try {
+      final theme = Theme.of(context);
+
+      final croppedFile = await ImageCropper().cropImage(
+        sourcePath: imagePath,
+        compressQuality: 85,
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Soruyu Kırp',
+            toolbarColor: theme.colorScheme.primary,
+            toolbarWidgetColor: theme.colorScheme.onPrimary,
+            backgroundColor: theme.scaffoldBackgroundColor,
+            activeControlsWidgetColor: theme.colorScheme.primary,
+            dimmedLayerColor: Colors.black,
+            cropFrameColor: theme.colorScheme.primary,
+            cropGridColor: theme.colorScheme.primary.withOpacity(0.5),
+            cropFrameStrokeWidth: 3,
+            cropGridStrokeWidth: 1,
+            showCropGrid: true,
+            lockAspectRatio: false,
+            hideBottomControls: false,
+            initAspectRatio: CropAspectRatioPreset.original,
+          ),
+          IOSUiSettings(
+            title: 'Soruyu Kırp',
+            doneButtonTitle: 'Tamam',
+            cancelButtonTitle: 'İptal',
+            aspectRatioLockEnabled: false,
+            resetAspectRatioEnabled: true,
+            aspectRatioPickerButtonHidden: false,
+            rotateButtonsHidden: false,
+          ),
+        ],
+      );
+
+      return croppedFile;
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = 'Görsel kırpılamadı: $e';
+        });
+      }
+      return null;
     }
   }
 

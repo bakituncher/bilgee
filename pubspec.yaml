@@ -93,6 +93,7 @@ dependencies:
 
   # Image Picker & Compression & AI
   image_picker: ^1.0.7
+  image_cropper: ^8.0.2
   flutter_image_compress: ^2.2.0
   google_generative_ai: ^0.4.3
 

@@ -75,6 +75,8 @@
 		<string>Önemli güncellemeler, hatırlatmalar ve kişiselleştirilmiş öğrenme ipuçları için bildirim izni gerekiyor.</string>
 		<key>NSPhotoLibraryUsageDescription</key>
 		<string>Uygulama yönetimi ve içerik paylaşımı için görsel seçimi yapmanızı sağlar.</string>
+		<key>NSCameraUsageDescription</key>
+		<string>Soru çözümü için fotoğraf çekmenizi sağlar.</string>
 		<key>NSUserTrackingUsageDescription</key>
 		<string>Bu izin, ilgi alanlarınıza uygun reklamlar gösterebilmemizi sağlar.</string>
 		<key>UIBackgroundModes</key>
