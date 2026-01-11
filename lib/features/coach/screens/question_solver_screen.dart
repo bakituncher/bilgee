@@ -10,6 +10,7 @@ import 'package:lottie/lottie.dart';
 import 'package:taktik/features/coach/services/question_solver_service.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:markdown/markdown.dart' as md;
+import 'package:taktik/data/providers/firestore_providers.dart';
 
 class QuestionSolverScreen extends ConsumerStatefulWidget {
   const QuestionSolverScreen({super.key});
@@ -63,7 +64,10 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
 
     try {
       final service = ref.read(questionSolverServiceProvider);
-      final result = await service.solveQuestion(_selectedImage!);
+      final user = ref.read(userProfileProvider).value;
+      final examType = user?.selectedExam;
+
+      final result = await service.solveQuestion(_selectedImage!, examType: examType);
 
       if (mounted) {
         setState(() {

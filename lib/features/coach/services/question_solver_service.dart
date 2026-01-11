@@ -14,7 +14,7 @@ final questionSolverServiceProvider = Provider<QuestionSolverService>((ref) {
 class QuestionSolverService {
   QuestionSolverService();
 
-  Future<String> solveQuestion(XFile imageFile) async {
+  Future<String> solveQuestion(XFile imageFile, {String? examType}) async {
     try {
       // 1) Compress image (bandwidth + callable payload)
       final Uint8List bytes = await _compressImage(File(imageFile.path));
@@ -24,7 +24,7 @@ class QuestionSolverService {
 
       final callable = FirebaseFunctions.instanceFor(region: 'us-central1').httpsCallable('ai-generateGemini');
 
-      final prompt = _textOnlyPrompt;
+      final prompt = _buildPrompt(examType);
 
       final result = await callable
           .call({
@@ -73,9 +73,14 @@ class QuestionSolverService {
     return await file.readAsBytes();
   }
 
-  // GÜNCELLENEN KISIM: Sektör standardı, samimi ve net prompt
-  static const String _textOnlyPrompt = '''
-Sen öğrencinin en yakın "zekî çalışma arkadaşısın". Karşındaki kişiyle yan yana ders çalışıyormuş gibi konuş.
+  String _buildPrompt(String? examType) {
+    String examContext = '';
+    if (examType != null && examType.isNotEmpty) {
+      examContext = '\n\n**ÖNEMLİ:** Kullanıcı **$examType** sınavına hazırlanıyor. Çözümü ve açıklamaları bu sınavın seviyesine, formatına ve müfredatına uygun şekilde hazırla.';
+    }
+
+    return '''
+Sen öğrencinin en yakın "zekî çalışma arkadaşısın". Karşındaki kişiyle yan yana ders çalışıyormuş gibi konuş.$examContext
 
 GÖREVİN:
 Kullanıcının gönderdiği soruyu analiz et ve çözümünü "biz bize", samimi, akıcı ve net bir dille anlat.
@@ -92,4 +97,5 @@ KURALLAR VE TON:
 
 Eğer görsel okunmuyorsa veya soru yoksa; teknik hata mesajı verme. "Kanka bu fotoyu okuyamadım ya, biraz daha net çekip atar mısın?" şeklinde samimi bir uyarı ver.
 ''';
+  }
 }
