@@ -41,7 +41,8 @@ const RETRY_DELAY_MS = 2000; // 2 saniye
 const MONTHLY_LIMITS = {
   workshop: 350,    // Cevher Atölyesi
   weekly_plan: 60,  // Haftalık Plan
-  chat: 2000         // Sohbet / Motivasyon
+  chat: 2000,        // Sohbet / Motivasyon
+  question_solver: 400 // Soru Çözücü
 };
 
 // Exponential backoff ile retry helper
@@ -91,6 +92,10 @@ exports.generateGemini = onCall(
     // YENİ: İstemciden gelen işlem türünü al, varsayılan 'chat'
     const requestType = request.data?.requestType || 'chat';
 
+    // YENİ: Soru çözücü görseli (base64, data uri değil)
+    const imageBase64 = typeof request.data?.imageBase64 === 'string' ? request.data.imageBase64.trim() : null;
+    const imageMimeType = typeof request.data?.imageMimeType === 'string' ? request.data.imageMimeType.trim() : 'image/jpeg';
+
     // Geçersiz tür kontrolü
     if (!Object.keys(MONTHLY_LIMITS).includes(requestType)) {
       throw new HttpsError("invalid-argument", "Geçersiz işlem türü.");
@@ -116,8 +121,22 @@ exports.generateGemini = onCall(
     if (typeof prompt !== "string" || !prompt.trim()) {
       throw new HttpsError("invalid-argument", "Geçerli bir prompt gerekli");
     }
+
+    // Soru çözücüde görsel bekleniyorsa doğrula
+    if (requestType === 'question_solver') {
+      if (!imageBase64) {
+        throw new HttpsError("invalid-argument", "Soru çözücü için görsel gerekli.");
+      }
+      // Çok kaba boyut koruması: base64 ~ 4/3 => 6MB base64 ~ 4.5MB binary
+      // (Callable + bellek için güvenli tarafta tutuyoruz)
+      const maxBase64Chars = parseInt(process.env.QUESTION_SOLVER_IMAGE_MAX_BASE64_CHARS || "6000000", 10);
+      if (imageBase64.length > maxBase64Chars) {
+        throw new HttpsError("invalid-argument", "Görsel çok büyük. Lütfen daha net ama daha yakın/az kırpılmış bir fotoğraf deneyin.");
+      }
+    }
+
     if (prompt.length > GEMINI_PROMPT_MAX_CHARS) {
-      logger.warn("Prompt length exceeded", { length: prompt.length, limit: GEMINI_PROMPT_MAX_CHARS, uid: request.auth.uid });
+      logger.warn("Prompt length exceeded", { length: prompt.length, limit: GEMINI_PROMPT_MAX_CHARS, uid: request.auth.uid, requestType });
       throw new HttpsError("invalid-argument", `Prompt çok uzun (${prompt.length} > ${GEMINI_PROMPT_MAX_CHARS}).`);
     }
 
@@ -168,6 +187,7 @@ exports.generateGemini = onCall(
         switch(requestType) {
           case 'workshop': featureName = "Cevher Atölyesi"; break;
           case 'weekly_plan': featureName = "Haftalık Plan"; break;
+          case 'question_solver': featureName = "Soru Çözücü"; break;
           default: featureName = "Sohbet"; break;
         }
         throw new HttpsError("resource-exhausted", `Bu ayki ${featureName} limitinize (${limit}) ulaştınız. Limitler her ayın başında yenilenir.`);
@@ -191,7 +211,16 @@ exports.generateGemini = onCall(
       }
 
       const body = {
-        contents: [{ parts: [{ text: normalizedPrompt }] }],
+        contents: [
+          {
+            parts: [
+              { text: normalizedPrompt },
+              ...(requestType === 'question_solver' && imageBase64
+                ? [{ inlineData: { mimeType: imageMimeType || 'image/jpeg', data: imageBase64 } }]
+                : []),
+            ],
+          },
+        ],
         generationConfig: {
           temperature,
           maxOutputTokens: effectiveMaxTokens,
