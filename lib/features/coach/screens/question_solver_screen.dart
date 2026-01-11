@@ -35,6 +35,16 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
     super.dispose();
   }
 
+  // Navigasyon geçmişini kontrol eden güvenli geri dönüş fonksiyonu
+  void _handleBack() {
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      // Eğer geri gidilecek sayfa yoksa ana sayfaya yönlendir
+      context.go('/ai-hub');
+    }
+  }
+
   Future<void> _pickImage(ImageSource source) async {
     try {
       final XFile? image = await _picker.pickImage(source: source);
@@ -151,7 +161,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
         centerTitle: true,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.colorScheme.onSurface),
-          onPressed: () => context.pop(),
+          onPressed: _handleBack,
         ),
         title: Text(
           'Anlık Çözüm',
