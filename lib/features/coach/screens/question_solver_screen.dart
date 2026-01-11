@@ -5,13 +5,15 @@ import 'package:crop_your_image/crop_your_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart'; // <-- EKLENDİ
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lottie/lottie.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:taktik/features/coach/providers/saved_solutions_provider.dart';
+import 'package:taktik/features/coach/screens/saved_solutions_screen.dart';
 import 'package:taktik/features/coach/services/question_solver_service.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:markdown/markdown.dart' as md;
@@ -182,6 +184,48 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
     }
   }
 
+  // --- YENİ KAYDETME FONKSİYONU ---
+  Future<void> _saveSolutionLocally() async {
+    if (_finalImageFile == null || _solution == null) return;
+
+    try {
+      final imageFile = File(_finalImageFile!.path);
+
+      await ref.read(savedSolutionsProvider.notifier).saveSolution(
+        imageFile: imageFile,
+        solutionText: _solution!,
+        subject: "Matematik", // İstersen analizden dersi de çekebiliriz
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Çözüm başarıyla kaydedildi!'),
+            backgroundColor: Colors.green,
+            action: SnackBarAction(
+              label: 'Görüntüle',
+              textColor: Colors.white,
+              onPressed: _openSavedSolutions,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Hata: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  void _openSavedSolutions() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const SavedSolutionsScreen()),
+    );
+  }
+
   void _showImageSourceSheet() {
     final theme = Theme.of(context);
     showModalBottomSheet(
@@ -288,6 +332,15 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
             _solution != null ? 'Çözüm' : 'Anlık Çözüm',
             style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
           ),
+          // KAYDEDİLENLERİ GÖRME BUTONU
+          actions: [
+            if (_finalImageFile == null) // Sadece ana ekranda göster
+              IconButton(
+                icon: const Icon(Icons.bookmark_border_rounded),
+                tooltip: 'Kaydedilenler',
+                onPressed: _openSavedSolutions,
+              )
+          ],
         ),
         body: SafeArea(
           child: _finalImageFile == null
@@ -509,7 +562,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
                   Icon(Icons.privacy_tip_outlined, size: 14, color: theme.colorScheme.onSurface.withOpacity(0.4)),
                   const SizedBox(width: 6),
                   Text(
-                    'Görsel sunucularımızda saklanmaz.',
+                    'Çözümler cihazınızda güvenle saklanır.',
                     style: TextStyle(
                       fontSize: 11,
                       color: theme.colorScheme.onSurface.withOpacity(0.4),
@@ -642,12 +695,6 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
           ),
         ).animate().fadeIn(duration: 500.ms).slideY(begin: 0.1, end: 0),
       ],
-    );
-  }
-
-  void _saveSolutionLocally() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Çözüm panoya kopyalandı!')),
     );
   }
 }
