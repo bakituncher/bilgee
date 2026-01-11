@@ -84,22 +84,29 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
   Future<CroppedFile?> _cropImage(String imagePath) async {
     try {
       final theme = Theme.of(context);
+      final isDark = theme.brightness == Brightness.dark;
 
       final croppedFile = await ImageCropper().cropImage(
         sourcePath: imagePath,
         compressQuality: 85,
+        maxWidth: 1800,
+        maxHeight: 1800,
+        compressFormat: ImageCompressFormat.jpg,
         uiSettings: [
           AndroidUiSettings(
             toolbarTitle: 'Soruyu Kırp',
             toolbarColor: theme.colorScheme.primary,
             toolbarWidgetColor: theme.colorScheme.onPrimary,
-            backgroundColor: theme.scaffoldBackgroundColor,
+            statusBarColor: theme.colorScheme.primary,
+            backgroundColor: isDark ? const Color(0xFF121212) : Colors.white,
             activeControlsWidgetColor: theme.colorScheme.primary,
-            dimmedLayerColor: Colors.black,
+            dimmedLayerColor: Colors.black.withOpacity(0.8),
             cropFrameColor: theme.colorScheme.primary,
-            cropGridColor: theme.colorScheme.primary.withOpacity(0.5),
-            cropFrameStrokeWidth: 3,
-            cropGridStrokeWidth: 1,
+            cropGridColor: Colors.white.withOpacity(0.4),
+            cropFrameStrokeWidth: 4,
+            cropGridStrokeWidth: 2,
+            cropGridRowCount: 3,
+            cropGridColumnCount: 3,
             showCropGrid: true,
             lockAspectRatio: false,
             hideBottomControls: false,
@@ -109,10 +116,16 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
             title: 'Soruyu Kırp',
             doneButtonTitle: 'Tamam',
             cancelButtonTitle: 'İptal',
+            minimumAspectRatio: 0.5,
             aspectRatioLockEnabled: false,
             resetAspectRatioEnabled: true,
             aspectRatioPickerButtonHidden: false,
             rotateButtonsHidden: false,
+            hidesNavigationBar: false,
+            rectX: 0,
+            rectY: 0,
+            rectWidth: 0,
+            rectHeight: 0,
           ),
         ],
       );

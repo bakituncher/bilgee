@@ -68,6 +68,8 @@
         <activity
             android:name="com.yalantis.ucrop.UCropActivity"
             android:screenOrientation="portrait"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:hardwareAccelerated="true"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
 
         <meta-data
