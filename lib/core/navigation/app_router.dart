@@ -33,6 +33,7 @@ import 'package:taktik/shared/widgets/splash_screen.dart';
 import 'package:taktik/data/providers/admin_providers.dart';
 import 'transition_utils.dart';
 import 'package:taktik/features/home/screens/user_guide_screen.dart';
+import 'package:taktik/features/coach/screens/question_solver_screen.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   final rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -244,6 +245,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           context: context,
           state: state,
           child: const AIToolsOfferScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/ai-hub/question-solver',
+        name: 'QuestionSolver',
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) => buildPageWithFadeTransition(
+          context: context,
+          state: state,
+          child: const QuestionSolverScreen(),
         ),
       ),
       GoRoute(

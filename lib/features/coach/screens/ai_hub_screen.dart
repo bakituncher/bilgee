@@ -140,6 +140,26 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
               ),
             ),
 
+            // --- Soru Çözüm Modülü (Yeni) ---
+            _WideFeatureCard(
+              title: 'Soru Çözücü',
+              subtitle: 'Takıldığın sorunun fotoğrafını çek, yapay zeka anında çözsün.',
+              icon: Icons.camera_enhance_rounded,
+              color: Colors.orangeAccent,
+              isPremium: isPremium,
+              onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/question-solver', offerData: {
+                'title': 'Soru Çözücü',
+                'subtitle': 'Anında çözüm cebinde.',
+                'icon': Icons.camera_enhance_rounded,
+                'color': Colors.orangeAccent,
+                'marketingTitle': 'Zaman Kaybetme!',
+                'marketingSubtitle': 'Soruyu çek, çözümünü gör. Anlamadığın yeri sor. Matematik, fizik, kimya fark etmez.',
+                'redirectRoute': '/ai-hub/question-solver',
+              }),
+            ),
+
+            const SizedBox(height: 12),
+
             // --- 2. GRID KARTLAR ---
             Row(
               children: [

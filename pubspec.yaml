@@ -91,6 +91,11 @@ dependencies:
   # App Tracking Transparency (iOS)
   app_tracking_transparency: ^2.0.4+1
 
+  # Image Picker & Compression & AI
+  image_picker: ^1.0.7
+  flutter_image_compress: ^2.2.0
+  google_generative_ai: ^0.4.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
