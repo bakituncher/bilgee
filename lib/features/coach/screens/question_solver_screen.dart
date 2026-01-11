@@ -5,6 +5,7 @@ import 'package:crop_your_image/crop_your_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart'; // <-- EKLENDİ
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -39,6 +40,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
   String? _solution;
   bool _isAnalyzing = false; // Yapay zeka analiz durumu
   bool _isCropping = false;  // Kırpma işlemi işleniyor durumu
+  bool _isProcessingImage = false; // Fotoğraf ilk işlenirken (Loader için)
   String? _error;
 
   final ImagePicker _picker = ImagePicker();
@@ -53,7 +55,6 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
   // --- Temel Fonksiyonlar ---
 
   void _handleBack() {
-    // 1. Durum: Analiz sonucu veya kırpma ekranındaysak -> Temizle ve başa dön
     if (_rawImageBytes != null || _finalImageFile != null || _solution != null) {
       setState(() {
         _rawImageBytes = null;
@@ -62,11 +63,11 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
         _error = null;
         _isAnalyzing = false;
         _isCropping = false;
+        _isProcessingImage = false;
       });
       return;
     }
 
-    // 2. Durum: Hiçbir şey yoksa -> Sayfadan çık
     if (context.canPop()) {
       context.pop();
     } else {
@@ -77,33 +78,61 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
   Future<void> _pickImage(ImageSource source) async {
     try {
       final XFile? image = await _picker.pickImage(source: source);
+
       if (image != null) {
-        // Resmi byte olarak oku (Crop paketi byte array ister)
-        final bytes = await image.readAsBytes();
         setState(() {
-          _rawImageBytes = bytes; // Resmi kırpma moduna sok
-          _finalImageFile = null;
-          _solution = null;
-          _error = null;
+          _isProcessingImage = true; // Yükleniyor göster
         });
+
+        // OPTİMİZASYON: Resmi ham haliyle okumak yerine sıkıştırarak okuyoruz.
+        // Bu işlem 10MB'lık fotoyu ~300KB'a düşürür, crop ekranı uçak gibi açılır.
+        final Uint8List? compressedBytes = await FlutterImageCompress.compressWithFile(
+          image.path,
+          minWidth: 1080, // 1080p fazlasıyla yeterli
+          minHeight: 1080,
+          quality: 85,    // Kalite kaybı fark edilmez ama boyut çok düşer
+          format: CompressFormat.jpeg,
+        );
+
+        if (compressedBytes != null) {
+          setState(() {
+            _rawImageBytes = compressedBytes;
+            _finalImageFile = null;
+            _solution = null;
+            _error = null;
+            _isProcessingImage = false;
+          });
+        } else {
+          // Sıkıştırma başarısız olursa orijinali kullan (Fallback)
+          final originalBytes = await image.readAsBytes();
+          setState(() {
+            _rawImageBytes = originalBytes;
+            _isProcessingImage = false;
+          });
+        }
       }
     } catch (e) {
       setState(() {
         _error = 'Görsel yüklenirken hata oluştu: $e';
+        _isProcessingImage = false;
       });
     }
   }
 
-  // Kırpma işlemi bittiğinde çalışır (Kütüphane callback'i)
   Future<void> _onCropped(Uint8List croppedData) async {
+    // İşlem başladığı an loading göster
     setState(() {
       _isCropping = true;
     });
 
     try {
-      // Byte verisini geçici bir dosyaya yaz (Servis XFile istiyor)
+      // Dosya yazma işlemi arka planda hızlıca olsun
       final tempDir = await getTemporaryDirectory();
-      final file = await File('${tempDir.path}/question_${DateTime.now().millisecondsSinceEpoch}.jpg').create();
+      // Dosya adını benzersiz yap
+      final fileName = 'q_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final file = File('${tempDir.path}/$fileName');
+
+      // Byte verisini dosyaya yaz
       await file.writeAsBytes(croppedData);
 
       setState(() {
@@ -111,7 +140,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
         _isCropping = false;
         _rawImageBytes = null; // Kırpma ekranından çık
 
-        // Otomatik olarak analizi başlat
+        // Analizi başlat
         _solveQuestion();
       });
     } catch (e) {
@@ -223,13 +252,32 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // DURUM 1: Henüz fotoğraf seçilmediyse veya sonuç ekranındaysak (Normal Scaffold)
-    // _rawImageBytes == null ise burası çalışır.
+    // DURUM 0: Fotoğraf seçildi, işleniyor (Kırpma ekranına geçiş ara yüzü)
+    if (_isProcessingImage) {
+      return Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(color: Colors.white),
+              const SizedBox(height: 16),
+              Text(
+                "Fotoğraf Hazırlanıyor...",
+                style: TextStyle(color: Colors.white.withOpacity(0.8)),
+              )
+            ],
+          ),
+        ),
+      );
+    }
+
+    // DURUM 1: Henüz fotoğraf seçilmediyse veya sonuç ekranındaysak
     if (_rawImageBytes == null) {
       return Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: theme.scaffoldBackgroundColor, // AppBar rengi sabitlendi
+          backgroundColor: theme.scaffoldBackgroundColor,
           elevation: 0,
           centerTitle: true,
           leading: IconButton(
@@ -260,7 +308,6 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
     }
 
     // DURUM 2: Fotoğraf seçildi, Kırpma Ekranı (Özel Siyah Arayüz)
-    // _rawImageBytes != null ise burası çalışır.
     return Scaffold(
       backgroundColor: Colors.black, // Full screen siyah mod
       body: Stack(
@@ -273,7 +320,6 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
                 image: _rawImageBytes!,
                 controller: _cropController,
                 onCropped: (image) {
-                  // Crop sonucu geldiğinde
                   if (image is Uint8List) {
                     _onCropped(image);
                   }
@@ -283,8 +329,6 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
                 initialSize: 0.8,
                 cornerDotBuilder: (size, edgeAlignment) => const DotControl(color: Colors.white),
                 interactive: true,
-                // fixCropRect parametresi bazı versiyonlarda farklı olabilir,
-                // interactive: true genelde yeterlidir.
               ),
             ),
           ),
@@ -646,7 +690,7 @@ class _SourceButton extends StatelessWidget {
   }
 }
 
-// --- LaTeX Syntax Sınıfları (Eski koddakiyle aynı) ---
+// --- LaTeX Syntax Sınıfları ---
 
 class LatexInlineSyntax extends md.InlineSyntax {
   LatexInlineSyntax() : super(r'(\$\$[\s\S]*?\$\$)|(\$[^$]*\$)');
