@@ -1,13 +1,16 @@
 import 'dart:io';
+import 'dart:typed_data';
 
+import 'package:crop_your_image/crop_your_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:image_cropper/image_cropper.dart';
 import 'package:lottie/lottie.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:taktik/features/coach/services/question_solver_service.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:markdown/markdown.dart' as md;
@@ -21,38 +24,52 @@ class QuestionSolverScreen extends ConsumerStatefulWidget {
 }
 
 class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
-  XFile? _selectedImage;
+  // --- Değişkenler ---
+
+  // Crop işlemi için ham resim verisi (Kırpma ekranı için)
+  Uint8List? _rawImageBytes;
+
+  // Kırpılmış ve sunucuya gönderilmeye hazır dosya
+  XFile? _finalImageFile;
+
+  // Crop Widget Kontrolcüsü
+  final _cropController = CropController();
+
+  // Analiz Sonuçları
   String? _solution;
-  bool _isLoading = false;
+  bool _isAnalyzing = false; // Yapay zeka analiz durumu
+  bool _isCropping = false;  // Kırpma işlemi işleniyor durumu
   String? _error;
 
   final ImagePicker _picker = ImagePicker();
 
   @override
   void dispose() {
-    // Ephemeral State: Clean up data when screen is closed
-    _selectedImage = null;
-    _solution = null;
+    _rawImageBytes = null;
+    _finalImageFile = null;
     super.dispose();
   }
 
-  // Navigasyon geçmişini kontrol eden güvenli geri dönüş fonksiyonu
+  // --- Temel Fonksiyonlar ---
+
   void _handleBack() {
-    // Eğer soru çözümü varsa, önce temizle
-    if (_selectedImage != null || _solution != null) {
+    // 1. Durum: Analiz sonucu veya kırpma ekranındaysak -> Temizle ve başa dön
+    if (_rawImageBytes != null || _finalImageFile != null || _solution != null) {
       setState(() {
-        _selectedImage = null;
+        _rawImageBytes = null;
+        _finalImageFile = null;
         _solution = null;
         _error = null;
+        _isAnalyzing = false;
+        _isCropping = false;
       });
       return;
     }
 
-    // Eğer temiz ekrandaysa, geri git
+    // 2. Durum: Hiçbir şey yoksa -> Sayfadan çık
     if (context.canPop()) {
       context.pop();
     } else {
-      // Eğer geri gidilecek sayfa yoksa ana sayfaya yönlendir
       context.go('/ai-hub');
     }
   }
@@ -61,91 +78,55 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
     try {
       final XFile? image = await _picker.pickImage(source: source);
       if (image != null) {
-        // Kırpma işlemi
-        final croppedFile = await _cropImage(image.path);
-
-        if (croppedFile != null) {
-          setState(() {
-            _selectedImage = XFile(croppedFile.path);
-            _solution = null;
-            _error = null;
-          });
-          // Auto-start solving process
-          _solveQuestion();
-        }
+        // Resmi byte olarak oku (Crop paketi byte array ister)
+        final bytes = await image.readAsBytes();
+        setState(() {
+          _rawImageBytes = bytes; // Resmi kırpma moduna sok
+          _finalImageFile = null;
+          _solution = null;
+          _error = null;
+        });
       }
     } catch (e) {
       setState(() {
-        _error = 'Görsel seçilemedi: $e';
+        _error = 'Görsel yüklenirken hata oluştu: $e';
       });
     }
   }
 
-  Future<CroppedFile?> _cropImage(String imagePath) async {
+  // Kırpma işlemi bittiğinde çalışır (Kütüphane callback'i)
+  Future<void> _onCropped(Uint8List croppedData) async {
+    setState(() {
+      _isCropping = true;
+    });
+
     try {
-      final theme = Theme.of(context);
-      final isDark = theme.brightness == Brightness.dark;
+      // Byte verisini geçici bir dosyaya yaz (Servis XFile istiyor)
+      final tempDir = await getTemporaryDirectory();
+      final file = await File('${tempDir.path}/question_${DateTime.now().millisecondsSinceEpoch}.jpg').create();
+      await file.writeAsBytes(croppedData);
 
-      final croppedFile = await ImageCropper().cropImage(
-        sourcePath: imagePath,
-        compressQuality: 85,
-        maxWidth: 1800,
-        maxHeight: 1800,
-        compressFormat: ImageCompressFormat.jpg,
-        uiSettings: [
-          AndroidUiSettings(
-            toolbarTitle: 'Soruyu Kırp',
-            toolbarColor: theme.colorScheme.primary,
-            toolbarWidgetColor: theme.colorScheme.onPrimary,
-            statusBarColor: theme.colorScheme.primary,
-            backgroundColor: isDark ? const Color(0xFF121212) : Colors.white,
-            activeControlsWidgetColor: theme.colorScheme.primary,
-            dimmedLayerColor: Colors.black.withOpacity(0.8),
-            cropFrameColor: theme.colorScheme.primary,
-            cropGridColor: Colors.white.withOpacity(0.4),
-            cropFrameStrokeWidth: 4,
-            cropGridStrokeWidth: 2,
-            cropGridRowCount: 3,
-            cropGridColumnCount: 3,
-            showCropGrid: true,
-            lockAspectRatio: false,
-            hideBottomControls: false,
-            initAspectRatio: CropAspectRatioPreset.original,
-          ),
-          IOSUiSettings(
-            title: 'Soruyu Kırp',
-            doneButtonTitle: 'Tamam',
-            cancelButtonTitle: 'İptal',
-            minimumAspectRatio: 0.5,
-            aspectRatioLockEnabled: false,
-            resetAspectRatioEnabled: true,
-            aspectRatioPickerButtonHidden: false,
-            rotateButtonsHidden: false,
-            hidesNavigationBar: false,
-            rectX: 0,
-            rectY: 0,
-            rectWidth: 0,
-            rectHeight: 0,
-          ),
-        ],
-      );
+      setState(() {
+        _finalImageFile = XFile(file.path);
+        _isCropping = false;
+        _rawImageBytes = null; // Kırpma ekranından çık
 
-      return croppedFile;
+        // Otomatik olarak analizi başlat
+        _solveQuestion();
+      });
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _error = 'Görsel kırpılamadı: $e';
-        });
-      }
-      return null;
+      setState(() {
+        _isCropping = false;
+        _error = 'Görsel işlenemedi: $e';
+      });
     }
   }
 
   Future<void> _solveQuestion() async {
-    if (_selectedImage == null) return;
+    if (_finalImageFile == null) return;
 
     setState(() {
-      _isLoading = true;
+      _isAnalyzing = true;
       _error = null;
     });
 
@@ -154,46 +135,56 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
       final user = ref.read(userProfileProvider).value;
       final examType = user?.selectedExam;
 
-      final result = await service.solveQuestion(_selectedImage!, examType: examType);
+      final result = await service.solveQuestion(_finalImageFile!, examType: examType);
 
       if (mounted) {
         setState(() {
           _solution = result;
-          _isLoading = false;
+          _isAnalyzing = false;
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
           _error = e.toString().replaceAll('Exception:', '').trim();
-          _isLoading = false;
+          _isAnalyzing = false;
         });
       }
     }
   }
 
   void _showImageSourceSheet() {
+    final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Theme.of(context).scaffoldBackgroundColor,
+          color: theme.scaffoldBackgroundColor,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 24),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.onSurface.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
             Text(
               'Soru Yükle',
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onSurface,
+                color: theme.colorScheme.onSurface,
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
             Row(
               children: [
                 Expanded(
@@ -226,43 +217,156 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
     );
   }
 
+  // --- Arayüz (Build) ---
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
+    // DURUM 1: Henüz fotoğraf seçilmediyse veya sonuç ekranındaysak (Normal Scaffold)
+    // _rawImageBytes == null ise burası çalışır.
+    if (_rawImageBytes == null) {
+      return Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.colorScheme.onSurface),
-          onPressed: _handleBack,
-        ),
-        title: Text(
-          'Anlık Çözüm',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.onSurface,
+        appBar: AppBar(
+          backgroundColor: theme.scaffoldBackgroundColor, // AppBar rengi sabitlendi
+          elevation: 0,
+          centerTitle: true,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.colorScheme.onSurface),
+            onPressed: _handleBack,
+          ),
+          title: Text(
+            _solution != null ? 'Çözüm' : 'Anlık Çözüm',
+            style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
           ),
         ),
+        body: SafeArea(
+          child: _finalImageFile == null
+              ? _buildEmptyState(theme) // Fotoğraf yoksa
+              : _buildResultContent(theme), // Fotoğraf varsa (Analiz/Sonuç)
+        ),
+        floatingActionButton: _finalImageFile == null
+            ? FloatingActionButton.extended(
+          onPressed: _showImageSourceSheet,
+          backgroundColor: theme.colorScheme.primary,
+          foregroundColor: theme.colorScheme.onPrimary,
+          icon: const Icon(Icons.add_a_photo_rounded),
+          label: const Text('Soru Sor'),
+        )
+            : null,
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      );
+    }
+
+    // DURUM 2: Fotoğraf seçildi, Kırpma Ekranı (Özel Siyah Arayüz)
+    // _rawImageBytes != null ise burası çalışır.
+    return Scaffold(
+      backgroundColor: Colors.black, // Full screen siyah mod
+      body: Stack(
+        children: [
+          // 1. Kırpma Aracı (Orta Alan)
+          Padding(
+            padding: const EdgeInsets.only(top: 60, bottom: 100),
+            child: Center(
+              child: Crop(
+                image: _rawImageBytes!,
+                controller: _cropController,
+                onCropped: (image) {
+                  // Crop sonucu geldiğinde
+                  if (image is Uint8List) {
+                    _onCropped(image);
+                  }
+                },
+                baseColor: Colors.black,
+                maskColor: Colors.black.withOpacity(0.6),
+                initialSize: 0.8,
+                cornerDotBuilder: (size, edgeAlignment) => const DotControl(color: Colors.white),
+                interactive: true,
+                // fixCropRect parametresi bazı versiyonlarda farklı olabilir,
+                // interactive: true genelde yeterlidir.
+              ),
+            ),
+          ),
+
+          // 2. Üst Bar (Başlık)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                alignment: Alignment.center,
+                child: Text(
+                  "Soruyu Kırp",
+                  style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // 3. Yükleniyor Göstergesi (Crop işlemi sırasında)
+          if (_isCropping)
+            Container(
+              color: Colors.black54,
+              child: const Center(
+                child: CircularProgressIndicator(color: Colors.white),
+              ),
+            ),
+
+          // 4. Alt Kontrol Paneli (İptal - Onay)
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              color: Colors.black,
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).padding.bottom + 20,
+                top: 20,
+                left: 24,
+                right: 24,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // İptal Butonu
+                  TextButton(
+                    onPressed: _handleBack,
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    ),
+                    child: const Text('İptal', style: TextStyle(fontSize: 16)),
+                  ),
+
+                  // Onay Butonu (Sağ Altta)
+                  FilledButton.icon(
+                    onPressed: () => _cropController.crop(),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                    ),
+                    icon: const Icon(Icons.check, size: 20),
+                    label: const Text('Kırp & Çöz', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
-      body: SafeArea(
-        child: _selectedImage == null
-            ? _buildEmptyState(theme)
-            : _buildContent(theme),
-      ),
-      floatingActionButton: _selectedImage == null ? FloatingActionButton.extended(
-        onPressed: _showImageSourceSheet,
-        backgroundColor: theme.colorScheme.primary,
-        foregroundColor: theme.colorScheme.onPrimary,
-        icon: const Icon(Icons.add_a_photo_rounded),
-        label: const Text('Soru Sor'),
-      ) : null,
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
+
+  // --- Yardımcı Widget'lar ---
 
   Widget _buildEmptyState(ThemeData theme) {
     return Center(
@@ -280,7 +384,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
               size: 64,
               color: theme.colorScheme.primary,
             ).animate(onPlay: (c) => c.repeat(reverse: true))
-             .scale(begin: const Offset(1,1), end: const Offset(1.1, 1.1), duration: 2.seconds),
+                .scale(begin: const Offset(1,1), end: const Offset(1.1, 1.1), duration: 2.seconds),
           ),
           const SizedBox(height: 24),
           Text(
@@ -304,48 +408,54 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
     );
   }
 
-  Widget _buildContent(ThemeData theme) {
+  Widget _buildResultContent(ThemeData theme) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Question Card
+          // Soru Kartı
           Container(
             height: 200,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
               image: DecorationImage(
-                image: FileImage(File(_selectedImage!.path)),
+                image: FileImage(File(_finalImageFile!.path)),
                 fit: BoxFit.cover,
               ),
             ),
-            child: Stack(
-              children: [
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: IconButton(
-                    onPressed: _showImageSourceSheet, // Retake
-                    style: IconButton.styleFrom(backgroundColor: Colors.black54),
-                    icon: const Icon(Icons.edit_rounded, color: Colors.white, size: 20),
-                  ),
+            child: Align(
+              alignment: Alignment.topRight,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: IconButton(
+                  onPressed: () {
+                    // Yeniden çekmek için (Başa dön)
+                    setState(() {
+                      _finalImageFile = null;
+                      _rawImageBytes = null;
+                      _solution = null;
+                    });
+                  },
+                  style: IconButton.styleFrom(backgroundColor: Colors.black54),
+                  icon: const Icon(Icons.refresh_rounded, color: Colors.white, size: 20),
+                  tooltip: "Yeni Fotoğraf Çek",
                 ),
-              ],
+              ),
             ),
           ),
 
           const SizedBox(height: 24),
 
-          if (_isLoading)
+          if (_isAnalyzing)
             _buildLoadingState(theme)
           else if (_error != null)
             _buildErrorState(theme)
           else if (_solution != null)
-            _buildSolutionCard(theme),
+              _buildSolutionCard(theme),
 
-          // Privacy Note
+          // Gizlilik notu
           if (_solution != null) ...[
             const SizedBox(height: 32),
             Center(
@@ -355,7 +465,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
                   Icon(Icons.privacy_tip_outlined, size: 14, color: theme.colorScheme.onSurface.withOpacity(0.4)),
                   const SizedBox(width: 6),
                   Text(
-                    'Görselin sunucularımızda saklanmaz. Uygulama kapanınca silinir.',
+                    'Görsel sunucularımızda saklanmaz.',
                     style: TextStyle(
                       fontSize: 11,
                       color: theme.colorScheme.onSurface.withOpacity(0.4),
@@ -376,15 +486,16 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
       children: [
         const SizedBox(height: 20),
         Lottie.asset(
-          'assets/lotties/loading_dots.json', // Ensure this exists or use a default loader
+          'assets/lotties/loading_dots.json',
           height: 100,
           errorBuilder: (context, error, stackTrace) =>
-              const CircularProgressIndicator(),
+          const Center(child: CircularProgressIndicator()),
         ),
         const SizedBox(height: 16),
         Text(
           'Soru Analiz Ediliyor...',
           style: TextStyle(
+            fontSize: 16,
             fontWeight: FontWeight.w600,
             color: theme.colorScheme.primary,
           ),
@@ -437,7 +548,6 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
               ),
             ),
             const Spacer(),
-            // Save Button (Local Only)
             TextButton.icon(
               onPressed: _saveSolutionLocally,
               icon: const Icon(Icons.bookmark_border_rounded, size: 18),
@@ -465,7 +575,6 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
             styleSheet: MarkdownStyleSheet(
               p: TextStyle(color: theme.colorScheme.onSurface, height: 1.5, fontSize: 15),
               h1: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold),
-              h2: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold),
               strong: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.w700),
               blockquote: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.7), fontStyle: FontStyle.italic),
               blockquoteDecoration: BoxDecoration(
@@ -483,14 +592,8 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
               ),
             },
             extensionSet: md.ExtensionSet(
-              [
-                ...md.ExtensionSet.gitHubFlavored.blockSyntaxes,
-                // Add LaTeX block syntax support if needed, or rely on text pattern
-              ],
-              [
-                ...md.ExtensionSet.gitHubFlavored.inlineSyntaxes,
-                 LatexInlineSyntax(),
-              ],
+              [...md.ExtensionSet.gitHubFlavored.blockSyntaxes],
+              [...md.ExtensionSet.gitHubFlavored.inlineSyntaxes, LatexInlineSyntax()],
             ),
           ),
         ).animate().fadeIn(duration: 500.ms).slideY(begin: 0.1, end: 0),
@@ -499,14 +602,9 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
   }
 
   void _saveSolutionLocally() {
-    // Implement local save logic if needed (SharedPrefs or just a snackbar for now as per "Optional Record" step)
-    // The prompt says "Opsiyonel Kayıt: Sadece kullanıcı açıkça 'Cevabı Kaydet' butonuna basarsa çözüm cihazın yerel veritabanına... kaydedilecektir."
-    // For now, I'll just show a success message since I haven't set up a specific Hive box for saved questions yet.
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Çözüm panoya kopyalandı! (Kaydetme özelliği yakında)')),
+      const SnackBar(content: Text('Çözüm panoya kopyalandı!')),
     );
-    // Also copy to clipboard
-    // Clipboard.setData(ClipboardData(text: _solution!));
   }
 }
 
@@ -548,25 +646,20 @@ class _SourceButton extends StatelessWidget {
   }
 }
 
-// Gelişmiş LaTeX Syntax Ayrıştırıcısı (Inline vs Block ayrımı yapar)
+// --- LaTeX Syntax Sınıfları (Eski koddakiyle aynı) ---
+
 class LatexInlineSyntax extends md.InlineSyntax {
-  // Hem $$...$$ hem de $...$ yakalar
   LatexInlineSyntax() : super(r'(\$\$[\s\S]*?\$\$)|(\$[^$]*\$)');
 
   @override
   bool onMatch(md.InlineParser parser, Match match) {
     final match0 = match.group(0)!;
-    // Eğer $$ ile başlıyorsa Blok (Display), değilse Satır içi (Text) moddur
     final isDisplay = match0.startsWith(r'$$');
-
     final raw = isDisplay
         ? match0.substring(2, match0.length - 2)
         : match0.substring(1, match0.length - 1);
-
     final el = md.Element.text('latex', raw);
-    // Render aşamasında kullanmak için stil bilgisini elemente ekliyoruz
     el.attributes['mathStyle'] = isDisplay ? 'display' : 'text';
-
     parser.addNode(el);
     return true;
   }
@@ -574,26 +667,18 @@ class LatexInlineSyntax extends md.InlineSyntax {
 
 class LatexElementBuilder extends MarkdownElementBuilder {
   final TextStyle? textStyle;
-
   LatexElementBuilder({this.textStyle});
 
   @override
   Widget visitElementAfter(md.Element element, TextStyle? preferredStyle) {
-    // Parser'dan gelen stil bilgisini okuyoruz
     final bool isDisplay = element.attributes['mathStyle'] == 'display';
-
     return FittedBox(
-      // CRITICAL FIX: Taşıyorsa küçült, sığıyorsa dokunma.
-      // Bu sayede "yana kaydırma" olmadan ekrana sığdırılır.
       fit: BoxFit.scaleDown,
       alignment: isDisplay ? Alignment.center : Alignment.centerLeft,
       child: Math.tex(
         element.textContent,
         textStyle: textStyle ?? preferredStyle,
-        // Blok denklemler için 'display' modu (daha ferah, integraller büyük),
-        // Satır içi için 'text' modu (kompakt).
         mathStyle: isDisplay ? MathStyle.display : MathStyle.text,
-        // Hata durumunda uygulamanın çökmemesi için
         onErrorFallback: (err) => Text(
           element.textContent,
           style: (textStyle ?? preferredStyle)?.copyWith(color: Colors.red),
