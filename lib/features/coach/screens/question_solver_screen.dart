@@ -37,6 +37,17 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
 
   // Navigasyon geçmişini kontrol eden güvenli geri dönüş fonksiyonu
   void _handleBack() {
+    // Eğer soru çözümü varsa, önce temizle
+    if (_selectedImage != null || _solution != null) {
+      setState(() {
+        _selectedImage = null;
+        _solution = null;
+        _error = null;
+      });
+      return;
+    }
+
+    // Eğer temiz ekrandaysa, geri git
     if (context.canPop()) {
       context.pop();
     } else {
@@ -170,18 +181,6 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
             color: theme.colorScheme.onSurface,
           ),
         ),
-        actions: [
-          if (_solution != null)
-             IconButton(
-               icon: const Icon(Icons.refresh_rounded),
-               onPressed: () {
-                 setState(() {
-                   _selectedImage = null;
-                   _solution = null;
-                 });
-               },
-             ),
-        ],
       ),
       body: SafeArea(
         child: _selectedImage == null
