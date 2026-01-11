@@ -10,18 +10,22 @@ class _TexInlineSyntax extends md.InlineSyntax {
   @override
   bool onMatch(md.InlineParser parser, Match match) {
     final content = match.group(1) ?? '';
-    parser.addNode(md.Element.text('tex', content));
+    final el = md.Element.text('tex', content);
+    el.attributes['mathStyle'] = 'text'; // Stil bilgisi eklendi
+    parser.addNode(el);
     return true;
   }
 }
 
-/// Block-like LaTeX: $$ ... $$ (single-line or same paragraph)
+/// Block-like LaTeX: $$ ... $$
 class _TexDoubleDollarSyntax extends md.InlineSyntax {
   _TexDoubleDollarSyntax() : super(r"\$\$([^$]+?)\$\$");
   @override
   bool onMatch(md.InlineParser parser, Match match) {
     final content = match.group(1) ?? '';
-    parser.addNode(md.Element.text('tex', content));
+    final el = md.Element.text('tex', content);
+    el.attributes['mathStyle'] = 'display'; // Stil bilgisi eklendi
+    parser.addNode(el);
     return true;
   }
 }
@@ -31,10 +35,19 @@ class _TexBuilder extends fmd.MarkdownElementBuilder {
   Widget? visitElementAfter(md.Element element, TextStyle? preferredStyle) {
     final expr = element.textContent.trim();
     if (expr.isEmpty) return const SizedBox.shrink();
-    return Math.tex(
-      expr,
-      textStyle: preferredStyle,
-      mathStyle: MathStyle.text,
+
+    final bool isDisplay = element.attributes['mathStyle'] == 'display';
+
+    return FittedBox(
+      // Taşan içeriği ekrana sığacak şekilde otomatik ölçekler
+      fit: BoxFit.scaleDown,
+      alignment: isDisplay ? Alignment.center : Alignment.centerLeft,
+      child: Math.tex(
+        expr,
+        textStyle: preferredStyle,
+        mathStyle: isDisplay ? MathStyle.display : MathStyle.text,
+        onErrorFallback: (err) => Text(expr, style: preferredStyle?.copyWith(color: Colors.red)),
+      ),
     );
   }
 }

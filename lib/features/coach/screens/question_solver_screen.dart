@@ -482,19 +482,25 @@ class _SourceButton extends StatelessWidget {
   }
 }
 
-// Simple LaTeX Syntax Parser for Inline Math ($...$)
+// Gelişmiş LaTeX Syntax Ayrıştırıcısı (Inline vs Block ayrımı yapar)
 class LatexInlineSyntax extends md.InlineSyntax {
+  // Hem $$...$$ hem de $...$ yakalar
   LatexInlineSyntax() : super(r'(\$\$[\s\S]*?\$\$)|(\$[^$]*\$)');
 
   @override
   bool onMatch(md.InlineParser parser, Match match) {
     final match0 = match.group(0)!;
-    // Strip $ signs
-    final raw = match0.startsWith(r'$$')
+    // Eğer $$ ile başlıyorsa Blok (Display), değilse Satır içi (Text) moddur
+    final isDisplay = match0.startsWith(r'$$');
+
+    final raw = isDisplay
         ? match0.substring(2, match0.length - 2)
         : match0.substring(1, match0.length - 1);
 
     final el = md.Element.text('latex', raw);
+    // Render aşamasında kullanmak için stil bilgisini elemente ekliyoruz
+    el.attributes['mathStyle'] = isDisplay ? 'display' : 'text';
+
     parser.addNode(el);
     return true;
   }
@@ -507,10 +513,26 @@ class LatexElementBuilder extends MarkdownElementBuilder {
 
   @override
   Widget visitElementAfter(md.Element element, TextStyle? preferredStyle) {
-    return Math.tex(
-      element.textContent,
-      textStyle: textStyle ?? preferredStyle,
-      mathStyle: MathStyle.text,
+    // Parser'dan gelen stil bilgisini okuyoruz
+    final bool isDisplay = element.attributes['mathStyle'] == 'display';
+
+    return FittedBox(
+      // CRITICAL FIX: Taşıyorsa küçült, sığıyorsa dokunma.
+      // Bu sayede "yana kaydırma" olmadan ekrana sığdırılır.
+      fit: BoxFit.scaleDown,
+      alignment: isDisplay ? Alignment.center : Alignment.centerLeft,
+      child: Math.tex(
+        element.textContent,
+        textStyle: textStyle ?? preferredStyle,
+        // Blok denklemler için 'display' modu (daha ferah, integraller büyük),
+        // Satır içi için 'text' modu (kompakt).
+        mathStyle: isDisplay ? MathStyle.display : MathStyle.text,
+        // Hata durumunda uygulamanın çökmemesi için
+        onErrorFallback: (err) => Text(
+          element.textContent,
+          style: (textStyle ?? preferredStyle)?.copyWith(color: Colors.red),
+        ),
+      ),
     );
   }
 }
