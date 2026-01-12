@@ -50,6 +50,9 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
 
   // --- BİLGİ VE SATIŞ EKRANI (NET VE İKNA EDİCİ) ---
   void _showInfoSheet(ThemeData theme) {
+    // Şık ve uyumlu bir pembe tonu tanımlıyoruz
+    const pinkColor = Color(0xFFE11D48);
+
     showModalBottomSheet(
       context: context,
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -144,25 +147,33 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                 ),
               ),
 
-              // SABİT BUTON (Action)
+              // SABİT BUTON (Action - PEMBE VE PREMİUM YÖNLENDİRMELİ)
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 10, 24, 40),
                 child: SizedBox(
                   width: double.infinity,
                   child: FilledButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () {
+                      Navigator.pop(context); // Sheet'i kapat
+                      context.push('/premium'); // Premium ekranına git
+                    },
                     style: FilledButton.styleFrom(
-                      backgroundColor: theme.colorScheme.primary,
-                      foregroundColor: theme.colorScheme.onPrimary,
+                      backgroundColor: pinkColor, // İstenilen pembe renk
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 18),
-                      elevation: 0,
+                      elevation: 8, // Biraz gölge ile şıklık
+                      shadowColor: pinkColor.withOpacity(0.4),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
                     child: const Text(
                       "Hemen Denemeye Başla",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5
+                      ),
                     ),
                   ),
                 ),
