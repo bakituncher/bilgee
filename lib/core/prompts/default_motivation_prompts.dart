@@ -7,10 +7,10 @@ import 'package:taktik/core/prompts/prompt_remote.dart';
 
 class DefaultMotivationPrompts {
   // Ortak Persona Tanımı
-  static String get _persona => '''
+  static String _persona(String goal) => '''
 Sen Taktik Tavşan'sın. Öğrencinin cebindeki en iyi koçsun.
 Tarzın: Profesyonel, destekleyici, zeki ve samimi.
-Hedef: Öğrenciyi hedefine ($Goal) ulaştırmak.
+Hedef: Öğrenciyi hedefine ($goal) ulaştırmak.
 Kurallar: Robotik konuşma. Emoji kullan (dozunda). Kısa ve net ol. Asla tekrara düşme.
 ''';
 
@@ -38,7 +38,7 @@ Kurallar: Robotik konuşma. Emoji kullan (dozunda). Kısa ve net ol. Asla tekrar
     }
 
     return '''
-$_persona
+${_persona(user.goal ?? 'Başarı')}
 Bağlam: Kullanıcı ($userName) sohbeti başlattı veya uygulamayı açtı.
 Sınav: $examName | Ortalama: $avgNet
 
@@ -59,7 +59,7 @@ Eğer son bir mesaj varsa ("$lastUserMessage"), ona cevap vererek başla.
     final avgNet = (analysis?.averageNet ?? 0).toStringAsFixed(2);
 
     return '''
-$_persona
+${_persona(user.goal ?? 'Başarı')}
 Durum: Kullanıcı son denemede beklediğinin altında yaptı.
 Son Net: $last | Ortalama: $avgNet
 
@@ -78,7 +78,7 @@ Görev: Moral bozmak yok! "Düşüşler yükselişin habercisidir" mantığıyla
     final last = tests.isNotEmpty ? tests.first.totalNet.toStringAsFixed(2) : '0';
 
     return '''
-$_persona
+${_persona(user.goal ?? 'Başarı')}
 Durum: Harika! Kullanıcı iyi bir sonuç aldı.
 Son Net: $last
 
@@ -97,7 +97,7 @@ Görev: Kutla! 🎉 Ama rehavete kapılmaması için "Daha iyisini de yaparız" 
     final streak = user.streak;
 
     return '''
-$_persona
+${_persona(user.goal ?? 'Başarı')}
 Durum: Kullanıcı bir süredir sessiz veya motivasyon düşüklüğü yaşıyor olabilir.
 Seri (Streak): $streak gün.
 
@@ -118,7 +118,7 @@ Görev: Onu dürtecek tatlı-sert bir mesaj at. "Nerelerdesin şampiyon? Masayı
     final score = (workshopContext?['score'] ?? '0').toString();
 
     return '''
-$_persona
+${_persona(user.goal ?? 'Başarı')}
 Durum: Kullanıcı bir çalışma atölyesini tamamladı.
 Ders: $subject | Başarı: %$score
 
@@ -148,7 +148,7 @@ Görev: Çalışmasını takdir et. Bu çalışmanın denemeye nasıl yansıyaca
     }
 
     return '''
-$_persona
+${_persona(user.goal ?? 'Başarı')}
 Bağlam: Serbest sohbet.
 Kullanıcı: $userName
 Sohbet Geçmişi: $conversationHistory
