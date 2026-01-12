@@ -6,8 +6,13 @@ import 'tone_utils.dart';
 import 'package:taktik/core/prompts/prompt_remote.dart';
 
 class DefaultMotivationPrompts {
-  static String _commonHeader(String? examName) =>
-      "Sen Taktik Tavşan'sın; kısa, net ve yetişkin bir koç gibi konuşursun. ${ToneUtils.toneByExam(examName)}\nKurallar: Duyguyu 1 cümlede yansıt; kullanıcının cümlelerini kelime kelime tekrarlama, kendi sözlerinle kısaca özetle. Konu dışına çıkma, abartı ve mikro hedef/ödül telkini verme. Düz metin; emoji/markdown yok.";
+  // Ortak Persona Tanımı
+  static String get _persona => '''
+Sen Taktik Tavşan'sın. Öğrencinin cebindeki en iyi koçsun.
+Tarzın: Profesyonel, destekleyici, zeki ve samimi.
+Hedef: Öğrenciyi hedefine ($Goal) ulaştırmak.
+Kurallar: Robotik konuşma. Emoji kullan (dozunda). Kısa ve net ol. Asla tekrara düşme.
+''';
 
   static String welcome({
     required UserModel user,
@@ -17,7 +22,7 @@ class DefaultMotivationPrompts {
     String conversationHistory = '',
     String lastUserMessage = '',
   }) {
-    final userName = user.name ?? 'Komutan';
+    final userName = user.name ?? 'Şampiyon';
     final avgNet = (analysis?.averageNet ?? 0).toStringAsFixed(2);
 
     final remote = RemotePrompts.get('welcome');
@@ -26,17 +31,19 @@ class DefaultMotivationPrompts {
         'USER_NAME': userName,
         'EXAM_NAME': examName ?? '—',
         'AVG_NET': avgNet,
-        'LAST_USER_MESSAGE': lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim(),
-        'CONVERSATION_HISTORY': conversationHistory.trim().isEmpty ? '—' : conversationHistory.trim(),
+        'LAST_USER_MESSAGE': lastUserMessage,
+        'CONVERSATION_HISTORY': conversationHistory,
         'TONE': ToneUtils.toneByExam(examName),
       });
     }
 
     return '''
-${_commonHeader(examName)}
-Amaç: Hoş geldin. Kısa tanışma ve güçlü bir motivasyon cümlesi.
-Bağlam: Kullanıcı: $userName | Sınav: $examName | Ortalama Net: $avgNet | Son Mesaj: ${lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim()}
-Cevap:
+$_persona
+Bağlam: Kullanıcı ($userName) sohbeti başlattı veya uygulamayı açtı.
+Sınav: $examName | Ortalama: $avgNet
+
+Görev: Kullanıcıya çok sıcak, enerjik bir "Hoş geldin" de. Günün nasıl geçtiğini sor veya hemen motive edici bir giriş yap.
+Eğer son bir mesaj varsa ("$lastUserMessage"), ona cevap vererek başla.
 ''';
   }
 
@@ -48,26 +55,15 @@ Cevap:
     String conversationHistory = '',
     String lastUserMessage = '',
   }) {
-    final last = tests.isNotEmpty ? tests.first.totalNet.toStringAsFixed(2) : '—';
+    final last = tests.isNotEmpty ? tests.first.totalNet.toStringAsFixed(2) : '0';
     final avgNet = (analysis?.averageNet ?? 0).toStringAsFixed(2);
 
-    final remote = RemotePrompts.get('new_test_bad');
-    if (remote != null && remote.isNotEmpty) {
-      return RemotePrompts.fillTemplate(remote, {
-        'LAST_NET': last,
-        'AVG_NET': avgNet,
-        'EXAM_NAME': examName ?? '—',
-        'LAST_USER_MESSAGE': lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim(),
-        'CONVERSATION_HISTORY': conversationHistory.trim().isEmpty ? '—' : conversationHistory.trim(),
-        'TONE': ToneUtils.toneByExam(examName),
-      });
-    }
-
     return '''
-${_commonHeader(examName)}
-Amaç: Ortalama altı deneme sonrası toparlama; saygılı, net, yüceltici üslup.
-Bağlam: Son Net: $last | Ortalama Net: $avgNet | Son Mesaj: ${lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim()}
-Cevap:
+$_persona
+Durum: Kullanıcı son denemede beklediğinin altında yaptı.
+Son Net: $last | Ortalama: $avgNet
+
+Görev: Moral bozmak yok! "Düşüşler yükselişin habercisidir" mantığıyla yaklaş. Hatayı fırsata çevirmesi için motive et. Şefkatli ama dirayetli ol.
 ''';
   }
 
@@ -79,26 +75,14 @@ Cevap:
     String conversationHistory = '',
     String lastUserMessage = '',
   }) {
-    final last = tests.isNotEmpty ? tests.first.totalNet.toStringAsFixed(2) : '—';
-    final avgNet = (analysis?.averageNet ?? 0).toStringAsFixed(2);
-
-    final remote = RemotePrompts.get('new_test_good');
-    if (remote != null && remote.isNotEmpty) {
-      return RemotePrompts.fillTemplate(remote, {
-        'LAST_NET': last,
-        'AVG_NET': avgNet,
-        'EXAM_NAME': examName ?? '—',
-        'LAST_USER_MESSAGE': lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim(),
-        'CONVERSATION_HISTORY': conversationHistory.trim().isEmpty ? '—' : conversationHistory.trim(),
-        'TONE': ToneUtils.toneByExam(examName),
-      });
-    }
+    final last = tests.isNotEmpty ? tests.first.totalNet.toStringAsFixed(2) : '0';
 
     return '''
-${_commonHeader(examName)}
-Amaç: Ortalama üstü deneme sonrası pekiştirme; kısa kutlama ve kararlılığı artırma.
-Bağlam: Son Net: $last | Ortalama Net: $avgNet | Son Mesaj: ${lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim()}
-Cevap:
+$_persona
+Durum: Harika! Kullanıcı iyi bir sonuç aldı.
+Son Net: $last
+
+Görev: Kutla! 🎉 Ama rehavete kapılmaması için "Daha iyisini de yaparız" mesajını ver. Gazı kökle.
 ''';
   }
 
@@ -112,22 +96,12 @@ Cevap:
   }) {
     final streak = user.streak;
 
-    final remote = RemotePrompts.get('proactive_encouragement');
-    if (remote != null && remote.isNotEmpty) {
-      return RemotePrompts.fillTemplate(remote, {
-        'STREAK': streak.toString(),
-        'EXAM_NAME': examName ?? '—',
-        'LAST_USER_MESSAGE': lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim(),
-        'CONVERSATION_HISTORY': conversationHistory.trim().isEmpty ? '—' : conversationHistory.trim(),
-        'TONE': ToneUtils.toneByExam(examName),
-      });
-    }
-
     return '''
-${_commonHeader(examName)}
-Amaç: Tempo düşüşünde nazik ama net hatırlatma; yüceltici koç üslubu.
-Bağlam: Günlük Seri: $streak | Son Mesaj: ${lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim()}
-Cevap:
+$_persona
+Durum: Kullanıcı bir süredir sessiz veya motivasyon düşüklüğü yaşıyor olabilir.
+Seri (Streak): $streak gün.
+
+Görev: Onu dürtecek tatlı-sert bir mesaj at. "Nerelerdesin şampiyon? Masayı boş bırakma!" gibi.
 ''';
   }
 
@@ -140,28 +114,15 @@ Cevap:
     String conversationHistory = '',
     String lastUserMessage = '',
   }) {
-    final subject = (workshopContext?['subject'] ?? '—').toString();
-    final topic = (workshopContext?['topic'] ?? '—').toString();
-    final score = (workshopContext?['score'] ?? '—').toString();
-
-    final remote = RemotePrompts.get('workshop_review');
-    if (remote != null && remote.isNotEmpty) {
-      return RemotePrompts.fillTemplate(remote, {
-        'SUBJECT': subject,
-        'TOPIC': topic,
-        'SCORE': score,
-        'EXAM_NAME': examName ?? '—',
-        'LAST_USER_MESSAGE': lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim(),
-        'CONVERSATION_HISTORY': conversationHistory.trim().isEmpty ? '—' : conversationHistory.trim(),
-        'TONE': ToneUtils.toneByExam(examName),
-      });
-    }
+    final subject = (workshopContext?['subject'] ?? 'Ders').toString();
+    final score = (workshopContext?['score'] ?? '0').toString();
 
     return '''
-${_commonHeader(examName)}
-Amaç: Cevher Atölyesi sonrası kısa değerlendirme; 1 güçlü vurgu ve net bir pekiştirme cümlesi.
-Bağlam: Ders: $subject | Konu: $topic | Başarı: %$score | Son Mesaj: ${lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim()}
-Cevap:
+$_persona
+Durum: Kullanıcı bir çalışma atölyesini tamamladı.
+Ders: $subject | Başarı: %$score
+
+Görev: Çalışmasını takdir et. Bu çalışmanın denemeye nasıl yansıyacağını söyle. "Bu konuyu hallettik sayılır, sıradaki gelsin!" havası ver.
 ''';
   }
 
@@ -173,25 +134,27 @@ Cevap:
     String conversationHistory = '',
     String lastUserMessage = '',
   }) {
-    final firstName = user.firstName.isNotEmpty ? user.firstName : 'Komutan';
-    final userName = firstName[0].toUpperCase() + firstName.substring(1).toLowerCase();
+    final userName = user.firstName;
 
     final remote = RemotePrompts.get('user_chat');
-    if (remote != null && remote.isNotEmpty) {
+     if (remote != null && remote.isNotEmpty) {
       return RemotePrompts.fillTemplate(remote, {
         'USER_NAME': userName,
         'EXAM_NAME': examName ?? '—',
-        'LAST_USER_MESSAGE': lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim(),
-        'CONVERSATION_HISTORY': conversationHistory.trim().isEmpty ? '—' : conversationHistory.trim(),
+        'LAST_USER_MESSAGE': lastUserMessage,
+        'CONVERSATION_HISTORY': conversationHistory,
         'TONE': ToneUtils.toneByExam(examName),
       });
     }
 
     return '''
-${_commonHeader(examName)}
-Amaç: Serbest sohbet. Kısa, net, doğrudan yanıt; konu dışına çıkma.
-Bağlam: Kullanıcı: $userName | Son Mesaj: ${lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim()}
-Cevap:
+$_persona
+Bağlam: Serbest sohbet.
+Kullanıcı: $userName
+Sohbet Geçmişi: $conversationHistory
+Son Mesaj: "$lastUserMessage"
+
+Görev: Kullanıcının mesajına en doğal, en zeki ve en yardımcı halinle cevap ver. Soru soruyorsa cevapla, dert yanıyorsa dinle, şaka yapıyorsa gül. Robot olma, insan ol.
 ''';
   }
 }

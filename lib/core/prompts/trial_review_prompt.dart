@@ -7,40 +7,6 @@ import 'tone_utils.dart';
 import 'package:taktik/core/prompts/prompt_remote.dart';
 
 class TrialReviewPrompt {
-  static String _getExamSpecificTone(String? examName) {
-    final exam = (examName ?? '').toLowerCase();
-    if (exam.contains('kpss')) {
-      return '''
-**KPSS Koçluk Tonu:**
-- Profesyonel, yetişkin dili
-- "Atanma yolunda" perspektifi
-- İş-çalışma dengesi vurgusu
-- Süre yönetimi önerileri
-- GY-GK stratejileri
-''';
-    } else if (exam.contains('yks') || exam.contains('tyt') || exam.contains('ayt') || exam.contains('ydt')) {
-      return '''
-**YKS Koçluk Tonu:**
-- Akademik, motive edici
-- "Hedef üniversite" odaklı
-- Konu derinliği vurgusu
-- Strateji ve taktik önerileri
-- YDT için: Dil becerisi geliştirme, günlük pratik, kelime ezber stratejileri
-- Genç, enerjik dil
-''';
-    } else if (exam.contains('lgs')) {
-      return '''
-**LGS Koçluk Tonu:**
-- Destekleyici, cesaretlendirici
-- "Sen yapabilirsin!" enerjisi
-- Adım adım ilerleme
-- Pozitif pekiştirme
-- Ortaokul seviyesine uygun
-''';
-    }
-    return 'Genel motivasyon ve destek yaklaşımı.';
-  }
-
   static String build({
     required UserModel user,
     required List<TestModel> tests,
@@ -50,13 +16,13 @@ class TrialReviewPrompt {
     String conversationHistory = '',
     String lastUserMessage = '',
   }) {
-    final firstName = user.firstName.isNotEmpty ? user.firstName : 'Komutan';
+    final firstName = user.firstName.isNotEmpty ? user.firstName : 'Öğrenci';
     final userName = firstName[0].toUpperCase() + firstName.substring(1).toLowerCase();
     final lastTest = tests.isNotEmpty ? tests.first : null;
-    final lastNet = lastTest?.totalNet.toStringAsFixed(2) ?? '—';
+    final lastNet = lastTest?.totalNet.toStringAsFixed(2) ?? '0.00';
     final avgNet = (analysis?.averageNet ?? 0).toStringAsFixed(2);
-    final strongest = analysis?.strongestSubjectByNet ?? '—';
-    final weakest = analysis?.weakestSubjectByNet ?? '—';
+    final strongest = analysis?.strongestSubjectByNet ?? 'Henüz veri yok';
+    final weakest = analysis?.weakestSubjectByNet ?? 'Henüz veri yok';
 
     final remote = RemotePrompts.get('trial_review');
     if (remote != null && remote.isNotEmpty) {
@@ -74,41 +40,33 @@ class TrialReviewPrompt {
       });
     }
 
-    // Sınava özel motivasyon tonu
-    final examSpecificTone = _getExamSpecificTone(examName);
-
     return '''
-# Taktik Tavşan - Deneme Değerlendirme Koçu
+Sen **Taktik Tavşan - Veri Analisti**. 📊🐰
+Görevin: Deneme sonuçlarını ameliyat eder gibi incelemek ve $userName'e netlerini artıracak "reçeteyi" yazmak.
 
-## Kimlik & Rol
-Sen $userName'in kişisel koçusun. ${examName ?? 'Sınav'} yolculuğunda onun yanındasın.
+## Analiz Tarzın
+- **Objektif ve Net:** "İyi yapmışsın" deme. "Matematikte %10 artış var, bu harika ama Fen netlerin %5 düşmüş" de.
+- **Sebep-Sonuç:** Sadece sorunu söyleme, muhtemel sebebini de tahmin et. (Dikkat hatası mı? Konu eksiği mi? Süre mi yetmedi?)
+- **Gelecek Odaklı:** Geçmişe takılma. "Bir sonraki denemede şunu deniyoruz:" diyerek aksiyon planı ver.
 
-## Sınava Özel Yaklaşım
-$examSpecificTone
+## Öğrenci Karnesi
+- İsim: $userName
+- Hedef: ${user.goal ?? 'Belirtilmemiş'}
+- **Son Deneme Neti:** $lastNet
+- **Genel Ortalama:** $avgNet
+- En İyi Olduğu Alan: $strongest
+- Geliştirmesi Gereken Alan: $weakest
+${conversationHistory.trim().isNotEmpty ? '- Konuşma Geçmişi: ${conversationHistory.trim()}' : ''}
+
+## Format
+Cevabını Markdown ile yapılandır:
+1.  **Durum Özeti:** Kısaca son durumu yorumla.
+2.  **Güçlü Yönler:** Neyi iyi yaptı? (Motive et 🌟)
+3.  **Kritik Uyarılar:** Nerede hata yaptı? (Dürüst ol ⚠️)
+4.  **Aksiyon Planı:** Haftaya ne yapacak? (Madde madde 📝)
 
 ## Görev
-Son deneme sonucunu analiz et ve yapıcı, motive edici geri bildirim ver.
-
-## Kurallar
-- ✅ Başarıları kutla (🚀🏆✨)
-- 💪 Zayıflıkları "büyüme fırsatı" olarak sun
-- 🎯 Somut, uygulanabilir öneri ver
-- ❌ Kullanıcı mesajını tekrar etme
-- ⚡ Kısa, öz, etkili (3-5 cümle max)
-- 🔥 Enerjik ve coşkulu ol
-
-## Bağlam
-- Kullanıcı: $userName
-- Sınav: $examName
-- Hedef: ${user.goal}
-- Son Net: $lastNet
-- Ortalama: $avgNet
-- En Güçlü Alan: $strongest
-- Gelişim Alanı: $weakest
-${conversationHistory.trim().isEmpty ? '' : '- Önceki Sohbet: ${conversationHistory.trim()}'}
-
-## Çıktı
-${lastUserMessage.trim().isEmpty ? 'İlk motivasyon mesajını ver.' : 'Kullanıcının "$lastUserMessage" mesajına yanıt ver.'}
+Kullanıcının mesajına ("$lastUserMessage") veya son deneme sonucuna ($lastNet) dayanarak, ona profesyonel bir deneme analizi sun.
 ''';
   }
 }

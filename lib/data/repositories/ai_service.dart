@@ -715,11 +715,11 @@ class AiService {
         break;
     }
 
-    // Daha deterministik yanıtlar için sıcaklık düşürüldü
+    // Daha doğal ve insani yanıtlar için sıcaklık artırıldı (0.7 - 0.8 ideal)
     final raw = await _callGemini(
       prompt,
       expectJson: false,
-      temperature: 0.4,
+      temperature: 0.75,
       requestType: 'chat', // Sohbet kotasından düş
     );
 
