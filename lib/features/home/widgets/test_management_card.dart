@@ -63,16 +63,17 @@ class TestManagementCard extends ConsumerWidget {
                   ),
                   borderRadius: BorderRadius.circular(8),
                 ),
+                // GÜNCELLEME: Daha kaliteli ve uygun bir ikon (Roket)
                 child: Icon(
-                  Icons.assignment_rounded,
+                  Icons.rocket_launch_rounded,
                   color: accentColor,
-                  size: 16,
+                  size: 18, // Biraz daha belirgin
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Sınav Yönetimi',
+                  'Hızlı Aksiyonlar',
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.3,
@@ -83,9 +84,23 @@ class TestManagementCard extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 10),
-          // İki buton yan yana
+
+          // --- BUTONLAR (3'lü Sıra) ---
           Row(
             children: [
+              // 1. YENİ BUTON: Soru Çözdür (AI Özelliği - MAVİ)
+              Expanded(
+                child: _ActionButton(
+                  icon: Icons.camera_enhance_rounded,
+                  label: 'Soru Çözdür',
+                  // İstenen Mavi Renk Geçişi
+                  gradientColors: const [Color(0xFF3B82F6), Color(0xFF2563EB)],
+                  onTap: () => context.push('/ai-hub/question-solver'),
+                ),
+              ),
+              const SizedBox(width: 6),
+
+              // 2. MEVCUT: Deneme Ekle (Mor)
               Expanded(
                 child: _ActionButton(
                   icon: Icons.add_chart_rounded,
@@ -95,6 +110,8 @@ class TestManagementCard extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: 6),
+
+              // 3. MEVCUT: Test Ekle (Yeşil/Mavi)
               Expanded(
                 child: _ActionButton(
                   icon: Icons.library_books_rounded,
@@ -133,7 +150,7 @@ class _ActionButton extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(10),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: gradientColors,
@@ -150,51 +167,54 @@ class _ActionButton extends StatelessWidget {
             ),
           ],
         ),
-        child: Row(
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: const EdgeInsets.all(5),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(7),
-              ),
-              child: Icon(
-                icon,
-                color: Colors.white,
-                size: 16,
-              ),
-            ),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                label,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 10.5,
-                  letterSpacing: -0.2,
-                  shadows: [
-                    Shadow(
-                      color: Colors.black.withOpacity(0.2),
-                      offset: const Offset(0, 1),
-                      blurRadius: 2,
-                    ),
-                  ],
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: Colors.white,
+                    size: 14,
+                  ),
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                fontSize: 9.5,
+                letterSpacing: -0.2,
+                shadows: [
+                  Shadow(
+                    color: Colors.black.withOpacity(0.2),
+                    offset: const Offset(0, 1),
+                    blurRadius: 2,
+                  ),
+                ],
               ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
       ),
     ).animate().fadeIn(duration: 200.ms).scale(
-          begin: const Offset(0.95, 0.95),
-          duration: 200.ms,
-          curve: Curves.easeOutBack,
-        );
+      begin: const Offset(0.95, 0.95),
+      duration: 200.ms,
+      curve: Curves.easeOutBack,
+    );
   }
 }
