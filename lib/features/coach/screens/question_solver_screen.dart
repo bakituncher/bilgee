@@ -338,10 +338,18 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
+        margin: const EdgeInsets.all(16),
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: theme.scaffoldBackgroundColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          borderRadius: BorderRadius.circular(28), // Daha yuvarlak köşeler
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            )
+          ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -349,48 +357,66 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
             Container(
               width: 40,
               height: 4,
-              margin: const EdgeInsets.only(bottom: 24),
               decoration: BoxDecoration(
-                color: theme.colorScheme.onSurface.withOpacity(0.2),
+                color: theme.colorScheme.outline.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
+            const SizedBox(height: 24),
             Text(
-              'Soru Yükle',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSurface,
-              ),
+              "Nasıl yüklemek istersin?",
+              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 32),
             Row(
               children: [
-                Expanded(
-                  child: _SourceButton(
-                    icon: Icons.camera_alt_rounded,
-                    label: 'Kamera',
-                    onTap: () {
-                      Navigator.pop(context);
-                      _pickImage(ImageSource.camera);
-                    },
-                  ),
+                _buildSourceButton(
+                  theme,
+                  Icons.camera_alt_rounded,
+                  "Kamera",
+                  () {
+                    Navigator.pop(context);
+                    _pickImage(ImageSource.camera);
+                  },
                 ),
                 const SizedBox(width: 16),
-                Expanded(
-                  child: _SourceButton(
-                    icon: Icons.photo_library_rounded,
-                    label: 'Galeri',
-                    onTap: () {
-                      Navigator.pop(context);
-                      _pickImage(ImageSource.gallery);
-                    },
-                  ),
+                _buildSourceButton(
+                  theme,
+                  Icons.photo_library_rounded,
+                  "Galeri",
+                  () {
+                    Navigator.pop(context);
+                    _pickImage(ImageSource.gallery);
+                  },
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSourceButton(ThemeData theme, IconData icon, String label, VoidCallback onTap) {
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: theme.colorScheme.outline.withOpacity(0.1)),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, size: 36, color: theme.colorScheme.primary),
+              const SizedBox(height: 12),
+              Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+            ],
+          ),
         ),
       ),
     );
@@ -614,44 +640,191 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
 
   // --- Yardımcı Widget'lar ---
 
+  // --- MODERN KARŞILAMA EKRANI ---
   Widget _buildEmptyState(ThemeData theme) {
-    return Center(
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          const SizedBox(height: 10),
+          // 1. HERO KARTI (Büyük Başlık)
           Container(
-            padding: const EdgeInsets.all(32),
+            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withOpacity(0.1),
-              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [theme.colorScheme.primary, theme.colorScheme.primary.withOpacity(0.7)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: theme.colorScheme.primary.withOpacity(0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
             ),
-            child: Icon(
-              Icons.camera_enhance_rounded,
-              size: 64,
-              color: theme.colorScheme.primary,
-            ).animate(onPlay: (c) => c.repeat(reverse: true))
-                .scale(begin: const Offset(1,1), end: const Offset(1.1, 1.1), duration: 2.seconds),
-          ),
-          const SizedBox(height: 24),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.auto_awesome_rounded, size: 48, color: Colors.white),
+                ).animate(onPlay: (c) => c.repeat(reverse: true))
+                    .scale(duration: 2.seconds, begin: const Offset(1, 1), end: const Offset(1.1, 1.1)),
+                const SizedBox(height: 16),
+                const Text(
+                  "Sorularla Boğuşma,\nZekice Çöz!",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    height: 1.3,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "Takıldığın sorunun fotoğrafını çek,\nyapay zeka anında çözsün ve anlatısın.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.white.withOpacity(0.9),
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ).animate().fadeIn().slideY(begin: 0.2, end: 0),
+
+          const SizedBox(height: 32),
+
+          // 2. ÖZELLİK LİSTESİ BAŞLIĞI
           Text(
-            'Takıldığın Soruyu Çek',
+            "Nasıl Çalışır?",
             style: TextStyle(
-              fontSize: 20,
+              fontSize: 18,
               fontWeight: FontWeight.bold,
               color: theme.colorScheme.onSurface,
             ),
+          ).animate().fadeIn(delay: 200.ms),
+
+          const SizedBox(height: 16),
+
+          // 3. ADIM KARTLARI
+          _buildFeatureRow(
+            theme,
+            icon: Icons.camera_alt_outlined,
+            title: "Fotoğrafını Çek",
+            subtitle: "Net bir şekilde soruyu görüntüle.",
+            delay: 300,
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Yapay zeka anında çözümlesin.',
-            style: TextStyle(
-              fontSize: 14,
-              color: theme.colorScheme.onSurface.withOpacity(0.6),
+          _buildFeatureRow(
+            theme,
+            icon: Icons.document_scanner_outlined,
+            title: "Yapay Zeka Analizi",
+            subtitle: "Saniyeler içinde detaylı çözüm.",
+            delay: 400,
+          ),
+          _buildFeatureRow(
+            theme,
+            icon: Icons.chat_bubble_outline_rounded,
+            title: "Anlamadığını Sor",
+            subtitle: "Çözüm üzerine sohbet et.",
+            isNew: true, // Yeni özelliği vurgula
+            delay: 500,
+          ),
+
+          const SizedBox(height: 80), // FAB için boşluk
+        ],
+      ),
+    );
+  }
+
+  // Yardımcı Widget: Özellik Satırı
+  Widget _buildFeatureRow(
+    ThemeData theme, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required int delay,
+    bool isNew = false,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.1)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: theme.colorScheme.primary, size: 24),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    if (isNew) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.tertiary,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          "YENİ",
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.onTertiary,
+                          ),
+                        ),
+                      ),
+                    ]
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
-    );
+    ).animate(delay: delay.ms).fadeIn().slideX(begin: 0.1, end: 0);
   }
 
   // --- MOD WIDGETLARI ---
@@ -1017,43 +1190,6 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
   }
 }
 
-class _SourceButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  const _SourceButton({required this.icon, required this.label, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 24),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: theme.colorScheme.outline.withOpacity(0.1)),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, size: 32, color: theme.colorScheme.primary),
-            const SizedBox(height: 12),
-            Text(
-              label,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 // --- LaTeX Syntax Sınıfları ---
 
