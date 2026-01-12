@@ -590,10 +590,14 @@ class AiService {
       mem = await _getChatMemory(user.id, promptType);
     }
 
-    final combinedHistory = [
-      if (mem.trim().isNotEmpty) mem.trim(),
-      if (conversationHistory.trim().isNotEmpty) conversationHistory.trim(),
-    ].join(mem.isNotEmpty && conversationHistory.isNotEmpty ? ' | ' : '');
+    // DÜZELTME: Eğer UI'dan conversationHistory geliyorsa, mem'i ekleme (tekrarı önle).
+    // Eğer conversationHistory boşsa (ilk açılış gibi), o zaman mem'i kullan.
+    String combinedHistory;
+    if (conversationHistory.trim().isNotEmpty) {
+      combinedHistory = conversationHistory.trim();
+    } else {
+      combinedHistory = mem.trim();
+    }
 
     // Yeni: Dört mod için özel promptlar + default akışın modüler hali
     String prompt;

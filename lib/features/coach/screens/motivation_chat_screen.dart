@@ -107,7 +107,13 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
 
     // YENI: Sohbet geçmişini ve son kullanıcı mesajını geçir
     final history = ref.read(chatHistoryProvider);
-    final historySummary = _buildConversationHistory(history);
+
+    // SON MESAJI HARİÇ TUT: Çünkü son mesajı zaten 'lastUserMessage' olarak ayrıca gönderiyoruz.
+    // Geçmişin içinde de gönderirsek yapay zeka aynı mesajı iki kere okur (Biri geçmişte, biri şimdi).
+    final historyForPrompt = history.length > 1 ? history.sublist(0, history.length - 1) : <ChatMessage>[];
+
+    // Özeti son mesaj hariç oluşturuyoruz
+    final historySummary = _buildConversationHistory(historyForPrompt);
 
     final aiResponse = await aiService.getPersonalizedMotivation(
       user: user,
