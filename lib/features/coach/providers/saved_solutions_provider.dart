@@ -1,93 +1,95 @@
 import 'dart:io';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:taktik/features/coach/models/saved_solution_model.dart';
 import 'package:uuid/uuid.dart';
 
-// 1. Provider Tanımı
 final savedSolutionsProvider = StateNotifierProvider<SavedSolutionsNotifier, List<SavedSolutionModel>>((ref) {
   return SavedSolutionsNotifier();
 });
 
-// 2. Notifier Sınıfı (Logic)
 class SavedSolutionsNotifier extends StateNotifier<List<SavedSolutionModel>> {
   SavedSolutionsNotifier() : super([]) {
-    _loadSolutions(); // Başlangıçta yükle
+    _loadFromHive();
   }
 
-  static const String _storageKey = 'saved_ai_solutions';
+  // Veritabanı kutusu
+  Box<SavedSolutionModel> get _box => Hive.box<SavedSolutionModel>('saved_solutions_box');
 
-  // Çözümleri Diskten Yükle
-  Future<void> _loadSolutions() async {
-    final prefs = await SharedPreferences.getInstance();
-    final List<String>? storedList = prefs.getStringList(_storageKey);
-
-    if (storedList != null) {
-      state = storedList
-          .map((item) => SavedSolutionModel.fromJson(item))
-          .toList()
-          ..sort((a, b) => b.timestamp.compareTo(a.timestamp)); // En yeni en üstte
-    }
+  void _loadFromHive() {
+    // Verileri tarihe göre sıralı getir (En yeni en üstte)
+    final list = _box.values.toList();
+    list.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    state = list;
   }
 
-  // Yeni Çözüm Kaydet
+  // PROFESYONEL KAYIT FONKSİYONU
   Future<void> saveSolution({
     required File imageFile,
     required String solutionText,
     String? subject,
   }) async {
     try {
-      // 1. Resmi Kalıcı Dizine Taşı
       final appDir = await getApplicationDocumentsDirectory();
-      final fileName = '${const Uuid().v4()}.jpg';
-      final savedImage = await imageFile.copy('${appDir.path}/$fileName');
+      final String uuid = const Uuid().v4();
 
-      // 2. Modeli Oluştur
+      // 1. Orijinal Resmi Kaydet (Yüksek Kalite)
+      final String originalFileName = 'sol_$uuid.jpg';
+      final File originalFile = await imageFile.copy('${appDir.path}/$originalFileName');
+
+      // 2. Thumbnail Oluştur ve Kaydet (Düşük Boyut - Liste Hızı İçin)
+      final String thumbFileName = 'thumb_$uuid.jpg';
+      final String thumbPath = '${appDir.path}/$thumbFileName';
+
+      await FlutterImageCompress.compressAndGetFile(
+        originalFile.path,
+        thumbPath,
+        minWidth: 300,  // Liste görünümü için 300px yeterli
+        minHeight: 300,
+        quality: 50,    // Kaliteyi düşür, boyutu minicik yap
+      );
+
+      // 3. Modeli Oluştur
       final newSolution = SavedSolutionModel(
-        id: const Uuid().v4(),
-        localImagePath: savedImage.path,
+        id: uuid,
+        localImagePath: originalFile.path,
+        thumbnailPath: thumbPath, // Thumbnail yolunu kaydet
         solutionText: solutionText,
         timestamp: DateTime.now(),
         subject: subject,
       );
 
-      // 3. State'i Güncelle
-      state = [newSolution, ...state];
+      // 4. Hive'a Ekle
+      await _box.add(newSolution);
 
-      // 4. Veriyi Diske (SharedPrefs) Yaz
-      await _saveToPrefs();
+      // 5. State Güncelle
+      _loadFromHive();
     } catch (e) {
-      print("Kaydetme hatası: $e");
+      print("Kayıt hatası: $e");
       rethrow;
     }
   }
 
-  // Çözüm Sil
-  Future<void> deleteSolution(String id) async {
-    // 1. Silinecek öğeyi bul
-    final itemIndex = state.indexWhere((element) => element.id == id);
-    if (itemIndex == -1) return;
+  // Silme Fonksiyonu
+  Future<void> deleteSolution(SavedSolutionModel item) async {
+    try {
+      // 1. Dosyaları Diskten Sil (Çöp birikmesin)
+      final originalFile = File(item.localImagePath);
+      final thumbFile = File(item.thumbnailPath);
 
-    final item = state[itemIndex];
+      if (await originalFile.exists()) await originalFile.delete();
+      if (await thumbFile.exists()) await thumbFile.delete();
 
-    // 2. Dosyayı cihazdan sil (Storage temizliği)
-    final file = File(item.localImagePath);
-    if (await file.exists()) {
-      await file.delete();
+      // 2. Veritabanından Sil
+      await item.delete(); // HiveObject özelliği sayesinde kendini silebilir
+
+      // 3. State Güncelle
+      _loadFromHive();
+    } catch (e) {
+      print("Silme hatası: $e");
     }
-
-    // 3. Listeden çıkar
-    state = state.where((element) => element.id != id).toList();
-
-    // 4. Güncel listeyi kaydet
-    await _saveToPrefs();
-  }
-
-  Future<void> _saveToPrefs() async {
-    final prefs = await SharedPreferences.getInstance();
-    final List<String> dataList = state.map((e) => e.toJson()).toList();
-    await prefs.setStringList(_storageKey, dataList);
   }
 }
 

@@ -67,6 +67,10 @@ dependencies:
   cross_file: ^0.3.4
   shared_preferences: ^2.5.3
 
+  # Hive Veritabanı
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+
   # Ekranı açık tutmak için
   wakelock_plus: ^1.2.7
 

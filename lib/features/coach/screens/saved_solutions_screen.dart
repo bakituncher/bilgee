@@ -16,25 +16,27 @@ class SavedSolutionsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Kaydedilen Çözümler'),
+        title: const Text('Arşivim'),
         centerTitle: true,
+        elevation: 0,
+        backgroundColor: theme.scaffoldBackgroundColor,
       ),
       body: solutions.isEmpty
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.bookmark_border, size: 64, color: theme.disabledColor),
+                  Icon(Icons.inventory_2_outlined, size: 64, color: theme.disabledColor),
                   const SizedBox(height: 16),
-                  Text('Henüz kaydedilmiş bir çözüm yok.', style: theme.textTheme.bodyLarge),
+                  Text('Henüz kaydedilmiş çözüm yok.', style: theme.textTheme.bodyLarge),
                 ],
               ),
             )
           : GridView.builder(
               padding: const EdgeInsets.all(16),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2, // Yan yana 2 kart
-                childAspectRatio: 0.75, // Dikey kartlar
+                crossAxisCount: 2,
+                childAspectRatio: 0.7,
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
               ),
@@ -43,7 +45,6 @@ class SavedSolutionsScreen extends ConsumerWidget {
                 final solution = solutions[index];
                 return GestureDetector(
                   onTap: () {
-                    // Detay sayfasına git (Navigasyon için normal push kullanıyoruz)
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -54,39 +55,43 @@ class SavedSolutionsScreen extends ConsumerWidget {
                   child: Container(
                     decoration: BoxDecoration(
                       color: theme.cardColor,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(0.05),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
                         ),
                       ],
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Resim Kısmı
+                        // RESİM BÖLÜMÜ (Thumbnail kullanıyoruz!)
                         Expanded(
                           child: ClipRRect(
-                            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
                             child: Image.file(
-                              File(solution.localImagePath),
+                              File(solution.thumbnailPath), // <-- PERFORMANS NOKTASI
                               fit: BoxFit.cover,
-                              errorBuilder: (c, o, s) => const Center(child: Icon(Icons.broken_image)),
+                              // Resim yüklenirken hata olursa
+                              errorBuilder: (c, o, s) => Container(
+                                color: Colors.grey[200],
+                                child: const Icon(Icons.broken_image, color: Colors.grey),
+                              ),
                             ),
                           ),
                         ),
-                        // Alt Bilgi
+                        // BİLGİ BÖLÜMÜ
                         Padding(
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(10),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                DateFormat('dd MMM yyyy').format(solution.timestamp),
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.secondary,
+                                DateFormat('dd MMM, HH:mm').format(solution.timestamp),
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: theme.colorScheme.primary,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -95,7 +100,7 @@ class SavedSolutionsScreen extends ConsumerWidget {
                                 solution.solutionText,
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
-                                style: theme.textTheme.bodyMedium?.copyWith(height: 1.2),
+                                style: theme.textTheme.bodySmall?.copyWith(height: 1.2),
                               ),
                             ],
                           ),

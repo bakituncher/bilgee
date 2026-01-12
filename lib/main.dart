@@ -27,6 +27,8 @@ import 'package:taktik/shared/screens/no_internet_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:taktik/core/services/firebase_analytics_service.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:taktik/features/coach/models/saved_solution_model.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -67,6 +69,27 @@ void main() async {
       if (kDebugMode) {
         debugPrint('[Init] .env dosyası yüklenemedi: $e');
       }
+    }
+
+    // 1.5. HIVE BAŞLATMA (Firebase'den önce)
+    try {
+      await Hive.initFlutter();
+      Hive.registerAdapter(SavedSolutionAdapter());
+      await Hive.openBox<SavedSolutionModel>('saved_solutions_box');
+      if (kDebugMode) {
+        debugPrint('[Hive] ✅ Başarıyla başlatıldı');
+      }
+    } catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('[Hive] ❌ Başlatılamadı: $e');
+        debugPrint(st.toString());
+      }
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        st,
+        reason: 'Hive initialization failed',
+        fatal: false,
+      );
     }
 
     // 2. Firebase Başlat

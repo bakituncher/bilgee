@@ -4,9 +4,8 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taktik/features/coach/models/saved_solution_model.dart';
 import 'package:taktik/features/coach/providers/saved_solutions_provider.dart';
-import 'package:taktik/features/coach/screens/question_solver_screen.dart';
+import 'package:taktik/features/coach/screens/question_solver_screen.dart'; // Markdown builder'lar için
 import 'package:markdown/markdown.dart' as md;
-import 'package:flutter_math_fork/flutter_math.dart';
 
 class SavedSolutionDetailScreen extends ConsumerWidget {
   final SavedSolutionModel solution;
@@ -20,7 +19,7 @@ class SavedSolutionDetailScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Çözüm Detayı'),
+        title: const Text('Çözüm'),
         actions: [
           IconButton(
             icon: const Icon(Icons.delete_outline, color: Colors.red),
@@ -29,7 +28,7 @@ class SavedSolutionDetailScreen extends ConsumerWidget {
                 context: context,
                 builder: (context) => AlertDialog(
                   title: const Text('Silinsin mi?'),
-                  content: const Text('Bu çözüm kalıcı olarak silinecek.'),
+                  content: const Text('Bu işlem geri alınamaz.'),
                   actions: [
                     TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('İptal')),
                     TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Sil', style: TextStyle(color: Colors.red))),
@@ -38,7 +37,7 @@ class SavedSolutionDetailScreen extends ConsumerWidget {
               );
 
               if (confirm == true) {
-                await ref.read(savedSolutionsProvider.notifier).deleteSolution(solution.id);
+                await ref.read(savedSolutionsProvider.notifier).deleteSolution(solution);
                 if (context.mounted) Navigator.pop(context);
               }
             },
@@ -50,11 +49,15 @@ class SavedSolutionDetailScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Soru Resmi
+            // Soru Resmi (Orijinal Yüksek Kalite)
             ClipRRect(
               borderRadius: BorderRadius.circular(16),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 300),
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: theme.dividerColor),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                constraints: const BoxConstraints(maxHeight: 400),
                 child: Image.file(File(solution.localImagePath), fit: BoxFit.contain),
               ),
             ),
@@ -66,6 +69,9 @@ class SavedSolutionDetailScreen extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: theme.cardColor,
                 borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+                ],
               ),
               child: MarkdownBody(
                 data: solution.solutionText,
@@ -86,6 +92,7 @@ class SavedSolutionDetailScreen extends ConsumerWidget {
                 ),
               ),
             ),
+            const SizedBox(height: 40),
           ],
         ),
       ),

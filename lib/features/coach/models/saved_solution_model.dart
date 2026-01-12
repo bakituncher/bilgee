@@ -1,45 +1,49 @@
-import 'dart:convert';
+import 'package:hive/hive.dart';
 
-class SavedSolutionModel {
+// TypeId: 0 -> Veritabanı kimliği
+class SavedSolutionModel extends HiveObject {
   final String id;
-  final String localImagePath; // Cihazdaki dosya yolu
-  final String solutionText;
-  final DateTime timestamp;
-  final String? subject; // Ders adı (opsiyonel)
+  final String localImagePath;   // Orijinal resim (Detay ekranı için)
+  final String thumbnailPath;    // Küçük resim (Liste ekranı için - PERFORMANS İÇİN KRİTİK)
+  final String solutionText;     // Çözüm metni
+  final DateTime timestamp;      // Kayıt tarihi
+  final String? subject;         // Ders (Matematik vb.)
 
   SavedSolutionModel({
     required this.id,
     required this.localImagePath,
+    required this.thumbnailPath,
     required this.solutionText,
     required this.timestamp,
     this.subject,
   });
+}
 
-  // JSON'dan modele çevirme
-  factory SavedSolutionModel.fromMap(Map<String, dynamic> map) {
+// Hive Adaptörü (build_runner çalıştırmaman için elle yazdım)
+class SavedSolutionAdapter extends TypeAdapter<SavedSolutionModel> {
+  @override
+  final int typeId = 0;
+
+  @override
+  SavedSolutionModel read(BinaryReader reader) {
     return SavedSolutionModel(
-      id: map['id'] ?? '',
-      localImagePath: map['localImagePath'] ?? '',
-      solutionText: map['solutionText'] ?? '',
-      timestamp: DateTime.fromMillisecondsSinceEpoch(map['timestamp']),
-      subject: map['subject'],
+      id: reader.read(),
+      localImagePath: reader.read(),
+      thumbnailPath: reader.read(),
+      solutionText: reader.read(),
+      timestamp: DateTime.fromMillisecondsSinceEpoch(reader.read()),
+      subject: reader.read(),
     );
   }
 
-  // Modelden JSON'a çevirme
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'localImagePath': localImagePath,
-      'solutionText': solutionText,
-      'timestamp': timestamp.millisecondsSinceEpoch,
-      'subject': subject,
-    };
+  @override
+  void write(BinaryWriter writer, SavedSolutionModel obj) {
+    writer.write(obj.id);
+    writer.write(obj.localImagePath);
+    writer.write(obj.thumbnailPath);
+    writer.write(obj.solutionText);
+    writer.write(obj.timestamp.millisecondsSinceEpoch);
+    writer.write(obj.subject);
   }
-
-  String toJson() => json.encode(toMap());
-
-  factory SavedSolutionModel.fromJson(String source) =>
-      SavedSolutionModel.fromMap(json.decode(source));
 }
 
