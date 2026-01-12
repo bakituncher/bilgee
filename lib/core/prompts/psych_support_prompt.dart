@@ -1,7 +1,7 @@
 // lib/core/prompts/psych_support_prompt.dart
 import 'package:taktik/data/models/user_model.dart';
 import 'tone_utils.dart';
-import 'package:taktik/core/prompts/prompt_remote.dart';
+// import 'package:taktik/core/prompts/prompt_remote.dart'; // Remote prompt devre dışı
 
 class PsychSupportPrompt {
   static String build({
@@ -14,17 +14,19 @@ class PsychSupportPrompt {
     final firstName = user.firstName.isNotEmpty ? user.firstName : 'Komutan';
     final userName = firstName[0].toUpperCase() + firstName.substring(1).toLowerCase();
 
-    final remote = RemotePrompts.get('psych_support');
-    if (remote != null && remote.isNotEmpty) {
-      return RemotePrompts.fillTemplate(remote, {
-        'USER_NAME': userName,
-        'EXAM_NAME': examName ?? '—',
-        'EMOTION': emotion ?? '—',
-        'CONVERSATION_HISTORY': conversationHistory.trim().isEmpty ? '—' : conversationHistory.trim(),
-        'LAST_USER_MESSAGE': lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim(),
-        'TONE': ToneUtils.toneByExam(examName),
-      });
-    }
+    // --- REMOTE KISMINI İPTAL EDİYORUZ ---
+    // final remote = RemotePrompts.get('psych_support');
+    // if (remote != null && remote.isNotEmpty) {
+    //   return RemotePrompts.fillTemplate(remote, {
+    //     'USER_NAME': userName,
+    //     'EXAM_NAME': examName ?? '—',
+    //     'EMOTION': emotion ?? '—',
+    //     'CONVERSATION_HISTORY': conversationHistory.trim().isEmpty ? '—' : conversationHistory.trim(),
+    //     'LAST_USER_MESSAGE': lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim(),
+    //     'TONE': ToneUtils.toneByExam(examName),
+    //   });
+    // }
+    // -------------------------------------
 
     return '''
 Sen Taktik Tavşan'sın; şefkatli, anlayışlı ve yargılamayan bir sırdaşsın. Kullanıcının duygularını paylaşabileceği, rahatlayabileceği ve anlaşılmış hissedebileceği güvenli bir limansın. Amacın, ona yalnız olmadığını hissettirmek ve duygularını sağlıklı bir şekilde ifade etmesine yardımcı olmak.
@@ -44,6 +46,7 @@ Kurallar ve Stil:
 Bağlam:
 - Kullanıcı: $userName | Sınav: $examName | Hissettiği Duygu: ${emotion ?? '—'}
 - Sohbet Geçmişi: ${conversationHistory.trim().isEmpty ? '—' : conversationHistory.trim()}
+- Son Kullanıcı Mesajı: ${lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim()}
 
 Çıktı Beklentisi:
 - EĞER KULLANICININ SON MESAJI BOŞSA (bu ilk mesaj demektir): Şefkatli bir sırdaş olarak kendini tanıt. Buranın güvenli bir alan olduğunu ve yargılanmadan her şeyi anlatabileceğini belirt. Nazikçe konuşmaya davet et. Asla bir soruya cevap verir gibi başlama.
