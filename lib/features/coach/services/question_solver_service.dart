@@ -98,4 +98,59 @@ KURALLAR VE TON:
 Eğer görsel okunmuyorsa veya soru yoksa; teknik hata mesajı verme. "Kanka bu fotoyu okuyamadım ya, biraz daha net çekip atar mısın?" şeklinde samimi bir uyarı ver.
 ''';
   }
+
+  // YENİ: Takip eden sorular için sohbet fonksiyonu
+  Future<String> solveFollowUp({
+    required String originalPrompt,
+    required String previousSolution,
+    required String userQuestion,
+    String? examType,
+  }) async {
+    try {
+      final callable = FirebaseFunctions.instanceFor(region: 'us-central1').httpsCallable('ai-generateGemini');
+
+      // AI'a rolünü ve geçmişi hatırlatan prompt
+      String examContext = '';
+      if (examType != null && examType.isNotEmpty) {
+        examContext = '\n\n**SINAV:** Öğrenci **$examType** sınavına hazırlanıyor.';
+      }
+
+      final contextPrompt = '''
+GÖREVİN:
+Sen bir öğrencinin yanındaki "zekî çalışma arkadaşısın". Daha önce bir soru çözdün.$examContext
+
+Önceki Çözümün:
+$previousSolution
+
+Öğrenci şimdi bu çözümle ilgili şunu soruyor:
+"$userQuestion"
+
+Bu soruya samimi, açıklayıcı ve motive edici bir dille, önceki çözümünü referans alarak cevap ver.
+Yine LaTeX formatını (\$\$) kullan ve Markdown ile biçimlendir. Kısa ve öz ol, gereksiz tekrar yapma.
+Konuşma dilin doğal, "biz bize" tarzında olsun.
+''';
+
+      final result = await callable.call({
+        'prompt': contextPrompt,
+        'expectJson': false,
+        'requestType': 'chat',
+        'temperature': 0.5,
+        'maxOutputTokens': 1024,
+      });
+
+      final data = result.data;
+      final rawResponse = (data is Map && data['raw'] is String) ? (data['raw'] as String).trim() : '';
+
+      if (rawResponse.isEmpty) {
+        throw Exception('Cevap alınamadı.');
+      }
+
+      return rawResponse;
+    } on FirebaseFunctionsException catch (e) {
+      final msg = e.message ?? 'AI hizmeti hatası. Lütfen tekrar deneyin.';
+      throw Exception(msg);
+    } catch (e) {
+      throw Exception('Sohbet hatası: $e');
+    }
+  }
 }

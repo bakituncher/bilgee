@@ -19,6 +19,15 @@ import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:taktik/data/providers/firestore_providers.dart';
 
+// Basit mesaj modeli
+class SolverMessage {
+  final String text;
+  final bool isUser;
+  final DateTime time;
+
+  SolverMessage(this.text, {required this.isUser}) : time = DateTime.now();
+}
+
 class QuestionSolverScreen extends ConsumerStatefulWidget {
   const QuestionSolverScreen({super.key});
 
@@ -38,17 +47,26 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
   // Crop Widget Kontrolcüsü
   final _cropController = CropController();
 
-  // Analiz Sonuçları
-  String? _solution;
+  // YENİ: Akış Kontrol Değişkenleri
+  String? _initialSolution; // İlk gelen tekil çözüm
+  bool _isChatMode = false; // Sohbet modu aktif mi?
+
+  final List<SolverMessage> _messages = []; // Sohbet geçmişi
+  final TextEditingController _chatController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+
   bool _isAnalyzing = false; // Yapay zeka analiz durumu
   bool _isCropping = false;  // Kırpma işlemi işleniyor durumu
   bool _isProcessingImage = false; // Fotoğraf ilk işlenirken (Loader için)
+  bool _isChatLoading = false; // Sohbet cevap bekliyor mu?
   String? _error;
 
   final ImagePicker _picker = ImagePicker();
 
   @override
   void dispose() {
+    _chatController.dispose();
+    _scrollController.dispose();
     _rawImageBytes = null;
     _finalImageFile = null;
     super.dispose();
@@ -57,24 +75,21 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
   // --- Temel Fonksiyonlar ---
 
   void _handleBack() {
-    if (_rawImageBytes != null || _finalImageFile != null || _solution != null) {
+    if (_rawImageBytes != null || _finalImageFile != null) {
       setState(() {
         _rawImageBytes = null;
         _finalImageFile = null;
-        _solution = null;
+        _initialSolution = null;
+        _messages.clear();
+        _isChatMode = false;
         _error = null;
         _isAnalyzing = false;
         _isCropping = false;
-        _isProcessingImage = false;
       });
       return;
     }
-
-    if (context.canPop()) {
-      context.pop();
-    } else {
-      context.go('/ai-hub');
-    }
+    if (context.canPop()) context.pop();
+    else context.go('/ai-hub');
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -100,7 +115,9 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
           setState(() {
             _rawImageBytes = compressedBytes;
             _finalImageFile = null;
-            _solution = null;
+            _initialSolution = null;
+            _messages.clear();
+            _isChatMode = false;
             _error = null;
             _isProcessingImage = false;
           });
@@ -109,6 +126,9 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
           final originalBytes = await image.readAsBytes();
           setState(() {
             _rawImageBytes = originalBytes;
+            _initialSolution = null;
+            _messages.clear();
+            _isChatMode = false;
             _isProcessingImage = false;
           });
         }
@@ -170,8 +190,9 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
 
       if (mounted) {
         setState(() {
-          _solution = result;
+          _initialSolution = result; // İlk sonucu kaydet
           _isAnalyzing = false;
+          _isChatMode = false; // Henüz sohbet modu kapalı
         });
       }
     } catch (e) {
@@ -184,23 +205,108 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
     }
   }
 
+  // BUTONA BASILINCA ÇAĞRILACAK: Sohbet Modunu Başlat
+  void _activateChatMode() {
+    if (_initialSolution == null) return;
+
+    setState(() {
+      _isChatMode = true;
+      // İlk çözümü sohbetin ilk mesajı olarak ekle
+      if (_messages.isEmpty) {
+        _messages.add(SolverMessage(_initialSolution!, isUser: false));
+      }
+    });
+
+    // Hafif bir kaydırma efekti ile kullanıcıya odaklanma hissi ver
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  // YENİ: Takip sorusu gönderme
+  Future<void> _sendFollowUpMessage() async {
+    final text = _chatController.text.trim();
+    if (text.isEmpty || _isChatLoading) return;
+
+    // 1. Kullanıcı mesajını ekle
+    setState(() {
+      _messages.add(SolverMessage(text, isUser: true));
+      _isChatLoading = true;
+    });
+    _chatController.clear();
+    _scrollToBottom();
+
+    try {
+      final service = ref.read(questionSolverServiceProvider);
+      final user = ref.read(userProfileProvider).value;
+
+      // Bağlam olarak ilk çözümü kullan
+      final contextSolution = _initialSolution ?? _messages.first.text;
+
+      final response = await service.solveFollowUp(
+        originalPrompt: "Context",
+        previousSolution: contextSolution,
+        userQuestion: text,
+        examType: user?.selectedExam,
+      );
+
+      if (mounted) {
+        setState(() {
+          _messages.add(SolverMessage(response, isUser: false));
+          _isChatLoading = false;
+        });
+        _scrollToBottom();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Hata: $e'))
+        );
+        setState(() => _isChatLoading = false);
+      }
+    }
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
   // --- YENİ KAYDETME FONKSİYONU ---
   Future<void> _saveSolutionLocally() async {
-    if (_finalImageFile == null || _solution == null) return;
+    // Kaydetme mantığı: Sohbet varsa sohbeti, yoksa sadece ilk çözümü kaydet
+    final contentToSave = _isChatMode
+        ? _messages.map((m) => "${m.isUser ? 'Soru' : 'Çözüm'}: ${m.text}").join('\n\n---\n\n')
+        : _initialSolution;
+
+    if (_finalImageFile == null || contentToSave == null) return;
 
     try {
       final imageFile = File(_finalImageFile!.path);
 
       await ref.read(savedSolutionsProvider.notifier).saveSolution(
         imageFile: imageFile,
-        solutionText: _solution!,
+        solutionText: contentToSave,
         subject: "Matematik", // İstersen analizden dersi de çekebiliriz
       );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Çözüm başarıyla kaydedildi!'),
+            content: Text(_isChatMode ? 'Çözüm ve sohbet kaydedildi!' : 'Çözüm kaydedildi!'),
             backgroundColor: Colors.green,
             action: SnackBarAction(
               label: 'Görüntüle',
@@ -329,12 +435,17 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
             onPressed: _handleBack,
           ),
           title: Text(
-            _solution != null ? 'Çözüm' : 'Anlık Çözüm',
+            _isChatMode ? 'Soru Asistanı' : (_initialSolution != null ? 'Çözüm' : 'Anlık Çözüm'),
             style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
           ),
-          // KAYDEDİLENLERİ GÖRME BUTONU
           actions: [
-            if (_finalImageFile == null) // Sadece ana ekranda göster
+            if (_initialSolution != null)
+              IconButton(
+                icon: const Icon(Icons.bookmark_border_rounded),
+                tooltip: 'Kaydet',
+                onPressed: _saveSolutionLocally,
+              )
+            else
               IconButton(
                 icon: const Icon(Icons.bookmark_border_rounded),
                 tooltip: 'Kaydedilenler',
@@ -343,11 +454,49 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
           ],
         ),
         body: SafeArea(
-          child: _finalImageFile == null
-              ? _buildEmptyState(theme) // Fotoğraf yoksa
-              : _buildResultContent(theme), // Fotoğraf varsa (Analiz/Sonuç)
+          child: Column(
+            children: [
+              // Resim Alanı (Her zaman üstte, sohbette küçülebilir)
+              if (_finalImageFile != null)
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  height: _isChatMode ? 120 : 200, // Sohbette yer açmak için resmi küçült
+                  width: double.infinity,
+                  margin: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: theme.dividerColor),
+                    image: DecorationImage(
+                      image: FileImage(File(_finalImageFile!.path)),
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+
+              // İÇERİK ALANI
+              Expanded(
+                child: _isAnalyzing
+                    ? _buildLoadingState(theme)
+                    : _error != null
+                        ? Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: _buildErrorState(theme),
+                            ),
+                          )
+                        : _initialSolution == null
+                            ? _buildEmptyState(theme) // Fotoğraf çekin ekranı
+                            : _isChatMode
+                                ? _buildChatView(theme) // SOHBET MODU
+                                : _buildInitialResultView(theme), // İLK SONUÇ MODU
+              ),
+
+              // Chat Input (Sadece sohbet modunda görünür)
+              if (_isChatMode) _buildInputArea(theme),
+            ],
+          ),
         ),
-        floatingActionButton: _finalImageFile == null
+        floatingActionButton: (_initialSolution == null && !_isAnalyzing)
             ? FloatingActionButton.extended(
           onPressed: _showImageSourceSheet,
           backgroundColor: theme.colorScheme.primary,
@@ -505,76 +654,98 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
     );
   }
 
-  Widget _buildResultContent(ThemeData theme) {
+  // --- MOD WIDGETLARI ---
+
+  // MOD 1: Sadece Çözüm Ekranı
+  Widget _buildInitialResultView(ThemeData theme) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Soru Kartı
+          // Çözüm Kartı
           Container(
-            height: 200,
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
+              color: theme.cardColor,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
-              image: DecorationImage(
-                image: FileImage(File(_finalImageFile!.path)),
-                fit: BoxFit.cover,
-              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-            child: Align(
-              alignment: Alignment.topRight,
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: IconButton(
-                  onPressed: () {
-                    // Yeniden çekmek için (Başa dön)
-                    setState(() {
-                      _finalImageFile = null;
-                      _rawImageBytes = null;
-                      _solution = null;
-                    });
-                  },
-                  style: IconButton.styleFrom(backgroundColor: Colors.black54),
-                  icon: const Icon(Icons.refresh_rounded, color: Colors.white, size: 20),
-                  tooltip: "Yeni Fotoğraf Çek",
+            child: MarkdownBody(
+              data: _initialSolution!,
+              selectable: true,
+              styleSheet: MarkdownStyleSheet(
+                p: TextStyle(color: theme.colorScheme.onSurface, fontSize: 16, height: 1.5),
+                h1: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold),
+                strong: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.w700),
+                blockquote: TextStyle(
+                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  fontStyle: FontStyle.italic,
+                ),
+                blockquoteDecoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border(left: BorderSide(color: theme.colorScheme.primary, width: 4)),
                 ),
               ),
+              builders: {
+                'latex': LatexElementBuilder(
+                  textStyle: TextStyle(color: theme.colorScheme.onSurface),
+                ),
+              },
+              extensionSet: md.ExtensionSet(
+                [...md.ExtensionSet.gitHubFlavored.blockSyntaxes],
+                [...md.ExtensionSet.gitHubFlavored.inlineSyntaxes, LatexInlineSyntax()],
+              ),
             ),
-          ),
+          ).animate().fadeIn(duration: 500.ms).slideY(begin: 0.1, end: 0),
 
           const SizedBox(height: 24),
 
-          if (_isAnalyzing)
-            _buildLoadingState(theme)
-          else if (_error != null)
-            _buildErrorState(theme)
-          else if (_solution != null)
-              _buildSolutionCard(theme),
-
-          // Gizlilik notu
-          if (_solution != null) ...[
-            const SizedBox(height: 32),
-            Center(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.privacy_tip_outlined, size: 14, color: theme.colorScheme.onSurface.withOpacity(0.4)),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Çözümler cihazınızda güvenle saklanır.',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: theme.colorScheme.onSurface.withOpacity(0.4),
-                    ),
-                  ),
-                ],
-              ),
+          // AKSİYON BUTONU: "Anlamadım"
+          FilledButton.icon(
+            onPressed: _activateChatMode,
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              backgroundColor: theme.colorScheme.secondaryContainer,
+              foregroundColor: theme.colorScheme.onSecondaryContainer,
             ),
-            const SizedBox(height: 40),
-          ]
+            icon: const Icon(Icons.help_outline_rounded),
+            label: const Text(
+              "Anlamadım / Soru Sor",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.2, end: 0),
+
+          const SizedBox(height: 16),
+          Center(
+            child: Text(
+              "Detaylı sormak için butona tıkla 👆",
+              style: TextStyle(color: theme.colorScheme.outline, fontSize: 12),
+            ),
+          ),
+          const SizedBox(height: 40),
         ],
       ),
+    );
+  }
+
+  // MOD 2: Sohbet Ekranı
+  Widget _buildChatView(ThemeData theme) {
+    return ListView.builder(
+      controller: _scrollController,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      itemCount: _messages.length + (_isChatLoading ? 1 : 0),
+      itemBuilder: (context, index) {
+        if (index == _messages.length) return _buildTypingIndicator(theme);
+        return _buildMessageBubble(theme, _messages[index]);
+      },
     );
   }
 
@@ -610,6 +781,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
         border: Border.all(color: theme.colorScheme.error.withOpacity(0.5)),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(Icons.error_outline_rounded, color: theme.colorScheme.error, size: 32),
           const SizedBox(height: 8),
@@ -622,6 +794,152 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
           ElevatedButton(
             onPressed: _solveQuestion,
             child: const Text('Tekrar Dene'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- YENİ WIDGET'LAR ---
+
+  Widget _buildMessageBubble(ThemeData theme, SolverMessage message) {
+    final isUser = message.isUser;
+    return Align(
+      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.all(16),
+        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.85),
+        decoration: BoxDecoration(
+          color: isUser ? theme.colorScheme.primary : theme.cardColor,
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(20),
+            topRight: const Radius.circular(20),
+            bottomLeft: Radius.circular(isUser ? 20 : 4),
+            bottomRight: Radius.circular(isUser ? 4 : 20),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            )
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (!isUser) ...[
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.auto_awesome, size: 16, color: theme.colorScheme.primary),
+                  const SizedBox(width: 4),
+                  Text(
+                    "Taktik Tavşan",
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+            ],
+            // Markdown Desteği (Latex dahil)
+            MarkdownBody(
+              data: message.text,
+              selectable: true,
+              styleSheet: MarkdownStyleSheet(
+                p: TextStyle(
+                  color: isUser ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
+                  fontSize: 15,
+                ),
+                strong: TextStyle(
+                  color: isUser ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              builders: {
+                'latex': LatexElementBuilder(
+                  textStyle: TextStyle(
+                    color: isUser ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
+                  ),
+                ),
+              },
+              extensionSet: md.ExtensionSet(
+                [...md.ExtensionSet.gitHubFlavored.blockSyntaxes],
+                [...md.ExtensionSet.gitHubFlavored.inlineSyntaxes, LatexInlineSyntax()],
+              ),
+            ),
+          ],
+        ),
+      ).animate().fadeIn().slideY(begin: 0.1, end: 0),
+    );
+  }
+
+  Widget _buildInputArea(ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: theme.scaffoldBackgroundColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          )
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _chatController,
+              decoration: InputDecoration(
+                hintText: 'Anlamadığın yeri sor...',
+                filled: true,
+                fillColor: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              ),
+              textCapitalization: TextCapitalization.sentences,
+              onSubmitted: (_) => _sendFollowUpMessage(),
+            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton.filled(
+            onPressed: _isChatLoading ? null : _sendFollowUpMessage,
+            icon: const Icon(Icons.send_rounded),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTypingIndicator(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Row(
+        children: [
+          const SizedBox(width: 12),
+          Lottie.asset(
+            'assets/lotties/loading_dots.json',
+            height: 40,
+            errorBuilder: (context, error, stackTrace) =>
+                const SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            "Cevap yazılıyor...",
+            style: TextStyle(color: theme.colorScheme.outline),
           ),
         ],
       ),
@@ -667,7 +985,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
             ],
           ),
           child: MarkdownBody(
-            data: _solution!,
+            data: _messages.isNotEmpty ? _messages.first.text : '',
             selectable: true,
             styleSheet: MarkdownStyleSheet(
               p: TextStyle(color: theme.colorScheme.onSurface, height: 1.5, fontSize: 15),
