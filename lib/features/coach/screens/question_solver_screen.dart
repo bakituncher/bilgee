@@ -422,6 +422,68 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
     );
   }
 
+  // Premium FAB (Floating Action Button) Tasarımı
+  Widget _buildStylishFAB(ThemeData theme) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(30),
+        gradient: LinearGradient(
+          colors: [
+            theme.colorScheme.primary,
+            theme.colorScheme.tertiary, // Gradyan geçişi
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          // Ana Gölge
+          BoxShadow(
+            color: theme.colorScheme.primary.withOpacity(0.4),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+          // Hafif parlama efekti (beyaz)
+          BoxShadow(
+            color: Colors.white.withOpacity(0.2),
+            blurRadius: 0,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _showImageSourceSheet,
+          borderRadius: BorderRadius.circular(30),
+          splashColor: Colors.white.withOpacity(0.2),
+          highlightColor: Colors.transparent,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 22),
+                const SizedBox(width: 12),
+                const Text(
+                  "Soru Sor",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    )
+        .animate(onPlay: (c) => c.repeat(reverse: true))
+        .shimmer(duration: 3.seconds, delay: 2.seconds, color: Colors.white.withOpacity(0.3)); // Hafif parıltı efekti
+  }
+
   // --- Arayüz (Build) ---
 
   @override
@@ -523,13 +585,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
           ),
         ),
         floatingActionButton: (_initialSolution == null && !_isAnalyzing)
-            ? FloatingActionButton.extended(
-          onPressed: _showImageSourceSheet,
-          backgroundColor: theme.colorScheme.primary,
-          foregroundColor: theme.colorScheme.onPrimary,
-          icon: const Icon(Icons.add_a_photo_rounded),
-          label: const Text('Soru Sor'),
-        )
+            ? _buildStylishFAB(theme)
             : null,
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       );
@@ -648,19 +704,20 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const SizedBox(height: 10),
-          // 1. HERO KARTI (Büyük Başlık)
+          // 1. HERO KARTI (Taktik Tavşan Branding)
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [theme.colorScheme.primary, theme.colorScheme.primary.withOpacity(0.7)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+                colors: [theme.colorScheme.primaryContainer, theme.colorScheme.surface],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(32),
+              border: Border.all(color: theme.colorScheme.primary.withOpacity(0.1)),
               boxShadow: [
                 BoxShadow(
-                  color: theme.colorScheme.primary.withOpacity(0.3),
+                  color: theme.colorScheme.primary.withOpacity(0.05),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),
@@ -668,33 +725,45 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
             ),
             child: Column(
               children: [
+                // Taktik Tavşan Görseli (Animasyonlu)
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white,
                     shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 15,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
                   ),
-                  child: const Icon(Icons.auto_awesome_rounded, size: 48, color: Colors.white),
+                  child: Image.asset(
+                    'assets/images/bunnyy.png',
+                    height: 80,
+                    width: 80,
+                  ),
                 ).animate(onPlay: (c) => c.repeat(reverse: true))
-                    .scale(duration: 2.seconds, begin: const Offset(1, 1), end: const Offset(1.1, 1.1)),
-                const SizedBox(height: 16),
-                const Text(
-                  "Sorularla Boğuşma,\nZekice Çöz!",
+                    .scale(duration: 3.seconds, begin: const Offset(1, 1), end: const Offset(1.05, 1.05)),
+                const SizedBox(height: 20),
+                Text(
+                  "Sorularla Boğuşma,\nTaktik Tavşan Yanında!",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    height: 1.3,
+                    fontWeight: FontWeight.w800,
+                    color: theme.colorScheme.onSurface,
+                    letterSpacing: -0.5,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 Text(
-                  "Takıldığın sorunun fotoğrafını çek,\nyapay zeka anında çözsün ve anlatısın.",
+                  "Takıldığın sorunun fotoğrafını çek,\nTaktik Tavşan senin için adım adım çözsün.",
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 15,
+                    color: theme.colorScheme.onSurfaceVariant,
                     height: 1.4,
                   ),
                 ),
@@ -704,7 +773,6 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
 
           const SizedBox(height: 32),
 
-          // 2. ÖZELLİK LİSTESİ BAŞLIĞI
           Text(
             "Nasıl Çalışır?",
             style: TextStyle(
@@ -716,31 +784,30 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
 
           const SizedBox(height: 16),
 
-          // 3. ADIM KARTLARI
+          // Özellikler (YENİ etiketi kaldırıldı)
           _buildFeatureRow(
             theme,
             icon: Icons.camera_alt_outlined,
             title: "Fotoğrafını Çek",
-            subtitle: "Net bir şekilde soruyu görüntüle.",
+            subtitle: "Soruyu net bir şekilde görüntüle.",
             delay: 300,
           ),
           _buildFeatureRow(
             theme,
-            icon: Icons.document_scanner_outlined,
-            title: "Yapay Zeka Analizi",
-            subtitle: "Saniyeler içinde detaylı çözüm.",
+            icon: Icons.auto_awesome_outlined,
+            title: "Taktik Tavşan Çözsün",
+            subtitle: "Saniyeler içinde detaylı anlatım.",
             delay: 400,
           ),
           _buildFeatureRow(
             theme,
             icon: Icons.chat_bubble_outline_rounded,
             title: "Anlamadığını Sor",
-            subtitle: "Çözüm üzerine sohbet et.",
-            isNew: true, // Yeni özelliği vurgula
+            subtitle: "Tavşan ile sohbet et.",
             delay: 500,
           ),
 
-          const SizedBox(height: 80), // FAB için boşluk
+          const SizedBox(height: 100), // FAB için alt boşluk
         ],
       ),
     );
@@ -753,7 +820,6 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
     required String title,
     required String subtitle,
     required int delay,
-    bool isNew = false,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -785,31 +851,9 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
-                    if (isNew) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.tertiary,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          "YENİ",
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.onTertiary,
-                          ),
-                        ),
-                      ),
-                    ]
-                  ],
+                Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 const SizedBox(height: 4),
                 Text(
