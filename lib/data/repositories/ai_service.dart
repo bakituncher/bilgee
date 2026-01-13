@@ -413,12 +413,30 @@ class AiService {
     try {
       final exam = await ExamData.getExamByType(examType);
 
-      List<ExamSection> sections;
+      List<ExamSection> sections = [];
 
-      // YDT ve YKS FIX: Eğer bölüm YDT ise, TYT'yi de listeye ekle (YDT öğrencileri TYT + YDT sorumludur)
-      if (examType == ExamType.yks && selectedSection == 'YDT') {
-        sections = exam.sections.where((s) => s.name == 'TYT' || s.name == 'YDT').toList();
-      } else {
+      // 1. AGS MANTIĞI: Her zaman "AGS" (Ortak) + Seçilen Branş
+      if (examType == ExamType.ags) {
+        // Ortak bölümü ekle (Adı genellikle 'AGS' olarak parse ediliyor)
+        sections.addAll(exam.sections.where((s) => s.name == 'AGS'));
+
+        // Seçilen branşı ekle (Eğer varsa)
+        if (selectedSection != null && selectedSection.isNotEmpty) {
+          sections.addAll(exam.sections.where((s) => s.name.toLowerCase() == selectedSection.toLowerCase()));
+        }
+      }
+      // 2. YKS MANTIĞI: Her zaman "TYT" + Seçilen Alan (AYT-Sayısal, YDT vb.)
+      else if (examType == ExamType.yks) {
+        // TYT her zaman eklenir
+        sections.addAll(exam.sections.where((s) => s.name == 'TYT'));
+
+        if (selectedSection != null && selectedSection.isNotEmpty && selectedSection != 'TYT') {
+          // Eğer seçilen alan 'AYT - Sayısal' ise onu ekle
+          sections.addAll(exam.sections.where((s) => s.name.toLowerCase() == selectedSection.toLowerCase()));
+        }
+      }
+      // 3. DİĞERLERİ (LGS, KPSS)
+      else {
         sections = (selectedSection != null && selectedSection.isNotEmpty)
             ? exam.sections.where((s) => s.name.toLowerCase() == selectedSection.toLowerCase()).toList()
             : exam.sections;
