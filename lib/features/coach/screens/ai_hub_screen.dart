@@ -501,7 +501,7 @@ class _BentoCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: height,
+        constraints: BoxConstraints(minHeight: height),
         decoration: BoxDecoration(
           color: theme.cardColor,
           borderRadius: BorderRadius.circular(24),
@@ -548,6 +548,7 @@ class _BentoCard extends StatelessWidget {
                 padding: const EdgeInsets.all(18),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     // İkon ve Kilit
                     Row(
@@ -567,31 +568,35 @@ class _BentoCard extends StatelessWidget {
                       ],
                     ),
 
-                    const Spacer(),
-
-                    // Başlık
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        height: 1.1,
-                        color: theme.colorScheme.onSurface,
-                        letterSpacing: -0.3,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    // Açıklama (Teşvik Edici)
-                    Text(
-                      description,
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        height: 1.3,
-                        color: theme.colorScheme.onSurface.withOpacity(0.65),
-                        fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                    // Başlık + Açıklama (alt blok)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                            height: 1.1,
+                            color: theme.colorScheme.onSurface,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        // Açıklama (Teşvik Edici)
+                        Text(
+                          description,
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            height: 1.3,
+                            color: theme.colorScheme.onSurface.withOpacity(0.65),
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 3,
+                          overflow: TextOverflow.fade,
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -790,3 +795,4 @@ class _MinimalDisclaimer extends StatelessWidget {
     );
   }
 }
+
