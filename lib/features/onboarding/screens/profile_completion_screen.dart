@@ -26,6 +26,37 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
   bool _acceptPolicy = false;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadUserData();
+    });
+  }
+
+  void _loadUserData() {
+    final user = ref.read(authControllerProvider).value;
+    if (user != null) {
+      final userProfile = ref.read(userProfileProvider).value;
+      if (userProfile != null) {
+        if (userProfile.username.isNotEmpty && _usernameController.text.isEmpty) {
+          _usernameController.text = userProfile.username;
+        }
+        if (userProfile.gender != null && _gender == null) {
+          setState(() {
+            _gender = userProfile.gender;
+          });
+        }
+        if (userProfile.dateOfBirth != null && _dateOfBirth == null) {
+          setState(() {
+            _dateOfBirth = userProfile.dateOfBirth;
+            _dateController.text = DateFormat.yMMMMd('tr_TR').format(userProfile.dateOfBirth!);
+          });
+        }
+      }
+    }
+  }
+
+  @override
   void dispose() {
     _usernameController.dispose();
     _dateController.dispose();
@@ -63,7 +94,10 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
       final firestoreService = ref.read(firestoreServiceProvider);
       final userId = ref.read(authControllerProvider).value!.uid;
 
-      final isAvailable = await firestoreService.checkUsernameAvailability(_usernameController.text.trim());
+      final isAvailable = await firestoreService.checkUsernameAvailability(
+        _usernameController.text.trim(),
+        excludeUserId: userId,
+      );
       if (!isAvailable) {
         if (mounted) {
           setState(() {

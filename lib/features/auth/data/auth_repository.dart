@@ -45,7 +45,12 @@ class AuthRepository {
       );
       if (userCredential.user != null) {
         // Send verification email
-        await userCredential.user!.sendEmailVerification();
+        try {
+          await userCredential.user!.sendEmailVerification();
+        } catch (e) {
+          debugPrint('Verification email could not be sent: $e');
+          // Devam et, profil oluşturulmasını engelleme
+        }
 
         // Varsayılan Avatar Belirleme
         String defaultStyle = 'bottts';
