@@ -325,7 +325,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                       'icon': Icons.camera_enhance_rounded,
                       'color': Colors.orangeAccent,
                       'marketingTitle': 'Soruda Takılma!',
-                      'marketingSubtitle': 'Yapamadığın sorunun fotoğrafını çek, yapay zeka adım adım çözümünü anlatsın.',
+                      'marketingSubtitle': 'Yapamadığın sorunun fotoğrafını çek, Taktik Tavşan adım adım çözümünü anlatsın.',
                       'redirectRoute': '/ai-hub/question-solver',
                     }),
                   ),
