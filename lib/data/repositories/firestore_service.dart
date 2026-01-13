@@ -429,14 +429,25 @@ class FirestoreService {
     await usersCollection.doc(userId).update(updateData);
   }
 
-  Future<bool> checkUsernameAvailability(String username) async {
+  Future<bool> checkUsernameAvailability(String username, {String? excludeUserId}) async {
     // Güvenli okuma: public_profiles herkesçe (auth) okunabilir
     final q = await _firestore
         .collection('public_profiles')
         .where('username', isEqualTo: username)
         .limit(1)
         .get();
-    return q.docs.isEmpty;
+
+    if (q.docs.isEmpty) return true;
+
+    // Eğer hariç tutulacak kullanıcı ID'si varsa ve bulunan doküman bu kullanıcıya aitse
+    // o zaman bu kullanıcı adı "müsait" kabul edilir (çünkü zaten kullanıcının kendisidir)
+    if (excludeUserId != null) {
+      final doc = q.docs.first;
+      // public_profiles doküman ID'si userId ile aynıdır
+      if (doc.id == excludeUserId) return true;
+    }
+
+    return false;
   }
 
   // KULLANICI ADI GÜNCELLEME (BASİTLEŞTİRİLDİ)
