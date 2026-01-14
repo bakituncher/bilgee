@@ -181,8 +181,8 @@ const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, e
   // Rate limit
   const ip = getClientIpFromRawRequest(request.rawRequest) || "unknown";
   await Promise.all([
-    enforceRateLimit(`delete_account_uid_${userId}`, 3600, 1),
-    enforceRateLimit(`delete_account_ip_${ip}`, 3600, 3),
+    enforceRateLimit(`delete_account_uid_${userId}`, 3600, 5),
+    enforceRateLimit(`delete_account_ip_${ip}`, 3600, 15),
   ]);
 
   const deletionLog = {
