@@ -34,7 +34,7 @@ class QuestionSolverService {
             'imageBase64': b64,
             'imageMimeType': 'image/jpeg',
             // Keep the output reasonably sized; solution is markdown.
-            'maxOutputTokens': 2048,
+            'maxOutputTokens': 8192,
             // Daha doğal ve insansı bir ton için sıcaklığı biraz artırdık (0.4 -> 0.5)
             'temperature': 0.5,
           })
@@ -89,7 +89,7 @@ KURALLAR VE TON:
 1. **Samimi Ol:** "Merhaba sevgili öğrencim" gibi resmi girişler YAPMA. Doğrudan "Bak şimdi kanka," veya "Gel bu soruyu halledelim," gibi doğal, konuşma diliyle başla.
 2. **Robotlaşma:** "İlk olarak verileri analiz edelim" gibi basmakalıp laflar etme. "Şunu şuraya atıyoruz, bunu bununla çarpıyoruz" gibi aktif ve canlı anlat.
 3. **Net ve Pratik Ol:** İşlemleri adım adım göster ama gereksiz uzatma. Sektördeki en pratik, en "kestirme" yol neyse onu göster. Laf kalabalığı yapma.
-4. **Görsel Düzen:** 
+4. **Görsel Düzen:**
    - Matematiksel ifadeleri mutlaka LaTeX formatında yaz (Örn: \$x^2 + 5x = 0\$).
    - Önemli yerleri **kalın** yazarak vurgula.
    - Çıktın Markdown formatında olsun.
