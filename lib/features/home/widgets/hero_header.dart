@@ -30,7 +30,8 @@ class HeroHeader extends ConsumerWidget {
     return Icons.nightlight_round;
   }
 
-  List<Map<String, dynamic>> _getExamCountdowns(String? selectedExam, String? selectedExamSection) {
+  List<Map<String, dynamic>> _getExamCountdowns(
+      String? selectedExam, String? selectedExamSection) {
     if (selectedExam == null) return [];
 
     final now = DateTime.now();
@@ -54,14 +55,16 @@ class HeroHeader extends ConsumerWidget {
       final examDate = DateTime(2026, 6, 14, 9, 30);
       final rem = _daysHoursRemaining(examDate);
       if (rem['days']! > 0 || rem['hours']! > 0) {
-        countdowns.add({'days': rem['days'], 'hours': rem['hours'], 'label': 'LGS'});
+        countdowns
+            .add({'days': rem['days'], 'hours': rem['hours'], 'label': 'LGS'});
       }
     } else if (exam == 'ags') {
       // AGS: 12 Temmuz 2026, 10:15
       final examDate = DateTime(2026, 7, 12, 10, 15);
       final rem = _daysHoursRemaining(examDate);
       if (rem['days']! > 0 || rem['hours']! > 0) {
-        countdowns.add({'days': rem['days'], 'hours': rem['hours'], 'label': 'AGS - ÖABT'});
+        countdowns.add(
+            {'days': rem['days'], 'hours': rem['hours'], 'label': 'AGS - ÖABT'});
       }
     } else if (exam == 'yks') {
       // TYT seçildiyse sadece TYT göster
@@ -69,7 +72,8 @@ class HeroHeader extends ConsumerWidget {
         final tytDate = DateTime(2026, 6, 20, 10, 15);
         final tytRem = _daysHoursRemaining(tytDate);
         if (tytRem['days']! > 0 || tytRem['hours']! > 0) {
-          countdowns.add({'days': tytRem['days'], 'hours': tytRem['hours'], 'label': 'TYT'});
+          countdowns.add(
+              {'days': tytRem['days'], 'hours': tytRem['hours'], 'label': 'TYT'});
         }
       }
       // YDT seçildiyse TYT ve YDT geri sayımını göster (her ikisine de girecekler)
@@ -78,14 +82,16 @@ class HeroHeader extends ConsumerWidget {
         final tytDate = DateTime(2026, 6, 20, 10, 15);
         final tytRem = _daysHoursRemaining(tytDate);
         if (tytRem['days']! > 0 || tytRem['hours']! > 0) {
-          countdowns.add({'days': tytRem['days'], 'hours': tytRem['hours'], 'label': 'TYT'});
+          countdowns.add(
+              {'days': tytRem['days'], 'hours': tytRem['hours'], 'label': 'TYT'});
         }
 
         // YDT: 21 Haziran 2026, 15:30
         final ydtDate = DateTime(2026, 6, 21, 15, 30);
         final ydtRem = _daysHoursRemaining(ydtDate);
         if (ydtRem['days']! > 0 || ydtRem['hours']! > 0) {
-          countdowns.add({'days': ydtRem['days'], 'hours': ydtRem['hours'], 'label': 'YDT'});
+          countdowns.add(
+              {'days': ydtRem['days'], 'hours': ydtRem['hours'], 'label': 'YDT'});
         }
       } else {
         // Diğer AYT alanları için TYT ve AYT göster
@@ -93,14 +99,16 @@ class HeroHeader extends ConsumerWidget {
         final tytDate = DateTime(2026, 6, 20, 10, 15);
         final tytRem = _daysHoursRemaining(tytDate);
         if (tytRem['days']! > 0 || tytRem['hours']! > 0) {
-          countdowns.add({'days': tytRem['days'], 'hours': tytRem['hours'], 'label': 'TYT'});
+          countdowns.add(
+              {'days': tytRem['days'], 'hours': tytRem['hours'], 'label': 'TYT'});
         }
 
         // AYT: 21 Haziran 2026, 10:15
         final aytDate = DateTime(2026, 6, 21, 10, 15);
         final aytRem = _daysHoursRemaining(aytDate);
         if (aytRem['days']! > 0 || aytRem['hours']! > 0) {
-          countdowns.add({'days': aytRem['days'], 'hours': aytRem['hours'], 'label': 'AYT'});
+          countdowns.add(
+              {'days': aytRem['days'], 'hours': aytRem['hours'], 'label': 'AYT'});
         }
       }
     } else if (exam == 'kpsslisans') {
@@ -108,21 +116,27 @@ class HeroHeader extends ConsumerWidget {
       final examDate = DateTime(2026, 9, 6, 10, 15);
       final rem = _daysHoursRemaining(examDate);
       if (rem['days']! > 0 || rem['hours']! > 0) {
-        countdowns.add({'days': rem['days'], 'hours': rem['hours'], 'label': 'Lisans'});
+        countdowns.add(
+            {'days': rem['days'], 'hours': rem['hours'], 'label': 'Lisans'});
       }
     } else if (exam == 'kpssonlisans') {
       // KPSS Önlisans: 04 Ekim 2026, 10:15
       final examDate = DateTime(2026, 10, 4, 10, 15);
       final rem = _daysHoursRemaining(examDate);
       if (rem['days']! > 0 || rem['hours']! > 0) {
-        countdowns.add({'days': rem['days'], 'hours': rem['hours'], 'label': 'Önlisans'});
+        countdowns.add(
+            {'days': rem['days'], 'hours': rem['hours'], 'label': 'Önlisans'});
       }
     } else if (exam == 'kpssortaogretim') {
       // KPSS Ortaöğretim: 25 Ekim 2026, 10:15
       final examDate = DateTime(2026, 10, 25, 10, 15);
       final rem = _daysHoursRemaining(examDate);
       if (rem['days']! > 0 || rem['hours']! > 0) {
-        countdowns.add({'days': rem['days'], 'hours': rem['hours'], 'label': 'Ortaöğretim'});
+        countdowns.add({
+          'days': rem['days'],
+          'hours': rem['hours'],
+          'label': 'Ortaöğretim'
+        });
       }
     }
 
@@ -138,9 +152,21 @@ class HeroHeader extends ConsumerWidget {
         if (user == null) return const SizedBox.shrink();
 
         final rankInfo = RankService.getRankInfo(user.engagementScore);
-        final examCountdowns = _getExamCountdowns(user.selectedExam, user.selectedExamSection);
+        final examCountdowns =
+        _getExamCountdowns(user.selectedExam, user.selectedExamSection);
         final theme = Theme.of(context);
         final isDark = theme.brightness == Brightness.dark;
+
+        // DÜZELTME BURADA: İsim kontrolü eklendi
+        String displayNameText;
+        if (user.firstName.isNotEmpty) {
+          // İsim boş değilse formatla: "Günaydın, Ahmet"
+          displayNameText =
+          '${_getGreeting()}, ${user.firstName[0].toUpperCase()}${user.firstName.substring(1).toLowerCase()}';
+        } else {
+          // İsim boşsa sadece selamlama: "Günaydın"
+          displayNameText = _getGreeting();
+        }
 
         return Container(
           decoration: BoxDecoration(
@@ -183,8 +209,10 @@ class HeroHeader extends ConsumerWidget {
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                                 colors: [
-                                  theme.colorScheme.primary.withValues(alpha: 0.15),
-                                  theme.colorScheme.primary.withValues(alpha: 0.08),
+                                  theme.colorScheme.primary
+                                      .withValues(alpha: 0.15),
+                                  theme.colorScheme.primary
+                                      .withValues(alpha: 0.08),
                                 ],
                               ),
                             ),
@@ -193,23 +221,25 @@ class HeroHeader extends ConsumerWidget {
                               radius: 20,
                               backgroundColor: theme.cardColor,
                               child: ClipOval(
-                                child: (user.avatarStyle != null && user.avatarSeed != null)
+                                child: (user.avatarStyle != null &&
+                                    user.avatarSeed != null)
                                     ? SvgPicture.network(
-                                        'https://api.dicebear.com/9.x/${user.avatarStyle}/svg?seed=${user.avatarSeed}',
-                                        fit: BoxFit.cover,
-                                        width: 40,
-                                        height: 40,
-                                        placeholderBuilder: (_) => const SizedBox(
-                                          width: 14,
-                                          height: 14,
-                                          child: CircularProgressIndicator(strokeWidth: 1.5),
-                                        ),
-                                      )
+                                  'https://api.dicebear.com/9.x/${user.avatarStyle}/svg?seed=${user.avatarSeed}',
+                                  fit: BoxFit.cover,
+                                  width: 40,
+                                  height: 40,
+                                  placeholderBuilder: (_) => const SizedBox(
+                                    width: 14,
+                                    height: 14,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 1.5),
+                                  ),
+                                )
                                     : Icon(
-                                        Icons.person_rounded,
-                                        size: 20,
-                                        color: theme.colorScheme.primary,
-                                      ),
+                                  Icons.person_rounded,
+                                  size: 20,
+                                  color: theme.colorScheme.primary,
+                                ),
                               ),
                             ),
                           ),
@@ -220,7 +250,8 @@ class HeroHeader extends ConsumerWidget {
                               Icon(
                                 _getGreetingIcon(),
                                 size: 13,
-                                color: theme.colorScheme.onSurface.withValues(alpha: 0.45),
+                                color: theme.colorScheme.onSurface
+                                    .withValues(alpha: 0.45),
                               ),
                               const SizedBox(width: 5),
                               Flexible(
@@ -228,8 +259,9 @@ class HeroHeader extends ConsumerWidget {
                                   fit: BoxFit.scaleDown,
                                   alignment: Alignment.centerLeft,
                                   child: Text(
-                                    '${_getGreeting()}, ${user.firstName[0].toUpperCase()}${user.firstName.substring(1).toLowerCase()}',
-                                    style: theme.textTheme.titleMedium?.copyWith(
+                                    displayNameText, // DÜZELTİLMİŞ DEĞİŞKEN BURADA KULLANILIYOR
+                                    style:
+                                    theme.textTheme.titleMedium?.copyWith(
                                       fontWeight: FontWeight.w700,
                                       fontSize: 15,
                                       letterSpacing: -0.2,
@@ -261,20 +293,23 @@ class HeroHeader extends ConsumerWidget {
                                   maxWidth: 180,
                                 ),
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 6),
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                       colors: [
                                         theme.colorScheme.secondary,
-                                        theme.colorScheme.secondary.withValues(alpha: 0.85),
+                                        theme.colorScheme.secondary
+                                            .withValues(alpha: 0.85),
                                       ],
                                     ),
                                     borderRadius: BorderRadius.circular(9),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: theme.colorScheme.secondary.withValues(alpha: 0.22),
+                                        color: theme.colorScheme.secondary
+                                            .withValues(alpha: 0.22),
                                         blurRadius: 6,
                                         offset: const Offset(0, 2),
                                       ),
@@ -295,7 +330,8 @@ class HeroHeader extends ConsumerWidget {
                                                 maxLines: 1,
                                                 overflow: TextOverflow.ellipsis,
                                                 softWrap: false,
-                                                style: theme.textTheme.labelSmall?.copyWith(
+                                                style: theme.textTheme.labelSmall
+                                                    ?.copyWith(
                                                   color: Colors.white,
                                                   fontWeight: FontWeight.w700,
                                                   fontSize: 11,
@@ -307,7 +343,8 @@ class HeroHeader extends ConsumerWidget {
                                             Text(
                                               '|',
                                               style: TextStyle(
-                                                color: Colors.white.withValues(alpha: 0.7),
+                                                color: Colors.white
+                                                    .withValues(alpha: 0.7),
                                                 fontSize: 10,
                                                 height: 1.2,
                                               ),
@@ -319,7 +356,8 @@ class HeroHeader extends ConsumerWidget {
                                                 maxLines: 1,
                                                 overflow: TextOverflow.visible,
                                                 softWrap: false,
-                                                style: theme.textTheme.labelSmall?.copyWith(
+                                                style: theme.textTheme.labelSmall
+                                                    ?.copyWith(
                                                   color: Colors.white,
                                                   fontWeight: FontWeight.w800,
                                                   fontSize: 11,
@@ -350,7 +388,8 @@ class HeroHeader extends ConsumerWidget {
                   gradient: LinearGradient(
                     colors: [
                       Colors.transparent,
-                      (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
+                      (isDark ? Colors.white : Colors.black)
+                          .withValues(alpha: 0.05),
                       Colors.transparent,
                     ],
                   ),
@@ -441,97 +480,97 @@ class _UltraCompactRankCard extends StatelessWidget {
             Row(
               children: [
                 Container(
-                padding: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(5),
-                ),
-                child: Icon(
-                  Icons.military_tech_rounded,
-                  size: 12,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-              const SizedBox(width: 5),
-              Text(
-                'Rütbe',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.45),
-                  fontWeight: FontWeight.w600,
-                  fontSize: 10,
-                  letterSpacing: 0.2,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-
-          // Rank Name
-          Text(
-            rankInfo.current.name,
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: theme.colorScheme.primary,
-              fontWeight: FontWeight.w800,
-              fontSize: 13,
-              letterSpacing: -0.2,
-              height: 1.1,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 5),
-
-          // Progress bar
-          ClipRRect(
-            borderRadius: BorderRadius.circular(3),
-            child: Stack(
-              children: [
-                Container(
-                  height: 3,
+                  padding: const EdgeInsets.all(3),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(3),
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  child: Icon(
+                    Icons.military_tech_rounded,
+                    size: 12,
+                    color: theme.colorScheme.primary,
                   ),
                 ),
-                FractionallySizedBox(
-                  widthFactor: rankInfo.progress.clamp(0.0, 1.0),
-                  child: Container(
-                    height: 3,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary,
-                      borderRadius: BorderRadius.circular(3),
-                    ),
+                const SizedBox(width: 5),
+                Text(
+                  'Rütbe',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.45),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 10,
+                    letterSpacing: 0.2,
                   ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 4),
+            const SizedBox(height: 6),
 
-          // Score & Progress
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'TP $score',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 10,
-                ),
+            // Rank Name
+            Text(
+              rankInfo.current.name,
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w800,
+                fontSize: 13,
+                letterSpacing: -0.2,
+                height: 1.1,
               ),
-              Text(
-                '%${(rankInfo.progress * 100).toInt()}',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
-                  fontWeight: FontWeight.w600,
-                  fontSize: 9,
-                ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 5),
+
+            // Progress bar
+            ClipRRect(
+              borderRadius: BorderRadius.circular(3),
+              child: Stack(
+                children: [
+                  Container(
+                    height: 3,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+                  FractionallySizedBox(
+                    widthFactor: rankInfo.progress.clamp(0.0, 1.0),
+                    child: Container(
+                      height: 3,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary,
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ],
-      ),
+            ),
+            const SizedBox(height: 4),
+
+            // Score & Progress
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'TP $score',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 10,
+                  ),
+                ),
+                Text(
+                  '%${(rankInfo.progress * 100).toInt()}',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 9,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -546,7 +585,8 @@ class _UltraCompactQuestCard extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<_UltraCompactQuestCard> createState() => _UltraCompactQuestCardState();
+  ConsumerState<_UltraCompactQuestCard> createState() =>
+      _UltraCompactQuestCardState();
 }
 
 class _UltraCompactQuestCardState extends ConsumerState<_UltraCompactQuestCard>
@@ -610,21 +650,23 @@ class _UltraCompactQuestCardState extends ConsumerState<_UltraCompactQuestCard>
         builder: (context, child) {
           return Transform.scale(
             scale: hasClaimable ? _pulseAnimation.value : 1.0,
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: hasClaimable
                       ? [
-                          theme.colorScheme.secondary,
-                          theme.colorScheme.secondary.withValues(alpha: 0.85),
-                        ]
+                    theme.colorScheme.secondary,
+                    theme.colorScheme.secondary.withValues(alpha: 0.85),
+                  ]
                       : [
-                          theme.colorScheme.secondary.withValues(alpha: isDark ? 0.10 : 0.05),
-                          theme.colorScheme.secondary.withValues(alpha: isDark ? 0.05 : 0.02),
-                        ],
+                    theme.colorScheme.secondary
+                        .withValues(alpha: isDark ? 0.10 : 0.05),
+                    theme.colorScheme.secondary
+                        .withValues(alpha: isDark ? 0.05 : 0.02),
+                  ],
                 ),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
@@ -635,12 +677,13 @@ class _UltraCompactQuestCardState extends ConsumerState<_UltraCompactQuestCard>
                 ),
                 boxShadow: hasClaimable
                     ? [
-                        BoxShadow(
-                          color: theme.colorScheme.secondary.withValues(alpha: 0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ]
+                  BoxShadow(
+                    color: theme.colorScheme.secondary
+                        .withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
                     : null,
               ),
               child: Column(
@@ -655,7 +698,8 @@ class _UltraCompactQuestCardState extends ConsumerState<_UltraCompactQuestCard>
                         decoration: BoxDecoration(
                           color: hasClaimable
                               ? Colors.white.withValues(alpha: 0.2)
-                              : theme.colorScheme.secondary.withValues(alpha: 0.1),
+                              : theme.colorScheme.secondary
+                              .withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(5),
                         ),
                         child: Icon(
@@ -672,7 +716,8 @@ class _UltraCompactQuestCardState extends ConsumerState<_UltraCompactQuestCard>
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: hasClaimable
                               ? Colors.white.withValues(alpha: 0.95)
-                              : theme.colorScheme.onSurface.withValues(alpha: 0.45),
+                              : theme.colorScheme.onSurface
+                              .withValues(alpha: 0.45),
                           fontWeight: FontWeight.w600,
                           fontSize: 10,
                           letterSpacing: 0.2,
@@ -707,7 +752,8 @@ class _UltraCompactQuestCardState extends ConsumerState<_UltraCompactQuestCard>
                           decoration: BoxDecoration(
                             color: hasClaimable
                                 ? Colors.white.withValues(alpha: 0.25)
-                                : theme.colorScheme.secondary.withValues(alpha: 0.1),
+                                : theme.colorScheme.secondary
+                                .withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(3),
                           ),
                         ),
@@ -731,7 +777,8 @@ class _UltraCompactQuestCardState extends ConsumerState<_UltraCompactQuestCard>
                   // Status text
                   if (hasClaimable)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(5),
@@ -751,13 +798,15 @@ class _UltraCompactQuestCardState extends ConsumerState<_UltraCompactQuestCard>
                         Icon(
                           Icons.schedule_rounded,
                           size: 10,
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.35),
                         ),
                         const SizedBox(width: 3),
                         Text(
                           _formatRemaining(remaining),
                           style: theme.textTheme.labelSmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.35),
                             fontWeight: FontWeight.w600,
                             fontSize: 9,
                           ),
@@ -768,7 +817,8 @@ class _UltraCompactQuestCardState extends ConsumerState<_UltraCompactQuestCard>
                     Text(
                       progress >= 1.0 ? '✓ Tamam' : 'Yok',
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
+                        color: theme.colorScheme.onSurface
+                            .withValues(alpha: 0.35),
                         fontWeight: FontWeight.w600,
                         fontSize: 9,
                       ),
