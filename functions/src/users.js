@@ -172,7 +172,7 @@ async function processAudienceInBatches(audience, batchCallback) {
  * - İşlem süresi dramatik olarak kısaltıldı (Bekleme süresi minimize edildi).
  * - Auth silme işlemi veri temizliğinden sonra güvenli bir şekilde yapılır.
  */
-const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, enforceAppCheck: true, maxInstances: 10 }, async (request) => {
+const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, enforceAppCheck: false, maxInstances: 10 }, async (request) => {
   if (!request.auth) {
     throw new Error("The function must be called while authenticated.");
   }
