@@ -42,7 +42,7 @@ const MONTHLY_LIMITS = {
   workshop: 350,    // Cevher Atölyesi
   weekly_plan: 60,  // Haftalık Plan
   chat: 2000,        // Sohbet / Motivasyon
-  question_solver: 400 // Soru Çözücü
+  question_solver: 1000 // Soru Çözücü
 };
 
 // Exponential backoff ile retry helper
@@ -113,10 +113,10 @@ exports.generateGemini = onCall(
 
     // Model seçimi: Politika gereği tüm çağrılar sabit model kullanır
     const requestedModel = typeof request.data?.model === "string" ? String(request.data.model).trim() : null;
-    if (requestedModel && requestedModel.toLowerCase() !== "gemini-2.5-flash-lite") {
-      logger.info("Model override enforced", { requestedModel, enforced: "gemini-2.5-flash-lite" });
+    if (requestedModel && requestedModel.toLowerCase() !== "gemini-2.5-flash") {
+      logger.info("Model override enforced", { requestedModel, enforced: "gemini-2.5-flash" });
     }
-    const modelId = "gemini-2.5-flash-lite";
+    const modelId = "gemini-2.5-flash";
 
     if (typeof prompt !== "string" || !prompt.trim()) {
       throw new HttpsError("invalid-argument", "Geçerli bir prompt gerekli");
