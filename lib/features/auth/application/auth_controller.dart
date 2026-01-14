@@ -11,6 +11,7 @@ import 'package:flutter/foundation.dart'; // kDebugMode ve debugPrint için
 import '../../../shared/notifications/notification_service.dart';
 import '../../../core/services/admob_service.dart';
 import '../../../core/services/revenuecat_service.dart'; // RevenueCat Service
+import '../../../core/app_check/app_check_helper.dart'; // [EKLENDİ] App Check Helper
 
 final authControllerProvider = StreamNotifierProvider<AuthController, User?>(() {
   return AuthController();
@@ -237,8 +238,14 @@ class AuthController extends StreamNotifier<User?> {
     DateTime? dateOfBirth,
     required String email,
     required String password,
-  }) {
+  }) async { // [DEĞİŞTİRİLDİ] async eklendi
     final authRepository = ref.read(authRepositoryProvider);
+
+    // [EKLENDİ] App Check token'ının hazır olduğundan emin ol (Race condition önleyici)
+    // Bu işlem, kayıt sürecinde token'ın eksik olması nedeniyle oluşan
+    // 'permission-denied' hatalarını önler.
+    await ensureAppCheckTokenReady();
+
     return authRepository.signUpWithEmailAndPassword(
       firstName: firstName,
       lastName: lastName,
