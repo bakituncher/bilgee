@@ -15,8 +15,9 @@ class Step1TestInfo extends ConsumerWidget {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
 
-    final isButtonEnabled =
-        state.testName.trim().isNotEmpty && state.selectedSection != null;
+    // Buton aktiflik kontrolü
+    final isButtonEnabled = state.testName.trim().isNotEmpty &&
+        (state.selectedSection != null || (state.isBranchMode && state.selectedBranchSubject != null));
 
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
@@ -32,21 +33,23 @@ class Step1TestInfo extends ConsumerWidget {
                 color: theme.colorScheme.surfaceVariant,
               ),
               child: Icon(
-                Icons.edit_note_rounded,
+                state.isBranchMode ? Icons.category_rounded : Icons.edit_note_rounded,
                 size: 36,
                 color: theme.colorScheme.primary,
               ),
             ),
             const SizedBox(height: 20),
             Text(
-              "Yeni Deneme Ekle",
+              state.isBranchMode ? "Branş Denemesi" : "Yeni Deneme Ekle",
               style: textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              "Denemenin temel bilgilerini girerek başlayalım.",
+              state.isBranchMode
+                  ? "Hangi dersin denemesini çözdün?"
+                  : "Denemenin temel bilgilerini girerek başlayalım.",
               textAlign: TextAlign.center,
               style: textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
@@ -55,9 +58,9 @@ class Step1TestInfo extends ConsumerWidget {
           ],
         ),
 
-        const SizedBox(height: 48),
+        const SizedBox(height: 40),
 
-        /// TEST NAME
+        /// TEST NAME (Her iki modda da gerekli)
         Text(
           "Deneme Adı",
           style: textTheme.titleMedium?.copyWith(
@@ -68,7 +71,7 @@ class Step1TestInfo extends ConsumerWidget {
         TextFormField(
           initialValue: state.testName,
           decoration: InputDecoration(
-            hintText: "Örn: 3D Türkiye Geneli",
+            hintText: "Örn: 3D Yayınları 5. Deneme",
             prefixIcon: Icon(
               Icons.description_outlined,
               color: theme.colorScheme.onSurfaceVariant,
@@ -90,25 +93,17 @@ class Step1TestInfo extends ConsumerWidget {
           onChanged: notifier.setTestName,
         ),
 
-        const SizedBox(height: 40),
+        const SizedBox(height: 32),
 
-        /// SECTION SELECTION
-        if (state.availableSections.length > 1) ...[
-          Text(
-            "Deneme Türü",
-            style: textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 16),
-          ...state.availableSections.map(
-                (section) => _SectionSelectionCard(
-              section: section,
-              isSelected: state.selectedSection == section,
-              onTap: () => notifier.setSection(section),
-            ),
-          ),
-        ],
+        /// MODE SELECTION AREA
+        AnimatedCrossFade(
+          duration: const Duration(milliseconds: 300),
+          firstChild: _buildGeneralMode(context, state, notifier),
+          secondChild: _buildBranchMode(context, state, notifier),
+          crossFadeState: state.isBranchMode
+              ? CrossFadeState.showSecond
+              : CrossFadeState.showFirst,
+        ),
 
         const SizedBox(height: 48),
 
@@ -124,10 +119,8 @@ class Step1TestInfo extends ConsumerWidget {
                 elevation: isButtonEnabled ? 2 : 0,
                 backgroundColor: theme.colorScheme.primary,
                 foregroundColor: theme.colorScheme.onPrimary,
-                disabledBackgroundColor:
-                theme.colorScheme.surfaceVariant,
-                disabledForegroundColor:
-                theme.colorScheme.onSurfaceVariant,
+                disabledBackgroundColor: theme.colorScheme.surfaceVariant,
+                disabledForegroundColor: theme.colorScheme.onSurfaceVariant,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -143,14 +136,178 @@ class Step1TestInfo extends ConsumerWidget {
           ),
         ),
       ]
-          .animate(interval: 70.ms)
+          .animate(interval: 50.ms)
           .fadeIn(duration: 300.ms)
-          .slideY(begin: 0.12),
+          .slideY(begin: 0.1),
+    );
+  }
+
+  // --- GENEL DENEME MODU GÖRÜNÜMÜ ---
+  Widget _buildGeneralMode(BuildContext context, AddTestState state, AddTestNotifier notifier) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Deneme Türü",
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Mevcut Bölümler (TYT, AYT vb.)
+        ...state.availableSections.map(
+              (section) => _SectionSelectionCard(
+            section: section,
+            isSelected: state.selectedSection == section && !state.isBranchMode,
+            onTap: () {
+              notifier.setBranchMode(false); // Garanti olsun
+              notifier.setSection(section);
+            },
+          ),
+        ),
+
+        const SizedBox(height: 24),
+
+        // --- VEYA --- Ayracı
+        Row(
+          children: [
+            Expanded(child: Divider(color: theme.colorScheme.outlineVariant)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                "VEYA",
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            Expanded(child: Divider(color: theme.colorScheme.outlineVariant)),
+          ],
+        ),
+
+        const SizedBox(height: 24),
+
+        // Branş Denemesi Butonu
+        InkWell(
+          onTap: () {
+            notifier.setBranchMode(true);
+            // Eğer daha önce bir bölüm seçilmediyse varsayılan olarak ilkini seç (dersleri listelemek için)
+            if (state.selectedSection == null && state.availableSections.isNotEmpty) {
+              notifier.setSection(state.availableSections.first);
+            }
+          },
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+            decoration: BoxDecoration(
+              border: Border.all(color: theme.colorScheme.primary, width: 1.5),
+              borderRadius: BorderRadius.circular(16),
+              color: theme.colorScheme.surface,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.category_outlined, color: theme.colorScheme.primary),
+                const SizedBox(width: 12),
+                Text(
+                  "Branş Denemesi Ekle",
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // --- BRANŞ DENEMESİ MODU GÖRÜNÜMÜ ---
+  Widget _buildBranchMode(BuildContext context, AddTestState state, AddTestNotifier notifier) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Geri Dön butonu (Genel Moda geçiş)
+        TextButton.icon(
+          onPressed: () => notifier.setBranchMode(false),
+          icon: const Icon(Icons.arrow_back, size: 18),
+          label: const Text("Genel Deneme Türüne Dön"),
+          style: TextButton.styleFrom(
+            padding: EdgeInsets.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // Bölüm Seçimi (Branch modunda hangi sınavın dersi?)
+        // Eğer birden fazla bölüm varsa (Örn: TYT ve AYT), kullanıcı önce onu seçmeli
+        if (state.availableSections.length > 1) ...[
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: state.availableSections.map((section) {
+                final isSelected = state.selectedSection == section;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: ChoiceChip(
+                    label: Text(section.name),
+                    selected: isSelected,
+                    onSelected: (selected) {
+                      if (selected) notifier.setSection(section);
+                    },
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+
+        Text(
+          "Ders Seçimi",
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Seçili bölümün dersleri
+        if (state.selectedSection != null)
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: state.selectedSection!.subjects.keys.map((subject) {
+              final isSelected = state.selectedBranchSubject == subject;
+              return ChoiceChip(
+                label: Text(subject),
+                selected: isSelected,
+                showCheckmark: true,
+                onSelected: (selected) {
+                  if (selected) notifier.setBranchSubject(subject);
+                },
+                selectedColor: theme.colorScheme.primaryContainer,
+                labelStyle: TextStyle(
+                  color: isSelected ? theme.colorScheme.onPrimaryContainer : null,
+                  fontWeight: isSelected ? FontWeight.bold : null,
+                ),
+              );
+            }).toList(),
+          )
+        else
+          const Text("Lütfen önce yukarıdan bir sınav türü seçin."),
+      ],
     );
   }
 }
 
-/// SECTION CARD (RENK ÇAKIŞMASI YOK)
+// Yardımcı Kart Widget'ı (Değişmedi)
 class _SectionSelectionCard extends StatelessWidget {
   final ExamSection section;
   final bool isSelected;
@@ -165,7 +322,6 @@ class _SectionSelectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
     return AnimatedContainer(
       duration: const Duration(milliseconds: 180),
       margin: const EdgeInsets.only(bottom: 12),
@@ -198,7 +354,7 @@ class _SectionSelectionCard extends StatelessWidget {
               ),
               const SizedBox(width: 16),
               Text(
-                section.name,
+                section.name, // Örn: TYT
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: theme.colorScheme.onSurface,
