@@ -178,8 +178,10 @@ class SubjectSolutionsScreen extends ConsumerWidget {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (_) => SavedSolutionDetailScreen(solution: solution),
+                        PageRouteBuilder(
+                          pageBuilder: (context, animation, secondaryAnimation) => SavedSolutionDetailScreen(solution: solution),
+                          transitionDuration: Duration.zero,
+                          reverseTransitionDuration: Duration.zero,
                         ),
                       );
                     },

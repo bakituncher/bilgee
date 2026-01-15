@@ -314,11 +314,13 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
     // Çözüm Arşivi ekranını seçim modunda aç
     final selectedSubject = await Navigator.push<String>(
       context,
-      MaterialPageRoute(
-        builder: (_) => SavedSolutionsScreen(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => SavedSolutionsScreen(
           isSelectionMode: true,
           availableSubjects: availableSubjects,
         ),
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
       ),
     );
 
@@ -406,7 +408,11 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
   void _openSavedSolutions() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const SavedSolutionsScreen()),
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => const SavedSolutionsScreen(),
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+      ),
     );
   }
 
