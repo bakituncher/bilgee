@@ -6,9 +6,22 @@ import 'package:taktik/data/models/user_model.dart';
 class StatsCalculator {
   /// Ortalama net hesapla
   static String calculateAvgNet(UserModel user, List<TestModel> tests) {
-    final testCount = user.testCount ?? tests.length;
-    final totalNet = user.totalNetSum ??
-        tests.fold<double>(0, (sum, t) => sum + t.totalNet);
+    // Önemli: Bu fonksiyon bazı yerlerde filtrelenmiş test listesiyle (örn. ana sınavlar)
+    // çağrılıyor. User modelindeki testCount/totalNetSum alanları branş denemelerini de
+    // içerebileceği için, liste verildiyse öncelik her zaman bu liste olmalı.
+
+    final int testCount;
+    final double totalNet;
+
+    if (tests.isNotEmpty) {
+      testCount = tests.length;
+      totalNet = tests.fold<double>(0, (sum, t) => sum + t.totalNet);
+    } else {
+      // Fallback: elde test listesi yoksa user aggregate değerlerini kullan.
+      testCount = user.testCount;
+      totalNet = user.totalNetSum;
+    }
+
     final avgNet = testCount > 0 ? (totalNet / testCount) : 0.0;
     return avgNet.toStringAsFixed(1);
   }
@@ -63,4 +76,3 @@ class StatsCalculator {
     return streak;
   }
 }
-

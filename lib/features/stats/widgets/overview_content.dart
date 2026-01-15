@@ -36,8 +36,11 @@ class OverviewContent extends ConsumerWidget {
       return _buildEmptyState(context, ref);
     }
 
-    final streak = StatsCalculator.calculateStreak(tests);
-    final avgNet = StatsCalculator.calculateAvgNet(user, tests);
+    // Hero kart ve genel metrikler branş denemelerinden etkilenmesin.
+    final mainExamTests = tests.where((t) => !t.isBranchTest).toList();
+
+    final streak = StatsCalculator.calculateStreak(mainExamTests);
+    final avgNet = StatsCalculator.calculateAvgNet(user, mainExamTests);
 
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
@@ -48,7 +51,7 @@ class OverviewContent extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
             child: PremiumHeroCard(
               user: user,
-              tests: tests,
+              tests: mainExamTests,
               isDark: isDark,
               streak: streak,
               avgNet: avgNet,
