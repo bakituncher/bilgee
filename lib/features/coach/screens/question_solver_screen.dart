@@ -18,6 +18,8 @@ import 'package:taktik/features/coach/services/question_solver_service.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/data/models/exam_model.dart';
+import 'package:taktik/core/utils/exam_utils.dart';
 
 // Basit mesaj modeli
 class SolverMessage {
@@ -294,19 +296,51 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
 
     if (_finalImageFile == null || contentToSave == null) return;
 
+    // Kullanıcının derslerini al
+    final availableSubjects = await _getUserSubjects();
+
+    if (availableSubjects.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ders listesi yüklenemedi'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    // Çözüm Arşivi ekranını seçim modunda aç
+    final selectedSubject = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SavedSolutionsScreen(
+          isSelectionMode: true,
+          availableSubjects: availableSubjects,
+        ),
+      ),
+    );
+
+    if (selectedSubject == null) return; // Kullanıcı iptal etti
+
     try {
       final imageFile = File(_finalImageFile!.path);
 
       await ref.read(savedSolutionsProvider.notifier).saveSolution(
         imageFile: imageFile,
         solutionText: contentToSave,
-        subject: "Matematik", // İstersen analizden dersi de çekebiliriz
+        subject: selectedSubject,
       );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(_isChatMode ? 'Çözüm ve sohbet kaydedildi!' : 'Çözüm kaydedildi!'),
+            content: Text(
+              _isChatMode
+                  ? '✅ "$selectedSubject" klasörüne kaydedildi!'
+                  : '✅ "$selectedSubject" klasörüne kaydedildi!',
+            ),
             backgroundColor: Colors.green,
             action: SnackBarAction(
               label: 'Görüntüle',
@@ -324,6 +358,50 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
       }
     }
   }
+
+  // Kullanıcının sınavına göre dersleri getir
+  Future<List<String>> _getUserSubjects() async {
+    try {
+      final user = ref.read(userProfileProvider).value;
+      if (user?.selectedExam == null) {
+        debugPrint('❌ Kullanıcının seçili sınavı yok');
+        return [];
+      }
+
+      debugPrint('✅ Kullanıcı sınavı: ${user!.selectedExam}');
+
+      // ExamType enum'ını al
+      final examType = ExamType.values.firstWhere(
+        (e) => e.name == user.selectedExam,
+        orElse: () => ExamType.yks,
+      );
+
+      debugPrint('✅ Exam type: ${examType.name}');
+
+      // Exam verisini yükle
+      final exam = await ExamData.getExamByType(examType);
+      debugPrint('✅ Exam data yüklendi: ${exam.name}');
+
+      // Kullanıcının ilgili bölümlerini al
+      final relevantSections = ExamUtils.getRelevantSectionsForUser(user, exam);
+      debugPrint('✅ İlgili bölümler: ${relevantSections.map((s) => s.name).join(", ")}');
+
+      // Tüm dersleri topla (Set kullanarak tekrarları engelle)
+      final subjects = <String>{};
+      for (final section in relevantSections) {
+        subjects.addAll(section.subjects.keys);
+      }
+
+      debugPrint('✅ Toplam ${subjects.length} ders bulundu: ${subjects.join(", ")}');
+
+      // Alfabetik sırala ve döndür
+      return subjects.toList()..sort();
+    } catch (e) {
+      debugPrint('❌ Ders listesi alınırken hata: $e');
+      return [];
+    }
+  }
+
 
   void _openSavedSolutions() {
     Navigator.push(
