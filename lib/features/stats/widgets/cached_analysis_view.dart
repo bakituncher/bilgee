@@ -80,13 +80,13 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
             gradient: LinearGradient(
               colors: isDark
                   ? [
-                      Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                      Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.25),
-                    ]
+                Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.25),
+              ]
                   : [
-                      Theme.of(context).cardColor.withValues(alpha: 0.95),
-                      Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-                    ],
+                Theme.of(context).cardColor.withValues(alpha: 0.95),
+                Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+              ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -99,7 +99,7 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
             ),
             boxShadow: [
               BoxShadow(
-                color: isDark 
+                color: isDark
                     ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.06)
                     : Colors.black.withValues(alpha: 0.08),
                 blurRadius: 10,
@@ -113,13 +113,13 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
               gradient: LinearGradient(
                 colors: isDark
                     ? [
-                        Theme.of(context).colorScheme.primary.withValues(alpha: 0.9),
-                        Theme.of(context).colorScheme.primary.withValues(alpha: 0.75),
-                      ]
+                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.9),
+                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.75),
+                ]
                     : [
-                        Theme.of(context).colorScheme.secondary,
-                        Theme.of(context).colorScheme.secondary.withValues(alpha: 0.88),
-                      ],
+                  Theme.of(context).colorScheme.secondary,
+                  Theme.of(context).colorScheme.secondary.withValues(alpha: 0.88),
+                ],
               ),
               borderRadius: BorderRadius.circular(11),
               boxShadow: [
@@ -229,15 +229,15 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
     // Sekme bazlı özellikler
     final features = title == 'Taktik Raporun'
         ? [
-            _FeatureItem(Icons.psychology_rounded, 'Yapay Zeka Analizi', 'Performansını derinlemesine analiz et'),
-            _FeatureItem(Icons.lightbulb_rounded, 'Kişisel Öneriler', 'Sana özel strateji tavsiyeleri'),
-            _FeatureItem(Icons.trending_up_rounded, 'Gelişim Yol Haritası', 'Adım adım ilerleme planı'),
-          ]
+      _FeatureItem(Icons.psychology_rounded, 'Yapay Zeka Analizi', 'Performansını derinlemesine analiz et'),
+      _FeatureItem(Icons.lightbulb_rounded, 'Kişisel Öneriler', 'Sana özel strateji tavsiyeleri'),
+      _FeatureItem(Icons.trending_up_rounded, 'Gelişim Yol Haritası', 'Adım adım ilerleme planı'),
+    ]
         : [
-            _FeatureItem(Icons.menu_book_rounded, 'Ders Bazlı Analiz', 'Her ders için detaylı istatistik'),
-            _FeatureItem(Icons.pie_chart_rounded, 'Konu Dağılımı', 'Güçlü ve zayıf yönlerini keşfet'),
-            _FeatureItem(Icons.compare_arrows_rounded, 'Karşılaştırmalı Görünüm', 'Dersler arası performans farkı'),
-          ];
+      _FeatureItem(Icons.menu_book_rounded, 'Ders Bazlı Analiz', 'Her ders için detaylı istatistik'),
+      _FeatureItem(Icons.pie_chart_rounded, 'Konu Dağılımı', 'Güçlü ve zayıf yönlerini keşfet'),
+      _FeatureItem(Icons.compare_arrows_rounded, 'Karşılaştırmalı Görünüm', 'Dersler arası performans farkı'),
+    ];
 
     return Container(
       decoration: BoxDecoration(
@@ -268,7 +268,7 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
                       border: Border.all(color: Colors.amber.withOpacity(0.15), width: 2),
                     ),
                   ).animate(onPlay: (c) => c.repeat())
-                    .scale(begin: const Offset(0.95, 0.95), end: const Offset(1.08, 1.08), duration: 2000.ms, curve: Curves.easeInOut),
+                      .scale(begin: const Offset(0.95, 0.95), end: const Offset(1.08, 1.08), duration: 2000.ms, curve: Curves.easeInOut),
                   // Ana ikon
                   Container(
                     padding: const EdgeInsets.all(16),
@@ -345,10 +345,10 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
                   ),
                 ),
               ).animate()
-                .fadeIn(delay: 350.ms)
-                .slideY(begin: 0.1, duration: 300.ms)
-                .then()
-                .shimmer(duration: 2000.ms, delay: 500.ms, color: Colors.white38),
+                  .fadeIn(delay: 350.ms)
+                  .slideY(begin: 0.1, duration: 300.ms)
+                  .then()
+                  .shimmer(duration: 2000.ms, delay: 500.ms, color: Colors.white38),
             ],
           ),
         ),
@@ -406,8 +406,8 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
         ],
       ),
     ).animate()
-      .fadeIn(delay: Duration(milliseconds: 200 + (index * 60)))
-      .slideX(begin: 0.08, duration: 300.ms, curve: Curves.easeOutCubic);
+        .fadeIn(delay: Duration(milliseconds: 200 + (index * 60)))
+        .slideX(begin: 0.08, duration: 300.ms, curve: Curves.easeOutCubic);
   }
 
   // Tab 1: Özet (Grafik + Metrikler)
