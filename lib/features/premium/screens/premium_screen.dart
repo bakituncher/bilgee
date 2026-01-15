@@ -74,12 +74,32 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     super.initState();
     _backgroundController = AnimationController(vsync: this, duration: const Duration(seconds: 15))..repeat();
     _pulseController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1500))..repeat(reverse: true);
+    _featurePageController = PageController(viewportFraction: 0.85);
+
+    // Otomatik kart geçişi - 3 saniyede bir
+    _startAutoScroll();
+  }
+
+  void _startAutoScroll() {
+    _autoScrollTimer?.cancel();
+    _autoScrollTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      if (!_userInteracting && mounted) {
+        final nextIndex = (_currentCarouselIndex + 1) % _features.length;
+        _featurePageController.animateToPage(
+          nextIndex,
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
   }
 
   @override
   void dispose() {
+    _autoScrollTimer?.cancel();
     _backgroundController.dispose();
     _pulseController.dispose();
+    _featurePageController.dispose();
     super.dispose();
   }
 
@@ -336,11 +356,31 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                                 Container(
                                   height: size.height * 0.17,
                                   constraints: const BoxConstraints(minHeight: 115, maxHeight: 150),
-                                  child: PageView.builder(
-                                    controller: PageController(viewportFraction: 0.85),
-                                    itemCount: _features.length,
-                                    onPageChanged: (i) => setState(() => _currentCarouselIndex = i),
-                                    itemBuilder: (ctx, index) => _buildModernFeatureCard(_features[index], index == _currentCarouselIndex),
+                                  child: GestureDetector(
+                                    onPanDown: (_) {
+                                      setState(() => _userInteracting = true);
+                                    },
+                                    onPanEnd: (_) {
+                                      // Kullanıcı etkileşimi bittikten 5 saniye sonra otomatik scroll'u tekrar başlat
+                                      Future.delayed(const Duration(seconds: 5), () {
+                                        if (mounted) {
+                                          setState(() => _userInteracting = false);
+                                        }
+                                      });
+                                    },
+                                    onPanCancel: () {
+                                      Future.delayed(const Duration(seconds: 5), () {
+                                        if (mounted) {
+                                          setState(() => _userInteracting = false);
+                                        }
+                                      });
+                                    },
+                                    child: PageView.builder(
+                                      controller: _featurePageController,
+                                      itemCount: _features.length,
+                                      onPageChanged: (i) => setState(() => _currentCarouselIndex = i),
+                                      itemBuilder: (ctx, index) => _buildModernFeatureCard(_features[index]),
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(height: 8),
@@ -614,62 +654,56 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     );
   }
 
-  Widget _buildModernFeatureCard(Map<String, dynamic> item, bool isActive) {
+  Widget _buildModernFeatureCard(Map<String, dynamic> item) {
     // Burada constraints hatası almamak için LayoutBuilder kullanılabilir ama
     // basitçe Container ile yapıyoruz.
-    return AnimatedScale(
-      scale: isActive ? 1.0 : 0.9,
-      duration: const Duration(milliseconds: 300),
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isActive ? Colors.white : Colors.white.withOpacity(0.6),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: isActive ? _primaryPink.withOpacity(0.5) : Colors.transparent,
-            width: 1,
-          ),
-          boxShadow: [
-            if(isActive)
-              BoxShadow(color: _primaryPink.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4))
-          ],
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: _primaryPink.withOpacity(0.3),
+          width: 1,
         ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                gradient: isActive ? LinearGradient(colors: [_primaryPink, _purpleAccent]) : null,
-                color: isActive ? null : _textSecondary.withOpacity(0.05),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(item['icon'], color: isActive ? Colors.white : _textSecondary, size: 20),
+        boxShadow: [
+          BoxShadow(color: _primaryPink.withOpacity(0.08), blurRadius: 10, offset: const Offset(0, 4))
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: [_primaryPink, _purpleAccent]),
+              shape: BoxShape.circle,
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                      item['title'],
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isActive ? _textPrimary : _textSecondary)
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                      item['desc'],
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 10.5, color: _textSecondary, height: 1.2)
-                  ),
-                ],
-              ),
-            )
-          ],
-        ),
+            child: Icon(item['icon'], color: Colors.white, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                    item['title'],
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: _textPrimary)
+                ),
+                const SizedBox(height: 2),
+                Text(
+                    item['desc'],
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 10.5, color: _textSecondary, height: 1.2)
+                ),
+              ],
+            ),
+          )
+        ],
       ),
     );
   }
