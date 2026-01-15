@@ -13,7 +13,6 @@ Bu adayın {{EXAM_NAME}} atanma hedefi için mevcut zamanını maksimum verimle 
 - Her günün schedule listesi DOLU olmalı (boş gün yasak)
 - Belirsiz ifadeler yasak: "Serbest çalışma", "...", "[TODO]" gibi
 - Sadece kullanıcının müsait olduğu saatlere görev ata
-- İş saatleri dışında verimli planlama yap
 
 ### 2. KPSS SINAV TİPİNE ÖZEL İÇERİK
 - {{EXAM_NAME}} için uygun konular seç
