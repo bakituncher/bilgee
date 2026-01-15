@@ -25,11 +25,14 @@ class PremiumScreen extends ConsumerStatefulWidget {
 class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProviderStateMixin {
   late final AnimationController _backgroundController;
   late final AnimationController _pulseController;
+  late final PageController _featurePageController;
+  Timer? _autoScrollTimer;
 
   // State
   bool _isPurchasing = false;
   Package? _selectedPackage;
   int _currentCarouselIndex = 0;
+  bool _userInteracting = false;
 
   // Modern Brand Colors - Premium Pink Theme (Instagram/Google Level)
   final Color _bgLight = const Color(0xFFFFFBFE);
@@ -46,8 +49,8 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
   final List<Map<String, dynamic>> _features = [
     {
       'icon': Icons.school_rounded,
-      'title': "Sınırsız Özel Ders Koçu",
-      'desc': "Taktik Tavşan 7/24 yanınızda, her soruna çözüm."
+      'title': "Saniyeler İçinde Çözdür",
+      'desc': "Sorunun fotoğrafını çek, anında çözüm al."
     },
     {
       'icon': Icons.bolt_rounded,
