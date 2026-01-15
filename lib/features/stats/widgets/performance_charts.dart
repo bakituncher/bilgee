@@ -55,8 +55,44 @@ class _SmartPerformanceChartsState extends State<SmartPerformanceCharts> {
     final examType = widget.examType;
     final List<ChartData> chartDataList = [];
 
+    // Branş denemeleri için
+    if (examType == 'BRANCH') {
+      final groupedTests = <String, List<TestModel>>{};
+      for (final test in tests) {
+        (groupedTests[test.sectionName] ??= []).add(test);
+      }
+
+      final colors = [
+        const Color(0xFFF59E0B), // Amber
+        const Color(0xFFEF4444), // Red
+        const Color(0xFF8B5CF6), // Purple
+        const Color(0xFF06B6D4), // Cyan
+        const Color(0xFFEC4899), // Pink
+        const Color(0xFF10B981), // Emerald
+      ];
+      final icons = [
+        Icons.menu_book_rounded,
+        Icons.science_rounded,
+        Icons.calculate_rounded,
+        Icons.language_rounded,
+        Icons.public_rounded,
+        Icons.psychology_rounded,
+      ];
+
+      int index = 0;
+      for (final entry in groupedTests.entries) {
+        chartDataList.add(ChartData(
+          tests: entry.value,
+          title: entry.key,
+          subtitle: '${entry.value.length} deneme',
+          icon: icons[index % icons.length],
+          baseColor: colors[index % colors.length],
+        ));
+        index++;
+      }
+    }
     // YKS için TYT ve AYT'yi ayır
-    if (examType == 'YKS') {
+    else if (examType == 'YKS') {
       final tytTests = tests.where((t) => t.sectionName.toUpperCase() == 'TYT').toList();
       final aytTests = tests.where((t) => t.sectionName.toUpperCase().startsWith('AYT')).toList();
 

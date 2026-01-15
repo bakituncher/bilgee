@@ -501,3 +501,4 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
     );
   }
 }
+

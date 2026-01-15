@@ -77,6 +77,28 @@ class TestModel {
 }
 
 extension TestModelSummaryX on TestModel {
+  // Branş denemesi mi kontrol et (sectionName bir ders adıysa branş denemesidir)
+  // Normal bölüm adları: TYT, AYT (ve tüm alt türleri), LGS, KPSS, AGS, YDT
+  bool get isBranchTest {
+    final sectionUpper = sectionName.toUpperCase().trim();
+
+    // Ana sınav bölümleri - büyük/küçük harf duyarsız kontrol
+    final mainSections = ['TYT', 'LGS', 'KPSS', 'AGS', 'YDT'];
+
+    // Direkt eşleşme kontrolü
+    if (mainSections.contains(sectionUpper)) {
+      return false;
+    }
+
+    // AYT ve alt türleri (AYT-SAY, AYT-EA, AYT-SOZ, AYT-DIL, vs.)
+    if (sectionUpper.startsWith('AYT')) {
+      return false;
+    }
+
+    // Diğer her şey branş denemesi sayılır (Matematik, Türkçe, Fizik, vs.)
+    return true;
+  }
+
   // Kullanıcının performansına göre bir "Bilgelik Puanı" hesaplar.
   double get wisdomScore {
     if (totalQuestions == 0) return 0;
