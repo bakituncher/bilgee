@@ -111,12 +111,13 @@ exports.generateGemini = onCall(
       temperature = Math.min(temperature, 0.3);
     }
 
-    // Model seçimi: Politika gereği tüm çağrılar sabit model kullanır
+    // Model seçimi: Soru çözücü için gemini-3-flash-preview, diğerleri için gemini-2.5-flash-lite
     const requestedModel = typeof request.data?.model === "string" ? String(request.data.model).trim() : null;
-    if (requestedModel && requestedModel.toLowerCase() !== "gemini-2.5-flash") {
-      logger.info("Model override enforced", { requestedModel, enforced: "gemini-2.5-flash" });
+    const modelId = requestType === 'question_solver' ? "gemini-3-flash-preview" : "gemini-2.5-flash-lite";
+
+    if (requestedModel && requestedModel.toLowerCase() !== modelId) {
+      logger.info("Model override enforced", { requestedModel, enforced: modelId, requestType });
     }
-    const modelId = "gemini-2.5-flash";
 
     if (typeof prompt !== "string" || !prompt.trim()) {
       throw new HttpsError("invalid-argument", "Geçerli bir prompt gerekli");
