@@ -117,7 +117,7 @@ class Step1TestInfo extends ConsumerWidget {
                 decoration: InputDecoration(
                   hintText: state.isBranchMode
                       ? "Örn: Tarih Branş Denemesi"
-                      : "Örn: 3D Yayınları 5. Deneme",
+                      : "Örn: 3D Yayınları Türkiye Geneli",
                   hintStyle: TextStyle(
                     fontSize: 15,
                     color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
