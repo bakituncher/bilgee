@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:taktik/data/models/test_model.dart';
+import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:taktik/data/providers/temporary_access_provider.dart';
@@ -26,12 +27,11 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   final List<TestModel> _tests = [];
   bool _isLoading = false;
   bool _hasMore = true;
-  static const int _pageSize = 10; // 20 -> 10
-  DocumentSnapshot? _lastVisible; // UI tarafında doküman referansı tutacağız
+  static const int _pageSize = 10;
+  DocumentSnapshot? _lastVisible;
 
-  // YENI: UI durumları
   String _searchQuery = '';
-  String _selectedSection = 'Tümü';
+  String _selectedCategory = 'Tümü';
   _SortOption _sortOption = const _SortOption(field: _SortField.date, descending: true);
 
   @override
@@ -39,7 +39,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     super.initState();
     _scrollController.addListener(_onScroll);
     _loadInitial();
-    // Engagement: Kütüphane ziyareti eylemini bildir
     WidgetsBinding.instance.addPostFrameCallback((_){
       if (!mounted) return;
       ref.read(questNotifierProvider.notifier).userVisitedLibrary();
@@ -76,7 +75,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     final userId = service.getUserId();
     if (userId == null) return;
 
-    // Sadece showLoader true ise (ilk açılışta) yükleniyor işaretini aç
     if (showLoader) {
       setState(() => _isLoading = true);
     }
@@ -90,7 +88,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       });
       await _syncLastVisibleFromLastItem();
     } finally {
-      // Yükleme işareti açıksa kapat
       if (showLoader && mounted) {
         setState(() => _isLoading = false);
       }
@@ -104,7 +101,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     if (userId == null) return;
     setState(() => _isLoading = true);
     try {
-      // _lastVisible yoksa senkronize et
       if (_lastVisible == null && _tests.isNotEmpty) {
         await _syncLastVisibleFromLastItem();
       }
@@ -123,7 +119,116 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     }
   }
 
-  // Premium Renk Paleti
+  // --- YARDIMCI METODLAR ---
+
+  // Filtreleme için kategori belirleme (UI'da göstermiyoruz ama filtrede kullanıyoruz)
+  String _getDisplayCategory(TestModel test) {
+    if (test.isBranchTest) {
+      return test.smartDisplayName; // "Türkçe", "Matematik" vb.
+    }
+    // Ana deneme ise Sınav Türünü kullan (Örn: KPSS Lisans, TYT)
+    return test.examType.displayName;
+  }
+
+  List<TestModel> _applyFiltersAndSort() {
+    Iterable<TestModel> list = _tests;
+
+    // Arama
+    if (_searchQuery.trim().isNotEmpty) {
+      final q = _searchQuery.toLowerCase();
+      list = list.where((t) => t.testName.toLowerCase().contains(q));
+    }
+
+    // Kategori filtresi
+    if (_selectedCategory != 'Tümü') {
+      list = list.where((t) => _getDisplayCategory(t) == _selectedCategory);
+    }
+
+    var tmp = list.toList();
+
+    int compareByField(TestModel a, TestModel b) {
+      switch (_sortOption.field) {
+        case _SortField.date:
+          return a.date.compareTo(b.date);
+        case _SortField.net:
+          return a.totalNet.compareTo(b.totalNet);
+        case _SortField.accuracy:
+          final accA = _accuracy(a);
+          final accB = _accuracy(b);
+          return accA.compareTo(accB);
+      }
+    }
+
+    tmp.sort(compareByField);
+    if (_sortOption.descending) {
+      tmp = tmp.reversed.toList();
+    }
+    return tmp;
+  }
+
+  double _accuracy(TestModel t) {
+    final total = t.totalCorrect + t.totalWrong + t.totalBlank;
+    if (total == 0) return 0.0;
+    return (t.totalCorrect / total) * 100.0;
+  }
+
+  List<String> _availableCategories() {
+    final set = <String>{};
+    for (final t in _tests) {
+      set.add(_getDisplayCategory(t));
+    }
+    final list = set.toList()..sort();
+    return ['Tümü', ...list];
+  }
+
+  void _showSortSheet() {
+    showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).cardColor,
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.today_rounded),
+                title: const Text('Tarih'),
+                trailing: _sortOption.field == _SortField.date ? _sortIcon() : null,
+                onTap: () => setState(() {
+                  _sortOption = _SortOption(field: _SortField.date, descending: _sortOption.field == _SortField.date ? !_sortOption.descending : true);
+                  Navigator.pop(ctx);
+                }),
+              ),
+              ListTile(
+                leading: const Icon(Icons.score_rounded),
+                title: const Text('Toplam Net'),
+                trailing: _sortOption.field == _SortField.net ? _sortIcon() : null,
+                onTap: () => setState(() {
+                  _sortOption = _SortOption(field: _SortField.net, descending: _sortOption.field == _SortField.net ? !_sortOption.descending : true);
+                  Navigator.pop(ctx);
+                }),
+              ),
+              ListTile(
+                leading: const Icon(Icons.check_circle_outline_rounded),
+                title: const Text('Doğruluk'),
+                trailing: _sortOption.field == _SortField.accuracy ? _sortIcon() : null,
+                onTap: () => setState(() {
+                  _sortOption = _SortOption(field: _SortField.accuracy, descending: _sortOption.field == _SortField.accuracy ? !_sortOption.descending : true);
+                  Navigator.pop(ctx);
+                }),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _sortIcon() {
+    return Icon(_sortOption.descending ? Icons.south_rounded : Icons.north_rounded, color: Theme.of(context).colorScheme.primary);
+  }
+
   static const Color _colDeepBlue = Color(0xFF2E3192);
   static const Color _colCyan = Color(0xFF1BFFFF);
 
@@ -181,7 +286,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       backgroundColor: theme.scaffoldBackgroundColor,
       body: Stack(
         children: [
-          // Arka Plan Gradient
           Container(
             decoration: BoxDecoration(
               gradient: RadialGradient(
@@ -189,121 +293,21 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                 radius: 1.6,
                 colors: isDark
                     ? [
-                        _colDeepBlue.withOpacity(0.12),
-                        theme.scaffoldBackgroundColor,
-                      ]
+                  _colDeepBlue.withOpacity(0.12),
+                  theme.scaffoldBackgroundColor,
+                ]
                     : [
-                        _colCyan.withOpacity(0.08),
-                        theme.scaffoldBackgroundColor,
-                      ],
+                  _colCyan.withOpacity(0.08),
+                  theme.scaffoldBackgroundColor,
+                ],
                 stops: const [0.0, 1.0],
               ),
             ),
           ),
-          // İçerik
           _buildBody(textTheme),
         ],
       ),
     );
-  }
-
-  // YENI: Filtre/Sıralama uygulayan yardımcı
-  List<TestModel> _applyFiltersAndSort() {
-    Iterable<TestModel> list = _tests;
-    // Arama
-    if (_searchQuery.trim().isNotEmpty) {
-      final q = _searchQuery.toLowerCase();
-      list = list.where((t) => t.testName.toLowerCase().contains(q));
-    }
-    // Bölüm filtresi
-    if (_selectedSection != 'Tümü') {
-      list = list.where((t) => t.sectionName == _selectedSection);
-    }
-
-    var tmp = list.toList();
-
-    int compareByField(TestModel a, TestModel b) {
-      switch (_sortOption.field) {
-        case _SortField.date:
-          return a.date.compareTo(b.date);
-        case _SortField.net:
-          return a.totalNet.compareTo(b.totalNet);
-        case _SortField.accuracy:
-          final accA = _accuracy(a);
-          final accB = _accuracy(b);
-          return accA.compareTo(accB);
-      }
-    }
-
-    tmp.sort(compareByField);
-    if (_sortOption.descending) {
-      tmp = tmp.reversed.toList();
-    }
-    return tmp;
-  }
-
-  double _accuracy(TestModel t) {
-    // Doğruluk: boş sorular da yüzdelik hesabında paydada yer almalı.
-    // Önceki hali: correct/(correct+wrong) -> boşlar %'yi şişiriyordu.
-    final total = t.totalCorrect + t.totalWrong + t.totalBlank;
-    if (total == 0) return 0.0; // Hiç soru yoksa 0%
-    return (t.totalCorrect / total) * 100.0;
-  }
-
-  // YENI: Mevcut bölümler
-  List<String> _availableSections() {
-    final set = <String>{}..addAll(_tests.map((e) => e.sectionName));
-    final list = set.toList()..sort();
-    return ['Tümü', ...list];
-  }
-
-  // YENI: Sıralama alt sayfası
-  void _showSortSheet() {
-    showModalBottomSheet(
-      context: context,
-      showDragHandle: true,
-      backgroundColor: Theme.of(context).cardColor,
-      builder: (ctx) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.today_rounded),
-                title: const Text('Tarih'),
-                trailing: _sortOption.field == _SortField.date ? _sortIcon() : null,
-                onTap: () => setState(() {
-                  _sortOption = _SortOption(field: _SortField.date, descending: _sortOption.field == _SortField.date ? !_sortOption.descending : true);
-                  Navigator.pop(ctx);
-                }),
-              ),
-              ListTile(
-                leading: const Icon(Icons.score_rounded),
-                title: const Text('Toplam Net'),
-                trailing: _sortOption.field == _SortField.net ? _sortIcon() : null,
-                onTap: () => setState(() {
-                  _sortOption = _SortOption(field: _SortField.net, descending: _sortOption.field == _SortField.net ? !_sortOption.descending : true);
-                  Navigator.pop(ctx);
-                }),
-              ),
-              ListTile(
-                leading: const Icon(Icons.check_circle_outline_rounded),
-                title: const Text('Doğruluk'),
-                trailing: _sortOption.field == _SortField.accuracy ? _sortIcon() : null,
-                onTap: () => setState(() {
-                  _sortOption = _SortOption(field: _SortField.accuracy, descending: _sortOption.field == _SortField.accuracy ? !_sortOption.descending : true);
-                  Navigator.pop(ctx);
-                }),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _sortIcon() {
-    return Icon(_sortOption.descending ? Icons.south_rounded : Icons.north_rounded, color: Theme.of(context).colorScheme.primary);
   }
 
   Widget _buildBody(TextTheme textTheme) {
@@ -322,54 +326,23 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Lottie Animasyonu
                 Container(
-                  constraints: const BoxConstraints(
-                    maxWidth: 280,
-                    maxHeight: 280,
-                  ),
-                  child: Lottie.asset(
-                    'assets/lotties/empty.json',
-                    fit: BoxFit.contain,
-                    repeat: true,
-                  ),
-                ).animate()
-                  .fadeIn(duration: 500.ms)
-                  .scale(begin: const Offset(0.8, 0.8), duration: 600.ms, curve: Curves.easeOutBack),
-
+                  constraints: const BoxConstraints(maxWidth: 280, maxHeight: 280),
+                  child: Lottie.asset('assets/lotties/empty.json', fit: BoxFit.contain, repeat: true),
+                ).animate().fadeIn(duration: 500.ms).scale(begin: const Offset(0.8, 0.8), duration: 600.ms, curve: Curves.easeOutBack),
                 const SizedBox(height: 24),
-
-                // Başlık
                 Text(
                   'Arşivin Henüz Boş',
-                  style: textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 24,
-                    letterSpacing: -0.5,
-                  ),
+                  style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800, fontSize: 24, letterSpacing: -0.5),
                   textAlign: TextAlign.center,
-                ).animate(delay: 200.ms)
-                  .fadeIn(duration: 400.ms)
-                  .slideY(begin: 0.1, duration: 500.ms),
-
+                ).animate(delay: 200.ms).fadeIn(duration: 400.ms).slideY(begin: 0.1, duration: 500.ms),
                 const SizedBox(height: 12),
-
-                // Açıklama
                 Text(
                   'Her deneme, gelecekteki başarının bir kanıtıdır. İlk kaydını ekleyerek yolculuğuna başla ve gelişimini takip et.',
                   textAlign: TextAlign.center,
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    height: 1.5,
-                    fontSize: 15,
-                  ),
-                ).animate(delay: 300.ms)
-                  .fadeIn(duration: 400.ms)
-                  .slideY(begin: 0.1, duration: 500.ms),
-
+                  style: textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.5, fontSize: 15),
+                ).animate(delay: 300.ms).fadeIn(duration: 400.ms).slideY(begin: 0.1, duration: 500.ms),
                 const SizedBox(height: 32),
-
-                // Deneme Ekle Butonu - Premium Gradient Design (Dark Mode Optimized)
                 InkWell(
                   onTap: () => context.push('/home/add-test'),
                   borderRadius: BorderRadius.circular(20),
@@ -381,125 +354,58 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: isDark
-                            ? [
-                                const Color(0xFF3D4DB7).withOpacity(0.35),
-                                const Color(0xFF1BFFFF).withOpacity(0.25),
-                              ]
-                            : [
-                                const Color(0xFF2E3192).withOpacity(0.08),
-                                const Color(0xFF1BFFFF).withOpacity(0.05),
-                              ],
+                            ? [const Color(0xFF3D4DB7).withOpacity(0.35), const Color(0xFF1BFFFF).withOpacity(0.25)]
+                            : [const Color(0xFF2E3192).withOpacity(0.08), const Color(0xFF1BFFFF).withOpacity(0.05)],
                       ),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: isDark
-                            ? const Color(0xFF1BFFFF).withOpacity(0.5)
-                            : const Color(0xFF2E3192).withOpacity(0.25),
-                        width: 2,
-                      ),
+                      border: Border.all(color: isDark ? const Color(0xFF1BFFFF).withOpacity(0.5) : const Color(0xFF2E3192).withOpacity(0.25), width: 2),
                       boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF2E3192).withOpacity(isDark ? 0.4 : 0.15),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
-                          spreadRadius: -2,
-                        ),
-                        BoxShadow(
-                          color: const Color(0xFF1BFFFF).withOpacity(isDark ? 0.35 : 0.2),
-                          blurRadius: 24,
-                          offset: const Offset(0, 12),
-                          spreadRadius: -4,
-                        ),
+                        BoxShadow(color: const Color(0xFF2E3192).withOpacity(isDark ? 0.4 : 0.15), blurRadius: 20, offset: const Offset(0, 8), spreadRadius: -2),
+                        BoxShadow(color: const Color(0xFF1BFFFF).withOpacity(isDark ? 0.35 : 0.2), blurRadius: 24, offset: const Offset(0, 12), spreadRadius: -4),
                       ],
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Gradient Icon Container
                         Container(
                           padding: const EdgeInsets.all(18),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: isDark
-                                  ? [
-                                      const Color(0xFF4D5FD1),
-                                      const Color(0xFF1BFFFF),
-                                    ]
-                                  : [
-                                      const Color(0xFF2E3192),
-                                      const Color(0xFF1BFFFF),
-                                    ],
+                              colors: isDark ? [const Color(0xFF4D5FD1), const Color(0xFF1BFFFF)] : [const Color(0xFF2E3192), const Color(0xFF1BFFFF)],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
                             shape: BoxShape.circle,
                             boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFF2E3192).withOpacity(isDark ? 0.5 : 0.4),
-                                blurRadius: 16,
-                                offset: const Offset(0, 6),
-                              ),
-                              BoxShadow(
-                                color: const Color(0xFF1BFFFF).withOpacity(isDark ? 0.4 : 0.3),
-                                blurRadius: 20,
-                                offset: const Offset(0, 8),
-                                spreadRadius: -4,
-                              ),
+                              BoxShadow(color: const Color(0xFF2E3192).withOpacity(isDark ? 0.5 : 0.4), blurRadius: 16, offset: const Offset(0, 6)),
+                              BoxShadow(color: const Color(0xFF1BFFFF).withOpacity(isDark ? 0.4 : 0.3), blurRadius: 20, offset: const Offset(0, 8), spreadRadius: -4),
                             ],
                           ),
-                          child: const Icon(
-                            Icons.add_chart_rounded,
-                            color: Colors.white,
-                            size: 36,
-                          ),
+                          child: const Icon(Icons.add_chart_rounded, color: Colors.white, size: 36),
                         ),
                         const SizedBox(height: 18),
-                        // Gradient Text - Dark mode için daha parlak
                         ShaderMask(
                           shaderCallback: (bounds) => LinearGradient(
-                            colors: isDark
-                                ? [
-                                    const Color(0xFF6B7FFF),
-                                    const Color(0xFF1BFFFF),
-                                  ]
-                                : [
-                                    const Color(0xFF2E3192),
-                                    const Color(0xFF1BFFFF),
-                                  ],
+                            colors: isDark ? [const Color(0xFF6B7FFF), const Color(0xFF1BFFFF)] : [const Color(0xFF2E3192), const Color(0xFF1BFFFF)],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ).createShader(bounds),
                           child: Text(
                             'İlk Denemeni Ekle',
-                            style: textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w900,
-                              fontSize: 22,
-                              letterSpacing: -0.5,
-                              color: Colors.white,
-                            ),
+                            style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900, fontSize: 22, letterSpacing: -0.5, color: Colors.white),
                             textAlign: TextAlign.center,
                           ),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           'Başarı yolculuğunu arşivlemeye başla',
-                          style: textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                            height: 1.4,
-                            color: isDark
-                                ? Colors.white.withOpacity(0.85)
-                                : Colors.black.withOpacity(0.6),
-                          ),
+                          style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600, fontSize: 14, height: 1.4, color: isDark ? Colors.white.withOpacity(0.85) : Colors.black.withOpacity(0.6)),
                           textAlign: TextAlign.center,
                         ),
                       ],
                     ),
                   ),
-                ).animate(delay: 400.ms)
-                  .fadeIn(duration: 500.ms)
-                  .slideY(begin: 0.15, duration: 600.ms, curve: Curves.easeOutCubic)
-                  .shimmer(delay: 800.ms, duration: 1500.ms),
+                ).animate(delay: 400.ms).fadeIn(duration: 500.ms).slideY(begin: 0.15, duration: 600.ms, curve: Curves.easeOutCubic).shimmer(delay: 800.ms, duration: 1500.ms),
               ],
             ),
           ),
@@ -509,11 +415,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
 
     final filtered = _applyFiltersAndSort();
 
-    final colorScheme = theme.colorScheme;
-
     return Column(
       children: [
-        // Arama ve filtre barı - Premium tarzı
         Padding(
           padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + 70, 20, 0),
           child: Column(
@@ -554,8 +457,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
-                  children: _availableSections().map((s) {
-                    final selected = _selectedSection == s;
+                  children: _availableCategories().map((s) {
+                    final selected = _selectedCategory == s;
                     return Padding(
                       padding: const EdgeInsets.only(right: 8.0),
                       child: FilterChip(
@@ -570,7 +473,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                           ),
                         ),
                         selected: selected,
-                        onSelected: (_) => setState(() => _selectedSection = s),
+                        onSelected: (_) => setState(() => _selectedCategory = s),
                         backgroundColor: isDark ? const Color(0xFF1E2230) : Colors.white,
                         selectedColor: isDark
                             ? const Color(0xFF2E3192).withOpacity(0.2)
@@ -597,15 +500,12 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           child: RefreshIndicator(
             onRefresh: () async {
               _lastVisible = null;
-              // showLoader: false gönderiyoruz ki alttaki çark çıkmasın
               await _loadInitial(showLoader: false);
             },
             child: ListView.separated(
-              // Liste kısa olsa bile aşağı çekilmesine izin verir (RefreshIndicator için gerekli)
               physics: const AlwaysScrollableScrollPhysics(),
               controller: _scrollController,
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-              // Sadece _isLoading true ve liste boş değilse alttaki çark için yer ayır
               itemCount: filtered.length + (_isLoading && filtered.isNotEmpty ? 1 : 0),
               separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
@@ -625,8 +525,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                   );
                 }
                 final test = filtered[index];
-
-                // Sektör standardı three-dots menü yaklaşımı
                 return _ArchiveListTile(test: test);
               },
             ),
@@ -637,7 +535,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   }
 }
 
-// YENI: Sıralama seçenekleri
 enum _SortField { date, net, accuracy }
 
 class _SortOption {
@@ -646,7 +543,6 @@ class _SortOption {
   const _SortOption({required this.field, required this.descending});
 }
 
-// Sektör standardı liste öğesi (Three-dots menü ile)
 class _ArchiveListTile extends ConsumerWidget {
   final TestModel test;
 
@@ -658,16 +554,13 @@ class _ArchiveListTile extends ConsumerWidget {
     return (t.totalCorrect / total) * 100.0;
   }
 
-  // Savaş Raporuna (Özet Ekranı) "Arşivden geliyorum" sinyaliyle git
   void _goToWarReport(BuildContext context) {
-    // fromArchive=true parametresi, hedef ekranda geri tuşunu aktifleştirecek
     context.push(
-      '/home/test-result-summary?fromArchive=true',
-      extra: test
+        '/home/test-result-summary?fromArchive=true',
+        extra: test
     );
   }
 
-  // Şık bir Bottom Sheet (Alttan Açılan Menü)
   void _showOptionsSheet(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
 
@@ -685,7 +578,6 @@ class _ArchiveListTile extends ConsumerWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Başlık kısmı
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
                   child: Text(
@@ -699,8 +591,6 @@ class _ArchiveListTile extends ConsumerWidget {
                   ),
                 ),
                 const Divider(),
-
-                // SEÇENEK 1: Savaş Raporu (Eski Detaylı Analiz yerine)
                 ListTile(
                   leading: Container(
                     padding: const EdgeInsets.all(8),
@@ -710,15 +600,13 @@ class _ArchiveListTile extends ConsumerWidget {
                     ),
                     child: Icon(Icons.analytics_rounded, color: theme.colorScheme.primary),
                   ),
-                  title: const Text('Savaş Raporunu İncele'),
+                  title: const Text('Deneme Raporunu İncele'),
                   subtitle: const Text('Netlerini ve detaylı analizini gör'),
                   onTap: () {
                     Navigator.pop(ctx);
-                    _goToWarReport(context); // Arşiv modunda Savaş Raporu'na git
+                    _goToWarReport(context);
                   },
                 ),
-
-                // SEÇENEK 2: Silme İşlemi
                 ListTile(
                   leading: Container(
                     padding: const EdgeInsets.all(8),
@@ -745,7 +633,6 @@ class _ArchiveListTile extends ConsumerWidget {
     );
   }
 
-  // Silme Onay Dialogu ve İşlemi
   Future<void> _confirmAndDelete(BuildContext context, WidgetRef ref) async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -772,7 +659,6 @@ class _ArchiveListTile extends ConsumerWidget {
     if (confirm == true) {
       try {
         await ref.read(firestoreServiceProvider).deleteTest(test.id);
-
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -794,7 +680,6 @@ class _ArchiveListTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
     final acc = _accuracy(test);
     final isDark = theme.brightness == Brightness.dark;
@@ -819,7 +704,6 @@ class _ArchiveListTile extends ConsumerWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: () {
-            // Ana tıklama artık direkt Savaş Raporuna (Arşiv modunda) gidiyor
             if (isPremium || hasTemporaryAccess) {
               _goToWarReport(context);
             } else {
@@ -893,7 +777,10 @@ class _ArchiveListTile extends ConsumerWidget {
                               color: isDark ? Colors.white54 : Colors.black45,
                             ),
                           ),
-                          const SizedBox(width: 10),
+                          // Kategori etiketi buradan kaldırıldı.
+
+                          const Spacer(),
+
                           // Doğruluk Oranı Rozeti
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -916,7 +803,7 @@ class _ArchiveListTile extends ConsumerWidget {
                   ),
                 ),
 
-                // 3. SEKTÖR STANDARDI THREE-DOTS MENU BUTONU
+                // 3. MENU BUTONU
                 IconButton(
                   icon: Icon(
                     Icons.more_vert_rounded,
