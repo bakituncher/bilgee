@@ -80,10 +80,15 @@ class TestModel {
 extension TestModelSummaryX on TestModel {
   // Branş denemesi mi kontrol et
   bool get isBranchTest {
+    // 1. KESİN KURAL: Eğer denemede sadece 1 dersin puanı varsa, bu kesinlikle bir branş denemesidir.
+    if (scores.length == 1) {
+      return true;
+    }
+
     final sectionUpper = sectionName.toUpperCase().trim();
     final examTypeUpper = examType.name.toUpperCase();
 
-    // 1. Ana sınav bölümleri - Kesin liste
+    // 2. Ana sınav bölümleri - Kesin liste
     final mainSections = ['TYT', 'LGS', 'KPSS', 'AGS', 'YDT', 'GENEL', 'TÜMÜ', 'DENEME'];
 
     // Eğer sectionName direkt sınav türüyle aynıysa (örn: examType: TYT, sectionName: TYT) -> Ana Deneme
@@ -108,6 +113,15 @@ extension TestModelSummaryX on TestModel {
 
     // Diğer her şey branş denemesi sayılır (Matematik, Türkçe, Fizik, vs.)
     return true;
+  }
+
+  // YENİ: Grafiklerde ve başlıklarda görünecek akıllı isim
+  // Branş denemesi ise dersin adını (Örn: Türkçe), değilse bölüm adını (Örn: AGS) döndürür.
+  String get smartDisplayName {
+    if (isBranchTest && scores.isNotEmpty) {
+      return scores.keys.first;
+    }
+    return sectionName;
   }
 
   // Kullanıcının performansına göre bir "Bilgelik Puanı" hesaplar.

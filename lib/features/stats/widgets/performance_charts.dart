@@ -59,7 +59,8 @@ class _SmartPerformanceChartsState extends State<SmartPerformanceCharts> {
     if (examType == 'BRANCH') {
       final groupedTests = <String, List<TestModel>>{};
       for (final test in tests) {
-        (groupedTests[test.sectionName] ??= []).add(test);
+        // Branş modunda da akıllı isimlendirmeyi kullanmak daha güvenlidir
+        (groupedTests[test.smartDisplayName] ??= []).add(test);
       }
 
       final colors = [
@@ -126,10 +127,12 @@ class _SmartPerformanceChartsState extends State<SmartPerformanceCharts> {
         ));
       }
     } else {
-      // Diğer sınavlar için bölümlere göre grupla
+      // Diğer sınavlar için (AGS, KPSS vb.) bölümlere göre grupla
       final groupedTests = <String, List<TestModel>>{};
       for (final test in tests) {
-        (groupedTests[test.sectionName] ??= []).add(test);
+        // DÜZELTME: test.sectionName yerine test.smartDisplayName kullanıldı.
+        // Bu sayede "AGS" ile "Türkçe" (Branş) aynı grupta toplanmaz, ayrı kartlar olur.
+        (groupedTests[test.smartDisplayName] ??= []).add(test);
       }
 
       if (groupedTests.length > 1) {
@@ -150,7 +153,7 @@ class _SmartPerformanceChartsState extends State<SmartPerformanceCharts> {
         for (final entry in groupedTests.entries) {
           chartDataList.add(ChartData(
             tests: entry.value,
-            title: entry.key,
+            title: entry.key, // Örn: "AGS" veya "Türkçe"
             subtitle: '${entry.value.length} deneme',
             icon: icons[index % icons.length],
             baseColor: colors[index % colors.length],
@@ -158,9 +161,18 @@ class _SmartPerformanceChartsState extends State<SmartPerformanceCharts> {
           index++;
         }
       } else {
+        // Tek bir grup varsa (Örn: Sadece AGS denemeleri var)
+        final title = tests.isNotEmpty ? tests.first.smartDisplayName : examType;
+
+        // Eğer akıllı isim, normal bölüm ismiyle aynıysa (yani ana denemeyse), Sınav Türünü başlık yap (AGS)
+        // Eğer farklıysa (yani branşsa), Branş ismini başlık yap (Türkçe)
+        final displayTitle = (tests.isNotEmpty && title == tests.first.sectionName)
+            ? examType.toUpperCase()
+            : title;
+
         chartDataList.add(ChartData(
           tests: tests,
-          title: examType.toUpperCase(),
+          title: displayTitle,
           subtitle: 'Genel Performansın',
           icon: Icons.trending_up_rounded,
           baseColor: AppTheme.successBrandColor,
@@ -186,8 +198,8 @@ class _SmartPerformanceChartsState extends State<SmartPerformanceCharts> {
                   data: data,
                   isDark: isDark,
                 ).animate(delay: (200 + index * 50).ms)
-                  .fadeIn(duration: 250.ms)
-                  .slideX(begin: 0.1),
+                    .fadeIn(duration: 250.ms)
+                    .slideX(begin: 0.1),
               );
             },
           ),
@@ -224,25 +236,25 @@ class _SmartPerformanceChartsState extends State<SmartPerformanceCharts> {
                       borderRadius: BorderRadius.circular(3),
                       gradient: isActive
                           ? LinearGradient(
-                              colors: [
-                                data.baseColor,
-                                data.baseColor.withOpacity(0.7),
-                              ],
-                            )
+                        colors: [
+                          data.baseColor,
+                          data.baseColor.withOpacity(0.7),
+                        ],
+                      )
                           : null,
                       color: isActive
                           ? null
                           : isDark
-                              ? Colors.white.withOpacity(0.2)
-                              : Colors.black.withOpacity(0.15),
+                          ? Colors.white.withOpacity(0.2)
+                          : Colors.black.withOpacity(0.15),
                       boxShadow: isActive
                           ? [
-                              BoxShadow(
-                                color: data.baseColor.withOpacity(0.4),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ]
+                        BoxShadow(
+                          color: data.baseColor.withOpacity(0.4),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
                           : null,
                     ),
                   );
@@ -265,4 +277,3 @@ class _SmartPerformanceChartsState extends State<SmartPerformanceCharts> {
     );
   }
 }
-
