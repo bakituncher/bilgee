@@ -102,7 +102,7 @@ class _PreAuthWelcomeScreenState extends ConsumerState<PreAuthWelcomeScreen>
                   colors: [
                     Colors.black.withValues(alpha: 0.1),
                     Colors.transparent,
-                    Colors.black.withValues(alpha: 0.7),
+                    Colors.black.withValues(alpha: 0.7), // Alt kısımdaki karartma
                     Colors.black,
                   ],
                   stops: const [0.0, 0.4, 0.8, 1.0],
@@ -152,12 +152,11 @@ class _PreAuthWelcomeScreenState extends ConsumerState<PreAuthWelcomeScreen>
 
                 // --- ALT METİN BLOĞU (SOLA DAYALI) ---
                 Padding(
-                  // Vertical padding ile butonun en alta yapışmasını engelliyoruz
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 30),
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40),
                   child: SlideTransition(
                     position: _slideAnimation,
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start, // Sola yaslı
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         // BAŞLIK
@@ -176,12 +175,12 @@ class _PreAuthWelcomeScreenState extends ConsumerState<PreAuthWelcomeScreen>
 
                         const SizedBox(height: 16),
 
-                        // AÇIKLAMA METNİ
+                        // AÇIKLAMA METNİ (Düzeltildi: Tam Beyaz)
                         Text(
                           'Düştüğünde kaldıran, başardığında seninle sevinen yol arkadaşın burada. Başarı hikayeni birlikte yazalım.',
                           textAlign: TextAlign.start,
                           style: textTheme.bodyLarge?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.8),
+                            color: Colors.white, // Artık opacity yok, tam beyaz.
                             fontSize: 16,
                             height: 1.5,
                             fontWeight: FontWeight.w400,
@@ -298,7 +297,7 @@ class _ShimmerText extends StatelessWidget {
   }
 }
 
-class _PremiumButton extends StatelessWidget {
+class _PremiumButton extends StatefulWidget {
   const _PremiumButton({
     required this.onTap,
     required this.pulseController,
@@ -308,63 +307,138 @@ class _PremiumButton extends StatelessWidget {
   final AnimationController pulseController;
 
   @override
+  State<_PremiumButton> createState() => _PremiumButtonState();
+}
+
+class _PremiumButtonState extends State<_PremiumButton> with SingleTickerProviderStateMixin {
+  late AnimationController _shimmerController;
+
+  @override
+  void initState() {
+    super.initState();
+    // Döngü süresi 4 saniye
+    _shimmerController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 4),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _shimmerController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
     return AnimatedBuilder(
-      animation: pulseController,
+      animation: widget.pulseController,
       builder: (context, child) {
-        final scale = 1.0 + (pulseController.value * 0.02);
+        final scale = 1.0 + (widget.pulseController.value * 0.02);
+
         return Transform.scale(
           scale: scale,
           child: Container(
             width: double.infinity,
-            height: 56,
+            height: 48,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(12),
               gradient: const LinearGradient(
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
                 colors: [
-                  Color(0xFF0EA5E9),
-                  Color(0xFF22D3EE),
+                  Color(0xFF2563EB), // Net Mavi
+                  Color(0xFF16A34A), // Net Yeşil
                 ],
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF0EA5E9).withValues(alpha: 0.3),
-                  blurRadius: 20,
+                  color: const Color(0xFF2563EB).withValues(alpha: 0.4),
+                  blurRadius: 16,
                   offset: const Offset(0, 4),
-                  spreadRadius: 1,
+                  spreadRadius: 0,
                 ),
               ],
             ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: onTap,
-                borderRadius: BorderRadius.circular(16),
-                overlayColor: WidgetStateProperty.all(Colors.white.withValues(alpha: 0.2)),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Yolculuğa Başla',
-                      style: textTheme.titleMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 17,
-                        letterSpacing: 0.5,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Stack(
+                children: [
+                  // 1. SHIMMER EFEKTİ (ÖNCE BEKLE, SONRA GEÇ)
+                  AnimatedBuilder(
+                    animation: _shimmerController,
+                    builder: (context, child) {
+                      // Mantık Değişikliği:
+                      // Animasyonun %80'lik kısmı (ilk 4.8 saniye) boş geçsin (bekleme).
+                      // Sadece son %20'lik kısımda (4.8 sn - 6.0 sn arası) efekt oynasın.
+                      const double startPoint = 0.8;
+
+                      final double value = _shimmerController.value;
+
+                      // Eğer henüz başlama noktasına gelmediysek (ilk 5 saniye) çizme.
+                      if (value < startPoint) {
+                        return const SizedBox();
+                      }
+
+                      // Değeri 0.8 ile 1.0 arasından -> 0.0 ile 1.0 arasına normalize et
+                      // Böylece animasyon akıcı görünür
+                      final double normalizedValue = (value - startPoint) / (1.0 - startPoint);
+
+                      return FractionallySizedBox(
+                        widthFactor: 1.0,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.transparent,
+                                Colors.white.withValues(alpha: 0.15),
+                                Colors.transparent,
+                              ],
+                              stops: const [0.0, 0.5, 1.0],
+                              begin: Alignment(-2.5 + (normalizedValue * 5), -0.5),
+                              end: Alignment(-1.5 + (normalizedValue * 5), 0.5),
+                              tileMode: TileMode.clamp,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+
+                  // 2. TIKLANABİLİR ALAN
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: widget.onTap,
+                      borderRadius: BorderRadius.circular(12),
+                      overlayColor: WidgetStateProperty.all(Colors.white.withValues(alpha: 0.1)),
+                      child: Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Yolculuğa Başla',
+                              style: textTheme.titleMedium?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Icon(
+                              Icons.arrow_forward_rounded,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    const Icon(
-                      Icons.arrow_forward_rounded,
-                      color: Colors.white,
-                      size: 20,
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
