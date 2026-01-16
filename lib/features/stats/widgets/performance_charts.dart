@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/models/test_model.dart';
+import 'package:taktik/data/models/exam_model.dart'; // EKLENDİ: displayName için gerekli
 import 'package:taktik/features/stats/models/chart_data.dart';
 import 'package:taktik/features/stats/widgets/swipeable_performance_card.dart';
 
@@ -59,7 +60,6 @@ class _SmartPerformanceChartsState extends State<SmartPerformanceCharts> {
     if (examType == 'BRANCH') {
       final groupedTests = <String, List<TestModel>>{};
       for (final test in tests) {
-        // Branş modunda da akıllı isimlendirmeyi kullanmak daha güvenlidir
         (groupedTests[test.smartDisplayName] ??= []).add(test);
       }
 
@@ -92,7 +92,7 @@ class _SmartPerformanceChartsState extends State<SmartPerformanceCharts> {
         index++;
       }
     }
-    // YKS için TYT ve AYT'yi ayır
+    // YKS için TYT ve AYT'yi ayır (String olarak 'YKS' gelme durumunu koruyoruz)
     else if (examType == 'YKS') {
       final tytTests = tests.where((t) => t.sectionName.toUpperCase() == 'TYT').toList();
       final aytTests = tests.where((t) => t.sectionName.toUpperCase().startsWith('AYT')).toList();
@@ -130,8 +130,6 @@ class _SmartPerformanceChartsState extends State<SmartPerformanceCharts> {
       // Diğer sınavlar için (AGS, KPSS vb.) bölümlere göre grupla
       final groupedTests = <String, List<TestModel>>{};
       for (final test in tests) {
-        // DÜZELTME: test.sectionName yerine test.smartDisplayName kullanıldı.
-        // Bu sayede "AGS" ile "Türkçe" (Branş) aynı grupta toplanmaz, ayrı kartlar olur.
         (groupedTests[test.smartDisplayName] ??= []).add(test);
       }
 
@@ -153,7 +151,7 @@ class _SmartPerformanceChartsState extends State<SmartPerformanceCharts> {
         for (final entry in groupedTests.entries) {
           chartDataList.add(ChartData(
             tests: entry.value,
-            title: entry.key, // Örn: "AGS" veya "Türkçe"
+            title: entry.key,
             subtitle: '${entry.value.length} deneme',
             icon: icons[index % icons.length],
             baseColor: colors[index % colors.length],
@@ -161,14 +159,24 @@ class _SmartPerformanceChartsState extends State<SmartPerformanceCharts> {
           index++;
         }
       } else {
-        // Tek bir grup varsa (Örn: Sadece AGS denemeleri var)
+        // Tek bir grup varsa (Örn: Sadece KPSS veya AGS denemeleri var)
         final title = tests.isNotEmpty ? tests.first.smartDisplayName : examType;
 
-        // Eğer akıllı isim, normal bölüm ismiyle aynıysa (yani ana denemeyse), Sınav Türünü başlık yap (AGS)
-        // Eğer farklıysa (yani branşsa), Branş ismini başlık yap (Türkçe)
-        final displayTitle = (tests.isNotEmpty && title == tests.first.sectionName)
-            ? examType.toUpperCase()
-            : title;
+        String displayTitle = title;
+
+        // Eğer akıllı isim, normal bölüm ismiyle aynıysa (yani ana denemeyse)
+        if (tests.isNotEmpty && title == tests.first.sectionName) {
+          // DÜZELTME: "KPSSLISANS" yerine "KPSS Lisans" yazması için
+          // Test modelinden enum'a erişip display name özelliğini kullanıyoruz.
+          displayTitle = tests.first.examType.displayName;
+        } else if (tests.isEmpty) {
+          // Liste boşsa ve string olarak geldiyse, enum'dan kurtarmayı dene
+          try {
+            displayTitle = ExamType.values.byName(examType).displayName;
+          } catch (_) {
+            displayTitle = examType.toUpperCase();
+          }
+        }
 
         chartDataList.add(ChartData(
           tests: tests,
