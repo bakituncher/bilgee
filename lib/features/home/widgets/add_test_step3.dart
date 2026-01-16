@@ -67,10 +67,26 @@ class Step3Summary extends ConsumerWidget {
               if (user == null) return;
               notifier.setSaving(true);
 
-              // Branş denemesi için ders adını kullan, normal deneme için section adını kullan
-              final displaySectionName = state.isBranchMode && state.selectedBranchSubject != null
-                  ? state.selectedBranchSubject!
-                  : section.name;
+              // DÜZELTME BAŞLANGICI: İsimlendirme Mantığı
+              // Branş denemesi seçilmiş olsa bile, eğer ders "Alan Bilgisi" veya "Temel Alan Bilgisi" ise,
+              // bu aslında o branşın ana sınavıdır (Örn: Türkçe Öğretmenliği).
+              // Bu yüzden bu özel derslerde, ders adı yerine Section (Bölüm) adını kullanarak kaydediyoruz.
+              // Böylece "Türkçe Öğretmenliği" genel denemesi ile "Alan Bilgisi" denemesi aynı isimde birleşir.
+              String displaySectionName;
+              if (state.isBranchMode && state.selectedBranchSubject != null) {
+                if (state.selectedBranchSubject == 'Alan Bilgisi' ||
+                    state.selectedBranchSubject == 'Temel Alan Bilgisi') {
+                  // AGS/ÖABT için özel durum: Bölüm adını kullan
+                  displaySectionName = section.name;
+                } else {
+                  // Diğer dersler (Matematik, Tarih vb.) için ders adını kullan
+                  displaySectionName = state.selectedBranchSubject!;
+                }
+              } else {
+                // Genel mod: Bölüm adını kullan
+                displaySectionName = section.name;
+              }
+              // DÜZELTME BİTİŞİ
 
               final newTest = TestModel(
                 id: const Uuid().v4(),
@@ -123,17 +139,17 @@ class Step3Summary extends ConsumerWidget {
 
                   switch (action) {
                     case MonetizationAction.showPaywall:
-                      // Paywall göster
+                    // Paywall göster
                       await context.push(AppRoutes.premium);
                       break;
                     case MonetizationAction.showAd:
-                      // Reklam göster
+                    // Reklam göster
                       await AdMobService().showInterstitialAd(
                         dateOfBirth: user?.dateOfBirth,
                       );
                       break;
                     case MonetizationAction.showNothing:
-                      // Hiçbir şey gösterme (cooldown aktif)
+                    // Hiçbir şey gösterme (cooldown aktif)
                       break;
                   }
                 }
@@ -164,13 +180,13 @@ class Step3Summary extends ConsumerWidget {
             },
             child: state.isSaving
                 ? SizedBox(
-                    height: 24,
-                    width: 24,
-                    child: CircularProgressIndicator(
-                      color: Theme.of(context).colorScheme.onPrimary,
-                      strokeWidth: 3,
-                    ),
-                  )
+              height: 24,
+              width: 24,
+              child: CircularProgressIndicator(
+                color: Theme.of(context).colorScheme.onPrimary,
+                strokeWidth: 3,
+              ),
+            )
                 : const Text('Kaydet ve Raporu Görüntüle'),
           ),
           TextButton(
