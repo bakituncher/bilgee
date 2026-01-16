@@ -270,7 +270,10 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
     final Widget body = userAsyncValue.when(
       data: (user) => testsAsyncValue.when(
         data: (tests) {
-          if (user == null || tests.isEmpty) {
+          // Sadece ana sınav denemeleri gösterilsin (branş denemeleri hariç)
+          final mainExamTests = tests.where((t) => !t.isBranchTest).toList();
+
+          if (user == null || mainExamTests.isEmpty) {
             return _buildEmptyState(context, isCompletelyEmpty: true);
           }
 
@@ -288,7 +291,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
               final exam = examSnapshot.data!;
 
               final groupedTests = <String, List<TestModel>>{};
-              for (final test in tests) {
+              for (final test in mainExamTests) {
                 (groupedTests[test.sectionName] ??= []).add(test);
               }
 

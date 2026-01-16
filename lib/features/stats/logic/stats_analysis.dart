@@ -74,27 +74,52 @@ class StatsAnalysis {
 
     if(tests.isNotEmpty) {
       sortedTests = List.from(tests)..sort((a, b) => a.date.compareTo(b.date));
-      final allNets = sortedTests.map((t) => t.totalNet).toList();
+
+      // --- BRANŞ DENEMESİ AYRIŞTIRMA MANTIĞI ---
+
+      // 1. Genel İstatistikler (Warrior Score, Trend, Ortalama Net) için kullanılacak liste.
+      // Branş denemelerini (Örn: Sadece Türkçe) genel ortalamaya katmamak için filtreliyoruz.
+      final mainTestsOnly = sortedTests.where((t) => !t.isBranchTest).toList();
+
+      // Eğer hiç ana deneme yoksa (kullanıcı sadece branş çözdüyse) mecburen hepsini kullan.
+      // Aksi takdirde sadece ana denemeleri (AGS, TYT vb.) kullan.
+      final statsSourceTests = mainTestsOnly.isNotEmpty ? mainTestsOnly : sortedTests;
+
+      // 2. Hesaplamaları filtrelenmiş liste (statsSourceTests) üzerinden yap
+      final allNets = statsSourceTests.map((t) => t.totalNet).toList();
       averageNet = allNets.average;
-      final totalQuestionsAttempted = sortedTests.map((t) => t.totalCorrect + t.totalWrong).sum;
-      final totalCorrectAnswers = sortedTests.map((t) => t.totalCorrect).sum;
+
+      final totalQuestionsAttempted = statsSourceTests.map((t) => t.totalCorrect + t.totalWrong).sum;
+      final totalCorrectAnswers = statsSourceTests.map((t) => t.totalCorrect).sum;
+
       if (averageNet.abs() > 0.001) {
         final double stdDev = sqrt(allNets.map((n) => pow(n - averageNet, 2)).sum / allNets.length);
         consistency = max(0, (1 - (stdDev / averageNet.abs())) * 100);
       } else {
         consistency = 0.0;
       }
+
       accuracy = totalQuestionsAttempted > 0 ? (totalCorrectAnswers / totalQuestionsAttempted) * 100 : 0.0;
       trend = _calculateTrend(allNets);
-      netSpots = List.generate(sortedTests.length, (i) => FlSpot(i.toDouble(), sortedTests[i].totalNet));
-      final totalQuestionsInFirstTest = sortedTests.first.totalQuestions;
+
+      // Grafik noktaları da filtrelenmiş listeden oluşturulmalı (Ana ekrandaki grafik için)
+      netSpots = List.generate(statsSourceTests.length, (i) => FlSpot(i.toDouble(), statsSourceTests[i].totalNet));
+
+      final totalQuestionsInFirstTest = statsSourceTests.first.totalQuestions;
+
+      // Warrior Score Hesaplama
       final netComponent = (totalQuestionsInFirstTest > 0)
           ? (averageNet / (totalQuestionsInFirstTest * 1.0)) * 50
           : 0.0;
       final accuracyComponent = (accuracy / 100) * 25;
       final consistencyComponent = (consistency / 100) * 15;
       final trendComponent = (atan(trend) / (pi / 2)) * 10;
+
       warriorScore = (netComponent + accuracyComponent + consistencyComponent + trendComponent).clamp(0, 100);
+
+      // 3. Ders Bazlı Analiz (Subject Breakdown)
+      // BURASI ÇOK ÖNEMLİ: Ders istatistikleri için TÜM denemeleri (sortedTests) kullanıyoruz.
+      // Çünkü Türkçe branş denemesi çözen biri, genel netini düşürmese de Türkçe ortalamasını etkilemeli.
       final subjectNets = <String, List<double>>{};
       for (var test in sortedTests) {
         test.scores.forEach((subject, scores) {
@@ -274,6 +299,8 @@ class StatsAnalysis {
     if (sortedTests.length < 3) return;
 
     // Son 5 testin trendini hesapla
+    // Not: Trend analizi için sortedTests kullanıyoruz, böylece kullanıcı genel gidişatını (branşlar dahil) görebilir.
+    // İstenirse burası da statsSourceTests ile değiştirilebilir ama genelde "son çözülenler" bağlamında hepsi istenir.
     final recentTests = sortedTests.length > 5 ? sortedTests.sublist(sortedTests.length - 5) : sortedTests;
     final recentNets = recentTests.map((t) => t.totalNet).toList();
     final recentTrend = _calculateTrend(recentNets);

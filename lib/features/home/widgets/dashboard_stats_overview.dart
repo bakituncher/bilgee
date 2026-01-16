@@ -23,17 +23,23 @@ class DashboardStatsOverview extends ConsumerWidget {
 
         final tests = testsAsync.valueOrNull ?? [];
 
+        // Genel bakış istatistikleri branş denemelerinden etkilenmesin.
+        // Bu kart, sadece ana sınav denemeleri (TYT/AYT/LGS/KPSS/AGS/YDT) üzerinden hesap yapar.
+        final mainExamTests = tests.where((t) => !t.isBranchTest).toList();
+
         // Test yoksa varsayılan değerler
-        final streak = tests.isEmpty ? 0 : StatsCalculator.calculateStreak(tests);
-        final avgNet = tests.isEmpty ? '0.0' : StatsCalculator.calculateAvgNet(user, tests);
-        final motivationColor = _getMotivationColor(streak, tests.length);
+        final streak = mainExamTests.isEmpty ? 0 : StatsCalculator.calculateStreak(mainExamTests);
+        final avgNet = mainExamTests.isEmpty ? '0.0' : StatsCalculator.calculateAvgNet(user, mainExamTests);
+        final motivationColor = _getMotivationColor(streak, mainExamTests.length);
 
         // Basit hesaplamalar - test yoksa 0 değerleri
-        final lastTestNet = tests.isEmpty ? 0.0 : (() {
-          final sortedTests = [...tests]..sort((a, b) => b.date.compareTo(a.date));
+        final lastTestNet = mainExamTests.isEmpty ? 0.0 : (() {
+          final sortedTests = [...mainExamTests]..sort((a, b) => b.date.compareTo(a.date));
           return sortedTests.first.totalNet;
         })();
-        final bestNet = tests.isEmpty ? 0.0 : tests.map((e) => e.totalNet).reduce((a, b) => a > b ? a : b);
+        final bestNet = mainExamTests.isEmpty
+            ? 0.0
+            : mainExamTests.map((e) => e.totalNet).reduce((a, b) => a > b ? a : b);
 
         return GestureDetector(
           onTap: () => context.push('/stats/overview'),
@@ -105,7 +111,7 @@ class DashboardStatsOverview extends ConsumerWidget {
                       child: _StatItem(
                         icon: Icons.assignment_turned_in_rounded,
                         label: 'Deneme',
-                        value: '${tests.length}',
+                        value: '${mainExamTests.length}',
                         color: const Color(0xFF8B5CF6),
                         theme: theme,
                       ),
@@ -246,4 +252,3 @@ class _StatItem extends StatelessWidget {
     );
   }
 }
-

@@ -36,8 +36,11 @@ class OverviewContent extends ConsumerWidget {
       return _buildEmptyState(context, ref);
     }
 
-    final streak = StatsCalculator.calculateStreak(tests);
-    final avgNet = StatsCalculator.calculateAvgNet(user, tests);
+    // Hero kart ve genel metrikler branş denemelerinden etkilenmesin.
+    final mainExamTests = tests.where((t) => !t.isBranchTest).toList();
+
+    final streak = StatsCalculator.calculateStreak(mainExamTests);
+    final avgNet = StatsCalculator.calculateAvgNet(user, mainExamTests);
 
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
@@ -48,7 +51,7 @@ class OverviewContent extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
             child: PremiumHeroCard(
               user: user,
-              tests: tests,
+              tests: mainExamTests,
               isDark: isDark,
               streak: streak,
               avgNet: avgNet,
@@ -59,8 +62,8 @@ class OverviewContent extends ConsumerWidget {
           ),
         ),
 
-        // Performans Grafikleri - Kompakt kaydırılabilir kartlar
-        if (tests.isNotEmpty)
+        // Performans Grafikleri - Sadece ana sınavlar (branş denemeleri hariç)
+        if (tests.where((t) => !t.isBranchTest).isNotEmpty)
           SliverToBoxAdapter(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -111,7 +114,7 @@ class OverviewContent extends ConsumerWidget {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              'Gelişimini grafiklerle takip et',
+                              'Ana sınavlardaki gelişimini takip et',
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w500,
@@ -169,10 +172,128 @@ class OverviewContent extends ConsumerWidget {
                 SizedBox(
                   height: 220,
                   child: SmartPerformanceCharts(
-                    tests: tests,
+                    tests: tests.where((t) => !t.isBranchTest).toList(),
                     isDark: isDark,
                     examType: user.selectedExam ?? 'YKS',
                   ).animate(delay: 350.ms).fadeIn(duration: 300.ms),
+                ),
+              ],
+            ),
+          ),
+
+        // Branş Denemesi Trendleri - Sadece branş denemeleri
+        if (tests.where((t) => t.isBranchTest).isNotEmpty)
+          SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Color(0xFFF59E0B),
+                              Color(0xFFD97706),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFF59E0B).withOpacity(0.35),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.assignment_rounded,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Branş Denemesi Trendleri',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w800,
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                letterSpacing: -0.3,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Ders bazlı performansını takip et',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: isDark
+                                    ? Colors.white.withOpacity(0.5)
+                                    : Colors.black.withOpacity(0.45),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Kaydırma ipucu
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white.withOpacity(0.08)
+                              : const Color(0xFFF59E0B).withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: isDark
+                                ? Colors.white.withOpacity(0.12)
+                                : const Color(0xFFF59E0B).withOpacity(0.15),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.swipe_rounded,
+                              size: 14,
+                              color: isDark
+                                  ? Colors.white.withOpacity(0.6)
+                                  : const Color(0xFFF59E0B).withOpacity(0.7),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Kaydır',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: isDark
+                                    ? Colors.white.withOpacity(0.6)
+                                    : const Color(0xFFF59E0B).withOpacity(0.7),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ).animate(delay: 320.ms).fadeIn().slideX(begin: -0.05),
+                ),
+                SizedBox(
+                  height: 220,
+                  child: SmartPerformanceCharts(
+                    tests: tests.where((t) => t.isBranchTest).toList(),
+                    isDark: isDark,
+                    examType: 'BRANCH',
+                  ).animate(delay: 370.ms).fadeIn(duration: 300.ms),
                 ),
               ],
             ),

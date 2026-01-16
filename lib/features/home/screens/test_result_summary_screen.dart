@@ -60,7 +60,7 @@ class TestResultSummaryScreen extends ConsumerWidget {
           onPressed: () => fromArchive ? context.pop() : context.go('/home'),
         ),
         title: Text(
-          "Savaş Raporu",
+          "Deneme Raporu",
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w800,
             fontSize: 17,

@@ -36,6 +36,7 @@ class TestModel {
   // Firestore'dan gelen veriyi modele çevirir
   factory TestModel.fromSnapshot(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data()!;
+    // scores map'ini güvenli bir şekilde cast etme işlemi
     final scoresData = (data['scores'] as Map<String, dynamic>).map(
           (key, value) => MapEntry(key, (value as Map<String, dynamic>).cast<String, int>()),
     );
@@ -43,16 +44,16 @@ class TestModel {
     return TestModel(
       id: doc.id,
       userId: data['userId'],
-      testName: data['testName'],
+      testName: data['testName'] ?? '',
       examType: ExamType.values.byName(data['examType']),
-      sectionName: data['sectionName'],
+      sectionName: data['sectionName'] ?? '',
       date: (data['date'] as Timestamp).toDate(),
       scores: scoresData,
       totalNet: (data['totalNet'] as num).toDouble(),
-      totalQuestions: data['totalQuestions'],
-      totalCorrect: data['totalCorrect'],
-      totalWrong: data['totalWrong'],
-      totalBlank: data['totalBlank'],
+      totalQuestions: data['totalQuestions'] ?? 0,
+      totalCorrect: data['totalCorrect'] ?? 0,
+      totalWrong: data['totalWrong'] ?? 0,
+      totalBlank: data['totalBlank'] ?? 0,
       penaltyCoefficient: (data['penaltyCoefficient'] as num?)?.toDouble() ?? 0.25,
     );
   }
@@ -77,6 +78,52 @@ class TestModel {
 }
 
 extension TestModelSummaryX on TestModel {
+  // Branş denemesi mi kontrol et
+  bool get isBranchTest {
+    // 1. KESİN KURAL: Eğer denemede sadece 1 dersin puanı varsa, bu kesinlikle bir branş denemesidir.
+    if (scores.length == 1) {
+      return true;
+    }
+
+    final sectionUpper = sectionName.toUpperCase().trim();
+    final examTypeUpper = examType.name.toUpperCase();
+
+    // 2. Ana sınav bölümleri - Kesin liste
+    final mainSections = ['TYT', 'LGS', 'KPSS', 'AGS', 'YDT', 'GENEL', 'TÜMÜ', 'DENEME'];
+
+    // Eğer sectionName direkt sınav türüyle aynıysa (örn: examType: TYT, sectionName: TYT) -> Ana Deneme
+    if (sectionUpper == examTypeUpper) {
+      return false;
+    }
+
+    // Ana sınav isimlerini içeriyorsa ve spesifik bir ders ismi gibi durmuyorsa -> Ana Deneme
+    if (mainSections.contains(sectionUpper)) {
+      return false;
+    }
+
+    // "TYT GENEL", "TYT DENEME" gibi kombinasyonları yakala
+    if (sectionUpper.contains('GENEL') || (sectionUpper.contains(examTypeUpper) && sectionUpper.contains('DENEME'))) {
+      return false;
+    }
+
+    // AYT ve alt türleri (AYT-SAY, AYT-EA, AYT-SOZ, AYT-DIL, vs.) -> Ana Deneme
+    if (sectionUpper.startsWith('AYT')) {
+      return false;
+    }
+
+    // Diğer her şey branş denemesi sayılır (Matematik, Türkçe, Fizik, vs.)
+    return true;
+  }
+
+  // YENİ: Grafiklerde ve başlıklarda görünecek akıllı isim
+  // Branş denemesi ise dersin adını (Örn: Türkçe), değilse bölüm adını (Örn: AGS) döndürür.
+  String get smartDisplayName {
+    if (isBranchTest && scores.isNotEmpty) {
+      return scores.keys.first;
+    }
+    return sectionName;
+  }
+
   // Kullanıcının performansına göre bir "Bilgelik Puanı" hesaplar.
   double get wisdomScore {
     if (totalQuestions == 0) return 0;
@@ -129,7 +176,7 @@ extension TestModelSummaryX on TestModel {
     }
   }
 
-  // En güçlü ve en zayıf dersleri bulan fonksiyon (yüzdeye göre)
+  // En güçlü ve en zayıf dersleri bulan fonksiyon
   Map<String, MapEntry<String, double>> findKeySubjects() {
     if (scores.isEmpty) {
       return {};
@@ -147,7 +194,7 @@ extension TestModelSummaryX on TestModel {
       final b = scoresMap['bos'] ?? 0;
       final totalQuestions = d + y + b;
 
-      if (totalQuestions == 0) continue; // Bu dersi atla
+      if (totalQuestions == 0) continue;
 
       final accuracy = (d / totalQuestions) * 100.0;
 

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/models/test_model.dart';
+import 'package:taktik/data/models/exam_model.dart'; // EKLENDİ: displayName için gerekli
 import 'package:taktik/features/stats/models/chart_data.dart';
 import 'package:taktik/features/stats/widgets/swipeable_performance_card.dart';
 
@@ -55,8 +56,44 @@ class _SmartPerformanceChartsState extends State<SmartPerformanceCharts> {
     final examType = widget.examType;
     final List<ChartData> chartDataList = [];
 
-    // YKS için TYT ve AYT'yi ayır
-    if (examType == 'YKS') {
+    // Branş denemeleri için
+    if (examType == 'BRANCH') {
+      final groupedTests = <String, List<TestModel>>{};
+      for (final test in tests) {
+        (groupedTests[test.smartDisplayName] ??= []).add(test);
+      }
+
+      final colors = [
+        const Color(0xFFF59E0B), // Amber
+        const Color(0xFFEF4444), // Red
+        const Color(0xFF8B5CF6), // Purple
+        const Color(0xFF06B6D4), // Cyan
+        const Color(0xFFEC4899), // Pink
+        const Color(0xFF10B981), // Emerald
+      ];
+      final icons = [
+        Icons.menu_book_rounded,
+        Icons.science_rounded,
+        Icons.calculate_rounded,
+        Icons.language_rounded,
+        Icons.public_rounded,
+        Icons.psychology_rounded,
+      ];
+
+      int index = 0;
+      for (final entry in groupedTests.entries) {
+        chartDataList.add(ChartData(
+          tests: entry.value,
+          title: entry.key,
+          subtitle: '${entry.value.length} deneme',
+          icon: icons[index % icons.length],
+          baseColor: colors[index % colors.length],
+        ));
+        index++;
+      }
+    }
+    // YKS için TYT ve AYT'yi ayır (String olarak 'YKS' gelme durumunu koruyoruz)
+    else if (examType == 'YKS') {
       final tytTests = tests.where((t) => t.sectionName.toUpperCase() == 'TYT').toList();
       final aytTests = tests.where((t) => t.sectionName.toUpperCase().startsWith('AYT')).toList();
 
@@ -90,10 +127,10 @@ class _SmartPerformanceChartsState extends State<SmartPerformanceCharts> {
         ));
       }
     } else {
-      // Diğer sınavlar için bölümlere göre grupla
+      // Diğer sınavlar için (AGS, KPSS vb.) bölümlere göre grupla
       final groupedTests = <String, List<TestModel>>{};
       for (final test in tests) {
-        (groupedTests[test.sectionName] ??= []).add(test);
+        (groupedTests[test.smartDisplayName] ??= []).add(test);
       }
 
       if (groupedTests.length > 1) {
@@ -122,9 +159,28 @@ class _SmartPerformanceChartsState extends State<SmartPerformanceCharts> {
           index++;
         }
       } else {
+        // Tek bir grup varsa (Örn: Sadece KPSS veya AGS denemeleri var)
+        final title = tests.isNotEmpty ? tests.first.smartDisplayName : examType;
+
+        String displayTitle = title;
+
+        // Eğer akıllı isim, normal bölüm ismiyle aynıysa (yani ana denemeyse)
+        if (tests.isNotEmpty && title == tests.first.sectionName) {
+          // DÜZELTME: "KPSSLISANS" yerine "KPSS Lisans" yazması için
+          // Test modelinden enum'a erişip display name özelliğini kullanıyoruz.
+          displayTitle = tests.first.examType.displayName;
+        } else if (tests.isEmpty) {
+          // Liste boşsa ve string olarak geldiyse, enum'dan kurtarmayı dene
+          try {
+            displayTitle = ExamType.values.byName(examType).displayName;
+          } catch (_) {
+            displayTitle = examType.toUpperCase();
+          }
+        }
+
         chartDataList.add(ChartData(
           tests: tests,
-          title: examType.toUpperCase(),
+          title: displayTitle,
           subtitle: 'Genel Performansın',
           icon: Icons.trending_up_rounded,
           baseColor: AppTheme.successBrandColor,
@@ -150,8 +206,8 @@ class _SmartPerformanceChartsState extends State<SmartPerformanceCharts> {
                   data: data,
                   isDark: isDark,
                 ).animate(delay: (200 + index * 50).ms)
-                  .fadeIn(duration: 250.ms)
-                  .slideX(begin: 0.1),
+                    .fadeIn(duration: 250.ms)
+                    .slideX(begin: 0.1),
               );
             },
           ),
@@ -188,25 +244,25 @@ class _SmartPerformanceChartsState extends State<SmartPerformanceCharts> {
                       borderRadius: BorderRadius.circular(3),
                       gradient: isActive
                           ? LinearGradient(
-                              colors: [
-                                data.baseColor,
-                                data.baseColor.withOpacity(0.7),
-                              ],
-                            )
+                        colors: [
+                          data.baseColor,
+                          data.baseColor.withOpacity(0.7),
+                        ],
+                      )
                           : null,
                       color: isActive
                           ? null
                           : isDark
-                              ? Colors.white.withOpacity(0.2)
-                              : Colors.black.withOpacity(0.15),
+                          ? Colors.white.withOpacity(0.2)
+                          : Colors.black.withOpacity(0.15),
                       boxShadow: isActive
                           ? [
-                              BoxShadow(
-                                color: data.baseColor.withOpacity(0.4),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ]
+                        BoxShadow(
+                          color: data.baseColor.withOpacity(0.4),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
                           : null,
                     ),
                   );
@@ -229,4 +285,3 @@ class _SmartPerformanceChartsState extends State<SmartPerformanceCharts> {
     );
   }
 }
-

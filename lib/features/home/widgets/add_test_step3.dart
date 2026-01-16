@@ -67,12 +67,17 @@ class Step3Summary extends ConsumerWidget {
               if (user == null) return;
               notifier.setSaving(true);
 
+              // Branş denemesi için ders adını kullan, normal deneme için section adını kullan
+              final displaySectionName = state.isBranchMode && state.selectedBranchSubject != null
+                  ? state.selectedBranchSubject!
+                  : section.name;
+
               final newTest = TestModel(
                 id: const Uuid().v4(),
                 userId: user.id,
                 testName: state.testName,
                 examType: ExamType.values.byName(user.selectedExam!),
-                sectionName: section.name,
+                sectionName: displaySectionName,
                 date: DateTime.now(),
                 scores: finalScores,
                 totalNet: totalNet,

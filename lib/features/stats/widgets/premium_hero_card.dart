@@ -232,7 +232,7 @@ class PremiumHeroCard extends StatelessWidget {
                           child: PremiumStatItem(
                             icon: Icons.assignment_turned_in_rounded,
                             label: 'Deneme',
-                            value: '${user.testCount ?? 0}',
+                            value: '${tests.length}',
                             color: const Color(0xFF8B5CF6),
                             isDark: isDark,
                           ),
@@ -400,4 +400,3 @@ class PremiumHeroCard extends StatelessWidget {
     return (weekTests / weeklyGoal).clamp(0.0, 1.0);
   }
 }
-
