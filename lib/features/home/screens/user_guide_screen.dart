@@ -71,6 +71,9 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
     final isDark = theme.brightness == Brightness.dark;
     final colorScheme = theme.colorScheme;
 
+    // Cihazın alt güvenli alan boşluğunu alıyoruz (Navigasyon çubuğu için)
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF0F0F0F) : const Color(0xFFF4F6F8),
       body: NestedScrollView(
@@ -179,15 +182,16 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
             ),
           ];
         },
+        // Alt padding değerini her sekmeye gönderiyoruz
         body: TabBarView(
           controller: _tabController,
           children: [
-            _buildStartingGuide(context, isDark),
-            _buildWeeklyPlanGuide(context, isDark),
-            _buildLibraryGuide(context, isDark),
-            _buildWorkshopGuide(context, isDark),
-            _buildArenaGuide(context, isDark),
-            _buildStatsGuide(context, isDark),
+            _buildStartingGuide(context, isDark, bottomPadding),
+            _buildWeeklyPlanGuide(context, isDark, bottomPadding),
+            _buildLibraryGuide(context, isDark, bottomPadding),
+            _buildWorkshopGuide(context, isDark, bottomPadding),
+            _buildArenaGuide(context, isDark, bottomPadding),
+            _buildStatsGuide(context, isDark, bottomPadding),
           ],
         ),
       ),
@@ -338,9 +342,10 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
   // TAB CONTENTS
   // ---------------------------------------------------------------------------
 
-  Widget _buildStartingGuide(BuildContext context, bool isDark) {
+  Widget _buildStartingGuide(BuildContext context, bool isDark, double bottomPadding) {
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      // Alt boşluğa bottomPadding ekliyoruz
+      padding: EdgeInsets.fromLTRB(14, 12, 14, 12 + bottomPadding),
       children: [
         // Hero Banner
         Container(
@@ -456,9 +461,9 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
     );
   }
 
-  Widget _buildWeeklyPlanGuide(BuildContext context, bool isDark) {
+  Widget _buildWeeklyPlanGuide(BuildContext context, bool isDark, double bottomPadding) {
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: EdgeInsets.fromLTRB(14, 12, 14, 12 + bottomPadding),
       children: [
         // Hero Banner
         Container(
@@ -583,9 +588,9 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
     );
   }
 
-  Widget _buildLibraryGuide(BuildContext context, bool isDark) {
+  Widget _buildLibraryGuide(BuildContext context, bool isDark, double bottomPadding) {
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: EdgeInsets.fromLTRB(14, 12, 14, 12 + bottomPadding),
       children: [
         // Hero Banner
         Container(
@@ -712,9 +717,9 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
     );
   }
 
-  Widget _buildWorkshopGuide(BuildContext context, bool isDark) {
+  Widget _buildWorkshopGuide(BuildContext context, bool isDark, double bottomPadding) {
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: EdgeInsets.fromLTRB(14, 12, 14, 12 + bottomPadding),
       children: [
         // Hero Banner
         Container(
@@ -866,9 +871,9 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
     );
   }
 
-  Widget _buildArenaGuide(BuildContext context, bool isDark) {
+  Widget _buildArenaGuide(BuildContext context, bool isDark, double bottomPadding) {
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: EdgeInsets.fromLTRB(14, 12, 14, 12 + bottomPadding),
       children: [
         // Hero Banner
         Container(
@@ -1048,9 +1053,9 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
     );
   }
 
-  Widget _buildStatsGuide(BuildContext context, bool isDark) {
+  Widget _buildStatsGuide(BuildContext context, bool isDark, double bottomPadding) {
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: EdgeInsets.fromLTRB(14, 12, 14, 12 + bottomPadding),
       children: [
         // Hero Banner
         Container(

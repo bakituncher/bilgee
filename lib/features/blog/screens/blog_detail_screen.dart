@@ -25,18 +25,30 @@ class BlogDetailScreen extends ConsumerWidget {
     Future<void> deletePost() async {
       final post = postForActions;
       if (post == null) return;
+
+      // ÇÖZÜM 1: Dialog'u root navigator (en üst katman) üzerinde açıyoruz.
+      // Böylece navigasyon barın üzerinde görünür.
       final ok = await showDialog<bool>(
         context: context,
+        useRootNavigator: true, // <-- KRİTİK EKLEME
         builder: (c) => AlertDialog(
           title: const Text('Yazıyı sil'),
           content: Text('"${post.title}" kalıcı olarak silinsin mi?'),
           actions: [
-            TextButton(onPressed: () => Navigator.of(c).pop(false), child: const Text('Vazgeç')),
-            ElevatedButton(onPressed: () => Navigator.of(c).pop(true), child: const Text('Sil')),
+            TextButton(
+                onPressed: () => Navigator.of(c).pop(false),
+                child: const Text('Vazgeç')
+            ),
+            ElevatedButton(
+                onPressed: () => Navigator.of(c).pop(true),
+                child: const Text('Sil')
+            ),
           ],
         ),
       );
+
       if (ok != true) return;
+
       try {
         await FirebaseFirestore.instance.collection('posts').doc(post.id).delete();
         if (context.mounted) {
@@ -49,6 +61,10 @@ class BlogDetailScreen extends ConsumerWidget {
         }
       }
     }
+
+    // Alt navigasyon çubuğu ve güvenli alan (iPhone home indicator vb.) yüksekliği
+    // İçeriğin en altta kesilmemesi için kullanılır.
+    final bottomPadding = MediaQuery.of(context).padding.bottom + kBottomNavigationBarHeight + 20;
 
     return Scaffold(
       appBar: AppBar(
@@ -175,7 +191,9 @@ class BlogDetailScreen extends ConsumerWidget {
               ),
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
+                  // ÇÖZÜM 2: Alt padding'i dinamik olarak artırdık.
+                  // Navigasyon barın altında metin kalmaması için "bottomPadding" eklendi.
+                  padding: EdgeInsets.fromLTRB(16, 0, 16, bottomPadding),
                   child: MarkdownBody(
                     data: post.contentMarkdown,
                     styleSheet: MarkdownStyleSheet(

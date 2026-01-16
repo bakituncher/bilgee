@@ -59,54 +59,56 @@ class _Step2ScoreEntryState extends ConsumerState<Step2ScoreEntry> {
 
     final subjects = section.subjects.entries.toList();
 
-    return Column(
-      children: [
-        // Branş Modu Bilgisi
-        if (state.isBranchMode)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
-            child: Text(
-              "BRANŞ DENEMESİ: ${subjects.first.key.toUpperCase()}",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.primary,
-                letterSpacing: 1.1,
+    return SafeArea(
+      child: Column(
+        children: [
+          // Branş Modu Bilgisi
+          if (state.isBranchMode)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+              child: Text(
+                "BRANŞ DENEMESİ: ${subjects.first.key.toUpperCase()}",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.primary,
+                  letterSpacing: 1.1,
+                ),
+              ),
+            ),
+
+          Expanded(
+            child: NotificationListener<ScrollNotification>(
+              onNotification: (notification) => false,
+              child: PageView.builder(
+                controller: _pageController,
+                physics: _isAnySliderActive
+                    ? const NeverScrollableScrollPhysics()
+                    : const PageScrollPhysics(),
+                itemCount: subjects.length,
+                itemBuilder: (context, index) {
+                  final subjectEntry = subjects[index];
+                  return _SubjectScoreCard(
+                    key: ValueKey(subjectEntry.key),
+                    subjectName: subjectEntry.key,
+                    details: subjectEntry.value,
+                    isFirst: index == 0,
+                    isLast: index == subjects.length - 1,
+                    currentPage: _currentPage,
+                    totalPages: subjects.length,
+                    onNext: () => _pageController.nextPage(duration: 200.ms, curve: Curves.easeOut),
+                    onPrevious: () => _pageController.previousPage(duration: 200.ms, curve: Curves.easeOut),
+                    pageController: _pageController,
+                    onSliderActiveChanged: _setSliderActive,
+                  );
+                },
               ),
             ),
           ),
-
-        Expanded(
-          child: NotificationListener<ScrollNotification>(
-            onNotification: (notification) => false,
-            child: PageView.builder(
-              controller: _pageController,
-              physics: _isAnySliderActive
-                  ? const NeverScrollableScrollPhysics()
-                  : const PageScrollPhysics(),
-              itemCount: subjects.length,
-              itemBuilder: (context, index) {
-                final subjectEntry = subjects[index];
-                return _SubjectScoreCard(
-                  key: ValueKey(subjectEntry.key),
-                  subjectName: subjectEntry.key,
-                  details: subjectEntry.value,
-                  isFirst: index == 0,
-                  isLast: index == subjects.length - 1,
-                  currentPage: _currentPage,
-                  totalPages: subjects.length,
-                  onNext: () => _pageController.nextPage(duration: 200.ms, curve: Curves.easeOut),
-                  onPrevious: () => _pageController.previousPage(duration: 200.ms, curve: Curves.easeOut),
-                  pageController: _pageController,
-                  onSliderActiveChanged: _setSliderActive,
-                );
-              },
-            ),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
