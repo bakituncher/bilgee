@@ -80,8 +80,16 @@ class TestModel {
 extension TestModelSummaryX on TestModel {
   // Branş denemesi mi kontrol et
   bool get isBranchTest {
-    // 1. KESİN KURAL: Eğer denemede sadece 1 dersin puanı varsa, bu kesinlikle bir branş denemesidir.
+    // 1. KESİN KURAL: Eğer denemede sadece 1 dersin puanı varsa...
     if (scores.length == 1) {
+      // İSTİSNA: Eğer bu tek ders "Alan Bilgisi" veya "Temel Alan Bilgisi" ise,
+      // bu bir AGS/ÖABT ana sınavıdır. Branş denemesi (ör: matematik testi) sayılmamalıdır.
+      final subjectName = scores.keys.first;
+      if (subjectName == 'Alan Bilgisi' || subjectName == 'Temel Alan Bilgisi') {
+        return false;
+      }
+
+      // Diğer tek derslik durumlar (ör: Sadece Fizik çözdüm) branş denemesidir.
       return true;
     }
 
