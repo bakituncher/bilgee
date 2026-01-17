@@ -7,7 +7,6 @@ import 'package:taktik/data/models/plan_model.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
-import 'package:taktik/data/repositories/ai_service.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
 
 class StrategyReviewScreen extends ConsumerStatefulWidget {
@@ -72,78 +71,22 @@ class _StrategyReviewScreenState extends ConsumerState<StrategyReviewScreen> {
   }
 
   Future<void> _fetchRevisedPlan(String feedback) async {
-    setState(() => _isRevising = true);
-
-    final user = ref.read(userProfileProvider).value;
-    final tests = ref.read(testsProvider).value ?? [];
-    final performance = ref.read(performanceProvider).value;
-    final planDoc = ref.read(planProvider).value;
-
-    if (user == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Kullanıcı verisi bulunamadı.")));
-      }
-      setState(() => _isRevising = false);
-      return;
-    }
-
-    if (performance == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Performans verisi yükleniyor, lütfen bekleyin.")));
-      }
-      setState(() => _isRevising = false);
-      return;
-    }
-
-    try {
-      final resultJson = await ref.read(aiServiceProvider).generateGrandStrategy(
-        user: user,
-        tests: tests,
-        performance: performance,
-        planDoc: planDoc,
-        pacing: pacing,
-        revisionRequest: feedback,
+    // AI revizyon özelliği kaldırıldı - kullanıcı yeni plan oluşturabilir
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Plan revizyon özelliği kaldırıldı. Yeni bir plan oluşturabilirsiniz.'),
+        ),
       );
-
-      final decodedData = jsonDecode(resultJson);
-
-      if (decodedData.containsKey('error')) {
-        throw Exception(decodedData['error']);
-      }
-
-      setState(() {
-        _currentStrategyData = {
-          'weeklyPlan': decodedData['weeklyPlan'],
-          'pacing': pacing,
-        };
-      });
-
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Revizyon sırasında hata: ${e.toString()}')),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isRevising = false);
-      }
     }
   }
 
   void _openRevisionWorkshop() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Padding(
-        padding: MediaQuery.of(context).viewInsets,
-        child: RevisionWorkshop(
-          onRevisionRequested: (String feedback) {
-            Navigator.of(context).pop();
-            _fetchRevisedPlan(feedback);
-          },
-        ),
+    // Revizyon yerine kullanıcıyı geri gönder
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Farklı bir plan için yeni plan oluşturma ekranına dönebilirsiniz.'),
+        duration: Duration(seconds: 2),
       ),
     );
   }

@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:taktik/data/repositories/ai_service.dart';
+import 'package:taktik/data/repositories/weekly_plan_generator.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:taktik/data/models/user_model.dart';
@@ -12,7 +12,6 @@ import 'package:intl/intl.dart';
 import 'package:taktik/data/models/plan_model.dart';
 import 'package:taktik/data/models/plan_document.dart';
 import 'package:lottie/lottie.dart';
-import 'package:taktik/core/safety/ai_content_safety.dart';
 
 enum Pacing { relaxed, moderate, intense }
 enum PlanningStep { dataCheck, confirmation, pacing, loading }
@@ -33,7 +32,6 @@ class StrategyGenerationNotifier extends StateNotifier<AsyncValue<void>> {
     final user = _ref.read(userProfileProvider).value;
     final tests = _ref.read(testsProvider).value;
     final performance = _ref.read(performanceProvider).value;
-    final planDoc = _ref.read(planProvider).value;
 
     if (user == null || tests == null || performance == null) {
       state = AsyncValue.error("Kullanıcı, test veya performans verisi bulunamadı.", StackTrace.current);
@@ -41,31 +39,13 @@ class StrategyGenerationNotifier extends StateNotifier<AsyncValue<void>> {
     }
 
     try {
-      final resultJson = await _ref.read(aiServiceProvider).generateGrandStrategy(
+      // İstemci tarafı plan oluşturma - AI kullanılmıyor
+      final result = await WeeklyPlanGenerator.generateWeeklyPlan(
         user: user,
         tests: tests,
         performance: performance,
-        planDoc: planDoc,
         pacing: pacing.name,
-        revisionRequest: revisionRequest,
       );
-
-      final decodedData = jsonDecode(resultJson);
-
-      if (decodedData.containsKey('error')) {
-        throw Exception(decodedData['error']);
-      }
-
-      // KÖK NEDEN ÇÖZÜMÜ: AI bazen creationDate alanını eski/random gönderiyor; planın anında expired görünmesini engellemek için şimdi ile ez.
-      if (decodedData['weeklyPlan'] is Map<String, dynamic>) {
-        (decodedData['weeklyPlan'] as Map<String, dynamic>)['creationDate'] = DateTime.now().toIso8601String();
-      }
-
-      final result = {
-        // long-term strateji kaldırıldı
-        'weeklyPlan': decodedData['weeklyPlan'],
-        'pacing': pacing.name,
-      };
 
       if (context.mounted) {
         context.push('/ai-hub/strategic-planning/${AppRoutes.strategyReview}', extra: result);
@@ -355,10 +335,32 @@ class StrategicPlanningScreen extends ConsumerWidget {
         ),
         child: Column(
           children: [
-            // AI güvenlik uyarısı
-            AiContentSafety.buildDisclaimerBanner(
-              context,
-              customMessage: 'Bu plan AI tarafından kişiselleştirilmiştir. Kendi durumunuza göre ayarlayabilirsiniz.',
+            // Otomatik plan oluşturma bilgisi
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: 20,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Bu plan performansınıza göre otomatik oluşturulmuştur. Kendi durumunuza göre ayarlayabilirsiniz.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
             Expanded(
               child: Center(
