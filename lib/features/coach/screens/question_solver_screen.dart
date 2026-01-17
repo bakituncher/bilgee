@@ -61,6 +61,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
   bool _isCropping = false;  // Kırpma işlemi işleniyor durumu
   bool _isProcessingImage = false; // Fotoğraf ilk işlenirken (Loader için)
   bool _isChatLoading = false; // Sohbet cevap bekliyor mu?
+  bool _isSaved = false; // YENİ: Çözüm kaydedildi mi?
   String? _error;
 
   final ImagePicker _picker = ImagePicker();
@@ -87,6 +88,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
         _error = null;
         _isAnalyzing = false;
         _isCropping = false;
+        _isSaved = false; // Sıfırla
       });
       return;
     }
@@ -122,6 +124,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
             _isChatMode = false;
             _error = null;
             _isProcessingImage = false;
+            _isSaved = false; // Sıfırla
           });
         } else {
           // Sıkıştırma başarısız olursa orijinali kullan (Fallback)
@@ -132,6 +135,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
             _messages.clear();
             _isChatMode = false;
             _isProcessingImage = false;
+            _isSaved = false; // Sıfırla
           });
         }
       }
@@ -181,6 +185,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
     setState(() {
       _isAnalyzing = true;
       _error = null;
+      _isSaved = false; // Yeni soru için sıfırla
     });
 
     try {
@@ -268,7 +273,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Hata: $e'))
+            SnackBar(content: Text('Hata: $e'))
         );
         setState(() => _isChatLoading = false);
       }
@@ -336,6 +341,10 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
       );
 
       if (mounted) {
+        setState(() {
+          _isSaved = true; // BAŞARILI: Durumu güncelle
+        });
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -374,7 +383,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
 
       // ExamType enum'ını al
       final examType = ExamType.values.firstWhere(
-        (e) => e.name == user.selectedExam,
+            (e) => e.name == user.selectedExam,
         orElse: () => ExamType.yks,
       );
 
@@ -458,7 +467,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
                   theme,
                   Icons.camera_alt_rounded,
                   "Kamera",
-                  () {
+                      () {
                     Navigator.pop(context);
                     _pickImage(ImageSource.camera);
                   },
@@ -468,7 +477,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
                   theme,
                   Icons.photo_library_rounded,
                   "Galeri",
-                  () {
+                      () {
                     Navigator.pop(context);
                     _pickImage(ImageSource.gallery);
                   },
@@ -613,9 +622,26 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
           actions: [
             if (_initialSolution != null)
               IconButton(
-                icon: const Icon(Icons.bookmark_border_rounded),
-                tooltip: 'Kaydet',
-                onPressed: _saveSolutionLocally,
+                icon: Icon(
+                  _isSaved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+                  color: _isSaved ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+                ),
+                tooltip: _isSaved ? 'Kaydedildi' : 'Kaydet',
+                onPressed: _isSaved
+                    ? () {
+                  ScaffoldMessenger.of(context).clearSnackBars();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('Bu soru zaten kütüphanene eklendi 🐰'),
+                      backgroundColor: theme.colorScheme.primary,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  );
+                }
+                    : _saveSolutionLocally,
               )
             else
               IconButton(
@@ -650,17 +676,17 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
                 child: _isAnalyzing
                     ? _buildLoadingState(theme)
                     : _error != null
-                        ? Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: _buildErrorState(theme),
-                            ),
-                          )
-                        : _initialSolution == null
-                            ? _buildEmptyState(theme) // Fotoğraf çekin ekranı
-                            : _isChatMode
-                                ? _buildChatView(theme) // SOHBET MODU
-                                : _buildInitialResultView(theme), // İLK SONUÇ MODU
+                    ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: _buildErrorState(theme),
+                  ),
+                )
+                    : _initialSolution == null
+                    ? _buildEmptyState(theme) // Fotoğraf çekin ekranı
+                    : _isChatMode
+                    ? _buildChatView(theme) // SOHBET MODU
+                    : _buildInitialResultView(theme), // İLK SONUÇ MODU
               ),
 
               // Chat Input (Sadece sohbet modunda görünür)
@@ -899,12 +925,12 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
 
   // Yardımcı Widget: Özellik Satırı
   Widget _buildFeatureRow(
-    ThemeData theme, {
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required int delay,
-  }) {
+      ThemeData theme, {
+        required IconData icon,
+        required String title,
+        required String subtitle,
+        required int delay,
+      }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
@@ -1231,11 +1257,11 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
             'assets/lotties/loading_dots.json',
             height: 40,
             errorBuilder: (context, error, stackTrace) =>
-                const SizedBox(
-                  width: 40,
-                  height: 40,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
+            const SizedBox(
+              width: 40,
+              height: 40,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
           ),
           const SizedBox(width: 8),
           Text(
