@@ -11,13 +11,16 @@ import 'package:go_router/go_router.dart';
 import 'package:taktik/features/pomodoro/logic/pomodoro_notifier.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
+import 'package:taktik/features/home/providers/home_providers.dart';
+import 'package:taktik/data/models/plan_document.dart';
+
+// Seçili plan indexi: 0 = Güncel Plan, 1+ = Geçmiş Planlar
+final _selectedPlanIndexProvider = StateProvider.autoDispose<int>((ref) => 0);
 
 final _selectedDayProvider = StateProvider.autoDispose<int>((ref) {
   int todayIndex = DateTime.now().weekday - 1;
   return todayIndex.clamp(0, 6);
 });
-
-final _isExpiredWarningShownProvider = StateProvider.autoDispose<bool>((ref) => false);
 
 class WeeklyPlanScreen extends ConsumerStatefulWidget {
   const WeeklyPlanScreen({super.key});
@@ -27,62 +30,61 @@ class WeeklyPlanScreen extends ConsumerStatefulWidget {
 }
 
 class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
-  // Plan süresi doldu dialog kontrolünü kaldırdık çünkü artık direkt Empty State gösteriyoruz.
 
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(userProfileProvider).value;
-    final planDoc = ref.watch(planProvider).value;
-    final weeklyPlan = planDoc?.weeklyPlan != null ? WeeklyPlan.fromJson(planDoc!.weeklyPlan!) : null;
 
-    // GÜNCELLEME: weeklyPlan.isExpired kontrolü buraya eklendi.
-    // Eğer plan yoksa VEYA planın süresi dolmuşsa direkt Empty State (Boş Durum) gösterilir.
-    if (user == null || weeklyPlan == null || weeklyPlan.isExpired) {
+    // Hem güncel planı hem arşivlenmişleri al
+    final currentPlanDoc = ref.watch(planProvider).value;
+    final archivedPlans = ref.watch(archivedPlansProvider).value ?? [];
+
+    // Tüm planları tek bir listede birleştir [Güncel, Eski1, Eski2, ...]
+    final List<PlanDocument?> allPlans = [currentPlanDoc, ...archivedPlans];
+
+    // Kullanıcının seçtiği index (Varsayılan 0)
+    final selectedIndex = ref.watch(_selectedPlanIndexProvider);
+
+    // Seçili dökümanı güvenli şekilde al
+    final PlanDocument? selectedDoc = (selectedIndex < allPlans.length) ? allPlans[selectedIndex] : null;
+    final WeeklyPlan? displayedPlan = selectedDoc?.weeklyPlan != null ? WeeklyPlan.fromJson(selectedDoc!.weeklyPlan!) : null;
+
+    // Sadece hiç plan yoksa Empty State göster (Kilit tamamen kalktı)
+    if (user == null || displayedPlan == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Haftalık Plan')),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.calendar_today_outlined, size: 64, color: Theme.of(context).colorScheme.primary.withOpacity(0.3)),
-              const SizedBox(height: 16),
-              // Mesajı duruma göre özelleştirdik
-              Text(
-                (weeklyPlan != null && weeklyPlan.isExpired)
-                   ? "Haftalık planının süresi doldu."
-                   : "Aktif bir haftalık plan bulunamadı.",
-                 style: Theme.of(context).textTheme.titleMedium
-              ),
-              const SizedBox(height: 8),
-              Text("Yeni bir strateji belirlemek için plan oluşturun.", textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodySmall),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: () {
-                  final isPremium = ref.read(premiumStatusProvider);
-                  if (isPremium) {
-                    context.go('/ai-hub/strategic-planning');
-                  } else {
-                    context.go(AppRoutes.aiToolsOffer);
-                  }
-                },
-                icon: const Icon(Icons.add),
-                label: const Text('Yeni Plan Oluştur'),
-              ),
-            ],
-          ),
-        ),
+        body: _buildEmptyState(context, ref, isExpired: false),
       );
     }
 
-    final creationDate = weeklyPlan.creationDate;
+    final bool isHistoryView = selectedIndex > 0;
+    final bool isExpired = displayedPlan.isExpired;
+    // Geçmiş planlara veya süresi dolmuş plana müdahale edilemez (readonly)
+    final bool isReadOnly = isHistoryView || isExpired;
+
+    final creationDate = displayedPlan.creationDate;
     final creationDayStart = DateTime(creationDate.year, creationDate.month, creationDate.day);
     final startOfWeek = creationDayStart.subtract(Duration(days: creationDayStart.weekday - 1));
+    final endOfWeek = startOfWeek.add(const Duration(days: 6));
+
+    final dateRangeText = "${DateFormat('d MMM', 'tr_TR').format(startOfWeek)} - ${DateFormat('d MMM', 'tr_TR').format(endOfWeek)}";
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Harekât Takvimi'),
+        // Başlık yerine Dropdown/Seçici koyuyoruz
+        title: _buildPlanSelector(context, ref, allPlans, selectedIndex),
+        centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
+        actions: [
+          // Eğer en güncel plandaysak ve süresi dolmuşsa "YENİLE" butonu göster
+          if (selectedIndex == 0 && isExpired)
+            IconButton(
+              icon: const Icon(Icons.update, color: Colors.amber),
+              tooltip: 'Yeni Plan Oluştur',
+              onPressed: () => _navigateToCreatePlan(ref, context),
+            )
+        ],
       ),
       extendBodyBehindAppBar: true,
       body: Container(
@@ -97,69 +99,46 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // isExpired banner'ını kaldırdık çünkü artık o duruma yukarıdaki if bloğunda düşüyor.
+              // UYARI BANNER'I: Eğer süresi dolmuşsa veya arşivse
+              if (isReadOnly)
+                 _buildStatusBanner(context, isHistoryView, isExpired),
+
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      "Bu haftanın odağı",
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Haftanın Odağı",
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        ),
+                        Text(
+                          dateRangeText,
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.outline),
+                        )
+                      ],
                     ),
-                    if (weeklyPlan.motivationalQuote != null && weeklyPlan.motivationalQuote!.isNotEmpty) ...[
+                    if (displayedPlan.motivationalQuote != null && displayedPlan.motivationalQuote!.isNotEmpty) ...[
                       const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
-                              Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.2),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.format_quote,
-                              size: 16,
-                              color: Theme.of(context).colorScheme.primary.withOpacity(0.7),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                weeklyPlan.motivationalQuote!,
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  fontStyle: FontStyle.italic,
-                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
-                                  height: 1.3,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      _buildQuoteCard(context, displayedPlan.motivationalQuote!),
                     ],
                   ],
                 ).animate().fadeIn(duration: 500.ms),
               ),
+
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 6),
-                child: WeeklyOverviewCard(weeklyPlan: weeklyPlan, userId: user.id, startOfWeek: startOfWeek),
+                child: WeeklyOverviewCard(weeklyPlan: displayedPlan, userId: user.id, startOfWeek: startOfWeek),
               ),
               const SizedBox(height: 4),
               const _DaySelector(
                 days: ['PZT', 'SAL', 'ÇAR', 'PER', 'CUM', 'CMT', 'PAZ'],
               ),
               const Divider(height: 1),
-              _buildPlanView(context, ref, weeklyPlan, user.id, startOfWeek),
+              _buildPlanView(context, ref, displayedPlan, user.id, startOfWeek, isReadOnly: isReadOnly),
             ],
           ),
         ),
@@ -167,7 +146,156 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
     );
   }
 
-  Widget _buildPlanView(BuildContext context, WidgetRef ref, WeeklyPlan weeklyPlan, String userId, DateTime startOfWeek) {
+  // Plan Seçici Widget (AppBar Title)
+  Widget _buildPlanSelector(BuildContext context, WidgetRef ref, List<PlanDocument?> plans, int currentIndex) {
+    if (plans.isEmpty) return const Text('Harekât Takvimi');
+
+    return PopupMenuButton<int>(
+      initialValue: currentIndex,
+      onSelected: (index) {
+        ref.read(_selectedPlanIndexProvider.notifier).state = index;
+      },
+      position: PopupMenuPosition.under,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            currentIndex == 0 ? 'Güncel Plan' : 'Geçmiş Plan $currentIndex',
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
+          const SizedBox(width: 4),
+          const Icon(Icons.arrow_drop_down),
+        ],
+      ),
+      itemBuilder: (context) {
+        return List.generate(plans.length, (index) {
+          final planDoc = plans[index];
+          if (planDoc?.weeklyPlan == null) return null;
+          final wp = WeeklyPlan.fromJson(planDoc!.weeklyPlan!);
+          final date = wp.creationDate;
+          final label = index == 0 ? "Güncel Plan" : "Arşiv: ${DateFormat('d MMM', 'tr_TR').format(date)}";
+
+          return PopupMenuItem<int>(
+            value: index,
+            child: Row(
+              children: [
+                Icon(
+                  index == 0 ? Icons.check_circle_outline : Icons.history,
+                  color: index == 0 ? Colors.green : Colors.grey,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(label),
+              ],
+            ),
+          );
+        }).whereType<PopupMenuItem<int>>().toList();
+      },
+    );
+  }
+
+  Widget _buildStatusBanner(BuildContext context, bool isHistory, bool isExpired) {
+    Color bgColor;
+    String text;
+    IconData icon;
+
+    if (isHistory) {
+      bgColor = Colors.grey.withOpacity(0.2);
+      text = "Geçmiş bir planı görüntülüyorsunuz.";
+      icon = Icons.history;
+    } else {
+      // isExpired
+      bgColor = Colors.amber.withOpacity(0.2);
+      text = "Bu planın süresi doldu. Yeni bir strateji belirle!";
+      icon = Icons.warning_amber_rounded;
+    }
+
+    return Container(
+      width: double.infinity,
+      color: bgColor,
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 16, color: Theme.of(context).colorScheme.onSurface),
+          const SizedBox(width: 8),
+          Text(text, style: Theme.of(context).textTheme.labelSmall),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context, WidgetRef ref, {required bool isExpired}) {
+    return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.calendar_today_outlined, size: 64, color: Theme.of(context).colorScheme.primary.withOpacity(0.3)),
+              const SizedBox(height: 16),
+              Text(
+                isExpired ? "Haftalık planının süresi doldu." : "Aktif bir haftalık plan bulunamadı.",
+                 style: Theme.of(context).textTheme.titleMedium
+              ),
+              const SizedBox(height: 8),
+              Text("Yeni bir strateji belirlemek için plan oluşturun.", textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodySmall),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: () => _navigateToCreatePlan(ref, context),
+                icon: const Icon(Icons.add),
+                label: const Text('Yeni Plan Oluştur'),
+              ),
+            ],
+          ),
+        );
+  }
+
+  void _navigateToCreatePlan(WidgetRef ref, BuildContext context) {
+      final isPremium = ref.read(premiumStatusProvider);
+      if (isPremium) {
+        context.go('/ai-hub/strategic-planning');
+      } else {
+        context.go(AppRoutes.aiToolsOffer);
+      }
+  }
+
+  // Quote kartını widget olarak ayırdım (temizlik için)
+  Widget _buildQuoteCard(BuildContext context, String quote) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+            Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.2),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.format_quote, size: 16, color: Theme.of(context).colorScheme.primary.withOpacity(0.7)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              quote,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                fontStyle: FontStyle.italic,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                height: 1.3,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlanView(BuildContext context, WidgetRef ref, WeeklyPlan weeklyPlan, String userId, DateTime startOfWeek, {required bool isReadOnly}) {
     final selectedDayIndex = ref.watch(_selectedDayProvider);
     final dayName = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'][selectedDayIndex];
     final dailyPlan = weeklyPlan.plan.firstWhere((p) => p.day == dayName, orElse: () => DailyPlan(day: dayName, schedule: []));
@@ -178,7 +306,13 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
         transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
         child: dailyPlan.schedule.isEmpty
             ? _EmptyDayView(key: ValueKey(dayName))
-            : _TaskListView(key: ValueKey(dayName), dailyPlan: dailyPlan, userId: userId, startOfWeek: startOfWeek),
+            : _TaskListView(
+                key: ValueKey(dayName),
+                dailyPlan: dailyPlan,
+                userId: userId,
+                startOfWeek: startOfWeek,
+                isReadOnly: isReadOnly // isReadOnly parametresini aşağı iletiyoruz
+              ),
       ),
     );
   }
@@ -229,8 +363,8 @@ class _DaySelector extends ConsumerWidget {
 }
 
 class _TaskListView extends ConsumerStatefulWidget {
-  final DailyPlan dailyPlan; final String userId; final DateTime startOfWeek;
-  const _TaskListView({super.key, required this.dailyPlan, required this.userId, required this.startOfWeek});
+  final DailyPlan dailyPlan; final String userId; final DateTime startOfWeek; final bool isReadOnly;
+  const _TaskListView({super.key, required this.dailyPlan, required this.userId, required this.startOfWeek, required this.isReadOnly});
   @override
   ConsumerState<_TaskListView> createState() => _TaskListViewState();
 }
@@ -288,7 +422,8 @@ class _TaskListViewState extends ConsumerState<_TaskListView> with AutomaticKeep
                   isFirst: index == 0,
                   isLast: index == dailyPlan.schedule.length - 1,
                   dateKey: dateKey,
-                  onToggle: () async {
+                  // Eğer salt okunursa toggle işlemini devre dışı bırak
+                  onToggle: widget.isReadOnly ? null : () async {
                     HapticFeedback.selectionClick();
                     final desired = !isCompleted;
                     // Eğer tamamlanmamış bir görevi bitirmek üzereyse, aksiyon sor
@@ -624,8 +759,11 @@ class _EmptyDayView extends StatelessWidget {
 }
 
 class _TaskTimelineTile extends StatelessWidget {
-  final ScheduleItem item; final bool isCompleted; final bool isFirst; final bool isLast; final String dateKey; final VoidCallback onToggle;
-  const _TaskTimelineTile({required this.item, required this.isCompleted, required this.isFirst, required this.isLast, required this.dateKey, required this.onToggle});
+  final ScheduleItem item; final bool isCompleted; final bool isFirst; final bool isLast; final String dateKey;
+  final VoidCallback? onToggle; // Nullable yaptık (Readonly için)
+
+  const _TaskTimelineTile({required this.item, required this.isCompleted, required this.isFirst, required this.isLast, required this.dateKey, this.onToggle});
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -664,18 +802,25 @@ class _TaskTimelineTile extends StatelessWidget {
               ],
             ),
           ),
-          IconButton(
-            icon: AnimatedSwitcher(
-              duration: 250.ms,
-              switchInCurve: Curves.elasticOut,
-              child: Icon(isCompleted? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
-                key: ValueKey<bool>(isCompleted),
-                color: isCompleted? Colors.green : Theme.of(context).colorScheme.surfaceContainerHighest,
-                size: 28,
+          // Checkbox (ReadOnly ise gizle veya deaktif yap)
+          if (onToggle != null)
+            IconButton(
+              icon: AnimatedSwitcher(
+                duration: 250.ms,
+                switchInCurve: Curves.elasticOut,
+                child: Icon(isCompleted? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+                  key: ValueKey<bool>(isCompleted),
+                  color: isCompleted? Colors.green : Theme.of(context).colorScheme.surfaceContainerHighest,
+                  size: 28,
+                ),
               ),
-            ),
-            onPressed: onToggle,
-          )
+              onPressed: onToggle,
+            )
+          else
+            Padding(
+               padding: const EdgeInsets.all(8.0),
+               child: Icon(isCompleted? Icons.check_circle_rounded : Icons.lock_outline, color: Theme.of(context).colorScheme.surfaceContainerHighest, size: 24),
+            )
         ],
       ),
     );
