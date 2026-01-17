@@ -38,7 +38,8 @@ class TopicScorer {
     final List<WeightedTopic> scoredTopics = [];
 
     // 1. Identify Weaknesses from Mock Exams (Last 3 tests)
-    // Currently relying on general performance accumulation.
+    // Currently relying on general performance accumulation via PerformanceSummary.
+    // Ideally, we would parse recentTests to find "Hot" topics where user failed recently.
 
     // 2. Iterate Curriculum
     for (var section in examModel.sections) {
@@ -51,7 +52,7 @@ class TopicScorer {
           isRelevant = true;
         } else if (section.name.toLowerCase() == selectedSection.toLowerCase()) {
           isRelevant = true;
-        } else if (selectedSection == 'TYT ve YDT' && (section.name == 'TYT' || section.name == 'YDT')) { // Special case for YDT
+        } else if (selectedSection == 'TYT ve YDT' && (section.name == 'TYT' || section.name == 'YDT')) {
              isRelevant = true;
         }
 
@@ -59,8 +60,19 @@ class TopicScorer {
       }
 
       section.subjects.forEach((subjectName, subjectData) {
-        for (var topic in subjectData.topics) {
-          final score = _calculateScore(subjectName, topic.name, performance);
+        // Iterate topics with index to calculate "Prerequisite Score"
+        // Topics earlier in the list are foundational.
+        for (var i = 0; i < subjectData.topics.length; i++) {
+          final topic = subjectData.topics[i];
+          // Determine relative position (0.0 to 1.0), where 0.0 is beginning (foundation)
+          final relativePosition = i / (subjectData.topics.length > 0 ? subjectData.topics.length : 1);
+
+          final score = _calculateScore(
+            subjectName,
+            topic.name,
+            performance,
+            relativePosition
+          );
           scoredTopics.add(score);
         }
       });
@@ -76,6 +88,7 @@ class TopicScorer {
     String subject,
     String topic,
     PerformanceSummary performance,
+    double relativePosition,
   ) {
     double score = 50.0; // Base score
     String status = 'new';
@@ -91,30 +104,53 @@ class TopicScorer {
         final accuracy = (p.correctCount / total) * 100;
 
         if (accuracy < redThreshold) {
-          score = 90.0; // Urgent Fix
+          // RED TOPIC (Urgent Fix)
+          score = 90.0;
           status = 'red';
           reason = 'Düşük başarı oranı (%${accuracy.toStringAsFixed(0)})';
-          // Boost based on wrong count (frequency of error)
+
+          // Boost: If this is a foundational topic (early in list), it's critical.
+          // relativePosition 0.0 -> Boost +10
+          // relativePosition 1.0 -> Boost +0
+          score += (1.0 - relativePosition) * 10.0;
+
+          // Boost: Frequency of error
           score += (p.wrongCount * 1.5).clamp(0, 10);
+
         } else if (accuracy < yellowThreshold) {
-          score = 75.0; // Improve
+          // YELLOW TOPIC (Improve)
+          score = 75.0;
           status = 'yellow';
           reason = 'Geliştirilmeli (%${accuracy.toStringAsFixed(0)})';
+
+          // Slight boost for foundational
+          score += (1.0 - relativePosition) * 5.0;
+
         } else {
-          score = 30.0; // Maintenance
+          // GREEN TOPIC (Review)
+          score = 30.0;
           status = 'green';
           reason = 'Konu hakimiyeti iyi';
+
+          // Decay factor (Spaced Repetition placeholder)
+          // If we had "lastStudiedDate", we would boost score as time passes.
         }
       } else {
-        // Started but not enough data
+        // Started but not enough data -> Treat as New/In-Progress
         score = 60.0;
         status = 'new';
         reason = 'Yeni başlandı';
+        // Boost earlier topics to encourage finishing foundations first
+        score += (1.0 - relativePosition) * 5.0;
       }
     } else {
-      // Not started (New)
+      // NOT STARTED (New)
       score = 50.0;
       status = 'new';
+
+      // Boost: Order matters heavily here. We want the user to start from Topic 1, then 2.
+      // So relativePosition 0.0 should have much higher score than 1.0
+      score += (1.0 - relativePosition) * 40.0; // Max score 90 for the very first topic
     }
 
     return WeightedTopic(

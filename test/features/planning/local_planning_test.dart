@@ -97,8 +97,6 @@ void main() {
         username: 'test',
         firstName: 'Test',
         lastName: 'User',
-        createdAt: DateTime.now(), // Not in constructor actually?
-        // Wait, UserModel doesn't have createdAt. Checking fields...
         weeklyAvailability: {
           'Pazartesi': ['09:00', '10:00'],
           'Salı': ['09:00'],
