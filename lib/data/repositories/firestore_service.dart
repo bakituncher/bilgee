@@ -48,13 +48,13 @@ class FirestoreService {
   CollectionReference<Map<String, dynamic>> get _questionReportsIndexCollection => _firestore.collection('question_report_index');
   // YENİ: Yayınlanmış tepe listesi dokümanı (latest)
   DocumentReference<Map<String, dynamic>> _leaderboardTopLatestDoc(String examType, String period)
-      => _firestore.collection('leaderboard_top').doc(examType).collection(period).doc('latest');
+  => _firestore.collection('leaderboard_top').doc(examType).collection(period).doc('latest');
   // YENİ: Optimize edilmiş anlık görüntü dokümanı referansı
   DocumentReference<Map<String, dynamic>> _leaderboardSnapshotDoc(String examType, String period)
-      => _firestore.collection('leaderboard_snapshots').doc('${examType}_$period');
+  => _firestore.collection('leaderboard_snapshots').doc('${examType}_$period');
   // YENİ: Public profile dokümanı
   DocumentReference<Map<String, dynamic>> _publicProfileDoc(String userId)
-      => _firestore.collection('public_profiles').doc(userId);
+  => _firestore.collection('public_profiles').doc(userId);
 
   // Admin: rapor indeks akışı (en çok raporlananlar en üstte)
   Stream<List<Map<String, dynamic>>> streamQuestionReportIndex({int limit = 200}) {
@@ -177,16 +177,16 @@ class FirestoreService {
 
     final Map<String, List<String>> out = {};
     for (final doc in qs.docs) {
-        final data = doc.data();
-        final taskId = data['taskId'] as String;
-        // The document ID of the parent is the dateKey
-        final dateKey = doc.reference.parent.parent!.id;
+      final data = doc.data();
+      final taskId = data['taskId'] as String;
+      // The document ID of the parent is the dateKey
+      final dateKey = doc.reference.parent.parent!.id;
 
-        if (out.containsKey(dateKey)) {
-            out[dateKey]!.add(taskId);
-        } else {
-            out[dateKey] = [taskId];
-        }
+      if (out.containsKey(dateKey)) {
+        out[dateKey]!.add(taskId);
+      } else {
+        out[dateKey] = [taskId];
+      }
     }
     return out;
   }
@@ -206,11 +206,11 @@ class FirestoreService {
 
     final List<Timestamp> visits = [];
     for (final doc in qs.docs) {
-        final data = doc.data();
-        final visitTime = data['visitTime'] as Timestamp?;
-        if (visitTime != null) {
-            visits.add(visitTime);
-        }
+      final data = doc.data();
+      final visitTime = data['visitTime'] as Timestamp?;
+      if (visitTime != null) {
+        visits.add(visitTime);
+      }
     }
     return visits;
   }
@@ -614,16 +614,38 @@ class FirestoreService {
     return qs.docs.map((d) => TestModel.fromSnapshot(d as DocumentSnapshot<Map<String, dynamic>>)).toList();
   }
 
-  // Test silme fonksiyonu
+  // Test silme fonksiyonu - GÜNCELLENDİ: İstatistikleri anında düşürür.
   Future<void> deleteTest(String testId) async {
-    try {
-      await _testsCollection.doc(testId).delete();
-      // Not: İstatistiklerin güncellenmesi (test sayısının düşmesi vb.)
-      // genellikle arka planda bir Firestore Trigger (Cloud Function) tarafından yönetilmelidir.
-    } catch (e) {
-      debugPrint('Test silme hatası: $e');
-      rethrow;
+    final currentUserId = getUserId();
+    if (currentUserId == null) throw Exception('Kullanıcı oturumu açık değil');
+
+    final docRef = _testsCollection.doc(testId);
+    final docSnap = await docRef.get();
+
+    if (!docSnap.exists) return; // Zaten silinmiş
+
+    final data = docSnap.data();
+    if (data == null) return;
+
+    // Güvenlik: Sadece kendi testini silebilir
+    if (data['userId'] != currentUserId) {
+      throw Exception('Bu işlem için yetkiniz yok');
     }
+
+    final double netToRemove = (data['totalNet'] as num?)?.toDouble() ?? 0.0;
+
+    final batch = _firestore.batch();
+    batch.delete(docRef);
+
+    // Stats güncelle: Deneme sayısı ve toplam neti düşür
+    final statsRef = _userStatsDoc(currentUserId);
+    batch.set(statsRef, {
+      'testCount': FieldValue.increment(-1),
+      'totalNetSum': FieldValue.increment(-netToRemove),
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+
+    await batch.commit();
   }
 
   Future<void> saveExamSelection({
@@ -817,38 +839,47 @@ class FirestoreService {
   }
 
   // YENİ: Public profile oku (güvenli alanlar)
+  // GÜNCEL: Eğer kendi profilimse, öncelikle canlı users/state verisini oku.
   Future<Map<String, dynamic>?> getPublicProfileRaw(String userId) async {
-    // 1. Önce Public Profile'a bak (En hızlı ve doğru yöntem)
-    final snap = await _publicProfileDoc(userId).get();
-    if (snap.exists) return snap.data();
-
-    // 2. Eğer kendi profilimse, users koleksiyonundan okuyabilirim (Fallback)
-    // Başkasının 'users' dokümanını okumak YASAKTIR (Permission Denied verir).
     final currentUid = getUserId();
+
+    // 1. Eğer kendi profilimse, doğrudan canlı kaynak (users + state/stats) üzerinden oku.
+    // Bu sayede silinen denemeler veya anlık güncellemeler public_profile senkronizasyonunu beklemeden görünür.
     if (userId == currentUid) {
       try {
         final userSnap = await usersCollection.doc(userId).get();
-        if (!userSnap.exists) return null;
+        if (userSnap.exists) {
+          final u = userSnap.data() ?? <String, dynamic>{};
+          final statsSnap = await _userStatsDoc(userId).get();
+          final s = statsSnap.data() ?? const <String, dynamic>{};
 
-        final u = userSnap.data() ?? <String, dynamic>{};
-        final statsSnap = await _userStatsDoc(userId).get();
-        final s = statsSnap.data() ?? const <String, dynamic>{};
-
-        return <String, dynamic>{
-          'name': (u['name'] ?? '') as String,
-          'testCount': ((s['testCount'] ?? u['testCount'] ?? 0) as num).toInt(),
-          'totalNetSum': ((s['totalNetSum'] ?? u['totalNetSum'] ?? 0.0) as num).toDouble(),
-          'engagementScore': ((s['engagementScore'] ?? u['engagementScore'] ?? 0) as num).toInt(),
-          'streak': ((s['streak'] ?? u['streak'] ?? 0) as num).toInt(),
-          'avatarStyle': u['avatarStyle'] as String?,
-          'avatarSeed': u['avatarSeed'] as String?,
-        };
+          return <String, dynamic>{
+            'name': (u['name'] ?? '') as String,
+            'username': (u['username'] ?? '') as String,
+            'testCount': ((s['testCount'] ?? u['testCount'] ?? 0) as num).toInt(),
+            'totalNetSum': ((s['totalNetSum'] ?? u['totalNetSum'] ?? 0.0) as num).toDouble(),
+            'engagementScore': ((s['engagementScore'] ?? u['engagementScore'] ?? 0) as num).toInt(),
+            'streak': ((s['streak'] ?? u['streak'] ?? 0) as num).toInt(),
+            'avatarStyle': u['avatarStyle'] as String?,
+            'avatarSeed': u['avatarSeed'] as String?,
+          };
+        }
       } catch (_) {
-        return null;
+        // Hata durumunda (izin vs.) normal akışa devam et
       }
     }
 
-    // Başkasıysa ve public profile yoksa, kullanıcı silinmiş demektir.
+    // 2. Başkasıysa veya yukarıdaki başarısızsa Public Profile'a bak (Cache dostu)
+    final snap = await _publicProfileDoc(userId).get();
+    if (snap.exists) return snap.data();
+
+    // 3. Fallback: Leaderboard verisi (Eğer public profile yoksa, örn. eski kullanıcı)
+    // Başkasının 'users' dokümanını okumak YASAKTIR, o yüzden buraya düşerse leaderboard deneriz.
+    final myExam = (await usersCollection.doc(currentUid).get()).data()?['selectedExam'];
+    if (myExam != null) {
+      return await getLeaderboardUserRaw(myExam, userId);
+    }
+
     return null;
   }
 
@@ -1171,10 +1202,10 @@ class FirestoreService {
 
   /// Takipçileri parça parça getirir
   Future<(List<String> ids, DocumentSnapshot? lastDoc)> getFollowersPaginated(
-    String userId, {
-    int limit = 20,
-    DocumentSnapshot? startAfter,
-  }) async {
+      String userId, {
+        int limit = 20,
+        DocumentSnapshot? startAfter,
+      }) async {
     Query query = _followersCollection(userId)
         .orderBy('createdAt', descending: true) // En yeni takipçiler üstte
         .limit(limit);
@@ -1192,10 +1223,10 @@ class FirestoreService {
 
   /// Takip edilenleri parça parça getirir
   Future<(List<String> ids, DocumentSnapshot? lastDoc)> getFollowingPaginated(
-    String userId, {
-    int limit = 20,
-    DocumentSnapshot? startAfter,
-  }) async {
+      String userId, {
+        int limit = 20,
+        DocumentSnapshot? startAfter,
+      }) async {
     Query query = _followingCollection(userId)
         .orderBy('createdAt', descending: true)
         .limit(limit);
@@ -1421,5 +1452,5 @@ class FirestoreService {
     }
   }
 
-  // KALDIRILDI: resetUserDataForNewExam() - Artık kullanılmıyor
+// KALDIRILDI: resetUserDataForNewExam() - Artık kullanılmıyor
 }
