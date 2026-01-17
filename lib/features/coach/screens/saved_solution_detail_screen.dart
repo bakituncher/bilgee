@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:taktik/features/coach/models/saved_solution_model.dart';
 import 'package:taktik/features/coach/providers/saved_solutions_provider.dart';
 import 'package:taktik/features/coach/screens/question_solver_screen.dart'; // Markdown builder'lar için
@@ -26,6 +28,21 @@ class _SavedSolutionDetailScreenState
   bool _isSolving = false; // Çözüm işlemi sürüyor mu?
 
   Future<void> _solveQuestion(SavedSolutionModel currentSolution) async {
+    // Premium Kontrolü
+    final isPremium = ref.read(premiumStatusProvider);
+    if (!isPremium) {
+      context.push('/ai-hub/offer', extra: {
+        'title': 'Soru Çözücü',
+        'subtitle': 'Anında çözüm cebinde.',
+        'icon': Icons.camera_enhance_rounded,
+        'color': Colors.orangeAccent,
+        'marketingTitle': 'Soruda Takılma!',
+        'marketingSubtitle': 'Yapamadığın sorunun fotoğrafını çek, Taktik Tavşan adım adım çözümünü anlatsın.',
+        'redirectRoute': null, // Mevcut sayfada kalması için null bırakıldı
+      });
+      return;
+    }
+
     setState(() => _isSolving = true);
 
     try {
