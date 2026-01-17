@@ -41,7 +41,6 @@ class OverviewContent extends ConsumerWidget {
 
     // MERKEZİ SİSTEM: Streak Firebase'den alınır, hesaplanmaz
     final streak = StatsCalculator.getStreak(user);
-    final avgNet = StatsCalculator.calculateAvgNet(user, mainExamTests);
 
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
@@ -55,7 +54,6 @@ class OverviewContent extends ConsumerWidget {
               tests: mainExamTests,
               isDark: isDark,
               streak: streak,
-              avgNet: avgNet,
             ).animate()
               .fadeIn(duration: 400.ms)
               .slideY(begin: -0.05, duration: 500.ms, curve: Curves.easeOutCubic)

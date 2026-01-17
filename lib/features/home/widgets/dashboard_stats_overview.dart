@@ -29,7 +29,6 @@ class DashboardStatsOverview extends ConsumerWidget {
 
         // MERKEZİ SİSTEM: Streak Firebase'den alınır, hesaplanmaz
         final streak = StatsCalculator.getStreak(user);
-        final avgNet = StatsCalculator.calculateAvgNet(user, mainExamTests);
         final motivationColor = _getMotivationColor(streak, mainExamTests.length);
 
         // Basit hesaplamalar - test yoksa 0 değerleri
@@ -104,7 +103,7 @@ class DashboardStatsOverview extends ConsumerWidget {
 
                 const SizedBox(height: 10),
 
-                // Ana İstatistikler - 4 sütun
+                // Ana İstatistikler - 3 sütun
                 Row(
                   children: [
                     Expanded(
@@ -113,16 +112,6 @@ class DashboardStatsOverview extends ConsumerWidget {
                         label: 'Deneme',
                         value: '${mainExamTests.length}',
                         color: const Color(0xFF8B5CF6),
-                        theme: theme,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: _StatItem(
-                        icon: Icons.trending_up_rounded,
-                        label: 'Ortalama',
-                        value: avgNet,
-                        color: const Color(0xFF10B981),
                         theme: theme,
                       ),
                     ),

@@ -17,7 +17,8 @@ class Step1TestInfo extends ConsumerWidget {
 
     // Buton aktiflik kontrolü
     final isButtonEnabled = state.testName.trim().isNotEmpty &&
-        (state.selectedSection != null || (state.isBranchMode && state.selectedBranchSubject != null));
+        state.selectedSection != null &&
+        (!state.isBranchMode || state.selectedBranchSubject != null);
 
     return Column(
       children: [
