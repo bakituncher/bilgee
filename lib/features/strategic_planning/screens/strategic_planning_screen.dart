@@ -645,6 +645,15 @@ class StrategicPlanningScreen extends ConsumerWidget {
                             ),
                           ),
                           const SizedBox(height: 12),
+                          // Yeni Strateji - Secondary Button
+                          _ModernButton(
+                            onPressed: () {
+                              ref.read(planningStepProvider.notifier).state = PlanningStep.confirmation;
+                            },
+                            icon: Icons.refresh_rounded,
+                            label: "Yeni Strateji Oluştur",
+                            isPrimary: false,
+                          ),
                         ],
                       ],
                     ),
