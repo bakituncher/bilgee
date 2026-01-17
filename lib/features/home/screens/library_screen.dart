@@ -333,6 +333,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
+    // Cihazın alt güvenli alan boşluğunu alıyoruz
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
     if (_tests.isEmpty && _isLoading) {
       return const LogoLoader();
     }
@@ -524,7 +527,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             child: ListView.separated(
               physics: const AlwaysScrollableScrollPhysics(),
               controller: _scrollController,
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+              // GÜVENLİ ALAN DÜZELTMESİ:
+              // Standart 24 padding'e ek olarak bottomPadding ekliyoruz.
+              padding: EdgeInsets.fromLTRB(20, 8, 20, 24 + bottomPadding),
               itemCount: filtered.length + (_isLoading && filtered.isNotEmpty ? 1 : 0),
               separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
@@ -796,7 +801,6 @@ class _ArchiveListTile extends ConsumerWidget {
                               color: isDark ? Colors.white54 : Colors.black45,
                             ),
                           ),
-                          // Kategori etiketi buradan kaldırıldı.
 
                           const Spacer(),
 
