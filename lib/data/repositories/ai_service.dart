@@ -423,6 +423,31 @@ class AiService {
     // TOKEN LİMİTİ UYARISI: AI'a JSON'u tam olarak kapatmasını hatırlat (Sorunun 2. çözümü)
     prompt += "\n\nÖNEMLİ: Yanıtını mutlaka geçerli ve KAPALI bir JSON objesi olarak döndür. JSON'un sonunda tüm süslü parantezleri kapat. Yanıt kesilirse kısa tut ama yapıyı koru.";
 
+    // ====================================================================================
+    // DÜZELTME 4: GÜN SIRALAMASI SORUNUNU ÇÖZME (Cumartesi bile olsa o günden başla)
+    // ====================================================================================
+    final trDays = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'];
+    final todayIndex = DateTime.now().weekday - 1; // 0=Pzt, 6=Paz
+    final todayName = trDays[todayIndex];
+
+    // Günleri bugünden başlayarak sırala (örn: Cmt, Paz, Pzt, Sal...)
+    List<String> orderedDays = [];
+    for(int i=0; i<7; i++) {
+      orderedDays.add(trDays[(todayIndex + i) % 7]);
+    }
+    final orderString = orderedDays.join(', ');
+
+    prompt += """
+
+[ÖNEMLİ SİSTEM TALİMATI]
+Bugün günlerden: $todayName.
+Lütfen oluşturacağın 'weeklyPlan' içindeki 'plan' dizisini KESİNLİKLE **$todayName** gününden başlat.
+Plan dizisindeki günlerin sırası tam olarak şu sırayla olmalıdır: $orderString.
+
+ÖNEMLİ: Haftanın planlamasını yaparken "Pazartesi başlar" kuralını YOK SAY. Kullanıcı stratejiyi bugün ($todayName) oluşturuyor, bu yüzden ilk gün ($todayName) en yoğun ve motive edici başlangıç günü olmalı. Geçmiş günleri (örneğin dünkü Cuma) planlama, onları döngünün sonuna (gelecek hafta) at.
+""";
+    // ====================================================================================
+
     return _callGemini(prompt, expectJson: true, requestType: 'weekly_plan');
   }
 
