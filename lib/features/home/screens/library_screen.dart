@@ -121,11 +121,30 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
 
   // --- YARDIMCI METODLAR ---
 
+  // AGS Ortak sınav bölümleri (ÖABT'den ayırt etmek için)
+  static const _agsCommonSections = {
+    'Genel Yetenek',
+    'Genel Kültür ve Eğitim Bilgisi',
+    'AGS',
+    'AGS Ortak',
+  };
+
   // Filtreleme için kategori belirleme (UI'da göstermiyoruz ama filtrede kullanıyoruz)
   String _getDisplayCategory(TestModel test) {
     if (test.isBranchTest) {
       return test.smartDisplayName; // "Türkçe", "Matematik" vb.
     }
+
+    // AGS - ÖABT ayrımı
+    if (test.examType == ExamType.ags) {
+      // sectionName AGS ortak bölümlerinden biri mi kontrol et
+      if (_agsCommonSections.contains(test.sectionName)) {
+        return 'AGS';
+      }
+      // Değilse ÖABT branşı
+      return 'ÖABT';
+    }
+
     // Ana deneme ise Sınav Türünü kullan (Örn: KPSS Lisans, TYT)
     return test.examType.displayName;
   }
@@ -313,6 +332,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   Widget _buildBody(TextTheme textTheme) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+
+    // Cihazın alt güvenli alan boşluğunu alıyoruz
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     if (_tests.isEmpty && _isLoading) {
       return const LogoLoader();
@@ -505,7 +527,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             child: ListView.separated(
               physics: const AlwaysScrollableScrollPhysics(),
               controller: _scrollController,
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+              // GÜVENLİ ALAN DÜZELTMESİ:
+              // Standart 24 padding'e ek olarak bottomPadding ekliyoruz.
+              padding: EdgeInsets.fromLTRB(20, 8, 20, 24 + bottomPadding),
               itemCount: filtered.length + (_isLoading && filtered.isNotEmpty ? 1 : 0),
               separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
@@ -777,7 +801,6 @@ class _ArchiveListTile extends ConsumerWidget {
                               color: isDark ? Colors.white54 : Colors.black45,
                             ),
                           ),
-                          // Kategori etiketi buradan kaldırıldı.
 
                           const Spacer(),
 

@@ -17,6 +17,25 @@ class SavedSolutionModel extends HiveObject {
     required this.timestamp,
     this.subject,
   });
+
+  // Nesneyi güncellemek için kopyalama metodu
+  SavedSolutionModel copyWith({
+    String? id,
+    String? localImagePath,
+    String? thumbnailPath,
+    String? solutionText,
+    DateTime? timestamp,
+    String? subject,
+  }) {
+    return SavedSolutionModel(
+      id: id ?? this.id,
+      localImagePath: localImagePath ?? this.localImagePath,
+      thumbnailPath: thumbnailPath ?? this.thumbnailPath,
+      solutionText: solutionText ?? this.solutionText,
+      timestamp: timestamp ?? this.timestamp,
+      subject: subject ?? this.subject,
+    );
+  }
 }
 
 // Hive Adaptörü (build_runner çalıştırmaman için elle yazdım)
@@ -46,4 +65,3 @@ class SavedSolutionAdapter extends TypeAdapter<SavedSolutionModel> {
     writer.write(obj.subject);
   }
 }
-

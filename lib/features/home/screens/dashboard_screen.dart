@@ -16,7 +16,6 @@ import 'package:taktik/features/home/widgets/motivation_quotes_card.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
 import 'package:taktik/data/models/plan_model.dart';
 import 'package:taktik/data/providers/shared_prefs_provider.dart';
-import 'package:taktik/shared/widgets/ad_banner_widget.dart';
 import 'package:in_app_review/in_app_review.dart';
 import 'package:lottie/lottie.dart';
 
@@ -260,16 +259,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           const RepaintBoundary(child: HeroHeader()),
           const RepaintBoundary(child: DashboardStatsOverview()),
           const RepaintBoundary(child: TestManagementCard()),
-          // AdMob Banner
-          RepaintBoundary(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4.0),
-              child: AdBannerWidget(
-                isPremium: user.isPremium,
-                dateOfBirth: user.dateOfBirth,
-              ),
-            ),
-          ),
           RepaintBoundary(child: Container(key: todaysPlanKey, child: const TodaysPlan())), // Kaydırılan kartlar burada
           const RepaintBoundary(child: MotivationQuotesCard()),
         ];
@@ -325,19 +314,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               ),
             ),
 
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(_hPad, 0, _hPad, 4),
-                sliver: SliverList.separated(
-                  itemCount: sections.length,
-                  itemBuilder: (c, i) {
-                    return _animatedSection(sections[i], i);
-                  },
-                  separatorBuilder: (_, i) {
-                    // Sıra: Hero -> TestManagement -> AdBanner -> TodaysPlan -> Motivation
-                    return const SizedBox(height: 6);
-                  },
-                ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(_hPad, 0, _hPad, 4),
+              sliver: SliverList.separated(
+                itemCount: sections.length,
+                itemBuilder: (c, i) {
+                  return _animatedSection(sections[i], i);
+                },
+                separatorBuilder: (_, i) {
+                  // Sıra: Hero -> TestManagement -> TodaysPlan -> Motivation
+                  return const SizedBox(height: 6);
+                },
               ),
+            ),
             SliverToBoxAdapter(
               child: SizedBox(
                 height: MediaQuery.of(context).padding.bottom + 60,

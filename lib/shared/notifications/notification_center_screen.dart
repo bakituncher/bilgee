@@ -46,8 +46,10 @@ class NotificationCenterScreen extends ConsumerWidget {
               onPressed: user == null
                   ? null
                   : () async {
-                      await ref.read(firestoreServiceProvider).markAllInAppNotificationsRead(user.uid);
-                    },
+                await ref
+                    .read(firestoreServiceProvider)
+                    .markAllInAppNotificationsRead(user.uid);
+              },
               icon: const Icon(Icons.done_all_rounded),
             ),
             IconButton(
@@ -55,45 +57,60 @@ class NotificationCenterScreen extends ConsumerWidget {
               onPressed: user == null
                   ? null
                   : () async {
-                      final ok = await showDialog<bool>(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: const Text('Tümünü sil'),
-                          content: const Text('Tüm bildirimleri silmek istediğine emin misin?'),
-                          actions: [
-                            TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Vazgeç')),
-                            FilledButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Sil')),
-                          ],
-                        ),
-                      );
-                      if (ok == true) {
-                        try {
-                          // 1. Kullanıcının özel bildirimlerini sil
-                          await ref.read(firestoreServiceProvider).clearAllInAppNotifications(user.uid);
+                final ok = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Tümünü sil'),
+                    content: const Text(
+                        'Tüm bildirimleri silmek istediğine emin misin?'),
+                    actions: [
+                      TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(false),
+                          child: const Text('Vazgeç')),
+                      FilledButton(
+                          onPressed: () => Navigator.of(ctx).pop(true),
+                          child: const Text('Sil')),
+                    ],
+                  ),
+                );
+                if (ok == true) {
+                  try {
+                    // 1. Kullanıcının özel bildirimlerini sil
+                    await ref
+                        .read(firestoreServiceProvider)
+                        .clearAllInAppNotifications(user.uid);
 
-                          // 2. Tüm görünür global kampanyaları kapat
-                          final notifications = ref.read(inAppNotificationsProvider).value ?? [];
-                          final globalCampaigns = notifications.where((n) => n.type == 'global_campaign').toList();
-                          final globalService = ref.read(globalCampaignServiceProvider);
+                    // 2. Tüm görünür global kampanyaları kapat
+                    final notifications =
+                        ref.read(inAppNotificationsProvider).value ?? [];
+                    final globalCampaigns = notifications
+                        .where((n) => n.type == 'global_campaign')
+                        .toList();
+                    final globalService =
+                    ref.read(globalCampaignServiceProvider);
 
-                          for (final campaign in globalCampaigns) {
-                            try {
-                              await globalService.closeGlobalCampaign(campaign.id);
-                            } catch (e) {
-                              // Tek bir kampanya hatasında devam et
-                            }
-                          }
-
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tüm bildirimler silindi')));
-                          }
-                        } catch (e) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Silinemedi: $e')));
-                          }
-                        }
+                    for (final campaign in globalCampaigns) {
+                      try {
+                        await globalService
+                            .closeGlobalCampaign(campaign.id);
+                      } catch (e) {
+                        // Tek bir kampanya hatasında devam et
                       }
-                    },
+                    }
+
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text('Tüm bildirimler silindi')));
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Silinemedi: $e')));
+                    }
+                  }
+                }
+              },
               icon: const Icon(Icons.delete_sweep_rounded),
             ),
           ],
@@ -109,9 +126,12 @@ class NotificationCenterScreen extends ConsumerWidget {
               });
             }
             return RefreshIndicator(
-              onRefresh: () async { await Future<void>.delayed(const Duration(milliseconds: 350)); },
+              onRefresh: () async {
+                await Future<void>.delayed(const Duration(milliseconds: 350));
+              },
               child: ListView.separated(
-                physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                physics: const AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics()),
                 padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
                 cacheExtent: 600,
                 itemCount: items.length,
@@ -125,35 +145,44 @@ class NotificationCenterScreen extends ConsumerWidget {
                       alignment: Alignment.centerRight,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.error.withOpacity(0.12),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .error
+                            .withOpacity(0.12),
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: Icon(Icons.delete_rounded, color: Theme.of(context).colorScheme.error),
+                      child: Icon(Icons.delete_rounded,
+                          color: Theme.of(context).colorScheme.error),
                     ),
                     confirmDismiss: (_) async {
                       final u = ref.read(authControllerProvider).value;
                       if (u == null) {
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Silinemedi: oturum yok')));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text('Silinemedi: oturum yok')));
                         }
                         return false;
                       }
                       try {
-                        // Global kampanya mı yoksa kullanıcıya özel bildirim mi kontrol et
                         if (n.type == 'global_campaign') {
-                          // Global kampanyayı kapat
-                          await ref.read(globalCampaignServiceProvider).closeGlobalCampaign(n.id);
+                          await ref
+                              .read(globalCampaignServiceProvider)
+                              .closeGlobalCampaign(n.id);
                         } else {
-                          // Normal bildirimi sil
-                          await ref.read(firestoreServiceProvider).deleteInAppNotification(u.uid, n.id);
+                          await ref
+                              .read(firestoreServiceProvider)
+                              .deleteInAppNotification(u.uid, n.id);
                         }
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Bildirim silindi')));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Bildirim silindi')));
                         }
                         return true;
                       } catch (e) {
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Silinemedi: $e')));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Silinemedi: $e')));
                         }
                         return false;
                       }
@@ -179,7 +208,9 @@ class _NotificationTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authControllerProvider).value;
-    final createdAtText = item.createdAt != null ? _formatDate(item.createdAt!.toDate()) : null;
+    final createdAtText = item.createdAt != null
+        ? _formatDate(item.createdAt!.toDate())
+        : null;
 
     final bool unread = !item.read;
     final theme = Theme.of(context);
@@ -194,54 +225,65 @@ class _NotificationTile extends ConsumerWidget {
 
     final leading = item.imageUrl != null && item.imageUrl!.isNotEmpty
         ? ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: CachedNetworkImage(
+        imageUrl: item.imageUrl!,
+        width: 56,
+        height: 56,
+        fit: BoxFit.cover,
+        fadeInDuration: const Duration(milliseconds: 150),
+        placeholder: (ctx, _) => Container(
+          width: 56,
+          height: 56,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(10),
-            child: CachedNetworkImage(
-              imageUrl: item.imageUrl!,
-              width: 56,
-              height: 56,
-              fit: BoxFit.cover,
-              fadeInDuration: const Duration(milliseconds: 150),
-              placeholder: (ctx, _) => Container(
-                width: 56,
-                height: 56,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
-              ),
-              errorWidget: (ctx, _, __) => Container(
-                width: 56,
-                height: 56,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(Icons.broken_image_rounded, color: Theme.of(context).colorScheme.onSurfaceVariant),
-              ),
-            ),
-          )
+          ),
+          child: const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2)),
+        ),
+        errorWidget: (ctx, _, __) => Container(
+          width: 56,
+          height: 56,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(Icons.broken_image_rounded,
+              color: Theme.of(context).colorScheme.onSurfaceVariant),
+        ),
+      ),
+    )
         : Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(Icons.notifications_rounded, color: Theme.of(context).colorScheme.primary),
-          );
+      width: 56,
+      height: 56,
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Icon(Icons.notifications_rounded,
+          color: Theme.of(context).colorScheme.primary),
+    );
 
     return InkWell(
       borderRadius: BorderRadius.circular(14),
       onTap: () async {
         if (user != null && !item.read) {
-          await ref.read(firestoreServiceProvider).markInAppNotificationRead(user.uid, item.id);
+          await ref
+              .read(firestoreServiceProvider)
+              .markInAppNotificationRead(user.uid, item.id);
         }
         if (context.mounted) {
           await showModalBottomSheet(
             context: context,
+            // -----------------------------------------------------------------
+            // KRİTİK DÜZELTME: Bu satır bottom sheet'i navigasyon barın üzerine çıkarır.
+            useRootNavigator: true,
+            // -----------------------------------------------------------------
             isScrollControlled: true,
             useSafeArea: true,
             showDragHandle: true,
@@ -274,9 +316,12 @@ class _NotificationTile extends ConsumerWidget {
                           item.title,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: unread ? FontWeight.w700 : FontWeight.w600,
-                              ),
+                          style:
+                          Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: unread
+                                ? FontWeight.w700
+                                : FontWeight.w600,
+                          ),
                         ),
                       ),
                       if (unread)
@@ -302,11 +347,13 @@ class _NotificationTile extends ConsumerWidget {
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        Icon(Icons.schedule_rounded, size: 14, color: colorScheme.onSurfaceVariant),
+                        Icon(Icons.schedule_rounded,
+                            size: 14, color: colorScheme.onSurfaceVariant),
                         const SizedBox(width: 6),
                         Text(
                           createdAtText,
-                          style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                          style: theme.textTheme.bodySmall
+                              ?.copyWith(color: colorScheme.onSurfaceVariant),
                         ),
                       ],
                     ),
@@ -335,11 +382,17 @@ class _NotificationDetailSheet extends ConsumerWidget {
     final createdAtText = item.createdAt != null
         ? _formatDate(item.createdAt!.toDate())
         : null;
+
+    // Alt boşluk hesaplaması: Klavye boşluğu + Sistem navigasyon çubuğu boşluğu
+    final bottomPadding = MediaQuery.of(context).viewInsets.bottom +
+        MediaQuery.of(context).padding.bottom;
+
     return Padding(
       padding: EdgeInsets.only(
         left: 16,
         right: 16,
-        bottom: 16 + MediaQuery.of(context).viewInsets.bottom,
+        // Klavye açılmasa bile alt sistem çubuğu (nav bar) için ekstra 16px ekliyoruz
+        bottom: 16 + (bottomPadding > 0 ? bottomPadding : 16),
         top: 8,
       ),
       child: Column(
@@ -355,22 +408,35 @@ class _NotificationDetailSheet extends ConsumerWidget {
                   imageUrl: item.imageUrl!,
                   fit: BoxFit.cover,
                   fadeInDuration: const Duration(milliseconds: 150),
-                  placeholder: (ctx, _) => const Center(child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))),
-                  errorWidget: (ctx, _, __) => Center(child: Icon(Icons.broken_image_rounded, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                  placeholder: (ctx, _) => const Center(
+                      child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2))),
+                  errorWidget: (ctx, _, __) => Center(
+                      child: Icon(Icons.broken_image_rounded,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant)),
                 ),
               ),
             ),
           const SizedBox(height: 12),
-          Text(item.title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+          Text(item.title,
+              style: Theme.of(context)
+                  .textTheme
+                  .titleLarge
+                  ?.copyWith(fontWeight: FontWeight.w700)),
           if (createdAtText != null) ...[
             const SizedBox(height: 4),
-            Text(createdAtText, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+            Text(createdAtText,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant)),
           ],
           const SizedBox(height: 12),
           Flexible(
             child: SingleChildScrollView(
               padding: const EdgeInsets.only(bottom: 8),
-              child: Text(item.body, style: Theme.of(context).textTheme.bodyMedium),
+              child: Text(item.body,
+                  style: Theme.of(context).textTheme.bodyMedium),
             ),
           ),
           const SizedBox(height: 12),
@@ -389,40 +455,37 @@ class _NotificationDetailSheet extends ConsumerWidget {
                   onPressed: () async {
                     Navigator.of(context).maybePop();
 
-                    // 1. Mağaza Yönlendirmesi Kontrolü
                     if (item.route == '/store' || item.route == 'UPDATE_APP') {
-                       final appId = Platform.isAndroid ? 'com.codenzi.taktik' : 'YOUR_IOS_APP_ID';
-                       final url = Uri.parse(
-                         Platform.isAndroid
-                           ? "market://details?id=$appId"
-                           : "https://apps.apple.com/app/id$appId"
-                       );
-                       if (await canLaunchUrl(url)) {
-                         await launchUrl(url, mode: LaunchMode.externalApplication);
-                       } else {
-                          // Fallback
-                          final webUrl = Uri.parse(
-                            Platform.isAndroid
-                              ? "https://play.google.com/store/apps/details?id=$appId"
-                              : "https://apps.apple.com/app/id$appId"
-                          );
-                          if (await canLaunchUrl(webUrl)) {
-                            await launchUrl(webUrl, mode: LaunchMode.externalApplication);
-                          }
-                       }
-                       return;
+                      final appId = Platform.isAndroid
+                          ? 'com.codenzi.taktik'
+                          : 'YOUR_IOS_APP_ID';
+                      final url = Uri.parse(Platform.isAndroid
+                          ? "market://details?id=$appId"
+                          : "https://apps.apple.com/app/id$appId");
+                      if (await canLaunchUrl(url)) {
+                        await launchUrl(url,
+                            mode: LaunchMode.externalApplication);
+                      } else {
+                        final webUrl = Uri.parse(Platform.isAndroid
+                            ? "https://play.google.com/store/apps/details?id=$appId"
+                            : "https://apps.apple.com/app/id$appId");
+                        if (await canLaunchUrl(webUrl)) {
+                          await launchUrl(webUrl,
+                              mode: LaunchMode.externalApplication);
+                        }
+                      }
+                      return;
                     }
 
-                    // 2. HTTP Link Kontrolü
                     if (item.route.startsWith('http')) {
-                       final uri = Uri.parse(item.route);
-                       if (await canLaunchUrl(uri)) {
-                         await launchUrl(uri, mode: LaunchMode.externalApplication);
-                       }
-                       return;
+                      final uri = Uri.parse(item.route);
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri,
+                            mode: LaunchMode.externalApplication);
+                      }
+                      return;
                     }
 
-                    // 3. Uygulama İçi Rota
                     if (context.mounted) {
                       context.go(item.route);
                     }
@@ -456,11 +519,17 @@ class _EmptyNotifications extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.notifications_none_rounded, size: 64, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            Icon(Icons.notifications_none_rounded,
+                size: 64,
+                color: Theme.of(context).colorScheme.onSurfaceVariant),
             const SizedBox(height: 12),
-            const Text('Henüz bildirimin yok', style: TextStyle(fontWeight: FontWeight.w600)),
+            const Text('Henüz bildirimin yok',
+                style: TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 6),
-            Text('Yeni duyurular ve hatırlatmalar burada görünecek.', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant), textAlign: TextAlign.center),
+            Text('Yeni duyurular ve hatırlatmalar burada görünecek.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant),
+                textAlign: TextAlign.center),
             const SizedBox(height: 16),
             OutlinedButton.icon(
               onPressed: onBack,

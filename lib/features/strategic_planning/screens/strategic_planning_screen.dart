@@ -189,13 +189,13 @@ class StrategicPlanningScreen extends ConsumerWidget {
               radius: 1.5,
               colors: isDark
                   ? [
-                      const Color(0xFF1A1F3A).withOpacity(0.4),
-                      const Color(0xFF0A0E27),
-                    ]
+                const Color(0xFF1A1F3A).withOpacity(0.4),
+                const Color(0xFF0A0E27),
+              ]
                   : [
-                      Theme.of(context).colorScheme.primary.withOpacity(0.05),
-                      const Color(0xFFF8F9FE),
-                    ],
+                Theme.of(context).colorScheme.primary.withOpacity(0.05),
+                const Color(0xFFF8F9FE),
+              ],
             ),
           ),
           child: Center(
@@ -321,6 +321,9 @@ class StrategicPlanningScreen extends ConsumerWidget {
     final isExpired = weeklyPlan.isExpired;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    // Alt güvenli alan boşluğu
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF0A0E27) : const Color(0xFFF8F9FE),
       appBar: AppBar(
@@ -341,13 +344,13 @@ class StrategicPlanningScreen extends ConsumerWidget {
             radius: 2.0,
             colors: isDark
                 ? [
-                    const Color(0xFF1A1F3A).withOpacity(0.4),
-                    const Color(0xFF0A0E27),
-                  ]
+              const Color(0xFF1A1F3A).withOpacity(0.4),
+              const Color(0xFF0A0E27),
+            ]
                 : [
-                    Theme.of(context).colorScheme.primary.withOpacity(0.04),
-                    const Color(0xFFF8F9FE),
-                  ],
+              Theme.of(context).colorScheme.primary.withOpacity(0.04),
+              const Color(0xFFF8F9FE),
+            ],
           ),
         ),
         child: Column(
@@ -360,7 +363,8 @@ class StrategicPlanningScreen extends ConsumerWidget {
             Expanded(
               child: Center(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20.0),
+                  // DÜZELTME: Alt padding ekledik
+                  padding: EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 20.0 + bottomPadding),
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 560),
                     child: Column(
@@ -375,31 +379,31 @@ class StrategicPlanningScreen extends ConsumerWidget {
                               end: Alignment.bottomRight,
                               colors: isExpired
                                   ? (isDark
-                                      ? [
-                                          const Color(0xFF2D1F1F),
-                                          const Color(0xFF1A1212),
-                                        ]
-                                      : [
-                                          const Color(0xFFFFF3E0),
-                                          const Color(0xFFFFE0B2),
-                                        ])
+                                  ? [
+                                const Color(0xFF2D1F1F),
+                                const Color(0xFF1A1212),
+                              ]
+                                  : [
+                                const Color(0xFFFFF3E0),
+                                const Color(0xFFFFE0B2),
+                              ])
                                   : (isDark
-                                      ? [
-                                          const Color(0xFF1E2147),
-                                          const Color(0xFF141729),
-                                        ]
-                                      : [
-                                          Colors.white,
-                                          const Color(0xFFF5F7FF),
-                                        ]),
+                                  ? [
+                                const Color(0xFF1E2147),
+                                const Color(0xFF141729),
+                              ]
+                                  : [
+                                Colors.white,
+                                const Color(0xFFF5F7FF),
+                              ]),
                             ),
                             borderRadius: BorderRadius.circular(28),
                             border: Border.all(
                               color: isExpired
                                   ? (isDark ? Colors.amber.withOpacity(0.2) : Colors.orange.withOpacity(0.3))
                                   : (isDark
-                                      ? Theme.of(context).colorScheme.primary.withOpacity(0.15)
-                                      : Theme.of(context).colorScheme.primary.withOpacity(0.1)),
+                                  ? Theme.of(context).colorScheme.primary.withOpacity(0.15)
+                                  : Theme.of(context).colorScheme.primary.withOpacity(0.1)),
                               width: 1.5,
                             ),
                             boxShadow: [
@@ -423,13 +427,13 @@ class StrategicPlanningScreen extends ConsumerWidget {
                                   gradient: LinearGradient(
                                     colors: isExpired
                                         ? [
-                                            Colors.orange.withOpacity(0.8),
-                                            Colors.deepOrange.withOpacity(0.9),
-                                          ]
+                                      Colors.orange.withOpacity(0.8),
+                                      Colors.deepOrange.withOpacity(0.9),
+                                    ]
                                         : [
-                                            Theme.of(context).colorScheme.primary,
-                                            Theme.of(context).colorScheme.secondary,
-                                          ],
+                                      Theme.of(context).colorScheme.primary,
+                                      Theme.of(context).colorScheme.secondary,
+                                    ],
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
                                   ),
@@ -456,12 +460,12 @@ class StrategicPlanningScreen extends ConsumerWidget {
                                 isExpired ? "Plan Yenileme Zamanı!" : "Stratejik Plan Aktif",
                                 textAlign: TextAlign.center,
                                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                      fontWeight: FontWeight.w800,
-                                      letterSpacing: -0.5,
-                                      color: isExpired
-                                          ? (isDark ? Colors.amber : Colors.orange.shade800)
-                                          : null,
-                                    ),
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: -0.5,
+                                  color: isExpired
+                                      ? (isDark ? Colors.amber : Colors.orange.shade800)
+                                      : null,
+                                ),
                               ),
                               const SizedBox(height: 8),
 
@@ -470,9 +474,9 @@ class StrategicPlanningScreen extends ConsumerWidget {
                                     ? "Planın 7 günlük süresi doldu"
                                     : "Bu haftanın odağı",
                                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
 
                               // Motivasyon Alıntısı - Sadece aktif planda
@@ -486,13 +490,13 @@ class StrategicPlanningScreen extends ConsumerWidget {
                                     gradient: LinearGradient(
                                       colors: isDark
                                           ? [
-                                              Theme.of(context).colorScheme.primaryContainer.withOpacity(0.2),
-                                              Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.15),
-                                            ]
+                                        Theme.of(context).colorScheme.primaryContainer.withOpacity(0.2),
+                                        Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.15),
+                                      ]
                                           : [
-                                              Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
-                                              Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.2),
-                                            ],
+                                        Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+                                        Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.2),
+                                      ],
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                     ),
@@ -524,11 +528,11 @@ class StrategicPlanningScreen extends ConsumerWidget {
                                           child: Text(
                                             weeklyPlan.motivationalQuote!,
                                             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                                  fontStyle: FontStyle.italic,
-                                                  height: 1.5,
-                                                  fontWeight: FontWeight.w500,
-                                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.9),
-                                                ),
+                                              fontStyle: FontStyle.italic,
+                                              height: 1.5,
+                                              fontWeight: FontWeight.w500,
+                                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.9),
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -561,10 +565,10 @@ class StrategicPlanningScreen extends ConsumerWidget {
                                         child: Text(
                                           "Yeni bir haftalık plan oluşturarak güncel hedeflerinle devam edin",
                                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                                color: isDark ? Colors.orange.shade200 : Colors.orange.shade900,
-                                                fontWeight: FontWeight.w500,
-                                                height: 1.4,
-                                              ),
+                                            color: isDark ? Colors.orange.shade200 : Colors.orange.shade900,
+                                            fontWeight: FontWeight.w500,
+                                            height: 1.4,
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -593,9 +597,9 @@ class StrategicPlanningScreen extends ConsumerWidget {
                                     Text(
                                       "Oluşturulma: ${DateFormat.yMMMMd('tr').format(weeklyPlan.creationDate)}",
                                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                            fontWeight: FontWeight.w500,
-                                          ),
+                                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -603,9 +607,9 @@ class StrategicPlanningScreen extends ConsumerWidget {
                             ],
                           ),
                         ).animate().fadeIn(duration: 400.ms).scale(
-                              begin: const Offset(0.95, 0.95),
-                              curve: Curves.easeOutCubic,
-                            ),
+                          begin: const Offset(0.95, 0.95),
+                          curve: Curves.easeOutCubic,
+                        ),
 
                         const SizedBox(height: 24),
 
@@ -765,10 +769,14 @@ class StrategicPlanningScreen extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textTheme = Theme.of(context).textTheme;
 
+    // Alt güvenli alan boşluğu
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
     return Center(
       key: const ValueKey('dataMissing'),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
+        // DÜZELTME: Alt padding ekledik
+        padding: EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 24.0 + bottomPadding),
         child: Container(
           constraints: const BoxConstraints(maxWidth: 450),
           child: Column(
@@ -975,6 +983,9 @@ class StrategicPlanningScreen extends ConsumerWidget {
     final performance = ref.watch(performanceProvider).value;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    // Alt güvenli alan boşluğu
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
     if(user == null || performance == null) return const Center(child: CircularProgressIndicator());
 
     final totalHours = user.weeklyAvailability.values.expand((slots) => slots).length * 2;
@@ -1014,13 +1025,13 @@ class StrategicPlanningScreen extends ConsumerWidget {
           radius: 2.0,
           colors: isDark
               ? [
-                  const Color(0xFF1A1F3A).withOpacity(0.3),
-                  const Color(0xFF0A0E27),
-                ]
+            const Color(0xFF1A1F3A).withOpacity(0.3),
+            const Color(0xFF0A0E27),
+          ]
               : [
-                  Theme.of(context).colorScheme.primary.withOpacity(0.03),
-                  const Color(0xFFF8F9FE),
-                ],
+            Theme.of(context).colorScheme.primary.withOpacity(0.03),
+            const Color(0xFFF8F9FE),
+          ],
         ),
       ),
       child: Column(
@@ -1035,17 +1046,17 @@ class StrategicPlanningScreen extends ConsumerWidget {
                   Text(
                     "Harekat Öncesi Son Kontrol",
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.5,
-                        ),
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.5,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     "Tüm verilerin güncel olduğundan emin olalım",
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          fontWeight: FontWeight.w500,
-                        ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                   const SizedBox(height: 28),
 
@@ -1089,20 +1100,21 @@ class StrategicPlanningScreen extends ConsumerWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(24.0),
+            // DÜZELTME: Alt padding ekledik
+            padding: EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 24.0 + bottomPadding),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _ModernButton(
                   onPressed: isTimeMapOk && isGalaxyOk
                       ? () {
-                          ref.read(planningStepProvider.notifier).state = PlanningStep.pacing;
-                        }
+                    ref.read(planningStepProvider.notifier).state = PlanningStep.pacing;
+                  }
                       : () {
-                          if (!isTimeMapOk) {
-                            context.push(AppRoutes.availability);
-                          }
-                        },
+                    if (!isTimeMapOk) {
+                      context.push(AppRoutes.availability);
+                    }
+                  },
                   icon: isTimeMapOk && isGalaxyOk ? Icons.arrow_forward_rounded : Icons.info_outline_rounded,
                   label: isTimeMapOk && isGalaxyOk ? "Tüm Verilerim Güncel, İlerle" : "Zaman Haritasını Tamamla",
                   isPrimary: true,
@@ -1124,6 +1136,9 @@ class StrategicPlanningScreen extends ConsumerWidget {
   Widget _buildPacingView(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    // Alt güvenli alan boşluğu
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
     return Container(
       decoration: BoxDecoration(
         gradient: RadialGradient(
@@ -1131,13 +1146,13 @@ class StrategicPlanningScreen extends ConsumerWidget {
           radius: 2.0,
           colors: isDark
               ? [
-                  const Color(0xFF1A1F3A).withOpacity(0.3),
-                  const Color(0xFF0A0E27),
-                ]
+            const Color(0xFF1A1F3A).withOpacity(0.3),
+            const Color(0xFF0A0E27),
+          ]
               : [
-                  Theme.of(context).colorScheme.primary.withOpacity(0.03),
-                  const Color(0xFFF8F9FE),
-                ],
+            Theme.of(context).colorScheme.primary.withOpacity(0.03),
+            const Color(0xFFF8F9FE),
+          ],
         ),
       ),
       child: Column(
@@ -1153,18 +1168,18 @@ class StrategicPlanningScreen extends ConsumerWidget {
                   Text(
                     "Haftalık Tempo Seçin",
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.5,
-                        ),
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.5,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 12),
                   Text(
                     "Planınız seçtiğiniz tempoya göre optimize edilecek",
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          fontWeight: FontWeight.w500,
-                        ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w500,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 32),
@@ -1208,7 +1223,8 @@ class StrategicPlanningScreen extends ConsumerWidget {
 
           // Alt Butonlar
           Padding(
-            padding: const EdgeInsets.all(24.0),
+            // DÜZELTME: Alt padding ekledik
+            padding: EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 24.0 + bottomPadding),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -1374,13 +1390,13 @@ class _ChecklistItemCard extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: isDark
               ? [
-                  const Color(0xFF1E2147).withOpacity(0.6),
-                  const Color(0xFF141729).withOpacity(0.4),
-                ]
+            const Color(0xFF1E2147).withOpacity(0.6),
+            const Color(0xFF141729).withOpacity(0.4),
+          ]
               : [
-                  Colors.white,
-                  const Color(0xFFF8F9FE),
-                ],
+            Colors.white,
+            const Color(0xFFF8F9FE),
+          ],
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
@@ -1552,24 +1568,24 @@ class _PacingCard extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: isSelected
             ? LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Theme.of(context).colorScheme.primary.withOpacity(isDark ? 0.25 : 0.15),
-                  Theme.of(context).colorScheme.secondary.withOpacity(isDark ? 0.2 : 0.1),
-                ],
-              )
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Theme.of(context).colorScheme.primary.withOpacity(isDark ? 0.25 : 0.15),
+            Theme.of(context).colorScheme.secondary.withOpacity(isDark ? 0.2 : 0.1),
+          ],
+        )
             : LinearGradient(
-                colors: isDark
-                    ? [
-                        const Color(0xFF1E2147).withOpacity(0.5),
-                        const Color(0xFF141729).withOpacity(0.3),
-                      ]
-                    : [
-                        Colors.white,
-                        const Color(0xFFF8F9FE),
-                      ],
-              ),
+          colors: isDark
+              ? [
+            const Color(0xFF1E2147).withOpacity(0.5),
+            const Color(0xFF141729).withOpacity(0.3),
+          ]
+              : [
+            Colors.white,
+            const Color(0xFFF8F9FE),
+          ],
+        ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isSelected
@@ -1579,19 +1595,19 @@ class _PacingCard extends StatelessWidget {
         ),
         boxShadow: isSelected
             ? [
-                BoxShadow(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.25),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                ),
-              ]
+          BoxShadow(
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.25),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ]
             : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(isDark ? 0.1 : 0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.1 : 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Material(
         color: Colors.transparent,
@@ -1608,26 +1624,26 @@ class _PacingCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     gradient: isSelected
                         ? LinearGradient(
-                            colors: [
-                              Theme.of(context).colorScheme.primary,
-                              Theme.of(context).colorScheme.secondary,
-                            ],
-                          )
+                      colors: [
+                        Theme.of(context).colorScheme.primary,
+                        Theme.of(context).colorScheme.secondary,
+                      ],
+                    )
                         : LinearGradient(
-                            colors: [
-                              Theme.of(context).colorScheme.surfaceContainerHighest,
-                              Theme.of(context).colorScheme.surfaceContainerHigh,
-                            ],
-                          ),
+                      colors: [
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
+                        Theme.of(context).colorScheme.surfaceContainerHigh,
+                      ],
+                    ),
                     borderRadius: BorderRadius.circular(14),
                     boxShadow: isSelected
                         ? [
-                            BoxShadow(
-                              color: Theme.of(context).colorScheme.primary.withOpacity(0.4),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                          ]
+                      BoxShadow(
+                        color: Theme.of(context).colorScheme.primary.withOpacity(0.4),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
                         : null,
                   ),
                   child: Icon(
@@ -1645,19 +1661,19 @@ class _PacingCard extends StatelessWidget {
                       Text(
                         title,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: -0.3,
-                              color: isSelected ? Theme.of(context).colorScheme.primary : null,
-                            ),
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.3,
+                          color: isSelected ? Theme.of(context).colorScheme.primary : null,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         subtitle,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              height: 1.4,
-                              fontSize: 13,
-                            ),
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          height: 1.4,
+                          fontSize: 13,
+                        ),
                       ),
                     ],
                   ),

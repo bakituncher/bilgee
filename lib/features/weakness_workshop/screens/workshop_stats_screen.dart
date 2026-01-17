@@ -16,6 +16,9 @@ class WorkshopStatsScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
+    // Cihazın alt güvenli alan boşluğunu alıyoruz
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -40,7 +43,8 @@ class WorkshopStatsScreen extends ConsumerWidget {
                     }
 
                     return ListView(
-                      padding: const EdgeInsets.all(16.0),
+                      // DÜZELTME: Alt boşluğa bottomPadding ekliyoruz
+                      padding: EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 16.0 + bottomPadding),
                       children: [
                         _buildAlchemistPrism(context, analysis),
                         const SizedBox(height: 20),
@@ -118,12 +122,12 @@ class WorkshopStatsScreen extends ConsumerWidget {
         boxShadow: isDark
             ? []
             : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -180,7 +184,7 @@ class WorkshopStatsScreen extends ConsumerWidget {
   Widget _buildSubjectSpectrum(BuildContext context, WorkshopAnalysis analysis) {
     final chartData = analysis.subjectAccuracyList;
     if (chartData.isEmpty) return const SizedBox.shrink();
-    
+
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -341,12 +345,12 @@ class _SubjectCrystalBar extends StatelessWidget {
         boxShadow: isDark
             ? []
             : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -451,12 +455,12 @@ class _TopicCard extends StatelessWidget {
         boxShadow: isDark
             ? []
             : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Material(
         color: Colors.transparent,
@@ -590,7 +594,7 @@ class _WSHeader extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final top = MediaQuery.of(context).padding.top;
-    
+
     return Container(
       padding: EdgeInsets.fromLTRB(16, top + 8, 16, 16),
       child: Row(
@@ -680,9 +684,9 @@ class _AdaptiveBackgroundState extends State<_AdaptiveBackground> with SingleTic
       animation: _c,
       builder: (_, __) {
         final t = _c.value;
-        return widget.isDark 
-          ? _buildDarkBackground(t)
-          : _buildLightBackground(context);
+        return widget.isDark
+            ? _buildDarkBackground(t)
+            : _buildLightBackground(context);
       },
     );
   }

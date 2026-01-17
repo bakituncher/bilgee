@@ -327,7 +327,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                     padding: const EdgeInsets.symmetric(vertical: 12),
                                     minimumSize: const Size.fromHeight(44),
                                     disabledBackgroundColor:
-                                        theme.colorScheme.surfaceContainerHighest,
+                                    theme.colorScheme.surfaceContainerHighest,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(10),
                                     ),
@@ -592,8 +592,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final initials = firstName.isNotEmpty
         ? firstName.substring(0, 1).toUpperCase()
         : email.isNotEmpty
-            ? email.substring(0, 1).toUpperCase()
-            : '?';
+        ? email.substring(0, 1).toUpperCase()
+        : '?';
 
     return Container(
       width: 64,
@@ -611,31 +611,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ),
       child: avatarUrl != null
           ? ClipOval(
-              child: SvgPicture.network(
-                avatarUrl,
-                width: 64,
-                height: 64,
-                fit: BoxFit.cover,
-                placeholderBuilder: (_) => Center(
-                  child: Text(
-                    initials,
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      color: theme.colorScheme.onPrimary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            )
-          : Center(
-              child: Text(
-                initials,
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  color: theme.colorScheme.onPrimary,
-                  fontWeight: FontWeight.bold,
-                ),
+        child: SvgPicture.network(
+          avatarUrl,
+          width: 64,
+          height: 64,
+          fit: BoxFit.cover,
+          placeholderBuilder: (_) => Center(
+            child: Text(
+              initials,
+              style: theme.textTheme.headlineMedium?.copyWith(
+                color: theme.colorScheme.onPrimary,
+                fontWeight: FontWeight.bold,
               ),
             ),
+          ),
+        ),
+      )
+          : Center(
+        child: Text(
+          initials,
+          style: theme.textTheme.headlineMedium?.copyWith(
+            color: theme.colorScheme.onPrimary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
     );
   }
 
@@ -784,6 +784,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final user = ref.watch(userProfileProvider).value;
     final isAdmin = ref.watch(adminClaimProvider).value ?? false;
 
+    // Alt navigasyon çubuğu için güvenli alan boşluğu
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
     Future<void> handleBack() async {
       if (Navigator.of(context).canPop()) {
         Navigator.of(context).pop();
@@ -808,7 +811,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       body: user == null
           ? const LogoLoader()
           : ListView(
-        padding: const EdgeInsets.only(bottom: 24),
+        // Burada standart 24 padding'e ek olarak cihazın alt güvenli alanını ekliyoruz
+        padding: EdgeInsets.only(bottom: 24 + bottomPadding),
         children: [
           // Profil Header
           _buildProfileHeader(context, user),
@@ -872,14 +876,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 icon: Icons.description_outlined,
                 title: "Kullanım Sözleşmesi",
                 subtitle: "Hizmet şartlarımızı okuyun",
-                onTap: () => _launchURL(context, "https://www.codenzi.com/taktik-kullanim-sozlesmesi.html"),
+                onTap: () => _launchURL(context,
+                    "https://www.codenzi.com/taktik-kullanim-sozlesmesi.html"),
               ),
               const Divider(height: 1, indent: 56),
               SettingsTile(
                 icon: Icons.privacy_tip_outlined,
                 title: "Gizlilik Politikası",
                 subtitle: "Verilerinizi nasıl koruduğumuzu öğrenin",
-                onTap: () => _launchURL(context, "https://www.codenzi.com/taktik-gizlilik-politikasi.html"),
+                onTap: () => _launchURL(context,
+                    "https://www.codenzi.com/taktik-gizlilik-politikasi.html"),
               ),
               const Divider(height: 1, indent: 56),
               SettingsTile(
@@ -905,11 +911,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         context: context,
                         applicationName: 'Taktik',
                         applicationVersion: appVersion,
-                        applicationLegalese: '© 2025 Codenzi. Tüm hakları saklıdır.',
+                        applicationLegalese:
+                        '© 2025 Codenzi. Tüm hakları saklıdır.',
                         children: const [
                           Padding(
                             padding: EdgeInsets.only(top: 15),
-                            child: Text('Taktik, kişisel yapay zeka destekli sınav koçunuzdur.'),
+                            child: Text(
+                                'Taktik, kişisel yapay zeka destekli sınav koçunuzdur.'),
                           )
                         ],
                       );
