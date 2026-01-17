@@ -412,8 +412,8 @@ class _ProfileView extends ConsumerWidget {
     final testCount = mainTests.length;
     final avgNet = testCount > 0 ? mainTests.fold(0.0, (sum, t) => sum + t.totalNet) / testCount : 0.0;
 
-    // SERİ HESAPLAMA: Filtrelenmiş liste üzerinden yeniden hesapla
-    final streak = StatsCalculator.calculateStreak(mainTests);
+    // MERKEZİ SİSTEM: Streak Firebase'den alınır, hesaplanmaz
+    final streak = StatsCalculator.getStreak(user);
 
     final allBadges = _generateBadges(context, user, performance, planDoc, testCount, avgNet, focusSessions, streak);
     final unlockedCount = allBadges.where((b) => b.isUnlocked).length;

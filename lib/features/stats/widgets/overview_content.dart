@@ -39,7 +39,8 @@ class OverviewContent extends ConsumerWidget {
     // Hero kart ve genel metrikler branş denemelerinden etkilenmesin.
     final mainExamTests = tests.where((t) => !t.isBranchTest).toList();
 
-    final streak = StatsCalculator.calculateStreak(mainExamTests);
+    // MERKEZİ SİSTEM: Streak Firebase'den alınır, hesaplanmaz
+    final streak = StatsCalculator.getStreak(user);
     final avgNet = StatsCalculator.calculateAvgNet(user, mainExamTests);
 
     return CustomScrollView(

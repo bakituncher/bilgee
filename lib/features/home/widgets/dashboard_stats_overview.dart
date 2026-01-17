@@ -27,9 +27,9 @@ class DashboardStatsOverview extends ConsumerWidget {
         // Bu kart, sadece ana sınav denemeleri (TYT/AYT/LGS/KPSS/AGS/YDT) üzerinden hesap yapar.
         final mainExamTests = tests.where((t) => !t.isBranchTest).toList();
 
-        // Test yoksa varsayılan değerler
-        final streak = mainExamTests.isEmpty ? 0 : StatsCalculator.calculateStreak(mainExamTests);
-        final avgNet = mainExamTests.isEmpty ? '0.0' : StatsCalculator.calculateAvgNet(user, mainExamTests);
+        // MERKEZİ SİSTEM: Streak Firebase'den alınır, hesaplanmaz
+        final streak = StatsCalculator.getStreak(user);
+        final avgNet = StatsCalculator.calculateAvgNet(user, mainExamTests);
         final motivationColor = _getMotivationColor(streak, mainExamTests.length);
 
         // Basit hesaplamalar - test yoksa 0 değerleri

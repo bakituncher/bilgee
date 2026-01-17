@@ -13,8 +13,6 @@ import 'package:intl/intl.dart';
 import 'package:flutter/rendering.dart';
 import 'package:taktik/shared/widgets/app_loader.dart';
 import 'package:taktik/features/profile/widgets/user_moderation_menu.dart';
-import 'package:taktik/features/stats/utils/stats_calculator.dart';
-import 'package:taktik/data/models/test_model.dart';
 
 // Bu provider, ID'ye göre tek bir kullanıcı profili getirmek için kullanılır.
 final publicUserProfileProvider = FutureProvider.family.autoDispose<Map<String, dynamic>?, String>((ref, userId) async {
@@ -29,15 +27,6 @@ final publicUserProfileProvider = FutureProvider.family.autoDispose<Map<String, 
   return null;
 });
 
-// Public profile için streak'i canlı hesapla (branş denemeleri hariç)
-final publicUserStreakProvider = FutureProvider.family.autoDispose<int, String>((ref, userId) async {
-  final svc = ref.watch(firestoreServiceProvider);
-  // Streak için genelde son N kayıt yeterli. 120 = 4 ay boyunca haftada ~7 deneme gibi senaryolara dayanır.
-  // Daha uzun streak senaryosu varsa (ör. 200+ gün) bu limit artırılabilir.
-  final tests = await svc.getTestResultsPaginatedForUser(userId, limit: 180);
-  final mainTests = tests.where((t) => !t.isBranchTest).toList(growable: false);
-  return StatsCalculator.calculateStreak(mainTests);
-});
 
 class PublicProfileScreen extends ConsumerStatefulWidget {
   final String userId;
@@ -84,7 +73,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
     }
   }
 
-  void _showPublicAchievements(BuildContext context, {required String displayName, required int testCount, required double avgNet, required int streak, required int engagement}) {
+  void _showPublicAchievements(BuildContext context, {required String displayName, required int testCount, required int streak, required int engagement}) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).cardColor,
@@ -144,50 +133,14 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
     );
   }
 
-  void _showPublicProgress(BuildContext context, {required int testCount, required double avgNet, required int streak, required int engagement}) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Theme.of(context).cardColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('İlerleme Özeti'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _kv('Deneme', testCount.toString(), ctx),
-            _kv('Ortalama Net', avgNet.toStringAsFixed(1), ctx),
-            _kv('Günlük Seri', streak.toString(), ctx),
-            _kv('Taktik Puanı', engagement.toString(), ctx),
-          ],
-        ),
-        actions: [TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Kapat'))],
-      ),
-    );
-  }
-
-  Widget _kv(String k, String v, BuildContext ctx) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 4.0),
-    child: Row(children: [
-      Expanded(
-          child: Text(k,
-              style: Theme.of(ctx)
-                  .textTheme
-                  .bodyLarge
-                  ?.copyWith(color: Theme.of(ctx).colorScheme.onSurfaceVariant))),
-      Text(v, style: Theme.of(ctx).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold))
-    ]),
-  );
-
   @override
   Widget build(BuildContext context) {
     final userProfileAsync = ref.watch(publicUserProfileProvider(widget.userId));
     final statsAsync = ref.watch(userStatsForUserProvider(widget.userId));
     final followCountsAsync = ref.watch(followCountsProvider(widget.userId));
-    final liveTestCountAsync = ref.watch(testCountForUserProvider(widget.userId));
-    final liveTotalNetSumAsync = ref.watch(totalNetSumForUserProvider(widget.userId));
-    final liveStreakAsync = ref.watch(publicUserStreakProvider(widget.userId));
     final me = ref.watch(authControllerProvider).value;
+
+    // (workaround kaldırıldı) testCount artık public_profiles'tan gelir
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -234,27 +187,13 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
           // GÜVENLİK: Gerçek isim yerine kullanıcı adı (13-17 yaş koruması)
           final String username = (data['username'] as String?) ?? '';
           final String displayName = username.isNotEmpty ? '@$username' : 'İsimsiz Savaşçı';
-          final int cachedTestCount = (data['testCount'] as num?)?.toInt() ?? 0;
-          final int testCount = liveTestCountAsync.maybeWhen(
-            data: (v) => v,
-            orElse: () => cachedTestCount,
-          );
 
-          final double cachedTotalNetSum = (data['totalNetSum'] as num?)?.toDouble() ?? 0.0;
-          final double totalNetSum = liveTotalNetSumAsync.maybeWhen(
-            data: (v) => v,
-            orElse: () => cachedTotalNetSum,
-          );
-
-          final double avgNet = testCount > 0 ? totalNetSum / testCount : 0.0;
+          // MERKEZİ SİSTEM: Tüm istatistikler public profile'dan alınır
+          final int testCount = (data['testCount'] as num?)?.toInt() ?? 0;
           final int engagement = (data['engagementScore'] as num?)?.toInt() ?? 0;
 
-          // Streak: önce canlı hesaplanan değer, yoksa cached fallback
-          final int cachedStreak = (data['streak'] as num?)?.toInt() ?? 0;
-          final int streak = liveStreakAsync.maybeWhen(
-            data: (v) => v,
-            orElse: () => cachedStreak,
-          );
+          // MERKEZİ SİSTEM: Streak artık Firebase'deki public profile'dan alınır
+          final int streak = (data['streak'] as num?)?.toInt() ?? 0;
 
           final String? avatarStyle = data['avatarStyle'] as String?;
           final String? avatarSeed = data['avatarSeed'] as String?;
@@ -294,7 +233,6 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                               rankColor: rankColor,
                               rankIcon: rankIcon,
                               rankName: rankName,
-                              avgNet: avgNet,
                               testCount: testCount,
                               streak: streak,
                             ),
@@ -338,7 +276,6 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                               _showPublicAchievements(context,
                                 displayName: displayName,
                                 testCount: testCount,
-                                avgNet: avgNet,
                                 streak: streak,
                                 engagement: engagement,
                               );
@@ -362,7 +299,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
 }
 
 class _ShareableProfileCard extends StatelessWidget {
-  final String displayName; final String? avatarStyle; final String? avatarSeed; final Color rankColor; final IconData rankIcon; final String rankName; final double avgNet; final int testCount; final int streak;
+  final String displayName; final String? avatarStyle; final String? avatarSeed; final Color rankColor; final IconData rankIcon; final String rankName; final int testCount; final int streak;
   const _ShareableProfileCard({
     required this.displayName,
     required this.avatarStyle,
@@ -370,7 +307,6 @@ class _ShareableProfileCard extends StatelessWidget {
     required this.rankColor,
     required this.rankIcon,
     required this.rankName,
-    required this.avgNet,
     required this.testCount,
     required this.streak,
   });
@@ -401,8 +337,6 @@ class _ShareableProfileCard extends StatelessWidget {
           Row(
             children: [
               Expanded(child: _StatCard(label: 'Deneme', value: testCount.toString(), icon: Icons.library_books_rounded, delay: 0.ms)),
-              const SizedBox(width: 10),
-              Expanded(child: _StatCard(label: 'Ort. Net', value: avgNet.toStringAsFixed(1), icon: Icons.track_changes_rounded, delay: 0.ms)),
               const SizedBox(width: 10),
               Expanded(child: _StatCard(label: 'Seri', value: streak.toString(), icon: Icons.local_fire_department_rounded, delay: 0.ms)),
             ],
@@ -730,6 +664,3 @@ class _ActionTileState extends State<_ActionTile> {
     );
   }
 }
-
-// Yardımcı: kısa kullanım için ekstension
-extension _ColorAlphaX on Color { Color oa(double f)=> withValues(alpha: (a * f).toDouble()); }

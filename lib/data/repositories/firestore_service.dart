@@ -265,9 +265,9 @@ class FirestoreService {
   DocumentReference<Map<String, dynamic>> _performanceDoc(String userId) => usersCollection.doc(userId).collection('performance').doc('summary');
   DocumentReference<Map<String, dynamic>> _appStateDoc(String userId) => usersCollection.doc(userId).collection('state').doc('app_state');
   DocumentReference<Map<String, dynamic>> _leaderboardUserDoc({required String examType, required String userId}) => _leaderboardsCollection.doc(examType).collection('users').doc(userId);
-  // YENI: Konu performansları için alt koleksiyon
+  // YENİ: Konu performansları için alt koleksiyon
   CollectionReference<Map<String, dynamic>> _topicPerformanceCollection(String userId) => usersCollection.doc(userId).collection('topic_performance');
-  // YENI: Ustalaşılan konular için alt koleksiyon
+  // YENİ: Ustalaşılan konular için alt koleksiyon
   CollectionReference<Map<String, dynamic>> _masteredTopicsCollection(String userId) => _performanceDoc(userId).collection('masteredTopics');
 
   Future<void> _syncLeaderboardUser(String userId, {String? targetExam}) async {
@@ -629,7 +629,7 @@ class FirestoreService {
     return qs.docs.map((d) => TestModel.fromSnapshot(d as DocumentSnapshot<Map<String, dynamic>>)).toList();
   }
 
-  // Test silme fonksiyonu - GÜNCELLENDİ: İstatistikleri anında düşürür.
+  // Test silme fonksiyonu - GÜNCELLENDİ: İstatistikleri anında düşürür ve public profile'ı senkronize eder.
   Future<void> deleteTest(String testId) async {
     final currentUserId = getUserId();
     if (currentUserId == null) throw Exception('Kullanıcı oturumu açık değil');
@@ -661,6 +661,24 @@ class FirestoreService {
     }, SetOptions(merge: true));
 
     await batch.commit();
+
+    // Public profile'ı senkronize et
+    try {
+      // Stats'tan güncel değerleri al
+      final statsSnap = await statsRef.get();
+      final stats = statsSnap.data() ?? {};
+
+      // Public profile'ı güncelle
+      final publicProfileRef = _publicProfileDoc(currentUserId);
+      await publicProfileRef.set({
+        'testCount': stats['testCount'] ?? 0,
+        'totalNetSum': stats['totalNetSum'] ?? 0,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      // Public profile güncellemesi başarısız olsa bile devam et
+      // (Kullanıcı deneyimini etkilemesin)
+    }
   }
 
   Future<void> saveExamSelection({
@@ -854,43 +872,20 @@ class FirestoreService {
   }
 
   // YENİ: Public profile oku (güvenli alanlar)
-  // GÜNCEL: Eğer kendi profilimse, öncelikle canlı users/state verisini oku.
+  // GÜNCEL: Artık kendi profilimde de public_profiles tek kaynak (server-side doğru hesaplanıyor)
   Future<Map<String, dynamic>?> getPublicProfileRaw(String userId) async {
     final currentUid = getUserId();
 
-    // 1. Eğer kendi profilimse, doğrudan canlı kaynak (users + state/stats) üzerinden oku.
-    // Bu sayede silinen denemeler veya anlık güncellemeler public_profile senkronizasyonunu beklemeden görünür.
-    if (userId == currentUid) {
-      try {
-        final userSnap = await usersCollection.doc(userId).get();
-        if (userSnap.exists) {
-          final u = userSnap.data() ?? <String, dynamic>{};
-          final statsSnap = await _userStatsDoc(userId).get();
-          final s = statsSnap.data() ?? const <String, dynamic>{};
-
-          return <String, dynamic>{
-            'name': (u['name'] ?? '') as String,
-            'username': (u['username'] ?? '') as String,
-            'testCount': ((s['testCount'] ?? u['testCount'] ?? 0) as num).toInt(),
-            'totalNetSum': ((s['totalNetSum'] ?? u['totalNetSum'] ?? 0.0) as num).toDouble(),
-            'engagementScore': ((s['engagementScore'] ?? u['engagementScore'] ?? 0) as num).toInt(),
-            'streak': ((s['streak'] ?? u['streak'] ?? 0) as num).toInt(),
-            'avatarStyle': u['avatarStyle'] as String?,
-            'avatarSeed': u['avatarSeed'] as String?,
-          };
-        }
-      } catch (_) {
-        // Hata durumunda (izin vs.) normal akışa devam et
-      }
-    }
-
-    // 2. Başkasıysa veya yukarıdaki başarısızsa Public Profile'a bak (Cache dostu)
+    // 1. Public Profile'a bak (Cache dostu) - kendi profilimde de burası kullanılır
     final snap = await _publicProfileDoc(userId).get();
     if (snap.exists) return snap.data();
 
-    // 3. Fallback: Leaderboard verisi (Eğer public profile yoksa, örn. eski kullanıcı)
-    // Başkasının 'users' dokümanını okumak YASAKTIR, o yüzden buraya düşerse leaderboard deneriz.
-    final myExam = (await usersCollection.doc(currentUid).get()).data()?['selectedExam'];
+    // 2. Fallback: Leaderboard verisi (Eğer public profile yoksa, örn. eski kullanıcı)
+    // Başkasının 'users' dokümanını okumak YASAKTIR; kendi profilimde ise users okunabilir ama public_profile yoksa leaderboard deneriz.
+    String? myExam;
+    if (currentUid != null) {
+      myExam = (await usersCollection.doc(currentUid).get()).data()?['selectedExam'] as String?;
+    }
     if (myExam != null) {
       return await getLeaderboardUserRaw(myExam, userId);
     }

@@ -1,6 +1,7 @@
 const { onDocumentCreated, onDocumentDeleted, onDocumentUpdated } = require("firebase-functions/v2/firestore");
 const { logger } = require("firebase-functions");
 const { db, admin } = require("./init");
+const { isBranchTest } = require("./utils");
 
 async function updatePublicProfile(uid, options = {}) {
   try {
@@ -10,7 +11,6 @@ async function updatePublicProfile(uid, options = {}) {
       userRef.collection("state").doc("stats").get(),
     ]);
 
-    // RACE CONDITION GÜVENLİĞİ: Kullanıcı silinmişse güncelleme yapma
     if (!userSnap.exists) {
       logger.info(`User ${uid} not found in updatePublicProfile (likely deleted). Skipping.`);
       return;
@@ -18,6 +18,39 @@ async function updatePublicProfile(uid, options = {}) {
 
     const u = userSnap.data() || {};
     const s = statsSnap.exists ? (statsSnap.data() || {}) : {};
+
+    // KRİTİK: testCount/totalNetSum drift edebiliyor.
+    // Tek kaynak: tests koleksiyonu. Hem yeni (isBranchTest alanı var) hem eski veriler desteklenir.
+    let realTestCount = 0;
+    let realTotalNetSum = 0;
+
+    try {
+      const qsAll = await db.collection("tests")
+        .where("userId", "==", uid)
+        .get();
+
+      for (const d of qsAll.docs) {
+        const data = d.data() || {};
+        // Yeni veriler: isBranchTest boolean’ı doğrudan kullan
+        // Eski veriler: utils.isBranchTest ile hesapla
+        const branch = (typeof data.isBranchTest === "boolean")
+          ? data.isBranchTest
+          : isBranchTest(data.scores, data.sectionName, data.examType);
+
+        if (branch) continue;
+        realTestCount += 1;
+        const net = typeof data.totalNet === "number" ? data.totalNet : 0;
+        realTotalNetSum += net;
+      }
+
+      // Eğer hiç test yoksa (gerçekten boş) 0 doğru; ama query başarısız olursa fallback'e düşelim.
+    } catch (e) {
+      // En kötü senaryo: sayımı yapamazsak stats bazlı değeri yaz (0'a düşürme)
+      logger.warn("updatePublicProfile: tests aggregate failed, falling back to stats", { uid, error: String(e) });
+      realTestCount = typeof s.testCount === "number" ? s.testCount : 0;
+      realTotalNetSum = typeof s.totalNetSum === "number" ? s.totalNetSum : 0;
+    }
+
     const publicDoc = {
       userId: uid,
       name: u.name || "",
@@ -27,8 +60,8 @@ async function updatePublicProfile(uid, options = {}) {
       selectedExam: u.selectedExam || null,
       engagementScore: typeof s.engagementScore === "number" ? s.engagementScore : 0,
       streak: typeof s.streak === "number" ? s.streak : 0,
-      testCount: typeof s.testCount === "number" ? s.testCount : 0,
-      totalNetSum: typeof s.totalNetSum === "number" ? s.totalNetSum : 0,
+      testCount: realTestCount,
+      totalNetSum: realTotalNetSum,
       // GÜVENLİK GÜNCELLEMESİ: Takipçi sayıları da senkronize edilir
       followerCount: typeof u.followerCount === "number" ? u.followerCount : 0,
       followingCount: typeof u.followingCount === "number" ? u.followingCount : 0,

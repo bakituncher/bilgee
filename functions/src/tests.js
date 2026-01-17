@@ -120,6 +120,9 @@ exports.addTestResult = onCall({ region: "us-central1", timeoutSeconds: 30, enfo
         }
       }
 
+      // Branş denemesi kontrolü
+      const isTestBranch = isBranchTest(normalizedScores, sectionName, examType);
+
       // Şimdi tüm yazma işlemleri
       const newDocRef = testsCol.doc();
       newTestId = newDocRef.id;
@@ -137,11 +140,9 @@ exports.addTestResult = onCall({ region: "us-central1", timeoutSeconds: 30, enfo
         totalWrong,
         totalBlank,
         penaltyCoefficient,
+        isBranchTest: isTestBranch,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       });
-
-      // Branş denemesi kontrolü
-      const isTestBranch = isBranchTest(normalizedScores, sectionName, examType);
 
       // İstatistikleri güncelle (onUserStatsWritten trigger'ı buradan tetiklenecek)
       // testCount ve totalNetSum sadece ana sınav denemeleri için artırılır (branş denemeleri hariç)

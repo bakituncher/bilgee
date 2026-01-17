@@ -26,42 +26,15 @@ class StatsCalculator {
     return avgNet.toStringAsFixed(1);
   }
 
-  /// Streak (ardışık gün) hesapla
+  /// Streak (ardışık gün) değerini döndür
   ///
-  /// Kural: Kullanıcı bir gün içinde en az bir deneme/test eklediyse o gün "aktif" sayılır.
-  /// Streak, en son aktif gün (bugün veya dün) baz alınarak geriye doğru kesintisiz aktif günlerin sayısıdır.
+  /// MERKEZİ SİSTEM: Streak artık Firebase'de server-side hesaplanıyor ve
+  /// public_profiles koleksiyonunda tutuluyor. Bu fonksiyon sadece UserModel'deki
+  /// streak değerini döndürür.
   ///
-  /// Not: Aynı gün içinde birden fazla test streak'i artırmaz.
-  static int calculateStreak(List<TestModel> tests) {
-    if (tests.isEmpty) return 0;
-
-    final sortedTests = tests.toList()..sort((a, b) => b.date.compareTo(a.date));
-
-    // Tekilleştir: sadece gün bazında unique set
-    final uniqueDays = <DateTime>{};
-    for (final t in sortedTests) {
-      uniqueDays.add(DateTime(t.date.year, t.date.month, t.date.day));
-    }
-
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-
-    // En son aktif gün
-    final lastActiveDay = uniqueDays.reduce((a, b) => a.isAfter(b) ? a : b);
-    final diffFromToday = today.difference(lastActiveDay).inDays;
-
-    // Bugün de aktif değilse ve dün de aktif değilse streak yok.
-    if (diffFromToday > 1) return 0;
-
-    // Sayım başlangıcı: bugün aktifse bugün, değilse dün.
-    DateTime cursor = diffFromToday == 0 ? today : today.subtract(const Duration(days: 1));
-
-    int streak = 0;
-    while (uniqueDays.contains(cursor)) {
-      streak++;
-      cursor = cursor.subtract(const Duration(days: 1));
-    }
-
-    return streak;
+  /// Not: Streak güncellemeleri test ekleme/silme işlemlerinde Cloud Functions
+  /// tarafından otomatik olarak yapılır.
+  static int getStreak(UserModel user) {
+    return user.streak;
   }
 }
