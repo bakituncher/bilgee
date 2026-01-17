@@ -439,13 +439,51 @@ class AiService {
 
     prompt += """
 
-[ÖNEMLİ SİSTEM TALİMATI]
+[SİSTEM AYARI 1: TAKVİM YAPISI]
 Bugün günlerden: $todayName.
 Lütfen oluşturacağın 'weeklyPlan' içindeki 'plan' dizisini KESİNLİKLE **$todayName** gününden başlat.
 Plan dizisindeki günlerin sırası tam olarak şu sırayla olmalıdır: $orderString.
 
 ÖNEMLİ: Haftanın planlamasını yaparken "Pazartesi başlar" kuralını YOK SAY. Kullanıcı stratejiyi bugün ($todayName) oluşturuyor, bu yüzden ilk gün ($todayName) en yoğun ve motive edici başlangıç günü olmalı. Geçmiş günleri (örneğin dünkü Cuma) planlama, onları döngünün sonuna (gelecek hafta) at.
 """;
+
+    // ====================================================================================
+    // ÇÖZÜM 2: KAPASİTE KULLANIMI VE BOŞLUK DOLDURMA
+    // ====================================================================================
+    // Sorun: Kullanıcı "Yoğun" seçiyor ve tüm saatleri açıyor ama AI boşluk bırakıyor.
+    // Çözüm: Pacing moduna göre "Doluluk Oranı" talimatı veriyoruz.
+
+    String densityInstruction = "";
+
+    if (pacing == 'intense' || pacing == 'yoğun') {
+      densityInstruction = """
+
+[SİSTEM AYARI 2: KAPASİTE VE DOLULUK (CRITICAL)]
+Kullanıcı Modu: **INTENSE (YOĞUN)**.
+
+TALİMATLAR:
+1. 'weeklyAvailability' içinde "true" (müsait) olarak işaretlenmiş **HER BİR SAAT DİLİMİNİ** doldurmak ZORUNDASIN.
+2. Asla "kullanıcı yorulur" diye düşünüp inisiyatif alma ve boşluk bırakma. Kullanıcı sınırlarını zorlamak istiyor.
+3. Konu çalışması biterse; "Zor Soru Çözümü", "Branş Denemesi", "Paragraf/Problem Rutini" veya "Genel Tekrar" ile slotu doldur.
+4. HEDEF DOLULUK ORANI: %100. Müsait olan hiçbir slot boş kalmamalı.
+""";
+    } else if (pacing == 'moderate' || pacing == 'dengeli') {
+      densityInstruction = """
+
+[SİSTEM AYARI 2: KAPASİTE]
+Kullanıcı Modu: **MODERATE (DENGELİ)**.
+Müsait zamanların yaklaşık %80'ini doldur. %20'lik kısmı esneklik payı olarak boş bırakabilirsin.
+""";
+    } else {
+      densityInstruction = """
+
+[SİSTEM AYARI 2: KAPASİTE]
+Kullanıcı Modu: **RELAXED (RAHAT)**.
+Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeterli.
+""";
+    }
+
+    prompt += densityInstruction;
     // ====================================================================================
 
     return _callGemini(prompt, expectJson: true, requestType: 'weekly_plan');
