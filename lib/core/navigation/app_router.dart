@@ -34,6 +34,7 @@ import 'package:taktik/data/providers/admin_providers.dart';
 import 'transition_utils.dart';
 import 'package:taktik/features/home/screens/user_guide_screen.dart';
 import 'package:taktik/features/coach/screens/question_solver_screen.dart';
+import 'package:taktik/features/coach/screens/saved_solutions_screen.dart'; // YENİ EKLENEN IMPORT
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   final rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -148,6 +149,18 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             child: const LibraryScreen(),
           )
       ),
+      // --- YENİ EKLENEN ROTA: SORU KUTUSU ---
+      GoRoute(
+        path: AppRoutes.questionBox,
+        name: 'QuestionBox',
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) => buildPageWithFadeTransition(
+          context: context,
+          state: state,
+          child: const SavedSolutionsScreen(),
+        ),
+      ),
+      // ------------------------------------
       GoRoute(
         path: AppRoutes.settings,
         name: 'Settings',

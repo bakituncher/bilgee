@@ -1,5 +1,8 @@
+// lib/features/coach/screens/saved_solutions_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart'; // Yönlendirme için eklendi
+import 'package:taktik/core/navigation/app_routes.dart'; // Rotalar için eklendi
 import 'package:taktik/features/coach/models/saved_solution_model.dart';
 import 'package:taktik/features/coach/providers/saved_solutions_provider.dart';
 import 'package:taktik/features/coach/screens/subject_solutions_screen.dart';
@@ -63,13 +66,6 @@ class SavedSolutionsScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final grouped = _groupBySubject(solutions);
 
-    // Debug logs
-    debugPrint('🔍 SavedSolutionsScreen build:');
-    debugPrint('   - isSelectionMode: $isSelectionMode');
-    debugPrint('   - solutions count: ${solutions.length}');
-    debugPrint('   - availableSubjects: $availableSubjects');
-    debugPrint('   - grouped keys: ${grouped.keys.join(", ")}');
-
     // Seçim modundaysa kullanıcının TÜM derslerini göster
     final List<String> subjects = isSelectionMode && availableSubjects != null
         ? availableSubjects! // Tüm dersleri göster (filtreleme yok!)
@@ -77,50 +73,84 @@ class SavedSolutionsScreen extends ConsumerWidget {
 
     subjects.sort();
 
-    debugPrint('   - subjects to display: ${subjects.join(", ")}');
-
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
-          isSelectionMode ? 'Nereye Kaydedelim?' : 'Çözüm Arşivi',
+          isSelectionMode ? 'Nereye Kaydedelim?' : 'Soru Kutusu',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         centerTitle: true,
+        // --- DÜZELTME 1: GERİ BUTONU MANTIĞI ---
+        leading: isSelectionMode
+            ? null // Seçim modunda (dialog gibi açıldıysa) otomatik kapat butonu gelir
+            : IconButton(
+          icon: const Icon(Icons.arrow_back_rounded),
+          onPressed: () {
+            // Eğer bir önceki sayfa varsa oraya dön, yoksa (menüden gelindiyse) Ana Sayfaya git
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go(AppRoutes.home);
+            }
+          },
+        ),
+      ),
+      // --- DÜZELTME 2: SORU EKLEME BUTONU ---
+      floatingActionButton: isSelectionMode
+          ? null // Seçim modunda buton gösterme
+          : FloatingActionButton.extended(
+        onPressed: () {
+          // Soru Çözücü ekranına yönlendir
+          context.push('/ai-hub/question-solver');
+        },
+        icon: const Icon(Icons.add_a_photo_rounded),
+        label: const Text('Soru Çöz & Kaydet'),
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: theme.colorScheme.onPrimary,
       ),
       body: (solutions.isEmpty && !isSelectionMode) || (isSelectionMode && subjects.isEmpty)
           ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.folder_open_rounded,
-                    size: 80,
-                    color: theme.colorScheme.outline.withOpacity(0.5),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    isSelectionMode
-                        ? "Henüz hiç soru kaydetmedin.\nİlk sorun bu mu? 🎉"
-                        : "Henüz kaydedilmiş çözüm yok",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6)),
-                  ),
-                ],
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.folder_open_rounded,
+              size: 80,
+              color: theme.colorScheme.outline.withOpacity(0.5),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              isSelectionMode
+                  ? "Henüz hiç soru kaydetmedin.\nİlk sorun bu mu? 🎉"
+                  : "Henüz kutuda soru yok.\nHadi hemen bir tane ekleyelim!",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6)),
+            ),
+            // Boş durumda da yönlendirme butonu
+            if (!isSelectionMode) ...[
+              const SizedBox(height: 24),
+              FilledButton.icon(
+                onPressed: () => context.push('/ai-hub/question-solver'),
+                icon: const Icon(Icons.camera_alt_rounded),
+                label: const Text('Soru Çöz'),
               ),
-            )
+            ],
+          ],
+        ),
+      )
           : isSelectionMode
-              ? _buildSelectionGrid(context, theme, subjects, grouped)
-              : _buildNormalGrid(context, theme, subjects, grouped),
+          ? _buildSelectionGrid(context, theme, subjects, grouped)
+          : _buildNormalGrid(context, theme, subjects, grouped),
     );
   }
 
   // Normal mod: Klasörleri aç
   Widget _buildNormalGrid(BuildContext context, ThemeData theme, List<String> subjects, Map<String, List<SavedSolutionModel>> grouped) {
     return GridView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 80), // FAB için alt boşluk
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         crossAxisSpacing: 12,
@@ -224,13 +254,13 @@ class SavedSolutionsScreen extends ConsumerWidget {
 
   // Ortak kart widget'ı
   Widget _buildSubjectCard(
-    BuildContext context,
-    ThemeData theme,
-    String subject,
-    List<SavedSolutionModel> subjectSolutions, {
-    bool isSelectionMode = false,
-    required VoidCallback onTap,
-  }) {
+      BuildContext context,
+      ThemeData theme,
+      String subject,
+      List<SavedSolutionModel> subjectSolutions, {
+        bool isSelectionMode = false,
+        required VoidCallback onTap,
+      }) {
     final subjectColor = _getSubjectColor(subject, theme.colorScheme);
     final subjectIcon = _getSubjectIcon(subject);
 
