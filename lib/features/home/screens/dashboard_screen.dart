@@ -284,7 +284,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
               ),
               actions: [
-                _HelpButton(),
                 _RatingStarButton(),
                 _NotificationBell(),
                 const SizedBox(width: 8),
@@ -837,22 +836,6 @@ class _BenefitItem extends StatelessWidget {
   }
 }
 
-
-class _HelpButton extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return IconButton(
-      tooltip: 'Kullanım Kılavuzu',
-      icon: Icon(
-        Icons.help_outline_rounded,
-        color: Theme.of(context).colorScheme.primary.withOpacity(0.85),
-        size: 22,
-      ),
-      onPressed: () => context.go(AppRoutes.userGuide),
-      padding: const EdgeInsets.all(8),
-    );
-  }
-}
 
 class _NudgeBullet extends StatelessWidget {
   final IconData icon;

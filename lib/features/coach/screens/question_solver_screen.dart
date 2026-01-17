@@ -819,92 +819,93 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
   // --- MODERN KARŞILAMA EKRANI ---
   Widget _buildEmptyState(ThemeData theme) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 10),
-          // 1. HERO KARTI (Taktik Tavşan Branding)
+          const SizedBox(height: 4),
+          // HERO KARTI
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [theme.colorScheme.primaryContainer, theme.colorScheme.surface],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
-              borderRadius: BorderRadius.circular(32),
+              borderRadius: BorderRadius.circular(20),
               border: Border.all(color: theme.colorScheme.primary.withOpacity(0.1)),
               boxShadow: [
                 BoxShadow(
                   color: theme.colorScheme.primary.withOpacity(0.05),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
                 ),
               ],
             ),
             child: Column(
               children: [
-                // Taktik Tavşan Görseli (Animasyonlu)
+                // Taktik Tavşan Görseli
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 15,
-                        offset: const Offset(0, 8),
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
                   child: Image.asset(
                     'assets/images/bunnyy.png',
-                    height: 80,
-                    width: 80,
+                    height: 56,
+                    width: 56,
                   ),
                 ).animate(onPlay: (c) => c.repeat(reverse: true))
                     .scale(duration: 3.seconds, begin: const Offset(1, 1), end: const Offset(1.05, 1.05)),
-                const SizedBox(height: 20),
+                const SizedBox(height: 14),
                 Text(
                   "Sorularla Boğuşma,\nTaktik Tavşan Yanında!",
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 22,
+                    fontSize: 19,
                     fontWeight: FontWeight.w800,
                     color: theme.colorScheme.onSurface,
-                    letterSpacing: -0.5,
+                    letterSpacing: -0.3,
+                    height: 1.15,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 6),
                 Text(
                   "Takıldığın sorunun fotoğrafını çek,\nTaktik Tavşan senin için adım adım çözsün.",
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 15,
+                    fontSize: 13.5,
                     color: theme.colorScheme.onSurfaceVariant,
-                    height: 1.4,
+                    height: 1.25,
                   ),
                 ),
               ],
             ),
           ).animate().fadeIn().slideY(begin: 0.2, end: 0),
 
-          const SizedBox(height: 32),
+          const SizedBox(height: 20),
 
           Text(
             "Nasıl Çalışır?",
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
               color: theme.colorScheme.onSurface,
             ),
           ).animate().fadeIn(delay: 200.ms),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
 
-          // Özellikler (YENİ etiketi kaldırıldı)
+          // Özellikler
           _buildFeatureRow(
             theme,
             icon: Icons.camera_alt_outlined,
@@ -926,8 +927,15 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
             subtitle: "Tavşan ile sohbet et.",
             delay: 500,
           ),
+          _buildFeatureRow(
+            theme,
+            icon: Icons.bookmark_outline_rounded,
+            title: "Dilersen Soruyu Kaydet",
+            subtitle: "İstediğin zaman tekrar bak.",
+            delay: 600,
+          ),
 
-          const SizedBox(height: 100), // FAB için alt boşluk
+          const SizedBox(height: 70), // FAB için alt boşluk
         ],
       ),
     );
@@ -942,45 +950,45 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
         required int delay,
       }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: theme.cardColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: theme.colorScheme.outline.withOpacity(0.1)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           )
         ],
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: theme.colorScheme.primary, size: 24),
+            child: Icon(icon, color: theme.colorScheme.primary, size: 22),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   subtitle,
                   style: TextStyle(
                     color: theme.colorScheme.onSurfaceVariant,
-                    fontSize: 13,
+                    fontSize: 12.5,
                   ),
                 ),
               ],
