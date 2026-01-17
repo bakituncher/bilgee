@@ -206,8 +206,14 @@ exports.generateGemini = onCall(
       // İsteğe bağlı maxOutputTokens (güvenli aralıkta kırpılır)
       const reqMaxTokensRaw = request.data?.maxOutputTokens;
       let effectiveMaxTokens = expectJson ? DEFAULT_JSON_TOKENS : DEFAULT_TEXT_TOKENS;
+
+      // HAFTALIK PLAN İÇİN ÖZEL TOKEN LİMİTİ (Yarım kalma sorununun çözümü)
+      if (requestType === 'weekly_plan') {
+        effectiveMaxTokens = 12000; // Haftalık planlar için daha yüksek limit (8192 -> 12000)
+      }
+
       if (typeof reqMaxTokensRaw === 'number' && isFinite(reqMaxTokensRaw)) {
-        const clamped = Math.max(256, Math.min(reqMaxTokensRaw, 8192));
+        const clamped = Math.max(256, Math.min(reqMaxTokensRaw, 12000)); // Üst sınır 8192 -> 12000
         effectiveMaxTokens = clamped;
       }
 

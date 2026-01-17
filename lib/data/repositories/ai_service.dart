@@ -142,14 +142,19 @@ class AiService {
   }
 
   String? _extractJsonFromFencedBlock(String text) {
+    // 1. ```json ... ``` bloklarını ara
     final jsonFence = RegExp(r"```json\s*([\s\S]*?)\s*```", multiLine: true).firstMatch(text);
     if (jsonFence != null) return jsonFence.group(1)!.trim();
+
+    // 2. Herhangi bir ``` ... ``` bloğunu ara
     final anyFence = RegExp(r"```\s*([\s\S]*?)\s*```", multiLine: true).firstMatch(text);
     if (anyFence != null) return anyFence.group(1)!.trim();
+
     return null;
   }
 
   String? _extractJsonByBracesFallback(String text) {
+    // İlk { ve son } arasındaki her şeyi al (Regex cerrahi müdahale - Sorunun 1. çözümü)
     final startIndex = text.indexOf('{');
     final endIndex = text.lastIndexOf('}');
     if (startIndex != -1 && endIndex != -1 && endIndex > startIndex) {
@@ -167,7 +172,16 @@ class AiService {
         } catch (_) {}
       }
       return jsonEncode(parsed);
-    } catch (_) {
+    } catch (e) {
+      // JSON parse hatası - muhtemelen yarım JSON veya kirli format
+      final errorMsg = e.toString().toLowerCase();
+
+      // Yarım JSON tespiti (token limiti nedeniyle kesilme)
+      if (errorMsg.contains('unexpected end') || errorMsg.contains('unterminated')) {
+        return jsonEncode({'error': 'Plan oluşturulurken yanıt yarım kaldı. Lütfen tekrar deneyin veya tempo ayarını "Rahat" seçerek daha kısa bir plan oluşturun.'});
+      }
+
+      // Genel parse hatası
       return jsonEncode({'error': 'Yapay zeka yanıtı anlaşılamadı, lütfen tekrar deneyin.'});
     }
   }
@@ -405,6 +419,9 @@ class AiService {
 
     // DÜZELTME 3: AI cache kırıcı varyasyon etiketi ekle
     prompt += "\n\n[System: Generate a UNIQUE plan. Variation: ${DateTime.now().millisecondsSinceEpoch}]";
+
+    // TOKEN LİMİTİ UYARISI: AI'a JSON'u tam olarak kapatmasını hatırlat (Sorunun 2. çözümü)
+    prompt += "\n\nÖNEMLİ: Yanıtını mutlaka geçerli ve KAPALI bir JSON objesi olarak döndür. JSON'un sonunda tüm süslü parantezleri kapat. Yanıt kesilirse kısa tut ama yapıyı koru.";
 
     return _callGemini(prompt, expectJson: true, requestType: 'weekly_plan');
   }
