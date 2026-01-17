@@ -472,7 +472,7 @@ class FirestoreService {
   }
 
   // KULLANICI PROFİLİ GÜNCELLEME (BASİTLEŞTİRİLDİ)
-  // Veri senkronizasyonu artık onUserUpdate Cloud Function'ı tarafından yapılıyor.
+  // Veri senkronizasyonı artık onUserUpdate Cloud Function'ı tarafından yapılıyor.
   Future<void> updateUserProfile(String userId, Map<String, dynamic> data) async {
     final userDocRef = usersCollection.doc(userId);
 
@@ -601,6 +601,21 @@ class FirestoreService {
 
   // YENI SAYFALAMALI FONKSIYON
   Future<List<TestModel>> getTestResultsPaginated(String userId, {DocumentSnapshot? lastVisible, int limit = 20}) async {
+    Query query = _testsCollection
+        .where('userId', isEqualTo: userId)
+        .orderBy('date', descending: true)
+        .limit(limit);
+
+    if (lastVisible != null) {
+      query = query.startAfterDocument(lastVisible);
+    }
+
+    final qs = await query.get();
+    return qs.docs.map((d) => TestModel.fromSnapshot(d as DocumentSnapshot<Map<String, dynamic>>)).toList();
+  }
+
+  // YENI: Herhangi bir kullanıcının testlerini sayfalı olarak getir (public profile streak gibi yerlerde kullanılır)
+  Future<List<TestModel>> getTestResultsPaginatedForUser(String userId, {DocumentSnapshot? lastVisible, int limit = 120}) async {
     Query query = _testsCollection
         .where('userId', isEqualTo: userId)
         .orderBy('date', descending: true)
@@ -1452,5 +1467,27 @@ class FirestoreService {
     }
   }
 
-// KALDIRILDI: resetUserDataForNewExam() - Artık kullanılmıyor
+  /// Gerçek deneme sayısı (tests koleksiyonundan). Stats/cache drift ederse bile doğruyu verir.
+  /// Not: Aggregate count yerine snapshot boyutu kullanılır; tek kullanıcı için kabul edilebilir maliyet.
+  Stream<int> streamTestCount(String userId) {
+    return _testsCollection
+        .where('userId', isEqualTo: userId)
+        .snapshots()
+        .map((qs) => qs.size);
+  }
+
+  /// Gerçek toplam net (tests koleksiyonundan). Stats/cache drift ederse bile doğruyu verir.
+  Stream<double> streamTotalNetSum(String userId) {
+    return _testsCollection
+        .where('userId', isEqualTo: userId)
+        .snapshots()
+        .map((qs) {
+          double sum = 0.0;
+          for (final d in qs.docs) {
+            final data = d.data();
+            sum += (data['totalNet'] as num?)?.toDouble() ?? 0.0;
+          }
+          return sum;
+        });
+  }
 }

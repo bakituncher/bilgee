@@ -252,3 +252,13 @@ final searchResultsProvider = FutureProvider.autoDispose<List<Map<String, dynami
     (result) => result['userId'] as String,
   );
 });
+
+/// Gerçek deneme sayısı: tests koleksiyonundan gelir (silinen denemeler otomatik düşer)
+final testCountForUserProvider = StreamProvider.family.autoDispose<int, String>((ref, userId) {
+  return ref.watch(firestoreServiceProvider).streamTestCount(userId);
+});
+
+/// Gerçek toplam net: tests koleksiyonundan gelir (silinen denemeler otomatik çıkar)
+final totalNetSumForUserProvider = StreamProvider.family.autoDispose<double, String>((ref, userId) {
+  return ref.watch(firestoreServiceProvider).streamTotalNetSum(userId);
+});

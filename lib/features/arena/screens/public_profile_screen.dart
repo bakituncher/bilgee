@@ -13,6 +13,8 @@ import 'package:intl/intl.dart';
 import 'package:flutter/rendering.dart';
 import 'package:taktik/shared/widgets/app_loader.dart';
 import 'package:taktik/features/profile/widgets/user_moderation_menu.dart';
+import 'package:taktik/features/stats/utils/stats_calculator.dart';
+import 'package:taktik/data/models/test_model.dart';
 
 // Bu provider, ID'ye göre tek bir kullanıcı profili getirmek için kullanılır.
 final publicUserProfileProvider = FutureProvider.family.autoDispose<Map<String, dynamic>?, String>((ref, userId) async {
@@ -25,6 +27,16 @@ final publicUserProfileProvider = FutureProvider.family.autoDispose<Map<String, 
     return await svc.getLeaderboardUserRaw(myExam, userId);
   }
   return null;
+});
+
+// Public profile için streak'i canlı hesapla (branş denemeleri hariç)
+final publicUserStreakProvider = FutureProvider.family.autoDispose<int, String>((ref, userId) async {
+  final svc = ref.watch(firestoreServiceProvider);
+  // Streak için genelde son N kayıt yeterli. 120 = 4 ay boyunca haftada ~7 deneme gibi senaryolara dayanır.
+  // Daha uzun streak senaryosu varsa (ör. 200+ gün) bu limit artırılabilir.
+  final tests = await svc.getTestResultsPaginatedForUser(userId, limit: 180);
+  final mainTests = tests.where((t) => !t.isBranchTest).toList(growable: false);
+  return StatsCalculator.calculateStreak(mainTests);
 });
 
 class PublicProfileScreen extends ConsumerStatefulWidget {
@@ -172,6 +184,9 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
     final userProfileAsync = ref.watch(publicUserProfileProvider(widget.userId));
     final statsAsync = ref.watch(userStatsForUserProvider(widget.userId));
     final followCountsAsync = ref.watch(followCountsProvider(widget.userId));
+    final liveTestCountAsync = ref.watch(testCountForUserProvider(widget.userId));
+    final liveTotalNetSumAsync = ref.watch(totalNetSumForUserProvider(widget.userId));
+    final liveStreakAsync = ref.watch(publicUserStreakProvider(widget.userId));
     final me = ref.watch(authControllerProvider).value;
 
     return Scaffold(
@@ -219,18 +234,34 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
           // GÜVENLİK: Gerçek isim yerine kullanıcı adı (13-17 yaş koruması)
           final String username = (data['username'] as String?) ?? '';
           final String displayName = username.isNotEmpty ? '@$username' : 'İsimsiz Savaşçı';
-          final int testCount = (data['testCount'] as num?)?.toInt() ?? 0;
-          final double totalNetSum = (data['totalNetSum'] as num?)?.toDouble() ?? 0.0;
+          final int cachedTestCount = (data['testCount'] as num?)?.toInt() ?? 0;
+          final int testCount = liveTestCountAsync.maybeWhen(
+            data: (v) => v,
+            orElse: () => cachedTestCount,
+          );
+
+          final double cachedTotalNetSum = (data['totalNetSum'] as num?)?.toDouble() ?? 0.0;
+          final double totalNetSum = liveTotalNetSumAsync.maybeWhen(
+            data: (v) => v,
+            orElse: () => cachedTotalNetSum,
+          );
+
           final double avgNet = testCount > 0 ? totalNetSum / testCount : 0.0;
           final int engagement = (data['engagementScore'] as num?)?.toInt() ?? 0;
-          final int streak = (data['streak'] as num?)?.toInt() ?? 0;
+
+          // Streak: önce canlı hesaplanan değer, yoksa cached fallback
+          final int cachedStreak = (data['streak'] as num?)?.toInt() ?? 0;
+          final int streak = liveStreakAsync.maybeWhen(
+            data: (v) => v,
+            orElse: () => cachedStreak,
+          );
+
           final String? avatarStyle = data['avatarStyle'] as String?;
           final String? avatarSeed = data['avatarSeed'] as String?;
           final rankInfo = RankService.getRankInfo(engagement);
           final rankName = rankInfo.current.name;
           final rankIcon = rankInfo.current.icon;
           final rankColor = rankInfo.current.color;
-          final currentLevel = RankService.ranks.indexOf(rankInfo.current) + 1;
           final updatedAt = statsAsync.valueOrNull?.updatedAt;
 
           return Container(
