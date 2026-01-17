@@ -180,6 +180,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final strength = _passwordStrength(passValue);
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
+    // Cihazın alt güvenli alan boşluğunu alıyoruz
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(_showEmailForm ? 'Kayıt Ol' : 'Hesap Oluştur'),
@@ -202,13 +205,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           },
         ),
       ),
-      body: _showEmailForm ? _buildEmailForm(context, passValue, strength, isDarkMode) : _buildMethodSelection(context, isDarkMode),
+      body: _showEmailForm
+          ? _buildEmailForm(context, passValue, strength, isDarkMode, bottomPadding)
+          : _buildMethodSelection(context, isDarkMode, bottomPadding),
     );
   }
 
-  Widget _buildMethodSelection(BuildContext context, bool isDarkMode) {
+  Widget _buildMethodSelection(BuildContext context, bool isDarkMode, double bottomPadding) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
+      // Alt kısma güvenli alan boşluğu ekliyoruz
+      padding: EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 24.0 + bottomPadding),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -470,9 +476,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     );
   }
 
-  Widget _buildEmailForm(BuildContext context, String passValue, double strength, bool isDarkMode) {
+  Widget _buildEmailForm(BuildContext context, String passValue, double strength, bool isDarkMode, double bottomPadding) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
+      // Alt kısma güvenli alan boşluğu ekliyoruz
+      padding: EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 16.0 + bottomPadding),
       child: Form(
         key: _formKey,
         child: Column(
@@ -495,271 +502,271 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             ),
             const SizedBox(height: 24),
             if (_errorMessage != null && _errorMessage!.isNotEmpty)
-                Card(
-                  color: Theme.of(context).colorScheme.errorContainer,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    child: Row(children: [
-                      Icon(Icons.error_outline, color: Theme.of(context).colorScheme.onErrorContainer),
-                      const SizedBox(width: 8),
-                      Expanded(child: Text(_errorMessage!, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onErrorContainer))),
-                      IconButton(
-                        tooltip: 'Kapat',
-                        onPressed: _isLoading ? null : () => setState(() => _errorMessage = null),
-                        icon: Icon(Icons.close_rounded, color: Theme.of(context).colorScheme.onErrorContainer),
-                      )
-                    ]),
-                  ),
-                ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _firstNameController,
-                      decoration: const InputDecoration(labelText: 'Ad', prefixIcon: Icon(Icons.person_outline)),
-                      textInputAction: TextInputAction.next,
-                      autofillHints: const [AutofillHints.givenName],
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Lütfen adınızı girin.';
-                        }
-                        return null;
-                      },
-                      onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _lastNameController,
-                      decoration: const InputDecoration(labelText: 'Soyad', prefixIcon: Icon(Icons.person_outline)),
-                      textInputAction: TextInputAction.next,
-                      autofillHints: const [AutofillHints.familyName],
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Lütfen soyadınızı girin.';
-                        }
-                        return null;
-                      },
-                      onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _usernameController,
-                decoration: const InputDecoration(labelText: 'Kullanıcı Adı', prefixIcon: Icon(Icons.alternate_email)),
-                textInputAction: TextInputAction.next,
-                autofillHints: const [AutofillHints.username],
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Lütfen bir kullanıcı adı girin.';
-                  }
-                  if (value.length < 3) {
-                    return 'Kullanıcı adı en az 3 karakter olmalıdır.';
-                  }
-                  return null;
-                },
-                onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                      initialValue: _selectedGender,
-                      isExpanded: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Cinsiyet',
-                        prefixIcon: Icon(Icons.wc_outlined),
-                      ),
-                      items: ['Erkek', 'Kadın', 'Belirtmek istemiyorum']
-                          .map((label) => DropdownMenuItem(
-                        value: label,
-                        child: Text(label, overflow: TextOverflow.ellipsis),
-                      ))
-                          .toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedGender = value;
-                        });
-                      },
-                      validator: (value) {
-                        if (value == null) {
-                          return 'Lütfen cinsiyetinizi seçin.';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _dateOfBirthController,
-                      decoration: InputDecoration(
-                        labelText: Platform.isIOS ? 'Doğum Tarihi (Opsiyonel)' : 'Doğum Tarihi',
-                        prefixIcon: const Icon(Icons.calendar_today_outlined),
-                      ),
-                      readOnly: true,
-                      onTap: () => _selectDate(context),
-                      validator: (value) {
-                        // iOS kullanıcıları için doğum tarihi zorunlu değil
-                        if (Platform.isIOS) {
-                          return null;
-                        }
-                        if (value == null || value.isEmpty) {
-                          return 'Lütfen doğum tarihinizi seçin.';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(labelText: 'E-posta', prefixIcon: Icon(Icons.alternate_email_rounded)),
-                textInputAction: TextInputAction.next,
-                autofillHints: const [AutofillHints.email],
-                validator: (value) {
-                  if (value == null || !value.contains('@')) {
-                    return 'Lütfen geçerli bir e-posta girin.';
-                  }
-                  return null;
-                },
-                onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _passwordController,
-                obscureText: _obscurePass1,
-                decoration: InputDecoration(
-                  labelText: 'Şifre',
-                  prefixIcon: const Icon(Icons.lock_outline_rounded),
-                  suffixIcon: IconButton(
-                    icon: Icon(_obscurePass1 ? Icons.visibility_off_outlined : Icons.visibility_outlined),
-                    tooltip: _obscurePass1 ? 'Şifreyi göster' : 'Şifreyi gizle',
-                    onPressed: _isLoading ? null : () => setState(() => _obscurePass1 = !_obscurePass1),
-                  ),
-                ),
-                textInputAction: TextInputAction.next,
-                autofillHints: const [AutofillHints.newPassword],
-                validator: (value) {
-                  if (value == null || value.length < 6) {
-                    return 'Şifre en az 6 karakter olmalıdır.';
-                  }
-                  return null;
-                },
-                onChanged: (_) => setState(() {}),
-                onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
-              ),
-              const SizedBox(height: 8),
-              // Şifre gücü göstergesi
-              ClipRRect(
-                borderRadius: BorderRadius.circular(6),
-                child: LinearProgressIndicator(
-                  value: strength <= 0.05 ? 0.05 : strength,
-                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                  valueColor: AlwaysStoppedAnimation(
-                    strength < .34 ? Colors.redAccent : (strength < .67 ? Colors.amber : Colors.green),
-                  ),
-                  minHeight: 6,
+              Card(
+                color: Theme.of(context).colorScheme.errorContainer,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  child: Row(children: [
+                    Icon(Icons.error_outline, color: Theme.of(context).colorScheme.onErrorContainer),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(_errorMessage!, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onErrorContainer))),
+                    IconButton(
+                      tooltip: 'Kapat',
+                      onPressed: _isLoading ? null : () => setState(() => _errorMessage = null),
+                      icon: Icon(Icons.close_rounded, color: Theme.of(context).colorScheme.onErrorContainer),
+                    )
+                  ]),
                 ),
               ),
-              const SizedBox(height: 6),
-              Text(
-                strength < .34 ? 'Zayıf şifre' : (strength < .67 ? 'Orta şifre' : 'Güçlü şifre'),
-                style: Theme.of(context).textTheme.labelMedium,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _confirmPasswordController,
-                obscureText: _obscurePass2,
-                decoration: InputDecoration(
-                  labelText: 'Şifre Tekrar',
-                  prefixIcon: const Icon(Icons.lock_reset_rounded),
-                  suffixIcon: IconButton(
-                    icon: Icon(_obscurePass2 ? Icons.visibility_off_outlined : Icons.visibility_outlined),
-                    tooltip: _obscurePass2 ? 'Şifreyi göster' : 'Şifreyi gizle',
-                    onPressed: _isLoading ? null : () => setState(() => _obscurePass2 = !_obscurePass2),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: _firstNameController,
+                    decoration: const InputDecoration(labelText: 'Ad', prefixIcon: Icon(Icons.person_outline)),
+                    textInputAction: TextInputAction.next,
+                    autofillHints: const [AutofillHints.givenName],
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Lütfen adınızı girin.';
+                      }
+                      return null;
+                    },
+                    onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
                   ),
                 ),
-                textInputAction: TextInputAction.done,
-                autofillHints: const [AutofillHints.newPassword],
-                validator: (value) {
-                  if (value != _passwordController.text) {
-                    return 'Şifreler eşleşmiyor.';
-                  }
-                  return null;
-                },
-                onFieldSubmitted: (_) => _isLoading ? null : _submit(),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Checkbox(
-                    value: _acceptPolicy,
-                    onChanged: _isLoading ? null : (v) => setState(() => _acceptPolicy = v ?? false),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextFormField(
+                    controller: _lastNameController,
+                    decoration: const InputDecoration(labelText: 'Soyad', prefixIcon: Icon(Icons.person_outline)),
+                    textInputAction: TextInputAction.next,
+                    autofillHints: const [AutofillHints.familyName],
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Lütfen soyadınızı girin.';
+                      }
+                      return null;
+                    },
+                    onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
                   ),
-                  Expanded(
-                    child: RichText(
-                      text: TextSpan(
-                        style: Theme.of(context).textTheme.bodySmall,
-                        children: [
-                          TextSpan(
-                            text: 'Kullanım Sözleşmesi',
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.primary,
-                              decoration: TextDecoration.underline,
-                            ),
-                            recognizer: TapGestureRecognizer()
-                              ..onTap = () async {
-                                const url = 'https://www.codenzi.com/taktik-kullanim-sozlesmesi.html';
-                                final uri = Uri.parse(url);
-                                try {
-                                  await launchUrl(uri, mode: LaunchMode.externalApplication);
-                                } catch (e) {
-                                  if (mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Link açılamadı')),
-                                    );
-                                  }
-                                }
-                              },
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _usernameController,
+              decoration: const InputDecoration(labelText: 'Kullanıcı Adı', prefixIcon: Icon(Icons.alternate_email)),
+              textInputAction: TextInputAction.next,
+              autofillHints: const [AutofillHints.username],
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Lütfen bir kullanıcı adı girin.';
+                }
+                if (value.length < 3) {
+                  return 'Kullanıcı adı en az 3 karakter olmalıdır.';
+                }
+                return null;
+              },
+              onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    initialValue: _selectedGender,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Cinsiyet',
+                      prefixIcon: Icon(Icons.wc_outlined),
+                    ),
+                    items: ['Erkek', 'Kadın', 'Belirtmek istemiyorum']
+                        .map((label) => DropdownMenuItem(
+                      value: label,
+                      child: Text(label, overflow: TextOverflow.ellipsis),
+                    ))
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedGender = value;
+                      });
+                    },
+                    validator: (value) {
+                      if (value == null) {
+                        return 'Lütfen cinsiyetinizi seçin.';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextFormField(
+                    controller: _dateOfBirthController,
+                    decoration: InputDecoration(
+                      labelText: Platform.isIOS ? 'Doğum Tarihi (Opsiyonel)' : 'Doğum Tarihi',
+                      prefixIcon: const Icon(Icons.calendar_today_outlined),
+                    ),
+                    readOnly: true,
+                    onTap: () => _selectDate(context),
+                    validator: (value) {
+                      // iOS kullanıcıları için doğum tarihi zorunlu değil
+                      if (Platform.isIOS) {
+                        return null;
+                      }
+                      if (value == null || value.isEmpty) {
+                        return 'Lütfen doğum tarihinizi seçin.';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _emailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(labelText: 'E-posta', prefixIcon: Icon(Icons.alternate_email_rounded)),
+              textInputAction: TextInputAction.next,
+              autofillHints: const [AutofillHints.email],
+              validator: (value) {
+                if (value == null || !value.contains('@')) {
+                  return 'Lütfen geçerli bir e-posta girin.';
+                }
+                return null;
+              },
+              onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _passwordController,
+              obscureText: _obscurePass1,
+              decoration: InputDecoration(
+                labelText: 'Şifre',
+                prefixIcon: const Icon(Icons.lock_outline_rounded),
+                suffixIcon: IconButton(
+                  icon: Icon(_obscurePass1 ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+                  tooltip: _obscurePass1 ? 'Şifreyi göster' : 'Şifreyi gizle',
+                  onPressed: _isLoading ? null : () => setState(() => _obscurePass1 = !_obscurePass1),
+                ),
+              ),
+              textInputAction: TextInputAction.next,
+              autofillHints: const [AutofillHints.newPassword],
+              validator: (value) {
+                if (value == null || value.length < 6) {
+                  return 'Şifre en az 6 karakter olmalıdır.';
+                }
+                return null;
+              },
+              onChanged: (_) => setState(() {}),
+              onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
+            ),
+            const SizedBox(height: 8),
+            // Şifre gücü göstergesi
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: LinearProgressIndicator(
+                value: strength <= 0.05 ? 0.05 : strength,
+                backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                valueColor: AlwaysStoppedAnimation(
+                  strength < .34 ? Colors.redAccent : (strength < .67 ? Colors.amber : Colors.green),
+                ),
+                minHeight: 6,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              strength < .34 ? 'Zayıf şifre' : (strength < .67 ? 'Orta şifre' : 'Güçlü şifre'),
+              style: Theme.of(context).textTheme.labelMedium,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _confirmPasswordController,
+              obscureText: _obscurePass2,
+              decoration: InputDecoration(
+                labelText: 'Şifre Tekrar',
+                prefixIcon: const Icon(Icons.lock_reset_rounded),
+                suffixIcon: IconButton(
+                  icon: Icon(_obscurePass2 ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+                  tooltip: _obscurePass2 ? 'Şifreyi göster' : 'Şifreyi gizle',
+                  onPressed: _isLoading ? null : () => setState(() => _obscurePass2 = !_obscurePass2),
+                ),
+              ),
+              textInputAction: TextInputAction.done,
+              autofillHints: const [AutofillHints.newPassword],
+              validator: (value) {
+                if (value != _passwordController.text) {
+                  return 'Şifreler eşleşmiyor.';
+                }
+                return null;
+              },
+              onFieldSubmitted: (_) => _isLoading ? null : _submit(),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Checkbox(
+                  value: _acceptPolicy,
+                  onChanged: _isLoading ? null : (v) => setState(() => _acceptPolicy = v ?? false),
+                ),
+                Expanded(
+                  child: RichText(
+                    text: TextSpan(
+                      style: Theme.of(context).textTheme.bodySmall,
+                      children: [
+                        TextSpan(
+                          text: 'Kullanım Sözleşmesi',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.primary,
+                            decoration: TextDecoration.underline,
                           ),
-                          const TextSpan(text: ' ve '),
-                          TextSpan(
-                            text: 'Gizlilik Politikası',
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.primary,
-                              decoration: TextDecoration.underline,
-                            ),
-                            recognizer: TapGestureRecognizer()
-                              ..onTap = () async {
-                                const url = 'https://www.codenzi.com/taktik-gizlilik-politikasi.html';
-                                final uri = Uri.parse(url);
-                                try {
-                                  await launchUrl(uri, mode: LaunchMode.externalApplication);
-                                } catch (e) {
-                                  if (mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Link açılamadı')),
-                                    );
-                                  }
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = () async {
+                              const url = 'https://www.codenzi.com/taktik-kullanim-sozlesmesi.html';
+                              final uri = Uri.parse(url);
+                              try {
+                                await launchUrl(uri, mode: LaunchMode.externalApplication);
+                              } catch (e) {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Link açılamadı')),
+                                  );
                                 }
-                              },
+                              }
+                            },
+                        ),
+                        const TextSpan(text: ' ve '),
+                        TextSpan(
+                          text: 'Gizlilik Politikası',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.primary,
+                            decoration: TextDecoration.underline,
                           ),
-                          const TextSpan(text: "'nı kabul ediyorum."),
-                        ],
-                      ),
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = () async {
+                              const url = 'https://www.codenzi.com/taktik-gizlilik-politikasi.html';
+                              final uri = Uri.parse(url);
+                              try {
+                                await launchUrl(uri, mode: LaunchMode.externalApplication);
+                              } catch (e) {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Link açılamadı')),
+                                  );
+                                }
+                              }
+                            },
+                        ),
+                        const TextSpan(text: "'nı kabul ediyorum."),
+                      ],
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
+            ),
             const SizedBox(height: 24),
             SizedBox(
               height: 52,
@@ -773,20 +780,20 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 child: _isLoading
                     ? SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          color: Theme.of(context).colorScheme.onPrimary,
-                          strokeWidth: 2,
-                        ),
-                      )
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                    color: Theme.of(context).colorScheme.onPrimary,
+                    strokeWidth: 2,
+                  ),
+                )
                     : const Text(
-                        'Kayıt Ol',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                  'Kayıt Ol',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 24),
@@ -814,5 +821,3 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     );
   }
 }
-
-
