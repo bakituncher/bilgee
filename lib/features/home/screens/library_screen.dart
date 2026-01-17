@@ -145,7 +145,23 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       return 'ÖABT';
     }
 
-    // Ana deneme ise Sınav Türünü kullan (Örn: KPSS Lisans, TYT)
+    // YKS - TYT/AYT ayrımı
+    if (test.examType == ExamType.yks) {
+      // sectionName'e göre TYT mi AYT mi kontrol et
+      if (test.sectionName.toUpperCase().contains('TYT')) {
+        return 'TYT';
+      } else if (test.sectionName.toUpperCase().contains('AYT')) {
+        return 'AYT';
+      }
+      // Eğer sectionName'de bulamazsak, testName'e bakalım
+      if (test.testName.toUpperCase().contains('TYT')) {
+        return 'TYT';
+      } else if (test.testName.toUpperCase().contains('AYT')) {
+        return 'AYT';
+      }
+    }
+
+    // Ana deneme ise Sınav Türünü kullan (Örn: KPSS Lisans)
     return test.examType.displayName;
   }
 
