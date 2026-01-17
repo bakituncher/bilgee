@@ -117,10 +117,15 @@ class WeeklyPlan {
       date = DateTime.now();
     }
 
-    // DÜZELTME: Salt'ı timezone'dan etkilenmeyen ham string üzerinden al.
-    // Not: Timestamp geliyorsa string olmadığından, önceki davranış (epoch) korunur.
-    final dateStr = json['creationDate']?.toString() ?? '';
-    final planSalt = (json['creationDate'] is String) ? dateStr.hashCode.toString() : date.millisecondsSinceEpoch.toString();
+    // 🛑 DÜZELTME BAŞLANGICI 🛑
+    // ESKİ HATALI YÖNTEM:
+    // final planSalt = (json['creationDate'] is String) ? dateStr.hashCode.toString() : date.millisecondsSinceEpoch.toString();
+
+    // YENİ GÜVENLİ YÖNTEM:
+    // CreationDate veritabanında sabit bir andır. Bunun milisaniye karşılığı her cihazda ve her açılışta aynıdır.
+    // HashCode yerine doğrudan zaman damgasını (timestamp string) kullanıyoruz.
+    final planSalt = date.millisecondsSinceEpoch.toString();
+    // 🛑 DÜZELTME BİTİŞİ 🛑
 
     var list = (json['plan'] as List?) ?? [];
     List<DailyPlan> dailyPlans = [];
@@ -133,12 +138,17 @@ class WeeklyPlan {
           'schedule': (dayJson['schedule'] is List)
               ? List.generate((dayJson['schedule'] as List).length, (j) {
                   final item = (dayJson['schedule'] as List)[j];
+
+                  // ID'yi deterministik (kararlı) bir şekilde oluştur:
+                  // FORMAT: {PlanZamanı}_{GünAdı}_{SıraNo} -> Örn: 1705482933000_Pazartesi_0
+                  final dayName = dayJson['day'] ?? 'gun';
+                  final deterministicId = '${planSalt}_${dayName}_$j';
+
                   if (item is Map<String, dynamic>) {
-                    final baseId = item['id'] ?? '${dayJson['day'] ?? 'gun'}_${j}';
-                    return {...item, 'id': '${planSalt}_$baseId'};
+                    // Mevcut item'ı al ama ID'sini bizim sabit ID ile ez.
+                    return {...item, 'id': deterministicId};
                   } else if (item is String) {
-                    final baseId = '${dayJson['day'] ?? 'gun'}_${j}';
-                    return {'id': '${planSalt}_$baseId', 'activity': item, 'time': 'Görev', 'type': 'study'};
+                    return {'id': deterministicId, 'activity': item, 'time': 'Görev', 'type': 'study'};
                   }
                   return item;
                 })
