@@ -72,6 +72,21 @@ class SavedSolutionsNotifier extends StateNotifier<List<SavedSolutionModel>> {
     }
   }
 
+  // GÜNCELLEME FONKSİYONU (YENİ)
+  Future<void> updateSolution(SavedSolutionModel oldItem, String newSolutionText) async {
+    try {
+      // HiveObject key'ini kullanarak eski kaydı yeni veriyle değiştiriyoruz
+      final newItem = oldItem.copyWith(solutionText: newSolutionText);
+      await _box.put(oldItem.key, newItem);
+
+      // State Güncelle
+      _loadFromHive();
+    } catch (e) {
+      print("Güncelleme hatası: $e");
+      rethrow;
+    }
+  }
+
   // Silme Fonksiyonu
   Future<void> deleteSolution(SavedSolutionModel item) async {
     try {
@@ -92,4 +107,3 @@ class SavedSolutionsNotifier extends StateNotifier<List<SavedSolutionModel>> {
     }
   }
 }
-
