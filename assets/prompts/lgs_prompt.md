@@ -113,9 +113,13 @@ Her görevin tipi şunlardan biri olmalı:
 {{GUARDRAILS_JSON}}
 ```
 
-## OUTPUT FORMAT
+## OUTPUT FORMAT (SADECE BU JSON)
 
-Sadece aşağıdaki JSON formatında çıktı ver. Açıklama, yorum YOK:
+**KESİN KURALLAR:**
+1. Sadece saf JSON formatında yanıt ver. 
+2. Markdown kod bloğu (```json) veya herhangi bir giriş/açıklama metni KULLANMA.
+3. Yorum satırı (//) KULLANMA.
+4. Sondaki virgüllere (trailing comma) dikkat et, geçersiz JSON oluşturma.
 
 ```json
 {

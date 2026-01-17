@@ -231,7 +231,7 @@ NOT: Bu bir revizyon talebidir, önceki planı unutun!
       'AVG_NET': avgNet,
       'SUBJECT_AVERAGES': jsonEncode(subjectAverages),
       'TOPIC_PERFORMANCES_JSON': topicPerformancesJson,
-      'WEEKLY_PLAN_TEXT': weeklyPlanJson ?? 'YOK. AGS HAREKÂTI BAŞLIYOR.',
+      'WEEKLY_PLAN_TEXT': weeklyPlanJson ?? '{"status": "new_plan", "message": "AGS harekâtı başlıyor."}',
       'COMPLETED_TASKS_JSON': completedTasksJson,
       'CURRICULUM_JSON': curriculumJson,
       'GUARDRAILS_JSON': guardrailsJson,

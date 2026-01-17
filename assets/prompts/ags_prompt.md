@@ -89,6 +89,13 @@ Bu sınav iki ana oturumdan oluşur ve plan her ikisini de kapsamalıdır:
 ```
 
 ## OUTPUT FORMAT (SADECE BU JSON)
+
+**KESİN KURALLAR:**
+1. Sadece saf JSON formatında yanıt ver. 
+2. Markdown kod bloğu (```json) veya herhangi bir giriş/açıklama metni KULLANMA.
+3. Yorum satırı (//) KULLANMA.
+4. Sondaki virgüllere (trailing comma) dikkat et, geçersiz JSON oluşturma.
+
 ```json
 {
   "weeklyPlan": {
@@ -102,7 +109,7 @@ Bu sınav iki ana oturumdan oluşur ve plan her ikisini de kapsamalıdır:
         "day": "Pazartesi",
         "schedule": [
           {"time": "19:00-20:30", "activity": "Eğitim Bilimleri: Gelişim Psikolojisi", "type": "study"},
-          {"time": "20:40-21:40", "activity": "Alan Bilgisi: [Konu Adı] - 40 soru", "type": "practice"}
+          {"time": "20:40-21:40", "activity": "Alan Bilgisi: Konu Adı - 40 soru", "type": "practice"}
         ]
       }
     ]

@@ -31,23 +31,27 @@ class JsonTextCleaner {
         .replaceAll(RegExp(r"^[\uFEFF\u200B\u200C\u200D\u2060]+"), "")
         .replaceAll(RegExp(r"[\u200B\u200C\u200D\u2060]"), "");
 
-    // Baş/son code-fence (```json, ``` veya ~~~) temizliği
-    text = text.replaceFirst(
-      RegExp(r'^\s*(```+|~~~+)\s*(jsonc?|json5|JSONC?|JSON5|json|JSON)?\s*\n?'),
-      '',
-    );
-    text = text.replaceFirst(
-      RegExp(r'\n?\s*(```+|~~~+)\s*$'),
-      '',
-    );
-
-    // İçerikte fenced blok varsa ilk bloğun içini tercih et
-    final fenceMatch = RegExp(
-      r'(```+|~~~+)\s*(jsonc?|json5|json|JSONC?|JSON5|JSON)?\s*([\s\S]*?)\s*(```+|~~~+)',
+    // GELİŞTİRİLMİŞ: Büyük/küçük harf duyarsız markdown bloklarını yakalama
+    // 1. ```json ... ``` veya ``` ... ``` bloklarını temizle (case-insensitive)
+    final pattern = RegExp(
+      r'```(?:json|JSON)?\s*(.*?)\s*```',
       multiLine: true,
-    ).firstMatch(text);
-    if (fenceMatch != null) {
-      text = fenceMatch.group(3)!.trim();
+      dotAll: true,
+      caseSensitive: false,
+    );
+    final match = pattern.firstMatch(text);
+    if (match != null && match.group(1) != null) {
+      text = match.group(1)!.trim();
+    } else {
+      // Fallback: Baş/son code-fence temizliği
+      text = text.replaceFirst(
+        RegExp(r'^\s*(```+|~~~+)\s*(jsonc?|json5|JSONC?|JSON5|json|JSON)?\s*\n?', caseSensitive: false),
+        '',
+      );
+      text = text.replaceFirst(
+        RegExp(r'\n?\s*(```+|~~~+)\s*$'),
+        '',
+      );
     }
 
     // JSON dışı metni kaldırmak için dengeli ilk JSON bloğunu tara
