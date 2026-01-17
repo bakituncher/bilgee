@@ -565,7 +565,13 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                   );
                 }
                 final test = filtered[index];
-                return _ArchiveListTile(test: test);
+                return _ArchiveListTile(
+                  test: test,
+                  onDeleted: () async {
+                    _lastVisible = null;
+                    await _loadInitial(showLoader: false);
+                  },
+                );
               },
             ),
           ),
@@ -585,8 +591,12 @@ class _SortOption {
 
 class _ArchiveListTile extends ConsumerWidget {
   final TestModel test;
+  final VoidCallback onDeleted;
 
-  const _ArchiveListTile({required this.test});
+  const _ArchiveListTile({
+    required this.test,
+    required this.onDeleted,
+  });
 
   double _accuracy(TestModel t) {
     final total = t.totalCorrect + t.totalWrong + t.totalBlank;
@@ -699,10 +709,15 @@ class _ArchiveListTile extends ConsumerWidget {
     if (confirm == true) {
       try {
         await ref.read(firestoreServiceProvider).deleteTest(test.id);
+
+        // Provider'ları invalidate et ki dashboard ve profile güncellensin
+        ref.invalidate(testsProvider);
+
+        onDeleted(); // Listeyi hemen yenile
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('${test.testName} başarıyla silindi. Listeyi yenilemek için sayfayı aşağı çekin.'),
+              content: Text('${test.testName} başarıyla silindi.'),
               behavior: SnackBarBehavior.floating,
             ),
           );

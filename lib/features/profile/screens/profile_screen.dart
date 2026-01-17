@@ -526,7 +526,7 @@ class _ProfileView extends ConsumerWidget {
                                   .fadeIn(duration: 500.ms, delay: 200.ms)
                                   .slideX(begin: -0.2, end: 0, duration: 500.ms, curve: Curves.easeOutCubic),
                               const SizedBox(height: 14),
-                              // Madalyalar ve Seviye
+                              // Madalyalar, Seviye, Deneme ve Seri - 2x2 Grid
                               Container(
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(18),
@@ -536,26 +536,57 @@ class _ProfileView extends ConsumerWidget {
                                     width: 1,
                                   ),
                                 ),
-                                child: Row(
+                                child: Column(
                                   children: [
-                                    Expanded(
-                                      child: _StatButton(
-                                        onTap: () => context.push('/profile/honor-wall', extra: allBadges),
-                                        icon: Icons.military_tech_rounded,
-                                        iconColor: Colors.amber.shade600,
-                                        value: '$unlockedCount/${allBadges.length}',
-                                        label: 'Madalyalar',
-                                        delay: 250.ms,
-                                      ),
+                                    // Üst Satır: Madalyalar ve Seviye
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: _StatButton(
+                                            onTap: () => context.push('/profile/honor-wall', extra: allBadges),
+                                            icon: Icons.military_tech_rounded,
+                                            iconColor: Colors.amber.shade600,
+                                            value: '$unlockedCount/${allBadges.length}',
+                                            label: 'Madalyalar',
+                                            delay: 250.ms,
+                                          ),
+                                        ),
+                                        Container(
+                                          width: 1.5,
+                                          height: 60,
+                                          margin: const EdgeInsets.symmetric(vertical: 6),
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              begin: Alignment.topCenter,
+                                              end: Alignment.bottomCenter,
+                                              colors: [
+                                                colorScheme.outline.withOpacity(0.0),
+                                                colorScheme.outline.withOpacity(0.3),
+                                                colorScheme.outline.withOpacity(0.0),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: _StatButton(
+                                            onTap: () => context.push('/profile/ranks'),
+                                            icon: Icons.workspace_premium,
+                                            iconColor: currentRank.color,
+                                            value: '${rankIndex + 1}',
+                                            label: 'Seviye',
+                                            delay: 275.ms,
+                                          ),
+                                        ),
+                                      ],
                                     ),
+                                    // Yatay Ayırıcı Çizgi
                                     Container(
-                                      width: 1.5,
-                                      height: 60,
-                                      margin: const EdgeInsets.symmetric(vertical: 6),
+                                      height: 1.5,
+                                      margin: const EdgeInsets.symmetric(horizontal: 6),
                                       decoration: BoxDecoration(
                                         gradient: LinearGradient(
-                                          begin: Alignment.topCenter,
-                                          end: Alignment.bottomCenter,
+                                          begin: Alignment.centerLeft,
+                                          end: Alignment.centerRight,
                                           colors: [
                                             colorScheme.outline.withOpacity(0.0),
                                             colorScheme.outline.withOpacity(0.3),
@@ -564,47 +595,52 @@ class _ProfileView extends ConsumerWidget {
                                         ),
                                       ),
                                     ),
-                                    Expanded(
-                                      child: _StatButton(
-                                        onTap: () => context.push('/profile/ranks'),
-                                        icon: Icons.workspace_premium,
-                                        iconColor: currentRank.color,
-                                        value: '${rankIndex + 1}',
-                                        label: 'Seviye',
-                                        delay: 300.ms,
-                                      ),
+                                    // Alt Satır: Deneme ve Seri
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: _StatButton(
+                                            onTap: () {}, // Deneme sayfasına gitmek için
+                                            icon: Icons.library_books_rounded,
+                                            iconColor: colorScheme.primary,
+                                            value: testCount.toString(),
+                                            label: 'Deneme',
+                                            delay: 300.ms,
+                                          ),
+                                        ),
+                                        Container(
+                                          width: 1.5,
+                                          height: 60,
+                                          margin: const EdgeInsets.symmetric(vertical: 6),
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              begin: Alignment.topCenter,
+                                              end: Alignment.bottomCenter,
+                                              colors: [
+                                                colorScheme.outline.withOpacity(0.0),
+                                                colorScheme.outline.withOpacity(0.3),
+                                                colorScheme.outline.withOpacity(0.0),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: _StatButton(
+                                            onTap: () {}, // Seri sayfasına gitmek için
+                                            icon: Icons.local_fire_department_rounded,
+                                            iconColor: Colors.orange.shade700,
+                                            value: streak.toString(),
+                                            label: 'Seri',
+                                            delay: 325.ms,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
                               ).animate()
                                   .fadeIn(duration: 500.ms, delay: 250.ms)
                                   .scale(begin: const Offset(0.95, 0.95), duration: 500.ms, curve: Curves.easeOutBack),
-                              const SizedBox(height: 14),
-                              // Deneme, Ort. Net, Seri
-                              Row(
-                                children: [
-                                  Expanded(child: _ProfileStatCard(
-                                    label: 'Deneme',
-                                    value: testCount.toString(),
-                                    icon: Icons.library_books_rounded,
-                                    delay: 300.ms,
-                                  )),
-                                  const SizedBox(width: 10),
-                                  Expanded(child: _ProfileStatCard(
-                                    label: 'Ort. Net',
-                                    value: avgNet.toStringAsFixed(1),
-                                    icon: Icons.track_changes_rounded,
-                                    delay: 350.ms,
-                                  )),
-                                  const SizedBox(width: 10),
-                                  Expanded(child: _ProfileStatCard(
-                                    label: 'Seri',
-                                    value: streak.toString(),
-                                    icon: Icons.local_fire_department_rounded,
-                                    delay: 400.ms,
-                                  )),
-                                ],
-                              ),
                               const SizedBox(height: 12),
                               // Takipçi / Takip alanı
                               Row(
