@@ -19,6 +19,7 @@ import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:taktik/data/repositories/exam_schedule.dart';
+import 'package:taktik/core/services/planning/local_planning_service.dart';
 
 class ChatMessage {
   final String text;
@@ -294,119 +295,16 @@ class AiService {
     required String pacing,
     String? revisionRequest,
   }) async {
-    if (user.selectedExam == null) {
-      return '{"error":"Analiz için önce bir sınav seçmelisiniz."}';
-    }
-    if (user.weeklyAvailability.values.every((list) => list.isEmpty)) {
-      return '{"error":"Strateji oluşturmadan önce en az bir tane müsait zaman dilimi seçmelisiniz."}';
-    }
-    final examType = ExamType.values.byName(user.selectedExam!);
-    final daysUntilExam = _getDaysUntilExam(examType);
-
-    // DÜZELTME 1: Önbellek yerine anlık hesap; yeni denemeler hemen yansısın.
-    final String avgNet = _quickAverageNet(tests).toStringAsFixed(2);
-    final Map<String, double> subjectAverages = _computeSubjectAveragesQuick(tests);
-
-    final topicPerformancesJson = _encodeTopicPerformances(performance.topicPerformances);
-    final availabilityJson = jsonEncode(user.weeklyAvailability);
-
-    // DÜZELTME 2: Anchoring bias önleme
-    // Sadece revizyon istendiyse veya plan çok yeniyse (bağlam kopmasın diye) gönder.
-    // Plan eskiyse gönderme ki AI geçmişe takılmadan sıfırdan düşünsün.
-    String? weeklyPlanJson;
-    if (planDoc?.weeklyPlan != null) {
-      try {
-        final planMap = planDoc!.weeklyPlan!;
-        final creation = DateTime.tryParse(planMap['creationDate'] ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
-        final isFresh = DateTime.now().difference(creation).inHours < 24;
-
-        if (isFresh || revisionRequest != null) {
-          weeklyPlanJson = jsonEncode(planMap);
-        } else {
-          weeklyPlanJson = null;
-        }
-      } catch (_) {}
-    }
-
-    // Son 14 gün tamamlanan görevler (Limit optimizasyonu yapılmış hali)
-    final recentCompleted = await _loadRecentCompletedTasks(user.id, days: 14);
-
-    final completedTasksJson = jsonEncode(recentCompleted);
-
-    // MÜFREDAT SIRASI: Seçili sınav ve bölüm için konu listesini sırayla çıkar
-    final curriculumJson = await _buildCurriculumOrderJson(examType, user.selectedExamSection);
-
-    // GUARDRAILS: backlog + konu renkleri + politika
-    final guardrailsJson = _buildGuardrailsJson(planDoc?.weeklyPlan, recentCompleted, performance);
-
-    String prompt;
-    switch (examType) {
-      case ExamType.yks:
-      // FIX: YDT öğrencileri için başlığı "TYT ve YDT" olarak güncelle ki AI her ikisini de kapsasın
-        String displaySection = user.selectedExamSection ?? '';
-        if (displaySection == 'YDT') {
-          displaySection = 'TYT ve YDT';
-        }
-
-        prompt = StrategyPrompts.getYksPrompt(
-            userId: user.id, selectedExamSection: displaySection,
-            daysUntilExam: daysUntilExam, goal: user.goal ?? '',
-            challenges: user.challenges, pacing: pacing,
-            testCount: user.testCount, avgNet: avgNet,
-            subjectAverages: subjectAverages, topicPerformancesJson: topicPerformancesJson,
-            availabilityJson: availabilityJson, weeklyPlanJson: weeklyPlanJson,
-            completedTasksJson: completedTasksJson,
-            curriculumJson: curriculumJson,
-            guardrailsJson: guardrailsJson,
-            revisionRequest: revisionRequest
-        );
-        break;
-      case ExamType.lgs:
-        prompt = StrategyPrompts.getLgsPrompt(
-            user: user,
-            avgNet: avgNet, subjectAverages: subjectAverages,
-            pacing: pacing, daysUntilExam: daysUntilExam,
-            topicPerformancesJson: topicPerformancesJson, availabilityJson: availabilityJson,
-            weeklyPlanJson: weeklyPlanJson,
-            completedTasksJson: completedTasksJson,
-            curriculumJson: curriculumJson,
-            guardrailsJson: guardrailsJson,
-            revisionRequest: revisionRequest
-        );
-        break;
-      case ExamType.ags:
-        prompt = StrategyPrompts.getAgsPrompt(
-            user: user,
-            avgNet: avgNet, subjectAverages: subjectAverages,
-            pacing: pacing, daysUntilExam: daysUntilExam,
-            topicPerformancesJson: topicPerformancesJson, availabilityJson: availabilityJson,
-            weeklyPlanJson: weeklyPlanJson,
-            completedTasksJson: completedTasksJson,
-            curriculumJson: curriculumJson,
-            guardrailsJson: guardrailsJson,
-            revisionRequest: revisionRequest
-        );
-        break;
-      default:
-        prompt = StrategyPrompts.getKpssPrompt(
-            user: user,
-            avgNet: avgNet, subjectAverages: subjectAverages,
-            pacing: pacing, daysUntilExam: daysUntilExam,
-            topicPerformancesJson: topicPerformancesJson, availabilityJson: availabilityJson,
-            examName: examType.displayName,
-            weeklyPlanJson: weeklyPlanJson,
-            completedTasksJson: completedTasksJson,
-            curriculumJson: curriculumJson,
-            guardrailsJson: guardrailsJson,
-            revisionRequest: revisionRequest
-        );
-        break;
-    }
-
-    // DÜZELTME 3: AI cache kırıcı varyasyon etiketi ekle
-    prompt += "\n\n[System: Generate a UNIQUE plan. Variation: ${DateTime.now().millisecondsSinceEpoch}]";
-
-    return _callGemini(prompt, expectJson: true, requestType: 'weekly_plan');
+    // Tamamen Client-Side Algoritmaya geçiş yapıldı.
+    // Artık Gemini (Remote LLM) kullanılmıyor.
+    final localPlanner = LocalPlanningService();
+    return localPlanner.generatePlanJson(
+      user: user,
+      tests: tests,
+      performance: performance,
+      planDoc: planDoc,
+      pacing: pacing,
+    );
   }
 
   Future<String> _buildCurriculumOrderJson(ExamType examType, String? selectedSection) async {
