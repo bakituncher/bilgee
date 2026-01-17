@@ -71,12 +71,60 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        // Başlık yerine Dropdown/Seçici koyuyoruz
-        title: _buildPlanSelector(context, ref, allPlans, selectedIndex),
+        title: Text(
+          isHistoryView
+            ? 'Geçmiş Plan ${DateFormat('d MMM', 'tr_TR').format(displayedPlan.creationDate)}'
+            : 'Harekât Takvimi',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: isHistoryView
+          ? IconButton(
+              icon: const Icon(Icons.arrow_back),
+              tooltip: 'Güncel Plana Dön',
+              onPressed: () => ref.read(_selectedPlanIndexProvider.notifier).state = 0,
+            )
+          : null,
         actions: [
+          // Arşiv butonu - her zaman göster
+          if (archivedPlans.isNotEmpty)
+            IconButton(
+              icon: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  const Icon(Icons.history),
+                  if (archivedPlans.isNotEmpty)
+                    Positioned(
+                      right: -2,
+                      top: -2,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: Colors.blue,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Text(
+                          '${archivedPlans.length}',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              tooltip: 'Geçmiş Planlar',
+              onPressed: () => _showArchivePanel(context, ref, allPlans, selectedIndex),
+            ),
           // Eğer en güncel plandaysak ve süresi dolmuşsa "YENİLE" butonu göster
           if (selectedIndex == 0 && isExpired)
             IconButton(
@@ -146,51 +194,232 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
     );
   }
 
-  // Plan Seçici Widget (AppBar Title)
-  Widget _buildPlanSelector(BuildContext context, WidgetRef ref, List<PlanDocument?> plans, int currentIndex) {
-    if (plans.isEmpty) return const Text('Harekât Takvimi');
-
-    return PopupMenuButton<int>(
-      initialValue: currentIndex,
-      onSelected: (index) {
-        ref.read(_selectedPlanIndexProvider.notifier).state = index;
-      },
-      position: PopupMenuPosition.under,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            currentIndex == 0 ? 'Güncel Plan' : 'Geçmiş Plan $currentIndex',
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-          ),
-          const SizedBox(width: 4),
-          const Icon(Icons.arrow_drop_down),
-        ],
-      ),
-      itemBuilder: (context) {
-        return List.generate(plans.length, (index) {
-          final planDoc = plans[index];
-          if (planDoc?.weeklyPlan == null) return null;
-          final wp = WeeklyPlan.fromJson(planDoc!.weeklyPlan!);
-          final date = wp.creationDate;
-          final label = index == 0 ? "Güncel Plan" : "Arşiv: ${DateFormat('d MMM', 'tr_TR').format(date)}";
-
-          return PopupMenuItem<int>(
-            value: index,
-            child: Row(
-              children: [
-                Icon(
-                  index == 0 ? Icons.check_circle_outline : Icons.history,
-                  color: index == 0 ? Colors.green : Colors.grey,
-                  size: 20,
+  // Arşiv Paneli - Geçmiş planları gösteren modal
+  void _showArchivePanel(BuildContext context, WidgetRef ref, List<PlanDocument?> plans, int currentIndex) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.7,
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: Column(
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                    Theme.of(context).colorScheme.secondary.withOpacity(0.05),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                const SizedBox(width: 8),
-                Text(label),
-              ],
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.history_rounded,
+                      color: Theme.of(context).colorScheme.primary,
+                      size: 28,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Plan Arşivi',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Son ${plans.length} planını görüntüle',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
             ),
-          );
-        }).whereType<PopupMenuItem<int>>().toList();
-      },
+
+            // Plan Listesi
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: plans.length,
+                itemBuilder: (context, index) {
+                  final planDoc = plans[index];
+                  if (planDoc?.weeklyPlan == null) {
+                    return const SizedBox.shrink();
+                  }
+
+                  final wp = WeeklyPlan.fromJson(planDoc!.weeklyPlan!);
+                  final isCurrentPlan = index == 0;
+                  final isSelected = index == currentIndex;
+                  final creationDate = wp.creationDate;
+                  final endDate = creationDate.add(const Duration(days: 6));
+                  final isExpired = wp.isExpired;
+
+                  // Tamamlanma oranını hesapla
+                  int totalTasks = 0;
+                  for (final day in wp.plan) {
+                    totalTasks += day.schedule.length;
+                  }
+
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    elevation: isSelected ? 4 : 1,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      side: BorderSide(
+                        color: isSelected
+                          ? Theme.of(context).colorScheme.primary
+                          : Colors.transparent,
+                        width: 2,
+                      ),
+                    ),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: () {
+                        ref.read(_selectedPlanIndexProvider.notifier).state = index;
+                        Navigator.pop(context);
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            // İkon
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: isCurrentPlan
+                                  ? Colors.green.withOpacity(0.2)
+                                  : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(
+                                isCurrentPlan ? Icons.star_rounded : Icons.calendar_month_rounded,
+                                color: isCurrentPlan ? Colors.green : Theme.of(context).colorScheme.onSurfaceVariant,
+                                size: 24,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+
+                            // İçerik
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          isCurrentPlan ? 'Güncel Plan' : 'Geçmiş Plan',
+                                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color: isCurrentPlan ? Colors.green : null,
+                                          ),
+                                        ),
+                                      ),
+                                      if (isExpired && !isCurrentPlan)
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: Colors.orange.withOpacity(0.2),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Text(
+                                            'Arşiv',
+                                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                              color: Colors.orange,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '${DateFormat('d MMM', 'tr_TR').format(creationDate)} - ${DateFormat('d MMM yyyy', 'tr_TR').format(endDate)}',
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.task_alt,
+                                        size: 14,
+                                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '$totalTasks görev',
+                                        style: Theme.of(context).textTheme.labelSmall,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Icon(
+                                        Icons.calendar_today,
+                                        size: 14,
+                                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '7 gün',
+                                        style: Theme.of(context).textTheme.labelSmall,
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            // Seçim işareti veya ok
+                            if (isSelected)
+                              Icon(
+                                Icons.check_circle,
+                                color: Theme.of(context).colorScheme.primary,
+                              )
+                            else
+                              Icon(
+                                Icons.chevron_right,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.5),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
