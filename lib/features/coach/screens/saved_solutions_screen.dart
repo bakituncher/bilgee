@@ -39,12 +39,120 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
   Uint8List? _rawImageBytes; // Kırpma ekranı aktifse dolu olur
   final _cropController = CropController();
   bool _isCropping = false; // Kırpma işlemi işleniyor mu? (Loading)
-  bool _isLoading = false;  // Genel yükleme
+  bool _isLoading = false; // Genel yükleme
 
   @override
   void dispose() {
     _rawImageBytes = null;
     super.dispose();
+  }
+
+  // --- YARDIM PENCERESİ ---
+  void _showInfoSheet() {
+    final theme = Theme.of(context);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true, // Taşmayı önlemek için kaydırılabilir yap
+      backgroundColor: Colors.transparent,
+      builder: (context) => SingleChildScrollView(
+        child: Container(
+          margin: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+            left: 16,
+            right: 16,
+            top: 16,
+          ),
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: theme.scaffoldBackgroundColor,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              )
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.outline.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 24),
+              // İkon ve Başlık
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Icon(
+                      Icons.inventory_2_rounded,
+                      color: theme.colorScheme.primary,
+                      size: 28,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Text(
+                      "Soru Kutusu Nedir?",
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              // Açıklama Metni
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color:
+                  theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                      color: theme.colorScheme.outline.withOpacity(0.05)),
+                ),
+                child: Text(
+                  "Soru kutusu, aralıklı tekrar yöntemiyle öğrenilen bilgileri uzun süreli hafızaya taşıyan bir sistemdir.\n\nÇözemediğiniz sorular üzerinde düzenli çalışarak eksiklerinizi kapatır, bilgiyi pekiştirir ve sınavda kolayca hatırlamanızı sağlar.",
+                  style: TextStyle(
+                    fontSize: 15,
+                    height: 1.5,
+                    color: theme.colorScheme.onSurface.withOpacity(0.8),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              // Kapat Butonu
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: const Text("Anladım",
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   // --- CROP & RESİM İŞLEMLERİ ---
@@ -70,8 +178,9 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
         return;
       }
 
-      // Optimizasyon: Resmi sıkıştırarak byte'lara çevir (Kırpma ekranı performansı için)
-      final Uint8List? compressedBytes = await FlutterImageCompress.compressWithFile(
+      // Optimizasyon: Resmi sıkıştırarak byte'lara çevir
+      final Uint8List? compressedBytes =
+      await FlutterImageCompress.compressWithFile(
         image.path,
         minWidth: 1080,
         minHeight: 1080,
@@ -116,7 +225,6 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
       // 3. Ders Seçimi Ekranına Git
       if (!mounted) return;
 
-      // Ders listesini tekrar al (veya cache'den kullanabiliriz ama garanti olsun)
       final subjects = await _getUserSubjects();
 
       final selectedSubject = await Navigator.push<String>(
@@ -136,22 +244,21 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
       if (selectedSubject != null) {
         await _saveImage(file, selectedSubject);
       }
-
     } catch (e) {
       setState(() {
         _isCropping = false;
-        // Hata olursa kırpma ekranında kalmasın, ana ekrana dönsün ama hata mesajı versin
         _rawImageBytes = null;
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Görsel işlenemedi: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('Görsel işlenemedi: $e'),
+              backgroundColor: Colors.red),
         );
       }
     }
   }
 
-  // Kırpma ekranından geri tuşu
   void _handleCropBack() {
     setState(() {
       _rawImageBytes = null;
@@ -161,7 +268,6 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
 
   // --- DİĞER YARDIMCI FONKSİYONLAR ---
 
-  // Derslere göre grupla
   Map<String, List<SavedSolutionModel>> _groupBySubject(
       List<SavedSolutionModel> solutions) {
     final Map<String, List<SavedSolutionModel>> grouped = {};
@@ -253,7 +359,8 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Kaydetme hatası: $e'), backgroundColor: Colors.red),
+              content: Text('Kaydetme hatası: $e'),
+              backgroundColor: Colors.red),
         );
       }
     }
@@ -263,64 +370,71 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
     final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true, // Ekleme menüsü için de scroll güvenliği
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        margin: const EdgeInsets.all(16),
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: theme.scaffoldBackgroundColor,
-          borderRadius: BorderRadius.circular(28),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            )
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.outline.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(2),
+      builder: (context) => SingleChildScrollView(
+        child: Container(
+          margin: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+            left: 16,
+            right: 16,
+          ),
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: theme.scaffoldBackgroundColor,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              )
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.outline.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              "Soru Ekle",
-              style: theme.textTheme.titleLarge
-                  ?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 32),
-            Row(
-              children: [
-                _buildSourceButton(
-                  theme,
-                  Icons.camera_alt_rounded,
-                  "Kamera",
-                      () {
-                    Navigator.pop(context);
-                    _pickImage(ImageSource.camera);
-                  },
-                ),
-                const SizedBox(width: 16),
-                _buildSourceButton(
-                  theme,
-                  Icons.photo_library_rounded,
-                  "Galeri",
-                      () {
-                    Navigator.pop(context);
-                    _pickImage(ImageSource.gallery);
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-          ],
+              const SizedBox(height: 24),
+              Text(
+                "Soru Ekle",
+                style: theme.textTheme.titleLarge
+                    ?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 32),
+              Row(
+                children: [
+                  _buildSourceButton(
+                    theme,
+                    Icons.camera_alt_rounded,
+                    "Kamera",
+                        () {
+                      Navigator.pop(context);
+                      _pickImage(ImageSource.camera);
+                    },
+                  ),
+                  const SizedBox(width: 16),
+                  _buildSourceButton(
+                    theme,
+                    Icons.photo_library_rounded,
+                    "Galeri",
+                        () {
+                      Navigator.pop(context);
+                      _pickImage(ImageSource.gallery);
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
         ),
       ),
     );
@@ -337,7 +451,8 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
           decoration: BoxDecoration(
             color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: theme.colorScheme.outline.withOpacity(0.1)),
+            border:
+            Border.all(color: theme.colorScheme.outline.withOpacity(0.1)),
           ),
           child: Column(
             children: [
@@ -355,13 +470,12 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // DURUM 1: KIRPMA MODU (Özel Siyah Arayüz)
+    // DURUM 1: KIRPMA MODU
     if (_rawImageBytes != null) {
       return Scaffold(
         backgroundColor: Colors.black,
         body: Stack(
           children: [
-            // 1. Kırpma Aracı (Orta Alan)
             Padding(
               padding: const EdgeInsets.only(top: 60, bottom: 100),
               child: Center(
@@ -382,8 +496,6 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
                 ),
               ),
             ),
-
-            // 2. Üst Bar (Başlık)
             Positioned(
               top: 0,
               left: 0,
@@ -403,8 +515,6 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
                 ),
               ),
             ),
-
-            // 3. Yükleniyor Göstergesi
             if (_isCropping)
               Container(
                 color: Colors.black54,
@@ -412,14 +522,13 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
                   child: CircularProgressIndicator(color: Colors.white),
                 ),
               ),
-
-            // 4. Alt Kontrol Paneli
             Positioned(
               bottom: 0,
               left: 0,
               right: 0,
               child: Container(
                 color: Colors.black,
+                // Güvenli alan padding kontrolü
                 padding: EdgeInsets.only(
                   bottom: MediaQuery.of(context).padding.bottom + 20,
                   top: 20,
@@ -429,7 +538,6 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // İptal Butonu
                     TextButton(
                       onPressed: _handleCropBack,
                       style: TextButton.styleFrom(
@@ -440,8 +548,6 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
                       child:
                       const Text('İptal', style: TextStyle(fontSize: 16)),
                     ),
-
-                    // Onay Butonu (Sağ Altta)
                     FilledButton.icon(
                       onPressed: () => _cropController.crop(),
                       style: FilledButton.styleFrom(
@@ -472,7 +578,6 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
     final theme = Theme.of(context);
     final grouped = _groupBySubject(solutions);
 
-    // Seçim modundaysa kullanıcının TÜM derslerini göster
     final List<String> subjects =
     widget.isSelectionMode && widget.availableSubjects != null
         ? widget.availableSubjects!
@@ -505,9 +610,16 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
             }
           },
         ),
+        actions: [
+          IconButton(
+            onPressed: _showInfoSheet,
+            icon: const Icon(Icons.help_outline_rounded),
+            tooltip: 'Soru Kutusu Nedir?',
+          ),
+        ],
       ),
       floatingActionButton: widget.isSelectionMode
-          ? null // Seçim modunda buton gösterme
+          ? null
           : FloatingActionButton.extended(
         onPressed: _showImageSourceSheet,
         icon: const Icon(Icons.add_a_photo_rounded),
@@ -535,7 +647,8 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
                   : "Henüz kutuda soru yok.\nHadi hemen bir tane ekleyelim!",
               textAlign: TextAlign.center,
               style: TextStyle(
-                  color: theme.colorScheme.onSurface.withOpacity(0.6)),
+                  color:
+                  theme.colorScheme.onSurface.withOpacity(0.6)),
             ),
           ],
         ),
@@ -546,11 +659,10 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
     );
   }
 
-  // Normal mod: Klasörleri listele ve tıklandığında içini aç
   Widget _buildNormalGrid(BuildContext context, ThemeData theme,
       List<String> subjects, Map<String, List<SavedSolutionModel>> grouped) {
     return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 80), // FAB için alt boşluk
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         crossAxisSpacing: 12,
@@ -585,12 +697,10 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
     );
   }
 
-  // Seçim modu: Dersleri listele ve tıklandığında ders adını döndür
   Widget _buildSelectionGrid(BuildContext context, ThemeData theme,
       List<String> subjects, Map<String, List<SavedSolutionModel>> grouped) {
     return Column(
       children: [
-        // Bilgilendirme banner'ı
         Container(
           margin: const EdgeInsets.all(16),
           padding: const EdgeInsets.all(16),
@@ -622,7 +732,6 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
             ],
           ),
         ),
-
         Expanded(
           child: GridView.builder(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -635,8 +744,7 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
             itemCount: subjects.length,
             itemBuilder: (context, index) {
               final subject = subjects[index];
-              final subjectSolutions =
-                  grouped[subject] ?? []; // Boş liste döndür eğer yoksa
+              final subjectSolutions = grouped[subject] ?? [];
               return _buildSubjectCard(
                 context,
                 theme,
@@ -644,7 +752,6 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
                 subjectSolutions,
                 isSelectionMode: true,
                 onTap: () {
-                  // Seçilen dersi geri döndür
                   Navigator.pop(context, subject);
                 },
               );
@@ -689,7 +796,9 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
             ),
           ),
           child: Column(
+            // DÜZELTME: Sabit boşluklar yerine esnek yapı
             children: [
+              const SizedBox(height: 4),
               // İkon
               Container(
                 padding: const EdgeInsets.all(14),
@@ -704,10 +813,8 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
                 ),
               ),
               const SizedBox(height: 10),
-
-              // Ders İsmi
-              SizedBox(
-                height: 38,
+              // Ders İsmi (Esnek Alan)
+              Expanded(
                 child: Center(
                   child: Text(
                     subject,
@@ -723,12 +830,11 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 8),
-
               // Badge
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: subjectColor.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(12),
@@ -744,6 +850,7 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
                   ),
                 ),
               ),
+              const SizedBox(height: 4),
             ],
           ),
         ),
