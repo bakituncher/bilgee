@@ -28,7 +28,7 @@ Bu adayın {{EXAM_NAME}} atanma hedefi için mevcut zamanını maksimum verimle 
 - Hafta sonu kapsamlı test çözümü
 
 ### 4. MÜFREDAT SIRASI TAKİBİ
-- Aşağıdaki müfredat sırasına uy: {{CURRICULUM_JSON}}
+- Aşağıdaki aday konu listesinden seç: {{CURRICULUM_JSON}}
 - Backlog varsa önce onu tamamla: {{GUARDRAILS_JSON}}
 - Kırmızı/sarı konuları önceliklendir
 - Yeşil konular için sadece review
@@ -56,11 +56,11 @@ Her görevin tipi şunlardan biri olmalı:
 - Güncel olayları takip (özellikle GK için)
 
 ### 8. KRİTİK UYARI: PLAN YENİLEME KURALI
-⚠️ **ASLA AYNI PLANI TEKRARLAMA!**
-- Eğer geçmiş haftanın planı verilmişse ({{WEEKLY_PLAN_TEXT}}), birebir aynı görevleri ASLA üretme
+⚠️ **HER HAFTA YENİ VE FARKLI PLAN!**
+- Her hafta adayın gelişimine göre farklı konular ve görevler oluştur
 - Aday gelişim gösteriyor, görevlerin zorluğunu ARTIR
 - Farklı soru tipleri, farklı konular, farklı deneme sınavları kullan
-- Önceki planla %100 aynı olan bir plan üretmek YASAKTIR
+- Çeşitlilik ve ilerlemeci yaklaşım şart
 
 {{REVISION_BLOCK}}
 
@@ -87,15 +87,6 @@ Her görevin tipi şunlardan biri olmalı:
 {{TOPIC_PERFORMANCES_JSON}}
 ```
 
-### Geçen Haftanın Analizi
-```json
-{{WEEKLY_PLAN_TEXT}}
-```
-
-### Tamamlanan Görevler
-```json
-{{COMPLETED_TASKS_JSON}}
-```
 
 ### Müfredat Sırası & Guardrails
 ```json

@@ -209,6 +209,35 @@ class AiService {
   String _yyyyMmDd(DateTime d) =>
       '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
+  /// Tamamlanan görev ID'lerini Set olarak döndürür (hızlı arama için)
+  Future<Set<String>> _loadRecentCompletedTaskIdsOnly(String userId, {int days = 365}) async {
+    try {
+      final cutoff = DateTime.now().subtract(Duration(days: days));
+      final svc = _ref.read(firestoreServiceProvider);
+      final snap = await svc.usersCollection
+          .doc(userId)
+          .collection('completedTasks')
+          .where('completedAt', isGreaterThanOrEqualTo: Timestamp.fromDate(cutoff))
+          .get();
+
+      final Set<String> taskIds = {};
+      for (var doc in snap.docs) {
+        final data = doc.data();
+        // taskId key'i ile kayıtlıysa:
+        final taskId = data['taskId'] as String?;
+        if (taskId != null && taskId.isNotEmpty) {
+          taskIds.add(taskId);
+        } else {
+          // Doküman ID'si görev ID'si ise:
+          taskIds.add(doc.id);
+        }
+      }
+      return taskIds;
+    } catch (_) {
+      return {};
+    }
+  }
+
   Future<String> _callGemini(String prompt, {bool expectJson = false, double? temperature, String? model, int retryCount = 0, required String requestType}) async {
     const int maxRetries = 3;
     try {
@@ -321,37 +350,21 @@ class AiService {
     final String avgNet = _quickAverageNet(tests).toStringAsFixed(2);
     final Map<String, double> subjectAverages = _computeSubjectAveragesQuick(tests);
 
-    final topicPerformancesJson = _encodeTopicPerformances(performance.topicPerformances);
     final availabilityJson = jsonEncode(user.weeklyAvailability);
 
-    // DÜZELTME 2: Anchoring bias önleme
-    // Sadece revizyon istendiyse veya plan çok yeniyse (bağlam kopmasın diye) gönder.
-    // Plan eskiyse gönderme ki AI geçmişe takılmadan sıfırdan düşünsün.
-    String? weeklyPlanJson;
-    if (planDoc?.weeklyPlan != null) {
-      try {
-        final planMap = planDoc!.weeklyPlan!;
-        final creation = DateTime.tryParse(planMap['creationDate'] ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
-        final isFresh = DateTime.now().difference(creation).inHours < 24;
+    // Tamamlanan konu ID'lerini al (Müfredat filtreleme için)
+    final completedTopicIds = await _loadRecentCompletedTaskIdsOnly(user.id, days: 365);
 
-        if (isFresh || revisionRequest != null) {
-          weeklyPlanJson = jsonEncode(planMap);
-        } else {
-          weeklyPlanJson = null;
-        }
-      } catch (_) {}
-    }
-
-    // Son 14 gün tamamlanan görevler (Limit optimizasyonu yapılmış hali)
-    final recentCompleted = await _loadRecentCompletedTasks(user.id, days: 14);
-
-    final completedTasksJson = jsonEncode(recentCompleted);
-
-    // MÜFREDAT SIRASI: Seçili sınav ve bölüm için konu listesini sırayla çıkar
-    final curriculumJson = await _buildCurriculumOrderJson(examType, user.selectedExamSection);
+    // YENİ SEKTÖR STANDARDI: Tüm müfredat yerine sadece "Sıradaki Aday Konular"
+    // Bu sayede yeni kullanıcı için otomatik olarak ilk konular, ileri kullanıcı için kaldığı yerden devam
+    final candidateTopicsJson = await _buildNextStudyTopicsJson(
+      examType,
+      user.selectedExamSection,
+      completedTopicIds
+    );
 
     // GUARDRAILS: backlog + konu renkleri + politika
-    final guardrailsJson = _buildGuardrailsJson(planDoc?.weeklyPlan, recentCompleted, performance);
+    final guardrailsJson = _buildGuardrailsJson(planDoc?.weeklyPlan, completedTopicIds, performance);
 
     String prompt;
     switch (examType) {
@@ -367,10 +380,9 @@ class AiService {
             daysUntilExam: daysUntilExam, goal: user.goal ?? '',
             challenges: user.challenges, pacing: pacing,
             testCount: user.testCount, avgNet: avgNet,
-            subjectAverages: subjectAverages, topicPerformancesJson: topicPerformancesJson,
-            availabilityJson: availabilityJson, weeklyPlanJson: weeklyPlanJson,
-            completedTasksJson: completedTasksJson,
-            curriculumJson: curriculumJson,
+            subjectAverages: subjectAverages,
+            availabilityJson: availabilityJson,
+            curriculumJson: candidateTopicsJson,
             guardrailsJson: guardrailsJson,
             revisionRequest: revisionRequest
         );
@@ -380,10 +392,8 @@ class AiService {
             user: user,
             avgNet: avgNet, subjectAverages: subjectAverages,
             pacing: pacing, daysUntilExam: daysUntilExam,
-            topicPerformancesJson: topicPerformancesJson, availabilityJson: availabilityJson,
-            weeklyPlanJson: weeklyPlanJson,
-            completedTasksJson: completedTasksJson,
-            curriculumJson: curriculumJson,
+            availabilityJson: availabilityJson,
+            curriculumJson: candidateTopicsJson,
             guardrailsJson: guardrailsJson,
             revisionRequest: revisionRequest
         );
@@ -393,10 +403,8 @@ class AiService {
             user: user,
             avgNet: avgNet, subjectAverages: subjectAverages,
             pacing: pacing, daysUntilExam: daysUntilExam,
-            topicPerformancesJson: topicPerformancesJson, availabilityJson: availabilityJson,
-            weeklyPlanJson: weeklyPlanJson,
-            completedTasksJson: completedTasksJson,
-            curriculumJson: curriculumJson,
+            availabilityJson: availabilityJson,
+            curriculumJson: candidateTopicsJson,
             guardrailsJson: guardrailsJson,
             revisionRequest: revisionRequest
         );
@@ -406,11 +414,9 @@ class AiService {
             user: user,
             avgNet: avgNet, subjectAverages: subjectAverages,
             pacing: pacing, daysUntilExam: daysUntilExam,
-            topicPerformancesJson: topicPerformancesJson, availabilityJson: availabilityJson,
+            availabilityJson: availabilityJson,
             examName: examType.displayName,
-            weeklyPlanJson: weeklyPlanJson,
-            completedTasksJson: completedTasksJson,
-            curriculumJson: curriculumJson,
+            curriculumJson: candidateTopicsJson,
             guardrailsJson: guardrailsJson,
             revisionRequest: revisionRequest
         );
@@ -489,6 +495,85 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
     return _callGemini(prompt, expectJson: true, requestType: 'weekly_plan');
   }
 
+  /// YENİ SEKTÖR STANDARDI FONKSİYON: Tüm müfredatı değil, sadece çalışılması gereken "ADAY" konuları hazırlar.
+  /// Bu sayede AI'a token israfı olmaz ve yeni kullanıcılar için otomatik olarak doğru konular seçilir.
+  Future<String> _buildNextStudyTopicsJson(
+    ExamType examType,
+    String? selectedSection,
+    Set<String> completedTopicIds // Kullanıcının bitirdiği konuların ID listesi
+  ) async {
+    try {
+      // 1. Tüm müfredatı yerelden çek (Bu işlem token harcamaz, cihazda yapılır)
+      final exam = await ExamData.getExamByType(examType);
+
+      List<ExamSection> sections = [];
+
+      // 2. Kullanıcının bölümüne göre dersleri filtrele
+      // AGS MANTIĞI: Her zaman "AGS" (Ortak) + Seçilen Branş
+      if (examType == ExamType.ags) {
+        sections.addAll(exam.sections.where((s) => s.name == 'AGS'));
+        if (selectedSection != null && selectedSection.isNotEmpty) {
+          sections.addAll(exam.sections.where((s) => s.name.toLowerCase() == selectedSection.toLowerCase()));
+        }
+      }
+      // YKS MANTIĞI: Her zaman "TYT" + Seçilen Alan (AYT-Sayısal, YDT vb.)
+      else if (examType == ExamType.yks) {
+        sections.addAll(exam.sections.where((s) => s.name == 'TYT'));
+        if (selectedSection != null && selectedSection.isNotEmpty && selectedSection != 'TYT') {
+          sections.addAll(exam.sections.where((s) => s.name.toLowerCase() == selectedSection.toLowerCase()));
+        }
+      }
+      // DİĞERLERİ (LGS, KPSS)
+      else {
+        sections = (selectedSection != null && selectedSection.isNotEmpty)
+            ? exam.sections.where((s) => s.name.toLowerCase() == selectedSection.toLowerCase()).toList()
+            : exam.sections;
+      }
+
+      final Map<String, List<String>> candidateTopics = {};
+
+      // 3. KRİTİK NOKTA: Her ders için "Sıradaki 3 Konuyu" bul
+      for (final sec in sections) {
+        sec.subjects.forEach((subjectName, subjectDetails) {
+          // Bu dersteki tüm konular (Sıralı halde gelir)
+          final allTopics = subjectDetails.topics.map((t) => t.name).toList();
+
+          // Bitmemiş olanları bul (Sırayı bozmadan)
+          final remainingTopics = allTopics.where((t) => !completedTopicIds.contains(t)).toList();
+
+          // Eğer hiç konu kalmadıysa (Ders bitmişse) boş geç
+          if (remainingTopics.isEmpty) return;
+
+          // SEKTÖR STANDARDI AYAR:
+          // Her dersten önümüzdeki "3" konuyu seç. AI bunlardan birini veya ikisini seçecek.
+          // Hepsini birden göndermiyoruz - Token tasarrufu + Odaklanma
+          final nextBatch = remainingTopics.take(3).toList();
+
+          candidateTopics[subjectName] = nextBatch;
+        });
+      }
+
+      // Çıktı Örneği:
+      // {
+      //   "candidates": {
+      //     "Matematik": ["Temel Kavramlar", "Sayı Basamakları", "Bölünebilme"],
+      //     "Fizik": ["Fizik Bilimine Giriş", "Madde ve Özellikleri"]
+      //   },
+      //   "note": "Sadece bu listedeki konuları planlayabilirsin. Sırayı bozma."
+      // }
+      return jsonEncode({
+        'candidates': candidateTopics,
+        'note': 'Sadece bu listedeki konuları planlayabilirsin. Müfredat sırasını takip et.'
+      });
+    } catch (e) {
+      // Hata durumunda boş liste döndür
+      return jsonEncode({
+        'candidates': {},
+        'note': 'Müfredat yüklenemedi, genel konulardan plan oluştur.'
+      });
+    }
+  }
+
   Future<String> _buildCurriculumOrderJson(ExamType examType, String? selectedSection) async {
     try {
       final exam = await ExamData.getExamByType(examType);
@@ -538,11 +623,7 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
     }
   }
 
-  String _buildGuardrailsJson(Map<String, dynamic>? weeklyPlanRaw, Map<String, List<String>> recentCompleted, PerformanceSummary performance){
-    // Tamamlanan görevleri tek set'e indir (date bağımsız)
-    final completedFlat = <String>{};
-    for (var list in recentCompleted.values) { for(final t in list){ completedFlat.add(t); }}
-
+  String _buildGuardrailsJson(Map<String, dynamic>? weeklyPlanRaw, Set<String> completedTopicIds, PerformanceSummary performance){
     // Backlog: geçen haftanın planından tamamlanmamış görevler
     final backlogActivities = <String>[];
     if (weeklyPlanRaw != null) {
@@ -555,12 +636,12 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
                 final time = (item['time'] ?? '').toString();
                 final activity = (item['activity'] ?? '').toString();
                 final id = '$time-$activity';
-                if (!completedFlat.contains(id)) {
+                if (!completedTopicIds.contains(id)) {
                   backlogActivities.add(activity);
                 }
               } else if (item is String) {
                 final id = 'Görev-$item';
-                if (!completedFlat.contains(id)) backlogActivities.add(item);
+                if (!completedTopicIds.contains(id)) backlogActivities.add(item);
               }
             }
           }
@@ -590,7 +671,10 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
         }
         map[topic] = status;
       });
-      topicStatus[subject] = map;
+      // Sadece içi dolu olan subject'leri ekle
+      if (map.isNotEmpty) {
+        topicStatus[subject] = map;
+      }
     });
 
     // Politika: ne zaman müfredat vs metrik
@@ -859,8 +943,9 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
   }) async {
     final user = _ref.read(userProfileProvider).value;
     if (user == null) return {};
-    final recentCompleted = await _loadRecentCompletedTasks(user.id, days: daysWindow);
-    final guardrailsJson = _buildGuardrailsJson(planDoc?.weeklyPlan, recentCompleted, performance);
+    // Set kullan (daha hızlı ve güncel metod)
+    final completedTaskIds = await _loadRecentCompletedTaskIdsOnly(user.id, days: daysWindow);
+    final guardrailsJson = _buildGuardrailsJson(planDoc?.weeklyPlan, completedTaskIds, performance);
     try {
       final decoded = jsonDecode(guardrailsJson);
       if (decoded is Map<String, dynamic>) return decoded;

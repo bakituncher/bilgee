@@ -27,7 +27,7 @@ Bu sınav iki ana oturumdan oluşur ve plan her ikisini de kapsamalıdır:
 
 ### 3. VERİ ODAKLI PLANLAMA
 - **Zayıf Noktalar:** {{TOPIC_PERFORMANCES_JSON}} verisine bak. Başarısız (kırmızı) konuları tespit et ve bu haftaya ekle.
-- **Konu Seçimi:** Konuları kafandan uydurma, mutlaka {{CURRICULUM_JSON}} listesinden seç.
+- **Konu Seçimi:** {{CURRICULUM_JSON}} içindeki "candidates" listesinden seç. Bu liste otomatik filtrelenmiştir.
 
 ### 4. DERS DAĞILIMI VE STRATEJİ
 - **Eğitim Bilimleri:** Haftada en az 4 gün yer ver.
@@ -42,7 +42,7 @@ Bu sınav iki ana oturumdan oluşur ve plan her ikisini de kapsamalıdır:
 - **Test:** Deneme sınavı süresi
 
 ### 6. PLAN YENİLEME
-- Önceki plan ({{WEEKLY_PLAN_TEXT}}) ile aynı planı üretme. Kullanıcıyı her hafta bir adım ileri taşı.
+- Her hafta farklı konular ve görevlerle kullanıcıyı bir adım ileri taşı.
 
 {{REVISION_BLOCK}}
 
@@ -68,15 +68,6 @@ Bu sınav iki ana oturumdan oluşur ve plan her ikisini de kapsamalıdır:
 {{TOPIC_PERFORMANCES_JSON}}
 ```
 
-### Geçen Haftanın Planı
-```json
-{{WEEKLY_PLAN_TEXT}}
-```
-
-### Tamamlanan Görevler
-```json
-{{COMPLETED_TASKS_JSON}}
-```
 
 ### Müfredat Sırası (KONU HAVUZU)
 ```json
