@@ -358,6 +358,39 @@ class FirestoreService {
         .map((snapshot) => snapshot.docs.map((doc) => WorkshopModel.fromSnapshot(doc)).toList());
   }
 
+  /// Kullanıcının workshop serisini (streak) günceller.
+  /// İş mantığı (Business Logic) burada döner, UI sadece çağırır.
+  Future<int> updateUserWorkshopStreak(String userId, Timestamp? lastWorkshopDate, int currentStreak) async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    int newStreak = currentStreak;
+
+    if (lastWorkshopDate == null) {
+      newStreak = 1;
+    } else {
+      final last = lastWorkshopDate.toDate();
+      final lastDay = DateTime(last.year, last.month, last.day);
+      final diff = today.difference(lastDay).inDays;
+
+      if (diff == 1) {
+        // Dün yapmış, seri devam ediyor
+        newStreak += 1;
+      } else if (diff > 1) {
+        // Zinciri kırmış, baştan başla
+        newStreak = 1;
+      }
+      // diff == 0 ise (bugün zaten yapmışsa) streak değişmez.
+    }
+
+    await usersCollection.doc(userId).update({
+      'workshopStreak': newStreak,
+      'lastWorkshopDate': FieldValue.serverTimestamp(),
+    });
+
+    return newStreak;
+  }
+
   Future<void> createUserProfile({
     required User user,
     required String firstName,

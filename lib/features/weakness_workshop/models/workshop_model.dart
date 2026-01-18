@@ -97,61 +97,39 @@ class QuizQuestion {
     required this.explanation,
   });
 
-  /// Hem AI formatını (optionA...) hem Firestore formatını (options listesi) okur.
   factory QuizQuestion.fromJson(Map<String, dynamic> json) {
     List<String> parsedOptions = [];
 
-    // A. AI Formatı: optionA, optionB... (Genelde üretim aşamasında gelir)
-    if (json.containsKey('optionA')) {
-      parsedOptions = [
-        JsonTextCleaner.cleanDynamic(json['optionA'] ?? ''),
-        JsonTextCleaner.cleanDynamic(json['optionB'] ?? ''),
-        JsonTextCleaner.cleanDynamic(json['optionC'] ?? ''),
-        JsonTextCleaner.cleanDynamic(json['optionD'] ?? ''),
-        if (json.containsKey('optionE')) JsonTextCleaner.cleanDynamic(json['optionE'] ?? ''),
-      ];
-      // Boş gelen şıkları temizle
-      parsedOptions = parsedOptions.where((e) => e.isNotEmpty).toList();
-    }
-    // B. Standart Format: options Listesi (Firestore'dan gelir)
-    else if (json['options'] is List) {
+    // DURUM 1: Firestore Kaydı (Liste Formatı)
+    if (json['options'] is List) {
       parsedOptions = (json['options'] as List)
-          .map((option) => JsonTextCleaner.cleanDynamic(option))
+          .map((e) => JsonTextCleaner.cleanDynamic(e))
+          .toList();
+    }
+    // DURUM 2: AI Çıktısı (Key Formatı - Prompt Kuralına Uygun)
+    else {
+      // "Defensive coding" zehrinden arındırılmış, net mantık:
+      // Prompt optionA...optionE dönecek dendi, o zaman bunları alıyoruz.
+      final opts = [
+        json['optionA'],
+        json['optionB'],
+        json['optionC'],
+        json['optionD'],
+        json['optionE']
+      ];
+      // Null olmayanları temizle ve ekle
+      parsedOptions = opts
+          .where((e) => e != null)
+          .map((e) => JsonTextCleaner.cleanDynamic(e))
+          .where((e) => e.isNotEmpty)
           .toList();
     }
 
-    // Boşları doldur
-    for (int i = 0; i < parsedOptions.length; i++) {
-      if (parsedOptions[i].isEmpty) {
-        parsedOptions[i] = "Seçenek ${String.fromCharCode(65 + i)}";
-      }
-    }
-
-    // Şık sayısını en az 5 olacak şekilde doldur (A-E). 4 gelirse E'yi ekle.
-    while (parsedOptions.length < 5) {
-      final idx = parsedOptions.length;
-      parsedOptions.add("Seçenek ${String.fromCharCode(65 + idx)}");
-    }
-    // Çok fazlaysa 5'e kısalt
-    if (parsedOptions.length > 5) {
-      parsedOptions = parsedOptions.sublist(0, 5);
-    }
-
-    // Doğru cevap indeksini güvenli aralığa sabitle
-    int idx = 0;
-    try {
-      idx = (json['correctOptionIndex'] as num?)?.toInt() ?? 0;
-    } catch (_) {
-      idx = 0;
-    }
-    if (idx < 0) idx = 0;
-    if (idx >= parsedOptions.length) idx = 0;
-
     return QuizQuestion(
-      question: JsonTextCleaner.cleanDynamic(json['question'] ?? 'Soru yüklenemedi.'),
+      question: JsonTextCleaner.cleanDynamic(json['question'] ?? 'Soru Metni Yok'),
       options: parsedOptions,
-      correctOptionIndex: idx,
-      explanation: JsonTextCleaner.cleanDynamic(json['explanation'] ?? 'Bu soru için açıklama bulunamadı.'),
+      correctOptionIndex: (json['correctOptionIndex'] as num?)?.toInt() ?? 0,
+      explanation: JsonTextCleaner.cleanDynamic(json['explanation'] ?? ''),
     );
   }
 

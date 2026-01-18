@@ -21,7 +21,10 @@ import 'package:taktik/features/weakness_workshop/logic/quiz_quality_guard.dart'
 import 'package:confetti/confetti.dart';
 import 'package:lottie/lottie.dart';
 import 'package:taktik/core/safety/ai_content_safety.dart';
+import 'package:taktik/features/weakness_workshop/logic/workshop_controller.dart';
 
+// DEPRECATED: Eski enum ve provider'lar - Artık WorkshopController içinde
+// Geriye dönük uyumluluk için kalsın ama yeni kullanmayın
 enum WorkshopStep { briefing, study, quiz, results }
 
 final _selectedTopicProvider = StateProvider<Map<String, String>?>((ref) => null);
