@@ -36,9 +36,27 @@ class DashboardStatsOverview extends ConsumerWidget {
           final sortedTests = [...mainExamTests]..sort((a, b) => b.date.compareTo(a.date));
           return sortedTests.first.totalNet;
         })();
+
+        // En iyi denemeyi başarı yüzdesine göre seç
         final bestNet = mainExamTests.isEmpty
             ? 0.0
-            : mainExamTests.map((e) => e.totalNet).reduce((a, b) => a > b ? a : b);
+            : (() {
+          // Her test için başarı yüzdesini hesapla ve en yüksek olanı seç
+          TestModel bestTest = mainExamTests.first;
+          double bestPercentage = (bestTest.totalNet / bestTest.totalQuestions) * 100;
+
+          for (final test in mainExamTests.skip(1)) {
+            if (test.totalQuestions > 0) {
+              final percentage = (test.totalNet / test.totalQuestions) * 100;
+              if (percentage > bestPercentage) {
+                bestTest = test;
+                bestPercentage = percentage;
+              }
+            }
+          }
+
+          return bestTest.totalNet;
+        })();
 
         return GestureDetector(
           onTap: () => context.push('/stats/overview'),
