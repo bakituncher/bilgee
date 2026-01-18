@@ -6,8 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taktik/data/repositories/ai_service.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:taktik/features/weakness_workshop/models/saved_workshop_model.dart';
-import 'package:taktik/features/weakness_workshop/models/study_guide_model.dart';
+import 'package:taktik/features/weakness_workshop/models/workshop_model.dart';
 import 'package:taktik/shared/widgets/markdown_with_math.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:taktik/data/models/topic_performance_model.dart';
@@ -28,7 +27,7 @@ enum WorkshopStep { briefing, study, quiz, results }
 final _selectedTopicProvider = StateProvider<Map<String, String>?>((ref) => null);
 final _difficultyProvider = StateProvider<(String, int)>((ref) => ('normal', 1));
 
-final workshopSessionProvider = FutureProvider.autoDispose<StudyGuideAndQuiz>((ref) async {
+final workshopSessionProvider = FutureProvider.autoDispose<WorkshopModel>((ref) async {
   final selectedTopic = ref.watch(_selectedTopicProvider);
   final difficultyInfo = ref.watch(_difficultyProvider);
 
@@ -44,7 +43,7 @@ final workshopSessionProvider = FutureProvider.autoDispose<StudyGuideAndQuiz>((r
     return Future.error("Analiz için kullanıcı, test veya performans verisi bulunamadı.");
   }
 
-  Future<StudyGuideAndQuiz> attempt({double? temperature}) async {
+  Future<WorkshopModel> attempt({double? temperature}) async {
     final jsonString = await ref.read(aiServiceProvider).generateStudyGuideAndQuiz(
       user,
       tests,
@@ -62,7 +61,7 @@ final workshopSessionProvider = FutureProvider.autoDispose<StudyGuideAndQuiz>((r
     if (decodedJson.containsKey('error')) {
       throw Exception(decodedJson['error']);
     }
-    final raw = StudyGuideAndQuiz.fromJson(decodedJson);
+    final raw = WorkshopModel.fromAIJson(decodedJson);
     // Soru kalite güvencesi uygula (yetersizse hata fırlatır)
     final guarded = QuizQualityGuard.apply(raw).material;
     return guarded;
@@ -103,7 +102,7 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
     setState(() => _currentStep = WorkshopStep.study);
   }
 
-  void _submitQuiz(StudyGuideAndQuiz material) {
+  void _submitQuiz(WorkshopModel material) {
     final user = ref.read(userProfileProvider).value;
     final performanceSummary = ref.read(performanceProvider).value;
     if(user == null || performanceSummary == null) return;
@@ -336,7 +335,7 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
     );
   }
 
-  void _openReportSheet(StudyGuideAndQuiz material, int qIndex, int? selected) {
+  void _openReportSheet(WorkshopModel material, int qIndex, int? selected) {
     final q = material.quiz[qIndex];
     showModalBottomSheet(
       context: context,
@@ -840,7 +839,7 @@ class _TopicCard extends StatelessWidget {
 }
 
 class _StudyView extends StatelessWidget {
-  final StudyGuideAndQuiz material;
+  final WorkshopModel material;
   final VoidCallback onStartQuiz;
   const _StudyView({super.key, required this.material, required this.onStartQuiz});
 
@@ -881,7 +880,7 @@ class _StudyView extends StatelessWidget {
 }
 
 class _QuizView extends StatefulWidget {
-  final StudyGuideAndQuiz material;
+  final WorkshopModel material;
   final VoidCallback onSubmit;
   final Map<int,int> selectedAnswers;
   final Function(int, int) onAnswerSelected;
@@ -1204,7 +1203,7 @@ class _ExplanationCard extends StatelessWidget {
 }
 
 class _ResultsView extends StatefulWidget {
-  final StudyGuideAndQuiz material;
+  final WorkshopModel material;
   final VoidCallback onNextTopic;
   final VoidCallback onRetryHarder;
   final Map<int, int> selectedAnswers;
@@ -1301,7 +1300,7 @@ class _ResultsViewState extends State<_ResultsView> with SingleTickerProviderSta
 
 class _SummaryView extends ConsumerStatefulWidget {
   final double score;
-  final StudyGuideAndQuiz material;
+  final WorkshopModel material;
   final VoidCallback onNextTopic;
   final VoidCallback onRetryHarder;
   final VoidCallback onShowReview;
@@ -1451,7 +1450,7 @@ class _SummaryViewState extends ConsumerState<_SummaryView> {
             onTap: (_isSaving || _isSaved) ? (){} : () async {
               setState(() => _isSaving = true);
               final userId = ref.read(authControllerProvider).value!.uid;
-              final workshopToSave = SavedWorkshopModel.fromStudyGuide(const Uuid().v4(), widget.material);
+              final workshopToSave = widget.material.copyWith(id: const Uuid().v4());
               await ref.read(firestoreServiceProvider).saveWorkshopForUser(userId, workshopToSave);
               if (mounted) {
                 setState(() {
@@ -1478,7 +1477,7 @@ class _SummaryViewState extends ConsumerState<_SummaryView> {
 }
 
 class _QuizReviewView extends StatelessWidget {
-  final StudyGuideAndQuiz material;
+  final WorkshopModel material;
   final Map<int, int> selectedAnswers;
 
   const _QuizReviewView({

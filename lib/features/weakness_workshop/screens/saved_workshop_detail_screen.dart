@@ -1,18 +1,17 @@
 // lib/features/weakness_workshop/screens/saved_workshop_detail_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:taktik/features/weakness_workshop/models/saved_workshop_model.dart';
-import 'package:taktik/features/weakness_workshop/models/study_guide_model.dart';
+import 'package:taktik/features/weakness_workshop/models/workshop_model.dart';
 
 class SavedWorkshopDetailScreen extends StatelessWidget {
-  final SavedWorkshopModel workshop;
+  final WorkshopModel workshop;
 
   const SavedWorkshopDetailScreen({super.key, required this.workshop});
 
   @override
   Widget build(BuildContext context) {
-    // Kaydedilmiş quiz verisini tekrar QuizQuestion modeline çeviriyoruz
-    final quizQuestions = workshop.quiz.map((q) => QuizQuestion.fromJson(q)).toList();
+    // Quiz verisi zaten QuizQuestion listesi olarak tutuluyor
+    final quizQuestions = workshop.quiz;
 
     return DefaultTabController(
       length: 2,

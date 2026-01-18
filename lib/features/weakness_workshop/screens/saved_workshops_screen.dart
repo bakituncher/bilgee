@@ -5,11 +5,11 @@ import 'package:go_router/go_router.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
-import 'package:taktik/features/weakness_workshop/models/saved_workshop_model.dart';
+import 'package:taktik/features/weakness_workshop/models/workshop_model.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-final savedWorkshopsProvider = StreamProvider.autoDispose<List<SavedWorkshopModel>>((ref) {
+final savedWorkshopsProvider = StreamProvider.autoDispose<List<WorkshopModel>>((ref) {
   final userId = ref.watch(authControllerProvider).value?.uid;
   if (userId == null) {
     return Stream.value([]);
@@ -102,8 +102,12 @@ class _SavedWorkshopsScreenState extends ConsumerState<SavedWorkshopsScreen> {
                   itemBuilder: (context, index) {
                     final workshop = filtered[index];
                     final userId = ref.read(authControllerProvider).value?.uid;
+
+                    // ID null kontrolü
+                    if (workshop.id == null) return const SizedBox.shrink();
+
                     return Dismissible(
-                      key: Key(workshop.id),
+                      key: Key(workshop.id!),
                       direction: DismissDirection.endToStart,
                       background: Container(
                         alignment: Alignment.centerRight,
@@ -113,8 +117,8 @@ class _SavedWorkshopsScreenState extends ConsumerState<SavedWorkshopsScreen> {
                       ),
                       confirmDismiss: (_) => _confirmDelete(context),
                       onDismissed: (_) async {
-                        if (userId != null) {
-                          await ref.read(firestoreServiceProvider).deleteSavedWorkshop(userId, workshop.id);
+                        if (userId != null && workshop.id != null) {
+                          await ref.read(firestoreServiceProvider).deleteSavedWorkshop(userId, workshop.id!);
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kayıt silindi')));
                           }
@@ -139,7 +143,7 @@ class _SavedWorkshopsScreenState extends ConsumerState<SavedWorkshopsScreen> {
 }
 
 class _SavedWorkshopCard extends StatelessWidget {
-  final SavedWorkshopModel workshop;
+  final WorkshopModel workshop;
   const _SavedWorkshopCard({required this.workshop});
 
   @override
@@ -179,7 +183,7 @@ class _SavedWorkshopCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      "${workshop.subject} | ${DateFormat.yMMMMd('tr').format(workshop.savedDate.toDate())}",
+                      "${workshop.subject} | ${workshop.savedDate != null ? DateFormat.yMMMMd('tr').format(workshop.savedDate!.toDate()) : 'Tarih yok'}",
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ],

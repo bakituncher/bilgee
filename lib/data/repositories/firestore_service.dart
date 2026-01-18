@@ -8,7 +8,7 @@ import 'package:taktik/data/models/test_model.dart';
 import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/data/models/topic_performance_model.dart';
 import 'package:taktik/data/models/focus_session_model.dart';
-import 'package:taktik/features/weakness_workshop/models/saved_workshop_model.dart';
+import 'package:taktik/features/weakness_workshop/models/workshop_model.dart';
 import 'package:taktik/data/models/plan_document.dart';
 import 'package:taktik/data/models/performance_summary.dart';
 import 'package:taktik/data/models/app_state.dart';
@@ -335,7 +335,7 @@ class FirestoreService {
     }
   }
 
-  Future<void> saveWorkshopForUser(String userId, SavedWorkshopModel workshop) async {
+  Future<void> saveWorkshopForUser(String userId, WorkshopModel workshop) async {
     final userDocRef = usersCollection.doc(userId);
     final workshopCollectionRef = userDocRef.collection('savedWorkshops');
     await workshopCollectionRef.doc(workshop.id).set(workshop.toMap());
@@ -349,13 +349,13 @@ class FirestoreService {
         .delete();
   }
 
-  Stream<List<SavedWorkshopModel>> getSavedWorkshops(String userId) {
+  Stream<List<WorkshopModel>> getSavedWorkshops(String userId) {
     return usersCollection
         .doc(userId)
         .collection('savedWorkshops')
         .orderBy('savedDate', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => SavedWorkshopModel.fromSnapshot(doc)).toList());
+        .map((snapshot) => snapshot.docs.map((doc) => WorkshopModel.fromSnapshot(doc)).toList());
   }
 
   Future<void> createUserProfile({

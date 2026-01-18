@@ -1,8 +1,8 @@
 // lib/features/weakness_workshop/logic/quiz_quality_guard.dart
-import 'package:taktik/features/weakness_workshop/models/study_guide_model.dart';
+import 'package:taktik/features/weakness_workshop/models/workshop_model.dart';
 
 class QuizQualityGuardResult {
-  final StudyGuideAndQuiz material;
+  final WorkshopModel material;
   final List<String> issues;
   QuizQualityGuardResult(this.material, this.issues);
 }
@@ -13,7 +13,7 @@ class QuizQualityGuard {
   static const int minTextLen = 10;
   static const int minExplLen = 15;
 
-  static QuizQualityGuardResult apply(StudyGuideAndQuiz raw) {
+  static QuizQualityGuardResult apply(WorkshopModel raw) {
     final issues = <String>[];
     final validQuestions = <QuizQuestion>[];
     final seenQuestions = <String>{};
@@ -45,11 +45,13 @@ class QuizQualityGuard {
     }
 
     // Temizlenmiş materyali döndür
-    final guarded = StudyGuideAndQuiz(
+    final guarded = WorkshopModel(
+      id: raw.id,
       studyGuide: _sanitizeText(raw.studyGuide),
       quiz: validQuestions,
       topic: raw.topic,
       subject: raw.subject,
+      savedDate: raw.savedDate,
     );
 
     return QuizQualityGuardResult(guarded, issues);
