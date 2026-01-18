@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/data/models/user_model.dart';
@@ -245,8 +246,78 @@ class _SubjectGalaxyViewState extends ConsumerState<_SubjectGalaxyView> {
         ref.read(subjectFilterProvider(widget.subjectName).notifier).state = '';
         ref.read(subjectSearchActiveProvider(widget.subjectName).notifier).state = false;
         _searchCtrl.clear();
+        _showInstructionsIfNeeded();
       }
     });
+  }
+
+  Future<void> _showInstructionsIfNeeded() async {
+    final prefs = await SharedPreferences.getInstance();
+    const key = 'coach_screen_instructions_shown';
+    final hasShown = prefs.getBool(key) ?? false;
+
+    if (!hasShown && mounted) {
+      await prefs.setBool(key, true);
+      _showInstructionsBottomSheet();
+    }
+  }
+
+  void _showInstructionsBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        final colorScheme = Theme.of(context).colorScheme;
+        return Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: colorScheme.onSurface.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Icon(
+                Icons.touch_app_rounded,
+                size: 48,
+                color: colorScheme.primary,
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Bir konuya dokunarak test ekleme ekranına gidebilirsiniz.',
+                style: Theme.of(context).textTheme.bodyLarge,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Bir konuya basılı tutarak o konunun detaylı istatistiklerini görebilirsiniz.',
+                style: Theme.of(context).textTheme.bodyLarge,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              FilledButton(
+                onPressed: () => Navigator.pop(context),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('Anladım'),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -394,8 +465,6 @@ class _SubjectGalaxyViewState extends ConsumerState<_SubjectGalaxyView> {
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children:[
                 _SubjectStatsCard(subjectName: subjectName, overallMastery: overallMastery, totalQuestions: totalQuestions, totalCorrect: totalCorrect, totalWrong: totalWrong, totalBlank: totalBlank),
                 const SizedBox(height:20),
-                _InstructionBanner(),
-                const SizedBox(height:20),
                 _GalaxyToolbar(
                   isSearchActive: isSearchActive,
                   onSearchToggle: () {
@@ -454,59 +523,6 @@ class _SubjectGalaxyViewState extends ConsumerState<_SubjectGalaxyView> {
 
 class _TopicBundle { final SubjectTopic topic; final TopicPerformanceModel performance; final double mastery; _TopicBundle({required this.topic, required this.performance, required this.mastery}); }
 
-class _InstructionBanner extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        gradient: LinearGradient(
-          colors: isDark
-              ? [
-                  colorScheme.primaryContainer.withOpacity(0.25),
-                  colorScheme.secondaryContainer.withOpacity(0.15),
-                ]
-              : [
-                  colorScheme.primaryContainer.withOpacity(0.35),
-                  colorScheme.secondaryContainer.withOpacity(0.25),
-                ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        border: Border.all(
-          color: colorScheme.primary.withOpacity(isDark ? 0.25 : 0.35),
-          width: 1.2,
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.touch_app_rounded, size: 16, color: colorScheme.primary),
-          const SizedBox(width: 6),
-          Flexible(
-            child: Text(
-              'Dokun: Test ekle  •  Basılı tut: Detay gör',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurface,
-                fontWeight: FontWeight.w600,
-                fontSize: 12,
-                height: 1.2,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _SubjectStatsCard extends StatelessWidget {
   final String subjectName; final double overallMastery; final int totalQuestions; final int totalCorrect; final int totalWrong; final int totalBlank;
