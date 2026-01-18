@@ -31,6 +31,7 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
   bool _showScrollToBottom = false;
   late AnimationController _backgroundAnimationController;
   String _currentPromptType = 'user_chat'; // YENİ: Aktif sohbet modunu saklamak için
+  bool _cameWithInitialPrompt = false; // YENİ: Kullanıcı direkt sohbete mi girdi?
 
   // YENI: Sohbetten Süit ekranına dönüş helper
   void _exitToSuite() {
@@ -58,6 +59,11 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
     Future.microtask(() async {
       ref.read(chatHistoryProvider.notifier).state = [];
       if (widget.initialPrompt != null) {
+        print('[MotivationChat] initState - initialPrompt: ${widget.initialPrompt}');
+        setState(() {
+          _cameWithInitialPrompt = true; // Kullanıcı direkt sohbete girdi
+        });
+        print('[MotivationChat] initState - _cameWithInitialPrompt set to true');
         if (widget.initialPrompt is String) {
           await _onMoodSelected(widget.initialPrompt as String);
         } else if (widget.initialPrompt is Map<String, dynamic>) {
@@ -65,6 +71,7 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
           await _onMoodSelected(contextData['type'], extraContext: contextData);
         }
       } else {
+        print('[MotivationChat] initState - No initialPrompt, showing menu');
         ref.read(chatScreenStateProvider.notifier).state = null;
       }
     });
@@ -227,14 +234,19 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
 
     return PopScope(
       // EĞER: Bir mood seçili değilse (menüdeysek) pop işlemine izin ver (true).
-      // DEĞİLSE: (Sohbetteysek) pop işlemini engelle (false) ki biz yönetelim.
-      canPop: selectedMood == null,
+      // VEYA: Kullanıcı direkt sohbete geldiyse (_cameWithInitialPrompt) ve sohbetteyse, pop'a izin ver (önceki ekrana dönecek).
+      // DEĞİLSE: (Menüden sohbete girdiyse) pop işlemini engelle (false) ki biz yönetelim.
+      canPop: selectedMood == null || (_cameWithInitialPrompt && selectedMood != null),
       onPopInvokedWithResult: (didPop, result) {
-        // Eğer zaten pop işlemi gerçekleştiyse (menüden çıkıldıysa) bir şey yapma.
+        // DEBUG: Geri tuşu davranışını izle
+        print('[MotivationChat] PopScope - didPop: $didPop, selectedMood: $selectedMood, _cameWithInitialPrompt: $_cameWithInitialPrompt');
+
+        // Eğer zaten pop işlemi gerçekleştiyse (önceki ekrana döndüyse) bir şey yapma.
         if (didPop) return;
 
-        // Eğer pop engellendiyse (yani sohbet ekranındaysak):
-        if (selectedMood != null) {
+        // Eğer pop engellendiyse (yani menüden sohbete girildiyse ve sohbetteyse):
+        if (selectedMood != null && !_cameWithInitialPrompt) {
+          print('[MotivationChat] Going back to menu (Briefing View)');
           // State'i null yaparak menüye (Briefing View) geri dön
           ref.read(chatScreenStateProvider.notifier).state = null;
           ref.read(chatHistoryProvider.notifier).state = [];
