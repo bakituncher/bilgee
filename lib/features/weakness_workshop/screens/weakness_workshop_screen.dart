@@ -56,8 +56,9 @@ final workshopSessionProvider = FutureProvider.autoDispose<WorkshopModel>((ref) 
       attemptCount: difficultyInfo.$2,
       temperature: temperature,
     ).timeout(
-      const Duration(seconds: 45),
-      onTimeout: () => throw TimeoutException("Yapay zeka çok uzun süredir yanıt vermiyor. Lütfen tekrar deneyin."),
+      // Gemini detaylı içerik üretirken 45sn yetmeyebilir, güvenli aralık 90sn'dir.
+      const Duration(seconds: 90),
+      onTimeout: () => throw TimeoutException('İçerik çok detaylı olduğu için hazırlanması zaman alıyor. Lütfen internet bağlantını kontrol edip tekrar dene.'),
     );
 
     final decodedJson = jsonDecode(jsonString);
@@ -70,18 +71,20 @@ final workshopSessionProvider = FutureProvider.autoDispose<WorkshopModel>((ref) 
     return guarded;
   }
 
-  // 1) Varsayılan sıcaklıkla dene -> 2) 0.35 -> 3) 0.25
-  final attempts = <double?>[null, 0.35, 0.25];
+  // 3 kere denemek yerine 2 kere deneyelim ama süreyi uzun tutalım.
+  // Sıcaklık ayarını (temperature) düşürmek halüsinasyonu ve bozuk JSON riskini azaltır.
+  final attempts = <double?>[0.3, 0.2]; // İlk deneme 0.3, başarısızsa 0.2
   Exception? lastErr;
   for (final t in attempts) {
     try {
       return await attempt(temperature: t);
     } catch (e) {
       lastErr = Exception(e.toString());
-      // denemeye devam
+      // Hata loglayıp devam et
+      debugPrint("Workshop deneme başarısız (Temp: $t): $e");
     }
   }
-  throw lastErr ?? Exception('Soru kalitesi yetersiz. Lütfen tekrar deneyin.');
+  throw lastErr ?? Exception('Bağlantı veya AI servisinde yoğunluk var. Lütfen tekrar deneyin.');
 });
 
 

@@ -82,8 +82,9 @@ class WorkshopController extends AutoDisposeNotifier<WorkshopState> {
         topicOverride: topic,
         temperature: temperature,
       ).timeout(
-        const Duration(seconds: 45),
-        onTimeout: () => throw TimeoutException('Yapay zeka çok uzun süredir yanıt vermiyor. Lütfen tekrar deneyin.'),
+        // Gemini detaylı içerik üretirken 45sn yetmeyebilir, güvenli aralık 90sn'dir.
+        const Duration(seconds: 90),
+        onTimeout: () => throw TimeoutException('İçerik çok detaylı olduğu için hazırlanması zaman alıyor. Lütfen internet bağlantını kontrol edip tekrar dene.'),
       );
 
       final decoded = jsonDecode(jsonString);

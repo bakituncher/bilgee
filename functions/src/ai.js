@@ -217,7 +217,7 @@ exports.generateGemini = onCall(
       if (requestType === 'weekly_plan') {
         effectiveMaxTokens = 50000; // Haftalık planlar için yüksek limit
       } else if (requestType === 'workshop') {
-        effectiveMaxTokens = 30384; // Workshop için yeterli limit (quiz JSON'ı büyük olabilir)
+        effectiveMaxTokens = 10000; // 30k çok fazla, latency yaratıyor. 10k fazlasıyla yeterli.
       }
 
       if (typeof reqMaxTokensRaw === 'number' && isFinite(reqMaxTokensRaw)) {
