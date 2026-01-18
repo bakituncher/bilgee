@@ -8,6 +8,7 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:taktik/core/utils/exam_utils.dart';
@@ -40,6 +41,7 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
   final _cropController = CropController();
   bool _isCropping = false; // Kırpma işlemi işleniyor mu? (Loading)
   bool _isLoading = false; // Genel yükleme
+  int _rotationAngle = 0; // Döndürme açısı
 
   @override
   void dispose() {
@@ -263,7 +265,44 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
     setState(() {
       _rawImageBytes = null;
       _isLoading = false;
+      _rotationAngle = 0; // Döndürme açısını sıfırla
     });
+  }
+
+  // Resmi 90 derece sağa döndürme
+  Future<void> _rotateImage() async {
+    if (_rawImageBytes == null) return;
+
+    setState(() => _isCropping = true);
+
+    try {
+      // Resmi decode et
+      img.Image? image = img.decodeImage(_rawImageBytes!);
+      if (image == null) {
+        throw Exception('Resim işlenemedi');
+      }
+
+      // 90 derece sağa döndür
+      image = img.copyRotate(image, angle: 90);
+
+      // Encode et
+      final rotatedBytes = Uint8List.fromList(img.encodeJpg(image, quality: 85));
+
+      setState(() {
+        _rawImageBytes = rotatedBytes;
+        _rotationAngle = (_rotationAngle + 90) % 360;
+        _isCropping = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isCropping = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Döndürme hatası: $e')),
+        );
+      }
+    }
   }
 
   // --- DİĞER YARDIMCI FONKSİYONLAR ---
@@ -480,6 +519,7 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
               padding: const EdgeInsets.only(top: 60, bottom: 100),
               child: Center(
                 child: Crop(
+                  key: ValueKey(_rotationAngle), // Döndürme sonrası widget'ı yeniden oluştur
                   image: _rawImageBytes!,
                   controller: _cropController,
                   onCropped: (image) {
@@ -504,13 +544,34 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
                 child: Container(
                   padding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  alignment: Alignment.center,
-                  child: Text(
-                    "Soruyu Kırp",
-                    style: TextStyle(
-                        color: Colors.white.withOpacity(0.9),
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Sol boşluk (denge için)
+                      const SizedBox(width: 48),
+                      // Başlık (Orta)
+                      Expanded(
+                        child: Text(
+                          "Soruyu Kırp",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      // Döndürme Butonu (Sağ Üst)
+                      IconButton(
+                        onPressed: _rotateImage,
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white.withOpacity(0.15),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.all(12),
+                        ),
+                        icon: const Icon(Icons.rotate_right, size: 24),
+                        tooltip: 'Döndür',
+                      ),
+                    ],
                   ),
                 ),
               ),

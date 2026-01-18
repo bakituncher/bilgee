@@ -10,6 +10,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image/image.dart' as img;
 import 'package:lottie/lottie.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:taktik/features/coach/providers/saved_solutions_provider.dart';
@@ -42,6 +43,9 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
 
   // Crop işlemi için ham resim verisi (Kırpma ekranı için)
   Uint8List? _rawImageBytes;
+
+  // Döndürme açısı (90 derecelik artışlarla)
+  int _rotationAngle = 0;
 
   // Kırpılmış ve sunucuya gönderilmeye hazır dosya
   XFile? _finalImageFile;
@@ -89,11 +93,44 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
         _isAnalyzing = false;
         _isCropping = false;
         _isSaved = false; // Sıfırla
+        _rotationAngle = 0; // Döndürme açısını sıfırla
       });
       return;
     }
     if (context.canPop()) context.pop();
     else context.go('/ai-hub');
+  }
+
+  // Resmi 90 derece sağa döndürme
+  Future<void> _rotateImage() async {
+    if (_rawImageBytes == null) return;
+
+    setState(() => _isCropping = true);
+
+    try {
+      // Resmi decode et
+      img.Image? image = img.decodeImage(_rawImageBytes!);
+      if (image == null) {
+        throw Exception('Resim işlenemedi');
+      }
+
+      // 90 derece sağa döndür
+      image = img.copyRotate(image, angle: 90);
+
+      // Encode et
+      final rotatedBytes = Uint8List.fromList(img.encodeJpg(image, quality: 85));
+
+      setState(() {
+        _rawImageBytes = rotatedBytes;
+        _rotationAngle = (_rotationAngle + 90) % 360;
+        _isCropping = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isCropping = false;
+        _error = 'Döndürme hatası: $e';
+      });
+    }
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -727,6 +764,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
             padding: const EdgeInsets.only(top: 60, bottom: 100),
             child: Center(
               child: Crop(
+                key: ValueKey(_rotationAngle), // Döndürme sonrası widget'ı yeniden oluştur
                 image: _rawImageBytes!,
                 controller: _cropController,
                 onCropped: (image) {
@@ -743,7 +781,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
             ),
           ),
 
-          // 2. Üst Bar (Başlık)
+          // 2. Üst Bar (Başlık ve Döndürme Butonu)
           Positioned(
             top: 0,
             left: 0,
@@ -751,14 +789,35 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
             child: SafeArea(
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                alignment: Alignment.center,
-                child: Text(
-                  "Soruyu Kırp",
-                  style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600
-                  ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Sol boşluk (denge için)
+                    const SizedBox(width: 48),
+                    // Başlık (Orta)
+                    Expanded(
+                      child: Text(
+                        "Soruyu Kırp",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600
+                        ),
+                      ),
+                    ),
+                    // Döndürme Butonu (Sağ Üst)
+                    IconButton(
+                      onPressed: _rotateImage,
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.white.withOpacity(0.15),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.all(12),
+                      ),
+                      icon: const Icon(Icons.rotate_right, size: 24),
+                      tooltip: 'Döndür',
+                    ),
+                  ],
                 ),
               ),
             ),
