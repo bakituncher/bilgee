@@ -798,8 +798,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        title: const Text("Ayarlar"),
-        centerTitle: false,
+        title: Text(
+          "Ayarlar",
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            color: Theme.of(context).colorScheme.onSurface,
+            letterSpacing: -0.5,
+            fontSize: 20,
+          ),
+        ),
+        centerTitle: true,
         elevation: 0,
         automaticallyImplyLeading: false,
         leading: IconButton(

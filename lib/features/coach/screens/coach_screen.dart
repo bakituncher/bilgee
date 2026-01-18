@@ -161,7 +161,15 @@ class _CoachScreenState extends ConsumerState<CoachScreen>
             return Scaffold(
                 resizeToAvoidBottomInset: false,
                 appBar: AppBar(
-                  title: const Text('Ders Netlerim'),
+                  title: Text(
+                    'Ders Netlerim',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      color: Theme.of(context).colorScheme.onSurface,
+                      letterSpacing: -0.5,
+                      fontSize: 20,
+                    ),
+                  ),
                   bottom: TabBar(
                     controller: _tabController,
                     isScrollable: true,

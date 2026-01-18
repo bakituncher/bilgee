@@ -56,7 +56,15 @@ class _ArenaScreenState extends ConsumerState<ArenaScreen> {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Zafer Panteonu'),
+          title: Text(
+            'Zafer Panteonu',
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
+              color: theme.colorScheme.onSurface,
+              letterSpacing: -0.5,
+              fontSize: 20,
+            ),
+          ),
           backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
           bottom: TabBar(
             indicatorColor: Theme.of(context).colorScheme.secondary,

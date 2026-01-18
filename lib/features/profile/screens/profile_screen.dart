@@ -150,9 +150,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         centerTitle: false,
         title: Text(
           'Profilim',
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            letterSpacing: 0.3,
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            color: theme.colorScheme.onSurface,
+            letterSpacing: -0.5,
+            fontSize: 20,
           ),
         ),
         backgroundColor: Colors.transparent,
