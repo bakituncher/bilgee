@@ -226,12 +226,19 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
     // AppTheme odaklı renk paleti
 
     return PopScope(
-      canPop: true,
+      // EĞER: Bir mood seçili değilse (menüdeysek) pop işlemine izin ver (true).
+      // DEĞİLSE: (Sohbetteysek) pop işlemini engelle (false) ki biz yönetelim.
+      canPop: selectedMood == null,
       onPopInvokedWithResult: (didPop, result) {
-        if (didPop && selectedMood != null) {
-          // Sohbetten çıkılırken state'i temizle
+        // Eğer zaten pop işlemi gerçekleştiyse (menüden çıkıldıysa) bir şey yapma.
+        if (didPop) return;
+
+        // Eğer pop engellendiyse (yani sohbet ekranındaysak):
+        if (selectedMood != null) {
+          // State'i null yaparak menüye (Briefing View) geri dön
           ref.read(chatScreenStateProvider.notifier).state = null;
           ref.read(chatHistoryProvider.notifier).state = [];
+          setState(() => _isTyping = false);
         }
       },
       child: Scaffold(
