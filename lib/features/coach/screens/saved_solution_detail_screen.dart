@@ -150,7 +150,7 @@ class _SavedSolutionDetailScreenState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Soru Resmi
+            // Soru Resmi (Animasyon ile birlikte)
             ClipRRect(
               borderRadius: BorderRadius.circular(16),
               child: Container(
@@ -160,41 +160,23 @@ class _SavedSolutionDetailScreenState
                   color: Colors.black, // Resim yüklenirken arka plan
                 ),
                 constraints: const BoxConstraints(maxHeight: 400),
-                child: Image.file(File(currentSolution.localImagePath),
-                    fit: BoxFit.contain),
+                child: Stack(
+                  children: [
+                    // Fotoğraf
+                    Image.file(File(currentSolution.localImagePath),
+                        fit: BoxFit.contain),
+
+                    // Animasyon overlay (sadece çözüm işlemi sırasında)
+                    if (_isSolving)
+                      _ScanningAnalysisOverlay(theme: theme),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 24),
 
             // DURUMA GÖRE İÇERİK
-            if (_isSolving) ...[
-              // Yükleniyor Durumu
-              Container(
-                padding: const EdgeInsets.all(32),
-                decoration: BoxDecoration(
-                  color: theme.cardColor,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  children: [
-                    const CircularProgressIndicator(),
-                    const SizedBox(height: 16),
-                    Text(
-                      "Soru İnceleniyor...",
-                      style: TextStyle(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      "Taktik Tavşan çözümü hazırlıyor 🐰",
-                      style: TextStyle(color: theme.colorScheme.outline),
-                    ),
-                  ],
-                ),
-              ),
-            ] else if (!isSolved) ...[
+            if (!isSolved && !_isSolving) ...[
               // Çözülmemiş Durum: ÇÖZ BUTONU
               Container(
                 padding: const EdgeInsets.all(20),
@@ -284,3 +266,282 @@ class _SavedSolutionDetailScreenState
     );
   }
 }
+
+// --- TARAMA EFEKTLİ ANALİZ OVERLAY ---
+class _ScanningAnalysisOverlay extends StatefulWidget {
+  final ThemeData theme;
+
+  const _ScanningAnalysisOverlay({required this.theme});
+
+  @override
+  State<_ScanningAnalysisOverlay> createState() => _ScanningAnalysisOverlayState();
+}
+
+class _ScanningAnalysisOverlayState extends State<_ScanningAnalysisOverlay>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scanAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    );
+
+    _scanAnimation = Tween<double>(begin: -1.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+
+    _controller.repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: Colors.black.withOpacity(0.4),
+      ),
+      child: AnimatedBuilder(
+        animation: _scanAnimation,
+        builder: (context, child) {
+          return Stack(
+            children: [
+              // Grid overlay (opsiyonel - gelişmiş görünüm için)
+              CustomPaint(
+                painter: _GridPainter(
+                  color: widget.theme.colorScheme.primary.withOpacity(0.1),
+                ),
+                size: Size.infinite,
+              ),
+
+              // Ana tarama çizgisi
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: CustomPaint(
+                  painter: _ScanLinePainter(
+                    progress: _scanAnimation.value,
+                    color: widget.theme.colorScheme.primary,
+                  ),
+                  child: Container(),
+                ),
+              ),
+
+              // Merkez bilgi kutusu
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  decoration: BoxDecoration(
+                    color: widget.theme.colorScheme.surface.withOpacity(0.95),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: widget.theme.colorScheme.primary.withOpacity(0.3),
+                      width: 2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: widget.theme.colorScheme.primary.withOpacity(0.3),
+                        blurRadius: 20,
+                        spreadRadius: 5,
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Radar ikonu
+                      Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          // Dış halka (pulse efekti)
+                          Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: widget.theme.colorScheme.primary.withOpacity(0.3),
+                                width: 2,
+                              ),
+                            ),
+                          ).animate(onPlay: (c) => c.repeat())
+                              .scale(
+                                begin: const Offset(1.0, 1.0),
+                                end: const Offset(1.3, 1.3),
+                                duration: 1.5.seconds,
+                              )
+                              .fadeOut(begin: 0.6, duration: 1.5.seconds),
+
+                          // İç ikon
+                          Icon(
+                            Icons.document_scanner_outlined,
+                            size: 36,
+                            color: widget.theme.colorScheme.primary,
+                          ).animate(onPlay: (c) => c.repeat())
+                              .shimmer(
+                                duration: 1.8.seconds,
+                                color: widget.theme.colorScheme.secondary,
+                              ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Metin
+                      Text(
+                        'Soru Analiz Ediliyor',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: widget.theme.colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Progress indicator
+                      SizedBox(
+                        width: 200,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: LinearProgressIndicator(
+                            backgroundColor: widget.theme.colorScheme.primary.withOpacity(0.1),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              widget.theme.colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ).animate()
+                    .fadeIn(duration: 300.ms)
+                    .scale(
+                      begin: const Offset(0.8, 0.8),
+                      end: const Offset(1.0, 1.0),
+                      duration: 300.ms,
+                    ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+// Tarama çizgisi çizen CustomPainter
+class _ScanLinePainter extends CustomPainter {
+  final double progress;
+  final Color color;
+
+  _ScanLinePainter({required this.progress, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Progress -1'den 1'e gidiyor, biz bunu 0-1 aralığına çevirelim
+    final normalizedProgress = (progress + 1) / 2;
+    final scanY = size.height * normalizedProgress;
+
+    // Glow efekti için gradient
+    final gradient = LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [
+        color.withOpacity(0.0),
+        color.withOpacity(0.3),
+        color.withOpacity(0.8),
+        color.withOpacity(0.3),
+        color.withOpacity(0.0),
+      ],
+      stops: const [0.0, 0.3, 0.5, 0.7, 1.0],
+    );
+
+    final rect = Rect.fromLTWH(
+      0,
+      scanY - 40,
+      size.width,
+      80,
+    );
+
+    final paint = Paint()
+      ..shader = gradient.createShader(rect)
+      ..style = PaintingStyle.fill;
+
+    canvas.drawRect(rect, paint);
+
+    // Ana tarama çizgisi (ince parlak çizgi)
+    final linePaint = Paint()
+      ..color = color
+      ..strokeWidth = 3
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawLine(
+      Offset(0, scanY),
+      Offset(size.width, scanY),
+      linePaint,
+    );
+
+    // Yan nokta efektleri
+    final dotPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    for (int i = 0; i < 5; i++) {
+      final x = (size.width / 4) * i;
+      canvas.drawCircle(Offset(x, scanY), 4, dotPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_ScanLinePainter oldDelegate) {
+    return oldDelegate.progress != progress;
+  }
+}
+
+// Grid çizen CustomPainter (arka plan detayı)
+class _GridPainter extends CustomPainter {
+  final Color color;
+
+  _GridPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1
+      ..style = PaintingStyle.stroke;
+
+    const spacing = 30.0;
+
+    // Dikey çizgiler
+    for (double x = 0; x < size.width; x += spacing) {
+      canvas.drawLine(
+        Offset(x, 0),
+        Offset(x, size.height),
+        paint,
+      );
+    }
+
+    // Yatay çizgiler
+    for (double y = 0; y < size.height; y += spacing) {
+      canvas.drawLine(
+        Offset(0, y),
+        Offset(size.width, y),
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_GridPainter oldDelegate) => false;
+}
+
+
