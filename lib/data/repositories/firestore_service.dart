@@ -762,22 +762,62 @@ class FirestoreService {
     required String pacing,
     required Map<String, dynamic> weeklyPlan,
   }) async {
-    // CreationDate ekle (eğer yoksa)
-    // FieldValue.serverTimestamp() KULLANMA! UI patlar (Type Mismatch)
-    // Prompt zaten creationDate üretiyor, yoksa şimdi String olarak ekle
+    // 1. CreationDate kontrolü
     if (!weeklyPlan.containsKey('creationDate') || weeklyPlan['creationDate'] == null) {
       weeklyPlan['creationDate'] = DateTime.now().toIso8601String();
     }
 
-    // ✅ KRİTİK DÜZELTME: Yeni plan geldiğinde eski tamamlanan görevleri sıfırla!
-    // Aksi halde eski plandaki taskId'ler yeni planda da tamamlanmış gibi gözükür ("ghost completion")
-    await _planDoc(userId).set({
+    final planRef = _planDoc(userId);
+    final historyCollection = usersCollection.doc(userId).collection('archived_plans');
+
+    // 2. MEVCUT PLANI ARŞİVLEME MANTIĞI
+    final currentSnap = await planRef.get();
+    if (currentSnap.exists && currentSnap.data() != null) {
+      final currentData = currentSnap.data()!;
+      // Eğer içinde geçerli bir plan varsa arşivle
+      if (currentData['weeklyPlan'] != null) {
+        // Arşiv belgesi için ID olarak creationDate timestamp veya şimdiki zamanı kullan
+        final archiveId = DateTime.now().millisecondsSinceEpoch.toString();
+
+        // Arşive kaydet
+        await historyCollection.doc(archiveId).set({
+          ...currentData,
+          'archivedAt': FieldValue.serverTimestamp(),
+        });
+      }
+    }
+
+    // 3. ARŞİV LİMİTİ KONTROLÜ (Son 5 Plan)
+    final historySnap = await historyCollection.orderBy('archivedAt', descending: true).get();
+    if (historySnap.docs.length > 4) { // 5. yi ekledik, o yüzden 4'ten büyükse fazlaları sil
+      final docsToDelete = historySnap.docs.sublist(4); // İlk 5 hariç gerisini al
+      final batch = _firestore.batch();
+      for (var doc in docsToDelete) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+    }
+
+    // 4. YENİ PLANI KAYDET (Eski tamamlama verilerini sıfırlayarak)
+    await planRef.set({
       'studyPacing': pacing,
       'weeklyPlan': weeklyPlan,
-      'completedTasks': [], // 👈 İşte bu! Tamamlanmış görevleri sıfırla
+      'completedTasks': [], // Tamamlanmış görevleri sıfırla
       'lastUpdated': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+
     await updateEngagementScore(userId, 100);
+  }
+
+  // YENİ EKLENECEK METOT: Arşivlenmiş planları getir
+  Stream<List<PlanDocument>> getArchivedPlansStream(String userId) {
+    return usersCollection
+        .doc(userId)
+        .collection('archived_plans')
+        .orderBy('archivedAt', descending: true)
+        .limit(5)
+        .snapshots()
+        .map((qs) => qs.docs.map((d) => PlanDocument.fromSnapshot(d)).toList());
   }
 
   Future<void> markTopicAsMastered({required String userId, required String subject, required String topic}) async {

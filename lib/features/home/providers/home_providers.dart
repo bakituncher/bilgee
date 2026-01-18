@@ -6,6 +6,7 @@ import 'package:taktik/data/models/test_model.dart';
 import 'package:taktik/features/quests/models/quest_model.dart';
 import 'package:flutter/material.dart';
 import 'package:taktik/features/quests/logic/optimized_quests_provider.dart';
+import 'package:taktik/data/models/plan_document.dart';
 
 final avgNetProvider = Provider<double>((ref) {
   final tests = ref.watch(testsProvider).valueOrNull ?? <TestModel>[];
@@ -107,3 +108,11 @@ final lastTestsSeriesProvider = Provider<List<TestModel>>((ref){
   const take = 10;
   return sorted.length <= take ? sorted : sorted.sublist(sorted.length - take);
 });
+
+// Arşivlenmiş (geçmiş) planları dinleyen provider
+final archivedPlansProvider = StreamProvider.autoDispose<List<PlanDocument>>((ref) {
+  final user = ref.watch(userProfileProvider).value;
+  if (user == null) return Stream.value([]);
+  return ref.read(firestoreServiceProvider).getArchivedPlansStream(user.id);
+});
+

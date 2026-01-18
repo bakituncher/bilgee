@@ -57,8 +57,8 @@ Her görevin tipi şunlardan biri olmalı:
 - Uzunluk: Maksimum 150 karakter
 
 ### 8. PLAN YENİLEME KURALI
-⚠️ **ASLA AYNI PLANI TEKRARLAMA!**
-- Eğer geçmiş haftanın planı verilmişse ({{WEEKLY_PLAN_TEXT}}), birebir aynı görevleri ASLA üretme.
+⚠️ **HER HAFTA YENİ VE FARKLI PLAN!**
+- Her hafta öğrencinin gelişimine göre farklı konular ve görevler oluştur.
 - Kullanıcı gelişim gösteriyor, görevlerin zorluğunu ARTIR.
 
 {{REVISION_BLOCK}}
@@ -86,15 +86,6 @@ Her görevin tipi şunlardan biri olmalı:
 {{TOPIC_PERFORMANCES_JSON}}
 ```
 
-### Geçen Haftanın Planı
-```json
-{{WEEKLY_PLAN_TEXT}}
-```
-
-### Tamamlanan Görevler
-```json
-{{COMPLETED_TASKS_JSON}}
-```
 
 ### Müfredat Sırası (KONU HAVUZU)
 ```json
@@ -133,5 +124,5 @@ Sadece aşağıdaki JSON formatında çıktı ver. Açıklama, yorum YOK:
 
 ## CRITICAL WARNINGS
 - Her günün schedule dizisi DOLU olmalı
-- Konu isimleri {{CURRICULUM_JSON}} içinden seçilmeli
+- Konu isimleri {{CURRICULUM_JSON}}'daki "candidates" listesinden seçilmeli
 - Hem TYT hem AYT konuları dengeli dağıtılmalı

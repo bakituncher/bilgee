@@ -74,7 +74,7 @@ async function retryWithBackoff(fn, maxAttempts = MAX_RETRY_ATTEMPTS, baseDelay 
 }
 
 exports.generateGemini = onCall(
-  { region: "us-central1", timeoutSeconds: 60, memory: "256MiB", secrets: [GEMINI_API_KEY], enforceAppCheck: true, maxInstances: 20, concurrency: 10 },
+  { region: "us-central1", timeoutSeconds: 300, memory: "256MiB", secrets: [GEMINI_API_KEY], enforceAppCheck: true, maxInstances: 20, concurrency: 10 },
   async (request) => {
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Oturum gerekli");
@@ -206,8 +206,14 @@ exports.generateGemini = onCall(
       // İsteğe bağlı maxOutputTokens (güvenli aralıkta kırpılır)
       const reqMaxTokensRaw = request.data?.maxOutputTokens;
       let effectiveMaxTokens = expectJson ? DEFAULT_JSON_TOKENS : DEFAULT_TEXT_TOKENS;
+
+      // HAFTALIK PLAN İÇİN ÖZEL TOKEN LİMİTİ (Yarım kalma sorununun çözümü)
+      if (requestType === 'weekly_plan') {
+        effectiveMaxTokens = 12000; // Haftalık planlar için daha yüksek limit (8192 -> 12000)
+      }
+
       if (typeof reqMaxTokensRaw === 'number' && isFinite(reqMaxTokensRaw)) {
-        const clamped = Math.max(256, Math.min(reqMaxTokensRaw, 8192));
+        const clamped = Math.max(256, Math.min(reqMaxTokensRaw, 12000)); // Üst sınır 8192 -> 12000
         effectiveMaxTokens = clamped;
       }
 
