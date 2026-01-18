@@ -283,8 +283,28 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   tooltip: 'Menü',
                 ),
               ),
+              title: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset(
+                    'assets/images/splash.png',
+                    height: 28,
+                    fit: BoxFit.contain,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Taktik',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      color: Theme.of(context).colorScheme.onSurface,
+                      letterSpacing: -0.5,
+                      fontSize: 20,
+                    ),
+                  ),
+                ],
+              ),
+              centerTitle: true,
               actions: [
-                _RatingStarButton(),
                 _NotificationBell(),
                 const SizedBox(width: 8),
               ],
