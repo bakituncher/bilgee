@@ -296,10 +296,11 @@ class QuestNotifier extends StateNotifier<bool> {
 
     try {
       final firestore = _ref.read(firestoreProvider);
-      firestore.collection('users').doc(user.id).update({
-        'usedFeatures.$featureName': true,
+      // FIX: Nested field update yerine map merge kullan (permission error çözümü)
+      firestore.collection('users').doc(user.id).set({
+        'usedFeatures': {featureName: true},
         'updatedAt': FieldValue.serverTimestamp(),
-      });
+      }, SetOptions(merge: true));
     } catch (e) {
       if (kDebugMode) {
         debugPrint('[QuestNotifier] Feature usage update hatası: $e');

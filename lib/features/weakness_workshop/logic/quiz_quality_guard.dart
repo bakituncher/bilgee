@@ -37,11 +37,16 @@ class QuizQualityGuard {
       }
     }
 
-    // Toplam soru sayısı kontrolü
-    if (validQuestions.length < minQuestions) {
-      issues.add('Kalite kontrol sonrası soru sayısı yetersiz kaldı (${validQuestions.length}/$minQuestions).');
-      // Kullanıcıya bozuk test göstermektense hata fırlatıp yeniden ürettirmek daha iyidir.
+    // Toplam soru sayısı kontrolü - YENİ YAKLAŞIM
+    // Eğer hiç soru kalmadıysa hata ver, ama 1-2 soru bile varsa AI'ye güven.
+    if (validQuestions.isEmpty) {
+      issues.add('Hiç geçerli soru oluşturulamadı.');
       throw Exception('Soru kalitesi standartları karşılamadı. Lütfen tekrar deneyin.');
+    }
+
+    // 1-2 soru kaldıysa uyarı ekle ama devam et (kullanıcı deneyimi için)
+    if (validQuestions.length < minQuestions) {
+      issues.add('Uyarı: Kalite kontrol nedeniyle bazı sorular elendi. Kalan soru sayısı: ${validQuestions.length}');
     }
 
     // Temizlenmiş materyali döndür
