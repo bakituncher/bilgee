@@ -112,12 +112,14 @@ exports.generateGemini = onCall(
     }
 
     // MODEL SEÇİMİ GÜNCELLEMESİ
-    // Soru çözücü: gemini-3-flash-preview (veya en son güçlü model)
+    // Soru çözücü ve Cevher Atölyesi: gemini-3-flash-preview (en son güçlü model)
     // Diğer tüm chat/planlama işleri: gemini-2.5-flash (Lite yerine tam sürüm)
     const requestedModel = typeof request.data?.model === "string" ? String(request.data.model).trim() : null;
 
-    // BURASI GÜNCELLENDİ: 'lite' ibaresi kaldırıldı.
-    const modelId = requestType === 'question_solver' ? "gemini-3-flash-preview" : "gemini-2.5-flash";
+    // BURASI GÜNCELLENDİ: workshop için de güçlü model kullanılıyor
+    const modelId = (requestType === 'question_solver' || requestType === 'workshop')
+      ? "gemini-3-flash-preview"
+      : "gemini-2.5-flash";
 
     if (requestedModel && requestedModel.toLowerCase() !== modelId) {
       logger.info("Model override enforced", { requestedModel, enforced: modelId, requestType });
