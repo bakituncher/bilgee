@@ -11,7 +11,6 @@ class PremiumHeroCard extends StatelessWidget {
   final List<TestModel> tests;
   final bool isDark;
   final int streak;
-  final String avgNet;
 
   const PremiumHeroCard({
     super.key,
@@ -19,7 +18,6 @@ class PremiumHeroCard extends StatelessWidget {
     required this.tests,
     required this.isDark,
     required this.streak,
-    required this.avgNet,
   });
 
   @override
@@ -234,16 +232,6 @@ class PremiumHeroCard extends StatelessWidget {
                             label: 'Deneme',
                             value: '${tests.length}',
                             color: const Color(0xFF8B5CF6),
-                            isDark: isDark,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: PremiumStatItem(
-                            icon: Icons.trending_up_rounded,
-                            label: 'Ort. Net',
-                            value: avgNet,
-                            color: const Color(0xFF10B981),
                             isDark: isDark,
                           ),
                         ),

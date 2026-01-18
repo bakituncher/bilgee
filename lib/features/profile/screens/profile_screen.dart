@@ -9,34 +9,24 @@ import 'package:taktik/data/providers/admin_providers.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:taktik/data/models/user_model.dart';
+import 'package:taktik/data/models/test_model.dart'; // EKLENDİ: isBranchTest için gerekli
 import 'package:taktik/data/models/focus_session_model.dart';
 import 'package:taktik/features/profile/models/badge_model.dart' as app_badge;
 import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:confetti/confetti.dart';
-import 'package:flutter_svg/flutter_svg.dart'; // Avatar için eklendi
-import 'package:flutter/services.dart'; // HapticFeedback
-import 'dart:math' as math; // trig için
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter/services.dart';
+import 'dart:math' as math;
 import '../logic/rank_service.dart';
 import 'package:taktik/data/models/performance_summary.dart';
-import 'package:taktik/data/models/plan_document.dart'; // EKLENDİ
+import 'package:taktik/data/models/plan_document.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter/rendering.dart';
 import 'package:intl/intl.dart';
 import 'package:taktik/data/providers/firestore_providers.dart' as providers;
 import 'dart:ui' as ui;
 import 'package:taktik/shared/widgets/logo_loader.dart';
-
-// ===== NovaPulse / Arena ile tutarlı premium accent renkleri =====
-// Bu sabitler artık tema renklerine bağlanacak.
-// const _accentProfile1 = AppTheme.secondaryColor; // camgöbeği
-// const _accentProfile2 = AppTheme.successColor;   // zümrüt
-
-// ARKA PLAN GRADYANI ARTIK TEMADAN DİNAMİK OLARAK ALINACAK
-// const List<Color> _profileBgGradient = [
-//   AppTheme.scaffoldBackgroundColor,
-//   AppTheme.cardColor,
-//   AppTheme.scaffoldBackgroundColor,
-// ];
+import 'package:taktik/features/stats/utils/stats_calculator.dart';
 
 final focusSessionsProvider = StreamProvider.autoDispose<List<FocusSessionModel>>((ref) {
   final user = ref.watch(authControllerProvider).value;
@@ -115,7 +105,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       final bytes = byteData.buffer.asUint8List();
       final xfile = XFile.fromData(bytes, name: 'warrior_card.png', mimeType: 'image/png');
 
-      // iOS için sharePositionOrigin gerekli
       final box = context.findRenderObject() as RenderBox?;
       final sharePositionOrigin = box != null
           ? box.localToGlobal(Offset.zero) & box.size
@@ -161,9 +150,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         centerTitle: false,
         title: Text(
           'Profilim',
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            letterSpacing: 0.3,
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            color: theme.colorScheme.onSurface,
+            letterSpacing: -0.5,
+            fontSize: 20,
           ),
         ),
         backgroundColor: Colors.transparent,
@@ -329,8 +320,8 @@ class _ModernIconButtonState extends State<_ModernIconButton> {
               height: 40,
               decoration: BoxDecoration(
                 color: _isPressed
-                  ? colorScheme.primaryContainer.withOpacity(0.8)
-                  : colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                    ? colorScheme.primaryContainer.withOpacity(0.8)
+                    : colorScheme.surfaceContainerHighest.withOpacity(0.5),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: colorScheme.outline.withOpacity(0.1),
@@ -341,8 +332,8 @@ class _ModernIconButtonState extends State<_ModernIconButton> {
                 widget.icon,
                 size: 22,
                 color: widget.onPressed != null
-                  ? colorScheme.onSurface
-                  : colorScheme.onSurface.withOpacity(0.3),
+                    ? colorScheme.onSurface
+                    : colorScheme.onSurface.withOpacity(0.3),
               ),
             ),
           ),
@@ -363,7 +354,7 @@ class _ProfileView extends ConsumerWidget {
     required this.confettiController,
   });
 
-  List<app_badge.Badge> _generateBadges(BuildContext context, UserModel user, PerformanceSummary performance, PlanDocument? planDoc, int testCount, double avgNet, List<FocusSessionModel> focusSessions) {
+  List<app_badge.Badge> _generateBadges(BuildContext context, UserModel user, PerformanceSummary performance, PlanDocument? planDoc, int testCount, double avgNet, List<FocusSessionModel> focusSessions, int streak) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     return [
@@ -371,9 +362,9 @@ class _ProfileView extends ConsumerWidget {
       app_badge.Badge(name: 'Acemi Savaşçı', description: '5 farklı denemede savaş meydanının tozunu attın.', icon: Icons.shield_outlined, color: colorScheme.secondary, isUnlocked: testCount >= 5, rarity: app_badge.BadgeRarity.common, hint: "Toplam 5 deneme ekle."),
       app_badge.Badge(name: 'Kıdemli Savaşçı', description: '15 deneme! Artık bu işin kurdu olmaya başladın.', icon: Icons.shield, color: colorScheme.secondary, isUnlocked: testCount >= 15, rarity: app_badge.BadgeRarity.rare, hint: "Toplam 15 deneme ekle."),
       app_badge.Badge(name: 'Deneme Fatihi', description: 'Tam 50 denemeyi arşivine ekledin. Önünde kimse duramaz!', icon: Icons.military_tech, color: colorScheme.secondary, isUnlocked: testCount >= 50, rarity: app_badge.BadgeRarity.epic, hint: "Toplam 50 deneme ekle."),
-      app_badge.Badge(name: 'Kıvılcım', description: 'Ateşi yaktın! 3 günlük çalışma serisine ulaştın.', icon: Icons.whatshot_outlined, color: colorScheme.primary, isUnlocked: user.streak >= 3, hint: "3 gün ara vermeden çalış."),
-      app_badge.Badge(name: 'Alev Ustası', description: 'Tam 14 gün boyunca disiplini elden bırakmadın. Bu bir irade zaferidir!', icon: Icons.local_fire_department, color: colorScheme.primary, isUnlocked: user.streak >= 14, rarity: app_badge.BadgeRarity.rare, hint: "14 günlük seriye ulaş."),
-      app_badge.Badge(name: 'Durdurulamaz', description: '30 gün! Sen artık bir alışkanlık abidesisin.', icon: Icons.wb_sunny, color: colorScheme.primary, isUnlocked: user.streak >= 30, rarity: app_badge.BadgeRarity.epic, hint: "Tam 30 gün ara verme."),
+      app_badge.Badge(name: 'Kıvılcım', description: 'Ateşi yaktın! 3 günlük çalışma serisine ulaştın.', icon: Icons.whatshot_outlined, color: colorScheme.primary, isUnlocked: streak >= 3, hint: "3 gün ara vermeden çalış."),
+      app_badge.Badge(name: 'Alev Ustası', description: 'Tam 14 gün boyunca disiplini elden bırakmadın. Bu bir irade zaferidir!', icon: Icons.local_fire_department, color: colorScheme.primary, isUnlocked: streak >= 14, rarity: app_badge.BadgeRarity.rare, hint: "14 günlük seriye ulaş."),
+      app_badge.Badge(name: 'Durdurulamaz', description: '30 gün! Sen artık bir alışkanlık abidesisin.', icon: Icons.wb_sunny, color: colorScheme.primary, isUnlocked: streak >= 30, rarity: app_badge.BadgeRarity.epic, hint: "Tam 30 gün ara verme."),
       app_badge.Badge(name: 'Yükseliş', description: 'Ortalama 50 net barajını aştın. Bu daha başlangıç!', icon: Icons.trending_up, color: colorScheme.primary, isUnlocked: avgNet > 50, hint: "Net ortalamanı 50'nin üzerine çıkar."),
       app_badge.Badge(name: 'Usta Nişancı', description: 'Ortalama 90 net! Elitler arasına hoş geldin.', icon: Icons.gps_not_fixed, color: colorScheme.primary, isUnlocked: avgNet > 90, rarity: app_badge.BadgeRarity.rare, hint: "Net ortalamanı 90'ın üzerine çıkar."),
       app_badge.Badge(name: 'Taktik Nişancı', description: 'Ortalama 100 net barajını yıktın. Sen bir efsanesin!', icon: Icons.workspace_premium, color: colorScheme.primary, isUnlocked: avgNet > 100, rarity: app_badge.BadgeRarity.epic, hint: "Net ortalamanı 100'ün üzerine çıkar."),
@@ -395,23 +386,23 @@ class _ProfileView extends ConsumerWidget {
     final statsStream = ref.watch(providers.userStatsStreamProvider);
     final followCountsAsync = ref.watch(providers.followCountsProvider(user.id));
 
-    // Check for loading state first
     if (testsAsync.isLoading || focusSessionsAsync.isLoading || performanceAsync.isLoading || planDocAsync.isLoading || followCountsAsync.isLoading) {
       return const LogoLoader();
     }
 
-    // Handle errors gracefully
     if (testsAsync.hasError || focusSessionsAsync.hasError || performanceAsync.hasError || planDocAsync.hasError || followCountsAsync.hasError) {
       return const Center(child: Text("Veriler yüklenirken bir sorun oluştu."));
     }
 
-    // If we reach here, all data is available.
     final tests = testsAsync.value!;
+
+    // FİLTRELEME: Branş denemelerini hariç tut
+    final mainTests = tests.where((t) => !t.isBranchTest).toList();
+
     final focusSessions = focusSessionsAsync.value!;
     final performance = performanceAsync.value!;
     final planDoc = planDocAsync.value;
     final followCounts = followCountsAsync.value!;
-    final statsUpdatedAt = statsStream.valueOrNull?.updatedAt;
 
     final rankInfo = RankService.getRankInfo(user.engagementScore);
     final currentRank = rankInfo.current;
@@ -419,9 +410,14 @@ class _ProfileView extends ConsumerWidget {
     final progressToNext = rankInfo.progress;
     final rankIndex = RankService.ranks.indexOf(currentRank);
 
-    final testCount = tests.length;
-    final avgNet = testCount > 0 ? user.totalNetSum / testCount : 0.0;
-    final allBadges = _generateBadges(context, user, performance, planDoc, testCount, avgNet, focusSessions);
+    // HESAPLAMA: Filtrelenmiş liste üzerinden hesapla
+    final testCount = mainTests.length;
+    final avgNet = testCount > 0 ? mainTests.fold(0.0, (sum, t) => sum + t.totalNet) / testCount : 0.0;
+
+    // MERKEZİ SİSTEM: Streak Firebase'den alınır, hesaplanmaz
+    final streak = StatsCalculator.getStreak(user);
+
+    final allBadges = _generateBadges(context, user, performance, planDoc, testCount, avgNet, focusSessions, streak);
     final unlockedCount = allBadges.where((b) => b.isUnlocked).length;
 
     final theme = Theme.of(context);
@@ -451,15 +447,15 @@ class _ProfileView extends ConsumerWidget {
                               end: Alignment.bottomRight,
                               colors: theme.brightness == Brightness.dark
                                   ? [
-                                      colorScheme.surface.withOpacity(0.7),
-                                      colorScheme.surface.withOpacity(0.4),
-                                      colorScheme.surface.withOpacity(0.6),
-                                    ]
+                                colorScheme.surface.withOpacity(0.7),
+                                colorScheme.surface.withOpacity(0.4),
+                                colorScheme.surface.withOpacity(0.6),
+                              ]
                                   : [
-                                      colorScheme.surface.withOpacity(0.98),
-                                      colorScheme.surfaceContainerHighest.withOpacity(0.85),
-                                      colorScheme.surface.withOpacity(0.95),
-                                    ],
+                                colorScheme.surface.withOpacity(0.98),
+                                colorScheme.surfaceContainerHighest.withOpacity(0.85),
+                                colorScheme.surface.withOpacity(0.95),
+                              ],
                             ),
                             border: Border.all(
                               color: theme.brightness == Brightness.dark
@@ -485,9 +481,9 @@ class _ProfileView extends ConsumerWidget {
                           child: Column(
                             children: [
                               _ProfileAvatarHalo(user: user, color: currentRank.color, rankIndex: rankIndex)
-                                .animate()
-                                .fadeIn(duration: 400.ms, curve: Curves.easeOut)
-                                .scale(begin: const Offset(0.8, 0.8), duration: 500.ms, curve: Curves.easeOutBack),
+                                  .animate()
+                                  .fadeIn(duration: 400.ms, curve: Curves.easeOut)
+                                  .scale(begin: const Offset(0.8, 0.8), duration: 500.ms, curve: Curves.easeOutBack),
                               const SizedBox(height: 8),
                               Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -505,23 +501,23 @@ class _ProfileView extends ConsumerWidget {
                                       textAlign: TextAlign.center,
                                       overflow: TextOverflow.ellipsis,
                                     ).animate()
-                                      .fadeIn(duration: 500.ms, delay: 100.ms)
-                                      .slideY(begin: 0.3, end: 0, duration: 500.ms, curve: Curves.easeOutCubic),
+                                        .fadeIn(duration: 500.ms, delay: 100.ms)
+                                        .slideY(begin: 0.3, end: 0, duration: 500.ms, curve: Curves.easeOutCubic),
                                   ),
                                   if (isPremium) ...[
                                     const SizedBox(width: 8),
                                     const _PremiumStatusBadge()
-                                      .animate()
-                                      .fadeIn(duration: 400.ms, delay: 200.ms)
-                                      .scale(begin: const Offset(0.5, 0.5), duration: 600.ms, curve: Curves.elasticOut),
+                                        .animate()
+                                        .fadeIn(duration: 400.ms, delay: 200.ms)
+                                        .scale(begin: const Offset(0.5, 0.5), duration: 600.ms, curve: Curves.elasticOut),
                                   ],
                                 ],
                               ),
                               const SizedBox(height: 6),
                               _RankPill(rank: currentRank)
-                                .animate()
-                                .fadeIn(duration: 500.ms, delay: 150.ms)
-                                .slideY(begin: 0.3, end: 0, duration: 500.ms, curve: Curves.easeOutCubic),
+                                  .animate()
+                                  .fadeIn(duration: 500.ms, delay: 150.ms)
+                                  .slideY(begin: 0.3, end: 0, duration: 500.ms, curve: Curves.easeOutCubic),
                               const SizedBox(height: 14),
                               // XP Progress Bar
                               _NeoXpBar(
@@ -529,10 +525,10 @@ class _ProfileView extends ConsumerWidget {
                                 nextLevelXp: nextRank.requiredScore == currentRank.requiredScore ? currentRank.requiredScore : nextRank.requiredScore,
                                 progress: progressToNext,
                               ).animate()
-                                .fadeIn(duration: 500.ms, delay: 200.ms)
-                                .slideX(begin: -0.2, end: 0, duration: 500.ms, curve: Curves.easeOutCubic),
+                                  .fadeIn(duration: 500.ms, delay: 200.ms)
+                                  .slideX(begin: -0.2, end: 0, duration: 500.ms, curve: Curves.easeOutCubic),
                               const SizedBox(height: 14),
-                              // Madalyalar ve Seviye
+                              // Madalyalar, Seviye, Deneme ve Seri - 2x2 Grid
                               Container(
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(18),
@@ -542,26 +538,57 @@ class _ProfileView extends ConsumerWidget {
                                     width: 1,
                                   ),
                                 ),
-                                child: Row(
+                                child: Column(
                                   children: [
-                                    Expanded(
-                                      child: _StatButton(
-                                        onTap: () => context.push('/profile/honor-wall', extra: allBadges),
-                                        icon: Icons.military_tech_rounded,
-                                        iconColor: Colors.amber.shade600,
-                                        value: '$unlockedCount/${allBadges.length}',
-                                        label: 'Madalyalar',
-                                        delay: 250.ms,
-                                      ),
+                                    // Üst Satır: Madalyalar ve Seviye
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: _StatButton(
+                                            onTap: () => context.push('/profile/honor-wall', extra: allBadges),
+                                            icon: Icons.military_tech_rounded,
+                                            iconColor: Colors.amber.shade600,
+                                            value: '$unlockedCount/${allBadges.length}',
+                                            label: 'Madalyalar',
+                                            delay: 250.ms,
+                                          ),
+                                        ),
+                                        Container(
+                                          width: 1.5,
+                                          height: 60,
+                                          margin: const EdgeInsets.symmetric(vertical: 6),
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              begin: Alignment.topCenter,
+                                              end: Alignment.bottomCenter,
+                                              colors: [
+                                                colorScheme.outline.withOpacity(0.0),
+                                                colorScheme.outline.withOpacity(0.3),
+                                                colorScheme.outline.withOpacity(0.0),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: _StatButton(
+                                            onTap: () => context.push('/profile/ranks'),
+                                            icon: Icons.workspace_premium,
+                                            iconColor: currentRank.color,
+                                            value: '${rankIndex + 1}',
+                                            label: 'Seviye',
+                                            delay: 275.ms,
+                                          ),
+                                        ),
+                                      ],
                                     ),
+                                    // Yatay Ayırıcı Çizgi
                                     Container(
-                                      width: 1.5,
-                                      height: 60,
-                                      margin: const EdgeInsets.symmetric(vertical: 6),
+                                      height: 1.5,
+                                      margin: const EdgeInsets.symmetric(horizontal: 6),
                                       decoration: BoxDecoration(
                                         gradient: LinearGradient(
-                                          begin: Alignment.topCenter,
-                                          end: Alignment.bottomCenter,
+                                          begin: Alignment.centerLeft,
+                                          end: Alignment.centerRight,
                                           colors: [
                                             colorScheme.outline.withOpacity(0.0),
                                             colorScheme.outline.withOpacity(0.3),
@@ -570,47 +597,52 @@ class _ProfileView extends ConsumerWidget {
                                         ),
                                       ),
                                     ),
-                                    Expanded(
-                                      child: _StatButton(
-                                        onTap: () => context.push('/profile/ranks'),
-                                        icon: Icons.workspace_premium,
-                                        iconColor: currentRank.color,
-                                        value: '${rankIndex + 1}',
-                                        label: 'Seviye',
-                                        delay: 300.ms,
-                                      ),
+                                    // Alt Satır: Deneme ve Seri
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: _StatButton(
+                                            onTap: () {}, // Deneme sayfasına gitmek için
+                                            icon: Icons.library_books_rounded,
+                                            iconColor: colorScheme.primary,
+                                            value: testCount.toString(),
+                                            label: 'Deneme',
+                                            delay: 300.ms,
+                                          ),
+                                        ),
+                                        Container(
+                                          width: 1.5,
+                                          height: 60,
+                                          margin: const EdgeInsets.symmetric(vertical: 6),
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              begin: Alignment.topCenter,
+                                              end: Alignment.bottomCenter,
+                                              colors: [
+                                                colorScheme.outline.withOpacity(0.0),
+                                                colorScheme.outline.withOpacity(0.3),
+                                                colorScheme.outline.withOpacity(0.0),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: _StatButton(
+                                            onTap: () {}, // Seri sayfasına gitmek için
+                                            icon: Icons.local_fire_department_rounded,
+                                            iconColor: Colors.orange.shade700,
+                                            value: streak.toString(),
+                                            label: 'Seri',
+                                            delay: 325.ms,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
                               ).animate()
-                                .fadeIn(duration: 500.ms, delay: 250.ms)
-                                .scale(begin: const Offset(0.95, 0.95), duration: 500.ms, curve: Curves.easeOutBack),
-                              const SizedBox(height: 14),
-                              // Deneme, Ort. Net, Seri
-                              Row(
-                                children: [
-                                  Expanded(child: _ProfileStatCard(
-                                    label: 'Deneme',
-                                    value: testCount.toString(),
-                                    icon: Icons.library_books_rounded,
-                                    delay: 300.ms,
-                                  )),
-                                  const SizedBox(width: 10),
-                                  Expanded(child: _ProfileStatCard(
-                                    label: 'Ort. Net',
-                                    value: avgNet.toStringAsFixed(1),
-                                    icon: Icons.track_changes_rounded,
-                                    delay: 350.ms,
-                                  )),
-                                  const SizedBox(width: 10),
-                                  Expanded(child: _ProfileStatCard(
-                                    label: 'Seri',
-                                    value: user.streak.toString(),
-                                    icon: Icons.local_fire_department_rounded,
-                                    delay: 400.ms,
-                                  )),
-                                ],
-                              ),
+                                  .fadeIn(duration: 500.ms, delay: 250.ms)
+                                  .scale(begin: const Offset(0.95, 0.95), duration: 500.ms, curve: Curves.easeOutBack),
                               const SizedBox(height: 12),
                               // Takipçi / Takip alanı
                               Row(
@@ -622,8 +654,8 @@ class _ProfileView extends ConsumerWidget {
                                       value: followCounts.$1,
                                       onTap: () => context.push('/profile/follow-list?mode=followers'),
                                     ).animate()
-                                      .fadeIn(duration: 500.ms, delay: 450.ms)
-                                      .slideX(begin: -0.2, end: 0, duration: 500.ms, curve: Curves.easeOutCubic),
+                                        .fadeIn(duration: 500.ms, delay: 450.ms)
+                                        .slideX(begin: -0.2, end: 0, duration: 500.ms, curve: Curves.easeOutCubic),
                                   ),
                                   const SizedBox(width: 16),
                                   Expanded(
@@ -632,8 +664,8 @@ class _ProfileView extends ConsumerWidget {
                                       value: followCounts.$2,
                                       onTap: () => context.push('/profile/follow-list?mode=following'),
                                     ).animate()
-                                      .fadeIn(duration: 500.ms, delay: 500.ms)
-                                      .slideX(begin: 0.2, end: 0, duration: 500.ms, curve: Curves.easeOutCubic),
+                                        .fadeIn(duration: 500.ms, delay: 500.ms)
+                                        .slideX(begin: 0.2, end: 0, duration: 500.ms, curve: Curves.easeOutCubic),
                                   ),
                                 ],
                               ),
@@ -654,8 +686,8 @@ class _ProfileView extends ConsumerWidget {
                                   ),
                                 ],
                               ).animate()
-                                .fadeIn(duration: 500.ms, delay: 550.ms)
-                                .scale(begin: const Offset(0.9, 0.9), duration: 500.ms, curve: Curves.easeOutBack),
+                                  .fadeIn(duration: 500.ms, delay: 550.ms)
+                                  .scale(begin: const Offset(0.9, 0.9), duration: 500.ms, curve: Curves.easeOutBack),
                             ],
                           ),
                         ),
@@ -732,40 +764,39 @@ class _FollowCount extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              FittedBox(
+          children: [
+            FittedBox(
+              child: Text(
+                value.toString(),
+                style: textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 22,
+                  letterSpacing: 0.5,
+                ),
+                maxLines: 1,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Flexible(
+              child: FittedBox(
                 child: Text(
-                  value.toString(),
-                  style: textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 22,
-                    letterSpacing: 0.5,
+                  label,
+                  style: textTheme.labelMedium?.copyWith(
+                    color: colorScheme.onSurface.withOpacity(0.7),
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.3,
                   ),
                   maxLines: 1,
                 ),
               ),
-              const SizedBox(height: 4),
-              Flexible(
-                child: FittedBox(
-                  child: Text(
-                    label,
-                    style: textTheme.labelMedium?.copyWith(
-                      color: colorScheme.onSurface.withOpacity(0.7),
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.3,
-                    ),
-                    maxLines: 1,
-                  ),
-                ),
-              ),
-            ],
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-// Yeni _StatButton Widget
 class _StatButton extends StatefulWidget {
   final VoidCallback onTap;
   final IconData icon;
@@ -847,7 +878,6 @@ class _StatButtonState extends State<_StatButton> {
   }
 }
 
-// === Diğer widget'lar değişmediği için kısaltıldı ===
 class _ProfileAvatarHalo extends StatefulWidget {
   final UserModel user; final Color color; final int rankIndex;
   const _ProfileAvatarHalo({required this.user, required this.color, required this.rankIndex});
@@ -925,7 +955,6 @@ class _ProfileAvatarHaloState extends State<_ProfileAvatarHalo> with SingleTicke
         child: Stack(
           alignment: Alignment.center,
           children: [
-            // Statik halo efekti - animasyon yok
             if (_isGlowing) ...[
               _HaloRing(controller: _glowController, color: accentProfile1.o(0.20), size: 150, begin: 0.90, end: 1.05, delay: 0.ms),
               if (_midTier)
@@ -951,7 +980,6 @@ class _ProfileAvatarHaloState extends State<_ProfileAvatarHalo> with SingleTicke
                 ...List.generate(10 + (widget.rankIndex * 2).clamp(0, 12), (i) => _SparkParticle(controller: _glowController, index: i, radius: 78, apex: _apexTier)),
             ],
 
-            // Rütbe ikonu - sadece glow sırasında animasyon
             if (widget.rankIndex >= 4)
               Positioned(
                 top: 4.0 + (10 - widget.rankIndex).clamp(0,6).toDouble(),
@@ -961,8 +989,8 @@ class _ProfileAvatarHaloState extends State<_ProfileAvatarHalo> with SingleTicke
                     animation: _glowController,
                     builder: (context, child) {
                       final scale = _isGlowing
-                        ? 1.0 + (_glowController.value * 0.1)
-                        : 1.0;
+                          ? 1.0 + (_glowController.value * 0.1)
+                          : 1.0;
                       return Transform.scale(
                         scale: scale,
                         child: child,
@@ -985,8 +1013,8 @@ class _ProfileAvatarHaloState extends State<_ProfileAvatarHalo> with SingleTicke
                     rankIndex: widget.rankIndex,
                     color: widget.color,
                     intensity: 0.35 + (widget.rankIndex * 0.04).clamp(0, 0.4),
-                    accent: accentProfile2, // Pass theme-aware color
-                    base: accentProfile1,   // Pass theme-aware color
+                    accent: accentProfile2,
+                    base: accentProfile1,
                   ),
                 ),
               ),
@@ -1404,7 +1432,6 @@ class _NeoXpBar extends StatelessWidget {
                       ],
                     ),
                   ),
-                  // Shine effect
                   if (capped > 0.05)
                     AnimatedContainer(
                       duration: const Duration(milliseconds: 900),
@@ -1425,7 +1452,7 @@ class _NeoXpBar extends StatelessWidget {
                         ),
                       ),
                     ).animate(onPlay: (controller) => controller.repeat())
-                      .shimmer(duration: 2000.ms, delay: 500.ms),
+                        .shimmer(duration: 2000.ms, delay: 500.ms),
                 ],
               );
             },
@@ -1486,13 +1513,13 @@ class _ProfileStatCardState extends State<_ProfileStatCard> {
               end: Alignment.bottomRight,
               colors: isDark
                   ? [
-                      colorScheme.surfaceContainerHigh.withOpacity(0.4),
-                      colorScheme.surfaceContainer.withOpacity(0.2),
-                    ]
+                colorScheme.surfaceContainerHigh.withOpacity(0.4),
+                colorScheme.surfaceContainer.withOpacity(0.2),
+              ]
                   : [
-                      colorScheme.surfaceContainerHighest.withOpacity(0.5),
-                      colorScheme.surfaceContainerHigh.withOpacity(0.3),
-                    ],
+                colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                colorScheme.surfaceContainerHigh.withOpacity(0.3),
+              ],
             ),
             border: Border.all(
               color: isDark
@@ -1637,38 +1664,38 @@ class _ActionNeoState extends State<_ActionNeo> {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: _pressed
-                ? [
-                    colorScheme.primaryContainer.withOpacity(0.6),
-                    colorScheme.secondaryContainer.withOpacity(0.4),
-                  ]
-                : isDark
                   ? [
-                      colorScheme.surfaceContainerHigh.withOpacity(0.5),
-                      colorScheme.surfaceContainer.withOpacity(0.3),
-                    ]
+                colorScheme.primaryContainer.withOpacity(0.6),
+                colorScheme.secondaryContainer.withOpacity(0.4),
+              ]
+                  : isDark
+                  ? [
+                colorScheme.surfaceContainerHigh.withOpacity(0.5),
+                colorScheme.surfaceContainer.withOpacity(0.3),
+              ]
                   : [
-                      colorScheme.surfaceContainerHighest.withOpacity(0.4),
-                      colorScheme.surfaceContainerHigh.withOpacity(0.25),
-                    ],
+                colorScheme.surfaceContainerHighest.withOpacity(0.4),
+                colorScheme.surfaceContainerHigh.withOpacity(0.25),
+              ],
             ),
             border: Border.all(
               color: _pressed
                   ? colorScheme.primary.withOpacity(0.3)
                   : isDark
-                    ? colorScheme.outline.withOpacity(0.15)
-                    : colorScheme.outline.withOpacity(0.2),
+                  ? colorScheme.outline.withOpacity(0.15)
+                  : colorScheme.outline.withOpacity(0.2),
               width: 1.5,
             ),
             boxShadow: _pressed
-              ? []
-              : [
-                  BoxShadow(
-                    color: colorScheme.shadow.withOpacity(0.08),
-                    blurRadius: 12,
-                    spreadRadius: 0,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+                ? []
+                : [
+              BoxShadow(
+                color: colorScheme.shadow.withOpacity(0.08),
+                blurRadius: 12,
+                spreadRadius: 0,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -1676,8 +1703,8 @@ class _ActionNeoState extends State<_ActionNeo> {
               Icon(
                 widget.icon,
                 color: _pressed
-                  ? colorScheme.primary
-                  : colorScheme.onSurface,
+                    ? colorScheme.primary
+                    : colorScheme.onSurface,
                 size: 22,
               ),
               const SizedBox(width: 8),
@@ -1688,8 +1715,8 @@ class _ActionNeoState extends State<_ActionNeo> {
                   fontSize: 14,
                   letterSpacing: 0.3,
                   color: _pressed
-                    ? colorScheme.primary
-                    : colorScheme.onSurface,
+                      ? colorScheme.primary
+                      : colorScheme.onSurface,
                 ),
               ),
             ],
@@ -1743,17 +1770,17 @@ class _PremiumStatusBadge extends StatelessWidget {
           ),
         ),
       ).animate(onPlay: (c) => c.repeat(reverse: true))
-        .scale(
-          begin: const Offset(1.0, 1.0),
-          end: const Offset(1.15, 1.15),
-          duration: const Duration(milliseconds: 2000),
-          curve: Curves.easeInOut,
-        )
-        .then()
-        .shimmer(
-          duration: const Duration(milliseconds: 1500),
-          color: Colors.white.withOpacity(0.3),
-        ),
+          .scale(
+        begin: const Offset(1.0, 1.0),
+        end: const Offset(1.15, 1.15),
+        duration: const Duration(milliseconds: 2000),
+        curve: Curves.easeInOut,
+      )
+          .then()
+          .shimmer(
+        duration: const Duration(milliseconds: 1500),
+        color: Colors.white.withOpacity(0.3),
+      ),
     );
   }
 }
@@ -1776,7 +1803,6 @@ class _AvatarPickerSheetState extends ConsumerState<_AvatarPickerSheet> {
   late String selectedSeed;
   bool _isUpdating = false;
 
-  // En popüler 6 avatar stili
   final List<String> avatarStyles = [
     'avataaars',
     'adventurer',
@@ -1883,7 +1909,6 @@ class _AvatarPickerSheetState extends ConsumerState<_AvatarPickerSheet> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Drag Handle
           Container(
             margin: const EdgeInsets.only(top: 12, bottom: 8),
             width: 40,
@@ -1894,7 +1919,6 @@ class _AvatarPickerSheetState extends ConsumerState<_AvatarPickerSheet> {
             ),
           ),
 
-          // Header with Preview
           Container(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
             child: Column(
@@ -1931,10 +1955,8 @@ class _AvatarPickerSheetState extends ConsumerState<_AvatarPickerSheet> {
 
                 const SizedBox(height: 20),
 
-                // Large Preview with Actions
                 Row(
                   children: [
-                    // Preview Avatar
                     Container(
                       width: 100,
                       height: 100,
@@ -1982,14 +2004,13 @@ class _AvatarPickerSheetState extends ConsumerState<_AvatarPickerSheet> {
 
                     const SizedBox(width: 20),
 
-                    // Action Button - Yeşil Şans Dene
                     Expanded(
                       child: FilledButton.icon(
                         onPressed: _randomizeAvatar,
                         icon: const Icon(Icons.casino_rounded, size: 22),
                         label: const Text('Şans Dene'),
                         style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFF4CAF50), // Yeşil
+                          backgroundColor: const Color(0xFF4CAF50),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
@@ -2006,7 +2027,6 @@ class _AvatarPickerSheetState extends ConsumerState<_AvatarPickerSheet> {
 
           const Divider(height: 1),
 
-          // Avatar Grid - Kompakt ve optimize edilmiş
           Flexible(
             child: Container(
               constraints: const BoxConstraints(
@@ -2023,121 +2043,118 @@ class _AvatarPickerSheetState extends ConsumerState<_AvatarPickerSheet> {
                 ),
                 itemCount: avatarStyles.length,
                 itemBuilder: (context, index) {
-                final styleKey = avatarStyles[index];
-                final isSelected = selectedStyle == styleKey;
+                  final styleKey = avatarStyles[index];
+                  final isSelected = selectedStyle == styleKey;
 
-                return GestureDetector(
-                  onTap: () => _selectStyle(styleKey),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 250),
-                    curve: Curves.easeOutCubic,
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? colorScheme.primaryContainer
-                          : colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(
+                  return GestureDetector(
+                    onTap: () => _selectStyle(styleKey),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeOutCubic,
+                      decoration: BoxDecoration(
                         color: isSelected
-                            ? colorScheme.primary
-                            : Colors.transparent,
-                        width: 3,
-                      ),
-                      boxShadow: isSelected
-                          ? [
-                              BoxShadow(
-                                color: colorScheme.primary.withOpacity(0.3),
-                                blurRadius: 16,
-                                spreadRadius: 2,
-                              ),
-                            ]
-                          : null,
-                    ),
-                    padding: const EdgeInsets.all(12),
-                    child: Stack(
-                      children: [
-                        // Avatar Preview
-                        Center(
-                          child: Container(
-                            width: double.infinity,
-                            height: double.infinity,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: colorScheme.surface,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
-                                  blurRadius: 8,
-                                  spreadRadius: 1,
-                                ),
-                              ],
-                            ),
-                            child: ClipOval(
-                              child: SvgPicture.network(
-                                _buildAvatarUrl(styleKey, selectedSeed),
-                                fit: BoxFit.cover,
-                                width: double.infinity,
-                                height: double.infinity,
-                                placeholderBuilder: (_) => Center(
-                                  child: SizedBox(
-                                    width: 24,
-                                    height: 24,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: colorScheme.primary,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ).animate(key: ValueKey('$styleKey-$selectedSeed'))
-                            .fadeIn(duration: 250.ms)
-                            .scale(
-                              begin: const Offset(0.85, 0.85),
-                              duration: 250.ms,
-                              curve: Curves.easeOutBack,
-                            ),
+                            ? colorScheme.primaryContainer
+                            : colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(
+                          color: isSelected
+                              ? colorScheme.primary
+                              : Colors.transparent,
+                          width: 3,
                         ),
-
-                        // Check Icon
-                        if (isSelected)
-                          Positioned(
-                            top: 4,
-                            right: 4,
+                        boxShadow: isSelected
+                            ? [
+                          BoxShadow(
+                            color: colorScheme.primary.withOpacity(0.3),
+                            blurRadius: 16,
+                            spreadRadius: 2,
+                          ),
+                        ]
+                            : null,
+                      ),
+                      padding: const EdgeInsets.all(12),
+                      child: Stack(
+                        children: [
+                          Center(
                             child: Container(
-                              padding: const EdgeInsets.all(6),
+                              width: double.infinity,
+                              height: double.infinity,
                               decoration: BoxDecoration(
-                                color: colorScheme.primary,
                                 shape: BoxShape.circle,
+                                color: colorScheme.surface,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: colorScheme.primary.withOpacity(0.4),
+                                    color: Colors.black.withOpacity(0.05),
                                     blurRadius: 8,
                                     spreadRadius: 1,
                                   ),
                                 ],
                               ),
-                              child: Icon(
-                                Icons.check_rounded,
-                                size: 16,
-                                color: colorScheme.onPrimary,
+                              child: ClipOval(
+                                child: SvgPicture.network(
+                                  _buildAvatarUrl(styleKey, selectedSeed),
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                  placeholderBuilder: (_) => Center(
+                                    child: SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: colorScheme.primary,
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ),
-                            ).animate()
-                              .scale(
+                            ).animate(key: ValueKey('$styleKey-$selectedSeed'))
+                                .fadeIn(duration: 250.ms)
+                                .scale(
+                              begin: const Offset(0.85, 0.85),
+                              duration: 250.ms,
+                              curve: Curves.easeOutBack,
+                            ),
+                          ),
+
+                          if (isSelected)
+                            Positioned(
+                              top: 4,
+                              right: 4,
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: colorScheme.primary,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: colorScheme.primary.withOpacity(0.4),
+                                      blurRadius: 8,
+                                      spreadRadius: 1,
+                                    ),
+                                  ],
+                                ),
+                                child: Icon(
+                                  Icons.check_rounded,
+                                  size: 16,
+                                  color: colorScheme.onPrimary,
+                                ),
+                              ).animate()
+                                  .scale(
                                 duration: 300.ms,
                                 curve: Curves.elasticOut,
                               )
-                              .fadeIn(duration: 200.ms),
-                          ),
-                      ],
+                                  .fadeIn(duration: 200.ms),
+                            ),
+                        ],
+                      ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
           ),
-        ),
 
-          // Bottom Action Bar - Eşit Boyutlu Butonlar
           Container(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
             decoration: BoxDecoration(
@@ -2154,7 +2171,6 @@ class _AvatarPickerSheetState extends ConsumerState<_AvatarPickerSheet> {
               top: false,
               child: Row(
                 children: [
-                  // İptal Butonu
                   Expanded(
                     child: FilledButton(
                       onPressed: () => Navigator.of(context).pop(),
@@ -2180,7 +2196,6 @@ class _AvatarPickerSheetState extends ConsumerState<_AvatarPickerSheet> {
 
                   const SizedBox(width: 12),
 
-                  // Kaydet Butonu
                   Expanded(
                     child: FilledButton(
                       onPressed: _isUpdating ? null : _updateAvatar,
@@ -2196,21 +2211,21 @@ class _AvatarPickerSheetState extends ConsumerState<_AvatarPickerSheet> {
                       ),
                       child: _isUpdating
                           ? SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.5,
-                                color: colorScheme.onPrimary,
-                              ),
-                            )
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: colorScheme.onPrimary,
+                        ),
+                      )
                           : const Text(
-                              'Kaydet',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.2,
-                              ),
-                            ),
+                        'Kaydet',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -2222,4 +2237,3 @@ class _AvatarPickerSheetState extends ConsumerState<_AvatarPickerSheet> {
     );
   }
 }
-

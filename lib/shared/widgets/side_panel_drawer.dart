@@ -145,10 +145,16 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                     ),
                   ),
 
-                  // -- MODERN SOSYAL MEDYA ALANI (AYIRICILI) --
+                  // --- MODERN SOSYAL MEDYA ALANI (AYIRICILI) --
                   Padding(
                     padding: const EdgeInsets.fromLTRB(10, 4, 10, 8),
                     child: _buildCompactSocialRow(context, user),
+                  ),
+
+                  // --- BİZİ DEĞERLENDİRİN BÖLÜMÜ ---
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(10, 4, 10, 8),
+                    child: _buildRateUsSection(context),
                   ),
 
                   const Divider(height: 1),
@@ -283,6 +289,81 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
               ),
             ),
           ],
+        ),
+      ],
+    );
+  }
+
+  // --- BİZİ DEĞERLENDİRİN BÖLÜMÜ ---
+  Widget _buildRateUsSection(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 4),
+          child: Text(
+            'BİZİ DEĞERLENDİRİR MİSİN?',
+            style: theme.textTheme.labelSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+              letterSpacing: 0.5,
+              fontSize: 10,
+            ),
+          ),
+        ),
+        InkWell(
+          onTap: () async {
+            Navigator.of(context).pop();
+            final url = Uri.parse('https://play.google.com/store/apps/details?id=com.codenzi.taktik');
+            if (await canLaunchUrl(url)) {
+              await launchUrl(url, mode: LaunchMode.externalApplication);
+            }
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              gradient: LinearGradient(
+                colors: [
+                  Colors.amber.withOpacity(0.15),
+                  Colors.orange.withOpacity(0.15),
+                ],
+              ),
+              border: Border.all(
+                color: Colors.amber.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.star_rounded,
+                  color: Colors.amber,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Mağazada Değerlendir',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.open_in_new_rounded,
+                  color: colorScheme.onSurfaceVariant,
+                  size: 16,
+                ),
+              ],
+            ),
+          ),
         ),
       ],
     );

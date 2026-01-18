@@ -171,6 +171,53 @@ function getClientIpFromRawRequest(rawRequest) {
   return null;
 }
 
+// Branş denemesi kontrolü (Dart'taki TestModel.isBranchTest mantığı)
+function isBranchTest(scores, sectionName, examType) {
+  if (!scores || typeof scores !== "object") return false;
+
+  const scoreKeys = Object.keys(scores);
+
+  // 1. Eğer sadece 1 ders varsa...
+  if (scoreKeys.length === 1) {
+    const subjectName = scoreKeys[0];
+    // İSTİSNA: "Alan Bilgisi" veya "Temel Alan Bilgisi" -> Ana sınav
+    if (subjectName === "Alan Bilgisi" || subjectName === "Temel Alan Bilgisi") {
+      return false;
+    }
+    // Diğer tek derslik durumlar branş denemesidir
+    return true;
+  }
+
+  const sectionUpper = (sectionName || "").toUpperCase().trim();
+  const examTypeUpper = (examType || "").toUpperCase().trim();
+
+  // 2. Ana sınav bölümleri - Kesin liste
+  const mainSections = ["TYT", "LGS", "KPSS", "AGS", "YDT", "GENEL", "TÜMÜ", "DENEME"];
+
+  // Eğer sectionName direkt sınav türüyle aynıysa -> Ana Deneme
+  if (sectionUpper === examTypeUpper) {
+    return false;
+  }
+
+  // Ana sınav isimlerini içeriyorsa -> Ana Deneme
+  if (mainSections.includes(sectionUpper)) {
+    return false;
+  }
+
+  // "TYT GENEL", "TYT DENEME" gibi kombinasyonları yakala
+  if (sectionUpper.includes("GENEL") || (sectionUpper.includes(examTypeUpper) && sectionUpper.includes("DENEME"))) {
+    return false;
+  }
+
+  // AYT ve alt türleri (AYT-SAY, AYT-EA, AYT-SOZ, AYT-DIL, vs.) -> Ana Deneme
+  if (sectionUpper.startsWith("AYT")) {
+    return false;
+  }
+
+  // Diğer her şey branş denemesi
+  return true;
+}
+
 module.exports = {
   nowIstanbul,
   dayKeyIstanbul,
@@ -181,4 +228,5 @@ module.exports = {
   enforceRateLimit,
   enforceDailyQuota,
   getClientIpFromRawRequest,
+  isBranchTest,
 };

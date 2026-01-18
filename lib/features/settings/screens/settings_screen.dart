@@ -798,8 +798,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        title: const Text("Ayarlar"),
-        centerTitle: false,
+        title: Text(
+          "Ayarlar",
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            color: Theme.of(context).colorScheme.onSurface,
+            letterSpacing: -0.5,
+            fontSize: 20,
+          ),
+        ),
+        centerTitle: true,
         elevation: 0,
         automaticallyImplyLeading: false,
         leading: IconButton(
@@ -865,6 +873,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SettingsSection(title: "Yardım ve Destek"),
           _SettingsCard(
             children: [
+              SettingsTile(
+                icon: Icons.help_outline_rounded,
+                title: "Taktik Rehberi",
+                subtitle: "Uygulama kullanım kılavuzu",
+                onTap: () => context.push(AppRoutes.userGuide),
+              ),
+              const Divider(height: 1, indent: 56),
               SettingsTile(
                 icon: Icons.contact_support_outlined,
                 title: "Bize Ulaşın",

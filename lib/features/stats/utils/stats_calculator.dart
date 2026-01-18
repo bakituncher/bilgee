@@ -26,53 +26,15 @@ class StatsCalculator {
     return avgNet.toStringAsFixed(1);
   }
 
-  /// Streak (ardışık gün) hesapla
-  static int calculateStreak(List<TestModel> tests) {
-    if (tests.isEmpty) return 0;
-
-    // Testleri tarihe göre sırala (en yeni en başta)
-    final sortedTests = tests.toList()
-      ..sort((a, b) => b.date.compareTo(a.date));
-
-    int streak = 0;
-    DateTime? lastDate;
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-
-    for (final test in sortedTests) {
-      final testDate = DateTime(test.date.year, test.date.month, test.date.day);
-
-      if (lastDate == null) {
-        // İlk test kontrolü - bugün olmalı, yoksa seri yok
-        final daysDiff = today.difference(testDate).inDays;
-        if (daysDiff == 0) {
-          // Bugün test var, seri başlasın
-          streak = 1;
-          lastDate = testDate;
-        } else if (daysDiff == 1) {
-          // En son test dün yapılmış, bugün yapılmamış - seri yok
-          return 0;
-        } else {
-          // Daha eski - seri kesinlikle yok
-          return 0;
-        }
-      } else {
-        // Bir önceki günde test var mı?
-        final daysDiff = lastDate.difference(testDate).inDays;
-        if (daysDiff == 1) {
-          // Ardışık gün
-          streak++;
-          lastDate = testDate;
-        } else if (daysDiff == 0) {
-          // Aynı gün içinde birden fazla test - sayma
-          continue;
-        } else {
-          // Seri kırılmış
-          break;
-        }
-      }
-    }
-
-    return streak;
+  /// Streak (ardışık gün) değerini döndür
+  ///
+  /// MERKEZİ SİSTEM: Streak artık Firebase'de server-side hesaplanıyor ve
+  /// public_profiles koleksiyonunda tutuluyor. Bu fonksiyon sadece UserModel'deki
+  /// streak değerini döndürür.
+  ///
+  /// Not: Streak güncellemeleri test ekleme/silme işlemlerinde Cloud Functions
+  /// tarafından otomatik olarak yapılır.
+  static int getStreak(UserModel user) {
+    return user.streak;
   }
 }

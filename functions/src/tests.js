@@ -1,7 +1,7 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions");
 const { db, admin } = require("./init");
-const { nowIstanbul, computeTestAggregates, enforceRateLimit, enforceDailyQuota, getClientIpFromRawRequest } = require("./utils");
+const { nowIstanbul, computeTestAggregates, enforceRateLimit, enforceDailyQuota, getClientIpFromRawRequest, isBranchTest } = require("./utils");
 const { updatePublicProfile } = require("./profile");
 
 exports.addEngagementPoints = onCall({ region: "us-central1", enforceAppCheck: true, maxInstances: 20 }, async (request) => {
@@ -120,6 +120,9 @@ exports.addTestResult = onCall({ region: "us-central1", timeoutSeconds: 30, enfo
         }
       }
 
+      // Branş denemesi kontrolü
+      const isTestBranch = isBranchTest(normalizedScores, sectionName, examType);
+
       // Şimdi tüm yazma işlemleri
       const newDocRef = testsCol.doc();
       newTestId = newDocRef.id;
@@ -137,18 +140,26 @@ exports.addTestResult = onCall({ region: "us-central1", timeoutSeconds: 30, enfo
         totalWrong,
         totalBlank,
         penaltyCoefficient,
+        isBranchTest: isTestBranch,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
       // İstatistikleri güncelle (onUserStatsWritten trigger'ı buradan tetiklenecek)
-      tx.set(statsRef, {
-        testCount: admin.firestore.FieldValue.increment(1),
-        totalNetSum: admin.firestore.FieldValue.increment(totalNet),
+      // testCount ve totalNetSum sadece ana sınav denemeleri için artırılır (branş denemeleri hariç)
+      const statsUpdate = {
         streak: newStreak,
         lastStreakUpdate: admin.firestore.Timestamp.fromDate(today),
         engagementScore: admin.firestore.FieldValue.increment(pointsAward),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      }, { merge: true });
+      };
+
+      // Sadece ana sınav denemelerinde testCount ve totalNetSum'ı artır
+      if (!isTestBranch) {
+        statsUpdate.testCount = admin.firestore.FieldValue.increment(1);
+        statsUpdate.totalNetSum = admin.firestore.FieldValue.increment(totalNet);
+      }
+
+      tx.set(statsRef, statsUpdate, { merge: true });
 
       if (!questsSnap.empty) {
         for (const doc of questsSnap.docs) {

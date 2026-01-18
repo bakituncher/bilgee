@@ -57,8 +57,9 @@ service cloud.firestore {
       match /state/{docId} {
         allow read: if request.auth.uid == userId;
         // ai_memory belgesi kullanıcı tarafından yazılabilir (AI sohbet hafızası için)
+        // stats belgesi kullanıcı tarafından yazılabilir (deneme silme işlemleri için)
         // points belgesi SADECE sunucu tarafından yazılabilir
-        allow write: if request.auth.uid == userId && docId == 'ai_memory';
+        allow write: if request.auth.uid == userId && (docId == 'ai_memory' || docId == 'stats');
       }
 
       match /plans/{docId} {
@@ -178,8 +179,8 @@ service cloud.firestore {
     // TESTLER
     // =====================================================================
     match /tests/{testId} {
-      allow read: if request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null;
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
       allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
     }
 

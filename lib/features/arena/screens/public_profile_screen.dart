@@ -27,6 +27,7 @@ final publicUserProfileProvider = FutureProvider.family.autoDispose<Map<String, 
   return null;
 });
 
+
 class PublicProfileScreen extends ConsumerStatefulWidget {
   final String userId;
   const PublicProfileScreen({super.key, required this.userId});
@@ -72,7 +73,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
     }
   }
 
-  void _showPublicAchievements(BuildContext context, {required String displayName, required int testCount, required double avgNet, required int streak, required int engagement}) {
+  void _showPublicAchievements(BuildContext context, {required String displayName, required int testCount, required int streak, required int engagement}) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).cardColor,
@@ -132,47 +133,14 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
     );
   }
 
-  void _showPublicProgress(BuildContext context, {required int testCount, required double avgNet, required int streak, required int engagement}) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Theme.of(context).cardColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('İlerleme Özeti'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _kv('Deneme', testCount.toString(), ctx),
-            _kv('Ortalama Net', avgNet.toStringAsFixed(1), ctx),
-            _kv('Günlük Seri', streak.toString(), ctx),
-            _kv('Taktik Puanı', engagement.toString(), ctx),
-          ],
-        ),
-        actions: [TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Kapat'))],
-      ),
-    );
-  }
-
-  Widget _kv(String k, String v, BuildContext ctx) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 4.0),
-    child: Row(children: [
-      Expanded(
-          child: Text(k,
-              style: Theme.of(ctx)
-                  .textTheme
-                  .bodyLarge
-                  ?.copyWith(color: Theme.of(ctx).colorScheme.onSurfaceVariant))),
-      Text(v, style: Theme.of(ctx).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold))
-    ]),
-  );
-
   @override
   Widget build(BuildContext context) {
     final userProfileAsync = ref.watch(publicUserProfileProvider(widget.userId));
     final statsAsync = ref.watch(userStatsForUserProvider(widget.userId));
     final followCountsAsync = ref.watch(followCountsProvider(widget.userId));
     final me = ref.watch(authControllerProvider).value;
+
+    // (workaround kaldırıldı) testCount artık public_profiles'tan gelir
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -219,18 +187,20 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
           // GÜVENLİK: Gerçek isim yerine kullanıcı adı (13-17 yaş koruması)
           final String username = (data['username'] as String?) ?? '';
           final String displayName = username.isNotEmpty ? '@$username' : 'İsimsiz Savaşçı';
+
+          // MERKEZİ SİSTEM: Tüm istatistikler public profile'dan alınır
           final int testCount = (data['testCount'] as num?)?.toInt() ?? 0;
-          final double totalNetSum = (data['totalNetSum'] as num?)?.toDouble() ?? 0.0;
-          final double avgNet = testCount > 0 ? totalNetSum / testCount : 0.0;
           final int engagement = (data['engagementScore'] as num?)?.toInt() ?? 0;
+
+          // MERKEZİ SİSTEM: Streak artık Firebase'deki public profile'dan alınır
           final int streak = (data['streak'] as num?)?.toInt() ?? 0;
+
           final String? avatarStyle = data['avatarStyle'] as String?;
           final String? avatarSeed = data['avatarSeed'] as String?;
           final rankInfo = RankService.getRankInfo(engagement);
           final rankName = rankInfo.current.name;
           final rankIcon = rankInfo.current.icon;
           final rankColor = rankInfo.current.color;
-          final currentLevel = RankService.ranks.indexOf(rankInfo.current) + 1;
           final updatedAt = statsAsync.valueOrNull?.updatedAt;
 
           return Container(
@@ -247,73 +217,90 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
               child: CustomScrollView(
                 physics: const BouncingScrollPhysics(),
                 slivers: [
-                  SliverToBoxAdapter(
+                  SliverFillRemaining(
+                    hasScrollBody: false,
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                       child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const SizedBox(height: 12),
+                          const Spacer(flex: 1),
                           // Paylaşılabilir kart
                           RepaintBoundary(
                             key: _shareKey,
-                            child: _ShareableProfileCard(
-                              displayName: displayName,
-                              avatarStyle: avatarStyle,
-                              avatarSeed: avatarSeed,
-                              rankColor: rankColor,
-                              rankIcon: rankIcon,
-                              rankName: rankName,
-                              avgNet: avgNet,
-                              testCount: testCount,
-                              streak: streak,
+                            child: followCountsAsync.when(
+                              data: (counts) => _ShareableProfileCard(
+                                displayName: displayName,
+                                avatarStyle: avatarStyle,
+                                avatarSeed: avatarSeed,
+                                rankColor: rankColor,
+                                rankIcon: rankIcon,
+                                rankName: rankName,
+                                testCount: testCount,
+                                streak: streak,
+                                followerCount: counts.$1,
+                                followingCount: counts.$2,
+                              ),
+                              loading: () => _ShareableProfileCard(
+                                displayName: displayName,
+                                avatarStyle: avatarStyle,
+                                avatarSeed: avatarSeed,
+                                rankColor: rankColor,
+                                rankIcon: rankIcon,
+                                rankName: rankName,
+                                testCount: testCount,
+                                streak: streak,
+                                followerCount: 0,
+                                followingCount: 0,
+                              ),
+                              error: (e, s) => _ShareableProfileCard(
+                                displayName: displayName,
+                                avatarStyle: avatarStyle,
+                                avatarSeed: avatarSeed,
+                                rankColor: rankColor,
+                                rankIcon: rankIcon,
+                                rankName: rankName,
+                                testCount: testCount,
+                                streak: streak,
+                                followerCount: 0,
+                                followingCount: 0,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 16),
-                          // Takipçi/Takip sayıları
-                          followCountsAsync.when(
-                            data: (counts) => Row(
-                              children: [
-                                Expanded(child: _CountPill(label: 'Takipçi', value: counts.$1)),
-                                const SizedBox(width: 12),
-                                Expanded(child: _CountPill(label: 'Takip', value: counts.$2)),
-                              ],
-                            ),
-                            loading: () => const LinearProgressIndicator(minHeight: 2),
-                            error: (e, s) => const SizedBox.shrink(),
-                          ),
-                          const SizedBox(height: 12),
-                          // Takip Et butonu - tam genişlikte
+                          // Takip Et butonu
                           if (me?.uid != widget.userId)
                             SizedBox(
                               width: double.infinity,
                               child: _FollowButton(targetUserId: widget.userId),
                             ),
-                          const SizedBox(height: 8),
-                          if (updatedAt != null)
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: Text(
-                                "Son güncelleme: ${DateFormat('dd MMM yyyy HH:mm', 'tr_TR').format(updatedAt)}",
-                                style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white70),
-                              ),
+                          if (me?.uid != widget.userId)
+                            const SizedBox(height: 10),
+                          // Başarılar butonu
+                          SizedBox(
+                            width: double.infinity,
+                            child: _ActionTile(
+                              icon: Icons.emoji_events_outlined,
+                              label: 'Başarılar',
+                              onTap: () {
+                                HapticFeedback.selectionClick();
+                                _showPublicAchievements(context,
+                                  displayName: displayName,
+                                  testCount: testCount,
+                                  streak: streak,
+                                  engagement: engagement,
+                                );
+                              }
                             ),
-                          const SizedBox(height: 16),
-                          // Başarılar butonu - tam genişlikte
-                          _ActionTile(
-                            icon: Icons.emoji_events_outlined,
-                            label: 'Başarılar',
-                            onTap: () {
-                              HapticFeedback.selectionClick();
-                              _showPublicAchievements(context,
-                                displayName: displayName,
-                                testCount: testCount,
-                                avgNet: avgNet,
-                                streak: streak,
-                                engagement: engagement,
-                              );
-                            }
                           ),
-                          const SizedBox(height: 20),
+                          if (updatedAt != null) ...[
+                            const SizedBox(height: 12),
+                            Text(
+                              "Son güncelleme: ${DateFormat('dd MMM yyyy HH:mm', 'tr_TR').format(updatedAt)}",
+                              style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white70),
+                            ),
+                          ],
+                          const Spacer(flex: 1),
                         ],
                       ),
                     ),
@@ -331,7 +318,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
 }
 
 class _ShareableProfileCard extends StatelessWidget {
-  final String displayName; final String? avatarStyle; final String? avatarSeed; final Color rankColor; final IconData rankIcon; final String rankName; final double avgNet; final int testCount; final int streak;
+  final String displayName; final String? avatarStyle; final String? avatarSeed; final Color rankColor; final IconData rankIcon; final String rankName; final int testCount; final int streak; final int followerCount; final int followingCount;
   const _ShareableProfileCard({
     required this.displayName,
     required this.avatarStyle,
@@ -339,15 +326,16 @@ class _ShareableProfileCard extends StatelessWidget {
     required this.rankColor,
     required this.rankIcon,
     required this.rankName,
-    required this.avgNet,
     required this.testCount,
     required this.streak,
+    required this.followerCount,
+    required this.followingCount,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
         gradient: LinearGradient(
@@ -362,21 +350,27 @@ class _ShareableProfileCard extends StatelessWidget {
       child: Column(
         children: [
           _AvatarHalo(displayName: displayName, avatarStyle: avatarStyle, avatarSeed: avatarSeed, rankColor: rankColor),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Text(displayName, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           _RankCapsule(rankName: rankName, icon: rankIcon, color: rankColor),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           Row(
             children: [
               Expanded(child: _StatCard(label: 'Deneme', value: testCount.toString(), icon: Icons.library_books_rounded, delay: 0.ms)),
               const SizedBox(width: 10),
-              Expanded(child: _StatCard(label: 'Ort. Net', value: avgNet.toStringAsFixed(1), icon: Icons.track_changes_rounded, delay: 0.ms)),
-              const SizedBox(width: 10),
               Expanded(child: _StatCard(label: 'Seri', value: streak.toString(), icon: Icons.local_fire_department_rounded, delay: 0.ms)),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(child: _CountPill(label: 'Takipçi', value: followerCount)),
+              const SizedBox(width: 10),
+              Expanded(child: _CountPill(label: 'Takip', value: followingCount)),
+            ],
+          ),
+          const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -510,20 +504,20 @@ class _AvatarHalo extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return SizedBox(
-      width: 150,
-      height: 150,
+      width: 130,
+      height: 130,
       child: Stack(
         alignment: Alignment.center,
         children: [
           _HaloCircle(
               color: colorScheme.primary.withOpacity(0.25),
-              size: 140,
+              size: 120,
               begin: 0.85,
               end: 1.05,
               delay: 0.ms),
           _HaloCircle(
               color: colorScheme.secondary.withOpacity(0.18),
-              size: 110,
+              size: 95,
               begin: 0.9,
               end: 1.08,
               delay: 400.ms),
@@ -537,7 +531,7 @@ class _AvatarHalo extends StatelessWidget {
               ],
             ),
             child: CircleAvatar(
-              radius: 56,
+              radius: 48,
               backgroundColor: Colors.black,
               child: ClipOval(
                 child: avatarStyle != null && avatarSeed != null
@@ -699,6 +693,3 @@ class _ActionTileState extends State<_ActionTile> {
     );
   }
 }
-
-// Yardımcı: kısa kullanım için ekstension
-extension _ColorAlphaX on Color { Color oa(double f)=> withValues(alpha: (a * f).toDouble()); }

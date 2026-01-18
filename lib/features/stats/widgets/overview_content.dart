@@ -39,8 +39,8 @@ class OverviewContent extends ConsumerWidget {
     // Hero kart ve genel metrikler branş denemelerinden etkilenmesin.
     final mainExamTests = tests.where((t) => !t.isBranchTest).toList();
 
-    final streak = StatsCalculator.calculateStreak(mainExamTests);
-    final avgNet = StatsCalculator.calculateAvgNet(user, mainExamTests);
+    // MERKEZİ SİSTEM: Streak Firebase'den alınır, hesaplanmaz
+    final streak = StatsCalculator.getStreak(user);
 
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
@@ -54,7 +54,6 @@ class OverviewContent extends ConsumerWidget {
               tests: mainExamTests,
               isDark: isDark,
               streak: streak,
-              avgNet: avgNet,
             ).animate()
               .fadeIn(duration: 400.ms)
               .slideY(begin: -0.05, duration: 500.ms, curve: Curves.easeOutCubic)

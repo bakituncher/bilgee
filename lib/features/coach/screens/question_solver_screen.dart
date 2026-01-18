@@ -61,6 +61,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
   bool _isCropping = false;  // Kırpma işlemi işleniyor durumu
   bool _isProcessingImage = false; // Fotoğraf ilk işlenirken (Loader için)
   bool _isChatLoading = false; // Sohbet cevap bekliyor mu?
+  bool _isSaved = false; // YENİ: Çözüm kaydedildi mi?
   String? _error;
 
   final ImagePicker _picker = ImagePicker();
@@ -87,6 +88,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
         _error = null;
         _isAnalyzing = false;
         _isCropping = false;
+        _isSaved = false; // Sıfırla
       });
       return;
     }
@@ -122,6 +124,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
             _isChatMode = false;
             _error = null;
             _isProcessingImage = false;
+            _isSaved = false; // Sıfırla
           });
         } else {
           // Sıkıştırma başarısız olursa orijinali kullan (Fallback)
@@ -132,6 +135,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
             _messages.clear();
             _isChatMode = false;
             _isProcessingImage = false;
+            _isSaved = false; // Sıfırla
           });
         }
       }
@@ -181,6 +185,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
     setState(() {
       _isAnalyzing = true;
       _error = null;
+      _isSaved = false; // Yeni soru için sıfırla
     });
 
     try {
@@ -268,7 +273,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Hata: $e'))
+            SnackBar(content: Text('Hata: $e'))
         );
         setState(() => _isChatLoading = false);
       }
@@ -336,6 +341,10 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
       );
 
       if (mounted) {
+        setState(() {
+          _isSaved = true; // BAŞARILI: Durumu güncelle
+        });
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -374,7 +383,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
 
       // ExamType enum'ını al
       final examType = ExamType.values.firstWhere(
-        (e) => e.name == user.selectedExam,
+            (e) => e.name == user.selectedExam,
         orElse: () => ExamType.yks,
       );
 
@@ -458,7 +467,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
                   theme,
                   Icons.camera_alt_rounded,
                   "Kamera",
-                  () {
+                      () {
                     Navigator.pop(context);
                     _pickImage(ImageSource.camera);
                   },
@@ -468,7 +477,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
                   theme,
                   Icons.photo_library_rounded,
                   "Galeri",
-                  () {
+                      () {
                     Navigator.pop(context);
                     _pickImage(ImageSource.gallery);
                   },
@@ -613,9 +622,26 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
           actions: [
             if (_initialSolution != null)
               IconButton(
-                icon: const Icon(Icons.bookmark_border_rounded),
-                tooltip: 'Kaydet',
-                onPressed: _saveSolutionLocally,
+                icon: Icon(
+                  _isSaved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+                  color: _isSaved ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+                ),
+                tooltip: _isSaved ? 'Kaydedildi' : 'Kaydet',
+                onPressed: _isSaved
+                    ? () {
+                  ScaffoldMessenger.of(context).clearSnackBars();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('Bu soru zaten kütüphanene eklendi 🐰'),
+                      backgroundColor: theme.colorScheme.primary,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  );
+                }
+                    : _saveSolutionLocally,
               )
             else
               IconButton(
@@ -635,32 +661,42 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
                   height: _isChatMode ? 120 : 200, // Sohbette yer açmak için resmi küçült
                   width: double.infinity,
                   margin: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: theme.dividerColor),
-                    image: DecorationImage(
-                      image: FileImage(File(_finalImageFile!.path)),
-                      fit: BoxFit.contain,
-                    ),
+                  child: Stack(
+                    children: [
+                      // Ana resim
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: theme.dividerColor),
+                          image: DecorationImage(
+                            image: FileImage(File(_finalImageFile!.path)),
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
+                      // Animasyon overlay (sadece analiz sırasında) - TARAMA EFEKTİ
+                      if (_isAnalyzing)
+                        _ScanningAnalysisOverlay(theme: theme),
+                    ],
                   ),
                 ),
 
               // İÇERİK ALANI
               Expanded(
                 child: _isAnalyzing
-                    ? _buildLoadingState(theme)
+                    ? const SizedBox.expand() // Animasyon resmin üstünde, burada boş alan
                     : _error != null
-                        ? Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: _buildErrorState(theme),
-                            ),
-                          )
-                        : _initialSolution == null
-                            ? _buildEmptyState(theme) // Fotoğraf çekin ekranı
-                            : _isChatMode
-                                ? _buildChatView(theme) // SOHBET MODU
-                                : _buildInitialResultView(theme), // İLK SONUÇ MODU
+                    ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: _buildErrorState(theme),
+                  ),
+                )
+                    : _initialSolution == null
+                    ? _buildEmptyState(theme) // Fotoğraf çekin ekranı
+                    : _isChatMode
+                    ? _buildChatView(theme) // SOHBET MODU
+                    : _buildInitialResultView(theme), // İLK SONUÇ MODU
               ),
 
               // Chat Input (Sadece sohbet modunda görünür)
@@ -783,92 +819,93 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
   // --- MODERN KARŞILAMA EKRANI ---
   Widget _buildEmptyState(ThemeData theme) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 10),
-          // 1. HERO KARTI (Taktik Tavşan Branding)
+          const SizedBox(height: 4),
+          // HERO KARTI
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [theme.colorScheme.primaryContainer, theme.colorScheme.surface],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
-              borderRadius: BorderRadius.circular(32),
+              borderRadius: BorderRadius.circular(20),
               border: Border.all(color: theme.colorScheme.primary.withOpacity(0.1)),
               boxShadow: [
                 BoxShadow(
                   color: theme.colorScheme.primary.withOpacity(0.05),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
                 ),
               ],
             ),
             child: Column(
               children: [
-                // Taktik Tavşan Görseli (Animasyonlu)
+                // Taktik Tavşan Görseli
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 15,
-                        offset: const Offset(0, 8),
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
                   child: Image.asset(
                     'assets/images/bunnyy.png',
-                    height: 80,
-                    width: 80,
+                    height: 56,
+                    width: 56,
                   ),
                 ).animate(onPlay: (c) => c.repeat(reverse: true))
                     .scale(duration: 3.seconds, begin: const Offset(1, 1), end: const Offset(1.05, 1.05)),
-                const SizedBox(height: 20),
+                const SizedBox(height: 14),
                 Text(
                   "Sorularla Boğuşma,\nTaktik Tavşan Yanında!",
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 22,
+                    fontSize: 19,
                     fontWeight: FontWeight.w800,
                     color: theme.colorScheme.onSurface,
-                    letterSpacing: -0.5,
+                    letterSpacing: -0.3,
+                    height: 1.15,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 6),
                 Text(
                   "Takıldığın sorunun fotoğrafını çek,\nTaktik Tavşan senin için adım adım çözsün.",
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 15,
+                    fontSize: 13.5,
                     color: theme.colorScheme.onSurfaceVariant,
-                    height: 1.4,
+                    height: 1.25,
                   ),
                 ),
               ],
             ),
           ).animate().fadeIn().slideY(begin: 0.2, end: 0),
 
-          const SizedBox(height: 32),
+          const SizedBox(height: 20),
 
           Text(
             "Nasıl Çalışır?",
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
               color: theme.colorScheme.onSurface,
             ),
           ).animate().fadeIn(delay: 200.ms),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
 
-          // Özellikler (YENİ etiketi kaldırıldı)
+          // Özellikler
           _buildFeatureRow(
             theme,
             icon: Icons.camera_alt_outlined,
@@ -890,8 +927,15 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
             subtitle: "Tavşan ile sohbet et.",
             delay: 500,
           ),
+          _buildFeatureRow(
+            theme,
+            icon: Icons.bookmark_outline_rounded,
+            title: "Dilersen Soruyu Kaydet",
+            subtitle: "İstediğin zaman tekrar bak.",
+            delay: 600,
+          ),
 
-          const SizedBox(height: 100), // FAB için alt boşluk
+          const SizedBox(height: 70), // FAB için alt boşluk
         ],
       ),
     );
@@ -899,52 +943,52 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
 
   // Yardımcı Widget: Özellik Satırı
   Widget _buildFeatureRow(
-    ThemeData theme, {
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required int delay,
-  }) {
+      ThemeData theme, {
+        required IconData icon,
+        required String title,
+        required String subtitle,
+        required int delay,
+      }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: theme.cardColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: theme.colorScheme.outline.withOpacity(0.1)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           )
         ],
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: theme.colorScheme.primary, size: 24),
+            child: Icon(icon, color: theme.colorScheme.primary, size: 22),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   subtitle,
                   style: TextStyle(
                     color: theme.colorScheme.onSurfaceVariant,
-                    fontSize: 13,
+                    fontSize: 12.5,
                   ),
                 ),
               ],
@@ -1231,11 +1275,11 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
             'assets/lotties/loading_dots.json',
             height: 40,
             errorBuilder: (context, error, stackTrace) =>
-                const SizedBox(
-                  width: 40,
-                  height: 40,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
+            const SizedBox(
+              width: 40,
+              height: 40,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
           ),
           const SizedBox(width: 8),
           Text(
@@ -1360,3 +1404,293 @@ class LatexElementBuilder extends MarkdownElementBuilder {
     );
   }
 }
+
+// --- TARAMA EFEKTLİ ANALİZ OVERLAY ---
+class _ScanningAnalysisOverlay extends StatefulWidget {
+  final ThemeData theme;
+
+  const _ScanningAnalysisOverlay({required this.theme});
+
+  @override
+  State<_ScanningAnalysisOverlay> createState() => _ScanningAnalysisOverlayState();
+}
+
+class _ScanningAnalysisOverlayState extends State<_ScanningAnalysisOverlay>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scanAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    );
+
+    _scanAnimation = Tween<double>(begin: -1.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+
+    _controller.repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: Colors.black.withOpacity(0.4),
+      ),
+      child: AnimatedBuilder(
+        animation: _scanAnimation,
+        builder: (context, child) {
+          return Stack(
+            children: [
+              // Grid overlay (opsiyonel - gelişmiş görünüm için)
+              CustomPaint(
+                painter: _GridPainter(
+                  color: widget.theme.colorScheme.primary.withOpacity(0.1),
+                ),
+                size: Size.infinite,
+              ),
+
+              // Ana tarama çizgisi
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: CustomPaint(
+                  painter: _ScanLinePainter(
+                    progress: _scanAnimation.value,
+                    color: widget.theme.colorScheme.primary,
+                  ),
+                  child: Container(),
+                ),
+              ),
+
+              // Merkez bilgi kutusu
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  decoration: BoxDecoration(
+                    color: widget.theme.colorScheme.surface.withOpacity(0.95),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: widget.theme.colorScheme.primary.withOpacity(0.3),
+                      width: 2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: widget.theme.colorScheme.primary.withOpacity(0.3),
+                        blurRadius: 20,
+                        spreadRadius: 5,
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Radar ikonu
+                      Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          // Dış halka (pulse efekti)
+                          Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: widget.theme.colorScheme.primary.withOpacity(0.3),
+                                width: 2,
+                              ),
+                            ),
+                          ).animate(onPlay: (c) => c.repeat())
+                              .scale(
+                                begin: const Offset(1.0, 1.0),
+                                end: const Offset(1.3, 1.3),
+                                duration: 1.5.seconds,
+                              )
+                              .fadeOut(begin: 0.6, duration: 1.5.seconds),
+
+                          // İç ikon
+                          Icon(
+                            Icons.document_scanner_outlined,
+                            size: 36,
+                            color: widget.theme.colorScheme.primary,
+                          ).animate(onPlay: (c) => c.repeat())
+                              .shimmer(
+                                duration: 1.8.seconds,
+                                color: widget.theme.colorScheme.secondary,
+                              ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Metin
+                      Text(
+                        'Soru Analiz Ediliyor',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: widget.theme.colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Taktik Tavşan çözümü hazırlıyor...',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: widget.theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ).animate(onPlay: (c) => c.repeat())
+                          .fadeIn(duration: 1.seconds)
+                          .then()
+                          .fadeOut(duration: 1.seconds),
+
+                      const SizedBox(height: 12),
+
+                      // Progress indicator
+                      SizedBox(
+                        width: 200,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: LinearProgressIndicator(
+                            backgroundColor: widget.theme.colorScheme.primary.withOpacity(0.1),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              widget.theme.colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ).animate()
+                    .fadeIn(duration: 300.ms)
+                    .scale(
+                      begin: const Offset(0.8, 0.8),
+                      end: const Offset(1.0, 1.0),
+                      duration: 300.ms,
+                    ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+// Tarama çizgisi çizen CustomPainter
+class _ScanLinePainter extends CustomPainter {
+  final double progress;
+  final Color color;
+
+  _ScanLinePainter({required this.progress, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Progress -1'den 1'e gidiyor, biz bunu 0-1 aralığına çevirelim
+    final normalizedProgress = (progress + 1) / 2;
+    final scanY = size.height * normalizedProgress;
+
+    // Glow efekti için gradient
+    final gradient = LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [
+        color.withOpacity(0.0),
+        color.withOpacity(0.3),
+        color.withOpacity(0.8),
+        color.withOpacity(0.3),
+        color.withOpacity(0.0),
+      ],
+      stops: const [0.0, 0.3, 0.5, 0.7, 1.0],
+    );
+
+    final rect = Rect.fromLTWH(
+      0,
+      scanY - 40,
+      size.width,
+      80,
+    );
+
+    final paint = Paint()
+      ..shader = gradient.createShader(rect)
+      ..style = PaintingStyle.fill;
+
+    canvas.drawRect(rect, paint);
+
+    // Ana tarama çizgisi (ince parlak çizgi)
+    final linePaint = Paint()
+      ..color = color
+      ..strokeWidth = 3
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawLine(
+      Offset(0, scanY),
+      Offset(size.width, scanY),
+      linePaint,
+    );
+
+    // Yan nokta efektleri
+    final dotPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    for (int i = 0; i < 5; i++) {
+      final x = (size.width / 4) * i;
+      canvas.drawCircle(Offset(x, scanY), 4, dotPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_ScanLinePainter oldDelegate) {
+    return oldDelegate.progress != progress;
+  }
+}
+
+// Grid çizen CustomPainter (arka plan detayı)
+class _GridPainter extends CustomPainter {
+  final Color color;
+
+  _GridPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1
+      ..style = PaintingStyle.stroke;
+
+    const spacing = 30.0;
+
+    // Dikey çizgiler
+    for (double x = 0; x < size.width; x += spacing) {
+      canvas.drawLine(
+        Offset(x, 0),
+        Offset(x, size.height),
+        paint,
+      );
+    }
+
+    // Yatay çizgiler
+    for (double y = 0; y < size.height; y += spacing) {
+      canvas.drawLine(
+        Offset(0, y),
+        Offset(size.width, y),
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_GridPainter oldDelegate) => false;
+}
+

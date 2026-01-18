@@ -13,6 +13,7 @@ import 'dart:ui';
 import 'package:taktik/shared/widgets/logo_loader.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:taktik/shared/widgets/ad_banner_widget.dart';
+import 'package:lottie/lottie.dart';
 
 class ArenaScreen extends ConsumerStatefulWidget {
   const ArenaScreen({super.key});
@@ -56,7 +57,15 @@ class _ArenaScreenState extends ConsumerState<ArenaScreen> {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Zafer Panteonu'),
+          title: Text(
+            'Zafer Panteonu',
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
+              color: theme.colorScheme.onSurface,
+              letterSpacing: -0.5,
+              fontSize: 20,
+            ),
+          ),
           backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
           bottom: TabBar(
             indicatorColor: Theme.of(context).colorScheme.secondary,
@@ -204,24 +213,100 @@ class _LeaderboardView extends ConsumerWidget {
 
   Widget _buildEmptyState(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.shield_moon_rounded, size: 80, color: Theme.of(context).colorScheme.onSurfaceVariant),
-            const SizedBox(height: 16),
-            Text('Arena Henüz Boş', style: textTheme.headlineSmall),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32.0),
-              child: Text(
-                'Deneme ekleyerek veya Pomodoro seansları tamamlayarak Taktik Puanı kazan ve adını bu panteona yazdır!',
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Lottie Animasyonu
+              Container(
+                width: 220,
+                height: 220,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      colorScheme.primary.withValues(alpha: 0.15),
+                      colorScheme.surface,
+                    ],
+                    stops: const [0.0, 1.0],
+                  ),
+                ),
+                child: Lottie.asset(
+                  'assets/lotties/Kart Flag Animation.json',
+                  fit: BoxFit.contain,
+                  repeat: true,
+                  animate: true,
+                ),
+              )
+                  .animate()
+                  .fadeIn(duration: 600.ms, delay: 100.ms)
+                  .scale(
+                    begin: const Offset(0.7, 0.7),
+                    end: const Offset(1.0, 1.0),
+                    duration: 700.ms,
+                    curve: Curves.easeOutBack,
+                  ),
+              const SizedBox(height: 32),
+
+              // Başlık
+              Text(
+                'Arena Henüz Boş',
+                style: textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onSurface,
+                  letterSpacing: -0.5,
+                ),
                 textAlign: TextAlign.center,
-                style: textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-              ),
-            ),
-          ],
-        ).animate().fadeIn(duration: 600.ms).scale(begin: const Offset(0.8, 0.8)));
+              )
+                  .animate()
+                  .fadeIn(duration: 500.ms, delay: 300.ms)
+                  .slideY(begin: 0.3, end: 0, duration: 500.ms, curve: Curves.easeOut),
+
+              const SizedBox(height: 16),
+
+              // Açıklama Metni
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Text(
+                  'İlk efsanelerden ol!',
+                  textAlign: TextAlign.center,
+                  style: textTheme.titleMedium?.copyWith(
+                    color: colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              )
+                  .animate()
+                  .fadeIn(duration: 500.ms, delay: 400.ms)
+                  .slideY(begin: 0.3, end: 0, duration: 500.ms, curve: Curves.easeOut),
+
+              const SizedBox(height: 12),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Text(
+                  'Deneme ekleyerek veya Pomodoro seansları tamamlayarak Taktik Puanı kazan ve adını bu panteona yazdır!',
+                  textAlign: TextAlign.center,
+                  style: textTheme.bodyLarge?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    height: 1.5,
+                  ),
+                ),
+              )
+                  .animate()
+                  .fadeIn(duration: 500.ms, delay: 500.ms)
+                  .slideY(begin: 0.3, end: 0, duration: 500.ms, curve: Curves.easeOut),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -578,3 +663,5 @@ class _RankCard extends ConsumerWidget {
     );
   }
 }
+
+

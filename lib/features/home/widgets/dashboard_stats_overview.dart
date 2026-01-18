@@ -27,9 +27,8 @@ class DashboardStatsOverview extends ConsumerWidget {
         // Bu kart, sadece ana sınav denemeleri (TYT/AYT/LGS/KPSS/AGS/YDT) üzerinden hesap yapar.
         final mainExamTests = tests.where((t) => !t.isBranchTest).toList();
 
-        // Test yoksa varsayılan değerler
-        final streak = mainExamTests.isEmpty ? 0 : StatsCalculator.calculateStreak(mainExamTests);
-        final avgNet = mainExamTests.isEmpty ? '0.0' : StatsCalculator.calculateAvgNet(user, mainExamTests);
+        // MERKEZİ SİSTEM: Streak Firebase'den alınır, hesaplanmaz
+        final streak = StatsCalculator.getStreak(user);
         final motivationColor = _getMotivationColor(streak, mainExamTests.length);
 
         // Basit hesaplamalar - test yoksa 0 değerleri
@@ -37,9 +36,27 @@ class DashboardStatsOverview extends ConsumerWidget {
           final sortedTests = [...mainExamTests]..sort((a, b) => b.date.compareTo(a.date));
           return sortedTests.first.totalNet;
         })();
+
+        // En iyi denemeyi başarı yüzdesine göre seç
         final bestNet = mainExamTests.isEmpty
             ? 0.0
-            : mainExamTests.map((e) => e.totalNet).reduce((a, b) => a > b ? a : b);
+            : (() {
+          // Her test için başarı yüzdesini hesapla ve en yüksek olanı seç
+          TestModel bestTest = mainExamTests.first;
+          double bestPercentage = (bestTest.totalNet / bestTest.totalQuestions) * 100;
+
+          for (final test in mainExamTests.skip(1)) {
+            if (test.totalQuestions > 0) {
+              final percentage = (test.totalNet / test.totalQuestions) * 100;
+              if (percentage > bestPercentage) {
+                bestTest = test;
+                bestPercentage = percentage;
+              }
+            }
+          }
+
+          return bestTest.totalNet;
+        })();
 
         return GestureDetector(
           onTap: () => context.push('/stats/overview'),
@@ -104,7 +121,7 @@ class DashboardStatsOverview extends ConsumerWidget {
 
                 const SizedBox(height: 10),
 
-                // Ana İstatistikler - 4 sütun
+                // Ana İstatistikler - 3 sütun
                 Row(
                   children: [
                     Expanded(
@@ -113,16 +130,6 @@ class DashboardStatsOverview extends ConsumerWidget {
                         label: 'Deneme',
                         value: '${mainExamTests.length}',
                         color: const Color(0xFF8B5CF6),
-                        theme: theme,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: _StatItem(
-                        icon: Icons.trending_up_rounded,
-                        label: 'Ortalama',
-                        value: avgNet,
-                        color: const Color(0xFF10B981),
                         theme: theme,
                       ),
                     ),
