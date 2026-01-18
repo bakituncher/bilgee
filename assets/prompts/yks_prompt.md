@@ -74,17 +74,10 @@ Her görevin tipi şunlardan biri olmalı:
 - Öğrenci ID: {{USER_ID}}
 - Sınav Bölümü: {{SELECTED_EXAM_SECTION}}
 - Sınava Kalan Gün: {{DAYS_UNTIL_EXAM}}
-- Hedef: {{GOAL}}
-- Zorluklar: {{CHALLENGES}}
 - Tempo Tercihi: {{PACING}}
 - Toplam Deneme: {{TEST_COUNT}}
 - Ortalama Net: {{AVG_NET}}
 - Ders Ortalamaları: {{SUBJECT_AVERAGES}}
-
-### Konu Performans Detayları (ZAYIF NOKTALAR BURADA)
-```json
-{{TOPIC_PERFORMANCES_JSON}}
-```
 
 
 ### Müfredat Sırası (KONU HAVUZU)

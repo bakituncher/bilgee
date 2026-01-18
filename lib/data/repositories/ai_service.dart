@@ -378,8 +378,7 @@ class AiService {
 
         prompt = StrategyPrompts.getYksPrompt(
             userId: user.id, selectedExamSection: displaySection,
-            daysUntilExam: daysUntilExam, goal: user.goal ?? '',
-            challenges: user.challenges, pacing: pacing,
+            daysUntilExam: daysUntilExam, pacing: pacing,
             testCount: user.testCount, avgNet: avgNet,
             subjectAverages: subjectAverages,
             availabilityJson: availabilityJson,
