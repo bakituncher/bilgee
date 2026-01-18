@@ -141,11 +141,17 @@ class _SavedSolutionDetailScreenState
       final service = ref.read(questionSolverServiceProvider);
       final user = ref.read(userProfileProvider).value;
 
-      // Bağlam olarak ilk çözümü kullan (mesajların ilki)
-      final contextSolution = _messages.first.text;
+      // Bağlam olarak TÜM sohbet geçmişini kullan (son 5 mesaj için token optimizasyonu)
+      final recentMessages = _messages.length > 6
+          ? _messages.sublist(_messages.length - 6)
+          : _messages;
+
+      final contextSolution = recentMessages
+          .map((m) => "${m.isUser ? 'Kullanıcı' : 'Asistan'}: ${m.text}")
+          .join('\n\n');
 
       final response = await service.solveFollowUp(
-        originalPrompt: "Context",
+        originalPrompt: "Sohbet Geçmişi",
         previousSolution: contextSolution,
         userQuestion: text,
         examType: user?.selectedExam,

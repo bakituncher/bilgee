@@ -135,7 +135,7 @@ Konuşma dilin doğal, "biz bize" tarzında olsun.
         'expectJson': false,
         'requestType': 'chat',
         'temperature': 0.5,
-        'maxOutputTokens': 1024,
+        'maxOutputTokens': 4096, // 1024'ten 4096'ya çıkarıldı
       });
 
       final data = result.data;
