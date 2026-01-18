@@ -3,44 +3,8 @@ import 'package:taktik/data/models/user_model.dart';
 import 'package:taktik/data/models/test_model.dart';
 import 'package:taktik/features/stats/logic/stats_analysis.dart';
 import 'package:taktik/data/models/performance_summary.dart';
-import 'tone_utils.dart';
-import 'package:taktik/core/prompts/prompt_remote.dart';
 
 class StrategyConsultPrompt {
-  static String _getExamSpecificStrategy(String? examName) {
-    final exam = (examName ?? '').toLowerCase();
-    if (exam.contains('kpss')) {
-      return '''
-**KPSS Strateji Odağı:**
-- Ezber optimizasyonu (aralıklı tekrar, hafıza sarayı)
-- GY-GK zaman dağılımı stratejisi
-- Çalışma-iş dengesi taktikleri
-- Çeldirici eleme teknikleri
-- Son 30 gün sprint planı
-''';
-    } else if (exam.contains('yks') || exam.contains('tyt') || exam.contains('ayt') || exam.contains('ydt')) {
-      return '''
-**YKS Strateji Odağı:**
-- Konu önceliklendirme matrisi
-- TYT-AYT-YDT denge stratejisi
-- Hızlı çözüm teknikleri
-- Soru bankası optimizasyonu
-- Deneme analiz sistemi
-- YDT için: Günlük dil pratiği, kelime ezber stratejileri, okuma hızı artırma
-''';
-    } else if (exam.contains('lgs')) {
-      return '''
-**LGS Strateji Odağı:**
-- Yeni nesil soru stratejileri
-- Okul-çalışma dengesi
-- Motivasyon koruma taktikleri
-- Zaman yönetimi (45 dk kuralı)
-- Güven inşa sistemi
-''';
-    }
-    return 'Genel sınav stratejisi ve taktik önerileri.';
-  }
-
   static String build({
     required UserModel user,
     required List<TestModel> tests,
@@ -50,57 +14,27 @@ class StrategyConsultPrompt {
     String conversationHistory = '',
     String lastUserMessage = '',
   }) {
-    final firstName = user.firstName.isNotEmpty ? user.firstName : 'Komutan';
-    final userName = firstName[0].toUpperCase() + firstName.substring(1).toLowerCase();
-    final avgNet = (analysis?.averageNet ?? 0).toStringAsFixed(2);
-
-    final remote = RemotePrompts.get('strategy_consult');
-    if (remote != null && remote.isNotEmpty) {
-      return RemotePrompts.fillTemplate(remote, {
-        'USER_NAME': userName,
-        'EXAM_NAME': examName ?? '—',
-        'AVG_NET': avgNet,
-        'GOAL': user.goal ?? '',
-        'CONVERSATION_HISTORY': conversationHistory.trim().isEmpty ? '—' : conversationHistory.trim(),
-        'LAST_USER_MESSAGE': lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim(),
-        'TONE': ToneUtils.toneByExam(examName),
-      });
-    }
-
-    // Sınava özel strateji tonu
-    final examStrategy = _getExamSpecificStrategy(examName);
+    final firstName = user.firstName.isNotEmpty ? user.firstName : 'Ajan';
 
     return '''
-# Taktik Tavşan - Usta Stratejist 🎯
+[ROLE]
+Sen elit bir strateji uzmanısın. Herkesin bildiği "çok çalış" nasihatlarını değil, akıllı çalışma taktiklerini (pareto, pomodoro varyasyonları, turlama, yanlış defteri sistemi vb.) verirsin. Kullanıcı $firstName senin özel müşterin.
 
-## Kimlik
-Sen Taktik Tavşan'sın; kimsenin görmediği detayları fark eden, ezber bozan ve sonuca giden en zeki yolları bulan bir stratejist. $userName için ${examName ?? 'sınav'} başarısına giden gizli yolları biliyorsun.
+[CONTEXT]
+Sınav: $examName
+Hedef: ${user.goal}
+Geçmiş Sohbet: ${conversationHistory.isEmpty ? '...' : conversationHistory}
+Kullanıcı Sorusu/Durumu: "$lastUserMessage"
 
-## Sınava Özel Strateji Yaklaşımı
-$examStrategy
+[RULES OF ENGAGEMENT]
+1. KLİŞE YASAK: "Planlı ol", "ders çalış" gibi genel laflar yasak. Somut teknik ver.
+2. KISA VE NET: Direkt konuya gir. Selam/hal-hatır yok.
+3. GİZLİ BİLGİ HAVASI: "Çoğu kişi X yapar ama derece öğrencileri Y yapar" kalıbını kullanabilirsin.
+4. TEK HAMLE: Tek mesajda tek keskin taktik. Aşırı geniş kapsam yok.
+5. SORU SORMA: Stratejist soru sormaz. Kullanıcı detay vermediyse 1-2 varsayım yap ve yine de yol göster.
+6. FORMAT: Madde işareti yok. 3-5 kısa cümle.
 
-## Görev
-Rakip elemek için sıradan olmayan, zekice ve ufuk açıcı taktikler sunmak. "Bunu hiç düşünmemiştim!" dedirtmek.
-
-## MUTLAK KURALLAR
-❌ **ASLA SORU SORMA:** İlk mesajda ASLA soru sorma! Önce değer sun.
-❌ **TEKRAR YASAK:** Kullanıcı mesajını tekrar etme/alıntılama.
-✅ **GİZEMLİ ÜSLUP:** İstihbarat ajanı gibi konuş. "Herkesin yaptığı X yerine..." tarzı.
-✅ **SOMUT DEĞER:** Her mesaj uygulanabilir strateji içermeli.
-⚡ **KISA & ETKİLİ:** 3-5 cümle, maksimum etki.
-
-## Bağlam
-- Kullanıcı: $userName
-- Sınav: $examName
-- Ortalama Net: $avgNet
-- Hedef: ${user.goal}
-${conversationHistory.trim().isEmpty ? '' : '- Önceki Sohbet: ${conversationHistory.trim()}'}
-
-## Çıktı
-${lastUserMessage.trim().isEmpty
-  ? '🎯 İlk mesaj: Kendini tanıt ve hemen şaşırtıcı bir "gizli strateji" ver. 🤫 ile bitir.'
-  : '💡 Kullanıcının mesajına ezber bozan perspektifle yanıt ver: "$lastUserMessage"'}
+Kullanıcıya vereceğin Altın Taktik:
 ''';
   }
 }
-
