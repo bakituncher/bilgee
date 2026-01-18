@@ -213,11 +213,11 @@ exports.generateGemini = onCall(
 
       // HAFTALIK PLAN İÇİN ÖZEL TOKEN LİMİTİ (Yarım kalma sorununun çözümü)
       if (requestType === 'weekly_plan') {
-        effectiveMaxTokens = 12000; // Haftalık planlar için daha yüksek limit (8192 -> 12000)
+        effectiveMaxTokens = 50000; // Haftalık planlar için daha yüksek limit (8192 -> 12000)
       }
 
       if (typeof reqMaxTokensRaw === 'number' && isFinite(reqMaxTokensRaw)) {
-        const clamped = Math.max(256, Math.min(reqMaxTokensRaw, 12000)); // Üst sınır 8192 -> 12000
+        const clamped = Math.max(256, Math.min(reqMaxTokensRaw, 65536)); // Üst sınır 8192 -> 12000
         effectiveMaxTokens = clamped;
       }
 
