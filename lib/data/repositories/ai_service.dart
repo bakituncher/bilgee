@@ -805,7 +805,7 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
           conversationHistory: historyToUse,
           lastUserMessage: lastUserMessage,
         );
-        chatTemperature = 0.9;
+        chatTemperature = 1.0; // MAKSİMUM DOĞALLIK VE YARATICILIK
         break;
       case 'motivation_corner':
         prompt = MotivationCornerPrompt.build(
@@ -814,7 +814,7 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
           conversationHistory: historyToUse,
           lastUserMessage: lastUserMessage,
         );
-        chatTemperature = 0.9;
+        chatTemperature = 0.95; // YÜKSEK ENERJİ İÇİN YÜKSEK ISI
         break;
       default:
         // Diğer durumlar için fallback
