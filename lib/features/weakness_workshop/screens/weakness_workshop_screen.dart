@@ -25,14 +25,16 @@ import 'package:taktik/features/weakness_workshop/logic/workshop_controller.dart
 
 // DEPRECATED: Eski enum ve provider'lar - Artık WorkshopController içinde
 // Geriye dönük uyumluluk için kalsın ama yeni kullanmayın
-enum WorkshopStep { briefing, study, quiz, results }
+enum WorkshopStep { briefing, contentSelection, study, quiz, results }
 
 final _selectedTopicProvider = StateProvider<Map<String, String>?>((ref) => null);
 final _difficultyProvider = StateProvider<(String, int)>((ref) => ('normal', 1));
+final _contentTypeProvider = StateProvider<String>((ref) => 'both'); // 'quizOnly', 'studyOnly', 'both'
 
 final workshopSessionProvider = FutureProvider.autoDispose<WorkshopModel>((ref) async {
   final selectedTopic = ref.watch(_selectedTopicProvider);
   final difficultyInfo = ref.watch(_difficultyProvider);
+  final contentType = ref.watch(_contentTypeProvider);
 
   if (selectedTopic == null) {
     return Future.error("Konu seçilmedi.");
@@ -55,6 +57,7 @@ final workshopSessionProvider = FutureProvider.autoDispose<WorkshopModel>((ref) 
       difficulty: difficultyInfo.$1,
       attemptCount: difficultyInfo.$2,
       temperature: temperature,
+      contentType: contentType, // İçerik türünü gönder
     ).timeout(
       // Gemini detaylı içerik üretirken 45sn yetmeyebilir, güvenli aralık 90sn'dir.
       const Duration(seconds: 90),
@@ -105,17 +108,24 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
     ref.read(_difficultyProvider.notifier).state = ('normal', 1);
     _selectedAnswers = {};
     _masteredAchieved = false;
+    setState(() => _currentStep = WorkshopStep.contentSelection);
+  }
+
+  void _selectContentType(String contentType) {
+    // contentType: 'quizOnly', 'studyOnly', 'both'
+    ref.read(_contentTypeProvider.notifier).state = contentType;
+    // Artık workshop provider'ı tetiklenecek
     setState(() => _currentStep = WorkshopStep.study);
   }
 
   void _submitQuiz(WorkshopModel material) {
     final user = ref.read(userProfileProvider).value;
     final performanceSummary = ref.read(performanceProvider).value;
-    if(user == null || performanceSummary == null) return;
+    if(user == null || performanceSummary == null || material.quiz == null || material.quiz!.isEmpty) return;
 
     int correct = 0;
     int wrong = 0;
-    material.quiz.asMap().forEach((index, q) {
+    material.quiz!.asMap().forEach((index, q) {
       if (_selectedAnswers.containsKey(index)) {
         if (_selectedAnswers[index] == q.correctOptionIndex) {
           correct++;
@@ -124,7 +134,7 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
         }
       }
     });
-    int blank = material.quiz.length - correct - wrong;
+    int blank = (material.quiz?.length ?? 0) - correct - wrong;
 
     final firestoreService = ref.read(firestoreServiceProvider);
     final sanitizedSubject = firestoreService.sanitizeKey(material.subject);
@@ -135,7 +145,7 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
       correctCount: currentPerformance.correctCount + correct,
       wrongCount: currentPerformance.wrongCount + wrong,
       blankCount: currentPerformance.blankCount + blank,
-      questionCount: currentPerformance.questionCount + material.quiz.length,
+      questionCount: currentPerformance.questionCount + (material.quiz?.length ?? 0),
     );
 
     firestoreService.updateTopicPerformance(
@@ -153,7 +163,7 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
     final int cumWrong = newPerformance.wrongCount;
     final int cumAnswered = (cumCorrect + cumWrong);
     final double cumAccuracy = cumAnswered == 0 ? 0.0 : (cumCorrect / cumAnswered);
-    final double quizScore = material.quiz.isEmpty ? 0.0 : (correct / material.quiz.length);
+    final double quizScore = (material.quiz?.isEmpty ?? true) ? 0.0 : (correct / material.quiz!.length);
 
     _masteredAchieved = false;
     final alreadyMasteredKey = '$sanitizedSubject-$sanitizedTopic';
@@ -283,6 +293,16 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
       return _BriefingView(key: const ValueKey('briefing'), onTopicSelected: _startWorkshop);
     }
 
+    if (_currentStep == WorkshopStep.contentSelection) {
+      final selectedTopic = ref.watch(_selectedTopicProvider);
+      return _ContentSelectionView(
+        key: const ValueKey('content_selection'),
+        topic: selectedTopic ?? {},
+        onContentTypeSelected: _selectContentType,
+        onBack: () => setState(() => _currentStep = WorkshopStep.briefing),
+      );
+    }
+
     final sessionAsync = ref.watch(workshopSessionProvider);
     return sessionAsync.when(
       loading: () => const _LoadingCevherView(key: ValueKey('loading')),
@@ -295,6 +315,9 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
         });
       },
       data: (material) {
+        // ContentType'a göre otomatik adım belirleme
+        final contentType = ref.read(_contentTypeProvider);
+
         if (_skipStudyView) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) {
@@ -305,6 +328,16 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
             }
           });
           return const _LoadingCevherView(key: ValueKey('reloading_quiz'));
+        }
+
+        // quizOnly modundaysa ve hala study adımındaysak, quiz'e geç
+        if (contentType == 'quizOnly' && _currentStep == WorkshopStep.study) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              setState(() => _currentStep = WorkshopStep.quiz);
+            }
+          });
+          return const _LoadingCevherView(key: ValueKey('loading_quiz'));
         }
 
         switch (_currentStep) {
@@ -342,7 +375,8 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
   }
 
   void _openReportSheet(WorkshopModel material, int qIndex, int? selected) {
-    final q = material.quiz[qIndex];
+    if (material.quiz == null || qIndex >= material.quiz!.length) return;
+    final q = material.quiz![qIndex];
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -752,6 +786,240 @@ class _EmptyStateView extends StatelessWidget {
   }
 }
 
+// YENİ: İçerik Türü Seçim Ekranı
+class _ContentSelectionView extends StatelessWidget {
+  final Map<String, String> topic;
+  final Function(String) onContentTypeSelected;
+  final VoidCallback onBack;
+
+  const _ContentSelectionView({
+    super.key,
+    required this.topic,
+    required this.onContentTypeSelected,
+    required this.onBack,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final topicName = topic['topic'] ?? 'Konu';
+    final subjectName = topic['subject'] ?? 'Ders';
+
+    return ListView(
+      padding: const EdgeInsets.all(24.0),
+      children: [
+        // Geri butonu
+        Align(
+          alignment: Alignment.centerLeft,
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            onPressed: onBack,
+            tooltip: 'Geri',
+          ),
+        ).animate().fadeIn(duration: 300.ms),
+
+        const SizedBox(height: 8),
+
+        // Başlık
+        Text(
+          "Ne Oluşturmak İstersin?",
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.2),
+
+        const SizedBox(height: 8),
+
+        // Seçilen konu bilgisi
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.topic_rounded,
+                color: Theme.of(context).colorScheme.primary,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      subjectName,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    Text(
+                      topicName,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1),
+
+        const SizedBox(height: 24),
+
+        // Seçenekler
+        _ContentTypeCard(
+          icon: Icons.quiz_rounded,
+          emoji: '🎯',
+          title: 'Sadece Soru Oluştur',
+          description: 'Konu hakkında 5 adet test sorusu hazırlanır. Hızlı pratik için ideal.',
+          color: Colors.orange,
+          onTap: () => onContentTypeSelected('quizOnly'),
+        ).animate().fadeIn(delay: 300.ms).slideX(begin: 0.2),
+
+        const SizedBox(height: 16),
+
+        _ContentTypeCard(
+          icon: Icons.school_rounded,
+          emoji: '📚',
+          title: 'Sadece Konu Anlatımı Oluştur',
+          description: 'Detaylı konu özeti, örnekler ve stratejiler içeren çalışma rehberi.',
+          color: Colors.blue,
+          onTap: () => onContentTypeSelected('studyOnly'),
+        ).animate().fadeIn(delay: 400.ms).slideX(begin: 0.2),
+
+        const SizedBox(height: 16),
+
+        _ContentTypeCard(
+          icon: Icons.auto_awesome_rounded,
+          emoji: '🚀',
+          title: 'Her İkisini de Oluştur',
+          description: 'Hem detaylı konu anlatımı hem de test soruları. Tam öğrenme paketi.',
+          color: Colors.purple,
+          isRecommended: true,
+          onTap: () => onContentTypeSelected('both'),
+        ).animate().fadeIn(delay: 500.ms).slideX(begin: 0.2).scale(delay: 550.ms, duration: 200.ms),
+      ],
+    );
+  }
+}
+
+class _ContentTypeCard extends StatelessWidget {
+  final IconData icon;
+  final String emoji;
+  final String title;
+  final String description;
+  final Color color;
+  final bool isRecommended;
+  final VoidCallback onTap;
+
+  const _ContentTypeCard({
+    super.key,
+    required this.icon,
+    required this.emoji,
+    required this.title,
+    required this.description,
+    required this.color,
+    this.isRecommended = false,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: isRecommended ? 4 : 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: isRecommended
+            ? BorderSide(
+                color: color.withOpacity(0.5),
+                width: 2,
+              )
+            : BorderSide.none,
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: color.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      emoji,
+                      style: const TextStyle(fontSize: 28),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (isRecommended)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: color.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              '✨ ÖNERİLEN',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: color,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                        const SizedBox(height: 4),
+                        Text(
+                          title,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: color,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 18,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                description,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _TopicCard extends StatelessWidget {
   final Map<String, dynamic> topic;
   final bool isRecommended;
@@ -851,6 +1119,16 @@ class _StudyView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // StudyGuide yoksa boş durum göster
+    if (material.studyGuide == null || material.studyGuide!.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24.0),
+          child: Text('Konu anlatımı oluşturulmadı.', textAlign: TextAlign.center),
+        ),
+      );
+    }
+
     return Column(
       children: [
         Expanded(
@@ -861,7 +1139,7 @@ class _StudyView extends StatelessWidget {
               children: [
                 // ✅ AI uyarısı kaldırıldı - üstteki banner yeterli
                 MarkdownWithMath(
-                  data: material.studyGuide,
+                  data: material.studyGuide!,
                   styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
                     p: TextStyle(fontSize: 16, height: 1.5, color: Theme.of(context).colorScheme.onSurface),
                     h1: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.secondary),
@@ -872,14 +1150,16 @@ class _StudyView extends StatelessWidget {
             ),
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: ElevatedButton.icon(
-            icon: const Icon(Icons.quiz_rounded),
-            label: const Text("Ustalık Sınavına Başla"),
-            onPressed: onStartQuiz,
+        // Quiz varsa buton göster
+        if (material.quiz != null && material.quiz!.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.quiz_rounded),
+              label: const Text("Ustalık Sınavına Başla"),
+              onPressed: onStartQuiz,
+            ),
           ),
-        )
       ],
     );
   }
@@ -923,7 +1203,12 @@ class _QuizViewState extends State<_QuizView> {
 
   @override
   Widget build(BuildContext context) {
-    final quizLength = widget.material.quiz.length;
+    // Quiz yoksa boş widget döndür
+    if (widget.material.quiz == null || widget.material.quiz!.isEmpty) {
+      return const Center(child: Text('Quiz bulunamadı'));
+    }
+
+    final quizLength = widget.material.quiz!.length;
     bool isCurrentPageAnswered = widget.selectedAnswers.containsKey(_currentPage);
     bool isQuizFinished = widget.selectedAnswers.length == quizLength;
 
@@ -945,7 +1230,7 @@ class _QuizViewState extends State<_QuizView> {
             physics: const NeverScrollableScrollPhysics(),
             itemCount: quizLength,
             itemBuilder: (context, index) {
-              final question = widget.material.quiz[index];
+              final question = widget.material.quiz![index];
               return _QuestionCard(
                 question: question,
                 questionNumber: index + 1,
@@ -1247,10 +1532,12 @@ class _ResultsViewState extends State<_ResultsView> with SingleTickerProviderSta
   @override
   Widget build(BuildContext context) {
     int correct = 0;
-    widget.material.quiz.asMap().forEach((index, q) {
-      if (widget.selectedAnswers[index] == q.correctOptionIndex) correct++;
-    });
-    final score = widget.material.quiz.isEmpty ? 0.0 : (correct / widget.material.quiz.length) * 100;
+    if (widget.material.quiz != null) {
+      widget.material.quiz!.asMap().forEach((index, q) {
+        if (widget.selectedAnswers[index] == q.correctOptionIndex) correct++;
+      });
+    }
+    final score = (widget.material.quiz?.isEmpty ?? true) ? 0.0 : (correct / widget.material.quiz!.length) * 100;
 
     return Stack(
       children: [
@@ -1493,11 +1780,21 @@ class _QuizReviewView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Quiz yoksa boş durum göster
+    if (material.quiz == null || material.quiz!.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24.0),
+          child: Text('Quiz oluşturulmadı.', textAlign: TextAlign.center),
+        ),
+      );
+    }
+
     return ListView.builder(
       padding: const EdgeInsets.all(16.0),
-      itemCount: material.quiz.length,
+      itemCount: material.quiz!.length,
       itemBuilder: (context, index) {
-        final question = material.quiz[index];
+        final question = material.quiz![index];
         final userAnswer = selectedAnswers[index];
         final isCorrect = userAnswer == question.correctOptionIndex;
 

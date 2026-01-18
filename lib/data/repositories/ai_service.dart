@@ -696,7 +696,16 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
     return jsonEncode(guardrails);
   }
 
-  Future<String> generateStudyGuideAndQuiz(UserModel user, List<TestModel> tests, PerformanceSummary performance, {Map<String, String>? topicOverride, String difficulty = 'normal', int attemptCount = 1, double? temperature}) async {
+  Future<String> generateStudyGuideAndQuiz(
+    UserModel user,
+    List<TestModel> tests,
+    PerformanceSummary performance, {
+    Map<String, String>? topicOverride,
+    String difficulty = 'normal',
+    int attemptCount = 1,
+    double? temperature,
+    dynamic contentType, // WorkshopContentType (dynamic to avoid import)
+  }) async {
     // Eğer test yoksa hemen hata döndürme: bazı yeni hesaplarda konu performansı (ör. manuel veri) olabilir.
     if (tests.isEmpty) {
       final hasTopicData = performance.topicPerformances.values.any((subjectMap) => subjectMap.values.any((t) => (t.questionCount ?? 0) > 0));
@@ -737,7 +746,21 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
       }
     }
 
-    final prompt = getStudyGuideAndQuizPrompt(weakestSubject, weakestTopic, user.selectedExam, difficulty, attemptCount);
+    // ContentType'ı stringe çevir
+    String contentTypeStr = 'both';
+    if (contentType != null) {
+      final typeStr = contentType.toString().split('.').last;
+      contentTypeStr = typeStr; // quizOnly, studyOnly, both
+    }
+
+    final prompt = getStudyGuideAndQuizPrompt(
+      weakestSubject,
+      weakestTopic,
+      user.selectedExam,
+      difficulty,
+      attemptCount,
+      contentType: contentTypeStr,
+    );
 
     // temperature parametresini _callGemini'ye geçir
     return _callGemini(prompt, expectJson: true, temperature: temperature, requestType: 'workshop');

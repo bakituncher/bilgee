@@ -16,12 +16,18 @@ class QuizQualityGuard {
 
   static QuizQualityGuardResult apply(WorkshopModel raw) {
     final issues = <String>[];
+
+    // Eğer quiz yoksa (sadece konu anlatımı modu), kalite kontrolü yapma
+    if (raw.quiz == null || raw.quiz!.isEmpty) {
+      return QuizQualityGuardResult(raw, issues);
+    }
+
     final validQuestions = <QuizQuestion>[];
     final seenQuestions = <String>{};
 
-    for (int i = 0; i < raw.quiz.length; i++) {
-      final q = raw.quiz[i];
-      
+    for (int i = 0; i < raw.quiz!.length; i++) {
+      final q = raw.quiz![i];
+
       // 1. Soru metni tekrarı kontrolü
       final normQ = _normalize(q.question);
       if (seenQuestions.contains(normQ)) {
@@ -53,7 +59,7 @@ class QuizQualityGuard {
     // Temizlenmiş materyali döndür
     final guarded = WorkshopModel(
       id: raw.id,
-      studyGuide: _sanitizeText(raw.studyGuide),
+      studyGuide: raw.studyGuide != null ? _sanitizeText(raw.studyGuide!) : null,
       quiz: validQuestions,
       topic: raw.topic,
       subject: raw.subject,

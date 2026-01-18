@@ -6,16 +6,16 @@ class WorkshopModel {
   final String? id; // Firestore ID (Henüz kaydedilmediyse null)
   final String subject;
   final String topic;
-  final String studyGuide;
-  final List<QuizQuestion> quiz;
+  final String? studyGuide; // Optional: Sadece quiz seçildiyse null olabilir
+  final List<QuizQuestion>? quiz; // Optional: Sadece konu anlatımı seçildiyse null/empty olabilir
   final Timestamp? savedDate;
 
   WorkshopModel({
     this.id,
     required this.subject,
     required this.topic,
-    required this.studyGuide,
-    required this.quiz,
+    this.studyGuide,
+    this.quiz,
     this.savedDate,
   });
 
@@ -24,14 +24,14 @@ class WorkshopModel {
   factory WorkshopModel.fromAIJson(Map<String, dynamic> json) {
     var quizList = (json['quiz'] as List<dynamic>?)
         ?.map((q) => QuizQuestion.fromJson(q as Map<String, dynamic>))
-        .toList() ?? [];
+        .toList();
 
     return WorkshopModel(
       id: null,
       subject: json['subject'] ?? "Bilinmeyen Ders",
       topic: json['topic'] ?? "Bilinmeyen Konu",
-      studyGuide: json['studyGuide'] ?? "# Bilgi Alınamadı",
-      quiz: quizList,
+      studyGuide: json['studyGuide'], // Null olabilir (sadece quiz modu)
+      quiz: quizList, // Null olabilir (sadece konu anlatımı modu)
       savedDate: Timestamp.now(), // Oluşturulma anı
     );
   }
@@ -58,8 +58,8 @@ class WorkshopModel {
     return {
       'subject': subject,
       'topic': topic,
-      'studyGuide': studyGuide,
-      'quiz': quiz.map((q) => q.toMap()).toList(), // Tip güvenli seri hale getirme
+      if (studyGuide != null) 'studyGuide': studyGuide,
+      if (quiz != null) 'quiz': quiz!.map((q) => q.toMap()).toList(),
       'savedDate': savedDate ?? FieldValue.serverTimestamp(),
     };
   }

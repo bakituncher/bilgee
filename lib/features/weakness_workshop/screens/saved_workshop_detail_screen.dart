@@ -10,8 +10,9 @@ class SavedWorkshopDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Quiz verisi zaten QuizQuestion listesi olarak tutuluyor
-    final quizQuestions = workshop.quiz;
+    // Null-safe değişkenler: workshop.quiz ve workshop.studyGuide nullable olduğu için default değerler veriyoruz
+    final List<QuizQuestion> quizQuestions = workshop.quiz ?? [];
+    final String studyGuideText = workshop.studyGuide ?? '# İçerik Bulunamadı\n\nBu çalışma kartı için konu anlatımı mevcut değil.';
 
     return DefaultTabController(
       length: 2,
@@ -32,7 +33,7 @@ class SavedWorkshopDetailScreen extends StatelessWidget {
             SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: MarkdownBody(
-                data: workshop.studyGuide,
+                data: studyGuideText, // Artık String (non-nullable)
                 styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
                   p: TextStyle(fontSize: 16, height: 1.5, color: Theme.of(context).colorScheme.onSurface),
                   h1: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.secondary),
@@ -41,7 +42,7 @@ class SavedWorkshopDetailScreen extends StatelessWidget {
               ),
             ),
             // Ustalık Sınavı Sekmesi
-            _QuizReviewView(quizQuestions: quizQuestions),
+            _QuizReviewView(quizQuestions: quizQuestions), // Artık List<QuizQuestion> (non-nullable)
           ],
         ),
       ),

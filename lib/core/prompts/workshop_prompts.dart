@@ -5,8 +5,9 @@ String getStudyGuideAndQuizPrompt(
     String weakestTopic,
     String? selectedExam,
     String difficulty,
-    int attemptCount,
-    ) {
+    int attemptCount, {
+    String contentType = 'both', // 'quizOnly', 'studyOnly', 'both'
+    }) {
 
   String difficultyInstruction = "";
   if (difficulty == 'hard') {
@@ -78,13 +79,22 @@ INPUT:
 - Ders: '$weakestSubject' | Konu: '$weakestTopic' 
 - Sınav: $selectedExam | Zorluk: $difficulty $difficultyInstruction
 
-GÖREV: Temel kavramlar, sık hatalar, çözümlü örnek, 5 soruluk quiz hazırla. HER SORUYU YUKARIDA BELİRTİLEN KONTROL LİSTESİNDEN GEÇİR!
+${_getTaskByContentType(contentType, weakestSubject, weakestTopic, fiveChoiceRule)}
+""";
+}
+
+String _getTaskByContentType(String contentType, String subject, String topic, String fiveChoiceRule) {
+  if (contentType == 'quizOnly') {
+    return """
+GÖREV: 🎯 SADECE SORU OLUŞTUR
+Kullanıcı sadece sorular istedi. Konu anlatımı YAPMA.
+$fiveChoiceRule
+5 adet kaliteli, zorlayıcı soru hazırla. HER SORUYU KONTROL LİSTESİNDEN GEÇİR!
 
 JSON ÇIKTI:
 {
-  "subject": "$weakestSubject",
-  "topic": "$weakestTopic",
-  "studyGuide": "# $weakestTopic - Cevher İşleme Kartı\\n\\n## 💎 Özü\\n...",
+  "subject": "$subject",
+  "topic": "$topic",
   "quiz": [
     {"question": "Soru 1", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 0, "explanation": "..."},
     {"question": "Soru 2", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 1, "explanation": "..."},
@@ -92,6 +102,39 @@ JSON ÇIKTI:
     {"question": "Soru 4", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 3, "explanation": "..."},
     {"question": "Soru 5", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 4, "explanation": "..."}
   ]
-}
-""";
+}""";
+  } else if (contentType == 'studyOnly') {
+    return """
+GÖREV: 📚 SADECE KONU ANLATIMI OLUŞTUR
+Kullanıcı sadece konu anlatımı istedi. Quiz/Soru YAPMA.
+Detaylı, örneklerle zenginleştirilmiş, stratejik bir çalışma rehberi hazırla (max 1000 kelime).
+
+JSON ÇIKTI:
+{
+  "subject": "$subject",
+  "topic": "$topic",
+  "studyGuide": "# $topic - Cevher İşleme Kartı\\n\\n## 💎 Özü\\n...\\n\\n## 📊 Temel Kavramlar\\n...\\n\\n## ⚠️ Sık Hatalar\\n...\\n\\n## 🎯 Strateji\\n...\\n\\n## 📝 Örnekler\\n..."
+}""";
+  } else {
+    // both (varsayılan)
+    return """
+GÖREV: 🚀 HEM KONU ANLATIMI HEM SORU OLUŞTUR
+Temel kavramlar, sık hatalar, çözümlü örnek içeren çalışma rehberi + 5 soruluk quiz hazırla.
+$fiveChoiceRule
+HER SORUYU KONTROL LİSTESİNDEN GEÇİR!
+
+JSON ÇIKTI:
+{
+  "subject": "$subject",
+  "topic": "$topic",
+  "studyGuide": "# $topic - Cevher İşleme Kartı\\n\\n## 💎 Özü\\n...",
+  "quiz": [
+    {"question": "Soru 1", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 0, "explanation": "..."},
+    {"question": "Soru 2", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 1, "explanation": "..."},
+    {"question": "Soru 3", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 2, "explanation": "..."},
+    {"question": "Soru 4", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 3, "explanation": "..."},
+    {"question": "Soru 5", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 4, "explanation": "..."}
+  ]
+}""";
+  }
 }

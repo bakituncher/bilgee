@@ -13,6 +13,13 @@ import 'package:taktik/features/quests/logic/quest_notifier.dart';
 // UI Durumu
 enum WorkshopStep { briefing, loading, study, quiz, results, error }
 
+// İçerik Türü Seçenekleri
+enum WorkshopContentType {
+  quizOnly,        // 🎯 Sadece Soru Oluştur
+  studyOnly,       // 📚 Sadece Konu Anlatımı Oluştur
+  both,            // 🚀 Her İkisini de Oluştur
+}
+
 class WorkshopState {
   final WorkshopStep step;
   final WorkshopModel? material;
@@ -20,6 +27,7 @@ class WorkshopState {
   final Map<String, String>? selectedTopic; // {subject: ..., topic: ...}
   final String? errorMessage;
   final bool isMastered; // Sonuçta ustalaştı mı?
+  final WorkshopContentType contentType; // Kullanıcının seçtiği içerik türü
 
   WorkshopState({
     this.step = WorkshopStep.briefing,
@@ -28,6 +36,7 @@ class WorkshopState {
     this.selectedTopic,
     this.errorMessage,
     this.isMastered = false,
+    this.contentType = WorkshopContentType.both, // Varsayılan: Her ikisi
   });
 
   WorkshopState copyWith({
@@ -37,6 +46,7 @@ class WorkshopState {
     Map<String, String>? selectedTopic,
     String? errorMessage,
     bool? isMastered,
+    WorkshopContentType? contentType,
     bool clearError = false,
   }) {
     return WorkshopState(
@@ -46,6 +56,7 @@ class WorkshopState {
       selectedTopic: selectedTopic ?? this.selectedTopic,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       isMastered: isMastered ?? this.isMastered,
+      contentType: contentType ?? this.contentType,
     );
   }
 }
@@ -57,12 +68,21 @@ class WorkshopController extends AutoDisposeNotifier<WorkshopState> {
   }
 
   void selectTopic(Map<String, String> topic) {
+    // Sadece konuyu seç, henüz içerik oluşturma
     state = state.copyWith(selectedTopic: topic, clearError: true);
-    _generateMaterial(topic);
   }
 
-  Future<void> _generateMaterial(Map<String, String> topic, {double? temperature}) async {
-    state = state.copyWith(step: WorkshopStep.loading, clearError: true);
+  void selectContentType(WorkshopContentType contentType) {
+    // İçerik türünü seç ve materyal oluşturmaya başla
+    state = state.copyWith(contentType: contentType, clearError: true);
+    if (state.selectedTopic != null) {
+      _generateMaterial(state.selectedTopic!, contentType: contentType);
+    }
+  }
+
+  Future<void> _generateMaterial(Map<String, String> topic, {WorkshopContentType? contentType, double? temperature}) async {
+    final selectedContentType = contentType ?? state.contentType;
+    state = state.copyWith(step: WorkshopStep.loading, clearError: true, contentType: selectedContentType);
 
     try {
       final user = ref.read(userProfileProvider).value;
@@ -81,6 +101,7 @@ class WorkshopController extends AutoDisposeNotifier<WorkshopState> {
         performance,
         topicOverride: topic,
         temperature: temperature,
+        contentType: selectedContentType, // İçerik türünü gönder
       ).timeout(
         // Gemini detaylı içerik üretirken 45sn yetmeyebilir, güvenli aralık 90sn'dir.
         const Duration(seconds: 90),
@@ -93,7 +114,17 @@ class WorkshopController extends AutoDisposeNotifier<WorkshopState> {
       final rawModel = WorkshopModel.fromAIJson(decoded);
       final guarded = QuizQualityGuard.apply(rawModel).material;
 
-      state = state.copyWith(step: WorkshopStep.study, material: guarded);
+      // İçerik türüne göre doğru adıma geç
+      WorkshopStep nextStep;
+      if (selectedContentType == WorkshopContentType.quizOnly) {
+        nextStep = WorkshopStep.quiz; // Direkt sorulara geç
+      } else if (selectedContentType == WorkshopContentType.studyOnly) {
+        nextStep = WorkshopStep.study; // Sadece konu anlatımı göster
+      } else {
+        nextStep = WorkshopStep.study; // Her ikisi için önce konu anlatımı
+      }
+
+      state = state.copyWith(step: nextStep, material: guarded);
     } catch (e) {
       state = state.copyWith(step: WorkshopStep.error, errorMessage: e.toString());
     }
@@ -119,17 +150,23 @@ class WorkshopController extends AutoDisposeNotifier<WorkshopState> {
 
     final firestore = ref.read(firestoreServiceProvider);
 
+    // Quiz yoksa işlem yapma
+    if (material.quiz == null || material.quiz!.isEmpty) {
+      state = state.copyWith(step: WorkshopStep.error, errorMessage: 'Quiz bulunamadı.');
+      return;
+    }
+
     // 1. İstatistik Hesapla
     int correct = 0;
     int wrong = 0;
-    material.quiz.asMap().forEach((idx, q) {
+    material.quiz!.asMap().forEach((idx, q) {
       if (state.selectedAnswers[idx] == q.correctOptionIndex) {
         correct++;
       } else if (state.selectedAnswers.containsKey(idx)) {
         wrong++;
       }
     });
-    int blank = material.quiz.length - correct - wrong;
+    int blank = material.quiz!.length - correct - wrong;
 
     // 2. Performansı Güncelle
     final sanitizedSubject = firestore.sanitizeKey(material.subject);
@@ -140,7 +177,7 @@ class WorkshopController extends AutoDisposeNotifier<WorkshopState> {
       correctCount: currentPerformance.correctCount + correct,
       wrongCount: currentPerformance.wrongCount + wrong,
       blankCount: currentPerformance.blankCount + blank,
-      questionCount: currentPerformance.questionCount + material.quiz.length,
+      questionCount: currentPerformance.questionCount + material.quiz!.length,
     );
 
     await firestore.updateTopicPerformance(
@@ -156,7 +193,7 @@ class WorkshopController extends AutoDisposeNotifier<WorkshopState> {
     final int cumWrong = newPerformance.wrongCount;
     final int cumAnswered = (cumCorrect + cumWrong);
     final double cumAccuracy = cumAnswered == 0 ? 0.0 : (cumCorrect / cumAnswered);
-    final double quizScore = material.quiz.isEmpty ? 0.0 : (correct / material.quiz.length);
+    final double quizScore = (correct / material.quiz!.length);
 
     final alreadyMasteredKey = '$sanitizedSubject-$sanitizedTopic';
     final alreadyMastered = performanceSummary.masteredTopics.contains(alreadyMasteredKey);
