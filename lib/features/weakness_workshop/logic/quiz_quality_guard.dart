@@ -8,131 +8,143 @@ class QuizQualityGuardResult {
 }
 
 class QuizQualityGuard {
-  static const int minQuestions = 3;
-  static const int minTextLen = 12;
-  static const int minExplLen = 20;
+  static const int minQuestions = 3; // En az kaç soru kalmalı?
+  static const int minOptions = 4;   // Bir soruda en az kaç benzersiz şık olmalı? (A, B, C, D)
+  static const int minTextLen = 10;
+  static const int minExplLen = 15;
 
   static QuizQualityGuardResult apply(StudyGuideAndQuiz raw) {
     final issues = <String>[];
-    final cleaned = <QuizQuestion>[];
+    final validQuestions = <QuizQuestion>[];
     final seenQuestions = <String>{};
 
-    for (final q in raw.quiz) {
-      // Aynı soru tekrarlarını ele
+    for (int i = 0; i < raw.quiz.length; i++) {
+      final q = raw.quiz[i];
+      
+      // 1. Soru metni tekrarı kontrolü
       final normQ = _normalize(q.question);
       if (seenQuestions.contains(normQ)) {
-        issues.add('Tekrarlanan soru elendi.');
+        issues.add('Soru ${i + 1}: Tekrarlanan soru metni nedeniyle elendi.');
         continue;
       }
-      final tmpIssues = <String>[];
-      if (_isQuestionValid(q, tmpIssues)) {
-        final deduped = _dedupOptions(q);
-        // Yer tutucu/boş şıklar nedeniyle elemek yerine, şıkları temizleyip eksikleri dolduruyoruz
-        cleaned.add(deduped);
+
+      // 2. Soruyu işle ve temizle (Başarısızsa null döner)
+      final processedQ = _processAndValidate(q, issues, index: i + 1);
+      
+      if (processedQ != null) {
+        validQuestions.add(processedQ);
         seenQuestions.add(normQ);
-      } else {
-        issues.addAll(tmpIssues);
       }
     }
 
-    if (cleaned.length < minQuestions) {
-      issues.add('Soru sayısı kalite kontrolünden sonra yetersiz kaldı (${cleaned.length}/$minQuestions).');
-      throw Exception('Soru kalitesi yetersiz. Lütfen tekrar deneyin.');
+    // Toplam soru sayısı kontrolü
+    if (validQuestions.length < minQuestions) {
+      issues.add('Kalite kontrol sonrası soru sayısı yetersiz kaldı (${validQuestions.length}/$minQuestions).');
+      // Kullanıcıya bozuk test göstermektense hata fırlatıp yeniden ürettirmek daha iyidir.
+      throw Exception('Soru kalitesi standartları karşılamadı. Lütfen tekrar deneyin.');
     }
 
+    // Temizlenmiş materyali döndür
     final guarded = StudyGuideAndQuiz(
       studyGuide: _sanitizeText(raw.studyGuide),
-      quiz: cleaned,
+      quiz: validQuestions,
       topic: raw.topic,
       subject: raw.subject,
     );
+
     return QuizQualityGuardResult(guarded, issues);
   }
 
-  static bool _isQuestionValid(QuizQuestion q, List<String> issues) {
-    final trimmedQ = _sanitizeText(q.question);
-    final trimmedExpl = _sanitizeText(q.explanation);
+  /// Soruyu temizler, şıkları tekilleştirir ve kalite kontrolünden geçirir.
+  /// Geçersizse `null` döner ve `issues` listesine nedenini ekler.
+  static QuizQuestion? _processAndValidate(QuizQuestion q, List<String> issues, {required int index}) {
+    final cleanQuestionText = _sanitizeText(q.question);
+    final cleanExplanation = _sanitizeText(q.explanation);
 
-    if (trimmedQ.length < minTextLen) {
-      issues.add('Çok kısa soru elendi.');
-      return false;
+    // --- A. Metin Kalite Kontrolleri ---
+    if (cleanQuestionText.length < minTextLen) {
+      issues.add('Soru $index: Soru metni çok kısa olduğu için elendi.');
+      return null;
+    }
+    if (cleanExplanation.length < minExplLen) {
+      issues.add('Soru $index: Açıklama yetersiz olduğu için elendi.');
+      return null;
+    }
+    
+    // Cevap sızıntısı kontrolü (Basit)
+    final lowerQ = cleanQuestionText.toLowerCase();
+    if (lowerQ.contains('cevap:') || lowerQ.contains('doğru şık')) {
+      issues.add('Soru $index: Cevap sızıntısı tespit edildiği için elendi.');
+      return null;
     }
 
-    // Cevap sızıntıları (yalnızca açık işaretler)
-    final lower = trimmedQ.toLowerCase();
-    if (lower.contains('cevap:') || lower.contains('doğru cevap') || lower.contains('[doğru]')) {
-      issues.add('Cevap sızıntısı içeren soru elendi.');
-      return false;
+    // --- B. Şık İşlemleri (Kritik Kısım) ---
+    
+    // 1. Doğru cevabın orijinal metnini al (İndeks kaymasını önlemek için)
+    if (q.correctOptionIndex < 0 || q.correctOptionIndex >= q.options.length) {
+      issues.add('Soru $index: Geçersiz cevap anahtarı nedeniyle elendi.');
+      return null;
     }
+    final originalCorrectText = _sanitizeText(q.options[q.correctOptionIndex]);
 
-    // Açıklama yeterliliği (yalnızca uzunluk)
-    if (trimmedExpl.length < minExplLen) {
-      issues.add('Yetersiz açıklama nedeniyle soru elendi.');
-      return false;
-    }
-
-    // Şıklar ve indeks
-    if (q.options.isEmpty || q.correctOptionIndex < 0 || q.correctOptionIndex >= q.options.length) {
-      issues.add('Geçersiz şık/indeks nedeniyle soru elendi.');
-      return false;
-    }
-
-    // Şıkların temizlik ve benzersizlik kontrolü (en az 3 benzersiz şık)
-    final cleaned = q.options.map(_sanitizeText).where((e) => e.trim().isNotEmpty).toList();
-    final setLower = cleaned.map((e) => e.toLowerCase()).toSet();
-    if (setLower.length < 3) {
-      issues.add('Tekrarlayan şıklar nedeniyle soru elendi.');
-      return false;
-    }
-
-    // Doğru şık boş/placeholder olmasın
-    final correct = cleaned[q.correctOptionIndex];
-    if (correct.trim().isEmpty || correct.toLowerCase().startsWith('seçenek ') || _isPlaceholderOption(correct)) {
-      issues.add('Doğru şık geçersiz görünüyor.');
-      return false;
-    }
-
-    return true;
-  }
-
-  static bool _isPlaceholderOption(String s) {
-    final l = s.trim().toLowerCase();
-    return l.isEmpty || l == 'a' || l == 'b' || l == 'c' || l == 'd' || l == 'e' ||
-        l.startsWith('seçenek') || l.startsWith('diğer seçenek') || l.startsWith('option');
-  }
-
-  static QuizQuestion _dedupOptions(QuizQuestion q) {
-    final seen = <String, int>{};
-    final cleaned = <String>[];
+    // 2. Şıkları temizle, boş/placeholder olanları at ve tekilleştir
+    final uniqueOptions = <String>{};
+    final finalOptions = <String>[];
+    
     for (final opt in q.options) {
-      final k = _sanitizeText(opt).trim();
-      final lk = k.toLowerCase();
-      // Yer tutucu/boş şıkları atla
-      if (k.isEmpty || _isPlaceholderOption(k)) continue;
-      if (!seen.containsKey(lk)) {
-        seen[lk] = 1;
-        cleaned.add(k);
+      final cleanOpt = _sanitizeText(opt);
+      final lowerOpt = cleanOpt.toLowerCase();
+
+      // Placeholder ve boş kontrolü
+      if (cleanOpt.isEmpty || _isPlaceholderOption(lowerOpt)) {
+        continue;
+      }
+
+      // Tekilleştirme
+      if (!uniqueOptions.contains(lowerOpt)) {
+        uniqueOptions.add(lowerOpt);
+        finalOptions.add(cleanOpt);
       }
     }
 
-    // En az 4 şık garanti et
-    int fillerIndex = 0;
-    while (cleaned.length < 4) {
-      cleaned.add('Diğer Seçenek ${++fillerIndex}');
-    }
-    if (cleaned.length > 5) {
-      cleaned.removeRange(5, cleaned.length);
+    // 3. Yeterli şık kaldı mı? (En az 4)
+    if (finalOptions.length < minOptions) {
+      issues.add('Soru $index: Yeterli geçerli şıkkı olmadığı (${finalOptions.length}) için elendi.');
+      return null; // BURASI KRİTİK: Dolgu yapmak yerine soruyu çöpe atıyoruz.
     }
 
-    int idx = q.correctOptionIndex;
-    if (idx >= cleaned.length) idx = 0;
+    // 4. Doğru cevabın yeni listedeki yerini bul
+    // Not: Tekilleştirme sırasında doğru cevap metni de biraz değişmiş olabilir (trim vs),
+    // bu yüzden fuzzy match veya sanitize edilmiş haliyle arıyoruz.
+    int newCorrectIndex = -1;
+    for (int i = 0; i < finalOptions.length; i++) {
+      if (finalOptions[i] == originalCorrectText) {
+        newCorrectIndex = i;
+        break;
+      }
+    }
+
+    // Eğer doğru cevap, temizlik sırasında (örn. placeholder sanılıp) silindiyse soruyu iptal et
+    if (newCorrectIndex == -1) {
+      issues.add('Soru $index: Doğru cevap şıkkı geçerli bulunmadığı için elendi.');
+      return null;
+    }
 
     return QuizQuestion(
-      question: _sanitizeText(q.question),
-      options: cleaned,
-      correctOptionIndex: idx,
-      explanation: _sanitizeText(q.explanation),
+      question: cleanQuestionText,
+      options: finalOptions,
+      correctOptionIndex: newCorrectIndex,
+      explanation: cleanExplanation,
     );
+  }
+
+  static bool _isPlaceholderOption(String lowerOpt) {
+    // "Diğer seçenek", "Seçenek A", "Option 1" gibi saçmalıkları filtreler
+    return lowerOpt == 'a' || lowerOpt == 'b' || lowerOpt == 'c' || lowerOpt == 'd' || lowerOpt == 'e' ||
+        lowerOpt.startsWith('seçenek') || 
+        lowerOpt.startsWith('diğer seçenek') || 
+        lowerOpt.startsWith('option') ||
+        lowerOpt.contains('belirtilmemiş');
   }
 
   static String _sanitizeText(String v) {
