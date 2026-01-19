@@ -2,7 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:taktik/features/coach/models/saved_solution_model.dart';
 import 'package:taktik/features/coach/providers/saved_solutions_provider.dart';
 import 'package:taktik/features/coach/screens/question_solver_screen.dart'; // Markdown builder'lar için
@@ -17,6 +19,7 @@ class SavedSolutionDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final allSolutions = ref.watch(savedSolutionsProvider);
+    final isPremium = ref.watch(premiumStatusProvider);
 
     SavedSolutionModel currentSolution;
     try {
@@ -149,6 +152,20 @@ class SavedSolutionDetailScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
+          // Premium kontrolü
+          if (!isPremium) {
+            context.go('/ai-hub/offer', extra: {
+              'title': 'Soru Çözücü',
+              'subtitle': 'Anında çözüm cebinde.',
+              'icon': Icons.camera_enhance_rounded,
+              'color': Colors.orangeAccent,
+              'marketingTitle': 'Soruda Takılma!',
+              'marketingSubtitle': 'Yapamadığın sorunun fotoğrafını çek, Taktik Tavşan adım adım çözümünü anlatsın.',
+              'redirectRoute': '/ai-hub/question-solver',
+            });
+            return;
+          }
+
           // Görseli XFile olarak oluştur ve QuestionSolverScreen'e gönder
           final imageFile = XFile(currentSolution.localImagePath);
 
@@ -159,7 +176,7 @@ class SavedSolutionDetailScreen extends ConsumerWidget {
               pageBuilder: (context, animation, secondaryAnimation) => QuestionSolverScreen(
                 preselectedImage: imageFile,
                 existingSolutionId: currentSolution.id, // Güncelleme için ID gönder
-                existingSolutionText: isSolved ? currentSolution.solutionText : null, // Çözüm varsa gönder
+                existingSolutionText: isSolved ? currentSolution.solutionText : null, // Çözüm varsa g��nder
               ),
               transitionDuration: Duration.zero,
               reverseTransitionDuration: Duration.zero,
