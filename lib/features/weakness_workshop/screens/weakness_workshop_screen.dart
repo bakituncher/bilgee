@@ -22,6 +22,7 @@ import 'package:confetti/confetti.dart';
 import 'package:lottie/lottie.dart';
 import 'package:taktik/core/safety/ai_content_safety.dart';
 import 'package:taktik/features/weakness_workshop/logic/workshop_controller.dart';
+import 'package:taktik/data/models/exam_model.dart';
 
 // DEPRECATED: Eski enum ve provider'lar - Artık WorkshopController içinde
 // Geriye dönük uyumluluk için kalsın ama yeni kullanmayın
@@ -657,10 +658,42 @@ class _BriefingView extends ConsumerWidget {
                 isRecommended: idx == 0,
                 onTap: () => onTopicSelected(topicForSelection),
               ).animate().fadeIn(delay: (200 * idx).ms).slideX(begin: 0.2);
-            })
+            }),
+
+            const SizedBox(height: 16),
+
+            // Manuel konu seçme butonu
+            OutlinedButton.icon(
+              onPressed: () {
+                _showManualTopicSelector(context, ref, onTopicSelected);
+              },
+              icon: const Icon(Icons.search_rounded, size: 20),
+              label: const Text("Başka Konu Seç"),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ).animate().fadeIn(delay: 800.ms).slideY(begin: 0.2),
           ],
         );
       },
+    );
+  }
+
+  void _showManualTopicSelector(
+    BuildContext context,
+    WidgetRef ref,
+    Function(Map<String, String>) onTopicSelected,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _ManualTopicSelectorSheet(
+        onTopicSelected: onTopicSelected,
+      ),
     );
   }
 }
@@ -2381,3 +2414,323 @@ class _WSHeader extends StatelessWidget {
     );
   }
 }
+
+class _ManualTopicSelectorSheet extends ConsumerStatefulWidget {
+  final Function(Map<String, String>) onTopicSelected;
+
+  const _ManualTopicSelectorSheet({required this.onTopicSelected});
+
+  @override
+  ConsumerState<_ManualTopicSelectorSheet> createState() => _ManualTopicSelectorSheetState();
+}
+
+class _ManualTopicSelectorSheetState extends ConsumerState<_ManualTopicSelectorSheet> {
+  String _searchQuery = '';
+  String? _selectedSubject;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final user = ref.watch(userProfileProvider).value;
+    final tests = ref.watch(testsProvider).value;
+
+    if (user?.selectedExam == null) {
+      return _buildErrorContainer(context, 'Sınav türü seçilmemiş');
+    }
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.9,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      builder: (context, scrollController) {
+        return Container(
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: colorScheme.surfaceContainerHighest,
+                      width: 1,
+                    ),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    // Drag handle
+                    Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: colorScheme.onSurfaceVariant.withOpacity(0.4),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.search_rounded,
+                          color: colorScheme.primary,
+                          size: 28,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Konu Seç',
+                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.close_rounded),
+                          style: IconButton.styleFrom(
+                            backgroundColor: colorScheme.surfaceContainerHighest,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    // Search bar
+                    TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Konu ara...',
+                        prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                        filled: true,
+                        fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                      ),
+                      onChanged: (value) {
+                        setState(() => _searchQuery = value.toLowerCase());
+                      },
+                    ),
+                  ],
+                ),
+              ),
+
+              // Content
+              Expanded(
+                child: FutureBuilder<Map<String, List<String>>>(
+                  future: _loadTopicsBySubject(user!.selectedExam!),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    if (snapshot.hasError || !snapshot.hasData) {
+                      return Center(
+                        child: Text(
+                          'Konular yüklenemedi',
+                          style: TextStyle(color: colorScheme.onSurfaceVariant),
+                        ),
+                      );
+                    }
+
+                    final topicsBySubject = snapshot.data!;
+                    final filteredTopics = _filterTopics(topicsBySubject);
+
+                    return ListView(
+                      controller: scrollController,
+                      padding: const EdgeInsets.all(16),
+                      children: filteredTopics.entries.map((entry) {
+                        final subject = entry.key;
+                        final topics = entry.value;
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Ders başlığı
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 12,
+                              ),
+                              child: Text(
+                                subject,
+                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.primary,
+                                ),
+                              ),
+                            ),
+                            // Konular
+                            ...topics.map((topic) => _buildTopicTile(
+                              context,
+                              subject,
+                              topic,
+                            )),
+                            const SizedBox(height: 8),
+                          ],
+                        );
+                      }).toList(),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTopicTile(BuildContext context, String subject, String topic) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      elevation: 0,
+      color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: colorScheme.surfaceContainerHighest,
+          width: 1,
+        ),
+      ),
+      child: InkWell(
+        onTap: () {
+          Navigator.pop(context);
+          widget.onTopicSelected({
+            'subject': subject,
+            'topic': topic,
+          });
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.bookmark_outline_rounded,
+                  size: 20,
+                  color: colorScheme.primary,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  topic,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 16,
+                color: colorScheme.onSurfaceVariant.withOpacity(0.5),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorContainer(BuildContext context, String message) {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Center(
+        child: Text(
+          message,
+          style: Theme.of(context).textTheme.bodyLarge,
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+
+  Future<Map<String, List<String>>> _loadTopicsBySubject(String examType) async {
+    try {
+      final ExamType examEnum = ExamType.values.byName(examType);
+      final examData = await ExamData.getExamByType(examEnum);
+
+      final Map<String, List<String>> topicsBySubject = {};
+
+      // Her section'ı gez
+      for (var section in examData.sections) {
+        // Her section içindeki subjects'i gez
+        for (var subjectEntry in section.subjects.entries) {
+          final subjectName = subjectEntry.key;
+          final subjectDetails = subjectEntry.value;
+
+          final topics = subjectDetails.topics.map((topic) => topic.name).toList();
+
+          if (topics.isNotEmpty) {
+            // Eğer aynı ders başka section'da da varsa birleştir
+            if (topicsBySubject.containsKey(subjectName)) {
+              topicsBySubject[subjectName]!.addAll(topics);
+              // Tekrarları kaldır
+              topicsBySubject[subjectName] = topicsBySubject[subjectName]!.toSet().toList();
+            } else {
+              topicsBySubject[subjectName] = topics;
+            }
+          }
+        }
+      }
+
+      return topicsBySubject;
+    } catch (e) {
+      debugPrint('Error loading topics: $e');
+      return {};
+    }
+  }
+
+  Map<String, List<String>> _filterTopics(Map<String, List<String>> allTopics) {
+    if (_searchQuery.isEmpty) {
+      return allTopics;
+    }
+
+    final filtered = <String, List<String>>{};
+
+    for (var entry in allTopics.entries) {
+      final subject = entry.key;
+      final topics = entry.value;
+
+      // Ders adında arama
+      final subjectMatches = subject.toLowerCase().contains(_searchQuery);
+
+      // Konularda arama
+      final matchingTopics = topics.where((topic) {
+        return topic.toLowerCase().contains(_searchQuery);
+      }).toList();
+
+      if (subjectMatches) {
+        // Ders adı eşleşiyorsa tüm konuları göster
+        filtered[subject] = topics;
+      } else if (matchingTopics.isNotEmpty) {
+        // Sadece eşleşen konuları göster
+        filtered[subject] = matchingTopics;
+      }
+    }
+
+    return filtered;
+  }
+}
+
