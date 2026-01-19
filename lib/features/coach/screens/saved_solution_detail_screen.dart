@@ -9,6 +9,7 @@ import 'package:taktik/features/coach/models/saved_solution_model.dart';
 import 'package:taktik/features/coach/providers/saved_solutions_provider.dart';
 import 'package:taktik/features/coach/screens/question_solver_screen.dart'; // Markdown builder'lar için
 import 'package:markdown/markdown.dart' as md;
+import 'package:taktik/shared/widgets/full_screen_image_viewer.dart';
 
 class SavedSolutionDetailScreen extends ConsumerWidget {
   final SavedSolutionModel solution;
@@ -75,20 +76,33 @@ class SavedSolutionDetailScreen extends ConsumerWidget {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: theme.dividerColor),
-                    borderRadius: BorderRadius.circular(16),
-                    color: Colors.black,
-                  ),
-                  constraints: const BoxConstraints(maxHeight: 300),
-                  child: Image.file(
-                    File(currentSolution.localImagePath),
+              child: GestureDetector(
+                onTap: () {
+                  // Tam ekran resim görüntüleyici aç
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => FullScreenImageViewer(
+                        imagePath: currentSolution.localImagePath,
+                      ),
+                    ),
+                  );
+                },
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
                     width: double.infinity,
-                    fit: BoxFit.contain,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: theme.dividerColor),
+                      borderRadius: BorderRadius.circular(16),
+                      color: Colors.black,
+                    ),
+                    constraints: const BoxConstraints(maxHeight: 300),
+                    child: Image.file(
+                      File(currentSolution.localImagePath),
+                      width: double.infinity,
+                      fit: BoxFit.contain,
+                    ),
                   ),
                 ),
               ),

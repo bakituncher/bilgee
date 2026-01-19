@@ -21,6 +21,7 @@ import 'package:markdown/markdown.dart' as md;
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/core/utils/exam_utils.dart';
+import 'package:taktik/shared/widgets/full_screen_image_viewer.dart';
 
 // Basit mesaj modeli
 class SolverMessage {
@@ -842,23 +843,36 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
                   height: _isChatMode ? 120 : 200, // Sohbette yer açmak için resmi küçült
                   width: double.infinity,
                   margin: const EdgeInsets.all(12),
-                  child: Stack(
-                    children: [
-                      // Ana resim
-                      Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: theme.dividerColor),
-                          image: DecorationImage(
-                            image: FileImage(File(_finalImageFile!.path)),
-                            fit: BoxFit.contain,
+                  child: GestureDetector(
+                    onTap: () {
+                      // Tam ekran resim görüntüleyici aç
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => FullScreenImageViewer(
+                            imagePath: _finalImageFile!.path,
                           ),
                         ),
-                      ),
-                      // Animasyon overlay (sadece analiz sırasında) - TARAMA EFEKTİ
-                      if (_isAnalyzing)
-                        _ScanningAnalysisOverlay(theme: theme),
-                    ],
+                      );
+                    },
+                    child: Stack(
+                      children: [
+                        // Ana resim
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: theme.dividerColor),
+                            image: DecorationImage(
+                              image: FileImage(File(_finalImageFile!.path)),
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                        ),
+                        // Animasyon overlay (sadece analiz sırasında) - TARAMA EFEKTİ
+                        if (_isAnalyzing)
+                          _ScanningAnalysisOverlay(theme: theme),
+                      ],
+                    ),
                   ),
                 ),
 
