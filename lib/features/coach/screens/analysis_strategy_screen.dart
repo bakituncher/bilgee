@@ -28,13 +28,13 @@ class AnalysisStrategyScreen extends StatelessWidget {
       backgroundColor: colorScheme.surface,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 32, 20, 32),
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // Premium Hero Section
               Container(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
@@ -49,50 +49,50 @@ class AnalysisStrategyScreen extends StatelessWidget {
                             colorScheme.secondaryContainer.withOpacity(0.4),
                           ],
                   ),
-                  borderRadius: BorderRadius.circular(32),
+                  borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: colorScheme.primary.withOpacity(0.15),
-                      blurRadius: 24,
-                      offset: const Offset(0, 8),
+                      color: colorScheme.primary.withOpacity(0.1),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
                 child: Column(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: colorScheme.surface,
                         boxShadow: [
                           BoxShadow(
-                            color: colorScheme.primary.withOpacity(0.2),
-                            blurRadius: 16,
-                            spreadRadius: 2,
+                            color: colorScheme.primary.withOpacity(0.15),
+                            blurRadius: 12,
+                            spreadRadius: 1,
                           ),
                         ],
                       ),
                       child: const CircleAvatar(
                         backgroundColor: Colors.transparent,
-                        radius: 48,
+                        radius: 32,
                         backgroundImage: AssetImage('assets/images/bunnyy.png'),
                       ),
                     ).animate().fadeIn(duration: 300.ms).scale(delay: 100.ms),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
                     Text(
                       'Analiz & Strateji Merkezi',
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
                         color: colorScheme.onSurface,
-                        letterSpacing: -0.5,
+                        letterSpacing: -0.3,
                       ),
                       textAlign: TextAlign.center,
                     ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.3),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     Text(
                       'Verilerini eyleme dönüştür. Taktik Tavşan ile eksiklerini bul, başarıyı şansa bırakma! 🚀',
-                      style: theme.textTheme.bodyLarge?.copyWith(
+                      style: theme.textTheme.bodyMedium?.copyWith(
                         color: colorScheme.onSurfaceVariant,
                         height: 1.5,
                         fontWeight: FontWeight.w500,
@@ -103,7 +103,7 @@ class AnalysisStrategyScreen extends StatelessWidget {
                 ),
               ).animate().fadeIn(delay: 100.ms).scale(),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
 
               // Premium Feature Cards
               _SuiteButton(
@@ -119,7 +119,7 @@ class AnalysisStrategyScreen extends StatelessWidget {
                 accentColor: isDark ? const Color(0xFFFFD54F) : const Color(0xFFFF8F00),
               ).animate().fadeIn(delay: 400.ms).slideX(begin: -0.2, curve: Curves.easeOutCubic),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
 
               _SuiteButton(
                 icon: Icons.rocket_launch_rounded,
@@ -134,14 +134,14 @@ class AnalysisStrategyScreen extends StatelessWidget {
                 accentColor: isDark ? const Color(0xFF64B5F6) : const Color(0xFF0D47A1),
               ).animate().fadeIn(delay: 500.ms).slideX(begin: 0.2, curve: Curves.easeOutCubic),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
 
               // Pro Tips Section
               Container(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: colorScheme.outline.withOpacity(0.2),
                   ),
@@ -154,22 +154,22 @@ class AnalysisStrategyScreen extends StatelessWidget {
                         Icon(
                           Icons.lightbulb_rounded,
                           color: colorScheme.primary,
-                          size: 24,
+                          size: 20,
                         ),
                         const SizedBox(width: 8),
                         Text(
                           'Pro İpucu',
-                          style: theme.textTheme.titleMedium?.copyWith(
+                          style: theme.textTheme.titleSmall?.copyWith(
                             color: colorScheme.onSurface,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     Text(
                       'Sık sık deneme ekleyerek Taktik Tavşan\'ın seni daha iyi tanımasını sağla! Level atlama zamanı!',
-                      style: theme.textTheme.bodyMedium?.copyWith(
+                      style: theme.textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurfaceVariant,
                         height: 1.5,
                       ),
@@ -212,24 +212,24 @@ class _SuiteButton extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(16),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(16),
             gradient: gradient,
             boxShadow: [
               BoxShadow(
-                color: accentColor.withOpacity(0.3),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
+                color: accentColor.withOpacity(0.2),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
                 spreadRadius: 0,
               ),
               BoxShadow(
-                color: Colors.black.withOpacity(isDark ? 0.4 : 0.1),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
+                color: Colors.black.withOpacity(isDark ? 0.2 : 0.06),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
@@ -237,65 +237,58 @@ class _SuiteButton extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
-                width: 64,
-                height: 64,
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: Colors.white.withOpacity(isDark ? 0.15 : 0.25),
                   border: Border.all(
                     color: Colors.white.withOpacity(0.3),
-                    width: 2,
+                    width: 1.5,
                   ),
                 ),
                 child: Icon(
                   icon,
-                  size: 32,
+                  size: 24,
                   color: isDark ? Colors.white : Colors.white.withOpacity(0.95),
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       title,
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
                         color: isDark ? Colors.white : Colors.white,
-                        letterSpacing: -0.3,
+                        letterSpacing: -0.2,
                       ),
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 4),
                     Text(
                       subtitle,
-                      style: theme.textTheme.bodyMedium?.copyWith(
+                      style: theme.textTheme.bodySmall?.copyWith(
                         color: isDark
                             ? Colors.white.withOpacity(0.85)
                             : Colors.white.withOpacity(0.9),
-                        height: 1.4,
-                        fontWeight: FontWeight.w500,
+                        height: 1.3,
+                        fontWeight: FontWeight.w400,
                       ),
-                      maxLines: 3,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.all(5),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.2),
-                ),
-                child: Icon(
-                  Icons.arrow_forward_rounded,
-                  size: 18,
-                  color: Colors.white,
-                ),
+              const SizedBox(width: 8),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 16,
+                color: Colors.white.withOpacity(0.8),
               ),
             ],
           ),
