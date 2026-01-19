@@ -166,15 +166,14 @@ class _LeaderboardView extends ConsumerWidget {
                     );
                   }
 
-                  final adjustedIndex = index - 1; // Adjust for banner
-                  if (showCurrentUserAtBottom && adjustedIndex == displayList.length) {
+                  if (showCurrentUserAtBottom && index == displayList.length) {
                     return Padding(
                       padding: const EdgeInsets.only(top: 20.0),
                       child: _CurrentUserCard(entry: currentUserEntry),
                     );
                   }
 
-                  final entry = displayList[adjustedIndex];
+                  final entry = displayList[index];
                   return GestureDetector(
                     onTap: () {
                       HapticFeedback.selectionClick();

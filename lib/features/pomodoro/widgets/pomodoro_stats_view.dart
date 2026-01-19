@@ -375,19 +375,6 @@ class _PomodoroStatsViewState extends ConsumerState<PomodoroStatsView> {
                       ),
                     ),
                   ).animate().fadeIn(delay: 600.ms),
-                  const SizedBox(height: 16),
-                  // Banner Reklam
-                  Consumer(
-                    builder: (context, ref, _) {
-                      final isPremium = ref.watch(premiumStatusProvider);
-                      final user = ref.watch(userProfileProvider).value;
-
-                      return AdBannerWidget(
-                        isPremium: isPremium,
-                        dateOfBirth: user?.dateOfBirth,
-                      );
-                    },
-                  ),
             ],
           ),
         ),
