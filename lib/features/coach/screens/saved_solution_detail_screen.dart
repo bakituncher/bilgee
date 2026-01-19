@@ -69,11 +69,11 @@ class SavedSolutionDetailScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Soru Resmi
-            Padding(
+      body: CustomScrollView(
+        slivers: [
+          // Soru Resmi
+          SliverToBoxAdapter(
+            child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
@@ -93,10 +93,12 @@ class SavedSolutionDetailScreen extends ConsumerWidget {
                 ),
               ),
             ),
+          ),
 
-            // Çözüm İçeriği
-            if (isSolved)
-              Padding(
+          // Çözüm İçeriği
+          if (isSolved)
+            SliverToBoxAdapter(
+              child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Container(
                   padding: const EdgeInsets.all(16),
@@ -111,9 +113,11 @@ class SavedSolutionDetailScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  child: MarkdownBody(
+                  child: Markdown(
                     data: currentSolution.solutionText,
                     selectable: true,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
                     styleSheet: MarkdownStyleSheet(
                       p: TextStyle(
                         color: theme.colorScheme.onSurface,
@@ -147,8 +151,13 @@ class SavedSolutionDetailScreen extends ConsumerWidget {
                   ),
                 ),
               ),
-          ],
-        ),
+            ),
+
+          // FloatingActionButton için boşluk
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 80),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
