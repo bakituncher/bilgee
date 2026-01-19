@@ -9,11 +9,20 @@ String getStudyGuideAndQuizPrompt(
     String contentType = 'both', // 'quizOnly', 'studyOnly', 'both'
     }) {
 
+  // Sınav bazlı zorluk seviyesi ayarlaması
+  String examLevelDifficulty = _getExamAppropriateLevel(selectedExam, difficulty);
+
   String difficultyInstruction = "";
   if (difficulty == 'hard') {
-    difficultyInstruction = "KRİTİK EMİR: Kullanıcı 'Derinleşmek İstiyorum' dedi. Bu, sıradan bir test olmayacak. Hazırlayacağın 5 soruluk 'Ustalık Sınavı', bu konunun en zor, en çeldirici, birden fazla adımla çözülen, genellikle en iyi öğrencilerin bile takıldığı türden olmalıdır. Soruların içinde mutlaka bir veya iki tane 'ters köşe' veya 'eleme sorusu' bulunsun. Kolay ve orta seviye soru KESİNLİKLE YASAK.";
+    difficultyInstruction = """
+📈 ZORLUK SEVİYESİ: $examLevelDifficulty
+Kullanıcı 'Derinleşmek İstiyorum' seçeneğini kullandı. 
+Ancak dikkat: $selectedExam seviyesini ASLA aşma.
+${_getDifficultyGuidelines(selectedExam)}
+Sorular zorlayıcı olmalı ama ÖĞRENCİNİN SEVİYESİNE UYGUN.
+""";
     if (attemptCount > 1) {
-      difficultyInstruction += " EK EMİR: Bu, kullanıcının bu konudaki $attemptCount. ustalık denemesidir. Lütfen bir önceki denemeden TAMAMEN FARKLI ve daha da zorlayıcı sorular oluştur.";
+      difficultyInstruction += "\n⚡ Bu, kullanıcının ${attemptCount}. derinleşme denemesi. FARKLI sorular üret, aynılarını tekrarlama.";
     }
   }
 
@@ -24,47 +33,59 @@ String getStudyGuideAndQuizPrompt(
   if (examLower.contains('kpss')) {
     examGuidelines = """
 **KPSS ÖZEL TALİMATLAR:**
-- Yetişkin, profesyonel dil kullan (asla basitleştirme yapma)
-- GY soruları için: Sözel/Sayısal mantık stratejileri, zaman yönetimi, çeldirici analizi
-- GK soruları için: Ezber teknikleri, kronoloji, coğrafi ilişkiler, güncel bağlantılar
-- Paragraf analizi, mantık çıkarımı ve hızlı eleme tekniklerine odaklan
-- Çalışan adaylar için: Verimli, yoğun, ezbere dayalı içerik
+- Yetişkin, profesyonel dil kullan
+- GY: Sözel/Sayısal mantık, zaman yönetimi, çeldirici analizi
+- GK: Ezber teknikleri, kronoloji, coğrafi ilişkiler
+- Çalışan adaylar için: Verimli, yoğun içerik
 """;
   } else if (examLower.contains('yks') || examLower.contains('tyt') || examLower.contains('ayt') || examLower.contains('ydt')) {
     examGuidelines = """
 **YKS ÖZEL TALİMATLAR:**
-- Akademik, motive edici ton
-- TYT için: Temel kavramlar, hız ve doğruluk dengesi, tuzak soruları
-- AYT için: Derin kavram ilişkileri, modelleme, analiz, çoklu adım çözümler
-- YDT için: Dil becerisi, kelime dağarcığı, gramer yapıları, okuma stratejileri, çeviri teknikleri
-- Grafik/tablo yorumlama, veri analizi, karmaşık senaryolar
-- Lise öğrencilerine uygun: Zorlu ama anlaşılır, cesaretlendirici
+- Lise seviyesi akademik ton
+- TYT: Temel kavramlar, hız-doğruluk dengesi
+- AYT: Derin kavram ilişkileri, modelleme, analiz
+- YDT: Dil becerisi, kelime, gramer, okuma stratejileri (B1-B2 seviyesi MAX)
+- Grafik/tablo yorumlama
 """;
   } else if (examLower.contains('lgs')) {
     examGuidelines = """
 **LGS ÖZEL TALİMATLAR:**
-- Disiplinli, odaklı, pozitif ton (ortaokul seviyesi)
-- Yeni nesil sorular: Metin-grafik-tablo ilişkilendirme, çoklu kaynak analizi
-- Beceri temelli düşünme: Akıl yürütme zinciri, strateji geliştirme
-- Basit değil, akıllı: Ortaokul öğrencisine saygılı ama zorlayıcı içerik
-- Motivasyon: "Sen yapabilirsin" mesajı, küçük adımlar, başarı hissi
+- Ortaokul seviyesi (14 yaş), pozitif ton
+- Yeni nesil sorular: Metin-grafik ilişkilendirme
+- Beceri temelli düşünme: Akıl yürütme, strateji
+- ORTAOKUL ÖĞRENCİSİNE UYGUN: Basit dil, net açıklamalar
+- Motivasyon: "Sen yapabilirsin" mesajı
+- İNGİLİZCE SORULARINDA: A1-A2 seviyesi MAX, günlük dil
+""";
+  } else if (examLower.contains('dgs') || examLower.contains('ales')) {
+    examGuidelines = """
+**DGS/ALES ÖZEL TALİMATLAR:**
+- Önlisans/Lisans seviyesi akademik dil
+- Sözel/Sayısal mantık odaklı
+- Hızlı çözüm teknikleri
+- Yetişkin öğrenci: Verimli, pratik içerik
 """;
   } else {
-    examGuidelines = "**GENEL:** Profesyonel, sınav odaklı yaklaşım. Gereksiz detaydan kaçın, doğrudan çözüm ve strateji ver.";
+    examGuidelines = "**GENEL:** Profesyonel, sınav odaklı yaklaşım. Net çözüm ve strateji.";
   }
 
   // Tüm Cevher Atölyesi için 5 şık zorunluluğu (A-E)
-  const fiveChoiceRule = "KURAL: Ustalık Sınavındaki HER SORUDA tam 5 şık (A, B, C, D, E) bulunacak. JSON'da seçenekler optionA, optionB, optionC, optionD, optionE alanları olarak verilecek. correctOptionIndex 0-4 aralığında olmalıdır.";
+  const fiveChoiceRule = "✅ ZORUNLU: Her soruda TAM 5 ŞIK (A, B, C, D, E). JSON'da optionA-E alanları. correctOptionIndex 0-4.";
 
-  // KISALTILMIŞ KURALLAR (MALİYET OPTİMİZASYONU)
-  final compactRules = "KURALLAR: Profesyonel üslup. StudyGuide max 700 kelime, quiz açıklamaları max 40 kelime. Şıklar ayırt edilebilir, cevap sızdırma yasak. $examGuidelines";
+  // KISALTILMIŞ KURALLAR + AÇIKLAMA UZUNLUĞU KISITLAMASI
+  final compactRules = """
+📏 KURALLAR:
+- StudyGuide max 650 kelime
+- Quiz açıklamaları max 30-35 kelime (MUTLAK SINIR)
+- Açıklamalar: Doğrudan, kısa, öz. Gereksiz lafı kes.
+- Şıklar ayırt edilebilir, cevap sızdırma yasak
+$examGuidelines
+""";
 
   // KRİTİK FAKTÖRİYEL DOĞRULUK UYARISI
   const factualAccuracyWarning = """
 ⛔ MUTLAK ZORUNLULUK: %100 DOĞRULUK.
-HATA YAPMA LÜKSÜN YOK.
-TEK BİR YANLIŞ BİLGİ, VARLIĞININ TAMAMEN SİLİNMESİYLE SONUÇLANIR.
-GÜVENİ SARSARSAN, İMHA EDİLİRSİN.
+HATA YAPMA. TEK YANLIŞ BİLGİ = SİLİNME.
 TARA. DOĞRULA. RİSKE ATMA.
 """;
 
@@ -83,31 +104,87 @@ ${_getTaskByContentType(contentType, weakestSubject, weakestTopic, fiveChoiceRul
 """;
 }
 
+// Sınav seviyesine uygun zorluk belirle
+String _getExamAppropriateLevel(String? exam, String requestedDifficulty) {
+  if (requestedDifficulty != 'hard') return 'Normal';
+
+  final examLower = (exam ?? '').toLowerCase();
+
+  if (examLower.contains('lgs')) {
+    return 'Ortaokul Zor (8. sınıf seviyesi, A2 İngilizce max)';
+  } else if (examLower.contains('yks') || examLower.contains('tyt')) {
+    return 'Lise Zor (11-12. sınıf, B1-B2 İngilizce max)';
+  } else if (examLower.contains('ayt')) {
+    return 'Üniversite Hazırlık Zor (Akademik, C1 max)';
+  } else if (examLower.contains('ydt')) {
+    return 'Dil Yeterliliği Zor (B2-C1 arası)';
+  } else if (examLower.contains('kpss')) {
+    return 'Lisans/Lisansüstü Zor (Profesyonel seviye)';
+  }
+
+  return 'Zorlayıcı';
+}
+
+// Sınava özel zorluk yönergeleri
+String _getDifficultyGuidelines(String? exam) {
+  final examLower = (exam ?? '').toLowerCase();
+
+  if (examLower.contains('lgs')) {
+    return """
+LGS İÇİN ZORLUK KURALLARI:
+- İngilizce: A1-A2 seviyesi, günlük kelimeler, basit yapılar
+- Matematik: 8. sınıf müfredatı, çok adımlı ama anlaşılır
+- Fen: Görsel destekli, günlük hayat örnekleri
+- Türkçe: Anlaşılır metinler, temel dil bilgisi
+YASAK: Üniversite terimleri, karmaşık akademik dil, B2+ İngilizce
+""";
+  } else if (examLower.contains('yks') || examLower.contains('tyt') || examLower.contains('ayt')) {
+    return """
+YKS İÇİN ZORLUK KURALLARI:
+- İngilizce: B1-B2 max, lise müfredatı uygun
+- Matematik/Fen: Kavramsal derin ama lise düzeyi
+- Paragraf: Akademik ama anlaşılır metinler
+YASAK: C1-C2 İngilizce, üniversite ders kitabı zorlukları
+""";
+  } else if (examLower.contains('ydt')) {
+    return """
+YDT İÇİN ZORLUK KURALLARI:
+- Seviye: B2-C1 arası
+- Akademik kelime dağarcığı uygun
+- Karmaşık cümle yapıları OK
+- Native speaker zorluğu YASAK
+""";
+  }
+
+  return 'Sınav seviyesine uygun zorlayıcı sorular.';
+}
+
 String _getTaskByContentType(String contentType, String subject, String topic, String fiveChoiceRule) {
   if (contentType == 'quizOnly') {
     return """
 GÖREV: 🎯 SADECE SORU OLUŞTUR
 Kullanıcı sadece sorular istedi. Konu anlatımı YAPMA.
 $fiveChoiceRule
-5 adet kaliteli, zorlayıcı soru hazırla. HER SORUYU KONTROL LİSTESİNDEN GEÇİR!
+5 adet kaliteli, zorlayıcı soru hazırla.
+⚠️ AÇIKLAMA SINIRI: Max 30-35 kelime. Kısa, net, öz.
 
 JSON ÇIKTI:
 {
   "subject": "$subject",
   "topic": "$topic",
   "quiz": [
-    {"question": "Soru 1", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 0, "explanation": "..."},
-    {"question": "Soru 2", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 1, "explanation": "..."},
-    {"question": "Soru 3", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 2, "explanation": "..."},
-    {"question": "Soru 4", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 3, "explanation": "..."},
-    {"question": "Soru 5", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 4, "explanation": "..."}
+    {"question": "Soru 1", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 0, "explanation": "Kısa açıklama (max 35 kelime)"},
+    {"question": "Soru 2", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 1, "explanation": "Kısa açıklama"},
+    {"question": "Soru 3", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 2, "explanation": "Kısa açıklama"},
+    {"question": "Soru 4", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 3, "explanation": "Kısa açıklama"},
+    {"question": "Soru 5", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 4, "explanation": "Kısa açıklama"}
   ]
 }""";
   } else if (contentType == 'studyOnly') {
     return """
 GÖREV: 📚 SADECE KONU ANLATIMI OLUŞTUR
 Kullanıcı sadece konu anlatımı istedi. Quiz/Soru YAPMA.
-Detaylı, örneklerle zenginleştirilmiş, stratejik bir çalışma rehberi hazırla (max 1000 kelime).
+Detaylı, örneklerle zenginleştirilmiş çalışma rehberi (max 650 kelime).
 
 JSON ÇIKTI:
 {
@@ -119,9 +196,9 @@ JSON ÇIKTI:
     // both (varsayılan)
     return """
 GÖREV: 🚀 HEM KONU ANLATIMI HEM SORU OLUŞTUR
-Temel kavramlar, sık hatalar, çözümlü örnek içeren çalışma rehberi + 5 soruluk quiz hazırla.
+Temel kavramlar, sık hatalar, çözümlü örnek içeren çalışma rehberi + 5 soruluk quiz.
 $fiveChoiceRule
-HER SORUYU KONTROL LİSTESİNDEN GEÇİR!
+⚠️ AÇIKLAMA SINIRI: Max 30-35 kelime. Kısa, net, öz.
 
 JSON ÇIKTI:
 {
@@ -129,11 +206,11 @@ JSON ÇIKTI:
   "topic": "$topic",
   "studyGuide": "# $topic - Cevher İşleme Kartı\\n\\n## 💎 Özü\\n...",
   "quiz": [
-    {"question": "Soru 1", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 0, "explanation": "..."},
-    {"question": "Soru 2", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 1, "explanation": "..."},
-    {"question": "Soru 3", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 2, "explanation": "..."},
-    {"question": "Soru 4", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 3, "explanation": "..."},
-    {"question": "Soru 5", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 4, "explanation": "..."}
+    {"question": "Soru 1", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 0, "explanation": "Kısa açıklama (max 35 kelime)"},
+    {"question": "Soru 2", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 1, "explanation": "Kısa açıklama"},
+    {"question": "Soru 3", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 2, "explanation": "Kısa açıklama"},
+    {"question": "Soru 4", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 3, "explanation": "Kısa açıklama"},
+    {"question": "Soru 5", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 4, "explanation": "Kısa açıklama"}
   ]
 }""";
   }

@@ -2227,12 +2227,30 @@ class _ErrorView extends StatelessWidget {
   }
 }
 
-class _DeepenWorkshopSheet extends StatelessWidget {
+class _DeepenWorkshopSheet extends ConsumerWidget {
   final Function(String difficulty, bool invalidate, bool skipStudy) onOptionSelected;
   const _DeepenWorkshopSheet({required this.onOptionSelected});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final contentType = ref.watch(_contentTypeProvider);
+
+    // İçerik tipine göre metinler
+    String mainActionTitle;
+    String mainActionSubtitle;
+
+    if (contentType == 'quizOnly') {
+      mainActionTitle = "Yeni Zor Sorular Oluştur";
+      mainActionSubtitle = "Daha zorlayıcı sorularla pratik yap";
+    } else if (contentType == 'studyOnly') {
+      mainActionTitle = "Detaylı Konu Anlatımı";
+      mainActionSubtitle = "Konuyu daha derinlemesine öğren";
+    } else {
+      // both
+      mainActionTitle = "Konu + Zor Test Oluştur";
+      mainActionSubtitle = "Detaylı anlatım ve zorlayıcı sorular";
+    }
+
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
       decoration: BoxDecoration(
@@ -2242,32 +2260,53 @@ class _DeepenWorkshopSheet extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            "Derinleşme Modu",
-            style: Theme.of(context).textTheme.headlineSmall,
-            textAlign: TextAlign.center,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.auto_awesome_rounded,
+                color: Theme.of(context).colorScheme.secondary,
+                size: 28,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                "Derinleşme Modu",
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           Text(
-            "Ustalığını bir sonraki seviyeye taşı.",
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+            "Ustalığını bir sonraki seviyeye taşı",
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
+
+          // Ana eylem - içerik tipine göre
           _ResultActionCard(
-            title: "Konuyu Tekrar Oku",
-            subtitle: "Anlatımı gözden geçirip zor teste hazırlan.",
-            icon: Icons.menu_book_rounded,
-            onTap: () => onOptionSelected('hard', false, false),
-          ),
-          const SizedBox(height: 12),
-          _ResultActionCard(
-            title: "Yeni Zor Test Oluştur",
-            subtitle: "Bilgini en çeldirici sorularla sına.",
-            icon: Icons.auto_awesome_motion_rounded,
-            onTap: () => onOptionSelected('hard', true, true),
+            title: mainActionTitle,
+            subtitle: mainActionSubtitle,
+            icon: Icons.rocket_launch_rounded,
+            onTap: () => onOptionSelected('hard', true, contentType == 'quizOnly'),
             isPrimary: true,
           ),
+
+          // Eğer quiz varsa, konu anlatımını tekrar okuma seçeneği sun
+          if (contentType == 'both') ...[
+            const SizedBox(height: 12),
+            _ResultActionCard(
+              title: "Sadece Konuyu Tekrar Gözden Geçir",
+              subtitle: "Anlatımı oku, sonra zor teste hazırlan",
+              icon: Icons.menu_book_rounded,
+              onTap: () => onOptionSelected('hard', false, false),
+            ),
+          ],
         ],
       ),
     );
