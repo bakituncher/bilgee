@@ -20,7 +20,6 @@ import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:taktik/features/weakness_workshop/logic/quiz_quality_guard.dart';
 import 'package:confetti/confetti.dart';
 import 'package:lottie/lottie.dart';
-import 'package:taktik/core/safety/ai_content_safety.dart';
 import 'package:taktik/features/weakness_workshop/logic/workshop_controller.dart';
 import 'package:taktik/data/models/exam_model.dart';
 
@@ -269,17 +268,11 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
                     _resetToBriefing();
                   }
                 },
-                onSaved: () => context.push('/ai-hub/weakness-workshop/${AppRoutes.savedWorkshops}'),
-                title: 'Etüt Odası',
-              ),
-              // AI güvenlik uyarısı
-              if (_currentStep != WorkshopStep.briefing)
-                AiContentSafety.buildDisclaimerBanner(
-                  context,
-                  customMessage: 'Çalışma kartı ve sorular AI ile üretilmiştir. Hata tespit ederseniz bildirim yapın.',
-                ),
-              Expanded(
-                child: AnimatedSwitcher(
+              onSaved: () => context.push('/ai-hub/weakness-workshop/${AppRoutes.savedWorkshops}'),
+              title: 'Etüt Odası',
+            ),
+            Expanded(
+              child: AnimatedSwitcher(
                   duration: 300.ms,
                   transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
                   child: _buildCurrentStepView(),
@@ -602,8 +595,8 @@ class _BriefingView extends ConsumerWidget {
     final user = ref.watch(userProfileProvider).value;
     final tests = ref.watch(testsProvider).value;
     final performance = ref.watch(performanceProvider).value;
-    // Yeni: Önbellekli analiz
     final analysisAsync = ref.watch(overallStatsAnalysisProvider);
+    final firestoreService = ref.read(firestoreServiceProvider);
 
     if (user == null || tests == null || user.selectedExam == null || performance == null) {
       return const Center(child: CircularProgressIndicator());
@@ -613,84 +606,229 @@ class _BriefingView extends ConsumerWidget {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, st) => Center(child: Text('Analiz yüklenemedi: $e')),
       data: (analysis) {
-        final suggestions = analysis?.getWorkshopSuggestions(count: 3) ?? [];
+        final suggestions = analysis?.getWorkshopSuggestions(count: 5) ?? [];
 
-        // Hiç veri yoksa özel ekran göster
         if (suggestions.isEmpty) {
           return _EmptyStateView();
         }
 
+        final colorScheme = Theme.of(context).colorScheme;
+        final textTheme = Theme.of(context).textTheme;
+
         return ListView(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           children: [
-            Text("Stratejik Mola", style: Theme.of(context).textTheme.headlineMedium),
-            const SizedBox(height: 8),
-            Text(
-              "Taktik Tavşan, performansını analiz etti ve gelişim için en önemli konuları belirledi. Aşağıdaki konulardan birini seçerek çalışmaya başla.",
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-            ),
-            const SizedBox(height: 12), // 👈 Azaltıldı
-            // 👈 Kompakt AI Uyarısı
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10), // 👈 Daha ince
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.4),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+            // Başlık
+            Center(
+              child: Text(
+                "Senin İçin Önerilen Konular",
+                style: textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
                 ),
               ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.info_outline_rounded,
-                    size: 18, // 👈 Küçültüldü
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      "Taktik Tavşan hata yapabilir. Üretilen içerikleri kontrol et.",
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontSize: 12, // 👈 Küçültüldü
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ).animate().fadeIn(delay: 100.ms),
-            const SizedBox(height: 20), // 👈 Azaltıldı
-            ...suggestions.asMap().entries.map((entry) {
-              int idx = entry.key;
-              var topicData = entry.value;
-              final topicForSelection = {'subject': topicData['subject'].toString(),'topic': topicData['topic'].toString(),};
-              return _TopicCard(
-                topic: topicData,
-                isRecommended: idx == 0,
-                onTap: () => onTopicSelected(topicForSelection),
-              ).animate().fadeIn(delay: (200 * idx).ms).slideX(begin: 0.2);
-            }),
+            ),
 
             const SizedBox(height: 16),
 
-            // Manuel konu seçme butonu
-            OutlinedButton.icon(
-              onPressed: () {
-                _showManualTopicSelector(context, ref, onTopicSelected);
-              },
-              icon: const Icon(Icons.search_rounded, size: 20),
-              label: const Text("Başka Konu Seç"),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            // Konu kartları
+            ...suggestions.asMap().entries.map((entry) {
+              final idx = entry.key;
+              final topicData = entry.value;
+              final subject = topicData['subject']?.toString() ?? '';
+              final topic = topicData['topic']?.toString() ?? '';
+
+              // Performance verilerini çek
+              final sanitizedSubject = firestoreService.sanitizeKey(subject);
+              final sanitizedTopic = firestoreService.sanitizeKey(topic);
+              final topicPerformance = performance.topicPerformances[sanitizedSubject]?[sanitizedTopic];
+
+              final int correctCount = topicPerformance?.correctCount ?? 0;
+              final int wrongCount = topicPerformance?.wrongCount ?? 0;
+              final int questionCount = topicPerformance?.questionCount ?? 0;
+              final int answered = correctCount + wrongCount;
+              final double accuracy = answered > 0 ? correctCount / answered : 0.0;
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: _buildTopicCard(
+                  context,
+                  subject: subject,
+                  topic: topic,
+                  accuracy: accuracy,
+                  questionCount: questionCount,
+                  onTap: () => onTopicSelected({
+                    'subject': subject,
+                    'topic': topic,
+                  }),
                 ),
+              ).animate().fadeIn(delay: (100 * idx).ms).slideX(begin: 0.1, end: 0);
+            }),
+
+            const SizedBox(height: 8),
+
+            // Manuel konu seç butonu
+            TextButton.icon(
+              onPressed: () => _showManualTopicSelector(context, ref, onTopicSelected),
+              icon: const Icon(Icons.search_rounded, size: 20),
+              label: const Text("Farklı bir konu seç"),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12),
               ),
-            ).animate().fadeIn(delay: 800.ms).slideY(begin: 0.2),
+            ).animate().fadeIn(delay: 400.ms),
           ],
         );
       },
+    );
+  }
+
+  Widget _buildTopicCard(
+    BuildContext context, {
+    required String subject,
+    required String topic,
+    required double accuracy,
+    required int questionCount,
+    required VoidCallback onTap,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    // Doğruluk yüzdesine göre renk
+    Color getAccuracyColor() {
+      if (accuracy >= 0.7) return Colors.green;
+      if (accuracy >= 0.5) return Colors.orange;
+      return Colors.red;
+    }
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.5), width: 1),
+          ),
+          child: Row(
+            children: [
+              // Sol taraf - Konu bilgisi
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Ders adı
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: colorScheme.secondaryContainer.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        subject,
+                        style: textTheme.labelSmall?.copyWith(
+                          color: colorScheme.onSecondaryContainer,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    // Konu adı
+                    Text(
+                      topic,
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        height: 1.3,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+
+                    const SizedBox(height: 6),
+
+                    // İstatistikler - konu isminin altında
+                    Row(
+                      children: [
+                        // Doğruluk badge'i
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: getAccuracyColor().withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.check_circle_rounded,
+                                size: 12,
+                                color: getAccuracyColor(),
+                              ),
+                              const SizedBox(width: 3),
+                              Text(
+                                "%${(accuracy * 100).toStringAsFixed(0)} başarı",
+                                style: textTheme.labelSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 10,
+                                  color: getAccuracyColor(),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(width: 4),
+
+                        // Soru sayısı badge'i
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.quiz_outlined,
+                                size: 12,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                              const SizedBox(width: 3),
+                              Text(
+                                "$questionCount soru",
+                                style: textTheme.labelSmall?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(width: 8),
+
+              // Ok ikonu
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 18,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -847,32 +985,24 @@ class _ContentSelectionView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Başlık
-          Text(
-            "İçerik Türü Seç",
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              fontSize: 20,
-            ),
-          ),
-          const SizedBox(height: 6),
-
-          // Konu bilgisi
-          RichText(
-            text: TextSpan(
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-              children: [
-                TextSpan(text: subjectName),
-                const TextSpan(text: ' • '),
-                TextSpan(
-                  text: topicName,
-                  style: TextStyle(
-                    color: colorScheme.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
+          Center(
+            child: RichText(
+              textAlign: TextAlign.center,
+              text: TextSpan(
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
                 ),
-              ],
+                children: [
+                  TextSpan(
+                    text: topicName,
+                    style: TextStyle(
+                      color: colorScheme.primary,
+                    ),
+                  ),
+                  const TextSpan(text: ' konusu için\nnasıl çalışmayı tercih edersin?'),
+                ],
+              ),
             ),
           ),
 
@@ -884,9 +1014,7 @@ class _ContentSelectionView extends StatelessWidget {
             icon: Icons.school_rounded,
             title: 'Konu Anlatımı + Sınav',
             subtitle: 'Hem öğren, hem test et',
-            badge: 'Önerilen',
             onTap: () => onContentTypeSelected('both'),
-            isPrimary: true,
           ),
 
           const SizedBox(height: 12),
@@ -1018,97 +1146,6 @@ class _ContentSelectionView extends StatelessWidget {
   }
 }
 
-class _TopicCard extends StatelessWidget {
-  final Map<String, dynamic> topic;
-  final bool isRecommended;
-  final VoidCallback onTap;
-
-  const _TopicCard({required this.topic, required this.isRecommended, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final masteryValue = topic['mastery'] as double?;
-
-    final colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12), // 👈 Azaltıldı
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: isRecommended
-            ? LinearGradient(colors: [colorScheme.secondary.withOpacity(0.2), Colors.transparent])
-            : null,
-      ),
-      child: Card(
-        elevation: 4, // 👈 Azaltıldı
-        color: colorScheme.surface.withOpacity(0.9),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: BorderSide(
-              color: isRecommended ? colorScheme.secondary : colorScheme.surfaceContainerHighest,
-              width: 1.5),
-        ),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(14),
-          child: Padding(
-            padding: const EdgeInsets.all(14.0), // 👈 Azaltıldı
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    if (isRecommended)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), // 👈 Daha ince
-                        decoration: BoxDecoration(color: colorScheme.secondary, borderRadius: BorderRadius.circular(6)),
-                        child: Text(
-                          "Taktik Tavşan ÖNERİSİ",
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: colorScheme.onSecondary, fontWeight: FontWeight.bold, letterSpacing: 0.8, fontSize: 10),
-                        ),
-                      ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: colorScheme.onSurface.withOpacity(0.06),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: colorScheme.surfaceContainerHighest),
-                      ),
-                      child: Row(children: [
-                        Icon(Icons.bolt_rounded, size: 14, color: colorScheme.secondary),
-                        const SizedBox(width: 4),
-                        Text(masteryValue == null || masteryValue < 0 ? 'Keşif' : '%${(masteryValue * 100).toStringAsFixed(0)}',
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 11)),
-                      ]),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10), // 👈 Azaltıldı
-                Text(topic['topic']!, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)), // 👈 Küçültüldü
-                const SizedBox(height: 2),
-                Text(topic['subject']!,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
-                const SizedBox(height: 10), // 👈 Azaltıldı
-                LinearProgressIndicator(
-                  value: masteryValue == null || masteryValue < 0 ? null : masteryValue,
-                  backgroundColor: colorScheme.surfaceContainerHighest.withOpacity(0.3),
-                  color: masteryValue == null || masteryValue < 0
-                      ? colorScheme.onSurfaceVariant
-                      : Color.lerp(colorScheme.error, colorScheme.secondary, masteryValue),
-                  borderRadius: BorderRadius.circular(4),
-                  minHeight: 6, // 👈 Daha ince progress bar
-                ),
-              ],
-            ),
-          ),
-        ),
-      )
-    .animate()
-    .fadeIn(duration: 350.ms)
-    .slideY(begin: 0.1));
-  }
-}
 
 class _StudyView extends StatelessWidget {
   final WorkshopModel material;
