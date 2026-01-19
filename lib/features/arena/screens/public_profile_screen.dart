@@ -245,7 +245,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                     hasScrollBody: false,
                     child: Center(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         child: Column(
                           mainAxisSize: MainAxisSize.min, // İçeriği sıkıştır
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -276,7 +276,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                               error: (e, s) => const _ShareableProfileCardSkeleton(),
                             ),
                             if (updatedAt != null) ...[
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 8),
                               Text(
                                 "Son güncelleme: ${DateFormat('dd MMM yyyy HH:mm', 'tr_TR').format(updatedAt)}",
                                 style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white70),
@@ -363,7 +363,7 @@ class _ShareableProfileCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity, // Kartın yatayda tam yer kaplamasını sağla
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
         gradient: LinearGradient(
@@ -379,11 +379,11 @@ class _ShareableProfileCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min, // İçeriği kadar yer kapla
         children: [
           _AvatarHalo(displayName: displayName, avatarStyle: avatarStyle, avatarSeed: avatarSeed, rankColor: rankColor),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Text(displayName, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           _RankCapsule(rankName: rankName, icon: rankIcon, color: rankColor),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
           // Taktik Puanı Çubuğu (XP Bar)
           // Genişliği garanti altına almak için SizedBox kullanıyoruz
@@ -398,7 +398,7 @@ class _ShareableProfileCard extends StatelessWidget {
               .fadeIn(duration: 500.ms, delay: 200.ms)
               .slideX(begin: -0.2, end: 0, duration: 500.ms, curve: Curves.easeOutCubic),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           // İstatistik Grid
           Container(
             decoration: BoxDecoration(
@@ -505,21 +505,21 @@ class _ShareableProfileCard extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Row(
             children: [
               Expanded(child: _CountPill(label: 'Takipçi', value: followerCount)),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Expanded(child: _CountPill(label: 'Takip', value: followingCount)),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           if (currentUserId != null && currentUserId != targetUserId) ...[
             SizedBox(
               width: double.infinity,
               child: _FollowButton(targetUserId: targetUserId),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
           ],
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -592,7 +592,7 @@ class _NeoXpBar extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         // Genişlik garantisi için Container kullanıyoruz
         Container(
           width: double.infinity,
@@ -691,7 +691,7 @@ class _CountPill extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
         color: colorScheme.onSurface.withOpacity(0.06),
@@ -706,7 +706,7 @@ class _CountPill extends StatelessWidget {
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 5),
           Text(label, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: colorScheme.onSurface.withOpacity(0.7))),
         ],
       ),
@@ -799,20 +799,20 @@ class _AvatarHalo extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return SizedBox(
-      width: 130,
-      height: 130,
+      width: 120,
+      height: 120,
       child: Stack(
         alignment: Alignment.center,
         children: [
           _HaloCircle(
               color: colorScheme.primary.withOpacity(0.25),
-              size: 120,
+              size: 110,
               begin: 0.85,
               end: 1.05,
               delay: 0.ms),
           _HaloCircle(
               color: colorScheme.secondary.withOpacity(0.18),
-              size: 95,
+              size: 88,
               begin: 0.9,
               end: 1.08,
               delay: 400.ms),
@@ -826,7 +826,7 @@ class _AvatarHalo extends StatelessWidget {
               ],
             ),
             child: CircleAvatar(
-              radius: 48,
+              radius: 44,
               backgroundColor: Colors.black,
               child: ClipOval(
                 child: avatarStyle != null && avatarSeed != null
@@ -882,7 +882,7 @@ class _RankCapsule extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnimatedContainer(
       duration: 400.ms,
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(30),
         gradient: LinearGradient(colors: [color.withOpacity(0.2), color.withOpacity(0.05)]),
@@ -892,7 +892,7 @@ class _RankCapsule extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 18, color: color),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           Text(rankName, style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700)),
         ],
       ),
@@ -921,7 +921,7 @@ class _StatButton extends StatelessWidget {
     final textTheme = theme.textTheme;
 
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -933,7 +933,7 @@ class _StatButton extends StatelessWidget {
             ),
             child: Icon(icon, color: iconColor, size: 24),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 5),
           Text(
             value,
             style: textTheme.titleLarge?.copyWith(
