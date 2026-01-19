@@ -233,7 +233,6 @@ class _QuestionCardState extends State<QuestionCard> {
             bool isCorrect = widget.question.correctOptionIndex == index;
             Color? tileColor;
             Color? borderColor;
-            IconData? trailingIcon;
 
             final colorScheme = Theme.of(context).colorScheme;
 
@@ -241,11 +240,9 @@ class _QuestionCardState extends State<QuestionCard> {
               if (isSelected) {
                 tileColor = isCorrect ? colorScheme.secondary.withOpacity(0.2) : colorScheme.error.withOpacity(0.2);
                 borderColor = isCorrect ? colorScheme.secondary : colorScheme.error;
-                trailingIcon = isCorrect ? Icons.check_circle_rounded : Icons.cancel_rounded;
               } else if (isCorrect) {
                 tileColor = colorScheme.secondary.withOpacity(0.2);
                 borderColor = colorScheme.secondary;
-                trailingIcon = Icons.check_circle_outline_rounded;
               }
             }
 
@@ -297,10 +294,6 @@ class _QuestionCardState extends State<QuestionCard> {
                           ),
                         ),
                       ),
-                      if (trailingIcon != null) ...[
-                        const SizedBox(width: 8),
-                        Icon(trailingIcon, color: borderColor, size: 22),
-                      ],
                     ],
                   ),
                 ),

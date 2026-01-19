@@ -460,7 +460,9 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
                     _resetToBriefing();
                   }
                 },
-              onSaved: () => context.push('/ai-hub/weakness-workshop/${AppRoutes.savedWorkshops}'),
+              onSaved: (_currentStep == WorkshopStep.briefing || _currentStep == WorkshopStep.contentSelection)
+                  ? () => context.push('/ai-hub/weakness-workshop/${AppRoutes.savedWorkshops}')
+                  : null, // Sadece briefing ve contentSelection'da göster
               title: 'Etüt Odası',
             ),
             Expanded(
@@ -1820,13 +1822,13 @@ class _ReportIssueSheetState extends State<_ReportIssueSheet> {
 class _WSHeader extends StatelessWidget {
   final bool showBack;
   final VoidCallback? onBack;
-  final VoidCallback onSaved;
+  final VoidCallback? onSaved; // Nullable yaptık
   final String title;
 
   const _WSHeader({
     required this.showBack,
     required this.onBack,
-    required this.onSaved,
+    this.onSaved, // Required kaldırdık
     required this.title,
   });
 
@@ -1865,14 +1867,16 @@ class _WSHeader extends StatelessWidget {
               ),
             ),
           const Spacer(),
-          IconButton(
-            tooltip: 'Cevher Kasası',
-            onPressed: onSaved,
-            icon: Icon(Icons.inventory_2_outlined, color: Theme.of(context).colorScheme.onSurface),
-            style: IconButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.08),
-                shape: const CircleBorder()),
-          ),
+          // Sadece onSaved null değilse butonu göster
+          if (onSaved != null)
+            IconButton(
+              tooltip: 'Cevher Kasası',
+              onPressed: onSaved,
+              icon: Icon(Icons.inventory_2_outlined, color: Theme.of(context).colorScheme.onSurface),
+              style: IconButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.08),
+                  shape: const CircleBorder()),
+            ),
         ],
       ),
     );
