@@ -269,8 +269,6 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
                     _resetToBriefing();
                   }
                 },
-                showStats: _currentStep == WorkshopStep.briefing,
-                onStats: () => context.push('/ai-hub/weakness-workshop/stats'),
                 onSaved: () => context.push('/ai-hub/weakness-workshop/${AppRoutes.savedWorkshops}'),
                 title: 'Etüt Odası',
               ),
@@ -2424,16 +2422,12 @@ class _ReportIssueSheetState extends State<_ReportIssueSheet> {
 class _WSHeader extends StatelessWidget {
   final bool showBack;
   final VoidCallback? onBack;
-  final bool showStats;
-  final VoidCallback onStats;
   final VoidCallback onSaved;
   final String title;
 
   const _WSHeader({
     required this.showBack,
     required this.onBack,
-    required this.showStats,
-    required this.onStats,
     required this.onSaved,
     required this.title,
   });
@@ -2473,16 +2467,6 @@ class _WSHeader extends StatelessWidget {
               ),
             ),
           const Spacer(),
-          if (showStats)
-            IconButton(
-              tooltip: 'Atölye Raporu',
-              onPressed: onStats,
-              icon: Icon(Icons.bar_chart_rounded, color: Theme.of(context).colorScheme.onSurface),
-              style: IconButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.08),
-                  shape: const CircleBorder()),
-            ),
-          const SizedBox(width: 8),
           IconButton(
             tooltip: 'Cevher Kasası',
             onPressed: onSaved,
