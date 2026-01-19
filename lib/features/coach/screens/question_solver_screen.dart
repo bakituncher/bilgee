@@ -74,6 +74,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
   bool _isCropping = false;  // Kırpma işlemi işleniyor durumu
   bool _isChatLoading = false; // Sohbet cevap bekliyor mu?
   bool _isSaved = false; // YENİ: Çözüm kaydedildi mi?
+  bool _isLoadingPreselected = false; // preselectedImage işlenirken true
   String? _error;
 
   final ImagePicker _picker = ImagePicker();
@@ -83,6 +84,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
     super.initState();
     // Eğer dışarıdan bir görsel gelirse otomatik olarak işleme başla
     if (widget.preselectedImage != null) {
+      _isLoadingPreselected = true; // Hemen işaretliyoruz ki "Nasıl Kullanılır" ekranı gösterilmesin
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _processPreselectedImage();
       });
@@ -123,6 +125,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
 
         setState(() {
           _finalImageFile = XFile(file.path);
+          _isLoadingPreselected = false; // İşlem tamamlandı
         });
 
         // ÖNEMLI: Eğer mevcut çözüm varsa, AI'ya tekrar göndermeden direkt göster
@@ -173,11 +176,13 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
       } else {
         setState(() {
           _error = 'Görsel işlenemedi';
+          _isLoadingPreselected = false;
         });
       }
     } catch (e) {
       setState(() {
         _error = 'Görsel yüklenirken hata oluştu: $e';
+        _isLoadingPreselected = false;
       });
     }
   }
@@ -769,15 +774,6 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
 
     // DURUM 1: Henüz fotoğraf seçilmediyse veya sonuç ekranındaysak
     if (_rawImageBytes == null) {
-      // Eğer preselectedImage ile gelindiyse ve henüz işleniyorsa, boş siyah ekran göster
-      if (widget.preselectedImage != null && _finalImageFile == null && _initialSolution == null) {
-        return const Scaffold(
-          backgroundColor: Colors.black,
-          body: Center(
-            child: CircularProgressIndicator(color: Colors.white),
-          ),
-        );
-      }
 
       return Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
@@ -866,7 +862,9 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
 
               // İÇERİK ALANI
               Expanded(
-                child: _isAnalyzing
+                child: _isLoadingPreselected
+                    ? const Center(child: CircularProgressIndicator()) // preselectedImage işlenirken
+                    : _isAnalyzing
                     ? const SizedBox.expand() // Animasyon resmin üstünde, burada boş alan
                     : _error != null
                     ? Center(

@@ -155,12 +155,14 @@ class SavedSolutionDetailScreen extends ConsumerWidget {
           // QuestionSolverScreen'e yönlendir (mevcut çözümün ID'sini ve metnini gönder)
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => QuestionSolverScreen(
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) => QuestionSolverScreen(
                 preselectedImage: imageFile,
                 existingSolutionId: currentSolution.id, // Güncelleme için ID gönder
                 existingSolutionText: isSolved ? currentSolution.solutionText : null, // Çözüm varsa gönder
               ),
+              transitionDuration: Duration.zero,
+              reverseTransitionDuration: Duration.zero,
             ),
           );
         },
