@@ -34,10 +34,7 @@ class _UserModerationMenuState extends ConsumerState<UserModerationMenu> {
       builder: (context) => AlertDialog(
         title: const Text('Kullanıcıyı Engelle'),
         content: Text(
-          '${widget.targetUserName} kullanıcısını engellemek istediğinizden emin misiniz?\n\n'
-          '• Bu kullanıcının içeriklerini görmeyeceksiniz\n'
-          '• Birbirinizi takip edemeyeceksiniz\n'
-          '• Birbirinize mesaj gönderemeyeceksiniz',
+          '${widget.targetUserName} kullanıcısını engellemek istediğinizden emin misiniz?',
         ),
         actions: [
           TextButton(
