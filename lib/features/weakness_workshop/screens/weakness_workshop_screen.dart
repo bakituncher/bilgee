@@ -105,7 +105,201 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
     ref.read(_difficultyProvider.notifier).state = ('normal', 1);
     _selectedAnswers = {};
     _masteredAchieved = false;
-    setState(() => _currentStep = WorkshopStep.contentSelection);
+
+    // Bottom sheet ile içerik türü seçimi göster
+    _showContentTypeBottomSheet(context, topic);
+  }
+
+  void _showContentTypeBottomSheet(BuildContext context, Map<String, String> topic) {
+    final topicName = topic['topic'] ?? 'Konu';
+    final colorScheme = Theme.of(context).colorScheme;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return Container(
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Handle bar
+                Center(
+                  child: Container(
+                    margin: const EdgeInsets.only(top: 12, bottom: 8),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: colorScheme.onSurfaceVariant.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+
+                // Başlık
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
+                  child: RichText(
+                    textAlign: TextAlign.center,
+                    text: TextSpan(
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                      ),
+                      children: [
+                        TextSpan(
+                          text: topicName,
+                          style: TextStyle(
+                            color: colorScheme.primary,
+                          ),
+                        ),
+                        const TextSpan(text: ' konusu için\nnasıl çalışmayı tercih edersin?'),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Seçenekler
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    children: [
+                      _buildBottomSheetOption(
+                        context,
+                        icon: Icons.school_rounded,
+                        title: 'Konu Anlatımı ve Sınav',
+                        subtitle: 'Hem öğren, hem test et',
+                        onTap: () {
+                          Navigator.pop(context);
+                          _selectContentType('both');
+                        },
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      _buildBottomSheetOption(
+                        context,
+                        icon: Icons.quiz_rounded,
+                        title: 'Sadece Sınav',
+                        subtitle: 'Kendini test et',
+                        onTap: () {
+                          Navigator.pop(context);
+                          _selectContentType('quizOnly');
+                        },
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      _buildBottomSheetOption(
+                        context,
+                        icon: Icons.menu_book_rounded,
+                        title: 'Sadece Konu',
+                        subtitle: 'Konuyu öğren',
+                        onTap: () {
+                          Navigator.pop(context);
+                          _selectContentType('studyOnly');
+                        },
+                      ),
+
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildBottomSheetOption(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+          width: 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          splashColor: colorScheme.primary.withValues(alpha: 0.12),
+          highlightColor: colorScheme.primary.withValues(alpha: 0.08),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: colorScheme.onSurfaceVariant,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 16,
+                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   void _selectContentType(String contentType) {
@@ -252,17 +446,14 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
                     // Quiz'den geri dönüş: contentType'a göre karar ver
                     final contentType = ref.read(_contentTypeProvider);
                     if (contentType == 'quizOnly') {
-                      // Sadece quiz modundaysa content selection'a dön
-                      setState(() => _currentStep = WorkshopStep.contentSelection);
+                      // Sadece quiz modundaysa briefing'e dön
+                      _resetToBriefing();
                     } else {
                       // Study varsa study'e dön
                       setState(() => _currentStep = WorkshopStep.study);
                     }
                   } else if(_currentStep == WorkshopStep.study){
-                    // Study'den content selection'a dön
-                    setState(() => _currentStep = WorkshopStep.contentSelection);
-                  } else if(_currentStep == WorkshopStep.contentSelection){
-                    // Content selection'dan briefing'e dön
+                    // Study'den briefing'e dön
                     _resetToBriefing();
                   } else {
                     _resetToBriefing();
@@ -290,15 +481,6 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
       return _BriefingView(key: const ValueKey('briefing'), onTopicSelected: _startWorkshop);
     }
 
-    if (_currentStep == WorkshopStep.contentSelection) {
-      final selectedTopic = ref.watch(_selectedTopicProvider);
-      return _ContentSelectionView(
-        key: const ValueKey('content_selection'),
-        topic: selectedTopic ?? {},
-        onContentTypeSelected: _selectContentType,
-        onBack: () => setState(() => _currentStep = WorkshopStep.briefing),
-      );
-    }
 
     final sessionAsync = ref.watch(workshopSessionProvider);
     return sessionAsync.when(
@@ -954,192 +1136,6 @@ class _EmptyStateView extends StatelessWidget {
               label: const Text("Ana Sayfaya Dön"),
             ).animate().fadeIn(delay: 1100.ms),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-// YENİ: İçerik Türü Seçim Ekranı
-class _ContentSelectionView extends StatelessWidget {
-  final Map<String, String> topic;
-  final Function(String) onContentTypeSelected;
-  final VoidCallback onBack;
-
-  const _ContentSelectionView({
-    super.key,
-    required this.topic,
-    required this.onContentTypeSelected,
-    required this.onBack,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final topicName = topic['topic'] ?? 'Konu';
-    final subjectName = topic['subject'] ?? 'Ders';
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Başlık
-          Center(
-            child: RichText(
-              textAlign: TextAlign.center,
-              text: TextSpan(
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                ),
-                children: [
-                  TextSpan(
-                    text: topicName,
-                    style: TextStyle(
-                      color: colorScheme.primary,
-                    ),
-                  ),
-                  const TextSpan(text: ' konusu için\nnasıl çalışmayı tercih edersin?'),
-                ],
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 28),
-
-          // Seçenekler - Minimal kartlar
-          _buildOptionTile(
-            context,
-            icon: Icons.school_rounded,
-            title: 'Konu Anlatımı ve Sınav',
-            subtitle: 'Hem öğren, hem test et',
-            onTap: () => onContentTypeSelected('both'),
-          ),
-
-          const SizedBox(height: 12),
-
-          _buildOptionTile(
-            context,
-            icon: Icons.quiz_rounded,
-            title: 'Sadece Sınav',
-            subtitle: 'Kendini test et',
-            onTap: () => onContentTypeSelected('quizOnly'),
-          ),
-
-          const SizedBox(height: 12),
-
-          _buildOptionTile(
-            context,
-            icon: Icons.menu_book_rounded,
-            title: 'Sadece Konu',
-            subtitle: 'Konuyu öğren',
-            onTap: () => onContentTypeSelected('studyOnly'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildOptionTile(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-    String? badge,
-    bool isPrimary = false,
-  }) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: isPrimary
-              ? colorScheme.primary.withOpacity(0.08)
-              : colorScheme.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isPrimary
-                ? colorScheme.primary.withOpacity(0.3)
-                : colorScheme.surfaceContainerHighest.withOpacity(0.5),
-              width: isPrimary ? 2 : 1,
-            ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: (isPrimary ? colorScheme.primary : colorScheme.onSurfaceVariant)
-                      .withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  icon,
-                  color: isPrimary ? colorScheme.primary : colorScheme.onSurfaceVariant,
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            title,
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                            ),
-                          ),
-                        ),
-                        if (badge != null)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: colorScheme.secondary,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              badge,
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: colorScheme.onSecondary,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 16,
-                color: colorScheme.onSurfaceVariant.withOpacity(0.5),
-              ),
-            ],
-          ),
         ),
       ),
     );
