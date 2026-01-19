@@ -138,19 +138,22 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
 
             // Mevcut çözümü parse et: Eğer sohbet formatındaysa (--- ile ayrılmışsa) parse et
             if (widget.existingSolutionText!.contains('\n---\n')) {
-              // Sohbet geçmişi formatında kaydedilmiş
+              // Sohbet geçmi��i formatında kaydedilmiş
               final parts = widget.existingSolutionText!.split('\n---\n');
               for (final part in parts) {
                 if (part.trim().isEmpty) continue;
 
-                // "Soru: " veya "Çözüm: " prefixini kontrol et ve kaldır
-                if (part.startsWith('Soru: ')) {
-                  _messages.add(SolverMessage(part.substring(6), isUser: true));
-                } else if (part.startsWith('Çözüm: ')) {
-                  _messages.add(SolverMessage(part.substring(7), isUser: false));
+                // "Soru:" veya "Çözüm:" prefixini kontrol et ve kaldır
+                final trimmedPart = part.trim();
+                if (trimmedPart.startsWith('Soru:')) {
+                  final text = trimmedPart.substring(5).trim();
+                  _messages.add(SolverMessage(text, isUser: true));
+                } else if (trimmedPart.startsWith('Çözüm:')) {
+                  final text = trimmedPart.substring(6).trim();
+                  _messages.add(SolverMessage(text, isUser: false));
                 } else {
                   // Prefix yoksa, asistan mesajı olarak ekle
-                  _messages.add(SolverMessage(part, isUser: false));
+                  _messages.add(SolverMessage(trimmedPart, isUser: false));
                 }
               }
             } else {
