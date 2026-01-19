@@ -36,64 +36,38 @@ class PublicProfileScreen extends ConsumerStatefulWidget {
 
 class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
 
-  void _showPublicAchievements(BuildContext context, {required String displayName, required int testCount, required int streak, required int engagement}) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Theme.of(context).cardColor,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (ctx) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(child: Container(width: 36, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(4)))),
-              const SizedBox(height: 12),
-              Text('$displayName — Taktik Puanı', style: Theme.of(ctx).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
-              const SizedBox(height: 20),
-              Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Theme.of(context).colorScheme.surface.withOpacity(0.5),
-                          Theme.of(context).colorScheme.surface.withOpacity(0.2)
-                        ]),
-                    border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.flash_on_rounded, color: Theme.of(context).colorScheme.primary, size: 48),
-                      const SizedBox(height: 12),
-                      Text(
-                        engagement.toString(),
-                        style: Theme.of(ctx).textTheme.displaySmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Taktik Puanı',
-                        style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
+  int _calculateUnlockedBadges(Map<String, dynamic> data) {
+    int count = 0;
+
+    // Public profile'dan SADECE mevcut olan verileri al
+    final int testCount = (data['testCount'] as num?)?.toInt() ?? 0;
+    final int streak = (data['streak'] as num?)?.toInt() ?? 0;
+    final int engagement = (data['engagementScore'] as num?)?.toInt() ?? 0;
+
+    // Sadece bu 3 veriyle hesaplanabilen 8 madalya:
+
+    // 1-4: Deneme bazlı madalyalar
+    if (testCount >= 1) count++;   // İlk Adım
+    if (testCount >= 5) count++;   // Acemi Savaşçı
+    if (testCount >= 15) count++;  // Kıdemli Savaşçı
+    if (testCount >= 50) count++;  // Deneme Fatihi
+
+    // 5-7: Seri bazlı madalyalar
+    if (streak >= 3) count++;      // Kıvılcım
+    if (streak >= 14) count++;     // Alev Ustası
+    if (streak >= 30) count++;     // Durdurulamaz
+
+    // 8: Engagement bazlı madalya
+    if (engagement > 0) count++;   // Arena Gladyatörü
+
+    // DİĞER MADALYALAR: Public profile'da bu veriler yok, hesaplanamaz:
+    // - Net ortalaması bazlı: avgNet verisi yok (3 madalya)
+    // - Günlük görev bazlı: completedTasksCount verisi yok (1 madalya)
+    // - Odaklanma bazlı: totalFocusSeconds verisi yok (1 madalya)
+    // - Cevher Avcısı: hasTopicPerformance verisi yok (1 madalya)
+    // - Efsane: Tüm madalyalar gerekli (1 madalya)
+
+    return count;
   }
 
   void _showModerationMenu(BuildContext context, String targetUserId, String displayName) {
@@ -264,6 +238,12 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
           final rankName = rankInfo.current.name;
           final rankIcon = rankInfo.current.icon;
           final rankColor = rankInfo.current.color;
+          final rankIndex = RankService.ranks.indexOf(rankInfo.current);
+
+          // Madalya hesaplaması - sadece public profile'da mevcut verilerle hesaplanabilen 8 madalya
+          final int unlockedBadges = _calculateUnlockedBadges(data);
+          final int totalBadges = 8; // Toplam gösterilen madalya sayısı (public verilerle hesaplanabilenler)
+
           final updatedAt = statsAsync.valueOrNull?.updatedAt;
 
           return Container(
@@ -290,79 +270,61 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                           const Spacer(flex: 1),
                           // Profil kartı
                           followCountsAsync.when(
-                              data: (counts) => _ShareableProfileCard(
-                                displayName: displayName,
-                                avatarStyle: avatarStyle,
-                                avatarSeed: avatarSeed,
-                                rankColor: rankColor,
-                                rankIcon: rankIcon,
-                                rankName: rankName,
-                                testCount: testCount,
-                                streak: streak,
-                                followerCount: counts.$1,
-                                followingCount: counts.$2,
-                                currentUserId: me?.uid,
-                                targetUserId: widget.userId,
-                                engagement: engagement,
-                                onShowAchievements: () {
-                                  HapticFeedback.selectionClick();
-                                  _showPublicAchievements(context,
-                                    displayName: displayName,
-                                    testCount: testCount,
-                                    streak: streak,
-                                    engagement: engagement,
-                                  );
-                                },
-                              ),
-                              loading: () => _ShareableProfileCard(
-                                displayName: displayName,
-                                avatarStyle: avatarStyle,
-                                avatarSeed: avatarSeed,
-                                rankColor: rankColor,
-                                rankIcon: rankIcon,
-                                rankName: rankName,
-                                testCount: testCount,
-                                streak: streak,
-                                followerCount: 0,
-                                followingCount: 0,
-                                currentUserId: me?.uid,
-                                targetUserId: widget.userId,
-                                engagement: engagement,
-                                onShowAchievements: () {
-                                  HapticFeedback.selectionClick();
-                                  _showPublicAchievements(context,
-                                    displayName: displayName,
-                                    testCount: testCount,
-                                    streak: streak,
-                                    engagement: engagement,
-                                  );
-                                },
-                              ),
-                              error: (e, s) => _ShareableProfileCard(
-                                displayName: displayName,
-                                avatarStyle: avatarStyle,
-                                avatarSeed: avatarSeed,
-                                rankColor: rankColor,
-                                rankIcon: rankIcon,
-                                rankName: rankName,
-                                testCount: testCount,
-                                streak: streak,
-                                followerCount: 0,
-                                followingCount: 0,
-                                currentUserId: me?.uid,
-                                targetUserId: widget.userId,
-                                engagement: engagement,
-                                onShowAchievements: () {
-                                  HapticFeedback.selectionClick();
-                                  _showPublicAchievements(context,
-                                    displayName: displayName,
-                                    testCount: testCount,
-                                    streak: streak,
-                                    engagement: engagement,
-                                  );
-                                },
-                              ),
+                            data: (counts) => _ShareableProfileCard(
+                              displayName: displayName,
+                              avatarStyle: avatarStyle,
+                              avatarSeed: avatarSeed,
+                              rankColor: rankColor,
+                              rankIcon: rankIcon,
+                              rankName: rankName,
+                              testCount: testCount,
+                              streak: streak,
+                              followerCount: counts.$1,
+                              followingCount: counts.$2,
+                              currentUserId: me?.uid,
+                              targetUserId: widget.userId,
+                              engagement: engagement,
+                              unlockedBadges: unlockedBadges,
+                              totalBadges: totalBadges,
+                              rankIndex: rankIndex,
                             ),
+                            loading: () => _ShareableProfileCard(
+                              displayName: displayName,
+                              avatarStyle: avatarStyle,
+                              avatarSeed: avatarSeed,
+                              rankColor: rankColor,
+                              rankIcon: rankIcon,
+                              rankName: rankName,
+                              testCount: testCount,
+                              streak: streak,
+                              followerCount: 0,
+                              followingCount: 0,
+                              currentUserId: me?.uid,
+                              targetUserId: widget.userId,
+                              engagement: engagement,
+                              unlockedBadges: unlockedBadges,
+                              totalBadges: totalBadges,
+                              rankIndex: rankIndex,
+                            ),
+                            error: (e, s) => _ShareableProfileCard(
+                              displayName: displayName,
+                              avatarStyle: avatarStyle,
+                              avatarSeed: avatarSeed,
+                              rankColor: rankColor,
+                              rankIcon: rankIcon,
+                              rankName: rankName,
+                              testCount: testCount,
+                              streak: streak,
+                              followerCount: 0,
+                              followingCount: 0,
+                              currentUserId: me?.uid,
+                              targetUserId: widget.userId,
+                              engagement: engagement,
+                              unlockedBadges: unlockedBadges,
+                              totalBadges: totalBadges,
+                              rankIndex: rankIndex,
+                            ),
+                          ),
                           if (updatedAt != null) ...[
                             const SizedBox(height: 12),
                             Text(
@@ -388,7 +350,23 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
 }
 
 class _ShareableProfileCard extends StatelessWidget {
-  final String displayName; final String? avatarStyle; final String? avatarSeed; final Color rankColor; final IconData rankIcon; final String rankName; final int testCount; final int streak; final int followerCount; final int followingCount; final String? currentUserId; final String targetUserId; final int engagement; final VoidCallback onShowAchievements;
+  final String displayName;
+  final String? avatarStyle;
+  final String? avatarSeed;
+  final Color rankColor;
+  final IconData rankIcon;
+  final String rankName;
+  final int testCount;
+  final int streak;
+  final int followerCount;
+  final int followingCount;
+  final String? currentUserId;
+  final String targetUserId;
+  final int engagement;
+  final int unlockedBadges;
+  final int totalBadges;
+  final int rankIndex;
+
   const _ShareableProfileCard({
     required this.displayName,
     required this.avatarStyle,
@@ -403,7 +381,9 @@ class _ShareableProfileCard extends StatelessWidget {
     required this.currentUserId,
     required this.targetUserId,
     required this.engagement,
-    required this.onShowAchievements,
+    required this.unlockedBadges,
+    required this.totalBadges,
+    required this.rankIndex,
   });
 
   @override
@@ -429,14 +409,117 @@ class _ShareableProfileCard extends StatelessWidget {
           const SizedBox(height: 8),
           _RankCapsule(rankName: rankName, icon: rankIcon, color: rankColor),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(child: _StatCard(label: 'Deneme', value: testCount.toString(), icon: Icons.library_books_rounded, delay: 0.ms)),
-              const SizedBox(width: 10),
-              Expanded(child: _StatCard(label: 'Seri', value: streak.toString(), icon: Icons.local_fire_department_rounded, delay: 0.ms)),
-            ],
+          // Madalyalar, Seviye, Deneme ve Seri - 2x2 Grid (Profile Screen gibi)
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
+                width: 1,
+              ),
+            ),
+            child: Column(
+              children: [
+                // Üst Satır: Madalyalar ve Seviye
+                Row(
+                  children: [
+                    Expanded(
+                      child: _StatButton(
+                        icon: Icons.military_tech_rounded,
+                        iconColor: Colors.amber.shade600,
+                        value: '$unlockedBadges/$totalBadges',
+                        label: 'Madalyalar',
+                        delay: 0.ms,
+                      ),
+                    ),
+                    Container(
+                      width: 1.5,
+                      height: 60,
+                      margin: const EdgeInsets.symmetric(vertical: 6),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Theme.of(context).colorScheme.outline.withOpacity(0.0),
+                            Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                            Theme.of(context).colorScheme.outline.withOpacity(0.0),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: _StatButton(
+                        icon: Icons.workspace_premium,
+                        iconColor: rankColor,
+                        value: '${rankIndex + 1}',
+                        label: 'Seviye',
+                        delay: 0.ms,
+                      ),
+                    ),
+                  ],
+                ),
+                // Yatay Ayırıcı Çizgi
+                Container(
+                  height: 1.5,
+                  margin: const EdgeInsets.symmetric(horizontal: 6),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [
+                        Theme.of(context).colorScheme.outline.withOpacity(0.0),
+                        Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                        Theme.of(context).colorScheme.outline.withOpacity(0.0),
+                      ],
+                    ),
+                  ),
+                ),
+                // Alt Satır: Deneme ve Seri
+                Row(
+                  children: [
+                    Expanded(
+                      child: _StatButton(
+                        icon: Icons.library_books_rounded,
+                        iconColor: Theme.of(context).colorScheme.primary,
+                        value: testCount.toString(),
+                        label: 'Deneme',
+                        delay: 0.ms,
+                      ),
+                    ),
+                    Container(
+                      width: 1.5,
+                      height: 60,
+                      margin: const EdgeInsets.symmetric(vertical: 6),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Theme.of(context).colorScheme.outline.withOpacity(0.0),
+                            Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                            Theme.of(context).colorScheme.outline.withOpacity(0.0),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: _StatButton(
+                        icon: Icons.local_fire_department_rounded,
+                        iconColor: Colors.orange.shade700,
+                        value: streak.toString(),
+                        label: 'Seri',
+                        delay: 0.ms,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
+          // Takipçi / Takip alanı
           Row(
             children: [
               Expanded(child: _CountPill(label: 'Takipçi', value: followerCount)),
@@ -451,18 +534,8 @@ class _ShareableProfileCard extends StatelessWidget {
               width: double.infinity,
               child: _FollowButton(targetUserId: targetUserId),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 16),
           ],
-          // Başarılar butonu
-          SizedBox(
-            width: double.infinity,
-            child: _ActionTile(
-              icon: Icons.emoji_events_outlined,
-              label: 'Başarılar',
-              onTap: onShowAchievements,
-            ),
-          ),
-          const SizedBox(height: 16),
           // Taktik App logosu en altta
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -537,55 +610,55 @@ class _FollowButtonState extends ConsumerState<_FollowButton> {
     final label = isFollowing ? 'Takipten Çık' : 'Takip Et';
 
     return ElevatedButton.icon(
-        onPressed: _busy || me?.uid == null || me!.uid == widget.targetUserId
-            ? null
-            : () async {
-          HapticFeedback.selectionClick();
-          setState(() {
-            _busy = true;
-            _optimistic = !isFollowing;
-          });
-          try {
-            final svc = ref.read(firestoreServiceProvider);
-            if (isFollowing) {
-              await svc.unfollowUser(currentUserId: me.uid, targetUserId: widget.targetUserId);
-            } else {
-              await svc.followUser(currentUserId: me.uid, targetUserId: widget.targetUserId);
-            }
-          } catch (e) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('İşlem başarısız: $e')));
-              setState(() {
-                _optimistic = null;
-              });
-            }
-          } finally {
-            if (mounted) {
-              setState(() {
-                _busy = false;
-                _optimistic = null;
-              });
-            }
+      onPressed: _busy || me?.uid == null || me!.uid == widget.targetUserId
+          ? null
+          : () async {
+        HapticFeedback.selectionClick();
+        setState(() {
+          _busy = true;
+          _optimistic = !isFollowing;
+        });
+        try {
+          final svc = ref.read(firestoreServiceProvider);
+          if (isFollowing) {
+            await svc.unfollowUser(currentUserId: me.uid, targetUserId: widget.targetUserId);
+          } else {
+            await svc.followUser(currentUserId: me.uid, targetUserId: widget.targetUserId);
           }
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: bg,
-          foregroundColor: fg,
-          elevation: 0,
-          side: BorderSide(color: colorScheme.secondary.withOpacity(0.8)),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-          minimumSize: const Size(0, 40),
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        ),
-        icon: (loading == true && _optimistic == null) || _busy
-            ? SizedBox(
-            width: 16,
-            height: 16,
-            child: CircularProgressIndicator(strokeWidth: 2, color: colorScheme.secondary))
-            : Icon(icon, size: 18),
-        label: Text(label, style: const TextStyle(fontSize: 13)),
-      );
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('İşlem başarısız: $e')));
+            setState(() {
+              _optimistic = null;
+            });
+          }
+        } finally {
+          if (mounted) {
+            setState(() {
+              _busy = false;
+              _optimistic = null;
+            });
+          }
+        }
+      },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: bg,
+        foregroundColor: fg,
+        elevation: 0,
+        side: BorderSide(color: colorScheme.secondary.withOpacity(0.8)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        minimumSize: const Size(0, 40),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      ),
+      icon: (loading == true && _optimistic == null) || _busy
+          ? SizedBox(
+          width: 16,
+          height: 16,
+          child: CircularProgressIndicator(strokeWidth: 2, color: colorScheme.secondary))
+          : Icon(icon, size: 18),
+      label: Text(label, style: const TextStyle(fontSize: 13)),
+    );
   }
 }
 
@@ -696,92 +769,59 @@ class _RankCapsule extends StatelessWidget {
   }
 }
 
-class _StatCard extends StatelessWidget {
-  final String label; final String value; final IconData icon; final Duration delay;
-  const _StatCard({required this.label, required this.value, required this.icon, required this.delay});
+class _StatButton extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String value;
+  final String label;
+  final Duration delay;
+
+  const _StatButton({
+    required this.icon,
+    required this.iconColor,
+    required this.value,
+    required this.label,
+    required this.delay,
+  });
+
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Semantics(
-      label: '$label istatistiği: $value',
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-          gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [colorScheme.onSurface.withOpacity(0.1), colorScheme.onSurface.withOpacity(0.05)]),
-          border: Border.all(color: colorScheme.onSurface.withOpacity(0.12), width: 1),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(icon, size: 20, color: colorScheme.secondary),
-              const SizedBox(height: 8),
-              Text(value,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              Text(label,
-                style: Theme.of(context)
-                    .textTheme
-                    .labelSmall
-                    ?.copyWith(color: colorScheme.onSurface.withOpacity(0.7)),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
 
-class _ActionTile extends StatefulWidget {
-  final IconData icon; final String label; final VoidCallback onTap; const _ActionTile({required this.icon, required this.label, required this.onTap});
-  @override
-  State<_ActionTile> createState() => _ActionTileState();
-}
-
-class _ActionTileState extends State<_ActionTile> {
-  bool _pressed = false;
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapCancel: () => setState(() => _pressed = false),
-      onTapUp: (_) { setState(() => _pressed = false); widget.onTap(); },
-      child: AnimatedScale(
-        scale: _pressed ? 0.96 : 1,
-        duration: 120.ms,
-        curve: Curves.easeOut,
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Theme.of(context).colorScheme.surface.withOpacity(0.5),
-                  Theme.of(context).colorScheme.surface.withOpacity(0.2)
-                ]),
-            border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)),
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: iconColor, size: 24),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(widget.icon, color: Theme.of(context).colorScheme.primary, size: 22),
-              const SizedBox(width: 8),
-              Text(widget.label, style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600)),
-            ],
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w900,
+              color: iconColor,
+              fontSize: 18,
+              letterSpacing: 0.3,
+            ),
           ),
-        ),
+          const SizedBox(height: 1),
+          Text(
+            label,
+            style: textTheme.bodySmall?.copyWith(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.2,
+            ),
+          ),
+        ],
       ),
     );
   }
