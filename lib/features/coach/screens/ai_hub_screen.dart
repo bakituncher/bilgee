@@ -141,7 +141,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                       theme: theme,
                       icon: Icons.auto_fix_high_rounded,
                       color: const Color(0xFF8B5CF6),
-                      title: "Eksik Konu Materyalleri",
+                      title: "Etüt Odası",
                       description: "Sadece senin eksik olduğun konulara özel konu özeti ve test soruları üretir.",
                     ),
                   ],
@@ -365,7 +365,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                 const SizedBox(width: gap),
                 Expanded(
                   child: _BentoCard(
-                    title: 'Eksik Konu\nAtölyesi',
+                    title: 'Etüt\nOdası',
                     // ÇOK NET: Ne işe yarar? Materyal verir.
                     description: 'Eksik konularına özel\nçalışma setleri.',
                     icon: Icons.auto_fix_high_rounded,
