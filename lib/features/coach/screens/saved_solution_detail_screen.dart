@@ -25,7 +25,7 @@ class SavedSolutionDetailScreen extends ConsumerWidget {
     SavedSolutionModel currentSolution;
     try {
       currentSolution = allSolutions.firstWhere(
-        (s) => s.id == solution.id,
+            (s) => s.id == solution.id,
         orElse: () => solution,
       );
     } catch (_) {
@@ -109,7 +109,7 @@ class SavedSolutionDetailScreen extends ConsumerWidget {
             ),
           ),
 
-          // Çözüm İçeriği
+          // Çözüm İçeriği - OPTİMİZE EDİLMİŞ HALİ
           if (isSolved)
             SliverToBoxAdapter(
               child: Padding(
@@ -127,11 +127,10 @@ class SavedSolutionDetailScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  child: Markdown(
+                  // DEĞİŞİKLİK: Markdown yerine MarkdownBody kullanıldı
+                  child: MarkdownBody(
                     data: currentSolution.solutionText,
-                    selectable: true,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
+                    selectable: false, // Performans için seçim kapatıldı
                     styleSheet: MarkdownStyleSheet(
                       p: TextStyle(
                         color: theme.colorScheme.onSurface,
@@ -142,9 +141,18 @@ class SavedSolutionDetailScreen extends ConsumerWidget {
                         color: theme.colorScheme.primary,
                         fontWeight: FontWeight.bold,
                       ),
+                      h2: TextStyle(
+                        color: theme.colorScheme.onSurface,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
                       strong: TextStyle(
                         color: theme.colorScheme.onSurface,
                         fontWeight: FontWeight.w700,
+                      ),
+                      blockquote: TextStyle(
+                        color: theme.colorScheme.secondary,
+                        fontStyle: FontStyle.italic,
                       ),
                     ),
                     builders: {
@@ -192,14 +200,14 @@ class SavedSolutionDetailScreen extends ConsumerWidget {
           // Görseli XFile olarak oluştur ve QuestionSolverScreen'e gönder
           final imageFile = XFile(currentSolution.localImagePath);
 
-          // QuestionSolverScreen'e yönlendir (mevcut çözümün ID'sini ve metnini gönder)
+          // QuestionSolverScreen'e yönlendir
           Navigator.push(
             context,
             PageRouteBuilder(
               pageBuilder: (context, animation, secondaryAnimation) => QuestionSolverScreen(
                 preselectedImage: imageFile,
                 existingSolutionId: currentSolution.id, // Güncelleme için ID gönder
-                existingSolutionText: isSolved ? currentSolution.solutionText : null, // Çözüm varsa g��nder
+                existingSolutionText: isSolved ? currentSolution.solutionText : null, // Çözüm varsa gönder
               ),
               transitionDuration: Duration.zero,
               reverseTransitionDuration: Duration.zero,
@@ -214,4 +222,3 @@ class SavedSolutionDetailScreen extends ConsumerWidget {
     );
   }
 }
-
