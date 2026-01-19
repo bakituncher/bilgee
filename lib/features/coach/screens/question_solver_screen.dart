@@ -73,7 +73,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
   bool _isAnalyzing = false; // Yapay zeka analiz durumu
   bool _isCropping = false;  // Kırpma işlemi işleniyor durumu
   bool _isChatLoading = false; // Sohbet cevap bekliyor mu?
-  bool _isSaved = false; // YENİ: Çözüm kaydedildi mi?
+  late bool _isSaved; // YENİ: Çözüm kaydedildi mi?
   bool _isLoadingPreselected = false; // preselectedImage işlenirken true
   String? _error;
 
@@ -82,6 +82,9 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
   @override
   void initState() {
     super.initState();
+    // Eğer existingSolutionId varsa, bu zaten kaydedilmiş bir çözüm demektir
+    _isSaved = widget.existingSolutionId != null;
+
     // Eğer dışarıdan bir görsel gelirse otomatik olarak işleme başla
     if (widget.preselectedImage != null) {
       _isLoadingPreselected = true; // Hemen işaretliyoruz ki "Nasıl Kullanılır" ekranı gösterilmesin
@@ -796,16 +799,12 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
             if (_initialSolution != null)
               IconButton(
                 icon: Icon(
-                  // Eğer existingSolutionId varsa (güncelleme modu), her zaman "güncelle" ikonu göster
-                  widget.existingSolutionId != null
-                      ? Icons.sync_rounded
-                      : (_isSaved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded),
-                  color: widget.existingSolutionId != null
-                      ? theme.colorScheme.primary
-                      : (_isSaved ? theme.colorScheme.primary : theme.colorScheme.onSurface),
+                  // Her zaman bookmark ikonunu kullan - kaydedilmişse dolu, yoksa boş
+                  _isSaved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+                  color: _isSaved ? theme.colorScheme.primary : theme.colorScheme.onSurface,
                 ),
                 tooltip: widget.existingSolutionId != null
-                    ? 'Güncelle'
+                    ? (_isSaved ? 'Güncellendi' : 'Güncelle')
                     : (_isSaved ? 'Kaydedildi' : 'Kaydet'),
                 onPressed: widget.existingSolutionId != null
                     ? _saveSolutionLocally // Güncelleme modu - her zaman kaydetmeye izin ver
