@@ -1012,7 +1012,7 @@ class _ContentSelectionView extends StatelessWidget {
           _buildOptionTile(
             context,
             icon: Icons.school_rounded,
-            title: 'Konu Anlatımı + Sınav',
+            title: 'Konu Anlatımı ve Sınav',
             subtitle: 'Hem öğren, hem test et',
             onTap: () => onContentTypeSelected('both'),
           ),
@@ -1023,7 +1023,7 @@ class _ContentSelectionView extends StatelessWidget {
             context,
             icon: Icons.quiz_rounded,
             title: 'Sadece Sınav',
-            subtitle: 'Direkt 5 soru çöz',
+            subtitle: 'Kendini test et',
             onTap: () => onContentTypeSelected('quizOnly'),
           ),
 
@@ -1033,7 +1033,7 @@ class _ContentSelectionView extends StatelessWidget {
             context,
             icon: Icons.menu_book_rounded,
             title: 'Sadece Konu',
-            subtitle: 'Detaylı açıklama oku',
+            subtitle: 'Konuyu öğren',
             onTap: () => onContentTypeSelected('studyOnly'),
           ),
         ],
