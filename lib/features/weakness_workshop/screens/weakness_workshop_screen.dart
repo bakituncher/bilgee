@@ -431,7 +431,9 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
     return Scaffold(
       body: Stack(
         children: [
-          const _FancyBackground(),
+          // Quiz ve results adımında renkli arka planı gizle - siyah-beyaz tema için
+          if (_currentStep != WorkshopStep.quiz && _currentStep != WorkshopStep.results)
+            const _FancyBackground(),
           Column(
             children: [
               _WSHeader(
@@ -1437,7 +1439,7 @@ class _SummaryViewState extends ConsumerState<_SummaryView> {
           ),
           const SizedBox(height: 12),
           _ResultActionCard(
-            title: "Cevheri Kaydet",
+            title: "Testi Kaydet",
             subtitle: "Daha sonra tekrar çalışmak için kaydet",
             icon: _isSaved ? Icons.check_circle_rounded : Icons.bookmark_add_rounded,
             onTap: (_isSaving || _isSaved) ? (){} : () async {
@@ -1462,7 +1464,7 @@ class _SummaryViewState extends ConsumerState<_SummaryView> {
           ),
           const SizedBox(height: 12),
           _ResultActionCard(
-            title: "Sıradaki Cevhere Geç",
+            title: "Sıradaki Konuya Geç",
             subtitle: "Başka bir zayıf konu üzerinde çalış",
             icon: Icons.diamond_outlined,
             onTap: widget.onNextTopic,
