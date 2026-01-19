@@ -166,14 +166,20 @@ class _LeaderboardView extends ConsumerWidget {
                     );
                   }
 
-                  if (showCurrentUserAtBottom && index == displayList.length) {
+                  if (showCurrentUserAtBottom && index == displayList.length + 1) {
                     return Padding(
                       padding: const EdgeInsets.only(top: 20.0),
                       child: _CurrentUserCard(entry: currentUserEntry),
                     );
                   }
 
-                  final entry = displayList[index];
+                  // Banner'dan sonraki indeksleri ayarla
+                  final listIndex = index - 1;
+                  if (listIndex < 0 || listIndex >= displayList.length) {
+                    return const SizedBox.shrink();
+                  }
+
+                  final entry = displayList[listIndex];
                   return GestureDetector(
                     onTap: () {
                       HapticFeedback.selectionClick();
@@ -190,9 +196,9 @@ class _LeaderboardView extends ConsumerWidget {
                           .animate()
                           .fadeIn(
                           duration: 350.ms,
-                          delay: (40 * (index % 10)).ms)
+                          delay: (40 * (listIndex % 10)).ms)
                           .slideX(
-                          begin: index.isEven ? -0.06 : 0.06,
+                          begin: listIndex.isEven ? -0.06 : 0.06,
                           end: 0,
                           duration: 420.ms,
                           curve: Curves.easeOutCubic),
