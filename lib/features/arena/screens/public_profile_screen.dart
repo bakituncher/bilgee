@@ -38,34 +38,18 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
 
   int _calculateUnlockedBadges(Map<String, dynamic> data) {
     int count = 0;
-
-    // Public profile'dan SADECE mevcut olan verileri al
     final int testCount = (data['testCount'] as num?)?.toInt() ?? 0;
     final int streak = (data['streak'] as num?)?.toInt() ?? 0;
     final int engagement = (data['engagementScore'] as num?)?.toInt() ?? 0;
 
-    // Sadece bu 3 veriyle hesaplanabilen 8 madalya:
-
-    // 1-4: Deneme bazlı madalyalar
-    if (testCount >= 1) count++;   // İlk Adım
-    if (testCount >= 5) count++;   // Acemi Savaşçı
-    if (testCount >= 15) count++;  // Kıdemli Savaşçı
-    if (testCount >= 50) count++;  // Deneme Fatihi
-
-    // 5-7: Seri bazlı madalyalar
-    if (streak >= 3) count++;      // Kıvılcım
-    if (streak >= 14) count++;     // Alev Ustası
-    if (streak >= 30) count++;     // Durdurulamaz
-
-    // 8: Engagement bazlı madalya
-    if (engagement > 0) count++;   // Arena Gladyatörü
-
-    // DİĞER MADALYALAR: Public profile'da bu veriler yok, hesaplanamaz:
-    // - Net ortalaması bazlı: avgNet verisi yok (3 madalya)
-    // - Günlük görev bazlı: completedTasksCount verisi yok (1 madalya)
-    // - Odaklanma bazlı: totalFocusSeconds verisi yok (1 madalya)
-    // - Cevher Avcısı: hasTopicPerformance verisi yok (1 madalya)
-    // - Efsane: Tüm madalyalar gerekli (1 madalya)
+    if (testCount >= 1) count++;
+    if (testCount >= 5) count++;
+    if (testCount >= 15) count++;
+    if (testCount >= 50) count++;
+    if (streak >= 3) count++;
+    if (streak >= 14) count++;
+    if (streak >= 30) count++;
+    if (engagement > 0) count++;
 
     return count;
   }
@@ -152,7 +136,6 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
       Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Hata: ${e.toString()}')),
       );
@@ -160,7 +143,6 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
   }
 
   Future<void> _reportUser(String targetUserId, String displayName) async {
-    // UserReportDialog'u import edelim ve kullanıcıyı raporlama işlemini yapalım
     final reported = await showUserReportDialog(
       context,
       targetUserId: targetUserId,
@@ -181,8 +163,6 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
     final followCountsAsync = ref.watch(followCountsProvider(widget.userId));
     final me = ref.watch(authControllerProvider).value;
 
-    // (workaround kaldırıldı) testCount artık public_profiles'tan gelir
-
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -190,14 +170,12 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
-          // Moderasyon menüsü (kendi profilinde gösterme)
           if (me?.uid != widget.userId)
             Builder(
               builder: (context) {
                 return userProfileAsync.maybeWhen(
                   data: (data) {
                     if (data == null) return const SizedBox.shrink();
-                    // GÜVENLİK: Username kullan
                     final username = (data['username'] as String?) ?? '';
                     final displayName = username.isNotEmpty ? '@$username' : 'İsimsiz Savaşçı';
                     return _ModernIconButton(
@@ -221,29 +199,30 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
           if (data == null) {
             return const Center(child: Text('Savaşçı bulunamadı.'));
           }
-          // GÜVENLİK: Gerçek isim yerine kullanıcı adı (13-17 yaş koruması)
           final String username = (data['username'] as String?) ?? '';
           final String displayName = username.isNotEmpty ? '@$username' : 'İsimsiz Savaşçı';
-
-          // MERKEZİ SİSTEM: Tüm istatistikler public profile'dan alınır
           final int testCount = (data['testCount'] as num?)?.toInt() ?? 0;
           final int engagement = (data['engagementScore'] as num?)?.toInt() ?? 0;
-
-          // MERKEZİ SİSTEM: Streak artık Firebase'deki public profile'dan alınır
           final int streak = (data['streak'] as num?)?.toInt() ?? 0;
-
           final String? avatarStyle = data['avatarStyle'] as String?;
           final String? avatarSeed = data['avatarSeed'] as String?;
+
           final rankInfo = RankService.getRankInfo(engagement);
           final rankName = rankInfo.current.name;
           final rankIcon = rankInfo.current.icon;
           final rankColor = rankInfo.current.color;
           final rankIndex = RankService.ranks.indexOf(rankInfo.current);
 
-          // Madalya hesaplaması - sadece public profile'da mevcut verilerle hesaplanabilen 8 madalya
-          final int unlockedBadges = _calculateUnlockedBadges(data);
-          final int totalBadges = 8; // Toplam gösterilen madalya sayısı (public verilerle hesaplanabilenler)
+          // XP Bar hesaplamaları
+          final nextRank = rankInfo.next;
+          final progressToNext = rankInfo.progress;
+          // Eğer son seviyedeyse, hedef puanı mevcut seviye puanı yapalım
+          final nextLevelXp = nextRank.requiredScore == rankInfo.current.requiredScore
+              ? rankInfo.current.requiredScore
+              : nextRank.requiredScore;
 
+          final int unlockedBadges = _calculateUnlockedBadges(data);
+          final int totalBadges = 8;
           final updatedAt = statsAsync.valueOrNull?.updatedAt;
 
           return Container(
@@ -260,80 +239,51 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
               child: CustomScrollView(
                 physics: const BouncingScrollPhysics(),
                 slivers: [
+                  // SliverFillRemaining ile ekrana ortalama yapıyoruz, ancak Spacer yerine Center kullanıyoruz
+                  // bu sayede layout hatası riskini (unbounded height) ortadan kaldırıyoruz.
                   SliverFillRemaining(
                     hasScrollBody: false,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Spacer(flex: 1),
-                          // Profil kartı
-                          followCountsAsync.when(
-                            data: (counts) => _ShareableProfileCard(
-                              displayName: displayName,
-                              avatarStyle: avatarStyle,
-                              avatarSeed: avatarSeed,
-                              rankColor: rankColor,
-                              rankIcon: rankIcon,
-                              rankName: rankName,
-                              testCount: testCount,
-                              streak: streak,
-                              followerCount: counts.$1,
-                              followingCount: counts.$2,
-                              currentUserId: me?.uid,
-                              targetUserId: widget.userId,
-                              engagement: engagement,
-                              unlockedBadges: unlockedBadges,
-                              totalBadges: totalBadges,
-                              rankIndex: rankIndex,
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min, // İçeriği sıkıştır
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            // Profil kartı
+                            followCountsAsync.when(
+                              data: (counts) => _ShareableProfileCard(
+                                displayName: displayName,
+                                avatarStyle: avatarStyle,
+                                avatarSeed: avatarSeed,
+                                rankColor: rankColor,
+                                rankIcon: rankIcon,
+                                rankName: rankName,
+                                testCount: testCount,
+                                streak: streak,
+                                followerCount: counts.$1,
+                                followingCount: counts.$2,
+                                currentUserId: me?.uid,
+                                targetUserId: widget.userId,
+                                engagement: engagement,
+                                unlockedBadges: unlockedBadges,
+                                totalBadges: totalBadges,
+                                rankIndex: rankIndex,
+                                nextLevelXp: nextLevelXp,
+                                progress: progressToNext,
+                              ),
+                              loading: () => const _ShareableProfileCardSkeleton(),
+                              error: (e, s) => const _ShareableProfileCardSkeleton(),
                             ),
-                            loading: () => _ShareableProfileCard(
-                              displayName: displayName,
-                              avatarStyle: avatarStyle,
-                              avatarSeed: avatarSeed,
-                              rankColor: rankColor,
-                              rankIcon: rankIcon,
-                              rankName: rankName,
-                              testCount: testCount,
-                              streak: streak,
-                              followerCount: 0,
-                              followingCount: 0,
-                              currentUserId: me?.uid,
-                              targetUserId: widget.userId,
-                              engagement: engagement,
-                              unlockedBadges: unlockedBadges,
-                              totalBadges: totalBadges,
-                              rankIndex: rankIndex,
-                            ),
-                            error: (e, s) => _ShareableProfileCard(
-                              displayName: displayName,
-                              avatarStyle: avatarStyle,
-                              avatarSeed: avatarSeed,
-                              rankColor: rankColor,
-                              rankIcon: rankIcon,
-                              rankName: rankName,
-                              testCount: testCount,
-                              streak: streak,
-                              followerCount: 0,
-                              followingCount: 0,
-                              currentUserId: me?.uid,
-                              targetUserId: widget.userId,
-                              engagement: engagement,
-                              unlockedBadges: unlockedBadges,
-                              totalBadges: totalBadges,
-                              rankIndex: rankIndex,
-                            ),
-                          ),
-                          if (updatedAt != null) ...[
-                            const SizedBox(height: 12),
-                            Text(
-                              "Son güncelleme: ${DateFormat('dd MMM yyyy HH:mm', 'tr_TR').format(updatedAt)}",
-                              style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white70),
-                            ),
+                            if (updatedAt != null) ...[
+                              const SizedBox(height: 12),
+                              Text(
+                                "Son güncelleme: ${DateFormat('dd MMM yyyy HH:mm', 'tr_TR').format(updatedAt)}",
+                                style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white70),
+                              ),
+                            ],
                           ],
-                          const Spacer(flex: 1),
-                        ],
+                        ),
                       ),
                     ),
                   ),
@@ -345,6 +295,25 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
         loading: () => const AppLoader(),
         error: (e, s) => Center(child: Text('Savaşçı Künyesi Yüklenemedi: $e')),
       ),
+    );
+  }
+}
+
+class _ShareableProfileCardSkeleton extends StatelessWidget {
+  const _ShareableProfileCardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 400,
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        color: Theme.of(context).colorScheme.surface.withOpacity(0.1),
+        border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)),
+      ),
+      child: const Center(child: CircularProgressIndicator()),
     );
   }
 }
@@ -366,6 +335,8 @@ class _ShareableProfileCard extends StatelessWidget {
   final int unlockedBadges;
   final int totalBadges;
   final int rankIndex;
+  final int nextLevelXp;
+  final double progress;
 
   const _ShareableProfileCard({
     required this.displayName,
@@ -384,11 +355,14 @@ class _ShareableProfileCard extends StatelessWidget {
     required this.unlockedBadges,
     required this.totalBadges,
     required this.rankIndex,
+    required this.nextLevelXp,
+    required this.progress,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity, // Kartın yatayda tam yer kaplamasını sağla
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
@@ -402,6 +376,7 @@ class _ShareableProfileCard extends StatelessWidget {
         border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5), width: 1),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min, // İçeriği kadar yer kapla
         children: [
           _AvatarHalo(displayName: displayName, avatarStyle: avatarStyle, avatarSeed: avatarSeed, rankColor: rankColor),
           const SizedBox(height: 12),
@@ -409,7 +384,22 @@ class _ShareableProfileCard extends StatelessWidget {
           const SizedBox(height: 8),
           _RankCapsule(rankName: rankName, icon: rankIcon, color: rankColor),
           const SizedBox(height: 16),
-          // Madalyalar, Seviye, Deneme ve Seri - 2x2 Grid (Profile Screen gibi)
+
+          // Taktik Puanı Çubuğu (XP Bar)
+          // Genişliği garanti altına almak için SizedBox kullanıyoruz
+          SizedBox(
+            width: double.infinity,
+            child: _NeoXpBar(
+              currentXp: engagement,
+              nextLevelXp: nextLevelXp,
+              progress: progress,
+            ),
+          ).animate()
+              .fadeIn(duration: 500.ms, delay: 200.ms)
+              .slideX(begin: -0.2, end: 0, duration: 500.ms, curve: Curves.easeOutCubic),
+
+          const SizedBox(height: 16),
+          // İstatistik Grid
           Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(18),
@@ -421,7 +411,6 @@ class _ShareableProfileCard extends StatelessWidget {
             ),
             child: Column(
               children: [
-                // Üst Satır: Madalyalar ve Seviye
                 Row(
                   children: [
                     Expanded(
@@ -460,7 +449,6 @@ class _ShareableProfileCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                // Yatay Ayırıcı Çizgi
                 Container(
                   height: 1.5,
                   margin: const EdgeInsets.symmetric(horizontal: 6),
@@ -476,7 +464,6 @@ class _ShareableProfileCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Alt Satır: Deneme ve Seri
                 Row(
                   children: [
                     Expanded(
@@ -519,7 +506,6 @@ class _ShareableProfileCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          // Takipçi / Takip alanı
           Row(
             children: [
               Expanded(child: _CountPill(label: 'Takipçi', value: followerCount)),
@@ -528,7 +514,6 @@ class _ShareableProfileCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          // Takip Et butonu (sadece başkasının profilinde)
           if (currentUserId != null && currentUserId != targetUserId) ...[
             SizedBox(
               width: double.infinity,
@@ -536,7 +521,6 @@ class _ShareableProfileCard extends StatelessWidget {
             ),
             const SizedBox(height: 16),
           ],
-          // Taktik App logosu en altta
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -551,6 +535,152 @@ class _ShareableProfileCard extends StatelessWidget {
   }
 }
 
+class _NeoXpBar extends StatelessWidget {
+  final int currentXp; final int nextLevelXp; final double progress;
+  const _NeoXpBar({required this.currentXp, required this.nextLevelXp, required this.progress});
+  @override
+  Widget build(BuildContext context) {
+    final capped = progress.clamp(0.0, 1.0);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final accentProfile1 = colorScheme.primary;
+    final accentProfile2 = colorScheme.secondary;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min, // Önemli: Yüksekliği içerik kadar olsun
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                color: accentProfile2.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(7),
+              ),
+              child: Icon(Icons.flash_on_rounded, size: 16, color: accentProfile2),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              'Taktik Puanı',
+              style: theme.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w800,
+                fontSize: 12,
+                letterSpacing: 0.3,
+              ),
+            ),
+            const Spacer(),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: colorScheme.outline.withOpacity(0.1),
+                  width: 1,
+                ),
+              ),
+              child: Text(
+                '$currentXp / $nextLevelXp',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: colorScheme.onSurface.withOpacity(0.8),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        // Genişlik garantisi için Container kullanıyoruz
+        Container(
+          width: double.infinity,
+          height: 24, // Yükseklik vererek layout belirsizliğini önlüyoruz
+          padding: const EdgeInsets.all(2),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              colors: [accentProfile1, accentProfile2, accentProfile1],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: accentProfile2.withOpacity(0.3),
+                blurRadius: 12,
+                spreadRadius: 0,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // Genişlik kontrolü: Eğer sonsuz gelirse varsayılan bir değer kullan
+              final w = constraints.maxWidth.isFinite ? constraints.maxWidth : 200.0;
+              return Stack(
+                children: [
+                  Container(
+                    height: 20,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      color: colorScheme.surface.withOpacity(0.7),
+                    ),
+                  ),
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 900),
+                    curve: Curves.easeOutCubic,
+                    width: (w) * capped,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      gradient: LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: [
+                          accentProfile2,
+                          accentProfile1,
+                          accentProfile2,
+                        ],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: accentProfile2.withOpacity(0.5),
+                          blurRadius: 16,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (capped > 0.05)
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 900),
+                      curve: Curves.easeOutCubic,
+                      width: (w) * capped,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(14),
+                        gradient: LinearGradient(
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                          colors: [
+                            Colors.white.withOpacity(0.0),
+                            Colors.white.withOpacity(0.2),
+                            Colors.white.withOpacity(0.0),
+                          ],
+                          stops: const [0.0, 0.5, 1.0],
+                        ),
+                      ),
+                    ).animate(onPlay: (controller) => controller.repeat())
+                        .shimmer(duration: 2000.ms, delay: 500.ms),
+                ],
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _CountPill extends StatelessWidget {
   final String label;
   final int value;
@@ -560,7 +690,7 @@ class _CountPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
-      width: double.infinity, // Tam genişlik
+      width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
@@ -592,7 +722,7 @@ class _FollowButton extends ConsumerStatefulWidget {
 }
 
 class _FollowButtonState extends ConsumerState<_FollowButton> {
-  bool? _optimistic; // null: stream belirleyici, true/false: anlık gösterim
+  bool? _optimistic;
   bool _busy = false;
 
   @override
@@ -662,7 +792,6 @@ class _FollowButtonState extends ConsumerState<_FollowButton> {
   }
 }
 
-// Aşağıdaki bileşenler eski dosyadan alınmış uyumlu kopyalardır
 class _AvatarHalo extends StatelessWidget {
   final String displayName; final String? avatarStyle; final String? avatarSeed; final Color rankColor;
   const _AvatarHalo({required this.displayName, required this.avatarStyle, required this.avatarSeed, required this.rankColor});
@@ -704,9 +833,11 @@ class _AvatarHalo extends StatelessWidget {
                     ? SvgPicture.network(
                   "https://api.dicebear.com/9.x/$avatarStyle/svg?seed=$avatarSeed",
                   fit: BoxFit.cover,
+                  placeholderBuilder: (BuildContext context) => Container(
+                      padding: const EdgeInsets.all(30.0),
+                      child: const CircularProgressIndicator()),
                 )
                     : Text(
-                  // @ işaretini atla, username'in ilk harfini al
                   (displayName.isNotEmpty && displayName.startsWith('@')
                       ? displayName.substring(1, displayName.length > 1 ? 2 : 1)
                       : displayName.isNotEmpty ? displayName[0] : 'T').toUpperCase(),
@@ -891,4 +1022,3 @@ class _ModernIconButtonState extends State<_ModernIconButton> {
     );
   }
 }
-
