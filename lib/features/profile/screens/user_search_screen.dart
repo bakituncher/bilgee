@@ -78,49 +78,60 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
               // Arama çubuğu
               Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
+                child: TextField(
+                  controller: _searchController,
+                  focusNode: _searchFocus,
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 16),
+                  decoration: InputDecoration(
+                    hintText: 'Kullanıcı adı ile ara...',
+                    hintStyle: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                     ),
-                  ),
-                  child: TextField(
-                    controller: _searchController,
-                    focusNode: _searchFocus,
-                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 16),
-                    decoration: InputDecoration(
-                      hintText: 'Kullanıcı adı ile ara...',
-                      hintStyle: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                      ),
-                      prefixIcon: Icon(
-                        Icons.alternate_email,
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                      ),
-                      suffixIcon: searchQuery.isNotEmpty
-                          ? IconButton(
-                              icon: Icon(
-                                Icons.clear,
-                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                              ),
-                              onPressed: () {
-                                _searchController.clear();
-                                ref.read(userSearchQueryProvider.notifier).state = '';
-                              },
-                            )
-                          : null,
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 16,
+                    prefixIcon: Icon(
+                      Icons.alternate_email,
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    ),
+                    suffixIcon: searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: Icon(
+                              Icons.clear,
+                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                            ),
+                            onPressed: () {
+                              _searchController.clear();
+                              ref.read(userSearchQueryProvider.notifier).state = '';
+                            },
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
                       ),
                     ),
-                    onChanged: (query) {
-                      ref.read(userSearchQueryProvider.notifier).state = query;
-                    },
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                        width: 2,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
                   ),
+                  onChanged: (query) {
+                    ref.read(userSearchQueryProvider.notifier).state = query;
+                  },
                 ),
               ),
 
