@@ -32,7 +32,16 @@ class SolverMessage {
 }
 
 class QuestionSolverScreen extends ConsumerStatefulWidget {
-  const QuestionSolverScreen({super.key});
+  final XFile? preselectedImage;
+  final String? existingSolutionId; // Güncelleme için mevcut çözüm ID'si
+  final String? existingSolutionText; // Mevcut çözüm metni (varsa direkt göster)
+
+  const QuestionSolverScreen({
+    super.key,
+    this.preselectedImage,
+    this.existingSolutionId,
+    this.existingSolutionText,
+  });
 
   @override
   ConsumerState<QuestionSolverScreen> createState() => _QuestionSolverScreenState();
@@ -63,12 +72,22 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
 
   bool _isAnalyzing = false; // Yapay zeka analiz durumu
   bool _isCropping = false;  // Kırpma işlemi işleniyor durumu
-  bool _isProcessingImage = false; // Fotoğraf ilk işlenirken (Loader için)
   bool _isChatLoading = false; // Sohbet cevap bekliyor mu?
   bool _isSaved = false; // YENİ: Çözüm kaydedildi mi?
   String? _error;
 
   final ImagePicker _picker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+    // Eğer dışarıdan bir görsel gelirse otomatik olarak işleme başla
+    if (widget.preselectedImage != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _processPreselectedImage();
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -81,7 +100,96 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
 
   // --- Temel Fonksiyonlar ---
 
+  // Önceden seçilmiş görseli işleme
+  Future<void> _processPreselectedImage() async {
+    if (widget.preselectedImage == null) return;
+
+    try {
+      // Görseli sıkıştır
+      final Uint8List? compressedBytes = await FlutterImageCompress.compressWithFile(
+        widget.preselectedImage!.path,
+        minWidth: 1080,
+        minHeight: 1080,
+        quality: 85,
+        format: CompressFormat.jpeg,
+      );
+
+      if (compressedBytes != null) {
+        // Geçici dosyaya kaydet
+        final tempDir = await getTemporaryDirectory();
+        final fileName = 'q_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        final file = File('${tempDir.path}/$fileName');
+        await file.writeAsBytes(compressedBytes);
+
+        setState(() {
+          _finalImageFile = XFile(file.path);
+        });
+
+        // ÖNEMLI: Eğer mevcut çözüm varsa, AI'ya tekrar göndermeden direkt göster
+        if (widget.existingSolutionText != null && widget.existingSolutionText!.trim().isNotEmpty) {
+          setState(() {
+            _initialSolution = widget.existingSolutionText;
+            _isAnalyzing = false;
+            // SavedSolutionDetail'den geliyorsa direkt sohbet modunu aktifleştir
+            _isChatMode = true;
+
+            // Mevcut çözümü parse et: Eğer sohbet formatındaysa (--- ile ayrılmışsa) parse et
+            if (widget.existingSolutionText!.contains('\n---\n')) {
+              // Sohbet geçmişi formatında kaydedilmiş
+              final parts = widget.existingSolutionText!.split('\n---\n');
+              for (final part in parts) {
+                if (part.trim().isEmpty) continue;
+
+                // "Soru: " veya "Çözüm: " prefixini kontrol et ve kaldır
+                if (part.startsWith('Soru: ')) {
+                  _messages.add(SolverMessage(part.substring(6), isUser: true));
+                } else if (part.startsWith('Çözüm: ')) {
+                  _messages.add(SolverMessage(part.substring(7), isUser: false));
+                } else {
+                  // Prefix yoksa, asistan mesajı olarak ekle
+                  _messages.add(SolverMessage(part, isUser: false));
+                }
+              }
+            } else {
+              // Tek bir çözüm metni, direkt ekle (prefix olmadan)
+              _messages.add(SolverMessage(_initialSolution!, isUser: false));
+            }
+          });
+
+          // Scroll to bottom için kısa bir gecikme
+          Future.delayed(const Duration(milliseconds: 100), () {
+            if (_scrollController.hasClients) {
+              _scrollController.animateTo(
+                _scrollController.position.maxScrollExtent,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOut,
+              );
+            }
+          });
+        } else {
+          // Yeni çözüm gerekiyor, AI'ya gönder
+          _solveQuestion();
+        }
+      } else {
+        setState(() {
+          _error = 'Görsel işlenemedi';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _error = 'Görsel yüklenirken hata oluştu: $e';
+      });
+    }
+  }
+
   void _handleBack() {
+    // Eğer preselectedImage ile gelindiyse (SavedSolutionDetail gibi), direkt geri dön
+    if (widget.preselectedImage != null) {
+      Navigator.pop(context);
+      return;
+    }
+
+    // Normal akış: Crop/resim yüklendiyse önce sıfırla
     if (_rawImageBytes != null || _finalImageFile != null) {
       setState(() {
         _rawImageBytes = null;
@@ -97,6 +205,8 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
       });
       return;
     }
+
+    // Hiçbir şey yoksa ana sayfaya git
     if (context.canPop()) context.pop();
     else context.go('/ai-hub');
   }
@@ -138,10 +248,6 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
       final XFile? image = await _picker.pickImage(source: source);
 
       if (image != null) {
-        setState(() {
-          _isProcessingImage = true; // Yükleniyor göster
-        });
-
         // OPTİMİZASYON: Resmi ham haliyle okumak yerine sıkıştırarak okuyoruz.
         // Bu işlem 10MB'lık fotoyu ~300KB'a düşürür, crop ekranı uçak gibi açılır.
         final Uint8List? compressedBytes = await FlutterImageCompress.compressWithFile(
@@ -160,7 +266,6 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
             _messages.clear();
             _isChatMode = false;
             _error = null;
-            _isProcessingImage = false;
             _isSaved = false; // Sıfırla
           });
         } else {
@@ -171,15 +276,13 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
             _initialSolution = null;
             _messages.clear();
             _isChatMode = false;
-            _isProcessingImage = false;
             _isSaved = false; // Sıfırla
           });
         }
       }
     } catch (e) {
       setState(() {
-        _error = 'Görsel yüklenirken hata oluştu: $e';
-        _isProcessingImage = false;
+        _error = 'Görsel y��klenirken hata oluştu: $e';
       });
     }
   }
@@ -344,6 +447,43 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
 
     if (_finalImageFile == null || contentToSave == null) return;
 
+    // GÜNCELLEME MODU: Eğer existingSolutionId varsa, mevcut kaydı güncelle
+    if (widget.existingSolutionId != null) {
+      try {
+        final allSolutions = ref.read(savedSolutionsProvider);
+        final existingSolution = allSolutions.firstWhere(
+          (s) => s.id == widget.existingSolutionId,
+          orElse: () => throw Exception('Kayıt bulunamadı'),
+        );
+
+        await ref.read(savedSolutionsProvider.notifier).updateSolution(
+          existingSolution,
+          contentToSave,
+        );
+
+        if (mounted) {
+          setState(() {
+            _isSaved = true;
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✅ Çözüm güncellendi!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Güncelleme hatası: $e'), backgroundColor: Colors.red),
+          );
+        }
+      }
+      return;
+    }
+
+    // YENİ KAYIT MODU: Normal kaydetme işlemi
     // Kullanıcının derslerini al
     final availableSubjects = await _getUserSubjects();
 
@@ -626,28 +766,19 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // DURUM 0: Fotoğraf seçildi, işleniyor (Kırpma ekranına geçiş ara yüzü)
-    if (_isProcessingImage) {
-      return Scaffold(
-        backgroundColor: Colors.black,
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const CircularProgressIndicator(color: Colors.white),
-              const SizedBox(height: 16),
-              Text(
-                "Fotoğraf Hazırlanıyor...",
-                style: TextStyle(color: Colors.white.withOpacity(0.8)),
-              )
-            ],
-          ),
-        ),
-      );
-    }
 
     // DURUM 1: Henüz fotoğraf seçilmediyse veya sonuç ekranındaysak
     if (_rawImageBytes == null) {
+      // Eğer preselectedImage ile gelindiyse ve henüz işleniyorsa, boş siyah ekran göster
+      if (widget.preselectedImage != null && _finalImageFile == null && _initialSolution == null) {
+        return const Scaffold(
+          backgroundColor: Colors.black,
+          body: Center(
+            child: CircularProgressIndicator(color: Colors.white),
+          ),
+        );
+      }
+
       return Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
@@ -666,25 +797,34 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
             if (_initialSolution != null)
               IconButton(
                 icon: Icon(
-                  _isSaved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
-                  color: _isSaved ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+                  // Eğer existingSolutionId varsa (güncelleme modu), her zaman "güncelle" ikonu göster
+                  widget.existingSolutionId != null
+                      ? Icons.sync_rounded
+                      : (_isSaved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded),
+                  color: widget.existingSolutionId != null
+                      ? theme.colorScheme.primary
+                      : (_isSaved ? theme.colorScheme.primary : theme.colorScheme.onSurface),
                 ),
-                tooltip: _isSaved ? 'Kaydedildi' : 'Kaydet',
-                onPressed: _isSaved
-                    ? () {
-                  ScaffoldMessenger.of(context).clearSnackBars();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('Bu soru zaten kütüphanene eklendi 🐰'),
-                      backgroundColor: theme.colorScheme.primary,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  );
-                }
-                    : _saveSolutionLocally,
+                tooltip: widget.existingSolutionId != null
+                    ? 'Güncelle'
+                    : (_isSaved ? 'Kaydedildi' : 'Kaydet'),
+                onPressed: widget.existingSolutionId != null
+                    ? _saveSolutionLocally // Güncelleme modu - her zaman kaydetmeye izin ver
+                    : (_isSaved
+                        ? () {
+                            ScaffoldMessenger.of(context).clearSnackBars();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Text('Bu soru zaten kütüphanene eklendi 🐰'),
+                                backgroundColor: theme.colorScheme.primary,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            );
+                          }
+                        : _saveSolutionLocally),
               )
             else
               IconButton(
