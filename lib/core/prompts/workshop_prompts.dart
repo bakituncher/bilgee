@@ -85,11 +85,20 @@ $languageControl
 $examGuidelines
 """;
 
-  // KRİTİK FAKTÖRİYEL DOĞRULUK UYARISI
+  // KRİTİK FAKTÖRİYEL DOĞRULUK UYARISI + GÖRSEL İÇERİK YASAĞI
   const factualAccuracyWarning = """
 ⛔ MUTLAK ZORUNLULUK: %100 DOĞRULUK.
 HATA YAPMA. TEK YANLIŞ BİLGİ = SİLİNME.
 TARA. DOĞRULA. RİSKE ATMA.
+
+🚫 GRAFİK/GÖRSEL İÇERİK YASAĞI:
+- "Aşağıdaki grafik/şekil/tablo/çizim" gibi referanslar YASAK
+- "Yukarıdaki grafik" veya benzeri ifadeler YASAK
+- Görsel olmayan metin tabanlı sorular oluştur
+- Grafik gerekiyorsa SADECE sözel/matematiksel açıklama yap
+- Örnek YANLIŞ: "Aşağıdaki grafikte görüldüğü gibi..."
+- Örnek DOĞRU: "f(x) = 2x + 3 fonksiyonu için..."
+⚠️ BU YASAK HALLÜSİNASYON = GÖREV İPTAL
 """;
 
   return """
