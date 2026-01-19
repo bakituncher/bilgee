@@ -1396,7 +1396,7 @@ class _SummaryViewState extends ConsumerState<_SummaryView> {
                                 .textTheme
                                 .titleMedium
                                 ?.copyWith(color: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.bold)),
-                        Text('Bu Cevher sınavında %80+ başarıyla ekstra bir yükseliş yakaladın.',
+                        Text('Bu testte %80+ başarıyla ekstra bir yükseliş yakaladın.',
                             style: Theme.of(context)
                                 .textTheme
                                 .bodySmall
@@ -1454,7 +1454,7 @@ class _SummaryViewState extends ConsumerState<_SummaryView> {
                 });
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                      content: const Text("Cevher başarıyla kasana eklendi!"),
+                      content: const Text("Test başarıyla eklendi!"),
                       backgroundColor: Theme.of(context).colorScheme.secondary),
                 );
               }
@@ -1557,7 +1557,7 @@ class _ErrorView extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            "Cevher işlenirken beklenmedik bir sorunla karşılaşıldı. Lütfen tekrar dene.\n\nHata: $error",
+            "Beklenmedik bir sorunla karşılaşıldı. Lütfen tekrar dene.\n\nHata: $error",
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: colorScheme.onSurfaceVariant),
             textAlign: TextAlign.center,
           ),
@@ -1872,7 +1872,7 @@ class _WSHeader extends StatelessWidget {
           // Sadece onSaved null değilse butonu göster
           if (onSaved != null)
             IconButton(
-              tooltip: 'Cevher Kasası',
+              tooltip: 'Etüt Geçmişi',
               onPressed: onSaved,
               icon: Icon(Icons.inventory_2_outlined, color: Theme.of(context).colorScheme.onSurface),
               style: IconButton.styleFrom(
