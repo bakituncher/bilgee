@@ -101,7 +101,7 @@ class _SavedWorkshopDetailScreenState extends State<SavedWorkshopDetailScreen>
                     ),
                     Tab(
                       icon: Icon(Icons.quiz_rounded, size: 20),
-                      text: "Ustalık Sınavı",
+                      text: "Test",
                       height: 44,
                     ),
                   ],

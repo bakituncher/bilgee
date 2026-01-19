@@ -1194,7 +1194,7 @@ class _StudyView extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
             child: ElevatedButton.icon(
               icon: const Icon(Icons.quiz_rounded, size: 20),
-              label: const Text("Ustalık Sınavına Başla"),
+              label: const Text("Teste Başla"),
               onPressed: onStartQuiz,
             ),
           ),
@@ -1410,7 +1410,7 @@ class _SummaryViewState extends ConsumerState<_SummaryView> {
             const SizedBox(height: 20),
           ],
           Text(
-            "Ustalık Sınavı Tamamlandı!",
+            "Test Tamamlandı!",
             style: Theme.of(context).textTheme.headlineMedium,
             textAlign: TextAlign.center,
           ),
