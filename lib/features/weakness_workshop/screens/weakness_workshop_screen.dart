@@ -803,100 +803,169 @@ class _ContentSelectionView extends StatelessWidget {
   Widget build(BuildContext context) {
     final topicName = topic['topic'] ?? 'Konu';
     final subjectName = topic['subject'] ?? 'Ders';
+    final colorScheme = Theme.of(context).colorScheme;
 
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      children: [
-        // Başlık
-        Text(
-          "Ne Oluşturmak İstersin?",
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-          ),
-        ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.2),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            colorScheme.surface,
+            colorScheme.surfaceContainerHighest.withOpacity(0.3),
+          ],
+        ),
+      ),
+      child: SafeArea(
+        child: Column(
+          children: [
+            // Başlık bölümü
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+              child: Column(
+                children: [
+                  Text(
+                    "Nasıl Çalışmak İstersin?",
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 24,
+                      letterSpacing: -0.5,
+                    ),
+                    textAlign: TextAlign.center,
+                  ).animate().fadeIn(delay: 100.ms).slideY(begin: -0.2),
 
-        const SizedBox(height: 8),
+                  const SizedBox(height: 12),
 
-        // Seçilen konu bilgisi (kompakt)
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.25),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                  // Seçilen konu bilgisi (şık card)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          colorScheme.primary.withOpacity(0.15),
+                          colorScheme.secondary.withOpacity(0.1),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: colorScheme.primary.withOpacity(0.3),
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: colorScheme.primary.withOpacity(0.1),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: colorScheme.primary.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.auto_awesome_rounded,
+                            color: colorScheme.primary,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Flexible(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                subjectName,
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              Text(
+                                topicName,
+                                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.primary,
+                                  fontSize: 15,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ).animate().fadeIn(delay: 200.ms).scale(begin: const Offset(0.95, 0.95)),
+                ],
+              ),
             ),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.topic_rounded,
-                color: Theme.of(context).colorScheme.primary,
-                size: 18,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      subjectName,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontSize: 11,
-                      ),
+
+            const SizedBox(height: 24),
+
+            // Seçenekler (şık kartlar)
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                children: [
+                  _ContentTypeCard(
+                    icon: Icons.quiz_rounded,
+                    emoji: '🎯',
+                    title: 'Sadece Sınav',
+                    description: 'Direkt pratik yap, 5 soru ile başla',
+                    color: const Color(0xFFFF6B35),
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFF6B35), Color(0xFFFF8C42)],
                     ),
-                    Text(
-                      topicName,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.primary,
-                        fontSize: 14,
-                      ),
+                    onTap: () => onContentTypeSelected('quizOnly'),
+                  ).animate().fadeIn(delay: 300.ms).slideX(begin: 0.3),
+
+                  const SizedBox(height: 14),
+
+                  _ContentTypeCard(
+                    icon: Icons.school_rounded,
+                    emoji: '📚',
+                    title: 'Sadece Konu Anlatımı',
+                    description: 'Önce öğren, detaylı açıklamalar al',
+                    color: const Color(0xFF4ECDC4),
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF4ECDC4), Color(0xFF44A5A0)],
                     ),
-                  ],
-                ),
+                    onTap: () => onContentTypeSelected('studyOnly'),
+                  ).animate().fadeIn(delay: 400.ms).slideX(begin: 0.3),
+
+                  const SizedBox(height: 14),
+
+                  _ContentTypeCard(
+                    icon: Icons.auto_awesome_rounded,
+                    emoji: '⚡',
+                    title: 'Konu + Sınav',
+                    description: 'Tam paket: Öğren ve test et kendini',
+                    color: const Color(0xFF9B5DE5),
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF9B5DE5), Color(0xFFB388FF)],
+                    ),
+                    isRecommended: true,
+                    onTap: () => onContentTypeSelected('both'),
+                  ).animate()
+                    .fadeIn(delay: 500.ms)
+                    .slideX(begin: 0.3)
+                    .then()
+                    .shimmer(duration: 1500.ms, color: Colors.white.withOpacity(0.3)),
+
+                  const SizedBox(height: 20),
+                ],
               ),
-            ],
-          ),
-        ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1),
-
-        const SizedBox(height: 20),
-
-        // Seçenekler (kompakt kartlar)
-        _ContentTypeCard(
-          icon: Icons.quiz_rounded,
-          emoji: '🎯',
-          title: 'Sadece Soru Oluştur',
-          description: 'Konu hakkında 5 adet test sorusu.',
-          color: Colors.orange,
-          onTap: () => onContentTypeSelected('quizOnly'),
-        ).animate().fadeIn(delay: 300.ms).slideX(begin: 0.2),
-
-        const SizedBox(height: 12),
-
-        _ContentTypeCard(
-          icon: Icons.school_rounded,
-          emoji: '📚',
-          title: 'Sadece Konu Anlatımı',
-          description: 'Detaylı konu özeti ve stratejiler.',
-          color: Colors.blue,
-          onTap: () => onContentTypeSelected('studyOnly'),
-        ).animate().fadeIn(delay: 400.ms).slideX(begin: 0.2),
-
-        const SizedBox(height: 12),
-
-        _ContentTypeCard(
-          icon: Icons.auto_awesome_rounded,
-          emoji: '🚀',
-          title: 'Her İkisini de Oluştur',
-          description: 'Hem konu hem de test soruları.',
-          color: Colors.purple,
-          isRecommended: true,
-          onTap: () => onContentTypeSelected('both'),
-        ).animate().fadeIn(delay: 500.ms).slideX(begin: 0.2).scale(delay: 550.ms, duration: 200.ms),
-      ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -907,6 +976,7 @@ class _ContentTypeCard extends StatelessWidget {
   final String title;
   final String description;
   final Color color;
+  final Gradient? gradient;
   final bool isRecommended;
   final VoidCallback onTap;
 
@@ -917,95 +987,150 @@ class _ContentTypeCard extends StatelessWidget {
     required this.title,
     required this.description,
     required this.color,
+    this.gradient,
     this.isRecommended = false,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: isRecommended ? 3 : 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: isRecommended
-            ? BorderSide(
-                color: color.withOpacity(0.5),
-                width: 2,
-              )
-            : BorderSide.none,
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: gradient ?? LinearGradient(
+          colors: [color, color.withOpacity(0.8)],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.4),
+            blurRadius: isRecommended ? 16 : 12,
+            offset: Offset(0, isRecommended ? 6 : 4),
+          ),
+        ],
       ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Padding(
-          padding: const EdgeInsets.all(14.0),
-          child: Row(
-            children: [
-              // Emoji Container
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(10),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              border: isRecommended
+                  ? Border.all(
+                      color: Colors.white.withOpacity(0.3),
+                      width: 2,
+                    )
+                  : null,
+            ),
+            child: Row(
+              children: [
+                // Emoji Container (Premium)
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.25),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.3),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      emoji,
+                      style: const TextStyle(fontSize: 28),
+                    ),
+                  ),
                 ),
-                child: Text(
-                  emoji,
-                  style: const TextStyle(fontSize: 24),
-                ),
-              ),
-              const SizedBox(width: 12),
+                const SizedBox(width: 16),
 
-              // Title & Description
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (isRecommended)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        margin: const EdgeInsets.only(bottom: 4),
-                        decoration: BoxDecoration(
-                          color: color.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        child: Text(
-                          '✨ ÖNERİLEN',
-                          style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
-                            color: color,
-                            letterSpacing: 0.5,
+                // Content
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              title,
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                fontSize: 16,
+                                letterSpacing: -0.3,
+                              ),
+                            ),
                           ),
+                          if (isRecommended)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.25),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.4),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.star_rounded,
+                                    color: Colors.white,
+                                    size: 14,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'ÖNERİLEN',
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                      letterSpacing: 0.8,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        description,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.white.withOpacity(0.9),
+                          fontSize: 13,
+                          height: 1.3,
                         ),
                       ),
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: color,
-                        fontSize: 15,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      description,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontSize: 12,
-                        height: 1.3,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
 
-              // Arrow Icon
-              Icon(
-                Icons.arrow_forward_ios_rounded,
-                color: color.withOpacity(0.7),
-                size: 16,
-              ),
-            ],
+                const SizedBox(width: 12),
+
+                // Arrow Icon
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.arrow_forward_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -1267,7 +1392,7 @@ class _QuizViewState extends State<_QuizView> {
   }
 }
 
-class _QuestionCard extends StatelessWidget {
+class _QuestionCard extends StatefulWidget {
   final QuizQuestion question;
   final int questionNumber;
   final int totalQuestions;
@@ -1285,8 +1410,54 @@ class _QuestionCard extends StatelessWidget {
   });
 
   @override
+  State<_QuestionCard> createState() => _QuestionCardState();
+}
+
+class _QuestionCardState extends State<_QuestionCard> {
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _explanationKey = GlobalKey();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(_QuestionCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // Eğer cevap yeni işaretlendiyse ve yanlışsa, açıklamaya scroll yap
+    if (oldWidget.selectedOptionIndex == null &&
+        widget.selectedOptionIndex != null &&
+        widget.selectedOptionIndex != widget.question.correctOptionIndex) {
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToExplanation();
+      });
+    }
+  }
+
+  void _scrollToExplanation() {
+    if (_explanationKey.currentContext != null) {
+      final RenderBox? renderBox = _explanationKey.currentContext!.findRenderObject() as RenderBox?;
+      if (renderBox != null) {
+        final position = renderBox.localToGlobal(Offset.zero);
+        final scrollOffset = _scrollController.offset + position.dy - 100; // 100px üstten boşluk
+
+        _scrollController.animateTo(
+          scrollOffset.clamp(0.0, _scrollController.position.maxScrollExtent),
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeOutCubic,
+        );
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
+      controller: _scrollController,
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1307,7 +1478,7 @@ class _QuestionCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(7),
                   ),
                   child: Text(
-                    "$questionNumber/$totalQuestions",
+                    "${widget.questionNumber}/${widget.totalQuestions}",
                     style: Theme.of(context).textTheme.labelMedium?.copyWith(
                       color: Theme.of(context).colorScheme.primary,
                       fontWeight: FontWeight.bold,
@@ -1317,7 +1488,7 @@ class _QuestionCard extends StatelessWidget {
                 ),
                 const Spacer(),
                 IconButton(
-                  onPressed: onReportIssue,
+                  onPressed: widget.onReportIssue,
                   icon: const Icon(Icons.flag_outlined, size: 18),
                   tooltip: 'Sorunu Bildir',
                   visualDensity: VisualDensity.compact,
@@ -1341,7 +1512,7 @@ class _QuestionCard extends StatelessWidget {
               ),
             ),
             child: MarkdownWithMath(
-              data: question.question,
+              data: widget.question.question,
               styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
                 p: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontSize: 16,
@@ -1353,16 +1524,16 @@ class _QuestionCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          ...List.generate(question.options.length, (index) {
-            bool isSelected = selectedOptionIndex == index;
-            bool isCorrect = question.correctOptionIndex == index;
+          ...List.generate(widget.question.options.length, (index) {
+            bool isSelected = widget.selectedOptionIndex == index;
+            bool isCorrect = widget.question.correctOptionIndex == index;
             Color? tileColor;
             Color? borderColor;
             IconData? trailingIcon;
 
             final colorScheme = Theme.of(context).colorScheme;
 
-            if (selectedOptionIndex != null) {
+            if (widget.selectedOptionIndex != null) {
               if (isSelected) {
                 tileColor = isCorrect ? colorScheme.secondary.withOpacity(0.2) : colorScheme.error.withOpacity(0.2);
                 borderColor = isCorrect ? colorScheme.secondary : colorScheme.error;
@@ -1385,7 +1556,7 @@ class _QuestionCard extends StatelessWidget {
                 ),
               ),
               child: InkWell(
-                onTap: selectedOptionIndex == null ? () => onOptionSelected(index) : null,
+                onTap: widget.selectedOptionIndex == null ? () => widget.onOptionSelected(index) : null,
                 borderRadius: BorderRadius.circular(12),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
@@ -1413,7 +1584,7 @@ class _QuestionCard extends StatelessWidget {
                       const SizedBox(width: 10),
                       Expanded(
                         child: MarkdownWithMath(
-                          data: question.options[index],
+                          data: widget.question.options[index],
                           styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
                             p: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               fontSize: 14,
@@ -1432,9 +1603,19 @@ class _QuestionCard extends StatelessWidget {
               ),
             );
           }),
-          if (selectedOptionIndex != null && selectedOptionIndex != question.correctOptionIndex)
-            _ExplanationCard(explanation: question.explanation)
-                .animate().fadeIn(delay: 200.ms).slideY(begin: 0.2),
+
+          // Açıklama kartı (yanlış cevap için)
+          if (widget.selectedOptionIndex != null && widget.selectedOptionIndex != widget.question.correctOptionIndex)
+            Container(
+              key: _explanationKey, // Global key ile takip ediyoruz
+              child: _ExplanationCard(explanation: widget.question.explanation)
+                  .animate()
+                  .fadeIn(delay: 150.ms, duration: 400.ms)
+                  .slideY(begin: 0.15, duration: 400.ms)
+                  .then()
+                  .shimmer(delay: 200.ms, duration: 1200.ms, color: Theme.of(context).colorScheme.secondary.withOpacity(0.3))
+                  .shake(delay: 300.ms, hz: 2, duration: 400.ms),
+            ),
         ],
       ),
     );
@@ -1449,52 +1630,140 @@ class _ExplanationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
-      margin: const EdgeInsets.only(top: 14),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colorScheme.secondaryContainer.withOpacity(0.4),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: colorScheme.secondary.withOpacity(0.3),
-          width: 1.5,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            colorScheme.secondary.withOpacity(0.15),
+            colorScheme.secondary.withOpacity(0.08),
+          ],
         ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: colorScheme.secondary.withOpacity(0.4),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.secondary.withOpacity(0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(7),
-            decoration: BoxDecoration(
-              color: colorScheme.secondary.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(9),
-            ),
-            child: Icon(Icons.lightbulb_rounded, color: colorScheme.secondary, size: 20),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Usta'nın Açıklaması",
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: colorScheme.secondary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
+          // Başlık satırı
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      colorScheme.secondary,
+                      colorScheme.secondary.withOpacity(0.8),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 5),
-                MarkdownWithMath(
-                  data: explanation,
-                  styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
-                    p: TextStyle(
-                      color: colorScheme.onSurface,
-                      height: 1.4,
-                      fontSize: 13,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colorScheme.secondary.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+                child: Icon(
+                  Icons.lightbulb_rounded,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.auto_awesome_rounded,
+                          color: colorScheme.secondary,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          "Usta'nın Açıklaması",
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: colorScheme.secondary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Text(
+                      "Doğru cevabın detayları",
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 14),
+
+          // Ayırıcı çizgi
+          Container(
+            height: 2,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  colorScheme.secondary.withOpacity(0.5),
+                  colorScheme.secondary.withOpacity(0.1),
+                  colorScheme.secondary.withOpacity(0.5),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(1),
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          // Açıklama metni
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: colorScheme.surface.withOpacity(0.7),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                width: 1,
+              ),
+            ),
+            child: MarkdownWithMath(
+              data: explanation,
+              styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                p: TextStyle(
+                  color: colorScheme.onSurface,
+                  height: 1.5,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+                strong: TextStyle(
+                  color: colorScheme.secondary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ),
         ],
