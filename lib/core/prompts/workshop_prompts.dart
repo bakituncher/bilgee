@@ -69,8 +69,8 @@ Sorular zorlayıcı olmalı ama ÖĞRENCİNİN SEVİYESİNE UYGUN.
     examGuidelines = "**GENEL:** Profesyonel, sınav odaklı yaklaşım. Net çözüm ve strateji.";
   }
 
-  // Tüm Cevher Atölyesi için 5 şık zorunluluğu (A-E)
-  const fiveChoiceRule = "✅ ZORUNLU: Her soruda TAM 5 ŞIK (A, B, C, D, E). JSON'da optionA-E alanları. correctOptionIndex 0-4.";
+  // Sınava göre şık sayısı belirleme
+  final choiceRule = _getChoiceRule(selectedExam);
 
   // KISALTILMIŞ KURALLAR + AÇIKLAMA UZUNLUĞU KISITLAMASI + DİL KONTROLÜ
   final languageControl = _getLanguageControl(weakestSubject);
@@ -103,7 +103,7 @@ TARA. DOĞRULA. RİSKE ATMA.
 
   return """
 Taktik Tavşan - Cevher İşleme Kiti oluştur.
-$fiveChoiceRule
+$choiceRule
 $compactRules
 
 $factualAccuracyWarning
@@ -112,7 +112,29 @@ INPUT:
 - Ders: '$weakestSubject' | Konu: '$weakestTopic' 
 - Sınav: $selectedExam | Zorluk: $difficulty $difficultyInstruction
 
-${_getTaskByContentType(contentType, weakestSubject, weakestTopic, fiveChoiceRule)}
+${_getTaskByContentType(contentType, weakestSubject, weakestTopic, selectedExam)}
+""";
+}
+
+// Sınava göre şık sayısı kuralı
+String _getChoiceRule(String? exam) {
+  final examLower = (exam ?? '').toLowerCase();
+
+  if (examLower.contains('lgs')) {
+    return """
+✅ LGS ŞIK KURALI: Her soruda TAM 4 ŞIK (A, B, C, D).
+- JSON'da optionA, optionB, optionC, optionD alanları
+- correctOptionIndex 0-3 aralığında (0=A, 1=B, 2=C, 3=D)
+- E şıkkı YASAK - LGS'de 4 şık vardır
+⚠️ 5 ŞIK OLUŞTURURSAN GÖREV İPTAL!
+""";
+  }
+
+  // Diğer tüm sınavlar için 5 şık
+  return """
+✅ ŞIK KURALI: Her soruda TAM 5 ŞIK (A, B, C, D, E).
+- JSON'da optionA, optionB, optionC, optionD, optionE alanları
+- correctOptionIndex 0-4 aralığında (0=A, 1=B, 2=C, 3=D, 4=E)
 """;
 }
 
@@ -195,12 +217,17 @@ String _getLanguageControl(String subject) {
 """;
 }
 
-String _getTaskByContentType(String contentType, String subject, String topic, String fiveChoiceRule) {
+String _getTaskByContentType(String contentType, String subject, String topic, String? exam) {
+  final examLower = (exam ?? '').toLowerCase();
+  final isLgs = examLower.contains('lgs');
+
+  // LGS için 4 şık, diğerleri için 5 şık
+  final exampleQuestions = isLgs ? _getLgsQuestionExamples() : _getStandardQuestionExamples();
+
   if (contentType == 'quizOnly') {
     return """
 GÖREV: 🎯 SADECE SORU OLUŞTUR
 Kullanıcı sadece sorular istedi. Konu anlatımı YAPMA.
-$fiveChoiceRule
 5 adet kaliteli, zorlayıcı soru hazırla.
 ⚠️ AÇIKLAMA SINIRI: Max 30-35 kelime. Kısa, net, öz.
 
@@ -208,13 +235,7 @@ JSON ÇIKTI:
 {
   "subject": "$subject",
   "topic": "$topic",
-  "quiz": [
-    {"question": "Soru 1", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 0, "explanation": "Kısa açıklama (max 35 kelime)"},
-    {"question": "Soru 2", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 1, "explanation": "Kısa açıklama"},
-    {"question": "Soru 3", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 2, "explanation": "Kısa açıklama"},
-    {"question": "Soru 4", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 3, "explanation": "Kısa açıklama"},
-    {"question": "Soru 5", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 4, "explanation": "Kısa açıklama"}
-  ]
+  "quiz": $exampleQuestions
 }""";
   } else if (contentType == 'studyOnly') {
     return """
@@ -233,7 +254,6 @@ JSON ÇIKTI:
     return """
 GÖREV: 🚀 HEM KONU ANLATIMI HEM SORU OLUŞTUR
 Temel kavramlar, sık hatalar, çözümlü örnek içeren çalışma rehberi + 5 soruluk quiz.
-$fiveChoiceRule
 ⚠️ AÇIKLAMA SINIRI: Max 30-35 kelime. Kısa, net, öz.
 
 JSON ÇIKTI:
@@ -241,13 +261,29 @@ JSON ÇIKTI:
   "subject": "$subject",
   "topic": "$topic",
   "studyGuide": "# $topic - Cevher İşleme Kartı\\n\\n## 💎 Özü\\n...",
-  "quiz": [
+  "quiz": $exampleQuestions
+}""";
+  }
+}
+
+// LGS için 4 şıklı soru örnekleri
+String _getLgsQuestionExamples() {
+  return """[
+    {"question": "Soru 1", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "correctOptionIndex": 0, "explanation": "Kısa açıklama (max 35 kelime)"},
+    {"question": "Soru 2", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "correctOptionIndex": 1, "explanation": "Kısa açıklama"},
+    {"question": "Soru 3", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "correctOptionIndex": 2, "explanation": "Kısa açıklama"},
+    {"question": "Soru 4", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "correctOptionIndex": 3, "explanation": "Kısa açıklama"},
+    {"question": "Soru 5", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "correctOptionIndex": 0, "explanation": "Kısa açıklama"}
+  ]""";
+}
+
+// Standart 5 şıklı soru örnekleri (YKS, KPSS, vb.)
+String _getStandardQuestionExamples() {
+  return """[
     {"question": "Soru 1", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 0, "explanation": "Kısa açıklama (max 35 kelime)"},
     {"question": "Soru 2", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 1, "explanation": "Kısa açıklama"},
     {"question": "Soru 3", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 2, "explanation": "Kısa açıklama"},
     {"question": "Soru 4", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 3, "explanation": "Kısa açıklama"},
     {"question": "Soru 5", "optionA": "A", "optionB": "B", "optionC": "C", "optionD": "D", "optionE": "E", "correctOptionIndex": 4, "explanation": "Kısa açıklama"}
-  ]
-}""";
-  }
+  ]""";
 }
