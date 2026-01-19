@@ -17,6 +17,7 @@ import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/coach/models/saved_solution_model.dart';
 import 'package:taktik/features/coach/providers/saved_solutions_provider.dart';
 import 'package:taktik/features/coach/screens/subject_solutions_screen.dart';
+import 'package:taktik/utils/subject_utils.dart';
 
 class SavedSolutionsScreen extends ConsumerStatefulWidget {
   final bool isSelectionMode; // Ders seçim modu aktif mi?
@@ -320,37 +321,6 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
     return grouped;
   }
 
-  IconData _getSubjectIcon(String subject) {
-    if (subject.contains('Matematik')) return Icons.calculate_rounded;
-    if (subject.contains('Fizik')) return Icons.science_rounded;
-    if (subject.contains('Kimya')) return Icons.biotech_rounded;
-    if (subject.contains('Biyoloji')) return Icons.eco_rounded;
-    if (subject.contains('Türkçe')) return Icons.menu_book_rounded;
-    if (subject.contains('Tarih')) return Icons.history_edu_rounded;
-    if (subject.contains('Coğrafya')) return Icons.public_rounded;
-    if (subject.contains('İngilizce') ||
-        subject.contains('Almanca') ||
-        subject.contains('Fransızca')) {
-      return Icons.translate_rounded;
-    }
-    return Icons.folder_rounded;
-  }
-
-  Color _getSubjectColor(String subject, ColorScheme colorScheme) {
-    if (subject.contains('Matematik')) return Colors.blue;
-    if (subject.contains('Fizik')) return Colors.purple;
-    if (subject.contains('Kimya')) return Colors.green;
-    if (subject.contains('Biyoloji')) return Colors.teal;
-    if (subject.contains('Türkçe')) return Colors.red;
-    if (subject.contains('Tarih')) return Colors.brown;
-    if (subject.contains('Coğrafya')) return Colors.lightBlue;
-    if (subject.contains('İngilizce') ||
-        subject.contains('Almanca') ||
-        subject.contains('Fransızca')) {
-      return Colors.orange;
-    }
-    return colorScheme.primary;
-  }
 
   Future<List<String>> _getUserSubjects() async {
     try {
@@ -830,8 +800,8 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
         bool isSelectionMode = false,
         required VoidCallback onTap,
       }) {
-    final subjectColor = _getSubjectColor(subject, theme.colorScheme);
-    final subjectIcon = _getSubjectIcon(subject);
+    final subjectColor = SubjectUtils.getSubjectColor(subject, colorScheme: theme.colorScheme);
+    final subjectIcon = SubjectUtils.getSubjectIcon(subject);
 
     return Card(
       elevation: 2,

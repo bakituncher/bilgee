@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taktik/features/coach/models/saved_solution_model.dart';
 import 'package:taktik/features/coach/providers/saved_solutions_provider.dart';
 import 'package:taktik/features/coach/screens/saved_solution_detail_screen.dart';
+import 'package:taktik/utils/subject_utils.dart';
 
 class SubjectSolutionsScreen extends ConsumerWidget {
   final String subject;
@@ -33,41 +34,11 @@ class SubjectSolutionsScreen extends ConsumerWidget {
     return '$day $month $year, $hour:$minute';
   }
 
-  // Ders ikonunu getir
-  IconData _getSubjectIcon(String subject) {
-    if (subject.contains('Matematik')) return Icons.calculate_rounded;
-    if (subject.contains('Fizik')) return Icons.science_rounded;
-    if (subject.contains('Kimya')) return Icons.biotech_rounded;
-    if (subject.contains('Biyoloji')) return Icons.eco_rounded;
-    if (subject.contains('Türkçe')) return Icons.menu_book_rounded;
-    if (subject.contains('Tarih')) return Icons.history_edu_rounded;
-    if (subject.contains('Coğrafya')) return Icons.public_rounded;
-    if (subject.contains('İngilizce') || subject.contains('Almanca') || subject.contains('Fransızca')) {
-      return Icons.translate_rounded;
-    }
-    return Icons.folder_rounded;
-  }
-
-  // Ders rengi getir
-  Color _getSubjectColor(String subject) {
-    if (subject.contains('Matematik')) return Colors.blue;
-    if (subject.contains('Fizik')) return Colors.purple;
-    if (subject.contains('Kimya')) return Colors.green;
-    if (subject.contains('Biyoloji')) return Colors.teal;
-    if (subject.contains('Türkçe')) return Colors.red;
-    if (subject.contains('Tarih')) return Colors.brown;
-    if (subject.contains('Coğrafya')) return Colors.lightBlue;
-    if (subject.contains('İngilizce') || subject.contains('Almanca') || subject.contains('Fransızca')) {
-      return Colors.orange;
-    }
-    return Colors.indigo;
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final subjectColor = _getSubjectColor(subject);
-    final subjectIcon = _getSubjectIcon(subject);
+    final subjectColor = SubjectUtils.getSubjectColor(subject, colorScheme: theme.colorScheme);
+    final subjectIcon = SubjectUtils.getSubjectIcon(subject);
 
     // Provider'dan tüm solutions'ı al ve subject'e göre filtrele
     final allSolutions = ref.watch(savedSolutionsProvider);

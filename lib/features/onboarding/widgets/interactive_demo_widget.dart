@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:taktik/utils/subject_utils.dart';
 
 class InteractiveDemoWidget extends StatefulWidget {
   final VoidCallback onContinue;
@@ -157,7 +158,7 @@ class _InteractiveDemoWidgetState extends State<InteractiveDemoWidget>
                         end: Alignment.bottomRight,
                         colors: [
                           theme.colorScheme.surface,
-                          _getSubjectColor(question.subject).withOpacity(0.1),
+                          SubjectUtils.getSubjectColor(question.subject).withOpacity(0.1),
                         ],
                       ),
                     ),
@@ -168,7 +169,7 @@ class _InteractiveDemoWidgetState extends State<InteractiveDemoWidget>
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: _getSubjectColor(question.subject),
+                            color: SubjectUtils.getSubjectColor(question.subject),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
@@ -406,19 +407,6 @@ class _InteractiveDemoWidgetState extends State<InteractiveDemoWidget>
     .animate(delay: Duration(milliseconds: 400 + (index * 100)))
     .fadeIn(duration: 600.ms)
     .slideX(begin: 0.3, end: 0);
-  }
-
-  Color _getSubjectColor(String subject) {
-    switch (subject) {
-      case 'Matematik':
-        return Colors.blue;
-      case 'Tarih':
-        return Colors.orange;
-      case 'Fizik':
-        return Colors.purple;
-      default:
-        return Colors.grey;
-    }
   }
 }
 

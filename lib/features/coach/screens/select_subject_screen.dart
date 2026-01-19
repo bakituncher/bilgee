@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/core/utils/exam_utils.dart';
+import 'package:taktik/utils/subject_utils.dart';
 
 class SelectSubjectScreen extends ConsumerWidget {
   const SelectSubjectScreen({super.key});
@@ -499,9 +500,9 @@ class _SubjectCardState extends State<_SubjectCard> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    // Tüm dersler için tek tip renk ve ikon
-    final subjectColor = const Color(0xFF22D3EE); // Cyan
-    final subjectIcon = Icons.school_rounded;
+    // SubjectUtils'den dinamik renk ve ikon çekiliyor
+    final subjectColor = SubjectUtils.getSubjectColor(widget.subject, colorScheme: cs);
+    final subjectIcon = SubjectUtils.getSubjectIcon(widget.subject);
 
     final scale = _isHovered ? 1.01 : 1.0;
 
