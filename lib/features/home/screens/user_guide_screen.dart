@@ -172,7 +172,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
                     Tab(text: '🚀 Başlangıç'),
                     Tab(text: '📅 Plan'),
                     Tab(text: '📚 Arşiv'),
-                    Tab(text: '💎 Cevher'),
+                    Tab(text: '💎 Etüt'),
                     Tab(text: '🎮 Arena'),
                     Tab(text: '📊 İstatistik'),
                   ],
@@ -743,7 +743,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
               Icon(Icons.diamond_rounded, color: Colors.amber, size: 36),
               SizedBox(height: 8),
               Text(
-                'Cevher Atölyesi',
+                'Etüt Odası',
                 style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900),
               ),
               SizedBox(height: 4),
@@ -756,7 +756,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           ),
         ).animate().fadeIn(duration: 400.ms, curve: Curves.easeOut).slideY(begin: 0.05, end: 0, duration: 400.ms, curve: Curves.easeOut),
 
-        // Value Prop - Cevher tanımı
+        // Value Prop - Etüt Odası tanımı
         Container(
           padding: const EdgeInsets.all(14),
           margin: const EdgeInsets.only(bottom: 16),
@@ -803,7 +803,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           isDark: isDark,
           icon: Icons.psychology_rounded,
           title: 'Taktik Tavşan Zayıf Noktayı Bulur',
-          content: 'Deneme verilerine bakarak hangi konularda en çok hata yaptığını tespit eder. Sonra bunları "Cevher" olarak işaretler.',
+          content: 'Deneme verilerine bakarak hangi konularda en çok hata yaptığını tespit eder. Sonra bunları sana özel çalışma konuları olarak işaretler.',
           accentColor: Colors.deepPurple,
         ),
 
@@ -812,7 +812,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           isDark: isDark,
           icon: Icons.auto_fix_high_rounded,
           title: '3 Aşamalı Özel Reçete',
-          content: 'Her cevher için Taktik Tavşan, sana özel 3 aşamalı çalışma planı hazırlar.',
+          content: 'Her konu için Taktik Tavşan, sana özel 3 aşamalı çalışma planı hazırlar.',
           accentColor: Colors.purple,
           bottomContent: Column(
             children: [
@@ -828,7 +828,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           isDark: isDark,
           icon: Icons.check_circle_outline_rounded,
           title: 'İlerlemeyi Takip Et',
-          content: 'Her adımı tamamladıkça cevher parlıyor. Tamamlandığında o konu artık "güçlü" kategorisine geçer.',
+          content: 'Her adımı tamamladıkça konu güçleniyor. Tamamlandığında o konu artık "güçlü" kategorisine geçer.',
           accentColor: Colors.green,
         ),
 
@@ -953,12 +953,12 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           isDark: isDark,
           icon: Icons.bolt_rounded,
           title: 'Her Şey TP Kazandırır',
-          content: 'Deneme çözme, cevher tamamlama, görev bitirme... Her başarılı eylem sana TP kazandırır.',
+          content: 'Deneme çözme, etüt tamamlama, görev bitirme... Her başarılı eylem sana TP kazandırır.',
           accentColor: Colors.amber,
           bottomContent: Column(
             children: [
               _buildTipRow('Deneme çöz → +50 TP', isDark),
-              _buildTipRow('Cevher tamamla → +100 TP', isDark),
+              _buildTipRow('Etüt tamamla → +100 TP', isDark),
               _buildTipRow('Günlük görev → +25 TP', isDark),
               _buildTipRow('Seri bonus → +10 TP/gün', isDark),
             ],
@@ -997,7 +997,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
                 children: [
                   Expanded(child: _buildBadgeChip('Deneme Fatihi')),
                   const SizedBox(width: 8),
-                  Expanded(child: _buildBadgeChip('Cevher Avcısı')),
+                  Expanded(child: _buildBadgeChip('İlk Etüt')),
                 ],
               ),
               const SizedBox(height: 8),

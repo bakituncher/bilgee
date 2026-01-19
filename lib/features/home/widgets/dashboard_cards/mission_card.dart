@@ -73,7 +73,7 @@ class MissionCard extends ConsumerWidget {
           final weakestTopicInfo = analysis.getWeakestTopicWithDetails();
           title = 'Günün Önceliği';
           subtitle = weakestTopicInfo != null
-              ? 'Taktik Tavşan, en zayıf noktanın **\'${weakestTopicInfo['subject']}\'** dersindeki **\'${weakestTopicInfo['topic']}\'** konusu olduğunu tespit etti. Bu cevheri işlemeye hazır mısın?'
+              ? 'Taktik Tavşan, en zayıf noktanın **\'${weakestTopicInfo['subject']}\'** dersindeki **\'${weakestTopicInfo['topic']}\'** konusu olduğunu tespit etti. Bu eksik konuyu çalışmaya hazır mısın?'
               : 'Harika gidiyorsun! Şu an belirgin bir zayıf noktan tespit edilmedi. Yeni konu verileri girerek analizi derinleştirebilirsin.';
           onTap = weakestTopicInfo != null
               ? () {
@@ -84,7 +84,7 @@ class MissionCard extends ConsumerWidget {
                     context.go(
                       '/ai-hub/offer',
                       extra: {
-                        'title': 'Cevher Atölyesi',
+                        'title': 'Etüt Odası',
                         'subtitle': 'En zayıf konunu, kişisel çalışma kartı ve özel test ile işle.',
                         'icon': Icons.construction_rounded,
                         'color': theme.colorScheme.secondary,
@@ -97,7 +97,7 @@ class MissionCard extends ConsumerWidget {
                   }
                 }
               : null;
-          buttonText = 'Cevher Atölyesine Git';
+          buttonText = 'Etüt Odasına Git';
           icon = Icons.construction_rounded;
         }
 

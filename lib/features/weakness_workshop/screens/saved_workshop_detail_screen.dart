@@ -192,7 +192,7 @@ class _SavedWorkshopDetailScreenState extends State<SavedWorkshopDetailScreen>
             ),
             const SizedBox(height: 16),
             Text(
-              "Bu cevher için sınav kaydedilmemiş",
+              "Bu konu için sınav kaydedilmemiş",
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
@@ -226,7 +226,7 @@ class _QuizReviewView extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              "Bu cevher için sınav kaydedilmemiş",
+              "Bu konu için sınav kaydedilmemiş",
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),

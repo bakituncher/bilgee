@@ -365,7 +365,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                 const SizedBox(width: gap),
                 Expanded(
                   child: _BentoCard(
-                    title: 'Cevher\nAtölyesi',
+                    title: 'Eksik Konu\nAtölyesi',
                     // ÇOK NET: Ne işe yarar? Materyal verir.
                     description: 'Eksik konularına özel\nçalışma setleri.',
                     icon: Icons.auto_fix_high_rounded,
@@ -373,7 +373,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                     isPremium: isPremium,
                     height: 160,
                     onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/weakness-workshop', offerData: {
-                      'title': 'Cevher Atölyesi',
+                      'title': 'Etüt Odası',
                       'subtitle': 'Kişiye özel çalışma materyalleri.',
                       'icon': Icons.diamond_rounded,
                       'color': const Color(0xFF8B5CF6),

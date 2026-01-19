@@ -159,7 +159,7 @@ Cevap:
 
     return '''
 ${_commonHeader(examName)}
-Amaç: Cevher Atölyesi sonrası kısa değerlendirme; 1 güçlü vurgu ve net bir pekiştirme cümlesi.
+Amaç: Etüt Odası sonrası kısa değerlendirme; 1 güçlü vurgu ve net bir pekiştirme cümlesi.
 Bağlam: Ders: $subject | Konu: $topic | Başarı: %$score | Son Mesaj: ${lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim()}
 Cevap:
 ''';

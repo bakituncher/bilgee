@@ -39,7 +39,7 @@ const RETRY_DELAY_MS = 2000; // 2 saniye
 
 // YENİ: Kategori bazlı aylık limitler
 const MONTHLY_LIMITS = {
-  workshop: 350,    // Cevher Atölyesi
+  workshop: 350,    // Etüt Odası
   weekly_plan: 60,  // Haftalık Plan
   chat: 2000,        // Sohbet / Motivasyon
   question_solver: 1000 // Soru Çözücü
@@ -112,7 +112,7 @@ exports.generateGemini = onCall(
     }
 
     // MODEL SEÇİMİ GÜNCELLEMESİ
-    // Soru çözücü ve Cevher Atölyesi: gemini-3-flash-preview (en son güçlü model)
+    // Soru çözücü ve Etüt Odası: gemini-3-flash-preview (en son güçlü model)
     // Diğer tüm chat/planlama işleri: gemini-2.5-flash (Lite yerine tam sürüm)
     const requestedModel = typeof request.data?.model === "string" ? String(request.data.model).trim() : null;
 
@@ -192,7 +192,7 @@ exports.generateGemini = onCall(
       if (currentUsage >= limit) {
         let featureName = "";
         switch(requestType) {
-          case 'workshop': featureName = "Cevher Atölyesi"; break;
+          case 'workshop': featureName = "Etüt Odası"; break;
           case 'weekly_plan': featureName = "Haftalık Plan"; break;
           case 'question_solver': featureName = "Soru Çözücü"; break;
           default: featureName = "Sohbet"; break;

@@ -85,7 +85,7 @@ class _SavedWorkshopsScreenState extends ConsumerState<SavedWorkshopsScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 32.0),
                           child: Text(
                             query.isEmpty
-                                ? 'Atölyede işlediğin değerli cevherleri buraya kaydederek onlara istediğin zaman geri dönebilirsin.'
+                                ? 'Atölyede çalıştığın konuları buraya kaydederek onlara istediğin zaman geri dönebilirsin.'
                                 : 'Farklı bir anahtar kelime dene.',
                             textAlign: TextAlign.center,
                             style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),

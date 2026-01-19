@@ -87,7 +87,7 @@ class WorkshopStatsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Atölyede bir konuyu işlediğinde ocak alevlenecek. İlk ham cevherini dövmeye başla!',
+              'Atölyede bir konuyu çalıştığında ocak alevlenecek. İlk konunu çalışmaya başla!',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: isDark ? Colors.white70 : colorScheme.onSurfaceVariant,

@@ -136,7 +136,7 @@ class QuestNotifier extends StateNotifier<bool> {
     _updateUserFeatureUsage('weeklyPlan');
   }
 
-  /// Kullanıcı "Cevher Atölyesi"nde bir quiz bitirdiğinde bu metot çağrılır.
+  /// Kullanıcı "Etüt Odası"nda bir quiz bitirdiğinde bu metot çağrılır.
   void userCompletedWorkshopQuiz(String subject, String topic) {
     _reportAction(
       QuestCategory.practice,

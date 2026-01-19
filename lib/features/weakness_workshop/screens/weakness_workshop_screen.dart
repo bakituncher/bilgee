@@ -61,7 +61,7 @@ final workshopSessionProvider = FutureProvider.autoDispose<WorkshopModel>((ref) 
       contentType: contentType,
     ).timeout(
       const Duration(seconds: 120), // 2 dakika - yeterince uzun
-      onTimeout: () => throw TimeoutException('Cevher hazırlanırken zaman aşımı. İnternet bağlantını kontrol edip tekrar dene.'),
+      onTimeout: () => throw TimeoutException('İçerik hazırlanırken zaman aşımı. İnternet bağlantını kontrol edip tekrar dene.'),
     );
 
     final decodedJson = jsonDecode(jsonString);
@@ -80,9 +80,9 @@ final workshopSessionProvider = FutureProvider.autoDispose<WorkshopModel>((ref) 
     // Kullanıcı dostu hata mesajı
     final errorMsg = e.toString();
     if (errorMsg.contains('timeout') || errorMsg.contains('Timeout')) {
-      throw Exception('Cevher hazırlanırken zaman aşımı. Lütfen tekrar dene.');
+      throw Exception('İçerik hazırlanırken zaman aşımı. Lütfen tekrar dene.');
     } else if (errorMsg.contains('Analiz için') || errorMsg.contains('test veya performans')) {
-      throw Exception('Cevher Atölyesi\'ni kullanmak için önce deneme çözmelisin.');
+      throw Exception('Etüt Odası\'nı kullanmak için önce deneme çözmelisin.');
     }
     throw Exception('Beklenmeyen bir hata oluştu. Lütfen tekrar dene.');
   }
@@ -272,7 +272,7 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
                 showStats: _currentStep == WorkshopStep.briefing,
                 onStats: () => context.push('/ai-hub/weakness-workshop/stats'),
                 onSaved: () => context.push('/ai-hub/weakness-workshop/${AppRoutes.savedWorkshops}'),
-                title: 'Cevher Atölyesi',
+                title: 'Etüt Odası',
               ),
               // AI güvenlik uyarısı
               if (_currentStep != WorkshopStep.briefing)
@@ -628,7 +628,7 @@ class _BriefingView extends ConsumerWidget {
             Text("Stratejik Mola", style: Theme.of(context).textTheme.headlineMedium),
             const SizedBox(height: 8),
             Text(
-              "Taktik Tavşan, performansını analiz etti ve gelişim için en parlak fırsatları belirledi. Aşağıdaki cevherlerden birini seçerek işlemeye başla.",
+              "Taktik Tavşan, performansını analiz etti ve gelişim için en önemli konuları belirledi. Aşağıdaki konulardan birini seçerek çalışmaya başla.",
               style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 12), // 👈 Azaltıldı
@@ -745,7 +745,7 @@ class _EmptyStateView extends StatelessWidget {
             ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.3),
             const SizedBox(height: 8),
             Text(
-              "Cevher Atölyesi'nin sana özel içerik üretebilmesi için önce ders neti eklemelisin.",
+              "Etüt Odası'nın sana özel içerik üretebilmesi için önce ders neti eklemelisin.",
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),

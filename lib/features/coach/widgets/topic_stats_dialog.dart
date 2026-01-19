@@ -20,7 +20,7 @@ class TopicStatsDialog extends StatelessWidget {
     if (mastery < 0) {
       return "Bu konu henüz senin için keşfedilmemiş bir diyar. İlk verileri girerek bu topraklara ilk adımı at ve fetih başlasın!";
     } else if (mastery < 0.4) {
-      return "Bu cephede zorlanıyorsun. Unutma, her yanlış bir derstir. Konu tekrarı ve bol soru çözümü ile bu kaleyi düşürebilirsin. Cevher Atölyesi seni bekliyor!";
+      return "Bu cephede zorlanıyorsun. Unutma, her yanlış bir derstir. Konu tekrarı ve bol soru çözümü ile bu kaleyi düşürebilirsin. Etüt Odası seni bekliyor!";
     } else if (mastery < 0.7) {
       return "İstikrarlı bir ilerleme kaydediyorsun. Temellerin sağlam ama daha fazla pratikle zirveye oynayabilirsin. Sakın pes etme!";
     } else if (mastery < 0.9) {
