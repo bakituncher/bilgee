@@ -805,36 +805,25 @@ class _ContentSelectionView extends StatelessWidget {
     final subjectName = topic['subject'] ?? 'Ders';
 
     return ListView(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       children: [
-        // Geri butonu
-        Align(
-          alignment: Alignment.centerLeft,
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded),
-            onPressed: onBack,
-            tooltip: 'Geri',
-          ),
-        ).animate().fadeIn(duration: 300.ms),
-
-        const SizedBox(height: 8),
-
         // Başlık
         Text(
           "Ne Oluşturmak İstersin?",
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.bold,
+            fontSize: 22,
           ),
         ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.2),
 
         const SizedBox(height: 8),
 
-        // Seçilen konu bilgisi
+        // Seçilen konu bilgisi (kompakt)
         Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
-            borderRadius: BorderRadius.circular(12),
+            color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.25),
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
             ),
@@ -844,7 +833,7 @@ class _ContentSelectionView extends StatelessWidget {
               Icon(
                 Icons.topic_rounded,
                 color: Theme.of(context).colorScheme.primary,
-                size: 20,
+                size: 18,
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -855,6 +844,7 @@ class _ContentSelectionView extends StatelessWidget {
                       subjectName,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: 11,
                       ),
                     ),
                     Text(
@@ -862,6 +852,7 @@ class _ContentSelectionView extends StatelessWidget {
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Theme.of(context).colorScheme.primary,
+                        fontSize: 14,
                       ),
                     ),
                   ],
@@ -871,36 +862,36 @@ class _ContentSelectionView extends StatelessWidget {
           ),
         ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1),
 
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
 
-        // Seçenekler
+        // Seçenekler (kompakt kartlar)
         _ContentTypeCard(
           icon: Icons.quiz_rounded,
           emoji: '🎯',
           title: 'Sadece Soru Oluştur',
-          description: 'Konu hakkında 5 adet test sorusu hazırlanır. Hızlı pratik için ideal.',
+          description: 'Konu hakkında 5 adet test sorusu.',
           color: Colors.orange,
           onTap: () => onContentTypeSelected('quizOnly'),
         ).animate().fadeIn(delay: 300.ms).slideX(begin: 0.2),
 
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
 
         _ContentTypeCard(
           icon: Icons.school_rounded,
           emoji: '📚',
-          title: 'Sadece Konu Anlatımı Oluştur',
-          description: 'Detaylı konu özeti, örnekler ve stratejiler içeren çalışma rehberi.',
+          title: 'Sadece Konu Anlatımı',
+          description: 'Detaylı konu özeti ve stratejiler.',
           color: Colors.blue,
           onTap: () => onContentTypeSelected('studyOnly'),
         ).animate().fadeIn(delay: 400.ms).slideX(begin: 0.2),
 
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
 
         _ContentTypeCard(
           icon: Icons.auto_awesome_rounded,
           emoji: '🚀',
           title: 'Her İkisini de Oluştur',
-          description: 'Hem detaylı konu anlatımı hem de test soruları. Tam öğrenme paketi.',
+          description: 'Hem konu hem de test soruları.',
           color: Colors.purple,
           isRecommended: true,
           onTap: () => onContentTypeSelected('both'),
@@ -933,9 +924,9 @@ class _ContentTypeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: isRecommended ? 4 : 2,
+      elevation: isRecommended ? 3 : 1,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         side: isRecommended
             ? BorderSide(
                 color: color.withOpacity(0.5),
@@ -945,72 +936,74 @@ class _ContentTypeCard extends StatelessWidget {
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          padding: const EdgeInsets.all(14.0),
+          child: Row(
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      emoji,
-                      style: const TextStyle(fontSize: 28),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (isRecommended)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: color.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              '✨ ÖNERİLEN',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: color,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ),
-                        const SizedBox(height: 4),
-                        Text(
-                          title,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              // Emoji Container
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  emoji,
+                  style: const TextStyle(fontSize: 24),
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              // Title & Description
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (isRecommended)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        margin: const EdgeInsets.only(bottom: 4),
+                        decoration: BoxDecoration(
+                          color: color.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Text(
+                          '✨ ÖNERİLEN',
+                          style: TextStyle(
+                            fontSize: 9,
                             fontWeight: FontWeight.bold,
                             color: color,
+                            letterSpacing: 0.5,
                           ),
                         ),
-                      ],
+                      ),
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: color,
+                        fontSize: 15,
+                      ),
                     ),
-                  ),
-                  Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    size: 18,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                description,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  height: 1.4,
+                    const SizedBox(height: 3),
+                    Text(
+                      description,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: 12,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
                 ),
+              ),
+
+              // Arrow Icon
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                color: color.withOpacity(0.7),
+                size: 16,
               ),
             ],
           ),
@@ -1133,17 +1126,19 @@ class _StudyView extends StatelessWidget {
       children: [
         Expanded(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // ✅ AI uyarısı kaldırıldı - üstteki banner yeterli
                 MarkdownWithMath(
                   data: material.studyGuide!,
                   styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
-                    p: TextStyle(fontSize: 16, height: 1.5, color: Theme.of(context).colorScheme.onSurface),
-                    h1: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.secondary),
-                    h3: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
+                    p: TextStyle(fontSize: 15, height: 1.5, color: Theme.of(context).colorScheme.onSurface),
+                    h1: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.secondary),
+                    h2: TextStyle(fontSize: 19, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
+                    h3: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
+                    listBullet: TextStyle(fontSize: 15),
+                    code: TextStyle(fontSize: 14, backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)),
                   ),
                 ),
               ],
@@ -1153,9 +1148,9 @@ class _StudyView extends StatelessWidget {
         // Quiz varsa buton göster
         if (material.quiz != null && material.quiz!.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
             child: ElevatedButton.icon(
-              icon: const Icon(Icons.quiz_rounded),
+              icon: const Icon(Icons.quiz_rounded, size: 20),
               label: const Text("Ustalık Sınavına Başla"),
               onPressed: onStartQuiz,
             ),
@@ -1214,14 +1209,15 @@ class _QuizViewState extends State<_QuizView> {
 
     return Column(
       children: [
-        // ✅ AI uyarısı kaldırıldı - üstteki banner yeterli
+        // Progress bar (kompakt)
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 18.0, vertical: 12.0),
           child: LinearProgressIndicator(
             value: (_currentPage + 1) / quizLength,
             backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
             color: Theme.of(context).colorScheme.secondary,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(6),
+            minHeight: 6,
           ),
         ),
         Expanded(
@@ -1250,11 +1246,11 @@ class _QuizViewState extends State<_QuizView> {
         ),
         if (isCurrentPageAnswered)
           Padding(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
             child: SafeArea(
               top: false,
               child: ElevatedButton.icon(
-                icon: Icon(isQuizFinished ? Icons.assignment_turned_in_rounded : Icons.arrow_forward_ios_rounded),
+                icon: Icon(isQuizFinished ? Icons.assignment_turned_in_rounded : Icons.arrow_forward_ios_rounded, size: 20),
                 label: Text(isQuizFinished ? "Sonuçları Gör" : "Devam Et"),
                 onPressed: (){
                   if(isQuizFinished){
@@ -1291,50 +1287,54 @@ class _QuestionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0), // 👈 Daha kompakt padding
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 👈 Kompakt header
+          // Kompakt header
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(7),
                   ),
                   child: Text(
                     "$questionNumber/$totalQuestions",
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
                       color: Theme.of(context).colorScheme.primary,
                       fontWeight: FontWeight.bold,
+                      fontSize: 13,
                     ),
                   ),
                 ),
                 const Spacer(),
                 IconButton(
                   onPressed: onReportIssue,
-                  icon: Icon(Icons.flag_outlined, size: 20),
+                  icon: const Icon(Icons.flag_outlined, size: 18),
                   tooltip: 'Sorunu Bildir',
                   visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 16), // 👈 Azaltıldı
-          // 👈 Soru kartı
+          const SizedBox(height: 14),
+
+          // Soru kartı
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
                 width: 1.5,
@@ -1343,11 +1343,16 @@ class _QuestionCard extends StatelessWidget {
             child: MarkdownWithMath(
               data: question.question,
               styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
-                p: Theme.of(context).textTheme.titleLarge, // 👈 Biraz küçültüldü
+                p: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  height: 1.4,
+                ),
               ),
             ),
           ),
-          const SizedBox(height: 20), // 👈 Azaltıldı
+          const SizedBox(height: 16),
+
           ...List.generate(question.options.length, (index) {
             bool isSelected = selectedOptionIndex == index;
             bool isCorrect = question.correctOptionIndex == index;
@@ -1370,10 +1375,10 @@ class _QuestionCard extends StatelessWidget {
             }
 
             return Container(
-              margin: const EdgeInsets.only(bottom: 10), // 👈 Azaltıldı
+              margin: const EdgeInsets.only(bottom: 8),
               decoration: BoxDecoration(
                 color: tileColor ?? colorScheme.surface,
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: borderColor ?? colorScheme.surfaceContainerHighest.withOpacity(0.5),
                   width: 1.5,
@@ -1381,15 +1386,15 @@ class _QuestionCard extends StatelessWidget {
               ),
               child: InkWell(
                 onTap: selectedOptionIndex == null ? () => onOptionSelected(index) : null,
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14), // 👈 Kompakt padding
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
                   child: Row(
                     children: [
-                      // 👈 Şık harf ikonları
+                      // Şık harf ikonları
                       Container(
-                        width: 32,
-                        height: 32,
+                        width: 30,
+                        height: 30,
                         decoration: BoxDecoration(
                           color: (borderColor ?? colorScheme.primary).withOpacity(0.15),
                           shape: BoxShape.circle,
@@ -1397,25 +1402,29 @@ class _QuestionCard extends StatelessWidget {
                         child: Center(
                           child: Text(
                             String.fromCharCode(65 + index), // A, B, C, D
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
                               color: borderColor ?? colorScheme.primary,
                               fontWeight: FontWeight.bold,
+                              fontSize: 14,
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: MarkdownWithMath(
                           data: question.options[index],
                           styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
-                            p: Theme.of(context).textTheme.bodyLarge,
+                            p: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontSize: 14,
+                              height: 1.4,
+                            ),
                           ),
                         ),
                       ),
                       if (trailingIcon != null) ...[
                         const SizedBox(width: 8),
-                        Icon(trailingIcon, color: borderColor, size: 24),
+                        Icon(trailingIcon, color: borderColor, size: 22),
                       ],
                     ],
                   ),
@@ -1440,11 +1449,11 @@ class _ExplanationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
-      margin: const EdgeInsets.only(top: 16), // 👈 Üstten boşluk
-      padding: const EdgeInsets.all(14), // 👈 Azaltıldı
+      margin: const EdgeInsets.only(top: 14),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: colorScheme.secondaryContainer.withOpacity(0.4), // 👈 Daha şık renk
-        borderRadius: BorderRadius.circular(14),
+        color: colorScheme.secondaryContainer.withOpacity(0.4),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: colorScheme.secondary.withOpacity(0.3),
           width: 1.5,
@@ -1454,33 +1463,34 @@ class _ExplanationCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(7),
             decoration: BoxDecoration(
               color: colorScheme.secondary.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(9),
             ),
-            child: Icon(Icons.lightbulb_rounded, color: colorScheme.secondary, size: 22), // 👈 Daha iyi ikon
+            child: Icon(Icons.lightbulb_rounded, color: colorScheme.secondary, size: 20),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   "Usta'nın Açıklaması",
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith( // 👈 Küçültüldü
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
                     color: colorScheme.secondary,
                     fontWeight: FontWeight.bold,
+                    fontSize: 13,
                   ),
                 ),
-                const SizedBox(height: 6), // 👈 Azaltıldı
+                const SizedBox(height: 5),
                 MarkdownWithMath(
                   data: explanation,
                   styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
                     p: TextStyle(
                       color: colorScheme.onSurface,
-                      height: 1.4, // 👈 Daha kompakt
-                      fontSize: 14, // 👈 Biraz küçük
+                      height: 1.4,
+                      fontSize: 13,
                     ),
                   ),
                 ),
