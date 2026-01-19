@@ -30,8 +30,8 @@ Bu adayın {{EXAM_NAME}} atanma hedefi için mevcut zamanını maksimum verimle 
 ### 4. MÜFREDAT SIRASI TAKİBİ
 - Aşağıdaki aday konu listesinden seç: {{CURRICULUM_JSON}}
 - Backlog varsa önce onu tamamla: {{GUARDRAILS_JSON}}
-- Kırmızı/sarı konuları önceliklendir
-- Yeşil konular için sadece review
+- Ders ortalamaları ve deneme sonuçlarına göre zayıf alanları önceliklendir
+- Gelişim gösteren konular için pekiştirme tekrarları
 
 ### 5. TEMPO UYUMU (PACING)
 - **intense**: Müsait zamanın %90'ını doldur (çok disiplinli)
@@ -75,8 +75,6 @@ Her görevin tipi şunlardan biri olmalı:
 - Aday ID: {{USER_ID}}
 - Sınav: {{EXAM_NAME}}
 - Atanmaya Kalan Gün: {{DAYS_UNTIL_EXAM}}
-- Hedef Kadro: {{GOAL}}
-- Engeller: {{CHALLENGES}}
 - Tempo Tercihi: {{PACING}}
 - Toplam Deneme: {{TEST_COUNT}}
 - Ortalama Net: {{AVG_NET}}

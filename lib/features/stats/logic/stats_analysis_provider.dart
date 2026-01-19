@@ -71,3 +71,65 @@ final overallStatsAnalysisProvider = Provider<AsyncValue<StatsAnalysis?>>((ref) 
   return mapAsync.whenData((map) => map[kAllSectionsKey]);
 });
 
+// Workshop İstatistik Analizi (Issue 6 Çözümü)
+final workshopStatsAnalysisProvider = Provider.autoDispose<WorkshopAnalysisData>((ref) {
+  final performance = ref.watch(performanceProvider).valueOrNull;
+
+  if (performance == null) {
+    return WorkshopAnalysisData.empty();
+  }
+
+  // Tüm hesaplamalar burada yapılır, build metodunda değil
+  final totalQuestionsAnswered = performance.topicPerformances.values
+      .expand((subject) => subject.values)
+      .map((topic) => topic.questionCount)
+      .fold<int>(0, (sum, count) => sum + count);
+
+  final totalCorrectAnswers = performance.topicPerformances.values
+      .expand((subject) => subject.values)
+      .map((topic) => topic.correctCount)
+      .fold<int>(0, (sum, count) => sum + count);
+
+  final uniqueTopicsWorkedOn = performance.topicPerformances.values
+      .expand((subject) => subject.keys)
+      .toSet()
+      .length;
+
+  final overallAccuracy = totalQuestionsAnswered > 0 
+      ? (totalCorrectAnswers / totalQuestionsAnswered) 
+      : 0.0;
+
+  final masteredCount = performance.masteredTopics.length;
+
+  return WorkshopAnalysisData(
+    totalQuestionsAnswered: totalQuestionsAnswered,
+    totalCorrectAnswers: totalCorrectAnswers,
+    uniqueTopicsWorkedOn: uniqueTopicsWorkedOn,
+    overallAccuracy: overallAccuracy,
+    masteredTopicsCount: masteredCount,
+  );
+});
+
+class WorkshopAnalysisData {
+  final int totalQuestionsAnswered;
+  final int totalCorrectAnswers;
+  final int uniqueTopicsWorkedOn;
+  final double overallAccuracy;
+  final int masteredTopicsCount;
+
+  WorkshopAnalysisData({
+    required this.totalQuestionsAnswered,
+    required this.totalCorrectAnswers,
+    required this.uniqueTopicsWorkedOn,
+    required this.overallAccuracy,
+    required this.masteredTopicsCount,
+  });
+
+  factory WorkshopAnalysisData.empty() => WorkshopAnalysisData(
+    totalQuestionsAnswered: 0,
+    totalCorrectAnswers: 0,
+    uniqueTopicsWorkedOn: 0,
+    overallAccuracy: 0.0,
+    masteredTopicsCount: 0,
+  );
+}

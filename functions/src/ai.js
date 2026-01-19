@@ -111,9 +111,15 @@ exports.generateGemini = onCall(
       temperature = Math.min(temperature, 0.3);
     }
 
-    // Model seçimi: Soru çözücü için gemini-3-flash-preview, diğerleri için gemini-2.5-flash-lite
+    // MODEL SEÇİMİ GÜNCELLEMESİ
+    // Soru çözücü ve Cevher Atölyesi: gemini-3-flash-preview (en son güçlü model)
+    // Diğer tüm chat/planlama işleri: gemini-2.5-flash (Lite yerine tam sürüm)
     const requestedModel = typeof request.data?.model === "string" ? String(request.data.model).trim() : null;
-    const modelId = requestType === 'question_solver' ? "gemini-3-flash-preview" : "gemini-2.5-flash-lite";
+
+    // BURASI GÜNCELLENDİ: workshop için de güçlü model kullanılıyor
+    const modelId = (requestType === 'question_solver' || requestType === 'workshop')
+      ? "gemini-3-flash-preview"
+      : "gemini-2.5-flash";
 
     if (requestedModel && requestedModel.toLowerCase() !== modelId) {
       logger.info("Model override enforced", { requestedModel, enforced: modelId, requestType });
@@ -207,13 +213,15 @@ exports.generateGemini = onCall(
       const reqMaxTokensRaw = request.data?.maxOutputTokens;
       let effectiveMaxTokens = expectJson ? DEFAULT_JSON_TOKENS : DEFAULT_TEXT_TOKENS;
 
-      // HAFTALIK PLAN İÇİN ÖZEL TOKEN LİMİTİ (Yarım kalma sorununun çözümü)
+      // ÖZEL TOKEN LİMİTLERİ (Yanıt kesilme sorunlarının çözümü)
       if (requestType === 'weekly_plan') {
-        effectiveMaxTokens = 12000; // Haftalık planlar için daha yüksek limit (8192 -> 12000)
+        effectiveMaxTokens = 50000; // Haftalık planlar için yüksek limit
+      } else if (requestType === 'workshop') {
+        effectiveMaxTokens = 10000; // 30k çok fazla, latency yaratıyor. 10k fazlasıyla yeterli.
       }
 
       if (typeof reqMaxTokensRaw === 'number' && isFinite(reqMaxTokensRaw)) {
-        const clamped = Math.max(256, Math.min(reqMaxTokensRaw, 12000)); // Üst sınır 8192 -> 12000
+        const clamped = Math.max(256, Math.min(reqMaxTokensRaw, 65536));
         effectiveMaxTokens = clamped;
       }
 

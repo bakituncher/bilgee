@@ -26,8 +26,9 @@ Bu sınav iki ana oturumdan oluşur ve plan her ikisini de kapsamalıdır:
 **GÖREV:** Plan hazırlarken hem "Ortak" konulardan hem de "Alan" konularından dengeli bir karışım yapmalısın.
 
 ### 3. VERİ ODAKLI PLANLAMA
-- **Zayıf Noktalar:** {{TOPIC_PERFORMANCES_JSON}} verisine bak. Başarısız (kırmızı) konuları tespit et ve bu haftaya ekle.
 - **Konu Seçimi:** {{CURRICULUM_JSON}} içindeki "candidates" listesinden seç. Bu liste otomatik filtrelenmiştir.
+- **Ders Ortalamaları:** {{SUBJECT_AVERAGES}} verilerine göre zayıf alanları belirle ve önceliklendir.
+- Deneme sonuçlarına göre eksik konuları bu haftanın odağına al.
 
 ### 4. DERS DAĞILIMI VE STRATEJİ
 - **Eğitim Bilimleri:** Haftada en az 4 gün yer ver.
@@ -56,8 +57,6 @@ Bu sınav iki ana oturumdan oluşur ve plan her ikisini de kapsamalıdır:
 ### Performans Raporu
 - Öğrenci ID: {{USER_ID}}
 - Sınava Kalan Gün: {{DAYS_UNTIL_EXAM}}
-- Hedef: {{GOAL}}
-- Zorluklar: {{CHALLENGES}}
 - Tempo Tercihi: {{PACING}}
 - Deneme Sayısı: {{TEST_COUNT}}
 - Ortalama Net: {{AVG_NET}}

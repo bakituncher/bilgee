@@ -34,7 +34,9 @@ service cloud.firestore {
                                  // Lazy cleanup için izin verildi
                                  'followingCount',
                                  // Global kampanyaları kapatma izni
-                                 'closedCampaignIds']);
+                                 'closedCampaignIds',
+                                 // Cevher Atölyesi streak sistemi
+                                 'workshopStreak', 'lastWorkshopDate']);
 
       // --- ALT KOLEKSİYONLAR ---
       match /stars/{day} {
@@ -60,6 +62,10 @@ service cloud.firestore {
         // stats belgesi kullanıcı tarafından yazılabilir (deneme silme işlemleri için)
         // points belgesi SADECE sunucu tarafından yazılabilir
         allow write: if request.auth.uid == userId && (docId == 'ai_memory' || docId == 'stats');
+      }
+
+      match /archived_plans/{docId} {
+        allow read, write: if request.auth.uid == userId;
       }
 
       match /plans/{docId} {
@@ -131,9 +137,8 @@ service cloud.firestore {
     match /public_profiles/{userId} {
       // Herkese açık profilleri tüm giriş yapmış kullanıcılar okuyabilir.
       allow read, list: if request.auth != null;
-      // GÜVENLİK AÇIĞI KAPATILDI: Kullanıcılar sadece kendi herkese açık profillerini oluşturabilir veya güncelleyebilir.
-      // Veri senkronizasyonu Cloud Function tarafından yapılır.
-      allow write: if false;
+      // Kullanıcılar kendi public profile'larını oluşturabilir ve güncelleyebilir
+      allow create, update: if request.auth != null && request.auth.uid == userId;
       // Profillerin silinmesine istemci tarafından izin verilmez.
       allow delete: if false;
     }

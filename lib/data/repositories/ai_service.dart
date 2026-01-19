@@ -6,6 +6,10 @@ import 'package:taktik/data/models/test_model.dart';
 import 'package:taktik/data/models/user_model.dart';
 import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/data/models/topic_performance_model.dart';
+import 'package:taktik/core/prompts/strategy_consult_prompt.dart';
+import 'package:taktik/core/prompts/psych_support_prompt.dart';
+import 'package:taktik/core/prompts/motivation_corner_prompt.dart';
+import 'package:taktik/core/prompts/trial_review_prompt.dart';
 import 'package:taktik/core/prompts/strategy_prompts.dart';
 import 'package:taktik/core/prompts/workshop_prompts.dart';
 import 'package:taktik/core/prompts/motivation_suite_prompts.dart';
@@ -42,8 +46,12 @@ class AiService {
       final snap = await svc.usersCollection.doc(userId).collection('state').doc('ai_memory').get();
       final data = snap.data() ?? const <String, dynamic>{};
       final key = '${mode}_summary';
+
+      // Varsa direkt stringi döndür (artık içinde ham mesajlar da olabilir)
       final v = data[key];
-      if (v is String && v.trim().isNotEmpty) return v.trim();
+      if (v is String) return v.trim();
+
+      // Geriye dönük uyumluluk / global fallback
       final g = data['globalSummary'];
       return (g is String) ? g.trim() : '';
     } catch (_) {
@@ -51,27 +59,36 @@ class AiService {
     }
   }
 
-  Future<void> _updateChatMemory(String userId, String mode, {required String lastUserMessage, required String aiResponse, String previous = ''}) async {
+  // INDUSTRY STANDARD MEMORY: Rolling Window (Kayan Pencere)
+  // Eski yöntem: Her şeyi özetle -> Robotlaşır.
+  // Yeni yöntem: Son ~4000 karakteri (yaklaşık 10-15 mesaj) olduğu gibi tut. Eskileri at.
+  Future<void> _updateChatMemory(
+    String userId,
+    String mode, {
+    required String lastUserMessage,
+    required String aiResponse,
+    String previous = '',
+  }) async {
     try {
-      // AKILLI ÖZET: Önceki özet + son tur (Kullanıcı/AI), başlangıcı ve sonu koruyarak ~1200 karaktere indir.
+      // 1) Yeni turu formatla
       final newTurn = [
         if (lastUserMessage.trim().isNotEmpty) 'Kullanıcı: ${lastUserMessage.trim().replaceAll('\n', ' ')}',
         if (aiResponse.trim().isNotEmpty) 'AI: ${aiResponse.trim().replaceAll('\n', ' ')}',
       ].join(' | ');
 
+      // 2) Geçmişe ekle
       String updatedHistory = previous.trim().isEmpty ? newTurn : '${previous.trim()} | $newTurn';
 
-      const int maxChars = 400; // MALİYET OPTİMİZASYONU: 800'den 400'e düşürüldü - %50 tasarruf
+      // 3) Limit Kontrolü (4000 Karakter ~ son turlar)
+      const int maxChars = 8000;
       if (updatedHistory.length > maxChars) {
-        const int preserveStart = 100;
-        const int preserveEnd = maxChars - preserveStart - 5; // " ... " için 5 karakter
-        if (preserveEnd > 0) {
-          final start = updatedHistory.substring(0, preserveStart);
-          final end = updatedHistory.substring(updatedHistory.length - preserveEnd);
-          updatedHistory = '$start ... $end';
-        } else {
-          // Eğer maxChars çok küçükse, sadece sonu al.
-          updatedHistory = updatedHistory.substring(updatedHistory.length - maxChars);
+        // sondan maxChars kadarını al (en taze sohbet kalsın)
+        updatedHistory = updatedHistory.substring(updatedHistory.length - maxChars);
+
+        // kesilen yerin başındaki yarım parça/turn’ü temizle
+        final firstPipe = updatedHistory.indexOf('|');
+        if (firstPipe != -1 && firstPipe < 100) {
+          updatedHistory = updatedHistory.substring(firstPipe + 1).trim();
         }
       }
 
@@ -85,16 +102,13 @@ class AiService {
     }
   }
 
-  // YENİ: Belirli bir sohbet modunun hafızasını temizle
   Future<void> clearChatMemory(String userId, String mode) async {
     try {
       final svc = _ref.read(firestoreServiceProvider);
       await svc.usersCollection.doc(userId).collection('state').doc('ai_memory').update({
         '${mode}_summary': FieldValue.delete(),
       });
-    } catch (_) {
-      // Başarısız olursa sessizce geç, kritik bir hata değil.
-    }
+    } catch (_) {}
   }
 
   String _preprocessAiTextForJson(String input) {
@@ -102,16 +116,15 @@ class AiService {
   }
 
   // YENI: Düz metin sanitizasyonu (markdown ve madde işaretlerini temizle)
+  // Not: Motivasyon modlarında emoji/enerji öldürmemek için sadece agressif markdown’ı temizleyeceğiz.
   String _sanitizePlainText(String input) {
     var out = input;
-    // code-fence ve backtick temizliği
     out = out.replaceAll('```', '');
     out = out.replaceAll('`', '');
-    // kalın/italik vurguları kaldır (** __ * _)
     out = out.replaceAll('**', '');
     out = out.replaceAll('__', '');
-    out = out.replaceAllMapped(RegExp(r"(^|\s)[*_]([^*_]+)[*_](?=\s|\.|,|!|\?|$)"), (match) => '${match.group(1)}${match.group(2)}');
-    // Satır başındaki madde işaretleri (-, *, •, # başlık, 1) 2) ..) kaldır
+
+    // Satır başı bullet temizliği (çok robotik liste cevapları kırmak için)
     final lines = out.split('\n').map((l) {
       var line = l;
       line = line.replaceFirst(RegExp(r'^\s*[-*•]\s+'), '');
@@ -120,25 +133,15 @@ class AiService {
       return line;
     }).toList();
     out = lines.join('\n');
-    // Fazla boşluk ve boş satırları sadeleştir
+
     out = out.replaceAll(RegExp(r'[ \t]+'), ' ').replaceAll(RegExp(r'\s*\n\s*\n+'), '\n');
     return out.trim();
   }
 
-  // YENI: Koçvari üslubu korumak için bazı ifadeleri nötralize et
+  // YENI: Koçvari üslubu korumak için bazen fazla “kelime değiştirme” robotikleşiyor.
+  // Bu işi daha çok prompt’a bırakıyoruz.
   String _enforceToneGuard(String input) {
-    var out = input;
-    final replacements = <RegExp, String>{
-      RegExp(r'küçük hedef(?:ler)?', caseSensitive: false): 'kararlı ilerleme',
-      RegExp(r'mikro\s+(görev|adım|hedef|ödül)', caseSensitive: false): 'kararlı ilerleme',
-      RegExp(r'mini\s+(görev|hedef|ödül)', caseSensitive: false): 'kararlı ilerleme',
-      RegExp(r'küçük\s+ödül', caseSensitive: false): '',
-      RegExp(r'\bstreak\b', caseSensitive: false): 'seri',
-    };
-    replacements.forEach((k, v) => out = out.replaceAll(k, v));
-    // Temizlemeden sonra fazla boşlukları toparla
-    out = out.replaceAll(RegExp(r'\s{2,}'), ' ').trim();
-    return out;
+    return input.replaceAll(RegExp(r'\s{2,}'), ' ').trim();
   }
 
   String? _extractJsonFromFencedBlock(String text) {
@@ -238,55 +241,53 @@ class AiService {
     }
   }
 
-  Future<String> _callGemini(String prompt, {bool expectJson = false, double? temperature, String? model, int retryCount = 0, required String requestType}) async {
+  Future<String> _callGemini(
+    String prompt, {
+    bool expectJson = false,
+    double? temperature,
+    String? model,
+    int retryCount = 0,
+    required String requestType,
+  }) async {
     const int maxRetries = 3;
     try {
       final callable = FirebaseFunctions.instanceFor(region: 'us-central1').httpsCallable('ai-generateGemini');
       final payload = {
         'prompt': prompt,
         'expectJson': expectJson,
-        'requestType': requestType, // Backend'e tip bilgisini gönder
+        'requestType': requestType,
+        'temperature': temperature ?? 0.7, // Default artık daha insani
         if (model != null && model.isNotEmpty) 'model': model,
       };
-      if (temperature != null) {
-        payload['temperature'] = temperature;
-      }
       final result = await callable.call(payload).timeout(const Duration(seconds: 70));
       final data = result.data;
       final rawResponse = (data is Map && data['raw'] is String) ? (data['raw'] as String).trim() : '';
       if (rawResponse.isEmpty) {
-        return expectJson ? jsonEncode({'error': 'Boş yanıt alındı'}) : 'Hata: Boş yanıt alındı';
+        return expectJson ? jsonEncode({'error': 'Boş yanıt alındı'}) : 'Hmm, bir an daldım. Tekrar söyler misin?';
       }
+
       String? extracted = _extractJsonFromFencedBlock(rawResponse);
       extracted ??= _extractJsonByBracesFallback(rawResponse);
-      String candidate = (extracted ?? rawResponse);
-      final cleaned = _preprocessAiTextForJson(candidate);
+      final candidate = (extracted ?? rawResponse);
+
       if (expectJson) {
-        return _parseAndNormalizeJsonOrError(cleaned);
+        return _parseAndNormalizeJsonOrError(_preprocessAiTextForJson(candidate));
       }
-      final plain = _sanitizePlainText(cleaned.isNotEmpty ? cleaned : rawResponse);
-      final guarded = _enforceToneGuard(plain);
-      return guarded.isNotEmpty ? guarded : _enforceToneGuard(_sanitizePlainText(rawResponse));
+
+      // Sohbet için basit temizlik
+      return _enforceToneGuard(_sanitizePlainText(rawResponse));
     } on FirebaseFunctionsException catch (e) {
       // Backend'den "resource-exhausted" gelirse (kota doldu), mesajı kullanıcıya göster
-      final isRateLimit = e.code == 'resource-exhausted' ||
-          e.code == 'unavailable' ||
-          (e.message?.contains('429') ?? false);
-
-      // Kota dolmuş mesajı içeriyorsa retry yapma (aylık limit)
+      final isRateLimit = e.code == 'resource-exhausted' || e.code == 'unavailable' || (e.message?.contains('429') ?? false);
       final isQuotaExceeded = e.message?.contains('limitinize') ?? false;
-
       if (isRateLimit && !isQuotaExceeded && retryCount < maxRetries) {
-        // Exponential backoff: 2s, 4s, 8s
         final delaySeconds = (retryCount + 1) * 2;
         await Future.delayed(Duration(seconds: delaySeconds));
         return _callGemini(prompt, expectJson: expectJson, temperature: temperature, model: model, requestType: requestType, retryCount: retryCount + 1);
       }
 
-      // Kullanıcı dostu hata mesajları
       String msg;
       if (e.code == 'resource-exhausted') {
-        // Backend'den gelen "Aylık X limitiniz doldu" mesajını kullan
         msg = e.message ?? 'İstek limitiniz doldu.';
       } else if (isRateLimit) {
         msg = 'AI sistemi çok yoğun. Lütfen birkaç saniye bekleyip tekrar deneyin.';
@@ -297,7 +298,7 @@ class AiService {
       } else {
         msg = 'AI hizmeti hatası. Lütfen tekrar deneyin.';
       }
-      return expectJson ? jsonEncode({'error': msg}) : 'Hata: $msg';
+      return expectJson ? jsonEncode({'error': msg}) : msg;
     } on TimeoutException {
       if (retryCount < maxRetries) {
         final delaySeconds = (retryCount + 1) * 2;
@@ -305,10 +306,10 @@ class AiService {
         return _callGemini(prompt, expectJson: expectJson, temperature: temperature, model: model, requestType: requestType, retryCount: retryCount + 1);
       }
       final msg = 'AI yanıtı çok uzun sürdü. Lütfen tekrar deneyin.';
-      return expectJson ? jsonEncode({'error': msg}) : 'Hata: $msg';
-    } catch (e) {
-      final msg = 'Bağlantı hatası. İnternet bağlantınızı kontrol edin.';
-      return expectJson ? jsonEncode({'error': msg}) : 'Hata: $msg';
+      return expectJson ? jsonEncode({'error': msg}) : msg;
+    } catch (_) {
+      final msg = 'Şu an bağlantıda bir sorun var sanırım. Birazdan tekrar deneyelim mi?';
+      return expectJson ? jsonEncode({'error': msg}) : msg;
     }
   }
 
@@ -377,8 +378,7 @@ class AiService {
 
         prompt = StrategyPrompts.getYksPrompt(
             userId: user.id, selectedExamSection: displaySection,
-            daysUntilExam: daysUntilExam, goal: user.goal ?? '',
-            challenges: user.challenges, pacing: pacing,
+            daysUntilExam: daysUntilExam, pacing: pacing,
             testCount: user.testCount, avgNet: avgNet,
             subjectAverages: subjectAverages,
             availabilityJson: availabilityJson,
@@ -696,7 +696,16 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
     return jsonEncode(guardrails);
   }
 
-  Future<String> generateStudyGuideAndQuiz(UserModel user, List<TestModel> tests, PerformanceSummary performance, {Map<String, String>? topicOverride, String difficulty = 'normal', int attemptCount = 1, double? temperature}) async {
+  Future<String> generateStudyGuideAndQuiz(
+    UserModel user,
+    List<TestModel> tests,
+    PerformanceSummary performance, {
+    Map<String, String>? topicOverride,
+    String difficulty = 'normal',
+    int attemptCount = 1,
+    double? temperature,
+    dynamic contentType, // WorkshopContentType (dynamic to avoid import)
+  }) async {
     // Eğer test yoksa hemen hata döndürme: bazı yeni hesaplarda konu performansı (ör. manuel veri) olabilir.
     if (tests.isEmpty) {
       final hasTopicData = performance.topicPerformances.values.any((subjectMap) => subjectMap.values.any((t) => (t.questionCount ?? 0) > 0));
@@ -737,7 +746,21 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
       }
     }
 
-    final prompt = getStudyGuideAndQuizPrompt(weakestSubject, weakestTopic, user.selectedExam, difficulty, attemptCount);
+    // ContentType'ı stringe çevir
+    String contentTypeStr = 'both';
+    if (contentType != null) {
+      final typeStr = contentType.toString().split('.').last;
+      contentTypeStr = typeStr; // quizOnly, studyOnly, both
+    }
+
+    final prompt = getStudyGuideAndQuizPrompt(
+      weakestSubject,
+      weakestTopic,
+      user.selectedExam,
+      difficulty,
+      attemptCount,
+      contentType: contentTypeStr,
+    );
 
     // temperature parametresini _callGemini'ye geçir
     return _callGemini(prompt, expectJson: true, temperature: temperature, requestType: 'workshop');
@@ -750,168 +773,101 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
     required String promptType,
     required String? emotion,
     Map<String, dynamic>? workshopContext,
-    // YENI: sohbet geçmişi ve son kullanıcı mesajı
     String conversationHistory = '',
     String lastUserMessage = '',
   }) async {
     final examType = user.selectedExam != null ? ExamType.values.byName(user.selectedExam!) : null;
-    // KALDIRILDI: examData kullanılmıyordu
-    // Önbellekli analiz (varsa)
     final analysis = _ref.read(overallStatsAnalysisProvider).value;
 
-    // HAFIZA OPTİMİZASYONU: Sadece derinlemesine sohbet gerektiren modlar hafıza kullanır
-    final bool shouldUseMemory =
-        promptType == 'strategy_consult' ||
-            promptType == 'psych_support' ||
-            promptType == 'user_chat' ||
-            promptType == 'trial_review';
+    final bool shouldUseMemory = ['strategy_consult', 'psych_support', 'user_chat', 'trial_review', 'motivation_corner'].contains(promptType);
 
-    // Kalıcı bellek: Sadece gerekli modlar için yükle
+    // Eğer UI'dan history gelmediyse, DB'den çek
+    String historyToUse = conversationHistory;
     String mem = '';
-    if (shouldUseMemory) {
+    if (shouldUseMemory && historyToUse.trim().isEmpty) {
       mem = await _getChatMemory(user.id, promptType);
+      historyToUse = mem;
     }
 
-    // DÜZELTME: Eğer UI'dan conversationHistory geliyorsa, mem'i ekleme (tekrarı önle).
-    // Eğer conversationHistory boşsa (ilk açılış gibi), o zaman mem'i kullan.
-    String combinedHistory;
-    if (conversationHistory.trim().isNotEmpty) {
-      combinedHistory = conversationHistory.trim();
-    } else {
-      combinedHistory = mem.trim();
-    }
-
-    // Yeni: Dört mod için özel promptlar + default akışın modüler hali
     String prompt;
-    int maxSentences = 3;
+
+    // Chat türüne göre dinamik temperature
+    double chatTemperature = 0.75;
+
     switch (promptType) {
       case 'trial_review':
-        prompt = MotivationSuitePrompts.trialReview(
+        prompt = TrialReviewPrompt.build(
           user: user,
           tests: tests,
           analysis: analysis,
           performance: performance,
           examName: examType?.displayName,
-          conversationHistory: combinedHistory,
+          conversationHistory: historyToUse,
           lastUserMessage: lastUserMessage,
         );
-        maxSentences = 5;
+        chatTemperature = 0.65;
         break;
       case 'strategy_consult':
-        prompt = MotivationSuitePrompts.strategyConsult(
+        prompt = StrategyConsultPrompt.build(
           user: user,
           tests: tests,
           analysis: analysis,
           performance: performance,
           examName: examType?.displayName,
-          conversationHistory: combinedHistory,
+          conversationHistory: historyToUse,
           lastUserMessage: lastUserMessage,
         );
-        maxSentences = 5;
+        chatTemperature = 0.6;
         break;
       case 'psych_support':
-        prompt = MotivationSuitePrompts.psychSupport(
+        prompt = PsychSupportPrompt.build(
           user: user,
           examName: examType?.displayName,
           emotion: emotion,
-          conversationHistory: combinedHistory,
+          conversationHistory: historyToUse,
           lastUserMessage: lastUserMessage,
         );
-        maxSentences = 5;
+        chatTemperature = 1.0; // MAKSİMUM DOĞALLIK VE YARATICILIK
         break;
       case 'motivation_corner':
-        prompt = MotivationSuitePrompts.motivationCorner(
+        prompt = MotivationCornerPrompt.build(
           user: user,
           examName: examType?.displayName,
-          conversationHistory: combinedHistory,
+          conversationHistory: historyToUse,
           lastUserMessage: lastUserMessage,
         );
-        maxSentences = 5;
-        break;
-      case 'welcome':
-        prompt = DefaultMotivationPrompts.welcome(
-          user: user,
-          tests: tests,
-          analysis: analysis,
-          examName: examType?.displayName,
-          conversationHistory: combinedHistory,
-          lastUserMessage: lastUserMessage,
-        );
-        break;
-      case 'new_test_bad':
-        prompt = DefaultMotivationPrompts.newTestBad(
-          user: user,
-          tests: tests,
-          analysis: analysis,
-          examName: examType?.displayName,
-          conversationHistory: combinedHistory,
-          lastUserMessage: lastUserMessage,
-        );
-        break;
-      case 'new_test_good':
-        prompt = DefaultMotivationPrompts.newTestGood(
-          user: user,
-          tests: tests,
-          analysis: analysis,
-          examName: examType?.displayName,
-          conversationHistory: combinedHistory,
-          lastUserMessage: lastUserMessage,
-        );
-        break;
-      case 'proactive_encouragement':
-        prompt = DefaultMotivationPrompts.proactiveEncouragement(
-          user: user,
-          tests: tests,
-          analysis: analysis,
-          examName: examType?.displayName,
-          conversationHistory: combinedHistory,
-          lastUserMessage: lastUserMessage,
-        );
-        break;
-      case 'workshop_review':
-        prompt = DefaultMotivationPrompts.workshopReview(
-          user: user,
-          tests: tests,
-          analysis: analysis,
-          examName: examType?.displayName,
-          workshopContext: workshopContext,
-          conversationHistory: combinedHistory,
-          lastUserMessage: lastUserMessage,
-        );
-        break;
-      case 'user_chat':
-        prompt = DefaultMotivationPrompts.userChat(
-          user: user,
-          tests: tests,
-          analysis: analysis,
-          examName: examType?.displayName,
-          conversationHistory: combinedHistory,
-          lastUserMessage: lastUserMessage,
-        );
+        chatTemperature = 0.95; // YÜKSEK ENERJİ İÇİN YÜKSEK ISI
         break;
       default:
+        // Diğer durumlar için fallback
         prompt = DefaultMotivationPrompts.userChat(
           user: user,
           tests: tests,
           analysis: analysis,
           examName: examType?.displayName,
-          conversationHistory: combinedHistory,
+          conversationHistory: historyToUse,
           lastUserMessage: lastUserMessage,
         );
         break;
     }
 
-    // Daha deterministik yanıtlar için sıcaklık düşürüldü
     final raw = await _callGemini(
       prompt,
       expectJson: false,
-      temperature: 0.4,
-      requestType: 'chat', // Sohbet kotasından düş
+      temperature: chatTemperature,
+      requestType: 'chat',
     );
 
-    // HAFIZA OPTİMİZASYONU: Belleği sadece hafıza kullanan modlarda güncelle
     if (shouldUseMemory) {
-      unawaited(_updateChatMemory(user.id, promptType, lastUserMessage: lastUserMessage, aiResponse: raw, previous: mem));
+      unawaited(
+        _updateChatMemory(
+          user.id,
+          promptType,
+          lastUserMessage: lastUserMessage,
+          aiResponse: raw,
+          previous: mem,
+        ),
+      );
     }
 
     return raw;
@@ -955,3 +911,4 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
     }
   }
 }
+

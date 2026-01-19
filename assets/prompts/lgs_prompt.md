@@ -33,8 +33,8 @@ Bu öğrencinin LGS başarısı için okul sonrası ve hafta sonu zamanını mak
 ### 4. MÜFREDAT SIRASI TAKİBİ
 - Aşağıdaki aday konu listesinden seç: {{CURRICULUM_JSON}}
 - Backlog varsa önce onu tamamla: {{GUARDRAILS_JSON}}
-- Kırmızı/sarı konuları önceliklendir
-- Yeşil konular için sadece review
+- Ders ortalamaları düşük olan konuları önceliklendir
+- Gelişim gösteren konular için pekiştirme tekrarları
 
 ### 5. TEMPO UYUMU (PACING)
 - **intense**: Müsait zamanın %90'ını doldur (çok çalışkan)
@@ -86,8 +86,6 @@ Her görevin tipi şunlardan biri olmalı:
 - Öğrenci ID: {{USER_ID}}
 - Sınav: LGS
 - Sınava Kalan Gün: {{DAYS_UNTIL_EXAM}}
-- Hedef Okul: {{GOAL}}
-- Zorluklar: {{CHALLENGES}}
 - Tempo Tercihi: {{PACING}}
 - Toplam Deneme: {{TEST_COUNT}}
 - Ortalama Net: {{AVG_NET}}

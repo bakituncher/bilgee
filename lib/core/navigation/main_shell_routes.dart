@@ -23,7 +23,7 @@ import 'package:taktik/features/profile/models/badge_model.dart' as app_badge;
 import 'package:taktik/features/stats/screens/stats_screen.dart';
 import 'package:taktik/features/strategic_planning/screens/strategic_planning_screen.dart';
 import 'package:taktik/features/strategic_planning/screens/strategy_review_screen.dart';
-import 'package:taktik/features/weakness_workshop/models/saved_workshop_model.dart';
+import 'package:taktik/features/weakness_workshop/models/workshop_model.dart';
 import 'package:taktik/features/weakness_workshop/screens/saved_workshop_detail_screen.dart';
 import 'package:taktik/features/weakness_workshop/screens/saved_workshops_screen.dart';
 import 'package:taktik/features/weakness_workshop/screens/weakness_workshop_screen.dart';
@@ -180,7 +180,7 @@ StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
                       parentNavigatorKey: rootNavigatorKey,
                       pageBuilder: (context, state) {
                         final workshop =
-                        state.extra as SavedWorkshopModel;
+                        state.extra as WorkshopModel;
                         return buildPageWithFadeTransition(context: context, state: state, child: SavedWorkshopDetailScreen(
                             workshop: workshop));
                       },

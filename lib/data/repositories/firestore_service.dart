@@ -8,7 +8,7 @@ import 'package:taktik/data/models/test_model.dart';
 import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/data/models/topic_performance_model.dart';
 import 'package:taktik/data/models/focus_session_model.dart';
-import 'package:taktik/features/weakness_workshop/models/saved_workshop_model.dart';
+import 'package:taktik/features/weakness_workshop/models/workshop_model.dart';
 import 'package:taktik/data/models/plan_document.dart';
 import 'package:taktik/data/models/performance_summary.dart';
 import 'package:taktik/data/models/app_state.dart';
@@ -335,7 +335,7 @@ class FirestoreService {
     }
   }
 
-  Future<void> saveWorkshopForUser(String userId, SavedWorkshopModel workshop) async {
+  Future<void> saveWorkshopForUser(String userId, WorkshopModel workshop) async {
     final userDocRef = usersCollection.doc(userId);
     final workshopCollectionRef = userDocRef.collection('savedWorkshops');
     await workshopCollectionRef.doc(workshop.id).set(workshop.toMap());
@@ -349,13 +349,46 @@ class FirestoreService {
         .delete();
   }
 
-  Stream<List<SavedWorkshopModel>> getSavedWorkshops(String userId) {
+  Stream<List<WorkshopModel>> getSavedWorkshops(String userId) {
     return usersCollection
         .doc(userId)
         .collection('savedWorkshops')
         .orderBy('savedDate', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => SavedWorkshopModel.fromSnapshot(doc)).toList());
+        .map((snapshot) => snapshot.docs.map((doc) => WorkshopModel.fromSnapshot(doc)).toList());
+  }
+
+  /// Kullanıcının workshop serisini (streak) günceller.
+  /// İş mantığı (Business Logic) burada döner, UI sadece çağırır.
+  Future<int> updateUserWorkshopStreak(String userId, Timestamp? lastWorkshopDate, int currentStreak) async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    int newStreak = currentStreak;
+
+    if (lastWorkshopDate == null) {
+      newStreak = 1;
+    } else {
+      final last = lastWorkshopDate.toDate();
+      final lastDay = DateTime(last.year, last.month, last.day);
+      final diff = today.difference(lastDay).inDays;
+
+      if (diff == 1) {
+        // Dün yapmış, seri devam ediyor
+        newStreak += 1;
+      } else if (diff > 1) {
+        // Zinciri kırmış, baştan başla
+        newStreak = 1;
+      }
+      // diff == 0 ise (bugün zaten yapmışsa) streak değişmez.
+    }
+
+    await usersCollection.doc(userId).update({
+      'workshopStreak': newStreak,
+      'lastWorkshopDate': FieldValue.serverTimestamp(),
+    });
+
+    return newStreak;
   }
 
   Future<void> createUserProfile({
