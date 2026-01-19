@@ -37,6 +37,13 @@ Sorular zorlayıcı olmalı ama ÖĞRENCİNİN SEVİYESİNE UYGUN.
 - GY: Sözel/Sayısal mantık, zaman yönetimi, çeldirici analizi
 - GK: Ezber teknikleri, kronoloji, coğrafi ilişkiler
 - Çalışan adaylar için: Verimli, yoğun içerik
+
+🎓 MÜFREDAT SINIRI:
+- SADECE KPSS müfredatındaki konular
+- Lisans seviyesi bilgi yeterli
+- Lisansüstü/akademik detaylar YASAK
+- Örnek YASAK: "Kuantum fiziği detayları"
+- Örnek OK: "Genel fizik prensipleri"
 """;
   } else if (examLower.contains('yks') || examLower.contains('tyt') || examLower.contains('ayt') || examLower.contains('ydt')) {
     examGuidelines = """
@@ -57,13 +64,11 @@ Sorular zorlayıcı olmalı ama ÖĞRENCİNİN SEVİYESİNE UYGUN.
 - Motivasyon: "Sen yapabilirsin" mesajı
 - İNGİLİZCE SORULARINDA: A1-A2 seviyesi MAX, günlük dil
 """;
-  } else if (examLower.contains('dgs') || examLower.contains('ales')) {
+  } else if (examLower.contains('ags')) {
     examGuidelines = """
-**DGS/ALES ÖZEL TALİMATLAR:**
-- Önlisans/Lisans seviyesi akademik dil
-- Sözel/Sayısal mantık odaklı
-- Hızlı çözüm teknikleri
-- Yetişkin öğrenci: Verimli, pratik içerik
+**AGS (AKADEMİ GİRİŞ SINAVI) ÖZEL TALİMATLAR:**
+- MEB Öğretmen Adayları için (2025-2026 sistemi)
+- Akademik ve profesyonel ton
 """;
   } else {
     examGuidelines = "**GENEL:** Profesyonel, sınav odaklı yaklaşım. Net çözüm ve strateji.";
