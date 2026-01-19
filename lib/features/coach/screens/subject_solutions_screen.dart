@@ -3,16 +3,15 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taktik/features/coach/models/saved_solution_model.dart';
+import 'package:taktik/features/coach/providers/saved_solutions_provider.dart';
 import 'package:taktik/features/coach/screens/saved_solution_detail_screen.dart';
 
 class SubjectSolutionsScreen extends ConsumerWidget {
   final String subject;
-  final List<SavedSolutionModel> solutions;
 
   const SubjectSolutionsScreen({
     super.key,
     required this.subject,
-    required this.solutions,
   });
 
   // --- Türkçe Tarih Formatlayıcı ---
@@ -69,6 +68,19 @@ class SubjectSolutionsScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final subjectColor = _getSubjectColor(subject);
     final subjectIcon = _getSubjectIcon(subject);
+
+    // Provider'dan tüm solutions'ı al ve subject'e göre filtrele
+    final allSolutions = ref.watch(savedSolutionsProvider);
+    final solutions = allSolutions.where((s) => s.subject == subject).toList();
+
+    // Eğer hiç soru kalmamışsa geri git
+    if (solutions.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) {
+          Navigator.pop(context);
+        }
+      });
+    }
 
     // Tarihe göre sırala (en yeni en üstte)
     final sortedSolutions = List<SavedSolutionModel>.from(solutions)

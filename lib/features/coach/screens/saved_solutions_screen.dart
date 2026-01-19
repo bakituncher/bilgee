@@ -746,7 +746,6 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
                 pageBuilder: (context, animation, secondaryAnimation) =>
                     SubjectSolutionsScreen(
                       subject: subject,
-                      solutions: subjectSolutions,
                     ),
                 transitionDuration: Duration.zero,
                 reverseTransitionDuration: Duration.zero,
