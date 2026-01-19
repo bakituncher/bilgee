@@ -250,7 +250,21 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
                   } else if(_currentStep == WorkshopStep.results){
                     setState(() => _currentStep = WorkshopStep.quiz);
                   } else if(_currentStep == WorkshopStep.quiz){
-                    setState(() => _currentStep = WorkshopStep.study);
+                    // Quiz'den geri dönüş: contentType'a göre karar ver
+                    final contentType = ref.read(_contentTypeProvider);
+                    if (contentType == 'quizOnly') {
+                      // Sadece quiz modundaysa content selection'a dön
+                      setState(() => _currentStep = WorkshopStep.contentSelection);
+                    } else {
+                      // Study varsa study'e dön
+                      setState(() => _currentStep = WorkshopStep.study);
+                    }
+                  } else if(_currentStep == WorkshopStep.study){
+                    // Study'den content selection'a dön
+                    setState(() => _currentStep = WorkshopStep.contentSelection);
+                  } else if(_currentStep == WorkshopStep.contentSelection){
+                    // Content selection'dan briefing'e dön
+                    _resetToBriefing();
                   } else {
                     _resetToBriefing();
                   }
@@ -1213,6 +1227,74 @@ class _QuizViewState extends State<_QuizView> {
             minHeight: 6,
           ),
         ),
+
+        // Soru navigasyon butonları
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18.0, vertical: 8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Geri butonu
+              IconButton.outlined(
+                onPressed: _currentPage > 0
+                    ? () {
+                        _pageController.previousPage(
+                          duration: 300.ms,
+                          curve: Curves.easeOutCubic,
+                        );
+                      }
+                    : null,
+                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+                tooltip: 'Önceki Soru',
+                style: IconButton.styleFrom(
+                  backgroundColor: _currentPage > 0
+                      ? Theme.of(context).colorScheme.surface
+                      : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                ),
+              ),
+
+              // Soru göstergesi
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  'Soru ${_currentPage + 1}/$quizLength',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+
+              // İleri butonu
+              IconButton.outlined(
+                onPressed: _currentPage < quizLength - 1
+                    ? () {
+                        _pageController.nextPage(
+                          duration: 300.ms,
+                          curve: Curves.easeOutCubic,
+                        );
+                      }
+                    : null,
+                icon: const Icon(Icons.arrow_forward_ios_rounded, size: 18),
+                tooltip: 'Sonraki Soru',
+                style: IconButton.styleFrom(
+                  backgroundColor: _currentPage < quizLength - 1
+                      ? Theme.of(context).colorScheme.surface
+                      : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                ),
+              ),
+            ],
+          ),
+        ),
+
         Expanded(
           child: PageView.builder(
             controller: _pageController,
