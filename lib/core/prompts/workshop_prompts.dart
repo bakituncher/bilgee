@@ -72,12 +72,15 @@ Sorular zorlayıcı olmalı ama ÖĞRENCİNİN SEVİYESİNE UYGUN.
   // Tüm Cevher Atölyesi için 5 şık zorunluluğu (A-E)
   const fiveChoiceRule = "✅ ZORUNLU: Her soruda TAM 5 ŞIK (A, B, C, D, E). JSON'da optionA-E alanları. correctOptionIndex 0-4.";
 
-  // KISALTILMIŞ KURALLAR + AÇIKLAMA UZUNLUĞU KISITLAMASI
+  // KISALTILMIŞ KURALLAR + AÇIKLAMA UZUNLUĞU KISITLAMASI + DİL KONTROLÜ
+  final languageControl = _getLanguageControl(weakestSubject);
+
   final compactRules = """
 📏 KURALLAR:
 - StudyGuide max 650 kelime
 - Quiz açıklamaları max 30-35 kelime (MUTLAK SINIR)
 - Açıklamalar: Doğrudan, kısa, öz. Gereksiz lafı kes.
+$languageControl
 - Şıklar ayırt edilebilir, cevap sızdırma yasak
 $examGuidelines
 """;
@@ -157,6 +160,30 @@ YDT İÇİN ZORLUK KURALLARI:
   }
 
   return 'Sınav seviyesine uygun zorlayıcı sorular.';
+}
+
+// Ders bazlı dil kontrolü
+String _getLanguageControl(String subject) {
+  final subjectLower = subject.toLowerCase();
+
+  // İngilizce dersi ise özel kontrol yok
+  if (subjectLower.contains('i̇ngilizce') ||
+      subjectLower.contains('ingilizce') ||
+      subjectLower.contains('english')) {
+    return '';
+  }
+
+  // Tüm diğer dersler için TÜRKÇE zorunlu
+  return """
+🇹🇷 DİL KONTROLÜ - KRİTİK:
+- Ders: "$subject" - Bu TÜRKÇE bir derstir.
+- SORU, ŞIK ve AÇIKLAMALAR TAMAMEN TÜRKÇE OLMALI.
+- İngilizce kelime, cümle veya ifade KESİNLİKLE YASAK.
+- Matematik/Fizik/Kimya/Biyoloji formülleri ve sembolleri OK, ama açıklamalar Türkçe.
+- Örnek YANLIŞ: "velocity", "force", "equation" 
+- Örnek DOĞRU: "hız", "kuvvet", "denklem"
+⚠️ BU KURALDAN SAPMA = GÖREV BAŞARISIZLIĞI
+""";
 }
 
 String _getTaskByContentType(String contentType, String subject, String topic, String fiveChoiceRule) {
