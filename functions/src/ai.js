@@ -246,9 +246,9 @@ exports.generateGemini = onCall(
 
       // Retry mekanizması ile Gemini API çağrısı
       const { resp, data } = await retryWithBackoff(async () => {
-        // Zaman aşımı kontrolü (55s):
+        // Zaman aşımı kontrolü (280s):
         const ac = new AbortController();
-        const t = setTimeout(() => ac.abort(), 55_000);
+        const t = setTimeout(() => ac.abort(), 280_000);
 
         const response = await fetch(url, {
           method: "POST",

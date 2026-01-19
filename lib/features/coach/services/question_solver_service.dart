@@ -38,7 +38,7 @@ class QuestionSolverService {
             // Daha doğal ve insansı bir ton için sıcaklığı biraz artırdık (0.4 -> 0.5)
             'temperature': 0.5,
           })
-          .timeout(const Duration(seconds: 70));
+          .timeout(const Duration(minutes: 5));
 
       final data = result.data;
       final rawResponse = (data is Map && data['raw'] is String) ? (data['raw'] as String).trim() : '';
@@ -135,7 +135,7 @@ Konuşma dilin doğal, "biz bize" tarzında olsun.
         'expectJson': false,
         'requestType': 'chat',
         'temperature': 0.5,
-        'maxOutputTokens': 4096, // 1024'ten 4096'ya çıkarıldı
+        'maxOutputTokens': 8192,
       });
 
       final data = result.data;
