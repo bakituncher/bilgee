@@ -452,6 +452,10 @@ class _NotificationDetailSheet extends ConsumerWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
                   onPressed: () async {
                     Navigator.of(context).maybePop();
 
@@ -490,8 +494,13 @@ class _NotificationDetailSheet extends ConsumerWidget {
                       context.go(item.route);
                     }
                   },
-                  icon: const Icon(Icons.open_in_new_rounded),
-                  label: const Text('İlgili sayfayı aç'),
+                  icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                  label: const Text(
+                    'İlgili sayfayı aç',
+                    maxLines: 1,
+                    softWrap: false,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ),
             ],

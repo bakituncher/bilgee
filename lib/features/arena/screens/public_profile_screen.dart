@@ -1,5 +1,4 @@
 // lib/features/arena/screens/public_profile_screen.dart
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
@@ -7,12 +6,11 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/services.dart';
 import 'package:taktik/features/profile/logic/rank_service.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter/rendering.dart';
 import 'package:taktik/shared/widgets/app_loader.dart';
-import 'package:taktik/features/profile/widgets/user_moderation_menu.dart';
+import 'package:taktik/data/providers/moderation_providers.dart';
+import 'package:taktik/features/profile/widgets/user_report_dialog.dart';
 
 // Bu provider, ID'ye göre tek bir kullanıcı profili getirmek için kullanılır.
 final publicUserProfileProvider = FutureProvider.family.autoDispose<Map<String, dynamic>?, String>((ref, userId) async {
@@ -37,41 +35,6 @@ class PublicProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
-  final GlobalKey _shareKey = GlobalKey();
-  bool _sharing = false;
-
-  Future<void> _shareProfileImage() async {
-    if (_sharing) return;
-    setState(() => _sharing = true);
-    try {
-      final boundary = _shareKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
-      if (boundary == null) return;
-      final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-      if (byteData == null) return;
-      final bytes = byteData.buffer.asUint8List();
-      final xfile = XFile.fromData(bytes, name: 'warrior_card.png', mimeType: 'image/png');
-
-      // iOS için sharePositionOrigin gerekli
-      final box = context.findRenderObject() as RenderBox?;
-      final sharePositionOrigin = box != null
-          ? box.localToGlobal(Offset.zero) & box.size
-          : null;
-
-      // ignore: deprecated_member_use
-      await Share.shareXFiles(
-        [xfile],
-        text: 'Savaşçı Künyem',
-        sharePositionOrigin: sharePositionOrigin,
-      );
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Paylaşım hatası: $e')));
-      }
-    } finally {
-      if (mounted) setState(() => _sharing = false);
-    }
-  }
 
   void _showPublicAchievements(BuildContext context, {required String displayName, required int testCount, required int streak, required int engagement}) {
     showModalBottomSheet(
@@ -133,6 +96,110 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
     );
   }
 
+  void _showModerationMenu(BuildContext context, String targetUserId, String displayName) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Theme.of(context).cardColor,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(child: Container(width: 36, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(4)))),
+              const SizedBox(height: 12),
+              Text('Kullanıcı Ayarları', style: Theme.of(ctx).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: Icon(Icons.block, color: colorScheme.error),
+                title: const Text('Kullanıcıyı Engelle'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _blockUser(targetUserId, displayName);
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.flag_outlined, color: colorScheme.error),
+                title: const Text('Kullanıcıyı Raporla'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _reportUser(targetUserId, displayName);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _blockUser(String targetUserId, String displayName) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Kullanıcıyı Engelle'),
+        content: Text('$displayName kullanıcısını engellemek istediğinizden emin misiniz?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('İptal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Engelle'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    try {
+      final service = ref.read(moderationServiceProvider);
+      await service.blockUser(targetUserId);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Kullanıcı başarıyla engellendi')),
+      );
+
+      ref.invalidate(blockedUsersProvider);
+      ref.invalidate(isUserBlockedProvider(targetUserId));
+      ref.invalidate(blockStatusProvider(targetUserId));
+
+      Navigator.of(context).pop();
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Hata: ${e.toString()}')),
+      );
+    }
+  }
+
+  Future<void> _reportUser(String targetUserId, String displayName) async {
+    // UserReportDialog'u import edelim ve kullanıcıyı raporlama işlemini yapalım
+    final reported = await showUserReportDialog(
+      context,
+      targetUserId: targetUserId,
+      targetUserName: displayName,
+    );
+
+    if (reported == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Kullanıcı rapor edildi')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final userProfileAsync = ref.watch(publicUserProfileProvider(widget.userId));
@@ -159,12 +226,12 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                     // GÜVENLİK: Username kullan
                     final username = (data['username'] as String?) ?? '';
                     final displayName = username.isNotEmpty ? '@$username' : 'İsimsiz Savaşçı';
-                    return UserModerationMenu(
-                      targetUserId: widget.userId,
-                      targetUserName: displayName,
-                      onBlocked: () {
-                        // Engelleme sonrası ana ekrana dön
-                        Navigator.of(context).pop();
+                    return _ModernIconButton(
+                      tooltip: 'Diğer',
+                      icon: Icons.more_vert,
+                      onPressed: () {
+                        HapticFeedback.selectionClick();
+                        _showModerationMenu(context, widget.userId, displayName);
                       },
                     );
                   },
@@ -172,11 +239,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                 );
               },
             ),
-          IconButton(
-            tooltip: _sharing ? 'Hazırlanıyor...' : 'Paylaş',
-            onPressed: _sharing ? null : () { HapticFeedback.selectionClick(); _shareProfileImage(); },
-            icon: Icon(Icons.ios_share_rounded, color: Theme.of(context).colorScheme.primary),
-          ),
+          const SizedBox(width: 4),
         ],
       ),
       body: userProfileAsync.when(
@@ -225,10 +288,8 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Spacer(flex: 1),
-                          // Paylaşılabilir kart
-                          RepaintBoundary(
-                            key: _shareKey,
-                            child: followCountsAsync.when(
+                          // Profil kartı
+                          followCountsAsync.when(
                               data: (counts) => _ShareableProfileCard(
                                 displayName: displayName,
                                 avatarStyle: avatarStyle,
@@ -240,6 +301,18 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                                 streak: streak,
                                 followerCount: counts.$1,
                                 followingCount: counts.$2,
+                                currentUserId: me?.uid,
+                                targetUserId: widget.userId,
+                                engagement: engagement,
+                                onShowAchievements: () {
+                                  HapticFeedback.selectionClick();
+                                  _showPublicAchievements(context,
+                                    displayName: displayName,
+                                    testCount: testCount,
+                                    streak: streak,
+                                    engagement: engagement,
+                                  );
+                                },
                               ),
                               loading: () => _ShareableProfileCard(
                                 displayName: displayName,
@@ -252,6 +325,18 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                                 streak: streak,
                                 followerCount: 0,
                                 followingCount: 0,
+                                currentUserId: me?.uid,
+                                targetUserId: widget.userId,
+                                engagement: engagement,
+                                onShowAchievements: () {
+                                  HapticFeedback.selectionClick();
+                                  _showPublicAchievements(context,
+                                    displayName: displayName,
+                                    testCount: testCount,
+                                    streak: streak,
+                                    engagement: engagement,
+                                  );
+                                },
                               ),
                               error: (e, s) => _ShareableProfileCard(
                                 displayName: displayName,
@@ -264,35 +349,20 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                                 streak: streak,
                                 followerCount: 0,
                                 followingCount: 0,
+                                currentUserId: me?.uid,
+                                targetUserId: widget.userId,
+                                engagement: engagement,
+                                onShowAchievements: () {
+                                  HapticFeedback.selectionClick();
+                                  _showPublicAchievements(context,
+                                    displayName: displayName,
+                                    testCount: testCount,
+                                    streak: streak,
+                                    engagement: engagement,
+                                  );
+                                },
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 16),
-                          // Takip Et butonu
-                          if (me?.uid != widget.userId)
-                            SizedBox(
-                              width: double.infinity,
-                              child: _FollowButton(targetUserId: widget.userId),
-                            ),
-                          if (me?.uid != widget.userId)
-                            const SizedBox(height: 10),
-                          // Başarılar butonu
-                          SizedBox(
-                            width: double.infinity,
-                            child: _ActionTile(
-                              icon: Icons.emoji_events_outlined,
-                              label: 'Başarılar',
-                              onTap: () {
-                                HapticFeedback.selectionClick();
-                                _showPublicAchievements(context,
-                                  displayName: displayName,
-                                  testCount: testCount,
-                                  streak: streak,
-                                  engagement: engagement,
-                                );
-                              }
-                            ),
-                          ),
                           if (updatedAt != null) ...[
                             const SizedBox(height: 12),
                             Text(
@@ -318,7 +388,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
 }
 
 class _ShareableProfileCard extends StatelessWidget {
-  final String displayName; final String? avatarStyle; final String? avatarSeed; final Color rankColor; final IconData rankIcon; final String rankName; final int testCount; final int streak; final int followerCount; final int followingCount;
+  final String displayName; final String? avatarStyle; final String? avatarSeed; final Color rankColor; final IconData rankIcon; final String rankName; final int testCount; final int streak; final int followerCount; final int followingCount; final String? currentUserId; final String targetUserId; final int engagement; final VoidCallback onShowAchievements;
   const _ShareableProfileCard({
     required this.displayName,
     required this.avatarStyle,
@@ -330,6 +400,10 @@ class _ShareableProfileCard extends StatelessWidget {
     required this.streak,
     required this.followerCount,
     required this.followingCount,
+    required this.currentUserId,
+    required this.targetUserId,
+    required this.engagement,
+    required this.onShowAchievements,
   });
 
   @override
@@ -371,6 +445,25 @@ class _ShareableProfileCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
+          // Takip Et butonu (sadece başkasının profilinde)
+          if (currentUserId != null && currentUserId != targetUserId) ...[
+            SizedBox(
+              width: double.infinity,
+              child: _FollowButton(targetUserId: targetUserId),
+            ),
+            const SizedBox(height: 10),
+          ],
+          // Başarılar butonu
+          SizedBox(
+            width: double.infinity,
+            child: _ActionTile(
+              icon: Icons.emoji_events_outlined,
+              label: 'Başarılar',
+              onTap: onShowAchievements,
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Taktik App logosu en altta
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -693,3 +786,69 @@ class _ActionTileState extends State<_ActionTile> {
     );
   }
 }
+
+class _ModernIconButton extends StatefulWidget {
+  final String? tooltip;
+  final IconData icon;
+  final VoidCallback? onPressed;
+
+  const _ModernIconButton({
+    this.tooltip,
+    required this.icon,
+    this.onPressed,
+  });
+
+  @override
+  State<_ModernIconButton> createState() => _ModernIconButtonState();
+}
+
+class _ModernIconButtonState extends State<_ModernIconButton> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Tooltip(
+        message: widget.tooltip ?? '',
+        child: GestureDetector(
+          onTapDown: widget.onPressed != null ? (_) => setState(() => _isPressed = true) : null,
+          onTapUp: widget.onPressed != null ? (_) {
+            setState(() => _isPressed = false);
+            widget.onPressed?.call();
+          } : null,
+          onTapCancel: () => setState(() => _isPressed = false),
+          child: AnimatedScale(
+            scale: _isPressed ? 0.85 : 1.0,
+            duration: const Duration(milliseconds: 100),
+            curve: Curves.easeOut,
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: _isPressed
+                    ? colorScheme.primaryContainer.withOpacity(0.8)
+                    : colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: colorScheme.outline.withOpacity(0.1),
+                  width: 1,
+                ),
+              ),
+              child: Icon(
+                widget.icon,
+                size: 22,
+                color: widget.onPressed != null
+                    ? colorScheme.onSurface
+                    : colorScheme.onSurface.withOpacity(0.3),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+

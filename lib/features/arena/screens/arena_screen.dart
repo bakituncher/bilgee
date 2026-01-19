@@ -12,7 +12,6 @@ import 'package:flutter/services.dart';
 import 'dart:ui';
 import 'package:taktik/shared/widgets/logo_loader.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
-import 'package:taktik/shared/widgets/ad_banner_widget.dart';
 import 'package:lottie/lottie.dart';
 
 class ArenaScreen extends ConsumerStatefulWidget {
@@ -73,8 +72,26 @@ class _ArenaScreenState extends ConsumerState<ArenaScreen> {
             labelStyle: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
             unselectedLabelStyle: textTheme.bodyLarge,
             tabs: const [
-              Tab(text: 'Günlük Efsaneler'),
-              Tab(text: 'Haftalık Efsaneler'),
+              Tab(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    'Günlük Efsaneler',
+                    maxLines: 1,
+                    softWrap: false,
+                  ),
+                ),
+              ),
+              Tab(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    'Haftalık Efsaneler',
+                    maxLines: 1,
+                    softWrap: false,
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -147,60 +164,52 @@ class _LeaderboardView extends ConsumerWidget {
                   : 1;
 
               final displayList = fullList.take(20).toList();
-              final itemCount = displayList.length + (showCurrentUserAtBottom ? 1 : 0) + 1; // +1 for banner
+              final itemCount = displayList.length + (showCurrentUserAtBottom ? 1 : 0);
 
-              return ListView.builder(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(14, 16, 14, 36),
-                itemCount: itemCount,
-                itemBuilder: (context, index) {
-                  // Banner at the top (hidden for premium users)
-                  if (index == 0) {
-                    final isPremium = currentUser?.isPremium ?? false;
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12.0),
-                      child: AdBannerWidget(
-                        isPremium: isPremium,
-                        dateOfBirth: currentUser?.dateOfBirth,
-                      ),
-                    );
-                  }
+               return ListView.builder(
+                 physics: const AlwaysScrollableScrollPhysics(),
+                 padding: const EdgeInsets.fromLTRB(14, 16, 14, 36),
+                 itemCount: itemCount,
+                 itemBuilder: (context, index) {
+                   if (showCurrentUserAtBottom && index == displayList.length) {
+                     return Padding(
+                       padding: const EdgeInsets.only(top: 20.0),
+                       child: _CurrentUserCard(entry: currentUserEntry),
+                     );
+                   }
 
-                  final adjustedIndex = index - 1; // Adjust for banner
-                  if (showCurrentUserAtBottom && adjustedIndex == displayList.length) {
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 20.0),
-                      child: _CurrentUserCard(entry: currentUserEntry),
-                    );
-                  }
+                   final listIndex = index;
+                   if (listIndex < 0 || listIndex >= displayList.length) {
+                     return const SizedBox.shrink();
+                   }
 
-                  final entry = displayList[adjustedIndex];
-                  return GestureDetector(
-                    onTap: () {
-                      HapticFeedback.selectionClick();
-                      context.push('${AppRoutes.arena}/${entry.userId}');
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: _RankCard(
-                        entry: entry,
-                        rank: entry.rank,
-                        isCurrentUser: entry.userId == currentUserId,
-                        topScore: topScore,
-                      )
-                          .animate()
-                          .fadeIn(
-                          duration: 350.ms,
-                          delay: (40 * (index % 10)).ms)
-                          .slideX(
-                          begin: index.isEven ? -0.06 : 0.06,
-                          end: 0,
-                          duration: 420.ms,
-                          curve: Curves.easeOutCubic),
-                    ),
-                  );
-                },
-              );
+                   final entry = displayList[listIndex];
+                   return GestureDetector(
+                     onTap: () {
+                       HapticFeedback.selectionClick();
+                       context.push('${AppRoutes.arena}/${entry.userId}');
+                     },
+                     child: Padding(
+                       padding: const EdgeInsets.only(bottom: 8.0),
+                       child: _RankCard(
+                         entry: entry,
+                         rank: entry.rank,
+                         isCurrentUser: entry.userId == currentUserId,
+                         topScore: topScore,
+                       )
+                           .animate()
+                           .fadeIn(
+                           duration: 350.ms,
+                           delay: (40 * (listIndex % 10)).ms)
+                           .slideX(
+                           begin: listIndex.isEven ? -0.06 : 0.06,
+                           end: 0,
+                           duration: 420.ms,
+                           curve: Curves.easeOutCubic),
+                     ),
+                   );
+                 },
+               );
             },
             loading: () => const LogoLoader(),
             error: (err, stack) =>
@@ -663,5 +672,3 @@ class _RankCard extends ConsumerWidget {
     );
   }
 }
-
-

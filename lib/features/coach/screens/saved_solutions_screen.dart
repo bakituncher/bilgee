@@ -8,6 +8,7 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:taktik/core/utils/exam_utils.dart';
@@ -16,6 +17,7 @@ import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/coach/models/saved_solution_model.dart';
 import 'package:taktik/features/coach/providers/saved_solutions_provider.dart';
 import 'package:taktik/features/coach/screens/subject_solutions_screen.dart';
+import 'package:taktik/utils/subject_utils.dart';
 
 class SavedSolutionsScreen extends ConsumerStatefulWidget {
   final bool isSelectionMode; // Ders seçim modu aktif mi?
@@ -40,6 +42,7 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
   final _cropController = CropController();
   bool _isCropping = false; // Kırpma işlemi işleniyor mu? (Loading)
   bool _isLoading = false; // Genel yükleme
+  int _rotationAngle = 0; // Döndürme açısı
 
   @override
   void dispose() {
@@ -263,7 +266,44 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
     setState(() {
       _rawImageBytes = null;
       _isLoading = false;
+      _rotationAngle = 0; // Döndürme açısını sıfırla
     });
+  }
+
+  // Resmi 90 derece sağa döndürme
+  Future<void> _rotateImage() async {
+    if (_rawImageBytes == null) return;
+
+    setState(() => _isCropping = true);
+
+    try {
+      // Resmi decode et
+      img.Image? image = img.decodeImage(_rawImageBytes!);
+      if (image == null) {
+        throw Exception('Resim işlenemedi');
+      }
+
+      // 90 derece sağa döndür
+      image = img.copyRotate(image, angle: 90);
+
+      // Encode et
+      final rotatedBytes = Uint8List.fromList(img.encodeJpg(image, quality: 85));
+
+      setState(() {
+        _rawImageBytes = rotatedBytes;
+        _rotationAngle = (_rotationAngle + 90) % 360;
+        _isCropping = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isCropping = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Döndürme hatası: $e')),
+        );
+      }
+    }
   }
 
   // --- DİĞER YARDIMCI FONKSİYONLAR ---
@@ -281,37 +321,6 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
     return grouped;
   }
 
-  IconData _getSubjectIcon(String subject) {
-    if (subject.contains('Matematik')) return Icons.calculate_rounded;
-    if (subject.contains('Fizik')) return Icons.science_rounded;
-    if (subject.contains('Kimya')) return Icons.biotech_rounded;
-    if (subject.contains('Biyoloji')) return Icons.eco_rounded;
-    if (subject.contains('Türkçe')) return Icons.menu_book_rounded;
-    if (subject.contains('Tarih')) return Icons.history_edu_rounded;
-    if (subject.contains('Coğrafya')) return Icons.public_rounded;
-    if (subject.contains('İngilizce') ||
-        subject.contains('Almanca') ||
-        subject.contains('Fransızca')) {
-      return Icons.translate_rounded;
-    }
-    return Icons.folder_rounded;
-  }
-
-  Color _getSubjectColor(String subject, ColorScheme colorScheme) {
-    if (subject.contains('Matematik')) return Colors.blue;
-    if (subject.contains('Fizik')) return Colors.purple;
-    if (subject.contains('Kimya')) return Colors.green;
-    if (subject.contains('Biyoloji')) return Colors.teal;
-    if (subject.contains('Türkçe')) return Colors.red;
-    if (subject.contains('Tarih')) return Colors.brown;
-    if (subject.contains('Coğrafya')) return Colors.lightBlue;
-    if (subject.contains('İngilizce') ||
-        subject.contains('Almanca') ||
-        subject.contains('Fransızca')) {
-      return Colors.orange;
-    }
-    return colorScheme.primary;
-  }
 
   Future<List<String>> _getUserSubjects() async {
     try {
@@ -480,6 +489,7 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
               padding: const EdgeInsets.only(top: 60, bottom: 100),
               child: Center(
                 child: Crop(
+                  key: ValueKey(_rotationAngle), // Döndürme sonrası widget'ı yeniden oluştur
                   image: _rawImageBytes!,
                   controller: _cropController,
                   onCropped: (image) {
@@ -504,13 +514,34 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
                 child: Container(
                   padding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  alignment: Alignment.center,
-                  child: Text(
-                    "Soruyu Kırp",
-                    style: TextStyle(
-                        color: Colors.white.withOpacity(0.9),
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Sol boşluk (denge için)
+                      const SizedBox(width: 48),
+                      // Başlık (Orta)
+                      Expanded(
+                        child: Text(
+                          "Soruyu Kırp",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      // Döndürme Butonu (Sağ Üst)
+                      IconButton(
+                        onPressed: _rotateImage,
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white.withOpacity(0.15),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.all(12),
+                        ),
+                        icon: const Icon(Icons.rotate_right, size: 24),
+                        tooltip: 'Döndür',
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -685,7 +716,6 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
                 pageBuilder: (context, animation, secondaryAnimation) =>
                     SubjectSolutionsScreen(
                       subject: subject,
-                      solutions: subjectSolutions,
                     ),
                 transitionDuration: Duration.zero,
                 reverseTransitionDuration: Duration.zero,
@@ -770,8 +800,8 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
         bool isSelectionMode = false,
         required VoidCallback onTap,
       }) {
-    final subjectColor = _getSubjectColor(subject, theme.colorScheme);
-    final subjectIcon = _getSubjectIcon(subject);
+    final subjectColor = SubjectUtils.getSubjectColor(subject, colorScheme: theme.colorScheme);
+    final subjectIcon = SubjectUtils.getSubjectIcon(subject);
 
     return Card(
       elevation: 2,
