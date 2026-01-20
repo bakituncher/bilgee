@@ -9,13 +9,13 @@ class TestModel {
   final ExamType examType;
   final String sectionName;
   final DateTime date;
-  final Map<String, Map<String, int>> scores; // { 'Türkçe': { 'dogru': 35, 'yanlis': 5, 'bos': 0 } }
+  final Map<String, Map<String, int>> scores;
   final double totalNet;
   final int totalQuestions;
   final int totalCorrect;
   final int totalWrong;
   final int totalBlank;
-  final double penaltyCoefficient; // Net hesaplaması için katsayı
+  final double penaltyCoefficient;
 
   TestModel({
     required this.id,
@@ -33,10 +33,8 @@ class TestModel {
     required this.penaltyCoefficient,
   });
 
-  // Firestore'dan gelen veriyi modele çevirir
   factory TestModel.fromSnapshot(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data()!;
-    // scores map'ini güvenli bir şekilde cast etme işlemi
     final scoresData = (data['scores'] as Map<String, dynamic>).map(
           (key, value) => MapEntry(key, (value as Map<String, dynamic>).cast<String, int>()),
     );
@@ -58,7 +56,6 @@ class TestModel {
     );
   }
 
-  // Modeli Firestore'a yazılacak JSON formatına çevirir
   Map<String, dynamic> toJson() {
     return {
       'userId': userId,
@@ -82,14 +79,11 @@ extension TestModelSummaryX on TestModel {
   bool get isBranchTest {
     // 1. KESİN KURAL: Eğer denemede sadece 1 dersin puanı varsa...
     if (scores.length == 1) {
-      // İSTİSNA: Eğer bu tek ders "Alan Bilgisi" veya "Temel Alan Bilgisi" ise,
-      // bu bir AGS/ÖABT ana sınavıdır. Branş denemesi (ör: matematik testi) sayılmamalıdır.
+      // İSTİSNA: AGS/ÖABT ana sınav parçaları
       final subjectName = scores.keys.first;
       if (subjectName == 'Alan Bilgisi' || subjectName == 'Temel Alan Bilgisi') {
         return false;
       }
-
-      // Diğer tek derslik durumlar (ör: Sadece Fizik çözdüm) branş denemesidir.
       return true;
     }
 
@@ -97,14 +91,21 @@ extension TestModelSummaryX on TestModel {
     final examTypeUpper = examType.name.toUpperCase();
 
     // 2. Ana sınav bölümleri - Kesin liste
-    final mainSections = ['TYT', 'LGS', 'KPSS', 'AGS', 'YDT', 'GENEL', 'TÜMÜ', 'DENEME'];
+    final mainSections = [
+      'TYT', 'LGS', 'KPSS', 'AGS', 'YDT', 'GENEL', 'TÜMÜ', 'DENEME',
+      // AGS/ÖABT: Çoklu ders içeren (Temel Alan + Alan Eğitimi) ana branşlar
+      // Bu branşlar "Branş Denemesi" değil, "Ana Sınav" olarak değerlendirilmeli.
+      'SINIF ÖĞRETMENLIĞI', 'SINIF ÖĞRETMENLİĞİ',
+      'OKUL ÖNCESI', 'OKUL ÖNCESİ',
+      'ÖZEL EĞITIM ÖĞRETMENLIĞI', 'ÖZEL EĞİTİM ÖĞRETMENLİĞİ'
+    ];
 
     // Eğer sectionName direkt sınav türüyle aynıysa (örn: examType: TYT, sectionName: TYT) -> Ana Deneme
     if (sectionUpper == examTypeUpper) {
       return false;
     }
 
-    // Ana sınav isimlerini içeriyorsa ve spesifik bir ders ismi gibi durmuyorsa -> Ana Deneme
+    // Ana sınav isimlerini içeriyorsa -> Ana Deneme
     if (mainSections.contains(sectionUpper)) {
       return false;
     }
@@ -114,45 +115,36 @@ extension TestModelSummaryX on TestModel {
       return false;
     }
 
-    // AYT ve alt türleri (AYT-SAY, AYT-EA, AYT-SOZ, AYT-DIL, vs.) -> Ana Deneme
+    // AYT ve alt türleri -> Ana Deneme
     if (sectionUpper.startsWith('AYT')) {
       return false;
     }
 
-    // Diğer her şey branş denemesi sayılır (Matematik, Türkçe, Fizik, vs.)
+    // Diğer her şey branş denemesi sayılır
     return true;
   }
 
   // YENİ: Grafiklerde ve başlıklarda görünecek akıllı isim
-  // Branş denemesi ise dersin adını (Örn: Türkçe), değilse bölüm adını (Örn: AGS) döndürür.
   String get smartDisplayName {
+    // Branş denemesi ise dersin adını (Örn: Türkçe), değilse bölüm adını (Örn: Sınıf Öğretmenliği) döndürür.
     if (isBranchTest && scores.isNotEmpty) {
       return scores.keys.first;
     }
     return sectionName;
   }
 
-  // Kullanıcının performansına göre bir "Bilgelik Puanı" hesaplar.
   double get wisdomScore {
     if (totalQuestions == 0) return 0;
-
-    // Netin katkısı (%60)
     final double netContribution = (totalNet / totalQuestions) * 60;
-
-    // Doğruluk oranının katkısı (%25)
     final int attemptedQuestions = totalCorrect + totalWrong;
     final double accuracyContribution = attemptedQuestions > 0
         ? (totalCorrect / attemptedQuestions) * 25
         : 0;
-
-    // Çaba/Katılım oranının katkısı (%15)
     final double effortContribution = (attemptedQuestions / totalQuestions) * 15;
-
     final double totalScore = netContribution + accuracyContribution + effortContribution;
     return totalScore.clamp(0, 100);
   }
 
-  // Puan aralığına göre uzman yorumu ve unvanı döndürür.
   Map<String, String> get expertVerdict => getExpertVerdict(wisdomScore);
 
   Map<String, String> getExpertVerdict(double score) {
@@ -184,11 +176,8 @@ extension TestModelSummaryX on TestModel {
     }
   }
 
-  // En güçlü ve en zayıf dersleri bulan fonksiyon
   Map<String, MapEntry<String, double>> findKeySubjects() {
-    if (scores.isEmpty) {
-      return {};
-    }
+    if (scores.isEmpty) return {};
 
     MapEntry<String, double>? strongest;
     MapEntry<String, double>? weakest;
@@ -196,14 +185,12 @@ extension TestModelSummaryX on TestModel {
     for (final entry in scores.entries) {
       final subject = entry.key;
       final scoresMap = entry.value;
-
       final d = scoresMap['dogru'] ?? 0;
       final y = scoresMap['yanlis'] ?? 0;
       final b = scoresMap['bos'] ?? 0;
       final totalQuestions = d + y + b;
 
       if (totalQuestions == 0) continue;
-
       final accuracy = (d / totalQuestions) * 100.0;
 
       if (strongest == null || accuracy > strongest.value) {
@@ -215,10 +202,6 @@ extension TestModelSummaryX on TestModel {
     }
 
     if (strongest == null || weakest == null) return {};
-
-    return {
-      'strongest': strongest,
-      'weakest': weakest,
-    };
+    return {'strongest': strongest, 'weakest': weakest};
   }
 }

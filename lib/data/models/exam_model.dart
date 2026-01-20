@@ -2,8 +2,6 @@
 import 'dart:convert';
 import 'package:flutter/services.dart';
 
-// --- VERİ MODELLERİ (Bunlar değişmedi, sadece temizlendi) ---
-
 enum ExamType {
   yks,
   lgs,
@@ -27,7 +25,7 @@ extension ExamTypeExtension on ExamType {
       case ExamType.kpssOrtaogretim:
         return 'KPSS Ortaöğretim';
       case ExamType.ags:
-        return 'AGS - ÖABT';
+        return 'AGS'; // "AGS - ÖABT" yerine sadeleştirildi
     }
   }
 }
