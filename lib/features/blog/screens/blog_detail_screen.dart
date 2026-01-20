@@ -67,11 +67,12 @@ class BlogDetailScreen extends ConsumerWidget {
     final bottomPadding = MediaQuery.of(context).padding.bottom + kBottomNavigationBarHeight + 20;
 
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        title: const Text('Taktik Blog'),
+        title: Text('Blog', style: GoogleFonts.montserrat(fontSize: 20, fontWeight: FontWeight.w700)),
         automaticallyImplyLeading: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: const Icon(Icons.arrow_back_rounded, size: 24),
           tooltip: 'Geri',
           onPressed: () {
             if (Navigator.of(context).canPop()) {
@@ -84,11 +85,14 @@ class BlogDetailScreen extends ConsumerWidget {
         actions: [
           if (isAdmin && postForActions != null)
             IconButton(
-              icon: const Icon(Icons.delete_outline_rounded),
+              icon: const Icon(Icons.delete_outline_rounded, size: 24),
               tooltip: 'Sil',
               onPressed: deletePost,
             ),
         ],
+        elevation: 0,
+        scrolledUnderElevation: 1,
+        backgroundColor: Theme.of(context).colorScheme.surface,
       ),
       body: postAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -98,10 +102,30 @@ class BlogDetailScreen extends ConsumerWidget {
             return const Center(child: Text('Yazı bulunamadı.'));
           }
 
-          final chips = post.tags.map((t) => Chip(
-            label: Text(t, style: GoogleFonts.montserrat(fontWeight: FontWeight.w600)),
-            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25),
-            shape: StadiumBorder(side: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.4))),
+          final chips = post.tags.map((t) => Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            margin: const EdgeInsets.only(right: 8, bottom: 8),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Theme.of(context).colorScheme.primaryContainer.withOpacity(0.5),
+                  Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.5),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                width: 1,
+              ),
+            ),
+            child: Text(
+              t,
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
           ));
 
           return CustomScrollView(
@@ -112,7 +136,7 @@ class BlogDetailScreen extends ConsumerWidget {
                   children: [
                     if (post.coverImageUrl != null && post.coverImageUrl!.isNotEmpty)
                       AspectRatio(
-                        aspectRatio: 16 / 9,
+                        aspectRatio: 1.5,
                         child: Stack(
                           fit: StackFit.expand,
                           children: [
@@ -125,22 +149,49 @@ class BlogDetailScreen extends ConsumerWidget {
                                 maxWidthDiskCache: 1920,
                                 memCacheHeight: 720,
                                 memCacheWidth: 1280,
-                                placeholder: (c, _) => Container(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25)),
+                                placeholder: (c, _) => Container(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                                        Theme.of(context).colorScheme.surfaceContainer.withOpacity(0.3),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                                 errorWidget: (c, _, __) => Container(
-                                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.2),
-                                  child: const Icon(Icons.image_not_supported_rounded),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Theme.of(context).colorScheme.errorContainer.withOpacity(0.2),
+                                        Theme.of(context).colorScheme.surfaceContainer.withOpacity(0.2),
+                                      ],
+                                    ),
+                                  ),
+                                  child: const Icon(Icons.image_not_supported_rounded, size: 64),
                                 ),
                               ),
                             ),
-                            Container(
-                              decoration: const BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.bottomCenter,
-                                  end: Alignment.topCenter,
-                                  colors: [
-                                    Color(0x880D1B2A),
-                                    Colors.transparent,
-                                  ],
+                            // Subtle gradient overlay at bottom
+                            Positioned(
+                              bottom: 0,
+                              left: 0,
+                              right: 0,
+                              child: Container(
+                                height: 100,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.bottomCenter,
+                                    end: Alignment.topCenter,
+                                    colors: [
+                                      Theme.of(context).colorScheme.surface.withOpacity(0.8),
+                                      Colors.transparent,
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
@@ -148,41 +199,85 @@ class BlogDetailScreen extends ConsumerWidget {
                         ),
                       ),
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 18, 16, 8),
+                      padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          if (post.tags.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 16),
+                              child: Wrap(children: chips.toList()),
+                            ),
                           Text(
                             post.title,
                             style: GoogleFonts.montserrat(
-                              fontSize: 24,
-                              height: 1.25,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: .1,
+                              fontSize: 28,
+                              height: 1.15,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -0.5,
                               color: Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Icon(Icons.person_outline_rounded, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                              const SizedBox(width: 6),
-                              Text('Taktik Ekibi', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-                              const SizedBox(width: 12),
-                              Icon(Icons.schedule_rounded, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                              const SizedBox(width: 6),
-                              Text(
-                                [
-                                  if (post.publishedAt != null) dateFmt.format(post.publishedAt!),
-                                  if (post.readTime != null) '${post.readTime} dk'
-                                ].join(' • '),
-                                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                          const SizedBox(height: 16),
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
+                                width: 1,
                               ),
-                            ],
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                                        Theme.of(context).colorScheme.secondary.withOpacity(0.2),
+                                      ],
+                                    ),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.edit_outlined,
+                                    size: 20,
+                                    color: Theme.of(context).colorScheme.primary,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Taktik Ekibi',
+                                        style: GoogleFonts.inter(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14,
+                                          color: Theme.of(context).colorScheme.onSurface,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        [
+                                          if (post.publishedAt != null) dateFmt.format(post.publishedAt!),
+                                          if (post.readTime != null) '${post.readTime} dk okuma'
+                                        ].join(' • '),
+                                        style: GoogleFonts.inter(
+                                          fontSize: 12,
+                                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                          const SizedBox(height: 10),
-                          if (post.tags.isNotEmpty)
-                            Wrap(spacing: 8, runSpacing: -6, children: chips.toList()),
                         ],
                       ),
                     ),
@@ -191,62 +286,151 @@ class BlogDetailScreen extends ConsumerWidget {
               ),
               SliverToBoxAdapter(
                 child: Padding(
-                  // ÇÖZÜM 2: Alt padding'i dinamik olarak artırdık.
-                  // Navigasyon barın altında metin kalmaması için "bottomPadding" eklendi.
-                  padding: EdgeInsets.fromLTRB(16, 0, 16, bottomPadding),
+                  padding: EdgeInsets.fromLTRB(24, 24, 24, bottomPadding),
                   child: MarkdownBody(
                     data: post.contentMarkdown,
                     styleSheet: MarkdownStyleSheet(
-                      p: GoogleFonts.montserrat(fontSize: 16, height: 1.65, letterSpacing: .05, color: Theme.of(context).colorScheme.onSurface),
-                      h1: GoogleFonts.montserrat(fontSize: 26, fontWeight: FontWeight.w800, height: 1.25),
-                      h2: GoogleFonts.montserrat(fontSize: 22, fontWeight: FontWeight.w800, height: 1.3),
-                      h3: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w700, height: 1.35),
-                      h4: GoogleFonts.montserrat(fontSize: 16, fontWeight: FontWeight.w700, height: 1.4),
-                      h1Padding: const EdgeInsets.only(top: 18, bottom: 8),
-                      h2Padding: const EdgeInsets.only(top: 16, bottom: 8),
-                      h3Padding: const EdgeInsets.only(top: 14, bottom: 6),
-                      h4Padding: const EdgeInsets.only(top: 12, bottom: 6),
-                      code: GoogleFonts.robotoMono(fontSize: 13.5, height: 1.5, color: Theme.of(context).colorScheme.onSurface),
-                      codeblockPadding: const EdgeInsets.all(12),
+                      p: GoogleFonts.inter(
+                        fontSize: 16,
+                        height: 1.75,
+                        letterSpacing: 0.2,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                      h1: GoogleFonts.montserrat(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
+                        height: 1.2,
+                        letterSpacing: -0.5,
+                      ),
+                      h2: GoogleFonts.montserrat(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        height: 1.25,
+                        letterSpacing: -0.3,
+                      ),
+                      h3: GoogleFonts.montserrat(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        height: 1.3,
+                        letterSpacing: -0.2,
+                      ),
+                      h4: GoogleFonts.montserrat(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        height: 1.35,
+                      ),
+                      h1Padding: const EdgeInsets.only(top: 24, bottom: 12),
+                      h2Padding: const EdgeInsets.only(top: 20, bottom: 10),
+                      h3Padding: const EdgeInsets.only(top: 18, bottom: 8),
+                      h4Padding: const EdgeInsets.only(top: 16, bottom: 8),
+                      code: GoogleFonts.robotoMono(
+                        fontSize: 14,
+                        height: 1.6,
+                        color: Theme.of(context).colorScheme.primary,
+                        backgroundColor: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+                      ),
+                      codeblockPadding: const EdgeInsets.all(16),
                       codeblockDecoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3)),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.4),
+                            Theme.of(context).colorScheme.surfaceContainer.withOpacity(0.4),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.outline.withOpacity(0.15),
+                          width: 1,
+                        ),
                       ),
-                      blockquote: GoogleFonts.montserrat(fontStyle: FontStyle.italic, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                      blockquotePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      blockquote: GoogleFonts.inter(
+                        fontStyle: FontStyle.italic,
+                        fontSize: 16,
+                        height: 1.7,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      blockquotePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       blockquoteDecoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.08),
-                        border: Border(left: BorderSide(color: Theme.of(context).colorScheme.secondary, width: 3)),
-                        borderRadius: BorderRadius.circular(8),
+                        gradient: LinearGradient(
+                          colors: [
+                            Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.2),
+                            Theme.of(context).colorScheme.surfaceContainer.withOpacity(0.1),
+                          ],
+                        ),
+                        border: Border(
+                          left: BorderSide(
+                            color: Theme.of(context).colorScheme.secondary,
+                            width: 4,
+                          ),
+                        ),
+                        borderRadius: const BorderRadius.only(
+                          topRight: Radius.circular(12),
+                          bottomRight: Radius.circular(12),
+                        ),
                       ),
-                      listBullet: TextStyle(color: Theme.of(context).colorScheme.secondary),
-                      a: const TextStyle(color: Color(0xFF55C1FF), fontWeight: FontWeight.w600),
+                      listBullet: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      a: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                        decoration: TextDecoration.underline,
+                        decorationColor: Theme.of(context).colorScheme.primary.withOpacity(0.4),
+                      ),
                       horizontalRuleDecoration: BoxDecoration(
-                        border: Border(top: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.6), width: 1)),
+                        border: Border(
+                          top: BorderSide(
+                            color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                            width: 2,
+                          ),
+                        ),
                       ),
-                      img: GoogleFonts.montserrat(),
-                      tableHead: GoogleFonts.montserrat(fontWeight: FontWeight.w700),
-                      tableBody: GoogleFonts.montserrat(),
+                      img: GoogleFonts.inter(),
+                      tableHead: GoogleFonts.inter(fontWeight: FontWeight.w700),
+                      tableBody: GoogleFonts.inter(),
                     ),
                     sizedImageBuilder: (image) {
                       final uri = image.uri;
-                      final height = (image.height?.toDouble() ?? 180).clamp(80, 1200);
-                      return SizedBox(
-                        width: double.infinity,
-                        height: height as double,
+                      final height = (image.height?.toDouble() ?? 220).clamp(120, 1200);
+                      return Container(
+                        margin: const EdgeInsets.symmetric(vertical: 16),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(20),
                           child: CachedNetworkImage(
                             imageUrl: uri.toString(),
                             fit: BoxFit.cover,
+                            height: height as double,
+                            width: double.infinity,
                             placeholder: (c, _) => Container(
-                              color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25),
+                              height: height,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                                    Theme.of(context).colorScheme.surfaceContainer.withOpacity(0.3),
+                                  ],
+                                ),
+                              ),
                             ),
                             errorWidget: (c, _, __) => Container(
+                              height: height,
                               alignment: Alignment.center,
-                              color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.2),
-                              child: const Icon(Icons.image_not_supported_rounded),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Theme.of(context).colorScheme.errorContainer.withOpacity(0.2),
+                                    Theme.of(context).colorScheme.surfaceContainer.withOpacity(0.2),
+                                  ],
+                                ),
+                              ),
+                              child: const Icon(Icons.image_not_supported_rounded, size: 48),
                             ),
                           ),
                         ),
