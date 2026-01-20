@@ -89,7 +89,7 @@ class _QuizViewState extends State<QuizView> {
               child: PageView.builder(
                 controller: _pageController,
                 scrollDirection: Axis.vertical, // DİKEY KAYDIRMA - Instagram Reels gibi
-                physics: const BouncingScrollPhysics(),
+                physics: const NeverScrollableScrollPhysics(), // PageView kaydırmasını devre dışı bırak
                 itemCount: quizLength,
                 itemBuilder: (context, index) {
                   final question = widget.material.quiz![index];
@@ -105,6 +105,26 @@ class _QuizViewState extends State<QuizView> {
                     },
                     onReportIssue: () {
                       widget.onReportIssue(index);
+                    },
+                    onSwipeUp: () {
+                      // Sonraki soruya geç
+                      if (_currentPage < quizLength - 1) {
+                        _pageController.animateToPage(
+                          _currentPage + 1,
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        );
+                      }
+                    },
+                    onSwipeDown: () {
+                      // Önceki soruya geç
+                      if (_currentPage > 0) {
+                        _pageController.animateToPage(
+                          _currentPage - 1,
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        );
+                      }
                     },
                   );
                 },
@@ -124,6 +144,12 @@ class _QuizViewState extends State<QuizView> {
                 icon: const Icon(Icons.assignment_turned_in_rounded, size: 20),
                 label: const Text("Sonuçları Gör"),
                 onPressed: widget.onSubmit,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.onSurface,
+                  foregroundColor: Theme.of(context).colorScheme.surface,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  elevation: 4,
+                ),
               ),
             ),
           ).animate().fadeIn().slideY(begin: 0.5),
@@ -140,6 +166,8 @@ class QuestionCard extends StatefulWidget {
   final int? selectedOptionIndex;
   final Function(int) onOptionSelected;
   final void Function()? onReportIssue;
+  final VoidCallback? onSwipeUp;
+  final VoidCallback? onSwipeDown;
 
   const QuestionCard({
     super.key,
@@ -149,6 +177,8 @@ class QuestionCard extends StatefulWidget {
     required this.selectedOptionIndex,
     required this.onOptionSelected,
     required this.onReportIssue,
+    this.onSwipeUp,
+    this.onSwipeDown,
   });
 
   @override
@@ -157,9 +187,36 @@ class QuestionCard extends StatefulWidget {
 
 class _QuestionCardState extends State<QuestionCard> {
   final ScrollController _scrollController = ScrollController();
+  bool _isAtTop = true;
+  bool _isAtBottom = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+    // Başlangıçta scroll pozisyonunu kontrol et
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkScrollPosition();
+    });
+  }
+
+  void _onScroll() {
+    _checkScrollPosition();
+  }
+
+  void _checkScrollPosition() {
+    if (!_scrollController.hasClients) return;
+
+    setState(() {
+      _isAtTop = _scrollController.position.pixels <= 0;
+      _isAtBottom = _scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 10;
+    });
+  }
 
   @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
   }
@@ -167,10 +224,26 @@ class _QuestionCardState extends State<QuestionCard> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      controller: _scrollController,
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-      child: Column(
+    return GestureDetector(
+      onVerticalDragEnd: (details) {
+        // Hızlı kaydırma kontrolü
+        if (details.primaryVelocity == null) return;
+
+        final velocity = details.primaryVelocity!;
+
+        // Yukarı kaydırma (sonraki soru)
+        if (velocity < -500 && _isAtBottom) {
+          widget.onSwipeUp?.call();
+        }
+        // Aşağı kaydırma (önceki soru)
+        else if (velocity > 500 && _isAtTop) {
+          widget.onSwipeDown?.call();
+        }
+      },
+      child: SingleChildScrollView(
+        controller: _scrollController,
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Kompakt header (siyah-beyaz)
@@ -355,14 +428,10 @@ class _QuestionCardState extends State<QuestionCard> {
                   icon: const Icon(Icons.lightbulb_outline_rounded),
                   label: const Text("Açıklamayı Gör"),
                   style: OutlinedButton.styleFrom(
-                    // Doğru cevap = yeşil, yanlış cevap = turuncu
-                    foregroundColor: widget.selectedOptionIndex == widget.question.correctOptionIndex
-                        ? const Color(0xFF4CAF50) // Yeşil
-                        : const Color(0xFFFF9800), // Turuncu
-                    side: BorderSide(
-                      color: widget.selectedOptionIndex == widget.question.correctOptionIndex
-                          ? const Color(0xFF4CAF50) // Yeşil
-                          : const Color(0xFFFF9800), // Turuncu
+                    // Her zaman turuncu
+                    foregroundColor: const Color(0xFFFF9800), // Turuncu
+                    side: const BorderSide(
+                      color: Color(0xFFFF9800), // Turuncu
                       width: 1.5,
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -371,6 +440,7 @@ class _QuestionCardState extends State<QuestionCard> {
               ),
             ),
         ],
+      ),
       ),
     );
   }
