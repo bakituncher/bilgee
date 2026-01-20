@@ -89,20 +89,26 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  child: BottomAppBar(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                    height: 72,
-                    elevation: 0,
-                    color: Colors.transparent,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _buildNavItem(context, icon: Icons.dashboard_rounded, index: 0, ref: ref),
-                        _buildNavItem(context, icon: Icons.school_rounded, index: 1, ref: ref),
-                        const SizedBox(width: 72),
-                        _buildNavItem(context, icon: Icons.military_tech_rounded, index: 3, ref: ref),
-                        _buildNavItem(context, icon: Icons.person_rounded, index: 4, ref: ref),
-                      ],
+                  child: SafeArea(
+                    top: false,
+                    child: SizedBox(
+                      height: 64,
+                      child: BottomAppBar(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                        height: 64,
+                        elevation: 0,
+                        color: Colors.transparent,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            _buildNavItem(context, icon: Icons.dashboard_rounded, index: 0, ref: ref),
+                            _buildNavItem(context, icon: Icons.school_rounded, index: 1, ref: ref),
+                            const SizedBox(width: 64),
+                            _buildNavItem(context, icon: Icons.military_tech_rounded, index: 3, ref: ref),
+                            _buildNavItem(context, icon: Icons.person_rounded, index: 4, ref: ref),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -145,27 +151,27 @@ class ScaffoldWithNavBar extends ConsumerWidget {
           splashColor: colorScheme.primary.withOpacity(0.2),
           highlightColor: colorScheme.primary.withOpacity(0.1),
           child: Container(
-            width: 56,
-            height: 56,
+            width: 48,
+            height: 48,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: isSelected
-                ? colorScheme.primary.withOpacity(0.15)
-                : Colors.transparent,
+                  ? colorScheme.primary.withOpacity(0.15)
+                  : Colors.transparent,
               border: isSelected
-                ? Border.all(
-                    color: colorScheme.primary.withOpacity(0.3),
-                    width: 1.5,
-                  )
-                : null,
+                  ? Border.all(
+                color: colorScheme.primary.withOpacity(0.3),
+                width: 1.5,
+              )
+                  : null,
             ),
             child: Center(
               child: Icon(
                 icon,
                 color: isSelected
-                  ? colorScheme.primary
-                  : colorScheme.onSurfaceVariant.withOpacity(0.7),
-                size: isSelected ? 28 : 26,
+                    ? colorScheme.primary
+                    : colorScheme.onSurfaceVariant.withOpacity(0.7),
+                size: isSelected ? 24 : 22,
               ),
             ),
           ),
@@ -393,126 +399,126 @@ class _AnimatedBunnyButtonState extends State<_AnimatedBunnyButton> with TickerP
             child: ClipOval(
               child: _showShimmer
                   ? AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      width: 72,
-                      height: 72,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: isActive
-                              ? [
-                                  colorScheme.primary,
-                                  colorScheme.primary.withOpacity(0.85),
-                                ]
-                              : [
-                                  colorScheme.primary.withOpacity(0.9),
-                                  colorScheme.primary.withOpacity(0.75),
-                                ],
-                        ),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: colorScheme.primary.withOpacity(isActive ? 0.5 : 0.4),
-                            blurRadius: isActive ? 20 : 16,
-                            spreadRadius: isActive ? 4 : 2,
-                            offset: const Offset(0, 4),
-                          ),
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.4),
-                          width: 2.5,
-                        ),
-                      ),
-                      padding: const EdgeInsets.all(3.5),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: cardColor,
-                          boxShadow: [
-                            BoxShadow(
-                              color: colorScheme.primary.withOpacity(0.2),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        padding: const EdgeInsets.all(7),
-                        child: ClipOval(
-                          child: Image.asset(
-                            'assets/images/bunnyy.png',
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                    ).animate().shimmer(
-                      duration: 600.ms,
-                      color: Colors.white.withOpacity(0.6),
-                    )
-                  : AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      width: 72,
-                      height: 72,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: isActive
-                              ? [
-                                  colorScheme.primary,
-                                  colorScheme.primary.withOpacity(0.85),
-                                ]
-                              : [
-                                  colorScheme.primary.withOpacity(0.9),
-                                  colorScheme.primary.withOpacity(0.75),
-                                ],
-                        ),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: colorScheme.primary.withOpacity(isActive ? 0.5 : 0.4),
-                            blurRadius: isActive ? 20 : 16,
-                            spreadRadius: isActive ? 4 : 2,
-                            offset: const Offset(0, 4),
-                          ),
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.4),
-                          width: 2.5,
-                        ),
-                      ),
-                      padding: const EdgeInsets.all(3.5),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: cardColor,
-                          boxShadow: [
-                            BoxShadow(
-                              color: colorScheme.primary.withOpacity(0.2),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        padding: const EdgeInsets.all(7),
-                        child: ClipOval(
-                          child: Image.asset(
-                            'assets/images/bunnyy.png',
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
+                duration: const Duration(milliseconds: 300),
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: isActive
+                        ? [
+                      colorScheme.primary,
+                      colorScheme.primary.withOpacity(0.85),
+                    ]
+                        : [
+                      colorScheme.primary.withOpacity(0.9),
+                      colorScheme.primary.withOpacity(0.75),
+                    ],
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: colorScheme.primary.withOpacity(isActive ? 0.5 : 0.4),
+                      blurRadius: isActive ? 20 : 16,
+                      spreadRadius: isActive ? 4 : 2,
+                      offset: const Offset(0, 4),
                     ),
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.4),
+                    width: 2,
+                  ),
+                ),
+                padding: const EdgeInsets.all(3),
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: cardColor,
+                    boxShadow: [
+                      BoxShadow(
+                        color: colorScheme.primary.withOpacity(0.2),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.all(6),
+                  child: ClipOval(
+                    child: Image.asset(
+                      'assets/images/bunnyy.png',
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+              ).animate().shimmer(
+                duration: 600.ms,
+                color: Colors.white.withOpacity(0.6),
+              )
+                  : AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: isActive
+                        ? [
+                      colorScheme.primary,
+                      colorScheme.primary.withOpacity(0.85),
+                    ]
+                        : [
+                      colorScheme.primary.withOpacity(0.9),
+                      colorScheme.primary.withOpacity(0.75),
+                    ],
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: colorScheme.primary.withOpacity(isActive ? 0.5 : 0.4),
+                      blurRadius: isActive ? 20 : 16,
+                      spreadRadius: isActive ? 4 : 2,
+                      offset: const Offset(0, 4),
+                    ),
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.4),
+                    width: 2,
+                  ),
+                ),
+                padding: const EdgeInsets.all(3),
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: cardColor,
+                    boxShadow: [
+                      BoxShadow(
+                        color: colorScheme.primary.withOpacity(0.2),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.all(6),
+                  child: ClipOval(
+                    child: Image.asset(
+                      'assets/images/bunnyy.png',
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+              ),
             ),
           );
         },
