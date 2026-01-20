@@ -100,6 +100,7 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
   Map<int, int> _selectedAnswers = {};
   bool _skipStudyView = false;
   bool _masteredAchieved = false; // bu oturumda ustalık kazan��ldı mı
+  int _currentQuizPage = 0;
 
   void _startWorkshop(Map<String, String> topic) {
     ref.read(_selectedTopicProvider.notifier).state = topic;
@@ -462,13 +463,68 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
                     _resetToBriefing();
                   }
                 },
-              onSaved: (_currentStep == WorkshopStep.briefing || _currentStep == WorkshopStep.contentSelection)
-                  ? () => context.push('/ai-hub/weakness-workshop/${AppRoutes.savedWorkshops}')
-                  : null, // Sadece briefing ve contentSelection'da göster
-              title: 'Etüt Odası',
-            ),
-            Expanded(
-              child: AnimatedSwitcher(
+                onSaved: (_currentStep == WorkshopStep.briefing || _currentStep == WorkshopStep.contentSelection)
+                    ? () => context.push('/ai-hub/weakness-workshop/${AppRoutes.savedWorkshops}')
+                    : null,
+                title: 'Etüt Odası',
+                center: (_currentStep == WorkshopStep.quiz)
+                    ? Consumer(
+                        builder: (context, ref, _) {
+                          final session = ref.watch(workshopSessionProvider).value;
+                          final total = session?.quiz?.length ?? 0;
+                          final safeTotal = total <= 0 ? 1 : total;
+                          final safeIndex = _currentQuizPage.clamp(0, safeTotal - 1);
+
+                          return Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.06),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+                            ),
+                            child: Text(
+                              '${safeIndex + 1}/$total',
+                              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: Theme.of(context).colorScheme.onSurface,
+                                  ),
+                            ),
+                          );
+                        },
+                      )
+                    : null,
+                trailing: (_currentStep == WorkshopStep.quiz)
+                    ? Consumer(
+                        builder: (context, ref, _) {
+                          final session = ref.watch(workshopSessionProvider).value;
+                          final total = session?.quiz?.length ?? 0;
+                          final safeTotal = total <= 0 ? 1 : total;
+                          final safeIndex = _currentQuizPage.clamp(0, safeTotal - 1);
+
+                          return IconButton(
+                            tooltip: 'Sorunu Bildir',
+                            onPressed: total == 0
+                                ? null
+                                : () {
+                                    final material = session;
+                                    if (material == null) return;
+                                    _openReportSheet(material, safeIndex, _selectedAnswers[safeIndex]);
+                                  },
+                            icon: Icon(
+                              Icons.flag_outlined,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                            style: IconButton.styleFrom(
+                              backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.08),
+                              shape: const CircleBorder(),
+                            ),
+                          );
+                        },
+                      )
+                    : null,
+              ),
+              Expanded(
+                child: AnimatedSwitcher(
                   duration: 300.ms,
                   transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
                   child: _buildCurrentStepView(),
@@ -540,6 +596,10 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
               onAnswerSelected: (q, a) => setState(() => _selectedAnswers[q] = a),
               onReportIssue: (qIndex) {
                 _openReportSheet(material, qIndex, _selectedAnswers[qIndex]);
+              },
+              onPageChanged: (page) {
+                if (!mounted) return;
+                setState(() => _currentQuizPage = page);
               },
             );
           case WorkshopStep.results:
@@ -764,10 +824,10 @@ class _LoadingCevherView extends StatelessWidget {
                 backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
                 minHeight: 6,
               ),
-            ),
-          ).animate(onPlay: (c) => c.repeat())
+            ).animate(onPlay: (c) => c.repeat())
            .shimmer(duration: 1800.ms, color: Theme.of(context).colorScheme.secondary.withOpacity(0.5)),
-        ],
+          ),
+            ],
       ),
     );
   }
@@ -1826,60 +1886,81 @@ class _WSHeader extends StatelessWidget {
   final VoidCallback? onBack;
   final VoidCallback? onSaved; // Nullable yaptık
   final String title;
+  final Widget? trailing;
+  final Widget? center;
 
   const _WSHeader({
     required this.showBack,
     required this.onBack,
     this.onSaved, // Required kaldırdık
     required this.title,
+    this.trailing,
+    this.center,
   });
 
   @override
   Widget build(BuildContext context) {
     final top = MediaQuery.of(context).padding.top;
+
+    final left = showBack
+        ? IconButton(
+            onPressed: onBack,
+            icon: Icon(Icons.arrow_back_ios_new_rounded, color: Theme.of(context).colorScheme.onSurface),
+            style: IconButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.08),
+              shape: const CircleBorder(),
+            ),
+          )
+        : Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.06),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.diamond_rounded, color: Theme.of(context).colorScheme.secondary),
+                const SizedBox(width: 8),
+                Text(title, style: Theme.of(context).textTheme.titleMedium),
+              ],
+            ),
+          );
+
+    final rightActions = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (trailing != null) ...[
+          trailing!,
+          const SizedBox(width: 8),
+        ],
+        if (onSaved != null)
+          IconButton(
+            tooltip: 'Etüt Geçmişi',
+            onPressed: onSaved,
+            icon: Icon(Icons.inventory_2_outlined, color: Theme.of(context).colorScheme.onSurface),
+            style: IconButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.08),
+              shape: const CircleBorder(),
+            ),
+          ),
+      ],
+    );
+
     return Container(
       padding: EdgeInsets.fromLTRB(16, top + 8, 16, 16),
-      decoration: const BoxDecoration(
-        color: Colors.transparent,
-      ),
-      child: Row(
-        children: [
-          if (showBack)
-            IconButton(
-              onPressed: onBack,
-              icon: Icon(Icons.arrow_back_ios_new_rounded, color: Theme.of(context).colorScheme.onSurface),
-              style: IconButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.08),
-                  shape: const CircleBorder()),
-            )
-          else
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.06),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.diamond_rounded, color: Theme.of(context).colorScheme.secondary),
-                  const SizedBox(width: 8),
-                  Text(title, style: Theme.of(context).textTheme.titleMedium),
-                ],
-              ),
-            ),
-          const Spacer(),
-          // Sadece onSaved null değilse butonu göster
-          if (onSaved != null)
-            IconButton(
-              tooltip: 'Etüt Geçmişi',
-              onPressed: onSaved,
-              icon: Icon(Icons.inventory_2_outlined, color: Theme.of(context).colorScheme.onSurface),
-              style: IconButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.08),
-                  shape: const CircleBorder()),
-            ),
-        ],
+      decoration: const BoxDecoration(color: Colors.transparent),
+      child: SizedBox(
+        height: 44,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Align(alignment: Alignment.centerLeft, child: left),
+            if (center != null) Center(child: center!),
+            Align(alignment: Alignment.centerRight, child: rightActions),
+          ],
+        ),
       ),
     );
   }
@@ -2203,4 +2284,3 @@ class _ManualTopicSelectorSheetState extends ConsumerState<_ManualTopicSelectorS
     return filtered;
   }
 }
-
