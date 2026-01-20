@@ -49,7 +49,7 @@ class _SavedWorkshopsScreenState extends ConsumerState<SavedWorkshopsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Cevher Kasası"),
+        title: const Text("Etüt Geçmişi"),
       ),
       body: Column(
         children: [
