@@ -60,57 +60,64 @@ class _QuizViewState extends State<QuizView> {
     final quizLength = widget.material.quiz!.length;
     bool isQuizFinished = widget.selectedAnswers.length == quizLength;
 
-    return Column(
+    return Stack(
       children: [
-        // Minimal progress bar - üstte küçük çizgiler (siyah-beyaz)
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-          child: Row(
-            children: List.generate(quizLength, (index) {
-              return Expanded(
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 2),
-                  height: 3,
-                  decoration: BoxDecoration(
-                    color: index <= _currentPage
-                        ? Theme.of(context).colorScheme.onSurface
-                        : Theme.of(context).colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              );
-            }),
-          ),
-        ),
+        Column(
+          children: [
+            // Minimal progress bar - üstte küçük çizgiler (siyah-beyaz)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+              child: Row(
+                children: List.generate(quizLength, (index) {
+                  return Expanded(
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 2),
+                      height: 3,
+                      decoration: BoxDecoration(
+                        color: index <= _currentPage
+                            ? Theme.of(context).colorScheme.onSurface
+                            : Theme.of(context).colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ),
 
-        Expanded(
-          child: PageView.builder(
-            controller: _pageController,
-            scrollDirection: Axis.vertical, // DİKEY KAYDIRMA - Instagram Reels gibi
-            physics: const BouncingScrollPhysics(),
-            itemCount: quizLength,
-            itemBuilder: (context, index) {
-              final question = widget.material.quiz![index];
-              return QuestionCard(
-                question: question,
-                questionNumber: index + 1,
-                totalQuestions: quizLength,
-                selectedOptionIndex: widget.selectedAnswers[index],
-                onOptionSelected: (optionIndex) {
-                  if(!widget.selectedAnswers.containsKey(index)){
-                    widget.onAnswerSelected(index, optionIndex);
-                  }
+            Expanded(
+              child: PageView.builder(
+                controller: _pageController,
+                scrollDirection: Axis.vertical, // DİKEY KAYDIRMA - Instagram Reels gibi
+                physics: const BouncingScrollPhysics(),
+                itemCount: quizLength,
+                itemBuilder: (context, index) {
+                  final question = widget.material.quiz![index];
+                  return QuestionCard(
+                    question: question,
+                    questionNumber: index + 1,
+                    totalQuestions: quizLength,
+                    selectedOptionIndex: widget.selectedAnswers[index],
+                    onOptionSelected: (optionIndex) {
+                      if(!widget.selectedAnswers.containsKey(index)){
+                        widget.onAnswerSelected(index, optionIndex);
+                      }
+                    },
+                    onReportIssue: () {
+                      widget.onReportIssue(index);
+                    },
+                  );
                 },
-                onReportIssue: () {
-                  widget.onReportIssue(index);
-                },
-              );
-            },
-          ),
+              ),
+            ),
+          ],
         ),
+        // Floating button - PageView'ın üstünde ama ona müdahale etmeden
         if (isQuizFinished)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          Positioned(
+            left: 18,
+            right: 18,
+            bottom: 16,
             child: SafeArea(
               top: false,
               child: ElevatedButton.icon(
