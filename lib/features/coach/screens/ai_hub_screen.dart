@@ -368,14 +368,14 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                     title: 'Etüt\nOdası',
                     // ÇOK NET: Ne işe yarar? Materyal verir.
                     description: 'Eksik konularına özel\nçalışma setleri.',
-                    icon: Icons.auto_fix_high_rounded,
+                    icon: Icons.menu_book_rounded,
                     color: const Color(0xFF8B5CF6),
                     isPremium: isPremium,
                     height: 160,
                     onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/weakness-workshop', offerData: {
                       'title': 'Etüt Odası',
                       'subtitle': 'Kişiye özel çalışma materyalleri.',
-                      'iconName': 'auto_fix_high',
+                      'iconName': 'menu_book',
                       'color': const Color(0xFF8B5CF6),
                       'marketingTitle': 'Eksiklerini Kapat!',
                       'marketingSubtitle': 'Yapay zeka sadece eksik olduğun konulara özel konu özeti ve test soruları üretsin.',

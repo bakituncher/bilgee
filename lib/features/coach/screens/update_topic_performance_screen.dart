@@ -380,7 +380,7 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
                             extra: {
                               'title': 'Etüt Odası',
                               'subtitle': 'Kişiye özel çalışma materyalleri.',
-                              'iconName': 'auto_fix_high',
+                              'iconName': 'menu_book',
                               'color': const Color(0xFF8B5CF6),
                               'heroTag': 'workshop-offer-${topic.hashCode}',
                               'marketingTitle': 'Eksiklerini Kapat!',
@@ -441,7 +441,7 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
   // Günde maksimum 1 kere Etüt Odası önerisi göstermek için kontrol
   Future<bool> _canShowWorkshopOffer() async {
     final prefs = await SharedPreferences.getInstance();
-    final lastOfferDate = prefs.getString('last_workshop_offer_date5');
+    final lastOfferDate = prefs.getString('last_workshop_offer_date6');
     final today = DateTime.now().toIso8601String().split('T')[0]; // YYYY-MM-DD formatında
 
     if (lastOfferDate == today) {
@@ -453,7 +453,7 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
   Future<void> _markWorkshopOfferShown() async {
     final prefs = await SharedPreferences.getInstance();
     final today = DateTime.now().toIso8601String().split('T')[0];
-    await prefs.setString('last_workshop_offer_date5', today);
+    await prefs.setString('last_workshop_offer_date6', today);
   }
 }
 
@@ -652,7 +652,7 @@ class _WorkshopOfferDialog extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      Icons.school_rounded,
+                      Icons.menu_book_rounded,
                       size: 48,
                       color: theme.colorScheme.secondary,
                     ),
