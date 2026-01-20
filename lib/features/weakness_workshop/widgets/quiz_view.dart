@@ -155,34 +155,13 @@ class _QuizViewState extends State<QuizView> {
                         );
                       }
                     },
+                    onSubmit: widget.onSubmit,
                   );
                 },
               ),
             ),
           ],
         ),
-
-        // Floating button - PageView'ın üstünde ama ona müdahale etmeden
-        if (isQuizFinished)
-          Positioned(
-            left: 18,
-            right: 18,
-            bottom: 16,
-            child: SafeArea(
-              top: false,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.assignment_turned_in_rounded, size: 20),
-                label: const Text("Sonuçları Gör"),
-                onPressed: widget.onSubmit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.onSurface,
-                  foregroundColor: Theme.of(context).colorScheme.surface,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                  elevation: 4,
-                ),
-              ),
-            ),
-          ).animate().fadeIn().slideY(begin: 0.5),
 
         // Şık kaydırma ipucu - ilk kullanımda göster
         if (_showHint)
@@ -208,6 +187,7 @@ class QuestionCard extends StatefulWidget {
   final void Function()? onReportIssue;
   final VoidCallback? onSwipeUp;
   final VoidCallback? onSwipeDown;
+  final VoidCallback? onSubmit;
 
   const QuestionCard({
     super.key,
@@ -219,6 +199,7 @@ class QuestionCard extends StatefulWidget {
     required this.onReportIssue,
     this.onSwipeUp,
     this.onSwipeDown,
+    this.onSubmit,
   });
 
   @override
@@ -296,7 +277,7 @@ class _QuestionCardState extends State<QuestionCard> {
                 color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
                   width: 1.5,
                 ),
               ),
@@ -332,34 +313,34 @@ class _QuestionCardState extends State<QuestionCard> {
                 if (isSelected) {
                   // Seçilen şık
                   if (isCorrect) {
-                    tileColor = greenColor.withOpacity(0.1);
+                    tileColor = greenColor.withValues(alpha: 0.1);
                     borderColor = greenColor;
                     letterBgColor = greenColor;
                     letterTextColor = Colors.white;
                   } else {
-                    tileColor = redColor.withOpacity(0.1);
+                    tileColor = redColor.withValues(alpha: 0.1);
                     borderColor = redColor;
                     letterBgColor = redColor;
                     letterTextColor = Colors.white;
                   }
                 } else if (isCorrect) {
                   // Doğru cevap (seçilmemiş)
-                  tileColor = greenColor.withOpacity(0.1);
+                  tileColor = greenColor.withValues(alpha: 0.1);
                   borderColor = greenColor;
                   letterBgColor = greenColor;
                   letterTextColor = Colors.white;
                 } else {
                   // Diğer şıklar - siyah beyaz devam eder
                   tileColor = colorScheme.surface;
-                  borderColor = colorScheme.onSurface.withOpacity(0.2);
-                  letterBgColor = colorScheme.onSurface.withOpacity(0.1);
-                  letterTextColor = colorScheme.onSurface.withOpacity(0.6);
+                  borderColor = colorScheme.onSurface.withValues(alpha: 0.2);
+                  letterBgColor = colorScheme.onSurface.withValues(alpha: 0.1);
+                  letterTextColor = colorScheme.onSurface.withValues(alpha: 0.6);
                 }
               } else {
                 // Cevap verilmeden önce - siyah beyaz tema
                 tileColor = colorScheme.surface;
-                borderColor = colorScheme.onSurface.withOpacity(0.3);
-                letterBgColor = colorScheme.onSurface.withOpacity(0.1);
+                borderColor = colorScheme.onSurface.withValues(alpha: 0.3);
+                letterBgColor = colorScheme.onSurface.withValues(alpha: 0.1);
                 letterTextColor = colorScheme.onSurface;
               }
 
@@ -418,27 +399,52 @@ class _QuestionCardState extends State<QuestionCard> {
               );
             }),
 
-            // Cevap verildikten sonra "Açıklamayı Gör" butonu
-            if (widget.selectedOptionIndex != null)
+            // Açıklamayı Gör butonu sadece cevap verildiyse, Sonuçları Gör butonu ise sadece son soruda gözükecek
+            if (widget.selectedOptionIndex != null || widget.questionNumber == widget.totalQuestions)
               Padding(
                 padding: const EdgeInsets.only(top: 16),
-                child: Center(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      _showExplanationBottomSheet(context);
-                    },
-                    icon: const Icon(Icons.lightbulb_outline_rounded),
-                    label: const Text("Açıklamayı Gör"),
-                    style: OutlinedButton.styleFrom(
-                      // Her zaman turuncu
-                      foregroundColor: const Color(0xFFFF9800), // Turuncu
-                      side: const BorderSide(
-                        color: Color(0xFFFF9800), // Turuncu
-                        width: 1.5,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    if (widget.selectedOptionIndex != null) ...[
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            _showExplanationBottomSheet(context);
+                          },
+                          icon: const Icon(Icons.lightbulb_outline_rounded),
+                          label: const FittedBox(child: Text("Açıklamayı Gör")),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFFFF9800),
+                            side: const BorderSide(
+                              color: Color(0xFFFF9800),
+                              width: 1.5,
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                          ),
+                        ).animate().fadeIn(delay: 150.ms).slideY(begin: 0.2),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    ),
-                  ).animate().fadeIn(delay: 150.ms).slideY(begin: 0.2),
+                    ],
+                    if (widget.selectedOptionIndex != null && widget.questionNumber == widget.totalQuestions)
+                      const SizedBox(width: 12),
+                    if (widget.questionNumber == widget.totalQuestions) ...[
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: widget.onSubmit,
+                          icon: const Icon(Icons.assignment_turned_in_rounded),
+                          label: const FittedBox(child: Text("Sonuçları Gör")),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFFFF9800),
+                            side: const BorderSide(
+                              color: Color(0xFFFF9800),
+                              width: 1.5,
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                          ),
+                        ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2),
+                      ),
+                    ],
+                  ],
                 ),
               ),
           ],
@@ -470,7 +476,7 @@ class _QuestionCardState extends State<QuestionCard> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.4),
+                color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -488,7 +494,7 @@ class _QuestionCardState extends State<QuestionCard> {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(
@@ -526,7 +532,7 @@ class _QuestionCardState extends State<QuestionCard> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: MarkdownWithMath(
@@ -548,10 +554,10 @@ class _QuestionCardState extends State<QuestionCard> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
                           width: 2,
                         ),
                       ),
@@ -611,10 +617,10 @@ class ExplanationCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: colorScheme.onSurface.withOpacity(0.2),
+          color: colorScheme.onSurface.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -715,7 +721,7 @@ class QuizReviewView extends StatelessWidget {
                               ? Theme.of(context).colorScheme.onSurface
                               : (optIndex == userAnswer && !isCorrect
                                   ? const Color(0xFFE53935) // Kırmızı - yanlış cevap
-                                  : Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
+                                  : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
                         ),
                       ),
                     ),
@@ -741,4 +747,3 @@ class QuizReviewView extends StatelessWidget {
     );
   }
 }
-

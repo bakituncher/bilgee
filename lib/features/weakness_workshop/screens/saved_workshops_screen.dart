@@ -205,7 +205,7 @@ class _SavedWorkshopGroupCardState extends ConsumerState<_SavedWorkshopGroupCard
                                   child: Text(
                                     count.toString(),
                                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                          color: Theme.of(context).colorScheme.primary,
+                                          color: Colors.black, // Mavi yerine siyah renk
                                           fontWeight: FontWeight.bold,
                                           fontSize: 10,
                                         ),
