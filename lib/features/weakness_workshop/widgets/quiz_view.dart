@@ -11,7 +11,7 @@ import 'package:taktik/features/weakness_workshop/widgets/quiz_swipe_hint.dart';
 class QuizView extends StatefulWidget {
   final WorkshopModel material;
   final VoidCallback onSubmit;
-  final Map<int,int> selectedAnswers;
+  final Map<int, int> selectedAnswers;
   final Function(int, int) onAnswerSelected;
   final void Function(int questionIndex) onReportIssue;
   final ValueChanged<int>? onPageChanged;
@@ -87,6 +87,7 @@ class _QuizViewState extends State<QuizView> {
     }
 
     final quizLength = widget.material.quiz!.length;
+    // ignore: unused_local_variable
     bool isQuizFinished = widget.selectedAnswers.length == quizLength;
 
     return Stack(
@@ -128,7 +129,7 @@ class _QuizViewState extends State<QuizView> {
                     totalQuestions: quizLength,
                     selectedOptionIndex: widget.selectedAnswers[index],
                     onOptionSelected: (optionIndex) {
-                      if(!widget.selectedAnswers.containsKey(index)){
+                      if (!widget.selectedAnswers.containsKey(index)) {
                         widget.onAnswerSelected(index, optionIndex);
                       }
                     },
@@ -242,7 +243,6 @@ class _QuestionCardState extends State<QuestionCard> {
     super.dispose();
   }
 
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -306,7 +306,7 @@ class _QuestionCardState extends State<QuestionCard> {
 
               // Yeşil ve kırmızı renkler
               const greenColor = Color(0xFF4CAF50); // Yeşil
-              const redColor = Color(0xFFE53935);   // Kırmızı
+              const redColor = Color(0xFFE53935); // Kırmızı
 
               if (widget.selectedOptionIndex != null) {
                 // Cevap verildikten sonra
@@ -399,51 +399,48 @@ class _QuestionCardState extends State<QuestionCard> {
               );
             }),
 
-            // Açıklamayı Gör butonu sadece cevap verildiyse, Sonuçları Gör butonu ise sadece son soruda gözükecek
+            // GÜNCELLENEN KISIM:
+            // "Cevap Verildiyse" VEYA "Son Sorudaysa" buton satırını göster
             if (widget.selectedOptionIndex != null || widget.questionNumber == widget.totalQuestions)
               Padding(
                 padding: const EdgeInsets.only(top: 16),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    if (widget.selectedOptionIndex != null) ...[
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            _showExplanationBottomSheet(context);
-                          },
-                          icon: const Icon(Icons.lightbulb_outline_rounded),
-                          label: const FittedBox(child: Text("Açıklamayı Gör")),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFFFF9800),
-                            side: const BorderSide(
-                              color: Color(0xFFFF9800),
-                              width: 1.5,
-                            ),
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                    // Açıklamayı Gör Butonu (Varsa Sola Yaslı)
+                    if (widget.selectedOptionIndex != null)
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          _showExplanationBottomSheet(context);
+                        },
+                        icon: const Icon(Icons.lightbulb_outline_rounded),
+                        label: const FittedBox(child: Text("Açıklamayı Gör")),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFFFF9800),
+                          side: const BorderSide(
+                            color: Color(0xFFFF9800),
+                            width: 1.5,
                           ),
-                        ).animate().fadeIn(delay: 150.ms).slideY(begin: 0.2),
-                      ),
-                    ],
-                    if (widget.selectedOptionIndex != null && widget.questionNumber == widget.totalQuestions)
-                      const SizedBox(width: 12),
-                    if (widget.questionNumber == widget.totalQuestions) ...[
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: widget.onSubmit,
-                          icon: const Icon(Icons.assignment_turned_in_rounded),
-                          label: const FittedBox(child: Text("Sonuçları Gör")),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFFFF9800),
-                            side: const BorderSide(
-                              color: Color(0xFFFF9800),
-                              width: 1.5,
-                            ),
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-                          ),
-                        ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2),
-                      ),
-                    ],
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        ),
+                      ).animate().fadeIn(delay: 150.ms).slideY(begin: 0.2),
+
+                    // Ortadaki boşluğu doldurarak Sonuçları Gör butonunu sağa iter
+                    const Spacer(),
+
+                    // Sonuçları Gör Butonu (Varsa Sağa Yaslı)
+                    if (widget.questionNumber == widget.totalQuestions)
+                      OutlinedButton.icon(
+                        onPressed: widget.onSubmit,
+                        icon: const Icon(Icons.assignment_turned_in_rounded),
+                        label: const FittedBox(child: Text("Sonuçları Gör")),
+                        style: OutlinedButton.styleFrom(
+                          // SİYAH BEYAZ TEMA
+                          foregroundColor: Theme.of(context).colorScheme.onSurface,
+                          backgroundColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
+                          side: BorderSide.none, // Kenarlık yok
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        ),
+                      ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2),
                   ],
                 ),
               ),
@@ -458,6 +455,7 @@ class _QuestionCardState extends State<QuestionCard> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true, // Status bar ve alt nav bar ile çakışmayı önler
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         constraints: BoxConstraints(
@@ -467,138 +465,143 @@ class _QuestionCardState extends State<QuestionCard> {
           color: Theme.of(context).colorScheme.surface,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Handle bar
-            Container(
-              margin: const EdgeInsets.symmetric(vertical: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(2),
+        // SafeArea: İçeriği güvenli alana hapseder (alt barın üzerine çıkmaz)
+        child: SafeArea(
+          bottom: true,
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle bar
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-            ),
 
-            Flexible(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Başlık
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Icon(
-                            Icons.lightbulb_rounded,
-                            color: Theme.of(context).colorScheme.onSurface,
-                            size: 28,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            "Soru ${widget.questionNumber}",
-                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: const Icon(Icons.close_rounded),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Soru
-                    Text(
-                      "Soru",
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: MarkdownWithMath(
-                        data: widget.question.question,
-                        styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Doğru cevap
-                    Text(
-                      "Doğru Cevap",
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
-                          width: 2,
-                        ),
-                      ),
-                      child: Row(
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Başlık
+                      Row(
                         children: [
                           Container(
-                            width: 32,
-                            height: 32,
+                            padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.onSurface,
-                              shape: BoxShape.circle,
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(10),
                             ),
-                            child: Center(
-                              child: Text(
-                                String.fromCharCode(65 + widget.question.correctOptionIndex),
-                                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                  color: Theme.of(context).colorScheme.surface,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                            child: Icon(
+                              Icons.lightbulb_rounded,
+                              color: Theme.of(context).colorScheme.onSurface,
+                              size: 28,
                             ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
-                            child: MarkdownWithMath(
-                              data: widget.question.options[widget.question.correctOptionIndex],
-                              styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)),
+                            child: Text(
+                              "Soru ${widget.questionNumber}",
+                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
+                          ),
+                          IconButton(
+                            onPressed: () => Navigator.pop(context),
+                            icon: const Icon(Icons.close_rounded),
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: 24),
+                      const SizedBox(height: 24),
 
-                    // Açıklama
-                    ExplanationCard(explanation: widget.question.explanation),
-                  ],
+                      // Soru
+                      Text(
+                        "Soru",
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurface,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: MarkdownWithMath(
+                          data: widget.question.question,
+                          styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Doğru cevap
+                      Text(
+                        "Doğru Cevap",
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurface,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
+                            width: 2,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.onSurface,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  String.fromCharCode(65 + widget.question.correctOptionIndex),
+                                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                    color: Theme.of(context).colorScheme.surface,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: MarkdownWithMath(
+                                data: widget.question.options[widget.question.correctOptionIndex],
+                                styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Açıklama
+                      ExplanationCard(explanation: widget.question.explanation),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -720,8 +723,8 @@ class QuizReviewView extends StatelessWidget {
                           color: optIndex == question.correctOptionIndex
                               ? Theme.of(context).colorScheme.onSurface
                               : (optIndex == userAnswer && !isCorrect
-                                  ? const Color(0xFFE53935) // Kırmızı - yanlış cevap
-                                  : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
+                              ? const Color(0xFFE53935) // Kırmızı - yanlış cevap
+                              : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
                         ),
                       ),
                     ),
@@ -732,8 +735,8 @@ class QuizReviewView extends StatelessWidget {
                       color: optIndex == question.correctOptionIndex
                           ? Theme.of(context).colorScheme.onSurface
                           : (optIndex == userAnswer && !isCorrect
-                              ? const Color(0xFFE53935) // Kırmızı - yanlış cevap
-                              : Theme.of(context).colorScheme.onSurfaceVariant),
+                          ? const Color(0xFFE53935) // Kırmızı - yanlış cevap
+                          : Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   );
                 }),
