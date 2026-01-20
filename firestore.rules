@@ -35,7 +35,7 @@ service cloud.firestore {
                                  'followingCount',
                                  // Global kampanyaları kapatma izni
                                  'closedCampaignIds',
-                                 // Cevher Atölyesi streak sistemi
+                                 // Etüt Odası streak sistemi
                                  'workshopStreak', 'lastWorkshopDate']);
 
       // --- ALT KOLEKSİYONLAR ---

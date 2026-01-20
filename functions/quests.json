@@ -37,8 +37,8 @@
   },
   {
     "id": "daily_eng_03_workshop_intro",
-    "title": "Cevher Atölyesi Keşfi",
-    "description": "Henüz Cevher Atölyesi'ni denemediniz. Bu güçlü öğrenme aracını keşfederek zayıf noktalarınızı güçlendirin.",
+    "title": "Etüt Odası Keşfi",
+    "description": "Henüz Etüt Odası'nı denemediniz. Bu güçlü öğrenme aracını keşfederek zayıf noktalarınızı güçlendirin.",
     "type": "daily",
     "category": "engagement",
     "reward": 80,
@@ -331,7 +331,7 @@
   {
     "id": "daily_pra_09_revisit_mistakes",
     "title": "Hata Avcısı",
-    "description": "Geçmiş hatalar geleceğin doğrularıdır. Cevher Atölyesi'nde daha önce yanlış yaptığınız 5 soruyu tekrar çözün.",
+    "description": "Geçmiş hatalar geleceğin doğrularıdır. Etüt Odası'nda daha önce yanlış yaptığınız 5 soruyu tekrar çözün.",
     "type": "daily",
     "category": "practice",
     "reward": 75,

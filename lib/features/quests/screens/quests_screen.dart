@@ -262,7 +262,7 @@ class _GamifiedQuestCardState extends ConsumerState<GamifiedQuestCard> {
         };
       case '/ai-hub/weakness-workshop':
         return {
-          'title': 'Cevher Atölyesi',
+          'title': 'Etüt Odası',
           'subtitle': 'Zayıflıkları güce çevir.',
           'icon': Icons.diamond_rounded,
           'color': const Color(0xFF8B5CF6),

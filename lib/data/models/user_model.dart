@@ -50,7 +50,7 @@ class UserModel {
   final Map<String,dynamic>? lastWeeklyReport; // YENİ: geçen hafta raporu
   final double? dynamicDifficultyFactorToday; // YENİ: bugünkü dinamik zorluk çarpanı
   final Timestamp? weeklyPlanCompletedAt; // YENİ: haftalık plan tamamlanma anı
-  final int workshopStreak; // YENİ: art arda günlerde Cevher Atölyesi seansı
+  final int workshopStreak; // YENİ: art arda günlerde Etüt Odası seansı
   final Timestamp? lastWorkshopDate; // YENİ: son Cevher seansı tarihi (UTC gün)
 
   // GÖREV KİŞİSELLEŞTİRME İÇİN YENİ ALANLAR

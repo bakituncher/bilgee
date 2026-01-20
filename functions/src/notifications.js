@@ -23,7 +23,7 @@ const GENERAL_MESSAGES = [
   { title: 'Kürsüde yerin boş 🏆', body: 'İlk 3\'e girmek senin elinde. Bir test çöz ve puanları topla.', route: '/arena' },
 
   // 🟠 Taktik & Eksik Kapama
-  { title: 'Zayıf halkanı bul 💎', body: 'Seni en çok zorlayan konu aslında en çok net getirecek konudur. Cevher Atölyesi\'ne bak.', route: '/ai-hub' },
+  { title: 'Zayıf halkanı bul 💎', body: 'Seni en çok zorlayan konu aslında en çok net getirecek konudur. Etüt Odası\'na bak.', route: '/ai-hub' },
   { title: 'Netlerin neden artmıyor? 🤔', body: 'Belki de yanlış yere odaklanıyorsun. Yapay zeka analizine göz at.', route: '/home/stats' },
   { title: 'Taktik Tavşan fısıldıyor... 🐰', body: '"Çok çalışmak yetmez, akıllı çalışmalısın." Stratejini kontrol et.', route: '/ai-hub' },
   { title: 'Deneme Analizi Yaptın mı? 📊', body: 'Çözdüğün denemeyi sisteme gir, eksiklerini nokta atışı belirleyelim.', route: '/home/add-test' },
@@ -39,7 +39,7 @@ const GENERAL_MESSAGES = [
 // Pazar, Çarşamba, Cuma 22:00'de sadece Premium olmayanlara gidecek.
 // DÜZELTME: route: '/premium' olarak güncellendi.
 const PREMIUM_SALES_MESSAGES = [
-  // 💎 Kanca: CEVHER ATÖLYESİ & DEĞER (Uygulamanın kalbi burası)
+  // 💎 Kanca: ETÜT ODASI & DEĞER (Uygulamanın kalbi burası)
   {
     title: 'Taktik Tavşan ile tanış, planını kap, istersen iptal et 🏃',
     body: '7 Günlük Bedava Taktik Pro hakkınla tüm eksiklerini analiz ettir, haftalık planını hazırlat. Beğenmezsen iptal et.',

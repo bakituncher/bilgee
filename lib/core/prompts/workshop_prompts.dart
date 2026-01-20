@@ -107,7 +107,7 @@ TARA. DOĞRULA. RİSKE ATMA.
 """;
 
   return """
-Taktik Tavşan - Cevher İşleme Kiti oluştur.
+Taktik Tavşan - Konu Anlatımı oluştur.
 $choiceRule
 $compactRules
 
@@ -252,7 +252,7 @@ JSON ÇIKTI:
 {
   "subject": "$subject",
   "topic": "$topic",
-  "studyGuide": "# $topic - Cevher İşleme Kartı\\n\\n## 💎 Özü\\n...\\n\\n## 📊 Temel Kavramlar\\n...\\n\\n## ⚠️ Sık Hatalar\\n...\\n\\n## 🎯 Strateji\\n...\\n\\n## 📝 Örnekler\\n..."
+  "studyGuide": "# $topic - Konu Anlatımı\\n\\n## 💎 Özü\\n...\\n\\n## 📊 Temel Kavramlar\\n...\\n\\n## ⚠️ Sık Hatalar\\n...\\n\\n## 🎯 Strateji\\n...\\n\\n## 📝 Örnekler\\n..."
 }""";
   } else {
     // both (varsayılan)
@@ -265,7 +265,7 @@ JSON ÇIKTI:
 {
   "subject": "$subject",
   "topic": "$topic",
-  "studyGuide": "# $topic - Cevher İşleme Kartı\\n\\n## 💎 Özü\\n...",
+  "studyGuide": "# $topic - Konu Anlatımı\\n\\n## 💎 Özü\\n...",
   "quiz": $exampleQuestions
 }""";
   }

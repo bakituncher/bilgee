@@ -1,21 +1,79 @@
 // lib/features/weakness_workshop/screens/saved_workshop_detail_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/features/auth/application/auth_controller.dart';
 import 'package:taktik/features/weakness_workshop/models/workshop_model.dart';
 import 'package:taktik/shared/widgets/markdown_with_math.dart';
 
-class SavedWorkshopDetailScreen extends StatefulWidget {
+class SavedWorkshopDetailScreen extends ConsumerStatefulWidget {
   final WorkshopModel workshop;
 
   const SavedWorkshopDetailScreen({super.key, required this.workshop});
 
   @override
-  State<SavedWorkshopDetailScreen> createState() => _SavedWorkshopDetailScreenState();
+  ConsumerState<SavedWorkshopDetailScreen> createState() => _SavedWorkshopDetailScreenState();
 }
 
-class _SavedWorkshopDetailScreenState extends State<SavedWorkshopDetailScreen>
+class _SavedWorkshopDetailScreenState extends ConsumerState<SavedWorkshopDetailScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+
+  Future<void> _confirmAndDelete() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Silinsin mi?'),
+        content: const Text('Bu kaydı kalıcı olarak silmek istiyor musun?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Vazgeç'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Sil'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      final userId = ref.read(authControllerProvider).value?.uid;
+      if (userId != null && widget.workshop.id != null) {
+        try {
+          await ref.read(firestoreServiceProvider).deleteSavedWorkshop(
+            userId,
+            widget.workshop.id!,
+          );
+          if (mounted) {
+            context.pop(); // Detay sayfasından çık
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Kayıt silindi'),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Hata: $e'),
+                behavior: SnackBarBehavior.floating,
+                backgroundColor: Theme.of(context).colorScheme.error,
+              ),
+            );
+          }
+        }
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -48,47 +106,45 @@ class _SavedWorkshopDetailScreenState extends State<SavedWorkshopDetailScreen>
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: colorScheme.surface,
         elevation: 0,
         centerTitle: false,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              widget.workshop.topic,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
-            ),
-            Text(
-              widget.workshop.subject,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-                fontSize: 12,
-              ),
-            ),
-          ],
+        surfaceTintColor: Colors.transparent,
+        title: Text(
+          widget.workshop.topic,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+            color: colorScheme.onSurface,
+          ),
         ),
+        iconTheme: IconThemeData(color: colorScheme.onSurface),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete_outline_rounded),
+            tooltip: 'Sil',
+            onPressed: _confirmAndDelete,
+          ),
+        ],
         bottom: _tabController.length > 1
           ? PreferredSize(
               preferredSize: const Size.fromHeight(48),
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                  color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: TabBar(
                   controller: _tabController,
                   indicator: BoxDecoration(
-                    color: colorScheme.primary,
+                    color: colorScheme.onSurface,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   indicatorSize: TabBarIndicatorSize.tab,
                   dividerColor: Colors.transparent,
-                  labelColor: colorScheme.onPrimary,
-                  unselectedLabelColor: colorScheme.onSurfaceVariant,
+                  labelColor: colorScheme.surface,
+                  unselectedLabelColor: colorScheme.onSurface.withValues(alpha: 0.6),
                   labelStyle: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
@@ -101,7 +157,7 @@ class _SavedWorkshopDetailScreenState extends State<SavedWorkshopDetailScreen>
                     ),
                     Tab(
                       icon: Icon(Icons.quiz_rounded, size: 20),
-                      text: "Ustalık Sınavı",
+                      text: "Test",
                       height: 44,
                     ),
                   ],
@@ -141,13 +197,13 @@ class _SavedWorkshopDetailScreenState extends State<SavedWorkshopDetailScreen>
           h1: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
-            color: Theme.of(context).colorScheme.primary,
+            color: Theme.of(context).colorScheme.onSurface,
             height: 1.3,
           ),
           h2: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Theme.of(context).colorScheme.secondary,
+            color: Theme.of(context).colorScheme.onSurface,
             height: 1.3,
           ),
           h3: TextStyle(
@@ -158,18 +214,18 @@ class _SavedWorkshopDetailScreenState extends State<SavedWorkshopDetailScreen>
           ),
           blockquotePadding: const EdgeInsets.all(12),
           blockquoteDecoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.3),
+            color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(8),
             border: Border(
               left: BorderSide(
-                color: Theme.of(context).colorScheme.secondary,
+                color: Theme.of(context).colorScheme.onSurface,
                 width: 3,
               ),
             ),
           ),
           code: TextStyle(
-            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
-            color: Theme.of(context).colorScheme.primary,
+            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+            color: Theme.of(context).colorScheme.onSurface,
             fontSize: 14,
           ),
         ),
@@ -188,13 +244,13 @@ class _SavedWorkshopDetailScreenState extends State<SavedWorkshopDetailScreen>
             Icon(
               Icons.quiz_outlined,
               size: 64,
-              color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.5),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
             ),
             const SizedBox(height: 16),
             Text(
-              "Bu cevher için sınav kaydedilmemiş",
+              "Bu konu için sınav kaydedilmemiş",
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
           ],
@@ -226,7 +282,7 @@ class _QuizReviewView extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              "Bu cevher için sınav kaydedilmemiş",
+              "Bu konu için sınav kaydedilmemiş",
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
@@ -250,7 +306,7 @@ class _QuizReviewView extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(
-              color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+              color: colorScheme.onSurface.withValues(alpha: 0.15),
               width: 1,
             ),
           ),
@@ -259,17 +315,17 @@ class _QuizReviewView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Soru numarası başlığı
+                // Soru numarası başlığı (siyah-beyaz)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: colorScheme.primary.withOpacity(0.12),
+                    color: colorScheme.onSurface.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     "Soru ${index + 1}",
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: colorScheme.primary,
+                      color: colorScheme.onSurface,
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
                     ),
@@ -285,27 +341,29 @@ class _QuizReviewView extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                       fontSize: 15,
                       height: 1.4,
+                      color: colorScheme.onSurface,
                     ),
                   ),
                 ),
                 const SizedBox(height: 14),
 
-                // Seçenekler (kompakt tasarım)
+                // Seçenekler (siyah-beyaz, yeşil accent için doğru cevap)
                 ...List.generate(question.options.length, (optIndex) {
                   final isCorrect = optIndex == question.correctOptionIndex;
+                  const greenColor = Color(0xFF4CAF50); // Doğru cevap için yeşil
 
                   return Container(
                     margin: const EdgeInsets.only(bottom: 8),
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     decoration: BoxDecoration(
                       color: isCorrect
-                        ? colorScheme.secondary.withOpacity(0.12)
-                        : colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                        ? greenColor.withValues(alpha: 0.1)
+                        : colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: isCorrect
-                          ? colorScheme.secondary
-                          : colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                          ? greenColor
+                          : colorScheme.onSurface.withValues(alpha: 0.2),
                         width: 1.5,
                       ),
                     ),
@@ -316,15 +374,15 @@ class _QuizReviewView extends StatelessWidget {
                           width: 28,
                           height: 28,
                           decoration: BoxDecoration(
-                            color: (isCorrect ? colorScheme.secondary : colorScheme.onSurfaceVariant)
-                                .withOpacity(0.15),
+                            color: (isCorrect ? greenColor : colorScheme.onSurface)
+                                .withValues(alpha: 0.15),
                             shape: BoxShape.circle,
                           ),
                           child: Center(
                             child: Text(
                               String.fromCharCode(65 + optIndex), // A, B, C, D
                               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                color: isCorrect ? colorScheme.secondary : colorScheme.onSurfaceVariant,
+                                color: isCorrect ? greenColor : colorScheme.onSurface,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 13,
                               ),
@@ -341,7 +399,7 @@ class _QuizReviewView extends StatelessWidget {
                               p: TextStyle(
                                 fontSize: 14,
                                 height: 1.4,
-                                color: Theme.of(context).colorScheme.onSurface,
+                                color: colorScheme.onSurface,
                                 fontWeight: isCorrect ? FontWeight.w600 : FontWeight.normal,
                               ),
                             ),
@@ -351,9 +409,9 @@ class _QuizReviewView extends StatelessWidget {
                         // Doğru işareti
                         if (isCorrect) ...[
                           const SizedBox(width: 8),
-                          Icon(
+                          const Icon(
                             Icons.check_circle_rounded,
-                            color: colorScheme.secondary,
+                            color: greenColor,
                             size: 20,
                           ),
                         ],
@@ -363,17 +421,17 @@ class _QuizReviewView extends StatelessWidget {
                 }),
 
                 const SizedBox(height: 12),
-                const Divider(height: 1),
+                Divider(height: 1, color: colorScheme.onSurface.withValues(alpha: 0.1)),
                 const SizedBox(height: 12),
 
-                // Açıklama kartı (kompakt ve şık)
+                // Açıklama kartı (siyah-beyaz)
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: colorScheme.secondaryContainer.withOpacity(0.3),
+                    color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: colorScheme.secondary.withOpacity(0.2),
+                      color: colorScheme.onSurface.withValues(alpha: 0.15),
                       width: 1,
                     ),
                   ),
@@ -383,12 +441,12 @@ class _QuizReviewView extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: colorScheme.secondary.withOpacity(0.15),
+                          color: colorScheme.onSurface.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Icon(
                           Icons.lightbulb_rounded,
-                          color: colorScheme.secondary,
+                          color: colorScheme.onSurface,
                           size: 18,
                         ),
                       ),
@@ -398,7 +456,7 @@ class _QuizReviewView extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "Usta'nın Açıklaması",
+                              "Açıklama",
                               style: Theme.of(context).textTheme.titleSmall?.copyWith(
                                 color: colorScheme.secondary,
                                 fontWeight: FontWeight.bold,

@@ -29,7 +29,6 @@ import 'package:taktik/features/weakness_workshop/screens/saved_workshops_screen
 import 'package:taktik/features/weakness_workshop/screens/weakness_workshop_screen.dart';
 import 'package:taktik/shared/widgets/scaffold_with_nav_bar.dart';
 import 'app_routes.dart';
-import 'package:taktik/features/weakness_workshop/screens/workshop_stats_screen.dart';
 import 'package:taktik/features/home/screens/weekly_plan_screen.dart';
 import 'package:taktik/features/quests/screens/quests_screen.dart';
 import 'package:taktik/features/profile/screens/avatar_selection_screen.dart'; // YENİ: Avatar ekranı import edildi
@@ -160,13 +159,6 @@ StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
                   pageBuilder: (context, state) =>
                   buildPageWithFadeTransition(context: context, state: state, child: const WeaknessWorkshopScreen()),
                   routes: [
-                    GoRoute(
-                      path: 'stats',
-                      name: 'WorkshopStats',
-                      parentNavigatorKey: rootNavigatorKey,
-                      pageBuilder: (context, state) =>
-                      buildPageWithFadeTransition(context: context, state: state, child: const WorkshopStatsScreen()),
-                    ),
                     GoRoute(
                       path: AppRoutes.savedWorkshops,
                       name: 'SavedWorkshops',
