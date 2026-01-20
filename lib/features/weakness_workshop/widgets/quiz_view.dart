@@ -2,16 +2,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:lottie/lottie.dart';
 import 'package:taktik/features/weakness_workshop/models/workshop_model.dart';
 import 'package:taktik/shared/widgets/markdown_with_math.dart';
 import 'package:taktik/features/weakness_workshop/widgets/quiz_swipe_hint.dart';
 
 /// Soru çözüm ekranı widget'ı
-/// Quiz sorularını gösterir ve kullanıcının cevaplarını alır
 class QuizView extends StatefulWidget {
   final WorkshopModel material;
   final VoidCallback onSubmit;
-  final Map<int,int> selectedAnswers;
+  final Map<int, int> selectedAnswers;
   final Function(int, int) onAnswerSelected;
   final void Function(int questionIndex) onReportIssue;
   final ValueChanged<int>? onPageChanged;
@@ -35,12 +35,13 @@ class _QuizViewState extends State<QuizView> {
   int _currentPage = 0;
   bool _showHint = false;
 
+  // Animasyonu gösterilmiş soruların indexlerini tutar
+  final Set<int> _shownAnimations = {};
+
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
-
-    // İpucunun gösterilmesi gerekip gerekmediğini kontrol et
     _checkAndShowHint();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -63,7 +64,6 @@ class _QuizViewState extends State<QuizView> {
   Future<void> _checkAndShowHint() async {
     final shouldShow = await QuizSwipeHint.shouldShow();
     if (shouldShow && mounted) {
-      // Kısa bir gecikme ile göster (ekranın yüklenmesini bekle)
       await Future.delayed(const Duration(milliseconds: 500));
       if (mounted) {
         setState(() {
@@ -81,19 +81,17 @@ class _QuizViewState extends State<QuizView> {
 
   @override
   Widget build(BuildContext context) {
-    // Quiz yoksa boş widget döndür
     if (widget.material.quiz == null || widget.material.quiz!.isEmpty) {
       return const Center(child: Text('Quiz bulunamadı'));
     }
 
     final quizLength = widget.material.quiz!.length;
-    bool isQuizFinished = widget.selectedAnswers.length == quizLength;
 
     return Stack(
       children: [
         Column(
           children: [
-            // Minimal progress bar - üstte küçük çizgiler (siyah-beyaz)
+            // Minimal progress bar
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
               child: Row(
@@ -117,26 +115,32 @@ class _QuizViewState extends State<QuizView> {
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
-                scrollDirection: Axis.vertical, // DİKEY KAYDIRMA - Instagram Reels gibi
-                physics: const NeverScrollableScrollPhysics(), // PageView kaydırmasını devre dışı bırak
+                scrollDirection: Axis.vertical,
+                physics: const NeverScrollableScrollPhysics(),
                 itemCount: quizLength,
                 itemBuilder: (context, index) {
                   final question = widget.material.quiz![index];
+
+                  // Animasyon kontrol mantığı
+                  final isCorrect = widget.selectedAnswers[index] == question.correctOptionIndex;
+                  final alreadyShown = _shownAnimations.contains(index);
+                  // Sadece doğruysa VE daha önce gösterilmediyse oynat
+                  final shouldPlay = isCorrect && !alreadyShown;
+
                   return QuestionCard(
                     question: question,
                     questionNumber: index + 1,
                     totalQuestions: quizLength,
                     selectedOptionIndex: widget.selectedAnswers[index],
+                    // Yeni eklenen parametre: Animasyon oynatılmalı mı?
+                    shouldPlayAnimation: shouldPlay,
                     onOptionSelected: (optionIndex) {
-                      if(!widget.selectedAnswers.containsKey(index)){
+                      if (!widget.selectedAnswers.containsKey(index)) {
                         widget.onAnswerSelected(index, optionIndex);
                       }
                     },
-                    onReportIssue: () {
-                      widget.onReportIssue(index);
-                    },
+                    onReportIssue: () => widget.onReportIssue(index),
                     onSwipeUp: () {
-                      // Sonraki soruya geç
                       if (_currentPage < quizLength - 1) {
                         _pageController.animateToPage(
                           _currentPage + 1,
@@ -146,7 +150,6 @@ class _QuizViewState extends State<QuizView> {
                       }
                     },
                     onSwipeDown: () {
-                      // Önceki soruya geç
                       if (_currentPage > 0) {
                         _pageController.animateToPage(
                           _currentPage - 1,
@@ -156,6 +159,10 @@ class _QuizViewState extends State<QuizView> {
                       }
                     },
                     onSubmit: widget.onSubmit,
+                    // Animasyon gösterildi olarak işaretle (setState yapmadan)
+                    onAnimationShown: () {
+                      _shownAnimations.add(index);
+                    },
                   );
                 },
               ),
@@ -163,7 +170,6 @@ class _QuizViewState extends State<QuizView> {
           ],
         ),
 
-        // Şık kaydırma ipucu - ilk kullanımda göster
         if (_showHint)
           QuizSwipeHint(
             onDismiss: () {
@@ -183,6 +189,8 @@ class QuestionCard extends StatefulWidget {
   final int questionNumber;
   final int totalQuestions;
   final int? selectedOptionIndex;
+  final bool shouldPlayAnimation; // Yeni parametre
+  final VoidCallback? onAnimationShown; // Yeni callback
   final Function(int) onOptionSelected;
   final void Function()? onReportIssue;
   final VoidCallback? onSwipeUp;
@@ -197,6 +205,8 @@ class QuestionCard extends StatefulWidget {
     required this.selectedOptionIndex,
     required this.onOptionSelected,
     required this.onReportIssue,
+    this.shouldPlayAnimation = false,
+    this.onAnimationShown,
     this.onSwipeUp,
     this.onSwipeDown,
     this.onSubmit,
@@ -215,10 +225,28 @@ class _QuestionCardState extends State<QuestionCard> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    // Başlangıçta scroll pozisyonunu kontrol et
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkScrollPosition();
+      // Eğer sayfa ilk açıldığında animasyon oynatılması gerekiyorsa (nadir durum)
+      _checkAnimationStatus();
     });
+  }
+
+  @override
+  void didUpdateWidget(QuestionCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Widget güncellendiğinde (cevap verildiğinde) animasyon kontrolü
+    if (widget.shouldPlayAnimation && !oldWidget.shouldPlayAnimation) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _checkAnimationStatus();
+      });
+    }
+  }
+
+  void _checkAnimationStatus() {
+    if (widget.shouldPlayAnimation) {
+      widget.onAnimationShown?.call();
+    }
   }
 
   void _onScroll() {
@@ -242,222 +270,209 @@ class _QuestionCardState extends State<QuestionCard> {
     super.dispose();
   }
 
-
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onVerticalDragEnd: (details) {
-        // Hızlı kaydırma kontrolü
-        if (details.primaryVelocity == null) return;
-
-        final velocity = details.primaryVelocity!;
-
-        // Yukarı kaydırma (sonraki soru)
-        if (velocity < -500 && _isAtBottom) {
-          widget.onSwipeUp?.call();
-        }
-        // Aşağı kaydırma (önceki soru)
-        else if (velocity > 500 && _isAtTop) {
-          widget.onSwipeDown?.call();
-        }
-      },
-      child: SingleChildScrollView(
-        controller: _scrollController,
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header AppBar'a taşındı; burada yer kaplamasın
-            const SizedBox(height: 2),
-
-            // Soru kartı (siyah-beyaz)
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
-                  width: 1.5,
-                ),
-              ),
-              child: MarkdownWithMath(
-                data: widget.question.question,
-                styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
-                  p: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    height: 1.4,
+    return Stack(
+      children: [
+        GestureDetector(
+          onVerticalDragEnd: (details) {
+            if (details.primaryVelocity == null) return;
+            final velocity = details.primaryVelocity!;
+            if (velocity < -500 && _isAtBottom) {
+              widget.onSwipeUp?.call();
+            } else if (velocity > 500 && _isAtTop) {
+              widget.onSwipeDown?.call();
+            }
+          },
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 2),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
+                      width: 1.5,
+                    ),
                   ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            ...List.generate(widget.question.options.length, (index) {
-              bool isSelected = widget.selectedOptionIndex == index;
-              bool isCorrect = widget.question.correctOptionIndex == index;
-              Color? tileColor;
-              Color? borderColor;
-              Color? letterBgColor;
-              Color? letterTextColor;
-
-              final colorScheme = Theme.of(context).colorScheme;
-
-              // Yeşil ve kırmızı renkler
-              const greenColor = Color(0xFF4CAF50); // Yeşil
-              const redColor = Color(0xFFE53935);   // Kırmızı
-
-              if (widget.selectedOptionIndex != null) {
-                // Cevap verildikten sonra
-                if (isSelected) {
-                  // Seçilen şık
-                  if (isCorrect) {
-                    tileColor = greenColor.withValues(alpha: 0.1);
-                    borderColor = greenColor;
-                    letterBgColor = greenColor;
-                    letterTextColor = Colors.white;
-                  } else {
-                    tileColor = redColor.withValues(alpha: 0.1);
-                    borderColor = redColor;
-                    letterBgColor = redColor;
-                    letterTextColor = Colors.white;
-                  }
-                } else if (isCorrect) {
-                  // Doğru cevap (seçilmemiş)
-                  tileColor = greenColor.withValues(alpha: 0.1);
-                  borderColor = greenColor;
-                  letterBgColor = greenColor;
-                  letterTextColor = Colors.white;
-                } else {
-                  // Diğer şıklar - siyah beyaz devam eder
-                  tileColor = colorScheme.surface;
-                  borderColor = colorScheme.onSurface.withValues(alpha: 0.2);
-                  letterBgColor = colorScheme.onSurface.withValues(alpha: 0.1);
-                  letterTextColor = colorScheme.onSurface.withValues(alpha: 0.6);
-                }
-              } else {
-                // Cevap verilmeden önce - siyah beyaz tema
-                tileColor = colorScheme.surface;
-                borderColor = colorScheme.onSurface.withValues(alpha: 0.3);
-                letterBgColor = colorScheme.onSurface.withValues(alpha: 0.1);
-                letterTextColor = colorScheme.onSurface;
-              }
-
-              return Container(
-                margin: const EdgeInsets.only(bottom: 8),
-                decoration: BoxDecoration(
-                  color: tileColor,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: borderColor,
-                    width: 1.5,
-                  ),
-                ),
-                child: InkWell(
-                  onTap: widget.selectedOptionIndex == null ? () => widget.onOptionSelected(index) : null,
-                  borderRadius: BorderRadius.circular(12),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-                    child: Row(
-                      children: [
-                        // Şık harf ikonları
-                        Container(
-                          width: 30,
-                          height: 30,
-                          decoration: BoxDecoration(
-                            color: letterBgColor,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: Text(
-                              String.fromCharCode(65 + index), // A, B, C, D
-                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                color: letterTextColor,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: MarkdownWithMath(
-                            data: widget.question.options[index],
-                            styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
-                              p: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                fontSize: 14,
-                                height: 1.4,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                  child: MarkdownWithMath(
+                    data: widget.question.question,
+                    styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                      p: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        height: 1.4,
+                      ),
                     ),
                   ),
                 ),
-              );
-            }),
+                const SizedBox(height: 16),
+                ...List.generate(widget.question.options.length, (index) {
+                  bool isSelected = widget.selectedOptionIndex == index;
+                  bool isCorrect = widget.question.correctOptionIndex == index;
+                  Color? tileColor;
+                  Color? borderColor;
+                  Color? letterBgColor;
+                  Color? letterTextColor;
+                  final colorScheme = Theme.of(context).colorScheme;
+                  const greenColor = Color(0xFF4CAF50);
+                  const redColor = Color(0xFFE53935);
 
-            // Açıklamayı Gör butonu sadece cevap verildiyse, Sonuçları Gör butonu ise sadece son soruda gözükecek
-            if (widget.selectedOptionIndex != null || widget.questionNumber == widget.totalQuestions)
-              Padding(
-                padding: const EdgeInsets.only(top: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    if (widget.selectedOptionIndex != null) ...[
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            _showExplanationBottomSheet(context);
-                          },
-                          icon: const Icon(Icons.lightbulb_outline_rounded),
-                          label: const FittedBox(child: Text("Açıklamayı Gör")),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFFFF9800),
-                            side: const BorderSide(
-                              color: Color(0xFFFF9800),
-                              width: 1.5,
-                            ),
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-                          ),
-                        ).animate().fadeIn(delay: 150.ms).slideY(begin: 0.2),
+                  if (widget.selectedOptionIndex != null) {
+                    if (isSelected) {
+                      if (isCorrect) {
+                        tileColor = greenColor.withValues(alpha: 0.1);
+                        borderColor = greenColor;
+                        letterBgColor = greenColor;
+                        letterTextColor = Colors.white;
+                      } else {
+                        tileColor = redColor.withValues(alpha: 0.1);
+                        borderColor = redColor;
+                        letterBgColor = redColor;
+                        letterTextColor = Colors.white;
+                      }
+                    } else if (isCorrect) {
+                      tileColor = greenColor.withValues(alpha: 0.1);
+                      borderColor = greenColor;
+                      letterBgColor = greenColor;
+                      letterTextColor = Colors.white;
+                    } else {
+                      tileColor = colorScheme.surface;
+                      borderColor = colorScheme.onSurface.withValues(alpha: 0.2);
+                      letterBgColor = colorScheme.onSurface.withValues(alpha: 0.1);
+                      letterTextColor = colorScheme.onSurface.withValues(alpha: 0.6);
+                    }
+                  } else {
+                    tileColor = colorScheme.surface;
+                    borderColor = colorScheme.onSurface.withValues(alpha: 0.3);
+                    letterBgColor = colorScheme.onSurface.withValues(alpha: 0.1);
+                    letterTextColor = colorScheme.onSurface;
+                  }
+
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: tileColor,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: borderColor,
+                        width: 1.5,
                       ),
-                    ],
-                    if (widget.selectedOptionIndex != null && widget.questionNumber == widget.totalQuestions)
-                      const SizedBox(width: 12),
-                    if (widget.questionNumber == widget.totalQuestions) ...[
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: widget.onSubmit,
-                          icon: const Icon(Icons.assignment_turned_in_rounded),
-                          label: const FittedBox(child: Text("Sonuçları Gör")),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFFFF9800),
-                            side: const BorderSide(
-                              color: Color(0xFFFF9800),
-                              width: 1.5,
+                    ),
+                    child: InkWell(
+                      onTap: widget.selectedOptionIndex == null ? () => widget.onOptionSelected(index) : null,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 30,
+                              height: 30,
+                              decoration: BoxDecoration(
+                                color: letterBgColor,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  String.fromCharCode(65 + index),
+                                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                    color: letterTextColor,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
                             ),
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-                          ),
-                        ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: MarkdownWithMath(
+                                data: widget.question.options[index],
+                                styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                                  p: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    fontSize: 14,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ],
-                  ],
-                ),
-              ),
-          ],
+                    ),
+                  );
+                }),
+                if (widget.selectedOptionIndex != null || widget.questionNumber == widget.totalQuestions)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: Row(
+                      children: [
+                        if (widget.selectedOptionIndex != null)
+                          OutlinedButton.icon(
+                            onPressed: () {
+                              _showExplanationBottomSheet(context);
+                            },
+                            icon: const Icon(Icons.lightbulb_outline_rounded),
+                            label: const FittedBox(child: Text("Açıklamayı Gör")),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFFFF9800),
+                              side: const BorderSide(
+                                color: Color(0xFFFF9800),
+                                width: 1.5,
+                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            ),
+                          ).animate().fadeIn(delay: 150.ms).slideY(begin: 0.2),
+                        const Spacer(),
+                        if (widget.questionNumber == widget.totalQuestions)
+                          OutlinedButton.icon(
+                            onPressed: widget.onSubmit,
+                            icon: const Icon(Icons.assignment_turned_in_rounded),
+                            label: const FittedBox(child: Text("Sonuçları Gör")),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Theme.of(context).colorScheme.onSurface,
+                              backgroundColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
+                              side: BorderSide.none,
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            ),
+                          ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ),
-      ),
+
+        // Sadece shouldPlayAnimation true ise göster
+        if (widget.shouldPlayAnimation)
+          Center(
+            child: IgnorePointer(
+              child: Lottie.asset(
+                'assets/lotties/firework.json',
+                repeat: false,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  return const SizedBox.shrink();
+                },
+              ),
+            ),
+          ),
+      ],
     );
   }
 
-  // Açıklama detay sayfasını göster
   void _showExplanationBottomSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         constraints: BoxConstraints(
@@ -467,138 +482,133 @@ class _QuestionCardState extends State<QuestionCard> {
           color: Theme.of(context).colorScheme.surface,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Handle bar
-            Container(
-              margin: const EdgeInsets.symmetric(vertical: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(2),
+        child: SafeArea(
+          bottom: true,
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-            ),
-
-            Flexible(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Başlık
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Icon(
-                            Icons.lightbulb_rounded,
-                            color: Theme.of(context).colorScheme.onSurface,
-                            size: 28,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            "Soru ${widget.questionNumber}",
-                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: const Icon(Icons.close_rounded),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Soru
-                    Text(
-                      "Soru",
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: MarkdownWithMath(
-                        data: widget.question.question,
-                        styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Doğru cevap
-                    Text(
-                      "Doğru Cevap",
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
-                          width: 2,
-                        ),
-                      ),
-                      child: Row(
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
                         children: [
                           Container(
-                            width: 32,
-                            height: 32,
+                            padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.onSurface,
-                              shape: BoxShape.circle,
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(10),
                             ),
-                            child: Center(
-                              child: Text(
-                                String.fromCharCode(65 + widget.question.correctOptionIndex),
-                                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                  color: Theme.of(context).colorScheme.surface,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                            child: Icon(
+                              Icons.lightbulb_rounded,
+                              color: Theme.of(context).colorScheme.onSurface,
+                              size: 28,
                             ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
-                            child: MarkdownWithMath(
-                              data: widget.question.options[widget.question.correctOptionIndex],
-                              styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)),
+                            child: Text(
+                              "Soru ${widget.questionNumber}",
+                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
+                          ),
+                          IconButton(
+                            onPressed: () => Navigator.pop(context),
+                            icon: const Icon(Icons.close_rounded),
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Açıklama
-                    ExplanationCard(explanation: widget.question.explanation),
-                  ],
+                      const SizedBox(height: 24),
+                      Text(
+                        "Soru",
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurface,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: MarkdownWithMath(
+                          data: widget.question.question,
+                          styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        "Doğru Cevap",
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurface,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
+                            width: 2,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.onSurface,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  String.fromCharCode(65 + widget.question.correctOptionIndex),
+                                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                    color: Theme.of(context).colorScheme.surface,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: MarkdownWithMath(
+                                data: widget.question.options[widget.question.correctOptionIndex],
+                                styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      ExplanationCard(explanation: widget.question.explanation),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -627,7 +637,6 @@ class ExplanationCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Basit başlık (siyah-beyaz)
           Row(
             children: [
               Icon(
@@ -646,8 +655,6 @@ class ExplanationCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-
-          // Açıklama metni
           MarkdownWithMath(
             data: explanation,
             styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
@@ -664,7 +671,6 @@ class ExplanationCard extends StatelessWidget {
   }
 }
 
-/// Quiz gözden geçirme ekranı widget'ı
 class QuizReviewView extends StatelessWidget {
   final WorkshopModel material;
   final Map<int, int> selectedAnswers;
@@ -677,7 +683,6 @@ class QuizReviewView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Quiz yoksa boş durum göster
     if (material.quiz == null || material.quiz!.isEmpty) {
       return const Center(
         child: Padding(
@@ -720,8 +725,8 @@ class QuizReviewView extends StatelessWidget {
                           color: optIndex == question.correctOptionIndex
                               ? Theme.of(context).colorScheme.onSurface
                               : (optIndex == userAnswer && !isCorrect
-                                  ? const Color(0xFFE53935) // Kırmızı - yanlış cevap
-                                  : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
+                              ? const Color(0xFFE53935)
+                              : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
                         ),
                       ),
                     ),
@@ -732,8 +737,8 @@ class QuizReviewView extends StatelessWidget {
                       color: optIndex == question.correctOptionIndex
                           ? Theme.of(context).colorScheme.onSurface
                           : (optIndex == userAnswer && !isCorrect
-                              ? const Color(0xFFE53935) // Kırmızı - yanlış cevap
-                              : Theme.of(context).colorScheme.onSurfaceVariant),
+                          ? const Color(0xFFE53935)
+                          : Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   );
                 }),
