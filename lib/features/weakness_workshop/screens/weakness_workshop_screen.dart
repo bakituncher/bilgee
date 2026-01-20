@@ -686,75 +686,14 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
   }
 }
 
-class _FancyBackground extends StatefulWidget {
+class _FancyBackground extends StatelessWidget {
   const _FancyBackground();
-  @override
-  State<_FancyBackground> createState() => _FancyBackgroundState();
-}
-
-class _FancyBackgroundState extends State<_FancyBackground> with SingleTickerProviderStateMixin {
-  late AnimationController _c;
-  @override
-  void initState() {
-    super.initState();
-    _c = AnimationController(vsync: this, duration: const Duration(seconds: 10))..repeat(reverse: true);
-  }
-  @override
-  void dispose() { _c.dispose(); super.dispose(); }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return AnimatedBuilder(
-      animation: _c,
-      builder: (_, __) {
-        final t = _c.value;
-        return Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color.lerp(colorScheme.surface, colorScheme.surface, t)!,
-                Color.lerp(colorScheme.surface, colorScheme.surface, 1 - t)!,
-              ],
-            ),
-          ),
-          child: Stack(
-            children: [
-              _GlowBlob(
-                  top: -40, left: -20, color: colorScheme.secondary.withOpacity(0.25), size: 200 + 40 * t),
-              _GlowBlob(
-                  bottom: -60, right: -30, color: colorScheme.primary.withOpacity(0.22), size: 240 - 20 * t),
-              _GlowBlob(
-                  top: 160,
-                  right: -40,
-                  color: colorScheme.tertiary.withOpacity(0.18),
-                  size: 180 + 20 * (1 - t)),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _GlowBlob extends StatelessWidget {
-  final double? top, left, right, bottom;
-  final Color color;
-  final double size;
-  const _GlowBlob({this.top, this.left, this.right, this.bottom, required this.color, required this.size});
-  @override
-  Widget build(BuildContext context) {
-    return Positioned(
-      top: top, left: left, right: right, bottom: bottom,
-      child: Container(
-        width: size, height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          boxShadow: [BoxShadow(color: color, blurRadius: 80, spreadRadius: 40)],
-        ),
-      ),
+    return Container(
+      color: colorScheme.surface,
     );
   }
 }
@@ -1399,10 +1338,7 @@ class _SummaryViewState extends ConsumerState<_SummaryView> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                gradient: LinearGradient(colors: [
-                  Theme.of(context).colorScheme.secondary.withOpacity(0.3),
-                  Theme.of(context).colorScheme.secondary.withOpacity(0.15)
-                ]),
+                color: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: Theme.of(context).colorScheme.secondary.withOpacity(0.8), width: 1.5),
               ),
@@ -1436,10 +1372,7 @@ class _SummaryViewState extends ConsumerState<_SummaryView> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                gradient: LinearGradient(colors: [
-                  Theme.of(context).colorScheme.secondary.withOpacity(0.25),
-                  Theme.of(context).colorScheme.primary.withOpacity(0.15)
-                ]),
+                color: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: Theme.of(context).colorScheme.secondary.withOpacity(0.6), width: 1.5),
               ),
