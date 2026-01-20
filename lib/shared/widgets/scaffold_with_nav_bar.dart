@@ -91,23 +91,44 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                   ),
                   child: SafeArea(
                     top: false,
-                    child: SizedBox(
-                      height: 64,
-                      child: BottomAppBar(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-                        height: 64,
-                        elevation: 0,
-                        color: Colors.transparent,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            _buildNavItem(context, icon: Icons.dashboard_rounded, index: 0, ref: ref),
-                            _buildNavItem(context, icon: Icons.school_rounded, index: 1, ref: ref),
-                            const SizedBox(width: 64),
-                            _buildNavItem(context, icon: Icons.military_tech_rounded, index: 3, ref: ref),
-                            _buildNavItem(context, icon: Icons.person_rounded, index: 4, ref: ref),
-                          ],
-                        ),
+                    child: BottomAppBar(
+                      padding: EdgeInsets.zero,
+                      height: 56,
+                      elevation: 0,
+                      color: Colors.transparent,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _buildNavItem(
+                            context,
+                            icon: Icons.dashboard_outlined,
+                            activeIcon: Icons.dashboard_rounded,
+                            index: 0,
+                            ref: ref,
+                          ),
+                          _buildNavItem(
+                            context,
+                            icon: Icons.school_outlined,
+                            activeIcon: Icons.school_rounded,
+                            index: 1,
+                            ref: ref,
+                          ),
+                          const SizedBox(width: 64),
+                          _buildNavItem(
+                            context,
+                            icon: Icons.military_tech_outlined,
+                            activeIcon: Icons.military_tech_rounded,
+                            index: 3,
+                            ref: ref,
+                          ),
+                          _buildNavItem(
+                            context,
+                            icon: Icons.person_outline_rounded,
+                            activeIcon: Icons.person_rounded,
+                            index: 4,
+                            ref: ref,
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -132,57 +153,48 @@ class ScaffoldWithNavBar extends ConsumerWidget {
     );
   }
 
-  Widget _buildNavItem(BuildContext context, {required IconData icon, required int index, required WidgetRef ref}) {
+  Widget _buildNavItem(BuildContext context, {
+    required IconData icon,
+    required IconData activeIcon,
+    required int index,
+    required WidgetRef ref,
+  }) {
     final isSelected = navigationShell.currentIndex == index;
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => navigationShell.goBranch(
-            index,
-            initialLocation: index == navigationShell.currentIndex,
+    final iconWidget = Icon(
+      isSelected ? activeIcon : icon,
+      color: colorScheme.onSurface,
+      size: 28,
+    )
+        .animate(target: isSelected ? 1 : 0)
+        .scale(
+          begin: const Offset(0.95, 0.95),
+          end: const Offset(1.0, 1.0),
+          duration: 200.ms,
+        )
+        .then()
+        .custom(
+          begin: isSelected ? 1.0 : 0.4,
+          end: isSelected ? 1.0 : 0.4,
+          duration: 0.ms,
+          builder: (context, value, child) => Opacity(
+            opacity: value,
+            child: child,
           ),
-          customBorder: const CircleBorder(),
-          splashColor: colorScheme.primary.withOpacity(0.2),
-          highlightColor: colorScheme.primary.withOpacity(0.1),
-          child: Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isSelected
-                  ? colorScheme.primary.withOpacity(0.15)
-                  : Colors.transparent,
-              border: isSelected
-                  ? Border.all(
-                color: colorScheme.primary.withOpacity(0.3),
-                width: 1.5,
-              )
-                  : null,
-            ),
-            child: Center(
-              child: Icon(
-                icon,
-                color: isSelected
-                    ? colorScheme.primary
-                    : colorScheme.onSurfaceVariant.withOpacity(0.7),
-                size: isSelected ? 24 : 22,
-              ),
-            ),
-          ),
-        ),
+        );
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => navigationShell.goBranch(
+        index,
+        initialLocation: index == navigationShell.currentIndex,
       ),
-    ).animate(
-      target: isSelected ? 1 : 0,
-    ).scale(
-      begin: const Offset(0.95, 0.95),
-      end: const Offset(1.0, 1.0),
-      duration: 200.ms,
+      child: SizedBox(
+        width: 48,
+        height: 48,
+        child: Center(child: iconWidget),
+      ),
     );
   }
 }
