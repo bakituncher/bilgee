@@ -77,9 +77,43 @@ class TestModel {
 extension TestModelSummaryX on TestModel {
   // Branş denemesi mi kontrol et
   bool get isBranchTest {
-    // 1. KESİN KURAL: Eğer denemede sadece 1 dersin puanı varsa...
+    final sectionUpper = sectionName.toUpperCase().trim();
+    final examTypeUpper = examType.name.toUpperCase();
+
+    // 1. KESİN ANA SINAVLAR LİSTESİ
+    // Bu isimlere sahip denemeler, tek ders içerse bile (Örn: YDT) ANA SINAV kabul edilir.
+    final mainSections = [
+      'TYT', 'LGS', 'KPSS', 'AGS', 'YDT', 'GENEL', 'TÜMÜ', 'DENEME',
+      // AGS/ÖABT Çoklu Branşları
+      'SINIF ÖĞRETMENLIĞI', 'SINIF ÖĞRETMENLİĞİ',
+      'OKUL ÖNCESI', 'OKUL ÖNCESİ',
+      'ÖZEL EĞITIM ÖĞRETMENLIĞI', 'ÖZEL EĞİTİM ÖĞRETMENLİĞİ'
+    ];
+
+    // Eğer bölüm adı bu listedeyse -> KESİNLİKLE ANA SINAVDIR
+    if (mainSections.contains(sectionUpper)) {
+      return false;
+    }
+
+    // Eğer bölüm adı sınav türüyle birebir aynıysa (Örn: examType: YDT, sectionName: YDT) -> ANA SINAVDIR
+    if (sectionUpper == examTypeUpper) {
+      return false;
+    }
+
+    // "TYT GENEL", "TYT DENEME" gibi isimler -> ANA SINAVDIR
+    if (sectionUpper.contains('GENEL') || (sectionUpper.contains(examTypeUpper) && sectionUpper.contains('DENEME'))) {
+      return false;
+    }
+
+    // AYT ve varyasyonları -> ANA SINAVDIR
+    if (sectionUpper.startsWith('AYT')) {
+      return false;
+    }
+
+    // 2. TEK DERS KONTROLÜ (Branş Denemesi Mantığı)
+    // Yukarıdaki ana sınav filtresinden geçemeyen ve tek ders içerenler branş denemesidir.
     if (scores.length == 1) {
-      // İSTİSNA: AGS/ÖABT ana sınav parçaları
+      // İstisna: Ders adı "Alan Bilgisi" ise bu AGS ana sınavıdır.
       final subjectName = scores.keys.first;
       if (subjectName == 'Alan Bilgisi' || subjectName == 'Temel Alan Bilgisi') {
         return false;
@@ -87,46 +121,16 @@ extension TestModelSummaryX on TestModel {
       return true;
     }
 
-    final sectionUpper = sectionName.toUpperCase().trim();
-    final examTypeUpper = examType.name.toUpperCase();
-
-    // 2. Ana sınav bölümleri - Kesin liste
-    final mainSections = [
-      'TYT', 'LGS', 'KPSS', 'AGS', 'YDT', 'GENEL', 'TÜMÜ', 'DENEME',
-      // AGS/ÖABT: Çoklu ders içeren (Temel Alan + Alan Eğitimi) ana branşlar
-      // Bu branşlar "Branş Denemesi" değil, "Ana Sınav" olarak değerlendirilmeli.
-      'SINIF ÖĞRETMENLIĞI', 'SINIF ÖĞRETMENLİĞİ',
-      'OKUL ÖNCESI', 'OKUL ÖNCESİ',
-      'ÖZEL EĞITIM ÖĞRETMENLIĞI', 'ÖZEL EĞİTİM ÖĞRETMENLİĞİ'
-    ];
-
-    // Eğer sectionName direkt sınav türüyle aynıysa (örn: examType: TYT, sectionName: TYT) -> Ana Deneme
-    if (sectionUpper == examTypeUpper) {
-      return false;
-    }
-
-    // Ana sınav isimlerini içeriyorsa -> Ana Deneme
-    if (mainSections.contains(sectionUpper)) {
-      return false;
-    }
-
-    // "TYT GENEL", "TYT DENEME" gibi kombinasyonları yakala
-    if (sectionUpper.contains('GENEL') || (sectionUpper.contains(examTypeUpper) && sectionUpper.contains('DENEME'))) {
-      return false;
-    }
-
-    // AYT ve alt türleri -> Ana Deneme
-    if (sectionUpper.startsWith('AYT')) {
-      return false;
-    }
-
-    // Diğer her şey branş denemesi sayılır
+    // Varsayılan olarak (birden çok ders varsa ve yukarıdaki listelerde yoksa)
+    // Taktik mantığında genelde ana deneme gibi davranır ama emin olmak için true dönebiliriz.
+    // Ancak orijinal kodda "Diğer her şey branş denemesi sayılır" denmişti.
+    // Çoklu ders içeren özel bir test (Örn: Fizik + Kimya tarama) branş denemesi kategorisine girebilir.
     return true;
   }
 
-  // YENİ: Grafiklerde ve başlıklarda görünecek akıllı isim
+  // Grafiklerde ve başlıklarda görünecek akıllı isim
   String get smartDisplayName {
-    // Branş denemesi ise dersin adını (Örn: Türkçe), değilse bölüm adını (Örn: Sınıf Öğretmenliği) döndürür.
+    // Branş denemesi ise dersin adını (Örn: İngilizce), değilse bölüm adını (Örn: YDT) döndürür.
     if (isBranchTest && scores.isNotEmpty) {
       return scores.keys.first;
     }
