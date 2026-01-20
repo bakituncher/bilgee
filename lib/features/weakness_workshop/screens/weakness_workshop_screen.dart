@@ -1183,15 +1183,52 @@ class _EmptyStateView extends StatelessWidget {
 }
 
 
-class _StudyView extends StatelessWidget {
+class _StudyView extends ConsumerStatefulWidget {
   final WorkshopModel material;
   final VoidCallback onStartQuiz;
   const _StudyView({super.key, required this.material, required this.onStartQuiz});
 
   @override
+  ConsumerState<_StudyView> createState() => _StudyViewState();
+}
+
+class _StudyViewState extends ConsumerState<_StudyView> {
+  bool _isSaving = false;
+  bool _isSaved = false;
+  final ScrollController _scrollController = ScrollController();
+  bool _showSaveButton = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    final hasQuiz = widget.material.quiz != null && widget.material.quiz!.isNotEmpty;
+    // Sadece quiz yoksa (sadece konu anlatımı modunda) scroll kontrolü yap
+    if (!hasQuiz && _scrollController.hasClients) {
+      final maxScroll = _scrollController.position.maxScrollExtent;
+      final currentScroll = _scrollController.position.pixels;
+      // Kullanıcı en alta yaklaştıysa (son 100 pixel) butonu göster
+      final shouldShow = maxScroll > 0 && currentScroll >= maxScroll - 100;
+      if (shouldShow != _showSaveButton) {
+        setState(() => _showSaveButton = shouldShow);
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     // StudyGuide yoksa boş durum göster
-    if (material.studyGuide == null || material.studyGuide!.isEmpty) {
+    if (widget.material.studyGuide == null || widget.material.studyGuide!.isEmpty) {
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(24.0),
@@ -1200,16 +1237,19 @@ class _StudyView extends StatelessWidget {
       );
     }
 
+    final hasQuiz = widget.material.quiz != null && widget.material.quiz!.isNotEmpty;
+
     return Column(
       children: [
         Expanded(
           child: SingleChildScrollView(
+            controller: _scrollController,
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 MarkdownWithMath(
-                  data: material.studyGuide!,
+                  data: widget.material.studyGuide!,
                   styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
                     p: TextStyle(fontSize: 15, height: 1.5, color: Theme.of(context).colorScheme.onSurface),
                     h1: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.secondary),
@@ -1223,15 +1263,53 @@ class _StudyView extends StatelessWidget {
             ),
           ),
         ),
-        // Quiz varsa buton göster
-        if (material.quiz != null && material.quiz!.isNotEmpty)
+        // Quiz varsa "Teste Başla" butonu göster
+        if (hasQuiz)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
             child: ElevatedButton.icon(
               icon: const Icon(Icons.quiz_rounded, size: 20),
               label: const Text("Teste Başla"),
-              onPressed: onStartQuiz,
+              onPressed: widget.onStartQuiz,
             ),
+          ),
+        // Quiz yoksa (sadece konu anlatımı) ve kullanıcı en alta scroll ettiyse kaydetme butonu göster
+        if (!hasQuiz && _showSaveButton)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+            child: ElevatedButton.icon(
+              icon: _isSaved
+                ? const Icon(Icons.check_circle_rounded, size: 20)
+                : const Icon(Icons.bookmark_add_rounded, size: 20),
+              label: _isSaving
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Text(_isSaved ? "Kaydedildi" : "Konuyu Kaydet"),
+              onPressed: (_isSaving || _isSaved) ? null : () async {
+                setState(() => _isSaving = true);
+                final userId = ref.read(authControllerProvider).value!.uid;
+                final workshopToSave = widget.material.copyWith(id: const Uuid().v4());
+                await ref.read(firestoreServiceProvider).saveWorkshopForUser(userId, workshopToSave);
+                if (mounted) {
+                  setState(() {
+                    _isSaving = false;
+                    _isSaved = true;
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text("Konu anlatımı başarıyla kaydedildi!"),
+                      backgroundColor: Theme.of(context).colorScheme.secondary,
+                    ),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _isSaved ? Theme.of(context).colorScheme.secondary : null,
+              ),
+            ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.3, duration: 300.ms),
           ),
       ],
     );
