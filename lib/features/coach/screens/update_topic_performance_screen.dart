@@ -441,7 +441,7 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
   // Günde maksimum 1 kere Etüt Odası önerisi göstermek için kontrol
   Future<bool> _canShowWorkshopOffer() async {
     final prefs = await SharedPreferences.getInstance();
-    final lastOfferDate = prefs.getString('last_workshop_offer_date6');
+    final lastOfferDate = prefs.getString('last_workshop_offer_date7');
     final today = DateTime.now().toIso8601String().split('T')[0]; // YYYY-MM-DD formatında
 
     if (lastOfferDate == today) {
@@ -453,7 +453,7 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
   Future<void> _markWorkshopOfferShown() async {
     final prefs = await SharedPreferences.getInstance();
     final today = DateTime.now().toIso8601String().split('T')[0];
-    await prefs.setString('last_workshop_offer_date6', today);
+    await prefs.setString('last_workshop_offer_date7', today);
   }
 }
 

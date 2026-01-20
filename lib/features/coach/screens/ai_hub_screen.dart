@@ -139,7 +139,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
 
                     _ProFeatureRow(
                       theme: theme,
-                      icon: Icons.auto_fix_high_rounded,
+                      icon: Icons.menu_book_rounded,
                       color: const Color(0xFF8B5CF6),
                       title: "Etüt Odası",
                       description: "Sadece senin eksik olduğun konulara özel konu özeti ve test soruları üretir.",
@@ -264,7 +264,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
               onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/motivation-chat', offerData: {
                 'title': 'Taktik Tavşan',
                 'subtitle': 'Sınav stresi ve motivasyon koçu.',
-                'icon': Icons.psychology_rounded,
+                'iconName': 'psychology',
                 'color': Colors.indigoAccent,
                 'marketingTitle': 'Koçun Cebinde!',
                 'marketingSubtitle': 'Sınav sadece bilgi değil, psikolojidir. Taktik Tavşan seni mental olarak sınava hazırlar.',
@@ -305,7 +305,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                     onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/strategic-planning', offerData: {
                       'title': 'Haftalık Stratejist',
                       'subtitle': 'Sana özel ders programı.',
-                      'icon': Icons.calendar_month_rounded,
+                      'iconName': 'calendar_month',
                       'color': const Color(0xFF10B981),
                       'marketingTitle': 'Programın Hazır!',
                       'marketingSubtitle': 'Eksik konularına ve müsait zamanına göre sana en uygun haftalık ders çalışma programını saniyeler içinde oluştur.',
@@ -326,7 +326,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                     onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/question-solver', offerData: {
                       'title': 'Soru Çözücü',
                       'subtitle': 'Anında çözüm cebinde.',
-                      'icon': Icons.camera_enhance_rounded,
+                      'iconName': 'camera_enhance',
                       'color': Colors.orangeAccent,
                       'marketingTitle': 'Soruda Takılma!',
                       'marketingSubtitle': 'Yapamadığın sorunun fotoğrafını çek, Taktik Tavşan adım adım çözümünü anlatsın.',
@@ -354,7 +354,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                     onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/analysis-strategy', offerData: {
                       'title': 'Analiz & Strateji',
                       'subtitle': 'Verilerle konuşan koç.',
-                      'icon': Icons.radar_rounded,
+                      'iconName': 'radar',
                       'color': const Color(0xFFF43F5E),
                       'marketingTitle': 'Tuzağı Fark Et!',
                       'marketingSubtitle': 'Denemelerde sürekli aynı yanlışları mı yapıyorsun? Seni aşağı çeken konuları nokta atışı tespit et.',
