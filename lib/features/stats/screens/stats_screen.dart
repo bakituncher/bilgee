@@ -128,8 +128,8 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                   repeat: true,
                 ),
               ).animate()
-                .fadeIn(duration: 500.ms)
-                .scale(begin: const Offset(0.8, 0.8), duration: 600.ms, curve: Curves.easeOutBack),
+                  .fadeIn(duration: 500.ms)
+                  .scale(begin: const Offset(0.8, 0.8), duration: 600.ms, curve: Curves.easeOutBack),
 
               const SizedBox(height: 24),
 
@@ -145,8 +145,8 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                 ),
                 textAlign: TextAlign.center,
               ).animate(delay: 200.ms)
-                .fadeIn(duration: 400.ms)
-                .slideY(begin: 0.1, duration: 500.ms),
+                  .fadeIn(duration: 400.ms)
+                  .slideY(begin: 0.1, duration: 500.ms),
 
               const SizedBox(height: 12),
 
@@ -162,8 +162,8 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                   fontSize: 15,
                 ),
               ).animate(delay: 300.ms)
-                .fadeIn(duration: 400.ms)
-                .slideY(begin: 0.1, duration: 500.ms),
+                  .fadeIn(duration: 400.ms)
+                  .slideY(begin: 0.1, duration: 500.ms),
 
               const SizedBox(height: 32),
 
@@ -236,9 +236,9 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                   ),
                 ),
               ).animate(delay: 400.ms)
-                .fadeIn(duration: 500.ms)
-                .slideY(begin: 0.15, duration: 600.ms, curve: Curves.easeOutCubic)
-                .shimmer(delay: 800.ms, duration: 1500.ms),
+                  .fadeIn(duration: 500.ms)
+                  .slideY(begin: 0.15, duration: 600.ms, curve: Curves.easeOutCubic)
+                  .shimmer(delay: 800.ms, duration: 1500.ms),
             ],
           ),
         ),
@@ -292,7 +292,14 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
 
               final groupedTests = <String, List<TestModel>>{};
               for (final test in mainExamTests) {
-                (groupedTests[test.sectionName] ??= []).add(test);
+                // --- DÜZELTME: Normalizasyon ---
+                // Eğer bölüm adı "Yabancı Dil" ise bunu "YDT" olarak kabul et
+                String sectionKey = test.sectionName;
+                if (sectionKey == 'Yabancı Dil') {
+                  sectionKey = 'YDT';
+                }
+
+                (groupedTests[sectionKey] ??= []).add(test);
               }
 
               final sortedGroups = groupedTests.entries.toList()
