@@ -835,7 +835,10 @@ class _BriefingView extends ConsumerWidget {
         final suggestions = analysis?.getWorkshopSuggestions(count: 5) ?? [];
 
         if (suggestions.isEmpty) {
-          return _EmptyStateView();
+          // GÜNCELLEME: Artık manuel seçim fonksiyonunu parametre olarak geçiyoruz
+          return _EmptyStateView(
+            onManualSelect: () => _showManualTopicSelector(context, ref, onTopicSelected),
+          );
         }
 
         final colorScheme = Theme.of(context).colorScheme;
@@ -1074,101 +1077,183 @@ class _BriefingView extends ConsumerWidget {
   }
 }
 class _EmptyStateView extends StatelessWidget {
-  const _EmptyStateView();
+  final VoidCallback onManualSelect;
+
+  const _EmptyStateView({super.key, required this.onManualSelect});
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Center(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // Şık İkon Animasyonu
             Container(
-              width: 120,
-              height: 120,
+              padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                color: colorScheme.primaryContainer.withOpacity(0.3),
                 shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: colorScheme.primary.withOpacity(0.1),
+                    blurRadius: 20,
+                    spreadRadius: 5,
+                  ),
+                ],
               ),
               child: Icon(
-                Icons.insert_chart_outlined_rounded,
-                size: 60,
-                color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.5),
+                Icons.auto_awesome_outlined,
+                size: 48,
+                color: colorScheme.primary,
               ),
-            ).animate().fadeIn(duration: 600.ms).scale(delay: 200.ms),
-            const SizedBox(height: 16),
+            ).animate().scale(duration: 600.ms, curve: Curves.elasticOut),
+
+            const SizedBox(height: 24),
+
             Text(
-              "Henüz Ders Neti Yok",
+              "Henüz Veri Yok",
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+                    fontWeight: FontWeight.bold,
+                  ),
               textAlign: TextAlign.center,
-            ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.3),
-            const SizedBox(height: 8),
+            ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2, end: 0),
+
+            const SizedBox(height: 12),
+
             Text(
-              "Etüt Odası'nın sana özel içerik üretebilmesi için önce ders neti eklemelisin.",
+              "Taktik Tavşan'ın zayıf yönlerini tespit edip sana nokta atışı öneriler yapabilmesi için ders netlerine ihtiyacı var.",
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+                    color: colorScheme.onSurfaceVariant,
+                    height: 1.5,
+                  ),
               textAlign: TextAlign.center,
-            ).animate().fadeIn(delay: 600.ms),
-            const SizedBox(height: 16),
-            Card(
-              color: Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.5),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: BorderSide(
-                  color: Theme.of(context).colorScheme.secondary.withOpacity(0.3),
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.lightbulb_outline_rounded,
-                          size: 24,
-                          color: Theme.of(context).colorScheme.secondary,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          "Nasıl Başlarım?",
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
+            ).animate().fadeIn(delay: 400.ms),
+
+            const SizedBox(height: 40),
+
+            // 1. Seçenek: Veri Ekleme (Önerilen)
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  // Net ekleme ekranına yönlendirme
+                  context.go(AppRoutes.coach);
+                },
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: colorScheme.primary.withOpacity(0.3),
+                      width: 1.5,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      "1. Ders netlerini ekle\n2. Taktik Tavşan en zayıf konuları analiz edecek\n3. Özel çalışma materyallerine eriş!",
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        height: 1.5,
+                    boxShadow: [
+                      BoxShadow(
+                        color: colorScheme.shadow.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          Icons.add_chart_rounded,
+                          color: colorScheme.primary,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Ders Neti Ekle",
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: colorScheme.onSurface,
+                                  ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "Taktik Tavşan analizi için önerilir",
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: colorScheme.primary,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 16,
+                        color: colorScheme.onSurfaceVariant.withOpacity(0.5),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ).animate().fadeIn(delay: 800.ms).slideY(begin: 0.3),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () {
-                context.go(AppRoutes.coach);
-              },
-              icon: const Icon(Icons.add_chart_rounded, size: 20),
-              label: const Text("Ders Neti Ekle"),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ).animate().fadeIn(delay: 600.ms).slideX(begin: 0.05, end: 0),
+
+            const SizedBox(height: 24),
+
+            // Şık ayırıcı
+            Row(
+              children: [
+                Expanded(child: Divider(color: colorScheme.outlineVariant.withOpacity(0.5))),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    "VEYA",
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                ),
+                Expanded(child: Divider(color: colorScheme.outlineVariant.withOpacity(0.5))),
+              ],
+            ).animate().fadeIn(delay: 800.ms),
+
+            const SizedBox(height: 24),
+
+            // 2. Seçenek: Manuel Seçim (Kullanıcı dostu)
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: onManualSelect,
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  side: BorderSide(color: colorScheme.outline.withOpacity(0.5)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  foregroundColor: colorScheme.onSurface,
+                ),
+                icon: const Icon(Icons.touch_app_rounded, size: 20),
+                label: const Text("Çalışacağım Konuyu Ben Seçeceğim"),
               ),
-            ).animate().fadeIn(delay: 1000.ms).scale(),
-            const SizedBox(height: 8),
-            TextButton.icon(
+            ).animate().fadeIn(delay: 1000.ms).slideY(begin: 0.2, end: 0),
+
+            const SizedBox(height: 12),
+
+            TextButton(
               onPressed: () {
                 if (Navigator.of(context).canPop()) {
                   context.pop();
@@ -1176,9 +1261,11 @@ class _EmptyStateView extends StatelessWidget {
                   context.go(AppRoutes.home);
                 }
               },
-              icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 14),
-              label: const Text("Ana Sayfaya Dön"),
-            ).animate().fadeIn(delay: 1100.ms),
+              child: Text(
+                "Daha Sonra",
+                style: TextStyle(color: colorScheme.onSurfaceVariant),
+              ),
+            ).animate().fadeIn(delay: 1200.ms),
           ],
         ),
       ),
