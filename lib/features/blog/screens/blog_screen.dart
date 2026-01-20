@@ -12,6 +12,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:taktik/features/blog/models/blog_post.dart';
+import 'package:in_app_review/in_app_review.dart';
+import 'package:taktik/data/providers/shared_prefs_provider.dart';
 
 class BlogScreen extends ConsumerStatefulWidget {
   const BlogScreen({super.key});
@@ -25,12 +27,464 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
   String _query = '';
   String? _selectedTag;
   Timer? _debounce;
+  bool _hasCheckedReviewPrompt = false;
 
   @override
   void dispose() {
     _debounce?.cancel();
     _searchCtrl.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // İlk render sonrası review teşvikini kontrol et
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndShowReviewPrompt();
+    });
+  }
+
+  Future<void> _checkAndShowReviewPrompt() async {
+    if (_hasCheckedReviewPrompt || !mounted) return;
+    _hasCheckedReviewPrompt = true;
+
+    try {
+      final prefs = await ref.read(sharedPreferencesProvider.future);
+      final hasShownBlogReview = prefs.getBool('blog_review_prompt_shown3') ?? false;
+
+      // Eğer daha önce gösterildiyse tekrar gösterme
+      if (hasShownBlogReview) return;
+
+      // 1.5 saniye bekle, sonra göster (kullanıcı ekranı inceleyebilsin)
+      await Future.delayed(const Duration(milliseconds: 1500));
+
+      if (!mounted) return;
+
+      await _showReviewPrompt();
+      await prefs.setBool('blog_review_prompt_shown3', true);
+    } catch (_) {
+      // Hata durumunda sessiz kal
+    }
+  }
+
+  Future<void> _showReviewPrompt() async {
+    if (!mounted) return;
+
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    // First step: Ask if they like the app
+    final liked = await showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      isDismissible: true,
+      enableDrag: true,
+      builder: (ctx) {
+        return Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                colorScheme.surface,
+                colorScheme.surfaceContainerHighest.withOpacity(0.95),
+              ],
+            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, -4),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Drag handle
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: colorScheme.onSurfaceVariant.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Animated emoji icon
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          colorScheme.primary.withOpacity(0.15),
+                          colorScheme.secondary.withOpacity(0.15),
+                        ],
+                      ),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        '💙',
+                        style: const TextStyle(fontSize: 40),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Title
+                  Text(
+                    'Taktik\'i beğendin mi?',
+                    style: GoogleFonts.montserrat(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.5,
+                      color: colorScheme.onSurface,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Description
+                  Text(
+                    'Görüşlerin bizim için çok değerli! 🙏',
+                    style: GoogleFonts.inter(
+                      fontSize: 15,
+                      height: 1.6,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // Choice buttons with icons
+                  Row(
+                    children: [
+                      // Dislike button
+                      Expanded(
+                        child: _buildChoiceButton(
+                          context: ctx,
+                          icon: Icons.sentiment_dissatisfied_rounded,
+                          label: 'Beğenmedim',
+                          gradient: LinearGradient(
+                            colors: [
+                              colorScheme.errorContainer.withOpacity(0.3),
+                              colorScheme.error.withOpacity(0.2),
+                            ],
+                          ),
+                          iconColor: colorScheme.error,
+                          onTap: () => Navigator.of(ctx).pop(false),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      // Like button
+                      Expanded(
+                        child: _buildChoiceButton(
+                          context: ctx,
+                          icon: Icons.favorite_rounded,
+                          label: 'Beğendim',
+                          gradient: LinearGradient(
+                            colors: [
+                              colorScheme.primary,
+                              colorScheme.secondary,
+                            ],
+                          ),
+                          iconColor: Colors.white,
+                          textColor: Colors.white,
+                          onTap: () => Navigator.of(ctx).pop(true),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Maybe later button
+                  TextButton(
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                    ),
+                    child: Text(
+                      'Şimdi Değil',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.1, curve: Curves.easeOut);
+      },
+    );
+
+    if (liked == null || !mounted) return;
+
+    // Small delay for smooth transition
+    await Future.delayed(const Duration(milliseconds: 300));
+
+    if (liked) {
+      // User likes the app - Show review request
+      await _showRatingDialog();
+    }
+    // Beğenmeyenler için hiçbir şey gösterme, sadece kapat
+  }
+
+  Widget _buildChoiceButton({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required Gradient gradient,
+    required Color iconColor,
+    Color? textColor,
+    required VoidCallback onTap,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      height: 120,
+      decoration: BoxDecoration(
+        gradient: gradient,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: iconColor.withOpacity(0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 40,
+                color: iconColor,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                label,
+                style: GoogleFonts.inter(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: textColor ?? colorScheme.onSurface,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showRatingDialog() async {
+    if (!mounted) return;
+
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      isDismissible: true,
+      enableDrag: true,
+      builder: (ctx) {
+        return Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                colorScheme.surface,
+                colorScheme.surfaceContainerHighest.withOpacity(0.95),
+              ],
+            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, -4),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Drag handle
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: colorScheme.onSurfaceVariant.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Success icon
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          colorScheme.primary.withOpacity(0.2),
+                          colorScheme.secondary.withOpacity(0.2),
+                        ],
+                      ),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.stars_rounded,
+                      size: 40,
+                      color: colorScheme.primary,
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Title
+                  Text(
+                    'Çok teşekkürler! 🎉',
+                    style: GoogleFonts.montserrat(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.5,
+                      color: colorScheme.onSurface,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Description
+                  Text(
+                    'Görüşlerini store\'da paylaşarak diğer öğrencilere de yardımcı olabilirsin! 💙',
+                    style: GoogleFonts.inter(
+                      fontSize: 15,
+                      height: 1.6,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+
+                  const SizedBox(height: 28),
+
+                  // Rate button
+                  Container(
+                    width: double.infinity,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          colorScheme.primary,
+                          colorScheme.secondary,
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(28),
+                      boxShadow: [
+                        BoxShadow(
+                          color: colorScheme.primary.withOpacity(0.3),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () async {
+                          Navigator.of(ctx).pop();
+                          final InAppReview inAppReview = InAppReview.instance;
+
+                          if (await inAppReview.isAvailable()) {
+                            await inAppReview.requestReview();
+                          } else {
+                            await inAppReview.openStoreListing(
+                              appStoreId: '6738746059',
+                            );
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(28),
+                        child: Center(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.star_rounded,
+                                color: Colors.white,
+                                size: 24,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Değerlendir',
+                                style: GoogleFonts.inter(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Maybe later
+                  TextButton(
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                    ),
+                    child: Text(
+                      'Belki Sonra',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ).animate().fadeIn(duration: 300.ms).scale(begin: const Offset(0.95, 0.95), curve: Curves.easeOut);
+      },
+    );
   }
 
   void _onSearchChanged(String v) {
@@ -92,18 +546,23 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
         label: const Text('Yeni Yazı'),
         backgroundColor: Theme.of(context).colorScheme.secondary,
         foregroundColor: Theme.of(context).colorScheme.onSecondary,
+        elevation: 4,
       );
     }
 
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        title: const Text('Taktik Blog'),
+        title: Text('Blog', style: GoogleFonts.montserrat(fontSize: 28, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
         automaticallyImplyLeading: false,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: const Icon(Icons.arrow_back_rounded, size: 26),
           tooltip: 'Geri',
           onPressed: () => _handleBack(context),
         ),
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        backgroundColor: Theme.of(context).colorScheme.surface,
       ),
       floatingActionButton: buildFab(),
       body: postsAsync.when(
@@ -133,71 +592,164 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
             child: CustomScrollView(
               physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
               slivers: [
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        TextField(
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Modern Search Bar - Instagram/Spotify Style
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(30),
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
+                            width: 1,
+                          ),
+                        ),
+                        child: TextField(
                           controller: _searchCtrl,
                           textInputAction: TextInputAction.search,
+                          style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w500),
                           decoration: InputDecoration(
-                            hintText: 'Yazı ara, etiket veya başlık...',
-                            prefixIcon: const Icon(Icons.search_rounded),
-                            filled: true,
-                            fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.18),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-                            contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                            hintText: 'Ara...',
+                            hintStyle: GoogleFonts.inter(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.6),
+                            ),
+                            prefixIcon: Icon(
+                              Icons.search_rounded,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.7),
+                              size: 22,
+                            ),
+                            suffixIcon: _query.isNotEmpty
+                                ? IconButton(
+                                    icon: Icon(
+                                      Icons.clear_rounded,
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.7),
+                                      size: 20,
+                                    ),
+                                    onPressed: () {
+                                      _searchCtrl.clear();
+                                      _onSearchChanged('');
+                                    },
+                                  )
+                                : null,
+                            filled: false,
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
                           ),
                           onChanged: _onSearchChanged,
                           onSubmitted: (v) => _onSearchChanged(v),
                         ),
-                        if (allTags.isNotEmpty) ...[
-                          const SizedBox(height: 10),
-                          SizedBox(
-                            height: 38,
-                            child: ListView.separated(
-                              scrollDirection: Axis.horizontal,
-                              physics: const BouncingScrollPhysics(),
-                              itemCount: allTags.length + 1,
-                              separatorBuilder: (_, __) => const SizedBox(width: 8),
-                              itemBuilder: (c, i) {
-                                final label = i == 0 ? 'Tümü' : allTags[i - 1];
-                                final isSelected = i == 0 ? _selectedTag == null : _selectedTag?.toLowerCase() == label.toLowerCase();
-                                return ChoiceChip(
-                                  label: Text(label),
+                      ),
+                      if (allTags.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          height: 36,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            physics: const BouncingScrollPhysics(),
+                            itemCount: allTags.length + 1,
+                            separatorBuilder: (_, __) => const SizedBox(width: 10),
+                            itemBuilder: (c, i) {
+                              final label = i == 0 ? 'Tümü' : allTags[i - 1];
+                              final isSelected = i == 0 ? _selectedTag == null : _selectedTag?.toLowerCase() == label.toLowerCase();
+                              return AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                child: FilterChip(
+                                  label: Text(
+                                    label,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: isSelected
+                                          ? Theme.of(context).colorScheme.onSecondary
+                                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
                                   selected: isSelected,
                                   onSelected: (_) => setState(() {
                                     _selectedTag = (i == 0) ? null : label;
                                   }),
+                                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.2),
+                                  selectedColor: Theme.of(context).colorScheme.secondary,
+                                  checkmarkColor: Theme.of(context).colorScheme.onSecondary,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                    side: BorderSide(
+                                      color: isSelected
+                                          ? Theme.of(context).colorScheme.secondary
+                                          : Theme.of(context).colorScheme.outline.withOpacity(0.15),
+                                      width: 1.5,
+                                    ),
+                                  ),
                                   visualDensity: VisualDensity.compact,
-                                );
-                              },
-                            ),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                ),
+                              );
+                            },
                           ),
-                        ],
+                        ),
                       ],
-                    ),
+                    ],
                   ),
                 ),
-                if (filtered.isEmpty)
-                  SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.menu_book_rounded, size: 64, color: Theme.of(context).colorScheme.surfaceContainerHighest),
-                            const SizedBox(height: 12),
-                            Text(
-                              _query.isEmpty ? 'Henüz yayınlanmış yazı yok.' : 'Aramanızla eşleşen yazı bulunamadı.',
-                              style: GoogleFonts.montserrat(
-                                  fontSize: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                              textAlign: TextAlign.center,
+              ),
+              if (filtered.isEmpty)
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 120,
+                            height: 120,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+                                  Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.3),
+                                ],
+                              ),
+                              shape: BoxShape.circle,
                             ),
+                            child: Icon(
+                              Icons.article_outlined,
+                              size: 56,
+                              color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          Text(
+                            _query.isEmpty ? 'Henüz yazı yok' : 'Sonuç bulunamadı',
+                            style: GoogleFonts.montserrat(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _query.isEmpty
+                                ? 'Blog yazıları yakında yayınlanacak.'
+                                : 'Farklı bir arama deneyin.',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
                           ],
                         ),
                       ),
@@ -236,183 +788,257 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                         }
 
                         List<Widget> buildTagChips() {
-                          final t = p.tags.take(3).toList();
+                          final t = p.tags.take(2).toList();
                           return t
-                              .map<Widget>((tag) => Padding(
-                                    padding: const EdgeInsets.only(right: 6),
-                                    child: Chip(
-                                      label: Text(tag, style: GoogleFonts.montserrat(fontSize: 11, fontWeight: FontWeight.w600)),
-                                      visualDensity: VisualDensity.compact,
-                                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                                      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25),
-                                      shape: StadiumBorder(
-                                          side: BorderSide(
-                                              color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.4))),
+                              .map<Widget>((tag) => Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                    margin: const EdgeInsets.only(right: 8),
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          Theme.of(context).colorScheme.primaryContainer.withOpacity(0.4),
+                                          Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.4),
+                                        ],
+                                      ),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: Theme.of(context).colorScheme.outline.withOpacity(0.15),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      tag,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: Theme.of(context).colorScheme.onSurface,
+                                      ),
                                     ),
                                   ))
                               .toList(growable: false);
                         }
 
                         return Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                           child: RepaintBoundary(
-                            child: Card(
-                              elevation: 0, // AppTheme.cardTheme ile uyumlu: gölgeyi kaldır
-                              shadowColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.18),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(18),
-                                side: BorderSide(
-                                    color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.45)),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(24),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Theme.of(context).colorScheme.shadow.withOpacity(0.08),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
                               ),
-                              clipBehavior: Clip.antiAlias,
-                              child: InkWell(
-                                onTap: () => context.go('/blog/${p.slug}'),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    if (p.coverImageUrl != null && p.coverImageUrl!.isNotEmpty)
-                                      AspectRatio(
-                                        aspectRatio: 16 / 9,
-                                        child: Stack(
-                                          fit: StackFit.expand,
-                                          children: [
-                                            Hero(
-                                              tag: 'post-cover-${p.slug}',
-                                              child: CachedNetworkImage(
-                                                imageUrl: p.coverImageUrl!,
-                                                fit: BoxFit.cover,
-                                                maxHeightDiskCache: 720,
-                                                maxWidthDiskCache: 1280,
-                                                memCacheHeight: 480,
-                                                memCacheWidth: 854,
-                                                placeholder: (c, _) => Container(
-                                                    color: Theme.of(context)
-                                                        .colorScheme
-                                                        .surfaceContainerHighest
-                                                        .withOpacity(0.25)),
-                                                errorWidget: (c, _, __) => Container(
-                                                    color: Theme.of(context)
-                                                        .colorScheme
-                                                        .surfaceContainerHighest
-                                                        .withOpacity(0.2),
-                                                    child: const Icon(Icons.image_not_supported_rounded)),
-                                              ),
-                                            ),
-                                            // Alt kısımda okunabilirlik için yumuşak degrade
-                                            Container(
-                                              decoration: BoxDecoration(
-                                                gradient: LinearGradient(
-                                                  begin: Alignment.bottomCenter,
-                                                  end: Alignment.topCenter,
-                                                  colors: [
-                                                    Theme.of(context).colorScheme.surface.withOpacity(0.6),
-                                                    Colors.transparent
-                                                  ],
+                              child: Material(
+                                elevation: 0,
+                                borderRadius: BorderRadius.circular(24),
+                                color: Theme.of(context).colorScheme.surface,
+                                clipBehavior: Clip.antiAlias,
+                                child: InkWell(
+                                  onTap: () => context.go('/blog/${p.slug}'),
+                                  borderRadius: BorderRadius.circular(24),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      if (p.coverImageUrl != null && p.coverImageUrl!.isNotEmpty)
+                                        AspectRatio(
+                                          aspectRatio: 1.5,
+                                          child: Stack(
+                                            fit: StackFit.expand,
+                                            children: [
+                                              Hero(
+                                                tag: 'post-cover-${p.slug}',
+                                                child: CachedNetworkImage(
+                                                  imageUrl: p.coverImageUrl!,
+                                                  fit: BoxFit.cover,
+                                                  maxHeightDiskCache: 720,
+                                                  maxWidthDiskCache: 1280,
+                                                  memCacheHeight: 480,
+                                                  memCacheWidth: 854,
+                                                  placeholder: (c, _) => Container(
+                                                    decoration: BoxDecoration(
+                                                      gradient: LinearGradient(
+                                                        begin: Alignment.topLeft,
+                                                        end: Alignment.bottomRight,
+                                                        colors: [
+                                                          Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                                                          Theme.of(context).colorScheme.surfaceContainer.withOpacity(0.3),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  errorWidget: (c, _, __) => Container(
+                                                    decoration: BoxDecoration(
+                                                      gradient: LinearGradient(
+                                                        begin: Alignment.topLeft,
+                                                        end: Alignment.bottomRight,
+                                                        colors: [
+                                                          Theme.of(context).colorScheme.errorContainer.withOpacity(0.2),
+                                                          Theme.of(context).colorScheme.surfaceContainer.withOpacity(0.2),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                    child: Icon(
+                                                      Icons.image_not_supported_rounded,
+                                                      size: 48,
+                                                      color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.5),
+                                                    ),
+                                                  ),
                                                 ),
                                               ),
-                                            ),
-                                            Positioned(
-                                              right: 10,
-                                              bottom: 10,
-                                              child: Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                              // Gradient overlay for readability
+                                              Container(
                                                 decoration: BoxDecoration(
-                                                  color: Theme.of(context).colorScheme.surface.withOpacity(0.35),
-                                                  borderRadius: BorderRadius.circular(10),
-                                                ),
-                                                child: Row(
-                                                  children: [
-                                                    Icon(Icons.schedule_rounded,
-                                                        size: 14, color: Theme.of(context).colorScheme.onSurface),
-                                                    const SizedBox(width: 4),
-                                                    Text('${p.readTime ?? 1} dk',
-                                                        style: TextStyle(
-                                                            color: Theme.of(context).colorScheme.onSurface,
-                                                            fontSize: 12,
-                                                            fontWeight: FontWeight.w600)),
-                                                  ],
+                                                  gradient: LinearGradient(
+                                                    begin: Alignment.bottomCenter,
+                                                    end: Alignment.topCenter,
+                                                    colors: [
+                                                      Colors.black.withOpacity(0.7),
+                                                      Colors.black.withOpacity(0.3),
+                                                      Colors.transparent,
+                                                    ],
+                                                    stops: const [0.0, 0.3, 0.7],
+                                                  ),
                                                 ),
                                               ),
+                                              // Read time badge
+                                              if (p.readTime != null)
+                                                Positioned(
+                                                  right: 16,
+                                                  top: 16,
+                                                  child: Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.black.withOpacity(0.6),
+                                                      borderRadius: BorderRadius.circular(20),
+                                                      border: Border.all(
+                                                        color: Colors.white.withOpacity(0.2),
+                                                        width: 1,
+                                                      ),
+                                                    ),
+                                                    child: Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        const Icon(Icons.access_time_rounded, size: 14, color: Colors.white),
+                                                        const SizedBox(width: 4),
+                                                        Text(
+                                                          '${p.readTime} dk',
+                                                          style: GoogleFonts.inter(
+                                                            color: Colors.white,
+                                                            fontSize: 12,
+                                                            fontWeight: FontWeight.w600,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                      Padding(
+                                        padding: const EdgeInsets.all(20),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            if (p.tags.isNotEmpty)
+                                              Padding(
+                                                padding: const EdgeInsets.only(bottom: 12),
+                                                child: Wrap(children: buildTagChips()),
+                                              ),
+                                            Text(
+                                              p.title,
+                                              style: GoogleFonts.montserrat(
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.w800,
+                                                height: 1.2,
+                                                letterSpacing: -0.3,
+                                                color: Theme.of(context).colorScheme.onSurface,
+                                              ),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            if (p.excerpt != null && p.excerpt!.isNotEmpty) ...[
+                                              const SizedBox(height: 8),
+                                              Text(
+                                                p.excerpt!,
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 14,
+                                                  height: 1.5,
+                                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                                ),
+                                              ),
+                                            ],
+                                            const SizedBox(height: 16),
+                                            Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.calendar_today_rounded,
+                                                  size: 14,
+                                                  color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.7),
+                                                ),
+                                                const SizedBox(width: 6),
+                                                Text(
+                                                  p.publishedAt != null ? dateFmt.format(p.publishedAt!) : '-',
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w500,
+                                                    color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.8),
+                                                  ),
+                                                ),
+                                                const Spacer(),
+                                                if (isAdmin)
+                                                  Container(
+                                                    decoration: BoxDecoration(
+                                                      color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                                                      borderRadius: BorderRadius.circular(12),
+                                                    ),
+                                                    child: PopupMenuButton<String>(
+                                                      icon: Icon(
+                                                        Icons.more_horiz_rounded,
+                                                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                                      ),
+                                                      shape: RoundedRectangleBorder(
+                                                        borderRadius: BorderRadius.circular(16),
+                                                      ),
+                                                      onSelected: (v) {
+                                                        switch (v) {
+                                                          case 'edit':
+                                                            context.go('/blog/admin/edit/${p.slug}');
+                                                            break;
+                                                          case 'delete':
+                                                            deletePost();
+                                                            break;
+                                                        }
+                                                      },
+                                                      itemBuilder: (c) => const [
+                                                        PopupMenuItem(value: 'edit', child: Text('Düzenle')),
+                                                        PopupMenuItem(value: 'delete', child: Text('Sil')),
+                                                      ],
+                                                    ),
+                                                  )
+                                                else
+                                                  Icon(
+                                                    Icons.arrow_forward_rounded,
+                                                    size: 20,
+                                                    color: Theme.of(context).colorScheme.primary,
+                                                  ),
+                                              ],
                                             ),
                                           ],
                                         ),
                                       ),
-                                    Padding(
-                                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            p.title,
-                                            style: GoogleFonts.montserrat(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.w800,
-                                              height: 1.25,
-                                              letterSpacing: .1,
-                                              color: Theme.of(context).colorScheme.onSurface,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 6),
-                                          if (p.excerpt != null && p.excerpt!.isNotEmpty)
-                                            Text(
-                                              p.excerpt!,
-                                              maxLines: 3,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: GoogleFonts.montserrat(
-                                                fontSize: 13.5,
-                                                height: 1.65,
-                                                letterSpacing: .05,
-                                                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                              ),
-                                            ),
-                                          const SizedBox(height: 10),
-                                          if (p.tags.isNotEmpty) Wrap(children: buildTagChips()),
-                                          const SizedBox(height: 10),
-                                          Row(
-                                            children: [
-                                              Icon(Icons.calendar_month_rounded,
-                                                  size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                                              const SizedBox(width: 6),
-                                              Text(
-                                                p.publishedAt != null ? dateFmt.format(p.publishedAt!) : '-',
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .labelSmall
-                                                    ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                                              ),
-                                              const Spacer(),
-                                              if (isAdmin)
-                                                PopupMenuButton<String>(
-                                                  icon: Icon(Icons.more_vert_rounded,
-                                                      color: Theme.of(context).colorScheme.onSurfaceVariant),
-                                                  onSelected: (v) {
-                                                    switch (v) {
-                                                      case 'edit':
-                                                        context.go('/blog/admin/edit/${p.slug}');
-                                                        break;
-                                                      case 'delete':
-                                                        deletePost();
-                                                        break;
-                                                    }
-                                                  },
-                                                  itemBuilder: (c) => const [
-                                                    PopupMenuItem(value: 'edit', child: Text('Düzenle')),
-                                                    PopupMenuItem(value: 'delete', child: Text('Sil')),
-                                                  ],
-                                                )
-                                              else
-                                                Icon(Icons.chevron_right_rounded,
-                                                    color: Theme.of(context).colorScheme.onSurfaceVariant),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
-                          ).animate().fadeIn(duration: 160.ms).slideY(begin: .05, curve: Curves.easeOut));
+                          ).animate().fadeIn(duration: 250.ms, curve: Curves.easeOut).scale(begin: const Offset(0.95, 0.95), curve: Curves.easeOut));
                       },
                       childCount: filtered.length,
                     ),
