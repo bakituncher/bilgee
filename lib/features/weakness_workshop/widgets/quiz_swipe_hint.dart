@@ -17,13 +17,13 @@ class QuizSwipeHint extends StatefulWidget {
   /// İpucunun daha önce gösterilip gösterilmediğini kontrol eder
   static Future<bool> shouldShow() async {
     final prefs = await SharedPreferences.getInstance();
-    return !(prefs.getBool('quiz_swipe_hint_shown') ?? false);
+    return !(prefs.getBool('quiz_swipe_hint_shown3') ?? false);
   }
 
   /// İpucunun gösterildiğini kaydeder
   static Future<void> markAsShown() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('quiz_swipe_hint_shown', true);
+    await prefs.setBool('quiz_swipe_hint_shown3', true);
   }
 
   @override
@@ -114,7 +114,7 @@ class _QuizSwipeHintState extends State<QuizSwipeHint> {
 
                       // Başlık
                       Text(
-                        'Soruları Keşfet',
+                        'Reels Gibi Kaydır 🔥',
                         style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -150,13 +150,13 @@ class _QuizSwipeHintState extends State<QuizSwipeHint> {
                               children: [
                                 _buildHintItem(
                                   icon: Icons.swipe_up_rounded,
-                                  text: 'Yukarı kaydır',
-                                  subtext: 'Sonraki soruya geç',
+                                  text: 'Yukarı kaydır ↑',
+                                  subtext: 'Bir sonraki soru',
                                 ),
                                 const SizedBox(height: 16),
                                 _buildHintItem(
                                   icon: Icons.swipe_down_rounded,
-                                  text: 'Aşağı kaydır',
+                                  text: 'Aşağı kaydır ↓',
                                   subtext: 'Önceki soruya dön',
                                 ),
                               ],
@@ -202,7 +202,7 @@ class _QuizSwipeHintState extends State<QuizSwipeHint> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'Anladım, Başlayalım',
+                              'Hadi Başlayalım!',
                               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                     color: isDark ? Colors.black : Colors.white,
                                     fontWeight: FontWeight.bold,
