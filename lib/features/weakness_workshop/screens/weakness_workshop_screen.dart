@@ -1926,7 +1926,14 @@ class _WSHeader extends StatelessWidget {
           alignment: Alignment.center,
           children: [
             Align(alignment: Alignment.centerLeft, child: left),
-            if (center != null) Center(child: center!),
+            Center(
+              child: center ?? Text(
+                title,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
             Align(alignment: Alignment.centerRight, child: rightActions),
           ],
         ),
