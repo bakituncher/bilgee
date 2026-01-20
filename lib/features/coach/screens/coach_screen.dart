@@ -113,7 +113,7 @@ class _CoachScreenState extends ConsumerState<CoachScreen>
       data: (user) {
         if (user == null || user.selectedExam == null) {
           return Scaffold(
-              appBar: AppBar(title: const Text('Ders Netlerim')),
+              appBar: AppBar(title: const Text('Konu Netlerim')),
               body: const Center(
                   child: Text('Lütfen önce profilden bir sınav seçin.')));
         }
@@ -125,19 +125,19 @@ class _CoachScreenState extends ConsumerState<CoachScreen>
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return Scaffold(
-                  appBar: AppBar(title: const Text('Ders Netlerim')),
+                  appBar: AppBar(title: const Text('Konu Netlerim')),
                   body: const LogoLoader());
             }
             if (snapshot.hasError) {
               return Scaffold(
-                  appBar: AppBar(title: const Text('Ders Netlerim')),
+                  appBar: AppBar(title: const Text('Konu Netlerim')),
                   body: Center(
                       child: Text(
                           'Sınav verileri yüklenemedi: ${snapshot.error}')));
             }
             if (!snapshot.hasData) {
               return Scaffold(
-                  appBar: AppBar(title: const Text('Ders Netlerim')),
+                  appBar: AppBar(title: const Text('Konu Netlerim')),
                   body:
                   const Center(child: Text('Sınav verisi bulunamadı.')));
             }
@@ -147,7 +147,7 @@ class _CoachScreenState extends ConsumerState<CoachScreen>
 
             if (subjects.isEmpty) {
               return Scaffold(
-                  appBar: AppBar(title: const Text('Ders Netlerim')),
+                  appBar: AppBar(title: const Text('Konu Netlerim')),
                   body: const Center(
                       child: Text('Bu sınav için konu bulunamadı.')));
             }
@@ -163,7 +163,7 @@ class _CoachScreenState extends ConsumerState<CoachScreen>
                 resizeToAvoidBottomInset: false,
                 appBar: AppBar(
                   title: Text(
-                    'Ders Netlerim',
+                    'Konu Netlerim',
                     style: TextStyle(
                       fontWeight: FontWeight.w900,
                       color: Theme.of(context).colorScheme.onSurface,
@@ -212,10 +212,10 @@ class _CoachScreenState extends ConsumerState<CoachScreen>
         );
       },
       loading: () => Scaffold(
-          appBar: AppBar(title: const Text('Ders Netlerim')),
+          appBar: AppBar(title: const Text('Konu Netlerim')),
           body: const LogoLoader()),
       error: (e, s) => Scaffold(
-          appBar: AppBar(title: const Text('Ders Netlerim')),
+          appBar: AppBar(title: const Text('Konu Netlerim')),
           body:
           Center(child: Text('Veriler yüklenirken bir hata oluştu: $e'))),
     );

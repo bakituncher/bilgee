@@ -397,7 +397,7 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
   }
 }
 
-// Başarı animasyonu için küçük ve şık bir dialog (Ders Netlerim akışına özel)
+// Başarı animasyonu için küçük ve şık bir dialog (Konu Netlerim akışına özel)
 Future<void> _showSuccessDialog(BuildContext context) async {
   await showDialog(
     context: context,
