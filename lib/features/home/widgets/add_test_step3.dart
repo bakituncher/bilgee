@@ -12,7 +12,6 @@ import 'package:taktik/features/stats/logic/stats_analysis.dart';
 import 'package:lottie/lottie.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
-import 'package:taktik/core/services/admob_service.dart';
 import 'package:taktik/data/providers/monetization_provider.dart';
 import 'package:taktik/core/services/monetization_manager.dart';
 
@@ -137,21 +136,11 @@ class Step3Summary extends ConsumerWidget {
                   final monetizationManager = ref.read(monetizationManagerProvider);
                   final action = monetizationManager.getActionAfterTestSubmission();
 
-                  switch (action) {
-                    case MonetizationAction.showPaywall:
+                  if (action == MonetizationAction.showPaywall) {
                     // Paywall göster
-                      await context.push(AppRoutes.premium);
-                      break;
-                    case MonetizationAction.showAd:
-                    // Reklam göster
-                      await AdMobService().showInterstitialAd(
-                        dateOfBirth: user?.dateOfBirth,
-                      );
-                      break;
-                    case MonetizationAction.showNothing:
-                    // Hiçbir şey gösterme (cooldown aktif)
-                      break;
+                    await context.push(AppRoutes.premium);
                   }
+                  // showNothing veya showAd durumunda hiçbir şey yapma
                 }
 
                 if (context.mounted) {

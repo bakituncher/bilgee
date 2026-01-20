@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:taktik/core/services/admob_service.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/stats/widgets/overview_content.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
@@ -17,20 +16,6 @@ class GeneralOverviewScreen extends ConsumerStatefulWidget {
 }
 
 class _GeneralOverviewScreenState extends ConsumerState<GeneralOverviewScreen> {
-  @override
-  void initState() {
-    super.initState();
-    // Show interstitial ad on screen entry (only for non-premium users)
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final user = ref.read(userProfileProvider).value;
-      if (user != null) {
-        // isPremium check is now handled internally by AdMobService
-        AdMobService().showInterstitialAd(
-          dateOfBirth: user.dateOfBirth,
-        );
-      }
-    });
-  }
 
   Future<void> _handleBack(BuildContext context) async {
     if (Navigator.of(context).canPop()) {

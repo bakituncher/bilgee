@@ -21,10 +21,12 @@ class MonetizationManager {
   static const String _paywallShowCountKey = 'monetization_paywall_count';
   static const String _adShowCountKey = 'monetization_ad_count';
 
-  // --- GÜNCELLENDİ: STRATEJİ 1 REKLAM / 1 PAYWALL ---
-  // Tek sayılarda (1, 3, 5...) reklam
-  // Çift sayılarda (2, 4, 6...) paywall
-  static const int _cycleLength = 2;
+  // --- GÜNCELLENDİ: STRATEJİ HER 3 İŞLEMDE 1 PAYWALL ---
+  // Geçiş reklamları kaldırıldığı için sadece paywall gösteriyoruz
+  // 1. işlem: skip
+  // 2. işlem: skip
+  // 3. işlem: paywall
+  static const int _cycleLength = 3;
 
   // Minimum bekleme süreleri (spam önleme)
   // Debug'da hızlı test için düşük, prod'da daha korumacı.
@@ -43,7 +45,7 @@ class MonetizationManager {
 
     debugPrint('💰 Monetization: Test Submission #$newCount');
 
-    // Çift sayı -> paywall
+    // Her 3 işlemde bir paywall göster
     if (newCount % _cycleLength == 0) {
       if (_canShowPaywall()) {
         _recordPaywallShow();
@@ -55,14 +57,8 @@ class MonetizationManager {
       return MonetizationAction.showNothing;
     }
 
-    // Tek sayı -> reklam
-    if (_canShowAd()) {
-      _recordAdShow();
-      debugPrint('📺 Monetization: Showing AD (test #$newCount)');
-      return MonetizationAction.showAd;
-    }
-
-    debugPrint('⏰ Monetization: Ad cooldown active, skipping');
+    // Diğer işlemlerde hiçbir şey gösterme
+    debugPrint('✓ Monetization: Skipping (test #$newCount)');
     return MonetizationAction.showNothing;
   }
 
@@ -86,7 +82,7 @@ class MonetizationManager {
 
     debugPrint('💰 Monetization: Lesson Net Submission #$newCount');
 
-    // Çift sayı -> paywall
+    // Her 3 işlemde bir paywall göster
     if (newCount % _cycleLength == 0) {
       if (_canShowPaywall()) {
         _recordPaywallShow();
@@ -98,14 +94,8 @@ class MonetizationManager {
       return MonetizationAction.showNothing;
     }
 
-    // Tek sayı -> reklam
-    if (_canShowAd()) {
-      _recordAdShow();
-      debugPrint('📺 Monetization: Showing AD (lesson net #$newCount)');
-      return MonetizationAction.showAd;
-    }
-
-    debugPrint('⏰ Monetization: Ad cooldown active, skipping');
+    // Diğer işlemlerde hiçbir şey gösterme
+    debugPrint('✓ Monetization: Skipping (lesson net #$newCount)');
     return MonetizationAction.showNothing;
   }
 
