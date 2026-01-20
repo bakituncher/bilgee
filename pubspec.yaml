@@ -97,6 +97,7 @@ dependencies:
 
   # Image Picker & Compression & AI
   image_picker: ^1.0.7
+  camera: ^0.11.0+2
   crop_your_image: ^1.0.0
   image: ^4.0.17
   path_provider: ^2.1.2

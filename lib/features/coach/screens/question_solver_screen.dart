@@ -22,6 +22,7 @@ import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/core/utils/exam_utils.dart';
 import 'package:taktik/shared/widgets/full_screen_image_viewer.dart';
+import 'package:taktik/features/coach/screens/custom_camera_screen.dart';
 
 // Basit mesaj modeli
 class SolverMessage {
@@ -257,44 +258,100 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
 
   Future<void> _pickImage(ImageSource source) async {
     try {
-      final XFile? image = await _picker.pickImage(source: source);
+      if (source == ImageSource.camera) {
+        // Özel kamera ekranını aç
+        try {
+          final String? croppedImagePath = await Navigator.push<String>(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const CustomCameraScreen(),
+            ),
+          );
 
-      if (image != null) {
-        // OPTİMİZASYON: Resmi ham haliyle okumak yerine sıkıştırarak okuyoruz.
-        // Bu işlem 10MB'lık fotoyu ~300KB'a düşürür, crop ekranı uçak gibi açılır.
-        final Uint8List? compressedBytes = await FlutterImageCompress.compressWithFile(
-          image.path,
-          minWidth: 1080, // 1080p fazlasıyla yeterli
-          minHeight: 1080,
-          quality: 85,    // Kalite kaybı fark edilmez ama boyut çok düşer
-          format: CompressFormat.jpeg,
-        );
+          if (croppedImagePath != null) {
+            // Kırpılmış görüntü direkt kullanıma hazır
+            setState(() {
+              _finalImageFile = XFile(croppedImagePath);
+              _rawImageBytes = null;
+              _initialSolution = null;
+              _messages.clear();
+              _isChatMode = false;
+              _error = null;
+              _isSaved = false;
+            });
 
-        if (compressedBytes != null) {
-          setState(() {
-            _rawImageBytes = compressedBytes;
-            _finalImageFile = null;
-            _initialSolution = null;
-            _messages.clear();
-            _isChatMode = false;
-            _error = null;
-            _isSaved = false; // Sıfırla
-          });
-        } else {
-          // Sıkıştırma başarısız olursa orijinali kullan (Fallback)
-          final originalBytes = await image.readAsBytes();
-          setState(() {
-            _rawImageBytes = originalBytes;
-            _initialSolution = null;
-            _messages.clear();
-            _isChatMode = false;
-            _isSaved = false; // Sıfırla
-          });
+            // Direkt çözüm ekranına geç
+            _solveQuestion();
+          }
+        } catch (cameraError) {
+          // Özel kamera başarısız olursa (izin yok, kamera yok vb.),
+          // sistem kamerasına fallback yap
+          debugPrint('Özel kamera hatası, sistem kamerasına geçiliyor: $cameraError');
+
+          final XFile? image = await _picker.pickImage(source: ImageSource.camera);
+          if (image != null) {
+            final Uint8List? compressedBytes = await FlutterImageCompress.compressWithFile(
+              image.path,
+              minWidth: 1080,
+              minHeight: 1080,
+              quality: 85,
+              format: CompressFormat.jpeg,
+            );
+
+            if (compressedBytes != null) {
+              setState(() {
+                _rawImageBytes = compressedBytes;
+                _finalImageFile = null;
+                _initialSolution = null;
+                _messages.clear();
+                _isChatMode = false;
+                _error = null;
+                _isSaved = false;
+              });
+            }
+          }
+        }
+      } else {
+        // Galeriden seçim - mevcut akış (kırpama ekranı ile)
+        final XFile? image = await _picker.pickImage(source: source);
+
+        if (image != null) {
+          // OPTİMİZASYON: Resmi ham haliyle okumak yerine sıkıştırarak okuyoruz.
+          // Bu işlem 10MB'lık fotoyu ~300KB'a düşürür, crop ekranı uçak gibi açılır.
+          final Uint8List? compressedBytes = await FlutterImageCompress.compressWithFile(
+            image.path,
+            minWidth: 1080, // 1080p fazlasıyla yeterli
+            minHeight: 1080,
+            quality: 85,    // Kalite kaybı fark edilmez ama boyut çok düşer
+            format: CompressFormat.jpeg,
+          );
+
+          if (compressedBytes != null) {
+            setState(() {
+              _rawImageBytes = compressedBytes;
+              _finalImageFile = null;
+              _initialSolution = null;
+              _messages.clear();
+              _isChatMode = false;
+              _error = null;
+              _isSaved = false; // Sıfırla
+            });
+          } else {
+            // Sıkıştırma başarısız olursa orijinali kullan (Fallback)
+            final originalBytes = await image.readAsBytes();
+            setState(() {
+              _rawImageBytes = originalBytes;
+              _initialSolution = null;
+              _messages.clear();
+              _isChatMode = false;
+              _isSaved = false; // Sıfırla
+            });
+          }
         }
       }
     } catch (e) {
       setState(() {
-        _error = 'Görsel y��klenirken hata oluştu: $e';
+        _error = 'Görsel yüklenirken hata oluştu: $e';
       });
     }
   }
