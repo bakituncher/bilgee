@@ -81,16 +81,37 @@ class _SavedWorkshopsScreenState extends ConsumerState<SavedWorkshopsScreen> {
                   );
                 }
 
+                // Konu başlığına göre grupla (subject + topic kombinasyonu)
+                final Map<String, List<WorkshopModel>> groupedWorkshops = {};
+                for (var workshop in filtered) {
+                  final key = '${workshop.subject}|||${workshop.topic}';
+                  if (!groupedWorkshops.containsKey(key)) {
+                    groupedWorkshops[key] = [];
+                  }
+                  groupedWorkshops[key]!.add(workshop);
+                }
+
+                // Her grup için en son kayıt tarihine göre sırala
+                final sortedGroups = groupedWorkshops.entries.toList()
+                  ..sort((a, b) {
+                    final aLatest = a.value.map((w) => w.savedDate?.toDate() ?? DateTime(2000)).reduce((a, b) => a.isAfter(b) ? a : b);
+                    final bLatest = b.value.map((w) => w.savedDate?.toDate() ?? DateTime(2000)).reduce((a, b) => a.isAfter(b) ? a : b);
+                    return bLatest.compareTo(aLatest);
+                  });
+
                 return ListView.builder(
                   padding: const EdgeInsets.all(16.0),
-                  itemCount: filtered.length,
+                  itemCount: sortedGroups.length,
                   itemBuilder: (context, index) {
-                    final workshop = filtered[index];
+                    final group = sortedGroups[index].value;
+                    // Grup içindeki workshop'ları tarihe göre sırala (en yeni önce)
+                    group.sort((a, b) {
+                      final aDate = a.savedDate?.toDate() ?? DateTime(2000);
+                      final bDate = b.savedDate?.toDate() ?? DateTime(2000);
+                      return bDate.compareTo(aDate);
+                    });
 
-                    // ID null kontrolü
-                    if (workshop.id == null) return const SizedBox.shrink();
-
-                    return _SavedWorkshopCard(workshop: workshop)
+                    return _SavedWorkshopGroupCard(workshops: group)
                         .animate()
                         .fadeIn(delay: (100 * index).ms)
                         .slideY(begin: 0.2);
@@ -107,72 +128,180 @@ class _SavedWorkshopsScreenState extends ConsumerState<SavedWorkshopsScreen> {
   }
 }
 
-class _SavedWorkshopCard extends StatelessWidget {
-  final WorkshopModel workshop;
-  const _SavedWorkshopCard({required this.workshop});
+class _SavedWorkshopGroupCard extends ConsumerStatefulWidget {
+  final List<WorkshopModel> workshops;
+  const _SavedWorkshopGroupCard({required this.workshops});
+
+  @override
+  ConsumerState<_SavedWorkshopGroupCard> createState() => _SavedWorkshopGroupCardState();
+}
+
+class _SavedWorkshopGroupCardState extends ConsumerState<_SavedWorkshopGroupCard> {
+  bool _isExpanded = false;
 
   @override
   Widget build(BuildContext context) {
+    final workshop = widget.workshops.first; // Grup başlığı için ilk workshop'u kullan
+    final count = widget.workshops.length;
+    final latestDate = widget.workshops.first.savedDate; // Zaten sıralı, ilki en yeni
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 4,
       shadowColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () {
-          context.push(
-            '${AppRoutes.aiHub}/${AppRoutes.weaknessWorkshop}/${AppRoutes.savedWorkshopDetail}',
-            extra: workshop,
-          );
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Row(
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Theme.of(context).colorScheme.primaryContainer,
-                      Theme.of(context).colorScheme.secondaryContainer,
-                    ],
+      child: Column(
+        children: [
+          InkWell(
+            onTap: () {
+              if (count == 1) {
+                // Tek kayıt varsa direkt aç
+                context.push(
+                  '${AppRoutes.aiHub}/${AppRoutes.weaknessWorkshop}/${AppRoutes.savedWorkshopDetail}',
+                  extra: widget.workshops.first,
+                );
+              } else {
+                // Birden fazla kayıt varsa genişlet/daralt
+                setState(() => _isExpanded = !_isExpanded);
+              }
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Row(
+                children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Theme.of(context).colorScheme.primaryContainer,
+                          Theme.of(context).colorScheme.secondaryContainer,
+                        ],
+                      ),
+                    ),
+                    child: count > 1
+                        ? Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Icon(
+                                Icons.diamond_rounded,
+                                color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                size: 28,
+                              ),
+                              Positioned(
+                                right: 2,
+                                top: 2,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Text(
+                                    count.toString(),
+                                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                          color: Theme.of(context).colorScheme.primary,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 10,
+                                        ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        : Icon(
+                            Icons.diamond_rounded,
+                            color: Theme.of(context).colorScheme.onPrimaryContainer,
+                            size: 28,
+                          ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          workshop.topic,
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "${workshop.subject} | ${latestDate != null ? DateFormat.yMMMMd('tr').format(latestDate.toDate()) : 'Tarih yok'}",
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    count > 1
+                        ? (_isExpanded ? Icons.expand_less_rounded : Icons.expand_more_rounded)
+                        : Icons.arrow_forward_ios_rounded,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_isExpanded && count > 1)
+            Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                border: Border(
+                  top: BorderSide(
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                    width: 1,
                   ),
                 ),
-                child: Icon(
-                  Icons.diamond_rounded,
-                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-                  size: 28,
-                ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      workshop.topic,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+              child: Column(
+                children: widget.workshops.map((w) {
+                  if (w.id == null) return const SizedBox.shrink();
+                  return InkWell(
+                    onTap: () {
+                      context.push(
+                        '${AppRoutes.aiHub}/${AppRoutes.weaknessWorkshop}/${AppRoutes.savedWorkshopDetail}',
+                        extra: w,
+                      );
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      child: Row(
+                        children: [
+                          const SizedBox(width: 16),
+                          Icon(
+                            Icons.history_edu_rounded,
+                            size: 20,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              w.savedDate != null
+                                  ? DateFormat('d MMMM yyyy, HH:mm', 'tr').format(w.savedDate!.toDate())
+                                  : 'Tarih yok',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ),
+                          Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            size: 16,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      "${workshop.subject} | ${workshop.savedDate != null ? DateFormat.yMMMMd('tr').format(workshop.savedDate!.toDate()) : 'Tarih yok'}",
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                    ),
-                  ],
-                ),
+                  );
+                }).toList(),
               ),
-              Icon(Icons.arrow_forward_ios_rounded, color: Theme.of(context).colorScheme.onSurfaceVariant),
-            ],
-          ),
-        ),
+            ),
+        ],
       ),
     );
   }

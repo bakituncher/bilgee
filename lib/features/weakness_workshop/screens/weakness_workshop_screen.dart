@@ -430,16 +430,19 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          // Quiz ve results adımında renkli arka planı gizle - siyah-beyaz tema için
-          if (_currentStep != WorkshopStep.quiz && _currentStep != WorkshopStep.results)
-            const _FancyBackground(),
-          Column(
-            children: [
-              _WSHeader(
-                showBack: true,
-                onBack: (){
+      body: SafeArea(
+        top: false,
+        bottom: true,
+        child: Stack(
+          children: [
+            // Quiz ve results adımında renkli arka planı gizle - siyah-beyaz tema için
+            if (_currentStep != WorkshopStep.quiz && _currentStep != WorkshopStep.results)
+              const _FancyBackground(),
+            Column(
+              children: [
+                _WSHeader(
+                  showBack: true,
+                  onBack: (){
                   if(_currentStep == WorkshopStep.briefing){
                     if (Navigator.of(context).canPop()) {
                       context.pop();
@@ -533,6 +536,7 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
             ],
           ),
         ],
+      ),
       ),
     );
   }
@@ -1546,7 +1550,7 @@ class _SummaryViewState extends ConsumerState<_SummaryView> {
           ),
           const SizedBox(height: 12),
           _ResultActionCard(
-            title: "Testi Kaydet",
+            title: "Etüdü Kaydet",
             subtitle: "Daha sonra tekrar çalışmak için kaydet",
             icon: _isSaved ? Icons.check_circle_rounded : Icons.bookmark_add_rounded,
             onTap: (_isSaving || _isSaved) ? (){} : () async {
@@ -1695,58 +1699,62 @@ class _DeepenWorkshopSheet extends ConsumerWidget {
         color: colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.auto_awesome_rounded,
-                color: colorScheme.secondary,
-                size: 28,
-              ),
-              const SizedBox(width: 12),
-              Text(
-                "Zorluk Seviyesi Seç",
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
+      child: SafeArea(
+        top: false,
+        bottom: true,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.auto_awesome_rounded,
+                  color: colorScheme.secondary,
+                  size: 28,
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            "Daha zorlu sorularla kendini test et",
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
+                const SizedBox(width: 12),
+                Text(
+                  "Zorluk Seviyesi Seç",
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                  ),
+                ),
+              ],
             ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
+            const SizedBox(height: 8),
+            Text(
+              "Daha zorlu sorularla kendini test et",
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
 
-          // Orta Zorluk
-          _DifficultyOption(
-            title: "Orta Zorluk",
-            subtitle: "Sınav seviyende ama daha zorlayıcı sorular",
-            icon: Icons.trending_up_rounded,
-            color: Colors.orange,
-            onTap: () => onOptionSelected('normal', true, contentType == 'quizOnly'),
-          ),
-          const SizedBox(height: 12),
+            // Orta Zorluk
+            _DifficultyOption(
+              title: "Orta Zorluk",
+              subtitle: "Sınav seviyende ama daha zorlayıcı sorular",
+              icon: Icons.trending_up_rounded,
+              color: Colors.orange,
+              onTap: () => onOptionSelected('normal', true, contentType == 'quizOnly'),
+            ),
+            const SizedBox(height: 12),
 
-          // Zor
-          _DifficultyOption(
-            title: "Zor",
-            subtitle: "Çeldirici ve çok adımlı sorular",
-            icon: Icons.whatshot_rounded,
-            color: Colors.red,
-            isPrimary: true,
-            onTap: () => onOptionSelected('hard', true, contentType == 'quizOnly'),
-          ),
-        ],
+            // Zor
+            _DifficultyOption(
+              title: "Zor",
+              subtitle: "Çeldirici ve çok adımlı sorular",
+              icon: Icons.whatshot_rounded,
+              color: Colors.red,
+              isPrimary: true,
+              onTap: () => onOptionSelected('hard', true, contentType == 'quizOnly'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -2053,9 +2061,12 @@ class _ManualTopicSelectorSheetState extends ConsumerState<_ManualTopicSelectorS
             color: colorScheme.surface,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
-          child: Column(
-            children: [
-              // Header
+          child: SafeArea(
+            top: false,
+            bottom: true,
+            child: Column(
+              children: [
+                // Header
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -2192,6 +2203,7 @@ class _ManualTopicSelectorSheetState extends ConsumerState<_ManualTopicSelectorS
                 ),
               ),
             ],
+            ),
           ),
         );
       },

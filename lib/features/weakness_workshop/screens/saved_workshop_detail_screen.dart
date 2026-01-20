@@ -99,8 +99,6 @@ class _SavedWorkshopDetailScreenState extends ConsumerState<SavedWorkshopDetailS
 
   @override
   Widget build(BuildContext context) {
-    final hasQuiz = widget.workshop.quiz?.isNotEmpty ?? false;
-    final hasStudyGuide = widget.workshop.studyGuide?.isNotEmpty ?? false;
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -108,7 +106,7 @@ class _SavedWorkshopDetailScreenState extends ConsumerState<SavedWorkshopDetailS
       appBar: AppBar(
         backgroundColor: colorScheme.surface,
         elevation: 0,
-        centerTitle: false,
+        centerTitle: true,
         surfaceTintColor: Colors.transparent,
         title: Text(
           widget.workshop.topic,
@@ -174,7 +172,7 @@ class _SavedWorkshopDetailScreenState extends ConsumerState<SavedWorkshopDetailS
                 _buildQuizReviewView(),
               ],
             )
-          : hasStudyGuide
+          : (widget.workshop.studyGuide?.isNotEmpty ?? false)
               ? _buildStudyGuideView()
               : _buildQuizReviewView(),
     );
@@ -184,9 +182,11 @@ class _SavedWorkshopDetailScreenState extends ConsumerState<SavedWorkshopDetailS
     final studyGuideText = widget.workshop.studyGuide ??
         '# İçerik Bulunamadı\n\nBu çalışma kartı için konu anlatımı mevcut değil.';
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      child: MarkdownWithMath(
+    return SafeArea(
+      bottom: true,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        child: MarkdownWithMath(
         data: studyGuideText,
         styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
           p: TextStyle(
@@ -230,6 +230,7 @@ class _SavedWorkshopDetailScreenState extends ConsumerState<SavedWorkshopDetailS
           ),
         ),
       ),
+    ),
     );
   }
 
@@ -278,7 +279,7 @@ class _QuizReviewView extends StatelessWidget {
             Icon(
               Icons.quiz_outlined,
               size: 64,
-              color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.5),
+              color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 16),
             Text(
@@ -292,10 +293,12 @@ class _QuizReviewView extends StatelessWidget {
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      itemCount: quizQuestions.length,
-      itemBuilder: (context, index) {
+    return SafeArea(
+      bottom: true,
+      child: ListView.builder(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        itemCount: quizQuestions.length,
+        itemBuilder: (context, index) {
         final question = quizQuestions[index];
         final colorScheme = Theme.of(context).colorScheme;
 
@@ -485,6 +488,7 @@ class _QuizReviewView extends StatelessWidget {
           ),
         );
       },
+    ),
     );
   }
 }
