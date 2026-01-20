@@ -90,7 +90,15 @@ final workshopSessionProvider = FutureProvider.autoDispose<WorkshopModel>((ref) 
 
 
 class WeaknessWorkshopScreen extends ConsumerStatefulWidget {
-  const WeaknessWorkshopScreen({super.key});
+  final String? initialSubject;
+  final String? initialTopic;
+
+  const WeaknessWorkshopScreen({
+    super.key,
+    this.initialSubject,
+    this.initialTopic,
+  });
+
   @override
   ConsumerState<WeaknessWorkshopScreen> createState() => _WeaknessWorkshopScreenState();
 }
@@ -101,6 +109,21 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
   bool _skipStudyView = false;
   bool _masteredAchieved = false; // bu oturumda ustalık kazan��ldı mı
   int _currentQuizPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Eğer initialSubject ve initialTopic varsa otomatik olarak workshop başlat
+    if (widget.initialSubject != null && widget.initialTopic != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _startWorkshop({
+          'subject': widget.initialSubject!,
+          'topic': widget.initialTopic!,
+        });
+      });
+    }
+  }
 
   void _startWorkshop(Map<String, String> topic) {
     ref.read(_selectedTopicProvider.notifier).state = topic;

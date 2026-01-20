@@ -13,6 +13,7 @@ import 'package:taktik/features/coach/widgets/topic_stats_dialog.dart';
 import 'package:taktik/core/utils/exam_utils.dart';
 import 'package:taktik/data/models/performance_summary.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
+import 'package:taktik/core/navigation/app_routes.dart';
 
 final coachScreenTabProvider = StateProvider<int>((ref) => 0);
 
@@ -515,6 +516,7 @@ class _SubjectGalaxyViewState extends ConsumerState<_SubjectGalaxyView> {
       ],
     );
   }
+
 
   void _showTopicStats(_TopicBundle e){
     showDialog(context: context, builder: (_)=> TopicStatsDialog(topicName: e.topic.name, performance: e.performance, mastery: e.mastery));

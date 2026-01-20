@@ -239,7 +239,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             child: ToolOfferScreen(
               title: (args['title'] as String?) ?? 'Premium Teklif',
               subtitle: (args['subtitle'] as String?) ?? 'Premium özelliklerin kilidini aç',
-              icon: (args['icon'] as IconData?) ?? Icons.auto_awesome,
+              iconName: args['iconName'] as String?,
               color: (args['color'] as Color?) ?? Colors.blueAccent,
               heroTag: (args['heroTag'] as String?) ?? 'offer-default',
               marketingTitle: (args['marketingTitle'] as String?) ?? 'Sınavda her zaman önde olun',

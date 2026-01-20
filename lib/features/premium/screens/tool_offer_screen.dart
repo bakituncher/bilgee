@@ -13,7 +13,8 @@ import 'package:url_launcher/url_launcher.dart';
 class ToolOfferScreen extends ConsumerStatefulWidget {
   final String title;
   final String subtitle;
-  final IconData icon;
+  final IconData? icon;
+  final String? iconName; // YENİ: String olarak icon ismi
   final Color color;
   final String heroTag;
   final String marketingTitle;
@@ -25,7 +26,8 @@ class ToolOfferScreen extends ConsumerStatefulWidget {
     super.key,
     required this.title,
     required this.subtitle,
-    required this.icon,
+    this.icon,
+    this.iconName,
     required this.color,
     required this.heroTag,
     required this.marketingTitle,
@@ -33,6 +35,21 @@ class ToolOfferScreen extends ConsumerStatefulWidget {
     this.redirectRoute,
     this.imageAsset,
   });
+
+  // Icon name'den IconData'ya çevirme
+  IconData get resolvedIcon {
+    if (icon != null) return icon!;
+    switch (iconName) {
+      case 'school':
+        return Icons.school_rounded;
+      case 'psychology':
+        return Icons.psychology_rounded;
+      case 'auto_awesome':
+        return Icons.auto_awesome;
+      default:
+        return Icons.auto_awesome;
+    }
+  }
 
   @override
   ConsumerState<ToolOfferScreen> createState() => _ToolOfferScreenState();
@@ -355,7 +372,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
                         const SizedBox(height: 20),
                         _ToolFeatureHeader(
                           heroTag: widget.heroTag,
-                          icon: widget.icon,
+                          icon: widget.resolvedIcon,
                           color: widget.color,
                           title: widget.title,
                           imageAsset: widget.imageAsset,
@@ -740,6 +757,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
       ),
     );
   }
+
 
   Future<void> _purchasePackage() async {
     if (_selectedPackage == null || _isPurchaseInProgress) return;
