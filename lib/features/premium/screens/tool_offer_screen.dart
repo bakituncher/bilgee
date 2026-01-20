@@ -46,6 +46,14 @@ class ToolOfferScreen extends ConsumerStatefulWidget {
         return Icons.psychology_rounded;
       case 'auto_awesome':
         return Icons.auto_awesome;
+      case 'auto_fix_high':
+        return Icons.auto_fix_high_rounded;
+      case 'calendar_month':
+        return Icons.calendar_month_rounded;
+      case 'camera_enhance':
+        return Icons.camera_enhance_rounded;
+      case 'radar':
+        return Icons.radar_rounded;
       default:
         return Icons.auto_awesome;
     }

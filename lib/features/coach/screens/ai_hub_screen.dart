@@ -375,7 +375,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                     onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/weakness-workshop', offerData: {
                       'title': 'Etüt Odası',
                       'subtitle': 'Kişiye özel çalışma materyalleri.',
-                      'icon': Icons.diamond_rounded,
+                      'iconName': 'auto_fix_high',
                       'color': const Color(0xFF8B5CF6),
                       'marketingTitle': 'Eksiklerini Kapat!',
                       'marketingSubtitle': 'Yapay zeka sadece eksik olduğun konulara özel konu özeti ve test soruları üretsin.',

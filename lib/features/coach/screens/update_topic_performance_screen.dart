@@ -379,12 +379,12 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
                             '/ai-hub/offer',
                             extra: {
                               'title': 'Etüt Odası',
-                              'subtitle': 'Zayıf konularını güçlendir',
-                              'iconName': 'school',
-                              'color': const Color(0xFF22D3EE),
+                              'subtitle': 'Kişiye özel çalışma materyalleri.',
+                              'iconName': 'auto_fix_high',
+                              'color': const Color(0xFF8B5CF6),
                               'heroTag': 'workshop-offer-${topic.hashCode}',
-                              'marketingTitle': 'Zayıf konularını AI ile güçlendir',
-                              'marketingSubtitle': 'Kişiselleştirilmiş ders anlatımı ve sınav soruları ile konuya hakim ol',
+                              'marketingTitle': 'Eksiklerini Kapat!',
+                              'marketingSubtitle': 'Yapay zeka sadece eksik olduğun konulara özel konu özeti ve test soruları üretsin.',
                               'redirectRoute': '/ai-hub/${AppRoutes.weaknessWorkshop}?subject=${Uri.encodeComponent(subject)}&topic=${Uri.encodeComponent(topic)}',
                             },
                           );
@@ -441,7 +441,7 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
   // Günde maksimum 1 kere Etüt Odası önerisi göstermek için kontrol
   Future<bool> _canShowWorkshopOffer() async {
     final prefs = await SharedPreferences.getInstance();
-    final lastOfferDate = prefs.getString('last_workshop_offer_date4');
+    final lastOfferDate = prefs.getString('last_workshop_offer_date5');
     final today = DateTime.now().toIso8601String().split('T')[0]; // YYYY-MM-DD formatında
 
     if (lastOfferDate == today) {
@@ -453,7 +453,7 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
   Future<void> _markWorkshopOfferShown() async {
     final prefs = await SharedPreferences.getInstance();
     final today = DateTime.now().toIso8601String().split('T')[0];
-    await prefs.setString('last_workshop_offer_date4', today);
+    await prefs.setString('last_workshop_offer_date5', today);
   }
 }
 
