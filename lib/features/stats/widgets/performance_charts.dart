@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/models/test_model.dart';
-import 'package:taktik/data/models/exam_model.dart'; // EKLENDİ: displayName için gerekli
+import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/features/stats/models/chart_data.dart';
 import 'package:taktik/features/stats/widgets/swipeable_performance_card.dart';
 
@@ -92,10 +92,16 @@ class _SmartPerformanceChartsState extends State<SmartPerformanceCharts> {
         index++;
       }
     }
-    // YKS için TYT ve AYT'yi ayır (String olarak 'YKS' gelme durumunu koruyoruz)
+    // YKS için TYT, AYT ve YDT ayrıştırması
     else if (examType == 'YKS') {
       final tytTests = tests.where((t) => t.sectionName.toUpperCase() == 'TYT').toList();
       final aytTests = tests.where((t) => t.sectionName.toUpperCase().startsWith('AYT')).toList();
+
+      // --- DÜZELTME: YDT (Yabancı Dil) Denemelerini Yakala ---
+      final ydtTests = tests.where((t) {
+        final name = t.sectionName.toUpperCase();
+        return name == 'YDT' || name == 'YABANCI DIL' || name == 'YABANCI DİL';
+      }).toList();
 
       if (tytTests.isNotEmpty) {
         chartDataList.add(ChartData(
@@ -115,8 +121,18 @@ class _SmartPerformanceChartsState extends State<SmartPerformanceCharts> {
           baseColor: AppTheme.secondaryBrandColor,
         ));
       }
+      // --- DÜZELTME: YDT Grafiğini Ekle ---
+      if (ydtTests.isNotEmpty) {
+        chartDataList.add(ChartData(
+          tests: ydtTests,
+          title: 'YDT',
+          subtitle: 'Yabancı Dil',
+          icon: Icons.language_rounded,
+          baseColor: const Color(0xFF06B6D4), // Cyan/Turkuaz
+        ));
+      }
 
-      // Hiçbiri yoksa tüm testleri göster
+      // Hiçbiri yoksa tüm testleri göster (Fallback)
       if (chartDataList.isEmpty) {
         chartDataList.add(ChartData(
           tests: tests,
@@ -166,8 +182,6 @@ class _SmartPerformanceChartsState extends State<SmartPerformanceCharts> {
 
         // Eğer akıllı isim, normal bölüm ismiyle aynıysa (yani ana denemeyse)
         if (tests.isNotEmpty && title == tests.first.sectionName) {
-          // DÜZELTME: "KPSSLISANS" yerine "KPSS Lisans" yazması için
-          // Test modelinden enum'a erişip display name özelliğini kullanıyoruz.
           displayTitle = tests.first.examType.displayName;
         } else if (tests.isEmpty) {
           // Liste boşsa ve string olarak geldiyse, enum'dan kurtarmayı dene

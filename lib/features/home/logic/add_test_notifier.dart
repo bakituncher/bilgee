@@ -121,19 +121,23 @@ class AddTestNotifier extends StateNotifier<AddTestState> {
       if (baseSection != null) {
         ExamSection targetSection;
 
-        // Branş moduysa ve ders seçildiyse -> TEK DERSLİK BÖLÜM OLUŞTUR
-        if (state.isBranchMode && state.selectedBranchSubject != null) {
+        // DÜZELTME: Seçilen bölüm tek dersten oluşuyorsa (YDT, AGS vb.),
+        // kullanıcı "Branş" seçse bile bu aslında bir "Ana Sınav"dır.
+        bool forceToGeneral = baseSection.subjects.length == 1;
+
+        // Branş moduysa ve ders seçildiyse VE zorla genel yapılmayacaksa -> TEK DERSLİK BÖLÜM OLUŞTUR
+        if (state.isBranchMode && state.selectedBranchSubject != null && !forceToGeneral) {
           final subjectName = state.selectedBranchSubject!;
           final subjectDetails = baseSection.subjects[subjectName]!;
 
           targetSection = ExamSection(
-              name: baseSection.name,
+              name: subjectName, // Branş ismi (örn: Matematik)
               subjects: {subjectName: subjectDetails}, // Sadece seçilen ders
               penaltyCoefficient: baseSection.penaltyCoefficient,
               availableLanguages: baseSection.availableLanguages
           );
         } else {
-          // Normal mod -> TÜM BÖLÜM
+          // Normal mod veya Tek dersli sınav (YDT/AGS) -> TÜM BÖLÜM (ANA SINAV)
           targetSection = baseSection;
         }
 
@@ -147,6 +151,8 @@ class AddTestNotifier extends StateNotifier<AddTestState> {
           scores: initialScores,
           currentStep: 1,
           activeSection: targetSection, // Step 2'de bunu kullanacağız
+          // Eğer forceToGeneral devreye girdiyse, branch modunu kapatıyoruz ki ana sınav olarak kaydedilsin.
+          isBranchMode: forceToGeneral ? false : state.isBranchMode,
         );
       }
     } else if (state.currentStep < 2) {
