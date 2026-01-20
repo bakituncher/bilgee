@@ -8,8 +8,8 @@ class AddTestState extends Equatable {
   final int currentStep;
   final String testName;
   final List<ExamSection> availableSections;
-  final ExamSection? selectedSection; // Genel seçim (TYT)
-  final ExamSection? activeSection;   // Net girilecek asıl nesne (Sadece Mat olabilir)
+  final ExamSection? selectedSection; // Genel seçim (TYT, YDT vb.)
+  final ExamSection? activeSection;   // Net girilecek asıl nesne (Sadece Mat olabilir veya tüm TYT)
   final Map<String, Map<String, int>> scores;
   final bool isSaving;
 
@@ -121,8 +121,9 @@ class AddTestNotifier extends StateNotifier<AddTestState> {
       if (baseSection != null) {
         ExamSection targetSection;
 
-        // DÜZELTME: Seçilen bölüm tek dersten oluşuyorsa (YDT, AGS vb.),
-        // kullanıcı "Branş" seçse bile bu aslında bir "Ana Sınav"dır.
+        // BASİTLEŞTİRİLMİŞ MANTIK:
+        // Eğer seçilen bölümün altında sadece 1 ders varsa (Örn: Alan Bilgisi, YDT),
+        // kullanıcı "Branş" seçmiş olsa bile bu bir "Ana Sınav" (Genel Deneme) kabul edilir.
         bool forceToGeneral = baseSection.subjects.length == 1;
 
         // Branş moduysa ve ders seçildiyse VE zorla genel yapılmayacaksa -> TEK DERSLİK BÖLÜM OLUŞTUR
@@ -137,7 +138,7 @@ class AddTestNotifier extends StateNotifier<AddTestState> {
               availableLanguages: baseSection.availableLanguages
           );
         } else {
-          // Normal mod veya Tek dersli sınav (YDT/AGS) -> TÜM BÖLÜM (ANA SINAV)
+          // Normal mod veya Tek dersli sınav (YDT/AGS/Alan Bilgisi) -> TÜM BÖLÜM (ANA SINAV)
           targetSection = baseSection;
         }
 
