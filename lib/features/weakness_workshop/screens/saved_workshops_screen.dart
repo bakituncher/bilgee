@@ -27,21 +27,6 @@ class SavedWorkshopsScreen extends ConsumerStatefulWidget {
 }
 
 class _SavedWorkshopsScreenState extends ConsumerState<SavedWorkshopsScreen> {
-  Future<bool> _confirmDelete(BuildContext context) async {
-    return await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Silinsin mi?'),
-        content: const Text('Bu kaydı kalıcı olarak silmek istiyor musun?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Vazgeç')),
-          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Sil')),
-        ],
-      ),
-    ) ??
-        false;
-  }
-
   @override
   Widget build(BuildContext context) {
     final savedWorkshopsAsync = ref.watch(savedWorkshopsProvider);
@@ -101,34 +86,14 @@ class _SavedWorkshopsScreenState extends ConsumerState<SavedWorkshopsScreen> {
                   itemCount: filtered.length,
                   itemBuilder: (context, index) {
                     final workshop = filtered[index];
-                    final userId = ref.read(authControllerProvider).value?.uid;
 
                     // ID null kontrolü
                     if (workshop.id == null) return const SizedBox.shrink();
 
-                    return Dismissible(
-                      key: Key(workshop.id!),
-                      direction: DismissDirection.endToStart,
-                      background: Container(
-                        alignment: Alignment.centerRight,
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        decoration: BoxDecoration(color: Theme.of(context).colorScheme.error.withOpacity(0.2), borderRadius: BorderRadius.circular(16)),
-                        child: Icon(Icons.delete_forever_rounded, color: Theme.of(context).colorScheme.error),
-                      ),
-                      confirmDismiss: (_) => _confirmDelete(context),
-                      onDismissed: (_) async {
-                        if (userId != null && workshop.id != null) {
-                          await ref.read(firestoreServiceProvider).deleteSavedWorkshop(userId, workshop.id!);
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kayıt silindi')));
-                          }
-                        }
-                      },
-                      child: _SavedWorkshopCard(workshop: workshop)
-                          .animate()
-                          .fadeIn(delay: (100 * index).ms)
-                          .slideY(begin: 0.2),
-                    );
+                    return _SavedWorkshopCard(workshop: workshop)
+                        .animate()
+                        .fadeIn(delay: (100 * index).ms)
+                        .slideY(begin: 0.2);
                   },
                 );
               },
@@ -151,7 +116,7 @@ class _SavedWorkshopCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 4,
-      shadowColor: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+      shadowColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -165,10 +130,25 @@ class _SavedWorkshopCard extends StatelessWidget {
           padding: const EdgeInsets.all(20.0),
           child: Row(
             children: [
-              CircleAvatar(
-                radius: 28,
-                backgroundColor: Theme.of(context).colorScheme.secondary,
-                child: Icon(Icons.diamond_rounded, color: Theme.of(context).colorScheme.primary, size: 28),
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Theme.of(context).colorScheme.primaryContainer,
+                      Theme.of(context).colorScheme.secondaryContainer,
+                    ],
+                  ),
+                ),
+                child: Icon(
+                  Icons.diamond_rounded,
+                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                  size: 28,
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
