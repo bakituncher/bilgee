@@ -51,7 +51,7 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
 
     try {
       final prefs = await ref.read(sharedPreferencesProvider.future);
-      final hasShownBlogReview = prefs.getBool('blog_review_prompt_shown3') ?? false;
+      final hasShownBlogReview = prefs.getBool('blog_review_prompt_shown4') ?? false;
 
       // Eğer daha önce gösterildiyse tekrar gösterme
       if (hasShownBlogReview) return;
@@ -62,7 +62,7 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
       if (!mounted) return;
 
       await _showReviewPrompt();
-      await prefs.setBool('blog_review_prompt_shown3', true);
+      await prefs.setBool('blog_review_prompt_shown4', true);
     } catch (_) {
       // Hata durumunda sessiz kal
     }
@@ -375,7 +375,7 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
 
                   // Title
                   Text(
-                    'Çok teşekkürler! 🎉',
+                    'Desteğin çok değerli! 🙏',
                     style: GoogleFonts.montserrat(
                       fontSize: 24,
                       fontWeight: FontWeight.w900,
@@ -389,7 +389,7 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
 
                   // Description
                   Text(
-                    'Görüşlerini store\'da paylaşarak diğer öğrencilere de yardımcı olabilirsin! 💙',
+                    'Görüşünü paylaşarak bize destek olabilirsin! 💙',
                     style: GoogleFonts.inter(
                       fontSize: 15,
                       height: 1.6,
@@ -447,7 +447,7 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'Değerlendir',
+                                'Mağazada Değerlendir',
                                 style: GoogleFonts.inter(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
