@@ -4,9 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:confetti/confetti.dart';
 import 'dart:ui' as ui;
-import 'package:taktik/core/services/admob_service.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
-import 'package:taktik/data/providers/firestore_providers.dart';
 import '../logic/pomodoro_notifier.dart';
 
 class PomodoroCompletedView extends ConsumerStatefulWidget {
@@ -26,29 +24,7 @@ class _PomodoroCompletedViewState extends ConsumerState<PomodoroCompletedView> {
     _confettiController = ConfettiController(duration: const Duration(seconds: 1));
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _confettiController.play();
-      // Geçiş reklamını göster (biraz gecikmeyle)
-      _showInterstitialAdIfNeeded();
     });
-  }
-
-  void _showInterstitialAdIfNeeded() async {
-    // Context mounted kontrolü
-    if (!mounted) return;
-
-    // Kullanıcının tamamlama ekranını görmesi için yeterli süre bekle
-    await Future.delayed(const Duration(milliseconds: 2500));
-    if (!mounted) return;
-
-    // Premium kontrolü ve kullanıcı bilgisi
-    // Artık isPremium kontrolü AdMobService içinde yapılıyor.
-    // Ancak gereksiz async bekleme yapmamak için burada da erken çıkış yapabiliriz.
-    // Yine de servis üzerinden geçmesi daha güvenli (state sync açısından).
-    final user = ref.read(userProfileProvider).value;
-
-    // Geçiş reklamını göster
-    await AdMobService().showInterstitialAd(
-      dateOfBirth: user?.dateOfBirth,
-    );
   }
 
   @override

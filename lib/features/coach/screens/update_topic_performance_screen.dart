@@ -14,7 +14,6 @@ import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:taktik/data/providers/monetization_provider.dart';
 import 'package:taktik/core/services/monetization_manager.dart';
-import 'package:taktik/core/services/admob_service.dart';
 
 final _updateModeProvider = StateProvider.autoDispose<bool>((ref) => true);
 final _sessionQuestionCountProvider = StateProvider.autoDispose<int>((ref) => 20);
@@ -358,23 +357,12 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
                     // Premium değilse, akıllı sistem karar verir
                     final monetizationManager = ref.read(monetizationManagerProvider);
                     final action = monetizationManager.getActionAfterLessonNetSubmission();
-                    final user = ref.read(userProfileProvider).value;
 
-                    switch (action) {
-                      case MonetizationAction.showPaywall:
-                        // Paywall göster
-                        await context.push(AppRoutes.premium);
-                        break;
-                      case MonetizationAction.showAd:
-                        // Reklam göster
-                        await AdMobService().showInterstitialAd(
-                          dateOfBirth: user?.dateOfBirth,
-                        );
-                        break;
-                      case MonetizationAction.showNothing:
-                        // Hiçbir şey gösterme (cooldown aktif)
-                        break;
+                    if (action == MonetizationAction.showPaywall) {
+                      // Paywall göster
+                      await context.push(AppRoutes.premium);
                     }
+                    // showNothing veya showAd durumunda hiçbir şey yapma
                   }
 
                   if (context.mounted) context.pop();
