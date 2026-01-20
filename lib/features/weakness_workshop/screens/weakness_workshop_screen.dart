@@ -698,76 +698,112 @@ class _FancyBackground extends StatelessWidget {
   }
 }
 
-class _LoadingCevherView extends StatelessWidget {
+class _LoadingCevherView extends ConsumerWidget {
   const _LoadingCevherView({super.key});
 
+  String _getLoadingMessage(String contentType, String topicName) {
+    switch (contentType) {
+      case 'quizOnly':
+        return "$topicName konusu için sana özel test hazırlanıyor";
+      case 'studyOnly':
+        return "$topicName konusu için sana özel konu anlatımı hazırlanıyor";
+      case 'both':
+        return "$topicName konusu için sana özel konu anlatımı ve test hazırlanıyor";
+      default:
+        return "Senin için özel çalışma materyali oluşturuluyor";
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Cevher animasyonu
-          Container(
-            width: 280,
-            height: 200,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
-                  blurRadius: 30,
-                  spreadRadius: 5,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedTopic = ref.watch(_selectedTopicProvider);
+    final contentType = ref.watch(_contentTypeProvider);
+
+    final topicName = selectedTopic?['topic'] ?? 'Konu';
+    final loadingMessage = _getLoadingMessage(contentType, topicName);
+
+    return Column(
+      children: [
+        Expanded(
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Cevher animasyonu
+                Container(
+                  width: 280,
+                  height: 200,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
+                        blurRadius: 30,
+                        spreadRadius: 5,
+                      ),
+                    ],
+                  ),
+                  child: Lottie.asset(
+                    'assets/lotties/cevher.json',
+                    fit: BoxFit.contain,
+                    repeat: true,
+                  ),
+                ).animate(onPlay: (c) => c.repeat(reverse: true))
+                 .scale(begin: const Offset(0.98, 0.98), end: const Offset(1.02, 1.02), duration: 2000.ms)
+                 .then()
+                 .shimmer(duration: 1500.ms, color: Theme.of(context).colorScheme.secondary.withOpacity(0.3)),
+                const SizedBox(height: 32),
+                Text(
+                  "İçerik hazırlanıyor...",
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ).animate(onPlay: (c) => c.repeat())
+                 .fadeIn(duration: 800.ms)
+                 .then()
+                 .fadeOut(duration: 800.ms),
+                const SizedBox(height: 12),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                  child: Text(
+                    loadingMessage,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: 220,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: LinearProgressIndicator(
+                      color: Theme.of(context).colorScheme.secondary,
+                      backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
+                      minHeight: 6,
+                    ),
+                  ).animate(onPlay: (c) => c.repeat())
+                   .shimmer(duration: 1800.ms, color: Theme.of(context).colorScheme.secondary.withOpacity(0.5)),
                 ),
               ],
             ),
-            child: Lottie.asset(
-              'assets/lotties/cevher.json',
-              fit: BoxFit.contain,
-              repeat: true,
-            ),
-          ).animate(onPlay: (c) => c.repeat(reverse: true))
-           .scale(begin: const Offset(0.98, 0.98), end: const Offset(1.02, 1.02), duration: 2000.ms)
-           .then()
-           .shimmer(duration: 1500.ms, color: Theme.of(context).colorScheme.secondary.withOpacity(0.3)),
-          const SizedBox(height: 32),
-          Text(
-            "İçerik hazırlanıyor...",
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 32.0, left: 32.0, right: 32.0),
+          child: Text(
+            "Yapay zeka hata yapabilir, bu nedenle verdiği yanıtları doğrulayın",
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface,
-              fontWeight: FontWeight.bold,
-            ),
-          ).animate(onPlay: (c) => c.repeat())
-           .fadeIn(duration: 800.ms)
-           .then()
-           .fadeOut(duration: 800.ms),
-          const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32.0),
-            child: Text(
-              "Senin için özel çalışma materyali oluşturuluyor",
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.7),
+              fontStyle: FontStyle.italic,
             ),
           ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: 220,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: LinearProgressIndicator(
-                color: Theme.of(context).colorScheme.secondary,
-                backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
-                minHeight: 6,
-              ),
-            ).animate(onPlay: (c) => c.repeat())
-           .shimmer(duration: 1800.ms, color: Theme.of(context).colorScheme.secondary.withOpacity(0.5)),
-          ),
-            ],
-      ),
+        ),
+      ],
     );
   }
 }
