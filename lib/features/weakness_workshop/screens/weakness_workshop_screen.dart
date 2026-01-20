@@ -2010,7 +2010,7 @@ class _ManualTopicSelectorSheetState extends ConsumerState<_ManualTopicSelectorS
               // Content
               Expanded(
                 child: FutureBuilder<Map<String, List<String>>>(
-                  future: _loadTopicsBySubject(user!.selectedExam!),
+                  future: _loadTopicsBySubject(user!.selectedExam!, user.selectedExamSection),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
@@ -2028,10 +2028,14 @@ class _ManualTopicSelectorSheetState extends ConsumerState<_ManualTopicSelectorS
                     final topicsBySubject = snapshot.data!;
                     final filteredTopics = _filterTopics(topicsBySubject);
 
+                    // Dersleri ters alfabetik sıraya koy (Z'den A'ya)
+                    final sortedEntries = filteredTopics.entries.toList()
+                      ..sort((a, b) => b.key.compareTo(a.key));
+
                     return ListView(
                       controller: scrollController,
                       padding: const EdgeInsets.all(16),
-                      children: filteredTopics.entries.map((entry) {
+                      children: sortedEntries.map((entry) {
                         final subject = entry.key;
                         final topics = entry.value;
 
@@ -2150,15 +2154,36 @@ class _ManualTopicSelectorSheetState extends ConsumerState<_ManualTopicSelectorS
     );
   }
 
-  Future<Map<String, List<String>>> _loadTopicsBySubject(String examType) async {
+  Future<Map<String, List<String>>> _loadTopicsBySubject(String examType, String? selectedExamSection) async {
     try {
       final ExamType examEnum = ExamType.values.byName(examType);
       final examData = await ExamData.getExamByType(examEnum);
 
       final Map<String, List<String>> topicsBySubject = {};
 
+      // Sadece kullanıcının seçtiği section'ları filtrele
+      List<ExamSection> sectionsToUse;
+
+      if (selectedExamSection != null && selectedExamSection.isNotEmpty) {
+        // YKS için özel mantık: TYT + seçilen AYT bölümü
+        if (examEnum == ExamType.yks) {
+          sectionsToUse = examData.sections.where((section) {
+            return section.name == 'TYT' ||
+                   section.name.toLowerCase() == selectedExamSection.toLowerCase();
+          }).toList();
+        } else {
+          // Diğer sınavlar için: sadece seçilen section
+          sectionsToUse = examData.sections.where((section) {
+            return section.name.toLowerCase() == selectedExamSection.toLowerCase();
+          }).toList();
+        }
+      } else {
+        // Section seçilmemişse tüm section'ları kullan
+        sectionsToUse = examData.sections;
+      }
+
       // Her section'ı gez
-      for (var section in examData.sections) {
+      for (var section in sectionsToUse) {
         // Her section içindeki subjects'i gez
         for (var subjectEntry in section.subjects.entries) {
           final subjectName = subjectEntry.key;
@@ -2169,9 +2194,10 @@ class _ManualTopicSelectorSheetState extends ConsumerState<_ManualTopicSelectorS
           if (topics.isNotEmpty) {
             // Eğer aynı ders başka section'da da varsa birleştir
             if (topicsBySubject.containsKey(subjectName)) {
-              topicsBySubject[subjectName]!.addAll(topics);
-              // Tekrarları kaldır
-              topicsBySubject[subjectName] = topicsBySubject[subjectName]!.toSet().toList();
+              // Set kullanarak tekrarları kaldır, ama sırayı koru
+              final existingTopics = topicsBySubject[subjectName]!;
+              final newTopics = topics.where((topic) => !existingTopics.contains(topic)).toList();
+              topicsBySubject[subjectName] = [...existingTopics, ...newTopics];
             } else {
               topicsBySubject[subjectName] = topics;
             }
