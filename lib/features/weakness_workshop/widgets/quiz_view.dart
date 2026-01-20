@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:taktik/features/weakness_workshop/models/workshop_model.dart';
 import 'package:taktik/shared/widgets/markdown_with_math.dart';
+import 'package:taktik/features/weakness_workshop/widgets/quiz_swipe_hint.dart';
 
 /// Soru çözüm ekranı widget'ı
 /// Quiz sorularını gösterir ve kullanıcının cevaplarını alır
@@ -32,11 +33,15 @@ class QuizView extends StatefulWidget {
 class _QuizViewState extends State<QuizView> {
   late PageController _pageController;
   int _currentPage = 0;
+  bool _showHint = false;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
+
+    // İpucunun gösterilmesi gerekip gerekmediğini kontrol et
+    _checkAndShowHint();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.onPageChanged?.call(_currentPage);
@@ -53,6 +58,19 @@ class _QuizViewState extends State<QuizView> {
         widget.onPageChanged?.call(_currentPage);
       }
     });
+  }
+
+  Future<void> _checkAndShowHint() async {
+    final shouldShow = await QuizSwipeHint.shouldShow();
+    if (shouldShow && mounted) {
+      // Kısa bir gecikme ile göster (ekranın yüklenmesini bekle)
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (mounted) {
+        setState(() {
+          _showHint = true;
+        });
+      }
+    }
   }
 
   @override
@@ -143,6 +161,7 @@ class _QuizViewState extends State<QuizView> {
             ),
           ],
         ),
+
         // Floating button - PageView'ın üstünde ama ona müdahale etmeden
         if (isQuizFinished)
           Positioned(
@@ -164,6 +183,16 @@ class _QuizViewState extends State<QuizView> {
               ),
             ),
           ).animate().fadeIn().slideY(begin: 0.5),
+
+        // Şık kaydırma ipucu - ilk kullanımda göster
+        if (_showHint)
+          QuizSwipeHint(
+            onDismiss: () {
+              setState(() {
+                _showHint = false;
+              });
+            },
+          ),
       ],
     );
   }
