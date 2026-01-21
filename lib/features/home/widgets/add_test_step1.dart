@@ -522,9 +522,7 @@ class Step1TestInfo extends ConsumerWidget {
                                     vertical: 14,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: isSelected
-                                        ? theme.colorScheme.primaryContainer
-                                        : theme.colorScheme.surfaceContainerHighest,
+                                    color: theme.colorScheme.surfaceContainerHighest, // Seçili olsa da arka plan değişmez
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
                                       color: isSelected
@@ -550,9 +548,7 @@ class Step1TestInfo extends ConsumerWidget {
                                           subject,
                                           style: theme.textTheme.titleSmall?.copyWith(
                                             fontWeight: FontWeight.w600,
-                                            color: isSelected
-                                                ? theme.colorScheme.onPrimaryContainer
-                                                : theme.colorScheme.onSurface,
+                                            color: theme.colorScheme.onSurface,
                                           ),
                                         ),
                                       ),
