@@ -38,20 +38,25 @@ class MiniPerformanceChart extends StatelessWidget {
       if (net > maxNet) maxNet = net;
     }
 
-    final minY = (minNet - 5).clamp(0.0, double.infinity).toDouble();
+    // minY artık negatif olabilir, clamp kaldırıldı
+    final minY = (minNet - 5).toDouble();
     final maxY = (maxNet + 5).toDouble();
+
+    // Y ekseni intervalini minimum 2 olacak şekilde ayarla
+    double rawInterval = (maxY - minY) / 3;
+    double interval = rawInterval < 2 ? 2 : rawInterval;
 
     return LineChart(
       LineChartData(
         gridData: FlGridData(
           show: true,
           drawVerticalLine: false,
-          horizontalInterval: (maxY - minY) / 3,
+          horizontalInterval: interval,
           getDrawingHorizontalLine: (value) {
             return FlLine(
               color: isDark
-                  ? Colors.white.withOpacity(0.03)
-                  : Colors.black.withOpacity(0.03),
+                  ? Colors.white.withAlpha(8)
+                  : Colors.black.withAlpha(8),
               strokeWidth: 1,
               dashArray: [5, 5],
             );
@@ -62,8 +67,10 @@ class MiniPerformanceChart extends StatelessWidget {
             sideTitles: SideTitles(
               showTitles: true,
               reservedSize: 28,
-              interval: (maxY - minY) / 3,
+              interval: interval,
               getTitlesWidget: (value, meta) {
+                // Sadece tam sayı ve interval'e tam bölünen değerleri göster
+                if (value % interval != 0) return const SizedBox.shrink();
                 return Padding(
                   padding: const EdgeInsets.only(right: 4),
                   child: Text(
@@ -72,8 +79,8 @@ class MiniPerformanceChart extends StatelessWidget {
                       fontSize: 9,
                       fontWeight: FontWeight.w600,
                       color: isDark
-                          ? Colors.white.withOpacity(0.35)
-                          : Colors.black.withOpacity(0.35),
+                          ? Colors.white.withAlpha(89)
+                          : Colors.black.withAlpha(89),
                     ),
                   ),
                 );
@@ -90,7 +97,7 @@ class MiniPerformanceChart extends StatelessWidget {
         lineTouchData: LineTouchData(
           enabled: true,
           touchTooltipData: LineTouchTooltipData(
-            getTooltipColor: (touchedSpot) => color.withOpacity(0.9),
+            getTooltipColor: (touchedSpot) => color.withAlpha(230),
             tooltipRoundedRadius: 8,
             tooltipPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             getTooltipItems: (touchedSpots) {
@@ -137,14 +144,14 @@ class MiniPerformanceChart extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  color.withOpacity(0.3),
-                  color.withOpacity(0.05),
-                  color.withOpacity(0.0),
+                  color.withAlpha(77),
+                  color.withAlpha(13),
+                  color.withAlpha(0),
                 ],
               ),
             ),
             shadow: Shadow(
-              color: color.withOpacity(0.3),
+              color: color.withAlpha(77),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -154,4 +161,3 @@ class MiniPerformanceChart extends StatelessWidget {
     );
   }
 }
-
