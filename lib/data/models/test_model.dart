@@ -98,10 +98,7 @@ extension TestModelSummaryX on TestModel {
     // YDT (Yabancı Dil) gibi tek derslik sınavları yakalamak için sadece dersin adına bakarız.
     // DÜZELTME: "ALAN BİLGİSİ" kaldırıldı çünkü ÖABT'de bu bir branş denemesi olabilir.
     final comprehensiveSubjectNames = [
-      'YABANCI DİL',
-      'YABANCI DIL',
-      'ALAN BİLGİSİ',
-      'ALAN BILGISI',
+
     ];
 
     if (comprehensiveSubjectNames.contains(subjectName)) {
