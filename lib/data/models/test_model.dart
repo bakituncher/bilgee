@@ -77,50 +77,86 @@ class TestModel {
 }
 
 extension TestModelSummaryX on TestModel {
-  // GÜNCELLENMİŞ MANTIK: İsim listesine bağımlılığı ortadan kaldıran evrensel çözüm
+  // GÜVENLİ VE KAPSAMLI KONTROL
   bool get isBranchTest {
-    // 1. ÇOKLU DERS KONTROLÜ (En güçlü ve genel kural)
-    // Uygulamanızın mantığında bir "Branş Denemesi" oluştururken sadece tek bir ders seçilebiliyor.
-    // Dolayısıyla, bir denemede 1'den fazla ders (subject) varsa, bu kesinlikle bir ANA SINAVDIR.
-    // Bu kural TYT, LGS ve çok dersli ÖABT branşlarını (Örn: Sınıf Öğretmenliği -> Temel Alan + Alan Eğitimi) otomatik kapsar.
+    // 1. ÇOKLU DERS KONTROLÜ (En Temel Kural)
+    // Eğer denemede 1'den fazla ders (subject) varsa, bu kesinlikle bir ANA SINAVDIR.
+    // Örnek: TYT (Türkçe + Mat + Fen + Sosyal), Sınıf Öğrt (Temel Alan + Alan Eğitimi)
     if (scores.length > 1) {
       return false;
     }
 
-    // Eğer buraya geldiysek deneme TEK DERSTEN oluşuyor demektir.
-    if (scores.isEmpty) return true; // Hata toleransı
+    // Hata toleransı: Hiç ders yoksa branş gibi davran
+    if (scores.isEmpty) return true;
 
     final subjectName = scores.keys.first.toUpperCase().trim();
     final sectionUpper = sectionName.toUpperCase().trim();
     final examTypeUpper = examType.name.toUpperCase();
 
-    // 2. KAPSAYICI DERS İSİMLERİ (Tek ders olsa bile tüm sınavı temsil edenler)
-    // YDT (Yabancı Dil) gibi tek derslik sınavları yakalamak için sadece dersin adına bakarız.
-    // DÜZELTME: "ALAN BİLGİSİ" kaldırıldı çünkü ÖABT'de bu bir branş denemesi olabilir.
-    final comprehensiveSubjectNames = [
+    // 2. ÖZEL BÖLÜM ADI KONTROLLERİ (YDT ve AGS Ortak)
+    // YKS YDT sınavı 'Yabancı Dil' dersinden oluşur ama ana sınavdır.
+    // Bölüm adı "YDT" veya "YABANCI DİL" içeriyorsa ana sınavdır.
+    if (sectionUpper == 'YDT' || sectionUpper.contains('YABANCI DİL TESTİ')) {
+      return false;
+    }
 
+    // 3. AGS "ALAN BİLGİSİ" KONTROLÜ (En Kritik Kısım)
+    // Sorun: "Türkçe Öğretmenliği" sınavı tek derstir: "Alan Bilgisi".
+    // Ama "Okul Öncesi" sınavında "Alan Bilgisi" sadece bir parçadır.
+    if (subjectName == 'ALAN BİLGİSİ' || subjectName == 'ALAN BILGISI') {
+
+      // Bu bölümler "Alan Bilgisi"ne ek olarak "Alan Eğitimi" de içerir.
+      // Dolayısıyla bu bölümlerde tek başına "Alan Bilgisi" çözmek bir BRANŞ denemesidir.
+      final multiPartSections = [
+        'OKUL ÖNCESİ',
+        'ÖZEL EĞİTİM',
+        // 'SINIF ÖĞRETMENLİĞİ' -> EKLENMEDİ. Çünkü json dosyasında dersin adı
+        // "Alan Bilgisi" değil, "Temel Alan Bilgisi". O yüzden buraya girmez,
+        // direkt branş olarak işaretlenir (Doğrusu budur).
+      ];
+
+      // Eğer kullanıcının bölümü (sectionName) bu istisna listesinde YOKSA,
+      // demek ki bu "Alan Bilgisi" sınavın tamamıdır (Örn: Türkçe, Matematik, Tarih).
+      // O zaman Ana Sınav kabul ediyoruz.
+      bool isMultiPart = multiPartSections.any((s) => sectionUpper.contains(s));
+
+      if (!isMultiPart) {
+        return false; // Çok parçalı değilse, Alan Bilgisi ana sınavdır.
+      }
+    }
+
+    // 4. KAPSAYICI DERS İSİMLERİ
+    // YDT gibi tek derslik sınavları yakalamak için.
+    // DİKKAT: "İNGİLİZCE" buraya eklenmedi. Çünkü LGS'de İngilizce sadece 10 soruluk bir branştır.
+    // Buraya sadece tek başına sınav olabilecek dersler eklenmelidir.
+    final comprehensiveSubjectNames = [
+      'YABANCI DİL', // yks.json'da YDT dersinin adı budur
+      'YABANCI DİL TESTİ',
+      'YDT',
     ];
 
     if (comprehensiveSubjectNames.contains(subjectName)) {
       return false; // Ana Sınavdır
     }
 
-    // 3. SINAV TÜRÜ EŞLEŞMESİ
+    // 5. SINAV TÜRÜ EŞLEŞMESİ
     // Eğer bölüm adı sınav türüyle aynıysa (Örn: Section: YDT, Exam: YDT) ana sınavdır.
     if (sectionUpper == examTypeUpper) {
       return false;
     }
 
-    // 4. GENEL ANAHTAR KELİMELER (DÜZELTİLDİ)
+    // 6. GENEL ANAHTAR KELİMELER
     // "Genel" veya "Tümü" kelimeleri bölüm adının BAŞINDA geçiyorsa ana sınavdır.
-    // contains yerine startsWith kullanıldı. Böylece "Tarih (Genel Kültür)" gibi
-    // parantez içi kullanımlar yanlışlıkla ana sınav sayılmayacak.
+    // Örn: "Genel Yetenek", "Genel Kültür"
     if (sectionUpper.startsWith('GENEL') || sectionUpper == 'TÜMÜ') {
       return false;
     }
 
     // Yukarıdaki şartların hiçbiri sağlanmadıysa, bu bir branş denemesidir.
-    // (Örn: TYT sınavında sadece "Matematik" çözüldüyse veya KPSS'de sadece "Tarih" çözüldüyse)
+    // Örnekler:
+    // - LGS'de sadece "Matematik" (subjectName: MATEMATİK -> Branş)
+    // - KPSS'de sadece "Tarih" (subjectName: TARİH -> Branş)
+    // - Sınıf Öğrt. sadece "Temel Alan Bilgisi" (subjectName: TEMEL ALAN... -> Branş)
     return true;
   }
 
