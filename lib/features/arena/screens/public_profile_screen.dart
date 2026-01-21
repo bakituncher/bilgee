@@ -223,7 +223,6 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
 
           final int unlockedBadges = _calculateUnlockedBadges(data);
           final int totalBadges = 8;
-          final updatedAt = statsAsync.valueOrNull?.updatedAt;
 
           return Container(
             decoration: BoxDecoration(
@@ -275,13 +274,6 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                               loading: () => const _ShareableProfileCardSkeleton(),
                               error: (e, s) => const _ShareableProfileCardSkeleton(),
                             ),
-                            if (updatedAt != null) ...[
-                              const SizedBox(height: 8),
-                              Text(
-                                "Son güncelleme: ${DateFormat('dd MMM yyyy HH:mm', 'tr_TR').format(updatedAt)}",
-                                style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white70),
-                              ),
-                            ],
                           ],
                         ),
                       ),
