@@ -544,7 +544,6 @@ class Step1TestInfo extends ConsumerWidget {
   }
 }
 
-// Yardımcı Kart Widget'ı (Değişmedi)
 class _SectionSelectionCard extends StatelessWidget {
   final ExamSection section;
   final bool isSelected;
@@ -588,13 +587,25 @@ class _SectionSelectionCard extends StatelessWidget {
                     : theme.colorScheme.onSurfaceVariant,
               ),
               const SizedBox(width: 16),
-              Text(
-                section.name,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.onSurface,
+
+              // --- GÜNCELLENEN KISIM ---
+              Expanded(
+                child: FittedBox(
+                  // BoxFit.scaleDown: Metin sığıyorsa normal boyutunda kalır,
+                  // sığmıyorsa küçülür. Asla büyütmez.
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft, // Küçülürse sola yaslı kalsın
+                  child: Text(
+                    section.name,
+                    maxLines: 1, // Tek satıra zorla
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
                 ),
               ),
+              // -------------------------
             ],
           ),
         ),
