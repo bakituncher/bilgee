@@ -14,6 +14,7 @@ import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:taktik/data/providers/monetization_provider.dart';
 import 'package:taktik/core/services/monetization_manager.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 final _updateModeProvider = StateProvider.autoDispose<bool>((ref) => true);
 final _sessionQuestionCountProvider = StateProvider.autoDispose<int>((ref) => 20);
@@ -350,9 +351,50 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
                   // Başarı Lottie diyaloğunu göster
                   await _showSuccessDialog(context);
 
-                  // Akıllı monetizasyon sistemi: Her 5 ders netinin 4'ü reklam, 1'i paywall
+                  // Mastery hesapla - eğer düşükse (< 0.7) Etüt Odası öner
+                  const double penaltyCoefficient = 0.25;
+                  final double finalMastery = _calculateMastery(isAddingMode, initialPerformance, correct, wrong, sessionQuestions, penaltyCoefficient);
+
                   final isPremium = ref.read(premiumStatusProvider);
 
+                  // Zayıf performans (sarı/kırmızı) kontrolü
+                  if (finalMastery >= 0 && finalMastery < 0.7 && context.mounted) {
+                    // Günde maksimum 1 kere göster
+                    final canShow = await _canShowWorkshopOffer();
+
+                    if (canShow) {
+                      // Önce bilgilendirme/pazarlama dialogu göster
+                      final shouldNavigate = await _showWorkshopOfferDialog(context, topic);
+
+                      if (shouldNavigate == true && context.mounted) {
+                        await _markWorkshopOfferShown(); // Bugün gösterildi olarak işaretle
+                        context.pop(); // Önce bu ekranı kapat
+
+                        if (isPremium) {
+                          // Premium kullanıcı - direkt Etüt Odası'na git
+                          await context.push('/ai-hub/${AppRoutes.weaknessWorkshop}?subject=${Uri.encodeComponent(subject)}&topic=${Uri.encodeComponent(topic)}');
+                        } else {
+                          // Premium değil - Tool Offer göster (ücretsiz erişemez)
+                          await context.push(
+                            '/ai-hub/offer',
+                            extra: {
+                              'title': 'Etüt Odası',
+                              'subtitle': 'Kişiye özel çalışma materyalleri.',
+                              'iconName': 'menu_book',
+                              'color': const Color(0xFF8B5CF6),
+                              'heroTag': 'workshop-offer-${topic.hashCode}',
+                              'marketingTitle': 'Eksiklerini Kapat!',
+                              'marketingSubtitle': 'Yapay zeka sadece eksik olduğun konulara özel konu özeti ve test soruları üretsin.',
+                              'redirectRoute': '/ai-hub/${AppRoutes.weaknessWorkshop}?subject=${Uri.encodeComponent(subject)}&topic=${Uri.encodeComponent(topic)}',
+                            },
+                          );
+                        }
+                        return;
+                      }
+                    }
+                  }
+
+                  // Normal durum: Akıllı monetizasyon sistemi
                   if (!isPremium && context.mounted) {
                     // Premium değilse, akıllı sistem karar verir
                     final monetizationManager = ref.read(monetizationManagerProvider);
@@ -395,14 +437,41 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
       return total == 0 ? 0.0 : (netCorrect / total).clamp(0.0, 1.0);
     }
   }
+
+  // Günde maksimum 1 kere Etüt Odası önerisi göstermek için kontrol
+  Future<bool> _canShowWorkshopOffer() async {
+    final prefs = await SharedPreferences.getInstance();
+    final lastOfferDate = prefs.getString('last_workshop_offer_date7');
+    final today = DateTime.now().toIso8601String().split('T')[0]; // YYYY-MM-DD formatında
+
+    if (lastOfferDate == today) {
+      return false; // Bugün zaten gösterilmiş
+    }
+    return true;
+  }
+
+  Future<void> _markWorkshopOfferShown() async {
+    final prefs = await SharedPreferences.getInstance();
+    final today = DateTime.now().toIso8601String().split('T')[0];
+    await prefs.setString('last_workshop_offer_date7', today);
+  }
 }
 
-// Başarı animasyonu için küçük ve şık bir dialog (Ders Netlerim akışına özel)
+// Başarı animasyonu için küçük ve şık bir dialog (Konu Netlerim akışına özel)
 Future<void> _showSuccessDialog(BuildContext context) async {
   await showDialog(
     context: context,
     barrierDismissible: false,
     builder: (ctx) => const _SuccessDialog(),
+  );
+}
+
+// Etüt Odası tanıtım/pazarlama dialogu
+Future<bool?> _showWorkshopOfferDialog(BuildContext context, String topicName) async {
+  return await showDialog<bool>(
+    context: context,
+    barrierDismissible: true,
+    builder: (ctx) => _WorkshopOfferDialog(topicName: topicName),
   );
 }
 
@@ -543,6 +612,224 @@ class _QuickStat extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// Etüt Odası Tanıtım ve Pazarlama Dialogu
+class _WorkshopOfferDialog extends StatelessWidget {
+  final String topicName;
+
+  const _WorkshopOfferDialog({required this.topicName});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      backgroundColor: Colors.transparent,
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 400),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          color: theme.cardColor,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // İkon + Başlık
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 32, 24, 16),
+              child: Column(
+                children: [
+                  // İkon
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.secondary.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.menu_book_rounded,
+                      size: 48,
+                      color: theme.colorScheme.secondary,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Zayıf Konu Tespit Edildi',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.secondary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: theme.colorScheme.secondary.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Text(
+                      topicName,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.secondary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Divider
+            Divider(
+              height: 1,
+              thickness: 1,
+              color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.2),
+            ),
+
+            // Content
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Etüt Odası\'nda bu konuyu güçlendir',
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Özellikler - Minimalist
+                  _MinimalFeatureItem(
+                    icon: Icons.auto_awesome,
+                    text: 'Kişiselleştirilmiş konu anlatımı',
+                    color: theme.colorScheme.secondary,
+                  ),
+                  const SizedBox(height: 10),
+                  _MinimalFeatureItem(
+                    icon: Icons.quiz_rounded,
+                    text: 'Seviyene uygun sınav soruları',
+                    color: theme.colorScheme.secondary,
+                  ),
+                  const SizedBox(height: 10),
+                  _MinimalFeatureItem(
+                    icon: Icons.trending_up_rounded,
+                    text: 'Hızlı ve etkili ilerleme',
+                    color: theme.colorScheme.secondary,
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Butonlar
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text(
+                            'Şimdi Değil',
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            backgroundColor: theme.colorScheme.secondary,
+                            foregroundColor: Colors.black,
+                            elevation: 0,
+                            shadowColor: theme.colorScheme.secondary.withOpacity(0.4),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Devam Et',
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              const Icon(
+                                Icons.arrow_forward_rounded,
+                                size: 18,
+                                color: Colors.black,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ).animate().scale(
+          duration: 300.ms,
+          curve: Curves.easeOutBack,
+        );
+  }
+}
+
+class _MinimalFeatureItem extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final Color color;
+
+  const _MinimalFeatureItem({
+    required this.icon,
+    required this.text,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(
+          icon,
+          color: color,
+          size: 20,
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            text,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

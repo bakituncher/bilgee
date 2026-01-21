@@ -132,7 +132,7 @@
   {
     "id": "daily_stu_02_topic_mastery_push",
     "title": "Konu Hakimiyeti İtişi",
-    "description": "Ders Netlerim'nde kırmızı renkteki bir konuyu sarı seviyeye çıkarın.",
+    "description": "Konu Netlerim'nde kırmızı renkteki bir konuyu sarı seviyeye çıkarın.",
     "type": "daily",
     "category": "study",
     "reward": 80,

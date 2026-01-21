@@ -1074,7 +1074,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
 
                   _ChecklistItemCard(
                     icon: Icons.insights_rounded,
-                    title: "Ders Netlerim",
+                    title: "Konu Netlerim",
                     description: "Konu hakimiyetin, bu hafta hangi konulara odaklanacağımızı belirleyecek.",
                     statusText: "$analyzedTopicsCount",
                     statusDescription: "Konu Analiz Edildi",

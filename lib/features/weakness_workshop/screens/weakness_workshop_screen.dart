@@ -90,7 +90,15 @@ final workshopSessionProvider = FutureProvider.autoDispose<WorkshopModel>((ref) 
 
 
 class WeaknessWorkshopScreen extends ConsumerStatefulWidget {
-  const WeaknessWorkshopScreen({super.key});
+  final String? initialSubject;
+  final String? initialTopic;
+
+  const WeaknessWorkshopScreen({
+    super.key,
+    this.initialSubject,
+    this.initialTopic,
+  });
+
   @override
   ConsumerState<WeaknessWorkshopScreen> createState() => _WeaknessWorkshopScreenState();
 }
@@ -101,6 +109,21 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
   bool _skipStudyView = false;
   bool _masteredAchieved = false; // bu oturumda ustalık kazan��ldı mı
   int _currentQuizPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Eğer initialSubject ve initialTopic varsa otomatik olarak workshop başlat
+    if (widget.initialSubject != null && widget.initialTopic != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _startWorkshop({
+          'subject': widget.initialSubject!,
+          'topic': widget.initialTopic!,
+        });
+      });
+    }
+  }
 
   void _startWorkshop(Map<String, String> topic) {
     ref.read(_selectedTopicProvider.notifier).state = topic;
@@ -835,7 +858,10 @@ class _BriefingView extends ConsumerWidget {
         final suggestions = analysis?.getWorkshopSuggestions(count: 5) ?? [];
 
         if (suggestions.isEmpty) {
-          return _EmptyStateView();
+          // GÜNCELLEME: Artık manuel seçim fonksiyonunu parametre olarak geçiyoruz
+          return _EmptyStateView(
+            onManualSelect: () => _showManualTopicSelector(context, ref, onTopicSelected),
+          );
         }
 
         final colorScheme = Theme.of(context).colorScheme;
@@ -1074,101 +1100,139 @@ class _BriefingView extends ConsumerWidget {
   }
 }
 class _EmptyStateView extends StatelessWidget {
-  const _EmptyStateView();
+  final VoidCallback onManualSelect;
+
+  const _EmptyStateView({super.key, required this.onManualSelect});
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
     return Center(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // 1. Animasyonlu Görsel Alanı (Premium Glow Efekti ile)
             Container(
-              width: 120,
-              height: 120,
+              height: 200,
+              width: 200,
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
                 shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: colorScheme.primary.withOpacity(0.15),
+                    blurRadius: 30,
+                    spreadRadius: -5,
+                  ),
+                ],
               ),
-              child: Icon(
-                Icons.insert_chart_outlined_rounded,
-                size: 60,
-                color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.5),
-              ),
-            ).animate().fadeIn(duration: 600.ms).scale(delay: 200.ms),
-            const SizedBox(height: 16),
-            Text(
-              "Henüz Ders Neti Yok",
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.3),
-            const SizedBox(height: 8),
-            Text(
-              "Etüt Odası'nın sana özel içerik üretebilmesi için önce ders neti eklemelisin.",
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ).animate().fadeIn(delay: 600.ms),
-            const SizedBox(height: 16),
-            Card(
-              color: Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.5),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: BorderSide(
-                  color: Theme.of(context).colorScheme.secondary.withOpacity(0.3),
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
+              child: ClipOval(
+                child: Stack(
+                  alignment: Alignment.center,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.lightbulb_outline_rounded,
-                          size: 24,
-                          color: Theme.of(context).colorScheme.secondary,
+                    // Arka planda hafif parlayan gradient
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: RadialGradient(
+                          center: Alignment.center,
+                          radius: 0.8,
+                          colors: [
+                            colorScheme.primary.withOpacity(0.2),
+                            Colors.transparent,
+                          ],
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          "Nasıl Başlarım?",
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      "1. Ders netlerini ekle\n2. Taktik Tavşan en zayıf konuları analiz edecek\n3. Özel çalışma materyallerine eriş!",
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        height: 1.5,
                       ),
-                      textAlign: TextAlign.center,
+                    ),
+                    // Lottie Animasyonu
+                    Lottie.asset(
+                      'assets/lotties/empty.json',
+                      width: 150,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Icon(
+                          Icons.auto_stories_rounded,
+                          size: 80,
+                          color: colorScheme.primary.withOpacity(0.5),
+                        );
+                      },
                     ),
                   ],
                 ),
               ),
-            ).animate().fadeIn(delay: 800.ms).slideY(begin: 0.3),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () {
-                context.go(AppRoutes.coach);
-              },
-              icon: const Icon(Icons.add_chart_rounded, size: 20),
-              label: const Text("Ders Neti Ekle"),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ).animate().scale(duration: 800.ms, curve: Curves.elasticOut),
+
+            const SizedBox(height: 32),
+
+            // 2. Başlık
+            Text(
+              "Taktik Tavşan Seni Bekliyor!",
+              style: textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurface,
               ),
-            ).animate().fadeIn(delay: 1000.ms).scale(),
-            const SizedBox(height: 8),
-            TextButton.icon(
+              textAlign: TextAlign.center,
+            ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.3, end: 0),
+
+            const SizedBox(height: 12),
+
+            // 3. Açıklama (İstediğiniz "Kişiye Özel Materyal" Vurgusu)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+              child: RichText(
+                textAlign: TextAlign.center,
+                text: TextSpan(
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    height: 1.6,
+                    fontSize: 15,
+                  ),
+                  children: [
+                    const TextSpan(text: "Zayıf yönlerini analiz edip, tam ihtiyacın olan "),
+                    TextSpan(
+                      text: "konu anlatımlarını ve test materyallerini",
+                      style: TextStyle(
+                        color: colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const TextSpan(text: " hazırlayabilmem için ders netlerini görmem gerekiyor."),
+                  ],
+                ),
+              ),
+            ).animate().fadeIn(delay: 500.ms),
+
+            const SizedBox(height: 40),
+
+            // 4. Birincil Aksiyon: Ders Neti Ekle
+            _ActionCard(
+              title: "Ders Neti Ekle",
+              subtitle: "Analiz yapıp eksiklerini bulayım",
+              icon: Icons.add_chart_rounded,
+              color: colorScheme.primary,
+              isPrimary: true,
+              onTap: () => context.go(AppRoutes.coach),
+            ).animate().fadeIn(delay: 700.ms).slideX(begin: 0.1, end: 0),
+
+            const SizedBox(height: 16),
+
+            // 5. İkincil Aksiyon: Manuel Seçim
+            _ActionCard(
+              title: "Konuyu Kendim Seçeceğim",
+              subtitle: "Listeden seçim yaparak hemen çalış",
+              icon: Icons.touch_app_rounded,
+              color: colorScheme.secondary,
+              isPrimary: false,
+              onTap: onManualSelect,
+            ).animate().fadeIn(delay: 900.ms).slideX(begin: 0.1, end: 0),
+
+            const SizedBox(height: 24),
+
+            // Çıkış butonu
+            TextButton(
               onPressed: () {
                 if (Navigator.of(context).canPop()) {
                   context.pop();
@@ -1176,10 +1240,122 @@ class _EmptyStateView extends StatelessWidget {
                   context.go(AppRoutes.home);
                 }
               },
-              icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 14),
-              label: const Text("Ana Sayfaya Dön"),
+              style: TextButton.styleFrom(
+                foregroundColor: colorScheme.onSurfaceVariant.withOpacity(0.8),
+              ),
+              child: const Text("Daha Sonra"),
             ).animate().fadeIn(delay: 1100.ms),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// Şık Kart Tasarımı (Değişmedi, aynı yapıyı koruduk)
+class _ActionCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color color;
+  final bool isPrimary;
+  final VoidCallback onTap;
+
+  const _ActionCard({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.color,
+    required this.isPrimary,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isPrimary ? color.withOpacity(0.08) : Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isPrimary ? color.withOpacity(0.5) : colorScheme.outline.withOpacity(0.2),
+          width: isPrimary ? 1.5 : 1,
+        ),
+        boxShadow: isPrimary
+            ? [
+                BoxShadow(
+                  color: color.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : null,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          splashColor: color.withOpacity(0.1),
+          highlightColor: color.withOpacity(0.05),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+            child: Row(
+              children: [
+                // İkon Kutusu
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isPrimary ? color : colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: (isPrimary ? color : Colors.black).withOpacity(isPrimary ? 0.3 : 0.05),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    icon,
+                    color: isPrimary ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                // Yazılar
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                              fontSize: 12,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Ok İkonu
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14,
+                  color: colorScheme.onSurfaceVariant.withOpacity(0.5),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

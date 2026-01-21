@@ -156,8 +156,18 @@ StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
                   path: AppRoutes.weaknessWorkshop,
                   name: 'WeaknessWorkshop',
                   parentNavigatorKey: rootNavigatorKey,
-                  pageBuilder: (context, state) =>
-                  buildPageWithFadeTransition(context: context, state: state, child: const WeaknessWorkshopScreen()),
+                  pageBuilder: (context, state) {
+                    final subject = state.uri.queryParameters['subject'];
+                    final topic = state.uri.queryParameters['topic'];
+                    return buildPageWithFadeTransition(
+                      context: context,
+                      state: state,
+                      child: WeaknessWorkshopScreen(
+                        initialSubject: subject,
+                        initialTopic: topic,
+                      ),
+                    );
+                  },
                   routes: [
                     GoRoute(
                       path: AppRoutes.savedWorkshops,
