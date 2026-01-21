@@ -23,6 +23,9 @@ import 'package:lottie/lottie.dart';
 import 'package:taktik/features/weakness_workshop/logic/workshop_controller.dart';
 import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/features/weakness_workshop/widgets/quiz_view.dart';
+// YENİ EKLENEN IMPORTLAR
+import 'package:taktik/core/utils/exam_utils.dart';
+import 'package:taktik/data/models/user_model.dart';
 
 // DEPRECATED: Eski enum ve provider'lar - Artık WorkshopController içinde
 // Geriye dönük uyumluluk için kalsın ama yeni kullanmayın
@@ -2229,13 +2232,11 @@ class _ManualTopicSelectorSheet extends ConsumerStatefulWidget {
 
 class _ManualTopicSelectorSheetState extends ConsumerState<_ManualTopicSelectorSheet> {
   String _searchQuery = '';
-  String? _selectedSubject;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final user = ref.watch(userProfileProvider).value;
-    final tests = ref.watch(testsProvider).value;
 
     if (user?.selectedExam == null) {
       return _buildErrorContainer(context, 'Sınav türü seçilmemiş');
@@ -2332,7 +2333,8 @@ class _ManualTopicSelectorSheetState extends ConsumerState<_ManualTopicSelectorS
                 // Content
                 Expanded(
                   child: FutureBuilder<Map<String, List<String>>>(
-                    future: _loadTopicsBySubject(user!.selectedExam!, user.selectedExamSection),
+                    // GÜNCELLEME: Artık user objesini ve ExamUtils mantığını kullanıyoruz
+                    future: _loadTopicsByUser(user!),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(child: CircularProgressIndicator());
@@ -2350,9 +2352,18 @@ class _ManualTopicSelectorSheetState extends ConsumerState<_ManualTopicSelectorS
                       final topicsBySubject = snapshot.data!;
                       final filteredTopics = _filterTopics(topicsBySubject);
 
-                      // Dersleri ters alfabetik sıraya koy (Z'den A'ya)
+                      // Dersleri ters alfabetik sıraya koy (Z'den A'ya) - İsteğe bağlı
                       final sortedEntries = filteredTopics.entries.toList()
                         ..sort((a, b) => b.key.compareTo(a.key));
+
+                      if (sortedEntries.isEmpty) {
+                        return Center(
+                          child: Text(
+                            'Aradığınız kriterlere uygun konu bulunamadı.',
+                            style: TextStyle(color: colorScheme.onSurfaceVariant),
+                          ),
+                        );
+                      }
 
                       return ListView(
                         controller: scrollController,
@@ -2477,55 +2488,33 @@ class _ManualTopicSelectorSheetState extends ConsumerState<_ManualTopicSelectorS
     );
   }
 
-  Future<Map<String, List<String>>> _loadTopicsBySubject(String examType, String? selectedExamSection) async {
+  // GÜNCELLEME: ExamUtils kullanılarak CoachScreen ile aynı mantığa getirildi
+  Future<Map<String, List<String>>> _loadTopicsByUser(UserModel user) async {
     try {
-      final ExamType examEnum = ExamType.values.byName(examType);
+      if (user.selectedExam == null) return {};
+      final ExamType examEnum = ExamType.values.byName(user.selectedExam!);
       final examData = await ExamData.getExamByType(examEnum);
 
       final Map<String, List<String>> topicsBySubject = {};
 
-      // Sadece kullanıcının seçtiği section'ları filtrele
-      List<ExamSection> sectionsToUse;
+      // ExamUtils kullanarak ilgili bölümleri ve dersleri çekiyoruz
+      final relevantSections = ExamUtils.getRelevantSectionsForUser(user, examData);
 
-      if (selectedExamSection != null && selectedExamSection.isNotEmpty) {
-        // YKS için özel mantık: TYT + seçilen AYT bölümü
-        if (examEnum == ExamType.yks) {
-          sectionsToUse = examData.sections.where((section) {
-            return section.name == 'TYT' ||
-                section.name.toLowerCase() == selectedExamSection.toLowerCase();
-          }).toList();
-        } else {
-          // Diğer sınavlar için: sadece seçilen section
-          sectionsToUse = examData.sections.where((section) {
-            return section.name.toLowerCase() == selectedExamSection.toLowerCase();
-          }).toList();
-        }
-      } else {
-        // Section seçilmemişse tüm section'ları kullan
-        sectionsToUse = examData.sections;
-      }
+      for (var section in relevantSections) {
+        section.subjects.forEach((subjectName, subjectDetails) {
+          final topicNames = subjectDetails.topics.map((t) => t.name).toList();
 
-      // Her section'ı gez
-      for (var section in sectionsToUse) {
-        // Her section içindeki subjects'i gez
-        for (var subjectEntry in section.subjects.entries) {
-          final subjectName = subjectEntry.key;
-          final subjectDetails = subjectEntry.value;
-
-          final topics = subjectDetails.topics.map((topic) => topic.name).toList();
-
-          if (topics.isNotEmpty) {
+          if (topicNames.isNotEmpty) {
             // Eğer aynı ders başka section'da da varsa birleştir
             if (topicsBySubject.containsKey(subjectName)) {
-              // Set kullanarak tekrarları kaldır, ama sırayı koru
               final existingTopics = topicsBySubject[subjectName]!;
-              final newTopics = topics.where((topic) => !existingTopics.contains(topic)).toList();
+              final newTopics = topicNames.where((topic) => !existingTopics.contains(topic)).toList();
               topicsBySubject[subjectName] = [...existingTopics, ...newTopics];
             } else {
-              topicsBySubject[subjectName] = topics;
+              topicsBySubject[subjectName] = topicNames;
             }
           }
-        }
+        });
       }
 
       return topicsBySubject;
@@ -2566,4 +2555,3 @@ class _ManualTopicSelectorSheetState extends ConsumerState<_ManualTopicSelectorS
     return filtered;
   }
 }
-
