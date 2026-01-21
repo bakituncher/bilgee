@@ -1734,7 +1734,6 @@ class _SummaryViewState extends ConsumerState<_SummaryView> with AutomaticKeepAl
             subtitle: "Daha zor sorularla kendini test et",
             icon: Icons.auto_awesome_rounded,
             onTap: widget.onRetryHarder,
-            isPrimary: true,
           ),
           const SizedBox(height: 12),
           _ResultActionCard(
@@ -2567,3 +2566,4 @@ class _ManualTopicSelectorSheetState extends ConsumerState<_ManualTopicSelectorS
     return filtered;
   }
 }
+
