@@ -355,7 +355,7 @@ index 1be867d..5215f85 100644
    }
  }
 diff --git a/lib/data/models/test_model.dart b/lib/data/models/test_model.dart
-index 71ae471..10a93b9 100644
+index 71ae471..96a1d1d 100644
 --- a/lib/data/models/test_model.dart
 +++ b/lib/data/models/test_model.dart
 @@ -9,13 +9,13 @@ class TestModel {
@@ -439,13 +439,13 @@ index 71ae471..10a93b9 100644
 +    final examTypeUpper = examType.name.toUpperCase();
 +
 +    // 2. KAPSAYICI DERS İSİMLERİ (Tek ders olsa bile tüm sınavı temsil edenler)
-+    // YDT (Yabancı Dil) veya ÖABT (Alan Bilgisi) gibi tek derslik sınavları yakalamak için
-+    // sadece dersin adına bakarız. Bölüm adını ("Fizik", "Tarih") bilmemize gerek kalmaz.
++    // YDT (Yabancı Dil) gibi tek derslik sınavları yakalamak için sadece dersin adına bakarız.
++    // DÜZELTME: "ALAN BİLGİSİ" kaldırıldı çünkü ÖABT'de bu bir branş denemesi olabilir.
 +    final comprehensiveSubjectNames = [
-+      'ALAN BİLGİSİ',
-+      'ALAN BILGISI',
 +      'YABANCI DİL',
 +      'YABANCI DIL',
++      'ALAN BİLGİSİ',
++      'ALAN BILGISI',
 +    ];
 +
 +    if (comprehensiveSubjectNames.contains(subjectName)) {
@@ -1015,7 +1015,7 @@ index c116aec..a31c2c2 100644
 +  }
  }
 diff --git a/lib/features/home/logic/add_test_notifier.dart b/lib/features/home/logic/add_test_notifier.dart
-index 4d13d13..39acdaa 100644
+index 4d13d13..e40ed62 100644
 --- a/lib/features/home/logic/add_test_notifier.dart
 +++ b/lib/features/home/logic/add_test_notifier.dart
 @@ -3,22 +3,30 @@ import 'package:equatable/equatable.dart';
@@ -1117,7 +1117,7 @@ index 4d13d13..39acdaa 100644
        state = state.copyWith(availableSections: sections);
        if (sections.length == 1) {
          state = state.copyWith(selectedSection: sections.first);
-@@ -78,40 +89,84 @@ class AddTestNotifier extends StateNotifier<AddTestState> {
+@@ -78,40 +89,113 @@ class AddTestNotifier extends StateNotifier<AddTestState> {
      }
    }
  
@@ -1160,13 +1160,37 @@ index 4d13d13..39acdaa 100644
 +      if (baseSection != null) {
 +        ExamSection targetSection;
 +
-+        // BASİTLEŞTİRİLMİŞ MANTIK:
-+        // Eğer seçilen bölümün altında sadece 1 ders varsa (Örn: Alan Bilgisi, YDT),
++        // 1. GENEL DENEME ZORLAMASI (Main Exam Force)
++        // Eğer seçilen bölümün altında sadece 1 ders varsa (Örn: Tekli Alan Bilgisi, YDT),
 +        // kullanıcı "Branş" seçmiş olsa bile bu bir "Ana Sınav" (Genel Deneme) kabul edilir.
 +        bool forceToGeneral = baseSection.subjects.length == 1;
 +
-+        // Branş moduysa ve ders seçildiyse VE zorla genel yapılmayacaksa -> TEK DERSLİK BÖLÜM OLUŞTUR
-+        if (state.isBranchMode && state.selectedBranchSubject != null && !forceToGeneral) {
++        // 2. BRANŞ DENEMESİ ZORLAMASI (Branch Exam Force)
++        // DÜZELTME: Sınıf Öğretmenliği, Okul Öncesi ve Özel Eğitim gibi bölümler
++        // birden fazla dersten (Alan + Eğitim) oluşur ama tek bir "Genel Deneme"dir.
++        // Bu yüzden bu zorlamayı kaldırıyoruz. Kullanıcı "Genel Deneme" seçtiyse
++        // (isBranchMode: false), tüm bölümü tek bir sınav olarak görmelidir.
++
++        // İPTAL EDİLEN ESKİ MANTIK:
++        /*
++        final subjectKeys = baseSection.subjects.keys.toList();
++        bool hasOABTSubjects = subjectKeys.any((key) =>
++        key.contains('Alan Bilgisi') ||
++            key.contains('Alan Eğitimi') ||
++            key.contains('Temel Alan Bilgisi'));
++
++        bool forceToBranch = !forceToGeneral && hasOABTSubjects;
++        */
++
++        // DÜZELTİLMİŞ MANTIK:
++        // Eğer bölüm birden fazla ders içeriyorsa (Sınıf Öğretmenliği gibi),
++        // bunu otomatik olarak branş denemesine çevirme.
++        // Kullanıcının en baştaki seçimine (isBranchMode) sadık kal.
++        bool forceToBranch = false;
++
++        // Target Section Belirleme
++        // Branş moduysa (veya zorlandıysa) VE belirli bir ders seçildiyse -> O dersi tek çek
++        if ((state.isBranchMode || forceToBranch) && state.selectedBranchSubject != null && !forceToGeneral) {
 +          final subjectName = state.selectedBranchSubject!;
 +          final subjectDetails = baseSection.subjects[subjectName]!;
 +
@@ -1177,7 +1201,8 @@ index 4d13d13..39acdaa 100644
 +              availableLanguages: baseSection.availableLanguages
 +          );
 +        } else {
-+          // Normal mod veya Tek dersli sınav (YDT/AGS/Alan Bilgisi) -> TÜM BÖLÜM (ANA SINAV)
++          // Normal mod (Genel Deneme) veya Tek dersli sınav -> TÜM BÖLÜM
++          // Sınıf Öğretmenliği burada "baseSection" olarak (tüm dersleriyle) kalır.
 +          targetSection = baseSection;
 +        }
 +
@@ -1189,12 +1214,16 @@ index 4d13d13..39acdaa 100644
          };
 -        state = state.copyWith(scores: initialScores, currentStep: 1);
 +
++        // Final Mod Kararı:
++        // 1. Tek ders ise -> Genel Deneme (forceToGeneral -> isBranchMode: false)
++        // 2. Çoklu ÖABT dersi ise -> Kullanıcının seçimi (state.isBranchMode) geçerli.
++        bool finalIsBranchMode = forceToGeneral ? false : (forceToBranch ? true : state.isBranchMode);
++
 +        state = state.copyWith(
 +          scores: initialScores,
 +          currentStep: 1,
 +          activeSection: targetSection, // Step 2'de bunu kullanacağız
-+          // Eğer forceToGeneral devreye girdiyse, branch modunu kapatıyoruz ki ana sınav olarak kaydedilsin.
-+          isBranchMode: forceToGeneral ? false : state.isBranchMode,
++          isBranchMode: finalIsBranchMode,
 +        );
        }
      } else if (state.currentStep < 2) {
@@ -1213,7 +1242,7 @@ index 4d13d13..39acdaa 100644
    void updateScores(String subject, {int? correct, int? wrong}) {
      final currentScores = Map<String, Map<String, int>>.from(state.scores);
      final subjectScores = Map<String, int>.from(currentScores[subject]!);
-@@ -123,13 +178,11 @@ class AddTestNotifier extends StateNotifier<AddTestState> {
+@@ -123,13 +207,11 @@ class AddTestNotifier extends StateNotifier<AddTestState> {
      state = state.copyWith(scores: currentScores);
    }
  
@@ -1997,10 +2026,10 @@ index 9c6f0aa..e77499d 100644
              fontWeight: FontWeight.w800,
              fontSize: 17,
 diff --git a/lib/features/home/widgets/add_test_step1.dart b/lib/features/home/widgets/add_test_step1.dart
-index e317c8d..192aa3c 100644
+index e317c8d..997ac3f 100644
 --- a/lib/features/home/widgets/add_test_step1.dart
 +++ b/lib/features/home/widgets/add_test_step1.dart
-@@ -15,142 +15,536 @@ class Step1TestInfo extends ConsumerWidget {
+@@ -15,142 +15,566 @@ class Step1TestInfo extends ConsumerWidget {
      final theme = Theme.of(context);
      final textTheme = theme.textTheme;
  
@@ -2293,7 +2322,7 @@ index e317c8d..192aa3c 100644
 -            fontWeight: FontWeight.w600,
 +        // Sınav türü seçimi
 +        ...state.availableSections.map(
-+          (section) => Padding(
++              (section) => Padding(
 +            padding: const EdgeInsets.only(bottom: 12),
 +            child: _SectionSelectionCard(
 +              section: section,
@@ -2404,17 +2433,21 @@ index e317c8d..192aa3c 100644
 +  }
  
 -        const SizedBox(height: 40),
-+  // Bottom sheet for subject selection - Tüm bölümlerdeki tüm dersleri göster
++  // Bottom sheet for subject selection - Sadece çoklu dersi olan bölümleri göster
 +  void _showSubjectBottomSheet(
-+    BuildContext context,
-+    AddTestState state,
-+    AddTestNotifier notifier,
-+    ThemeData theme,
-+  ) {
-+    // Tüm bölümlerden tüm dersleri topla
++      BuildContext context,
++      AddTestState state,
++      AddTestNotifier notifier,
++      ThemeData theme,
++      ) {
++    // FİLTRELEME İŞLEMİ BURADA YAPILIYOR
++    // Sadece birden fazla dersi olan bölümleri (section.subjects.length > 1) listeye alıyoruz.
++    // Tek dersli sınavlar (Örn: Türkçe ÖABT) burada listelenmez.
 +    final Map<String, List<String>> allSubjectsBySection = {};
 +    for (final section in state.availableSections) {
-+      allSubjectsBySection[section.name] = section.subjects.keys.toList();
++      if (section.subjects.length > 1) {
++        allSubjectsBySection[section.name] = section.subjects.keys.toList();
++      }
 +    }
  
 -        /// SECTION SELECTION
@@ -2517,110 +2550,137 @@ index e317c8d..192aa3c 100644
 +
 +              const Divider(height: 1),
 +
-+              // Subject list grouped by section
-+              Flexible(
-+                child: ListView.builder(
-+                  padding: const EdgeInsets.all(20),
-+                  shrinkWrap: true,
-+                  itemCount: allSubjectsBySection.length,
-+                  itemBuilder: (context, index) {
-+                    final sectionName = allSubjectsBySection.keys.elementAt(index);
-+                    final subjects = allSubjectsBySection[sectionName]!;
-+                    final section = state.availableSections.firstWhere((s) => s.name == sectionName);
-+
-+                    return Column(
-+                      crossAxisAlignment: CrossAxisAlignment.start,
++              // Liste boşsa (uygun ders yoksa) bilgilendirme göster
++              if (allSubjectsBySection.isEmpty)
++                Padding(
++                  padding: const EdgeInsets.all(32.0),
++                  child: Center(
++                    child: Column(
 +                      children: [
-+                        // Bölüm Başlığı
-+                        if (allSubjectsBySection.length > 1) ...[
-+                          Padding(
-+                            padding: EdgeInsets.only(left: 4, bottom: 8, top: index > 0 ? 16 : 0),
-+                            child: Row(
-+                              children: [
-+                                Container(
-+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-+                                  decoration: BoxDecoration(
-+                                    color: theme.colorScheme.primaryContainer,
-+                                    borderRadius: BorderRadius.circular(6),
-+                                  ),
-+                                  child: Text(
-+                                    sectionName,
-+                                    style: theme.textTheme.labelMedium?.copyWith(
-+                                      color: theme.colorScheme.onPrimaryContainer,
-+                                      fontWeight: FontWeight.bold,
-+                                    ),
-+                                  ),
-+                                ),
-+                              ],
-+                            ),
++                        Icon(Icons.info_outline, size: 48, color: theme.colorScheme.secondary),
++                        const SizedBox(height: 16),
++                        Text(
++                          "Branş denemesi için uygun, çoklu ders içeren bir bölüm bulunamadı.",
++                          textAlign: TextAlign.center,
++                          style: theme.textTheme.bodyLarge,
++                        ),
++                        const SizedBox(height: 8),
++                        Text(
++                          "Tek derslik sınavları 'Genel Deneme' üzerinden ekleyebilirsiniz.",
++                          textAlign: TextAlign.center,
++                          style: theme.textTheme.bodyMedium?.copyWith(
++                              color: theme.colorScheme.onSurfaceVariant
 +                          ),
-+                        ],
++                        ),
++                      ],
++                    ),
++                  ),
++                )
++              else
++              // Subject list grouped by section
++                Flexible(
++                  child: ListView.builder(
++                    padding: const EdgeInsets.all(20),
++                    shrinkWrap: true,
++                    itemCount: allSubjectsBySection.length,
++                    itemBuilder: (context, index) {
++                      final sectionName = allSubjectsBySection.keys.elementAt(index);
++                      final subjects = allSubjectsBySection[sectionName]!;
++                      final section = state.availableSections.firstWhere((s) => s.name == sectionName);
 +
-+                        // Dersler
-+                        ...subjects.map((subject) {
-+                          final isSelected = state.selectedBranchSubject == subject;
-+                          return Padding(
-+                            padding: const EdgeInsets.only(bottom: 8),
-+                            child: InkWell(
-+                              onTap: () {
-+                                // Dersi seç ve ilgili bölümü de seç
-+                                notifier.setSection(section);
-+                                notifier.setBranchSubject(subject);
-+                                Navigator.pop(context);
-+                              },
-+                              borderRadius: BorderRadius.circular(12),
-+                              child: AnimatedContainer(
-+                                duration: const Duration(milliseconds: 200),
-+                                padding: const EdgeInsets.symmetric(
-+                                  horizontal: 16,
-+                                  vertical: 14,
-+                                ),
-+                                decoration: BoxDecoration(
-+                                  color: isSelected
-+                                      ? theme.colorScheme.primaryContainer
-+                                      : theme.colorScheme.surfaceContainerHighest,
-+                                  borderRadius: BorderRadius.circular(12),
-+                                  border: Border.all(
-+                                    color: isSelected
-+                                        ? theme.colorScheme.primary
-+                                        : Colors.transparent,
-+                                    width: 2,
-+                                  ),
-+                                ),
-+                                child: Row(
-+                                  children: [
-+                                    Icon(
-+                                      isSelected
-+                                          ? Icons.check_circle_rounded
-+                                          : Icons.radio_button_unchecked,
-+                                      color: isSelected
-+                                          ? theme.colorScheme.primary
-+                                          : theme.colorScheme.onSurfaceVariant,
-+                                      size: 22,
++                      return Column(
++                        crossAxisAlignment: CrossAxisAlignment.start,
++                        children: [
++                          // Bölüm Başlığı
++                          if (allSubjectsBySection.length > 1) ...[
++                            Padding(
++                              padding: EdgeInsets.only(left: 4, bottom: 8, top: index > 0 ? 16 : 0),
++                              child: Row(
++                                children: [
++                                  Container(
++                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
++                                    decoration: BoxDecoration(
++                                      color: theme.colorScheme.primaryContainer,
++                                      borderRadius: BorderRadius.circular(6),
 +                                    ),
-+                                    const SizedBox(width: 14),
-+                                    Expanded(
-+                                      child: Text(
-+                                        subject,
-+                                        style: theme.textTheme.titleSmall?.copyWith(
-+                                          fontWeight: FontWeight.w600,
-+                                          color: isSelected
-+                                              ? theme.colorScheme.onPrimaryContainer
-+                                              : theme.colorScheme.onSurface,
-+                                        ),
++                                    child: Text(
++                                      sectionName,
++                                      style: theme.textTheme.labelMedium?.copyWith(
++                                        color: theme.colorScheme.onPrimaryContainer,
++                                        fontWeight: FontWeight.bold,
 +                                      ),
 +                                    ),
-+                                  ],
-+                                ),
++                                  ),
++                                ],
 +                              ),
 +                            ),
-+                          );
-+                        }).toList(),
-+                      ],
-+                    );
-+                  },
++                          ],
++
++                          // Dersler
++                          ...subjects.map((subject) {
++                            final isSelected = state.selectedBranchSubject == subject;
++                            return Padding(
++                              padding: const EdgeInsets.only(bottom: 8),
++                              child: InkWell(
++                                onTap: () {
++                                  // Dersi seç ve ilgili bölümü de seç
++                                  notifier.setSection(section);
++                                  notifier.setBranchSubject(subject);
++                                  Navigator.pop(context);
++                                },
++                                borderRadius: BorderRadius.circular(12),
++                                child: AnimatedContainer(
++                                  duration: const Duration(milliseconds: 200),
++                                  padding: const EdgeInsets.symmetric(
++                                    horizontal: 16,
++                                    vertical: 14,
++                                  ),
++                                  decoration: BoxDecoration(
++                                    color: isSelected
++                                        ? theme.colorScheme.primaryContainer
++                                        : theme.colorScheme.surfaceContainerHighest,
++                                    borderRadius: BorderRadius.circular(12),
++                                    border: Border.all(
++                                      color: isSelected
++                                          ? theme.colorScheme.primary
++                                          : Colors.transparent,
++                                      width: 2,
++                                    ),
++                                  ),
++                                  child: Row(
++                                    children: [
++                                      Icon(
++                                        isSelected
++                                            ? Icons.check_circle_rounded
++                                            : Icons.radio_button_unchecked,
++                                        color: isSelected
++                                            ? theme.colorScheme.primary
++                                            : theme.colorScheme.onSurfaceVariant,
++                                        size: 22,
++                                      ),
++                                      const SizedBox(width: 14),
++                                      Expanded(
++                                        child: Text(
++                                          subject,
++                                          style: theme.textTheme.titleSmall?.copyWith(
++                                            fontWeight: FontWeight.w600,
++                                            color: isSelected
++                                                ? theme.colorScheme.onPrimaryContainer
++                                                : theme.colorScheme.onSurface,
++                                          ),
++                                        ),
++                                      ),
++                                    ],
++                                  ),
++                                ),
++                              ),
++                            );
++                          }).toList(),
++                        ],
++                      );
++                    },
++                  ),
 +                ),
-+              ),
 +            ],
            ),
          ),
@@ -2634,11 +2694,10 @@ index e317c8d..192aa3c 100644
  }
  
 -/// SECTION CARD (RENK ÇAKIŞMASI YOK)
-+// Yardımcı Kart Widget'ı (Değişmedi)
  class _SectionSelectionCard extends StatelessWidget {
    final ExamSection section;
    final bool isSelected;
-@@ -165,33 +559,30 @@ class _SectionSelectionCard extends StatelessWidget {
+@@ -165,43 +589,48 @@ class _SectionSelectionCard extends StatelessWidget {
    @override
    Widget build(BuildContext context) {
      final theme = Theme.of(context);
@@ -2679,7 +2738,30 @@ index e317c8d..192aa3c 100644
                  color: isSelected
                      ? theme.colorScheme.primary
                      : theme.colorScheme.onSurfaceVariant,
-@@ -211,3 +602,68 @@ class _SectionSelectionCard extends StatelessWidget {
+               ),
+               const SizedBox(width: 16),
+-              Text(
+-                section.name,
+-                style: theme.textTheme.titleMedium?.copyWith(
+-                  fontWeight: FontWeight.w600,
+-                  color: theme.colorScheme.onSurface,
++
++              Expanded(
++                child: FittedBox(
++                  fit: BoxFit.scaleDown,
++                  alignment: Alignment.centerLeft,
++                  child: Text(
++                    section.name,
++                    maxLines: 1,
++                    style: theme.textTheme.titleMedium?.copyWith(
++                      fontWeight: FontWeight.w600,
++                      color: theme.colorScheme.onSurface,
++                    ),
++                  ),
+                 ),
+               ),
+             ],
+@@ -211,3 +640,68 @@ class _SectionSelectionCard extends StatelessWidget {
      );
    }
  }
@@ -2714,12 +2796,12 @@ index e317c8d..192aa3c 100644
 +          borderRadius: BorderRadius.circular(8),
 +          boxShadow: isSelected
 +              ? [
-+                  BoxShadow(
-+                    color: theme.colorScheme.primary.withValues(alpha: 0.3),
-+                    blurRadius: 8,
-+                    offset: const Offset(0, 2),
-+                  )
-+                ]
++            BoxShadow(
++              color: theme.colorScheme.primary.withValues(alpha: 0.3),
++              blurRadius: 8,
++              offset: const Offset(0, 2),
++            )
++          ]
 +              : null,
 +        ),
 +        child: Row(
@@ -2748,6 +2830,7 @@ index e317c8d..192aa3c 100644
 +    );
 +  }
 +}
+\ No newline at end of file
 diff --git a/lib/features/home/widgets/add_test_step2.dart b/lib/features/home/widgets/add_test_step2.dart
 index d973cee..320f2a5 100644
 --- a/lib/features/home/widgets/add_test_step2.dart
