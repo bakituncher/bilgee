@@ -100,6 +100,8 @@ extension TestModelSummaryX on TestModel {
     final comprehensiveSubjectNames = [
       'YABANCI DİL',
       'YABANCI DIL',
+      'ALAN BİLGİSİ',
+      'ALAN BILGISI',
     ];
 
     if (comprehensiveSubjectNames.contains(subjectName)) {
