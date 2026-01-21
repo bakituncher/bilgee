@@ -270,7 +270,7 @@ class Step1TestInfo extends ConsumerWidget {
 
         // Sınav türü seçimi
         ...state.availableSections.map(
-          (section) => Padding(
+              (section) => Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: _SectionSelectionCard(
               section: section,
@@ -361,17 +361,21 @@ class Step1TestInfo extends ConsumerWidget {
     );
   }
 
-  // Bottom sheet for subject selection - Tüm bölümlerdeki tüm dersleri göster
+  // Bottom sheet for subject selection - Sadece çoklu dersi olan bölümleri göster
   void _showSubjectBottomSheet(
-    BuildContext context,
-    AddTestState state,
-    AddTestNotifier notifier,
-    ThemeData theme,
-  ) {
-    // Tüm bölümlerden tüm dersleri topla
+      BuildContext context,
+      AddTestState state,
+      AddTestNotifier notifier,
+      ThemeData theme,
+      ) {
+    // FİLTRELEME İŞLEMİ BURADA YAPILIYOR
+    // Sadece birden fazla dersi olan bölümleri (section.subjects.length > 1) listeye alıyoruz.
+    // Tek dersli sınavlar (Örn: Türkçe ÖABT) burada listelenmez.
     final Map<String, List<String>> allSubjectsBySection = {};
     for (final section in state.availableSections) {
-      allSubjectsBySection[section.name] = section.subjects.keys.toList();
+      if (section.subjects.length > 1) {
+        allSubjectsBySection[section.name] = section.subjects.keys.toList();
+      }
     }
 
     showModalBottomSheet(
@@ -432,110 +436,137 @@ class Step1TestInfo extends ConsumerWidget {
 
               const Divider(height: 1),
 
-              // Subject list grouped by section
-              Flexible(
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(20),
-                  shrinkWrap: true,
-                  itemCount: allSubjectsBySection.length,
-                  itemBuilder: (context, index) {
-                    final sectionName = allSubjectsBySection.keys.elementAt(index);
-                    final subjects = allSubjectsBySection[sectionName]!;
-                    final section = state.availableSections.firstWhere((s) => s.name == sectionName);
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              // Liste boşsa (uygun ders yoksa) bilgilendirme göster
+              if (allSubjectsBySection.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(32.0),
+                  child: Center(
+                    child: Column(
                       children: [
-                        // Bölüm Başlığı
-                        if (allSubjectsBySection.length > 1) ...[
-                          Padding(
-                            padding: EdgeInsets.only(left: 4, bottom: 8, top: index > 0 ? 16 : 0),
-                            child: Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: theme.colorScheme.primaryContainer,
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    sectionName,
-                                    style: theme.textTheme.labelMedium?.copyWith(
-                                      color: theme.colorScheme.onPrimaryContainer,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                        Icon(Icons.info_outline, size: 48, color: theme.colorScheme.secondary),
+                        const SizedBox(height: 16),
+                        Text(
+                          "Branş denemesi için uygun, çoklu ders içeren bir bölüm bulunamadı.",
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.bodyLarge,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          "Tek derslik sınavları 'Genel Deneme' üzerinden ekleyebilirsiniz.",
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant
                           ),
-                        ],
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+              // Subject list grouped by section
+                Flexible(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(20),
+                    shrinkWrap: true,
+                    itemCount: allSubjectsBySection.length,
+                    itemBuilder: (context, index) {
+                      final sectionName = allSubjectsBySection.keys.elementAt(index);
+                      final subjects = allSubjectsBySection[sectionName]!;
+                      final section = state.availableSections.firstWhere((s) => s.name == sectionName);
 
-                        // Dersler
-                        ...subjects.map((subject) {
-                          final isSelected = state.selectedBranchSubject == subject;
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: InkWell(
-                              onTap: () {
-                                // Dersi seç ve ilgili bölümü de seç
-                                notifier.setSection(section);
-                                notifier.setBranchSubject(subject);
-                                Navigator.pop(context);
-                              },
-                              borderRadius: BorderRadius.circular(12),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 14,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? theme.colorScheme.primaryContainer
-                                      : theme.colorScheme.surfaceContainerHighest,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: isSelected
-                                        ? theme.colorScheme.primary
-                                        : Colors.transparent,
-                                    width: 2,
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      isSelected
-                                          ? Icons.check_circle_rounded
-                                          : Icons.radio_button_unchecked,
-                                      color: isSelected
-                                          ? theme.colorScheme.primary
-                                          : theme.colorScheme.onSurfaceVariant,
-                                      size: 22,
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Bölüm Başlığı
+                          if (allSubjectsBySection.length > 1) ...[
+                            Padding(
+                              padding: EdgeInsets.only(left: 4, bottom: 8, top: index > 0 ? 16 : 0),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: theme.colorScheme.primaryContainer,
+                                      borderRadius: BorderRadius.circular(6),
                                     ),
-                                    const SizedBox(width: 14),
-                                    Expanded(
-                                      child: Text(
-                                        subject,
-                                        style: theme.textTheme.titleSmall?.copyWith(
-                                          fontWeight: FontWeight.w600,
-                                          color: isSelected
-                                              ? theme.colorScheme.onPrimaryContainer
-                                              : theme.colorScheme.onSurface,
-                                        ),
+                                    child: Text(
+                                      sectionName,
+                                      style: theme.textTheme.labelMedium?.copyWith(
+                                        color: theme.colorScheme.onPrimaryContainer,
+                                        fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                             ),
-                          );
-                        }).toList(),
-                      ],
-                    );
-                  },
+                          ],
+
+                          // Dersler
+                          ...subjects.map((subject) {
+                            final isSelected = state.selectedBranchSubject == subject;
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: InkWell(
+                                onTap: () {
+                                  // Dersi seç ve ilgili bölümü de seç
+                                  notifier.setSection(section);
+                                  notifier.setBranchSubject(subject);
+                                  Navigator.pop(context);
+                                },
+                                borderRadius: BorderRadius.circular(12),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 14,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? theme.colorScheme.primaryContainer
+                                        : theme.colorScheme.surfaceContainerHighest,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? theme.colorScheme.primary
+                                          : Colors.transparent,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        isSelected
+                                            ? Icons.check_circle_rounded
+                                            : Icons.radio_button_unchecked,
+                                        color: isSelected
+                                            ? theme.colorScheme.primary
+                                            : theme.colorScheme.onSurfaceVariant,
+                                        size: 22,
+                                      ),
+                                      const SizedBox(width: 14),
+                                      Expanded(
+                                        child: Text(
+                                          subject,
+                                          style: theme.textTheme.titleSmall?.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                            color: isSelected
+                                                ? theme.colorScheme.onPrimaryContainer
+                                                : theme.colorScheme.onSurface,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ],
+                      );
+                    },
+                  ),
                 ),
-              ),
             ],
           ),
         ),
@@ -588,16 +619,13 @@ class _SectionSelectionCard extends StatelessWidget {
               ),
               const SizedBox(width: 16),
 
-              // --- GÜNCELLENEN KISIM ---
               Expanded(
                 child: FittedBox(
-                  // BoxFit.scaleDown: Metin sığıyorsa normal boyutunda kalır,
-                  // sığmıyorsa küçülür. Asla büyütmez.
                   fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft, // Küçülürse sola yaslı kalsın
+                  alignment: Alignment.centerLeft,
                   child: Text(
                     section.name,
-                    maxLines: 1, // Tek satıra zorla
+                    maxLines: 1,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: theme.colorScheme.onSurface,
@@ -605,7 +633,6 @@ class _SectionSelectionCard extends StatelessWidget {
                   ),
                 ),
               ),
-              // -------------------------
             ],
           ),
         ),
@@ -644,12 +671,12 @@ class _ModeToggleButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           boxShadow: isSelected
               ? [
-                  BoxShadow(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  )
-                ]
+            BoxShadow(
+              color: theme.colorScheme.primary.withValues(alpha: 0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            )
+          ]
               : null,
         ),
         child: Row(
