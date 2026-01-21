@@ -1179,13 +1179,18 @@ class _EmptyStateView extends StatelessWidget {
             const SizedBox(height: 32),
 
             // 2. Başlık
-            Text(
-              "Taktik Tavşan Seni Bekliyor!",
-              style: textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: colorScheme.onSurface,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                "Taktik Tavşan Seni Bekliyor!",
+                style: textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onSurface,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              textAlign: TextAlign.center,
             ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.3, end: 0),
 
             const SizedBox(height: 12),
@@ -2553,3 +2558,4 @@ class _ManualTopicSelectorSheetState extends ConsumerState<_ManualTopicSelectorS
     return filtered;
   }
 }
+
