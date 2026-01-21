@@ -399,6 +399,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
       _isChatLoading = true;
     });
     _chatController.clear();
+    FocusScope.of(context).unfocus(); // Klavyeyi kapat
     _scrollToBottom();
 
     try {
