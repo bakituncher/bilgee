@@ -17,26 +17,26 @@ service cloud.firestore {
       // Kullanıcı kendi profil belgesini oluşturabilir.
       allow create: if request.auth != null && request.auth.uid == userId;
 
-      // Kullanıcı kendi profilini güncelleyebilir, ancak SADECE belirli alanları.
-      // Bu kural, 'followerCount', 'isPremium' ve 'premiumUntil' gibi sunucu tarafından yönetilen
-      // alanların istemci tarafından manipüle edilmesini kesinlikle engeller.
-      // NOT: 'followingCount' lazy cleanup için izin verildi (silinmiş kullanıcı temizliği)
+      // =====================================================================
+      // GÜNCELLEME İZNİ (SEKTÖR STANDARDI - BLACKLIST YAKLAŞIMI)
+      // =====================================================================
+      // Whitelist yerine, sadece DEĞİŞTİRİLMESİ YASAK olan alanları kontrol ediyoruz.
+      // Bu sayede 'email', 'goal' gibi alanlar güncellenebilirken, kritik veriler korunur.
+      // changedKeys(): Sadece değeri ESKİSİNDEN FARKLI olan alanları döndürür.
+      // Eğer kullanıcı { isPremium: false } gönderirse ve sunucuda zaten false ise,
+      // bu bir "değişiklik" sayılmaz ve izin verilir.
       allow update: if request.auth != null && request.auth.uid == userId &&
-                       request.resource.data.diff(resource.data).affectedKeys()
-                       .hasOnly(['name', 'firstName', 'lastName', 'username', 'gender', 'dateOfBirth',
-                                 'profileCompleted', 'tutorialCompleted', 'avatarStyle', 'avatarSeed',
-                                 'selectedExam', 'selectedExamSection', 'weeklyAvailability', 'updatedAt',
-                                 'selectedYdtLanguage',
-                                 // Uygulama içi özelliği kullandı bilgisini tutar
-                                 'usedFeatures',
-                                 // Stratejik plan işaretleri
-                                 'hasCreatedStrategicPlan', 'lastStrategyCreationDate',
-                                 // Lazy cleanup için izin verildi
-                                 'followingCount',
-                                 // Global kampanyaları kapatma izni
-                                 'closedCampaignIds',
-                                 // Etüt Odası streak sistemi
-                                 'workshopStreak', 'lastWorkshopDate']);
+          (!request.resource.data.diff(resource.data).changedKeys()
+            .hasAny([
+              'isAdmin',          // Admin yetkisi çalınamaz
+              'isPremium',        // Premium hilesi yapılamaz
+              'premiumUntil',     // Süre uzatılamaz
+              'engagementScore',  // Puan hilesi yapılamaz (Sunucu yönetir)
+              'testCount',        // İstatistik bozulumaz
+              'totalNetSum',      // Netler manipüle edilemez
+              'streak',           // Seri hilesi yapılamaz
+              'followerCount'     // Takipçi sayısı elle değiştirilemez (Cloud Function yapar)
+            ]));
 
       // --- ALT KOLEKSİYONLAR ---
       match /stars/{day} {
