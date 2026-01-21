@@ -121,13 +121,27 @@ class AddTestNotifier extends StateNotifier<AddTestState> {
       if (baseSection != null) {
         ExamSection targetSection;
 
-        // BASİTLEŞTİRİLMİŞ MANTIK:
-        // Eğer seçilen bölümün altında sadece 1 ders varsa (Örn: Alan Bilgisi, YDT),
+        // 1. GENEL DENEME ZORLAMASI (Main Exam Force)
+        // Eğer seçilen bölümün altında sadece 1 ders varsa (Örn: Tekli Alan Bilgisi, YDT),
         // kullanıcı "Branş" seçmiş olsa bile bu bir "Ana Sınav" (Genel Deneme) kabul edilir.
         bool forceToGeneral = baseSection.subjects.length == 1;
 
-        // Branş moduysa ve ders seçildiyse VE zorla genel yapılmayacaksa -> TEK DERSLİK BÖLÜM OLUŞTUR
-        if (state.isBranchMode && state.selectedBranchSubject != null && !forceToGeneral) {
+        // 2. BRANŞ DENEMESİ ZORLAMASI (Branch Exam Force)
+        // Eğer birden fazla ders varsa VE içerikte ÖABT/AGS ile ilgili özel dersler geçiyorsa
+        // (Alan Bilgisi, Alan Eğitimi vb.), kullanıcı genel seçse bile sistem bunu Branş Denemesi sayar.
+        final subjectKeys = baseSection.subjects.keys.toList();
+        bool hasOABTSubjects = subjectKeys.any((key) =>
+        key.contains('Alan Bilgisi') ||
+            key.contains('Alan Eğitimi') ||
+            key.contains('Temel Alan Bilgisi'));
+
+        bool forceToBranch = !forceToGeneral && hasOABTSubjects;
+
+        // Target Section Belirleme
+        // Branş moduysa (veya zorlandıysa) VE belirli bir ders seçildiyse -> O dersi tek çek
+        // Not: forceToBranch true ise ama kullanıcı spesifik bir ders seçmediyse,
+        // baseSection olduğu gibi (tüm dersleriyle) targetSection olur ama isBranchMode = true işaretlenir.
+        if ((state.isBranchMode || forceToBranch) && state.selectedBranchSubject != null && !forceToGeneral) {
           final subjectName = state.selectedBranchSubject!;
           final subjectDetails = baseSection.subjects[subjectName]!;
 
@@ -138,7 +152,7 @@ class AddTestNotifier extends StateNotifier<AddTestState> {
               availableLanguages: baseSection.availableLanguages
           );
         } else {
-          // Normal mod veya Tek dersli sınav (YDT/AGS/Alan Bilgisi) -> TÜM BÖLÜM (ANA SINAV)
+          // Normal mod veya Tek dersli sınav (YDT/AGS/Tekli Alan Bilgisi) -> TÜM BÖLÜM
           targetSection = baseSection;
         }
 
@@ -148,12 +162,17 @@ class AddTestNotifier extends StateNotifier<AddTestState> {
             subject: {'dogru': 0, 'yanlis': 0}
         };
 
+        // Final Mod Kararı:
+        // 1. Tek ders ise -> Genel Deneme (forceToGeneral -> isBranchMode: false)
+        // 2. Çoklu ÖABT dersi ise -> Branş Denemesi (forceToBranch -> isBranchMode: true)
+        // 3. Diğer durumlar -> Kullanıcının seçimi (state.isBranchMode)
+        bool finalIsBranchMode = forceToGeneral ? false : (forceToBranch ? true : state.isBranchMode);
+
         state = state.copyWith(
           scores: initialScores,
           currentStep: 1,
           activeSection: targetSection, // Step 2'de bunu kullanacağız
-          // Eğer forceToGeneral devreye girdiyse, branch modunu kapatıyoruz ki ana sınav olarak kaydedilsin.
-          isBranchMode: forceToGeneral ? false : state.isBranchMode,
+          isBranchMode: finalIsBranchMode,
         );
       }
     } else if (state.currentStep < 2) {
