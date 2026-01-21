@@ -677,18 +677,31 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
       }
     });
 
-    // Politika: ne zaman müfredat vs metrik
+    // --- ORTA YOLCU (DENGELİ) POLİTİKA ---
+
+    // Kural: Eğer 3'ten fazla birikmiş görev VEYA 2'den fazla kırmızı konu varsa "Yığılma Var" (Overwhelmed) say.
+    // Bu durumda frene basacağız. Yoksa gaza basmaya devam.
+    final bool isOverwhelmed = backlogActivities.length >= 3 || redCount >= 2;
+
     final policy = <String, dynamic>{
-      'allowNewTopics': backlogActivities.isEmpty && redCount == 0,
-      'priorities': backlogActivities.isNotEmpty
-          ? ['backlog','red','yellow','curriculum']
-          : (redCount>0 ? ['red','yellow','curriculum'] : ['curriculum','yellow','red']),
-      'notes': 'Backlog veya kırmızı konular varsa yeni konu açma; önce bunları bitir. Unknown konularda kısa tanılayıcı set uygula.'
+      // Yığılma yoksa yeni konuya izin ver, varsa verme.
+      'allowNewTopics': !isOverwhelmed,
+
+      // Öncelik Sıralaması:
+      // Yığılma varsa: Önce Backlog ve Kırmızılar (Temizlik Modu)
+      // Yığılma yoksa: Önce Müfredat (İlerleme Modu)
+      'priorities': isOverwhelmed
+          ? ['backlog', 'red', 'yellow', 'curriculum']
+          : ['curriculum', 'yellow', 'backlog', 'red'],
+
+      'notes': isOverwhelmed
+          ? 'Kullanıcı geride kalmaya başladı (Yığılma var). Yeni konu açma, öncelik borçları temizlemek.'
+          : 'Durum stabil. Ufak eksikleri araya sıkıştır ama ana odak müfredatta ilerlemek olsun.'
     };
 
     final guardrails = {
       'backlogCount': backlogActivities.length,
-      'backlogSample': backlogActivities.take(10).toList(),
+      'backlogSample': backlogActivities.take(5).toList(), // Örnek sayısını makul tut
       'topicStatus': topicStatus,
       'policy': policy,
     };

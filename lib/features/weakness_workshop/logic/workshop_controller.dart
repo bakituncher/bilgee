@@ -89,8 +89,9 @@ class WorkshopController extends AutoDisposeNotifier<WorkshopState> {
       final tests = ref.read(testsProvider).value;
       final performance = ref.read(performanceProvider).value;
 
+      // Basit null check, hata fırlatma yerine log basabiliriz ama şimdilik kalsın.
       if (user == null || tests == null || performance == null) {
-        throw Exception('Analiz için kullanıcı, test veya performans verisi bulunamadı.');
+        throw Exception('Veriler yüklenirken bir sorun oluştu. Lütfen sayfayı yenileyin.');
       }
 
       final aiService = ref.read(aiServiceProvider);
@@ -101,32 +102,38 @@ class WorkshopController extends AutoDisposeNotifier<WorkshopState> {
         performance,
         topicOverride: topic,
         temperature: temperature,
-        contentType: selectedContentType, // İçerik türünü gönder
+        contentType: selectedContentType,
       ).timeout(
-        // Gemini detaylı içerik üretirken 45sn yetmeyebilir, güvenli aralık 90sn'dir.
-        const Duration(seconds: 90),
-        onTimeout: () => throw TimeoutException('İçerik çok detaylı olduğu için hazırlanması zaman alıyor. Lütfen internet bağlantını kontrol edip tekrar dene.'),
+        // GÜNCELLEME: Timeout süresi 3 dakikaya çıkarıldı.
+        // Ağır analizlerde 90sn yetmeyip "TimeoutException" hatasına düşüyordu.
+        const Duration(minutes: 3),
+        onTimeout: () => throw TimeoutException('Bağlantı zaman aşımına uğradı. İnternetinizi kontrol edip tekrar deneyin.'),
       );
 
       final decoded = jsonDecode(jsonString);
       if (decoded.containsKey('error')) throw Exception(decoded['error']);
 
       final rawModel = WorkshopModel.fromAIJson(decoded);
+
+      // ARTIK HATA FIRLATMIYOR: Sektör standardı guard uygulandı.
       final guarded = QuizQualityGuard.apply(rawModel).material;
 
-      // İçerik türüne göre doğru adıma geç
+      // İçerik türüne göre yönlendirme
       WorkshopStep nextStep;
       if (selectedContentType == WorkshopContentType.quizOnly) {
-        nextStep = WorkshopStep.quiz; // Direkt sorulara geç
+        nextStep = WorkshopStep.quiz;
       } else if (selectedContentType == WorkshopContentType.studyOnly) {
-        nextStep = WorkshopStep.study; // Sadece konu anlatımı göster
+        nextStep = WorkshopStep.study;
       } else {
-        nextStep = WorkshopStep.study; // Her ikisi için önce konu anlatımı
+        nextStep = WorkshopStep.study;
       }
 
       state = state.copyWith(step: nextStep, material: guarded);
     } catch (e) {
-      state = state.copyWith(step: WorkshopStep.error, errorMessage: e.toString());
+      // Hatayı kullanıcıya daha nazik göster
+      String msg = e.toString();
+      if (msg.contains('Exception:')) msg = msg.replaceAll('Exception:', '').trim();
+      state = state.copyWith(step: WorkshopStep.error, errorMessage: msg);
     }
   }
 
