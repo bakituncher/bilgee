@@ -193,18 +193,18 @@ class OverviewContent extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(
+                          gradient: LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: [
-                              Color(0xFFF59E0B),
-                              Color(0xFFD97706),
+                              AppTheme.primaryBrandColor,
+                              AppTheme.secondaryBrandColor,
                             ],
                           ),
                           borderRadius: BorderRadius.circular(10),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFFF59E0B).withOpacity(0.35),
+                              color: AppTheme.primaryBrandColor.withOpacity(0.35),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
@@ -239,45 +239,6 @@ class OverviewContent extends ConsumerWidget {
                                 color: isDark
                                     ? Colors.white.withOpacity(0.5)
                                     : Colors.black.withOpacity(0.45),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Kaydırma ipucu
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? Colors.white.withOpacity(0.08)
-                              : const Color(0xFFF59E0B).withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: isDark
-                                ? Colors.white.withOpacity(0.12)
-                                : const Color(0xFFF59E0B).withOpacity(0.15),
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.swipe_rounded,
-                              size: 14,
-                              color: isDark
-                                  ? Colors.white.withOpacity(0.6)
-                                  : const Color(0xFFF59E0B).withOpacity(0.7),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Kaydır',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: isDark
-                                    ? Colors.white.withOpacity(0.6)
-                                    : const Color(0xFFF59E0B).withOpacity(0.7),
                               ),
                             ),
                           ],

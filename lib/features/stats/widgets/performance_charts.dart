@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/data/models/test_model.dart';
-import 'package:taktik/data/models/exam_model.dart'; // EKLENDİ: displayName için gerekli
+import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/features/stats/models/chart_data.dart';
 import 'package:taktik/features/stats/widgets/swipeable_performance_card.dart';
 
@@ -92,10 +92,16 @@ class _SmartPerformanceChartsState extends State<SmartPerformanceCharts> {
         index++;
       }
     }
-    // YKS için TYT ve AYT'yi ayır (String olarak 'YKS' gelme durumunu koruyoruz)
+    // YKS için TYT, AYT ve YDT ayrıştırması
     else if (examType == 'YKS') {
       final tytTests = tests.where((t) => t.sectionName.toUpperCase() == 'TYT').toList();
       final aytTests = tests.where((t) => t.sectionName.toUpperCase().startsWith('AYT')).toList();
+
+      // YDT (Yabancı Dil) Denemelerini Yakala
+      final ydtTests = tests.where((t) {
+        final name = t.sectionName.toUpperCase();
+        return name == 'YDT' || name == 'YABANCI DIL' || name == 'YABANCI DİL';
+      }).toList();
 
       if (tytTests.isNotEmpty) {
         chartDataList.add(ChartData(
@@ -115,8 +121,18 @@ class _SmartPerformanceChartsState extends State<SmartPerformanceCharts> {
           baseColor: AppTheme.secondaryBrandColor,
         ));
       }
+      // YDT Grafiğini Ekle
+      if (ydtTests.isNotEmpty) {
+        chartDataList.add(ChartData(
+          tests: ydtTests,
+          title: 'YDT',
+          subtitle: 'Yabancı Dil',
+          icon: Icons.language_rounded,
+          baseColor: const Color(0xFF06B6D4), // Cyan/Turkuaz
+        ));
+      }
 
-      // Hiçbiri yoksa tüm testleri göster
+      // Hiçbiri yoksa tüm testleri göster (Fallback)
       if (chartDataList.isEmpty) {
         chartDataList.add(ChartData(
           tests: tests,
@@ -127,64 +143,57 @@ class _SmartPerformanceChartsState extends State<SmartPerformanceCharts> {
         ));
       }
     } else {
-      // Diğer sınavlar için (AGS, KPSS vb.) bölümlere göre grupla
+      // DÜZELTME: Diğer sınavlar için (AGS, KPSS vb.) mantık sadeleştirildi.
+      // Artık tek grup olsa bile "Genel" isim yerine grubun kendi ismini (smartDisplayName) kullanıyoruz.
       final groupedTests = <String, List<TestModel>>{};
       for (final test in tests) {
         (groupedTests[test.smartDisplayName] ??= []).add(test);
       }
 
-      if (groupedTests.length > 1) {
-        final colors = [
-          AppTheme.primaryBrandColor,
-          AppTheme.secondaryBrandColor,
-          AppTheme.successBrandColor,
-          Colors.deepOrange,
-        ];
-        final icons = [
-          Icons.menu_book_rounded,
-          Icons.science_rounded,
-          Icons.calculate_rounded,
-          Icons.psychology_rounded,
-        ];
+      // Renk ve ikon paleti
+      final colors = [
+        AppTheme.primaryBrandColor,
+        AppTheme.secondaryBrandColor,
+        AppTheme.successBrandColor,
+        Colors.deepOrange,
+        const Color(0xFF8B5CF6), // Mor
+      ];
+      final icons = [
+        Icons.menu_book_rounded,
+        Icons.science_rounded,
+        Icons.calculate_rounded,
+        Icons.psychology_rounded,
+        Icons.lightbulb_rounded,
+      ];
 
+      // Eğer hiç test yoksa boş bir grafik göster
+      if (groupedTests.isEmpty) {
+        String displayTitle = examType;
+        try {
+          displayTitle = ExamType.values.byName(examType).displayName;
+        } catch (_) {}
+
+        chartDataList.add(ChartData(
+          tests: [],
+          title: displayTitle,
+          subtitle: 'Genel Performansın',
+          icon: Icons.trending_up_rounded,
+          baseColor: AppTheme.successBrandColor,
+        ));
+      } else {
+        // İster 1 tane ister 10 tane grup olsun, hepsini kendi ismiyle listele.
+        // Böylece "Alan Bilgisi" tek başına olsa bile adı "AGS"ye dönüşmez.
         int index = 0;
         for (final entry in groupedTests.entries) {
           chartDataList.add(ChartData(
             tests: entry.value,
-            title: entry.key,
+            title: entry.key, // Burada artık doğrudan bölüm/branş adı yazacak
             subtitle: '${entry.value.length} deneme',
             icon: icons[index % icons.length],
             baseColor: colors[index % colors.length],
           ));
           index++;
         }
-      } else {
-        // Tek bir grup varsa (Örn: Sadece KPSS veya AGS denemeleri var)
-        final title = tests.isNotEmpty ? tests.first.smartDisplayName : examType;
-
-        String displayTitle = title;
-
-        // Eğer akıllı isim, normal bölüm ismiyle aynıysa (yani ana denemeyse)
-        if (tests.isNotEmpty && title == tests.first.sectionName) {
-          // DÜZELTME: "KPSSLISANS" yerine "KPSS Lisans" yazması için
-          // Test modelinden enum'a erişip display name özelliğini kullanıyoruz.
-          displayTitle = tests.first.examType.displayName;
-        } else if (tests.isEmpty) {
-          // Liste boşsa ve string olarak geldiyse, enum'dan kurtarmayı dene
-          try {
-            displayTitle = ExamType.values.byName(examType).displayName;
-          } catch (_) {
-            displayTitle = examType.toUpperCase();
-          }
-        }
-
-        chartDataList.add(ChartData(
-          tests: tests,
-          title: displayTitle,
-          subtitle: 'Genel Performansın',
-          icon: Icons.trending_up_rounded,
-          baseColor: AppTheme.successBrandColor,
-        ));
       }
     }
 

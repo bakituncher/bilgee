@@ -147,17 +147,25 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
 
     // YKS - TYT/AYT ayrımı
     if (test.examType == ExamType.yks) {
+      final sectionUpper = test.sectionName.toUpperCase();
+      final testNameUpper = test.testName.toUpperCase();
+
       // sectionName'e göre TYT mi AYT mi kontrol et
-      if (test.sectionName.toUpperCase().contains('TYT')) {
+      if (sectionUpper.contains('TYT')) {
         return 'TYT';
-      } else if (test.sectionName.toUpperCase().contains('AYT')) {
+      } else if (sectionUpper.contains('AYT')) {
         return 'AYT';
+      } else if (sectionUpper.contains('YDT')) { // - YDT kontrolü eklendi
+        return 'YDT';
       }
+
       // Eğer sectionName'de bulamazsak, testName'e bakalım
-      if (test.testName.toUpperCase().contains('TYT')) {
+      if (testNameUpper.contains('TYT')) {
         return 'TYT';
-      } else if (test.testName.toUpperCase().contains('AYT')) {
+      } else if (testNameUpper.contains('AYT')) {
         return 'AYT';
+      } else if (testNameUpper.contains('YDT')) { // - YDT kontrolü eklendi
+        return 'YDT';
       }
     }
 
