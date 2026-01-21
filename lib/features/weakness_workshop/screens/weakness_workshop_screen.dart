@@ -2333,7 +2333,6 @@ class _ManualTopicSelectorSheetState extends ConsumerState<_ManualTopicSelectorS
                 // Content
                 Expanded(
                   child: FutureBuilder<Map<String, List<String>>>(
-                    // GÜNCELLEME: Artık user objesini ve ExamUtils mantığını kullanıyoruz
                     future: _loadTopicsByUser(user!),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
@@ -2352,9 +2351,8 @@ class _ManualTopicSelectorSheetState extends ConsumerState<_ManualTopicSelectorS
                       final topicsBySubject = snapshot.data!;
                       final filteredTopics = _filterTopics(topicsBySubject);
 
-                      // Dersleri ters alfabetik sıraya koy (Z'den A'ya) - İsteğe bağlı
-                      final sortedEntries = filteredTopics.entries.toList()
-                        ..sort((a, b) => b.key.compareTo(a.key));
+                      // DÜZELTME: Sıralama kodu kaldırıldı. Artık ExamUtils'ten gelen (doğal) sırayı koruyor.
+                      final sortedEntries = filteredTopics.entries.toList();
 
                       if (sortedEntries.isEmpty) {
                         return Center(
@@ -2488,7 +2486,6 @@ class _ManualTopicSelectorSheetState extends ConsumerState<_ManualTopicSelectorS
     );
   }
 
-  // GÜNCELLEME: ExamUtils kullanılarak CoachScreen ile aynı mantığa getirildi
   Future<Map<String, List<String>>> _loadTopicsByUser(UserModel user) async {
     try {
       if (user.selectedExam == null) return {};
@@ -2497,7 +2494,7 @@ class _ManualTopicSelectorSheetState extends ConsumerState<_ManualTopicSelectorS
 
       final Map<String, List<String>> topicsBySubject = {};
 
-      // ExamUtils kullanarak ilgili bölümleri ve dersleri çekiyoruz
+      // ExamUtils zaten doğru sırayı (Curriculum Order) döndürür
       final relevantSections = ExamUtils.getRelevantSectionsForUser(user, examData);
 
       for (var section in relevantSections) {
@@ -2511,6 +2508,7 @@ class _ManualTopicSelectorSheetState extends ConsumerState<_ManualTopicSelectorS
               final newTopics = topicNames.where((topic) => !existingTopics.contains(topic)).toList();
               topicsBySubject[subjectName] = [...existingTopics, ...newTopics];
             } else {
+              // Map'e ekleme sırası korunur
               topicsBySubject[subjectName] = topicNames;
             }
           }
