@@ -7,7 +7,6 @@ import 'package:taktik/features/weakness_workshop/models/workshop_model.dart';
 import 'package:taktik/shared/widgets/markdown_with_math.dart';
 import 'package:taktik/features/weakness_workshop/widgets/quiz_swipe_hint.dart';
 
-/// Soru çözüm ekranı widget'ı
 class QuizView extends StatefulWidget {
   final WorkshopModel material;
   final VoidCallback onSubmit;
@@ -34,8 +33,6 @@ class _QuizViewState extends State<QuizView> {
   late PageController _pageController;
   int _currentPage = 0;
   bool _showHint = false;
-
-  // Animasyonu gösterilmiş soruların indexlerini tutar
   final Set<int> _shownAnimations = {};
 
   @override
@@ -91,7 +88,6 @@ class _QuizViewState extends State<QuizView> {
       children: [
         Column(
           children: [
-            // Minimal progress bar
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
               child: Row(
@@ -111,7 +107,6 @@ class _QuizViewState extends State<QuizView> {
                 }),
               ),
             ),
-
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
@@ -120,11 +115,8 @@ class _QuizViewState extends State<QuizView> {
                 itemCount: quizLength,
                 itemBuilder: (context, index) {
                   final question = widget.material.quiz![index];
-
-                  // Animasyon kontrol mantığı
                   final isCorrect = widget.selectedAnswers[index] == question.correctOptionIndex;
                   final alreadyShown = _shownAnimations.contains(index);
-                  // Sadece doğruysa VE daha önce gösterilmediyse oynat
                   final shouldPlay = isCorrect && !alreadyShown;
 
                   return QuestionCard(
@@ -132,7 +124,6 @@ class _QuizViewState extends State<QuizView> {
                     questionNumber: index + 1,
                     totalQuestions: quizLength,
                     selectedOptionIndex: widget.selectedAnswers[index],
-                    // Yeni eklenen parametre: Animasyon oynatılmalı mı?
                     shouldPlayAnimation: shouldPlay,
                     onOptionSelected: (optionIndex) {
                       if (!widget.selectedAnswers.containsKey(index)) {
@@ -159,7 +150,6 @@ class _QuizViewState extends State<QuizView> {
                       }
                     },
                     onSubmit: widget.onSubmit,
-                    // Animasyon gösterildi olarak işaretle (setState yapmadan)
                     onAnimationShown: () {
                       _shownAnimations.add(index);
                     },
@@ -169,7 +159,6 @@ class _QuizViewState extends State<QuizView> {
             ),
           ],
         ),
-
         if (_showHint)
           QuizSwipeHint(
             onDismiss: () {
@@ -183,14 +172,13 @@ class _QuizViewState extends State<QuizView> {
   }
 }
 
-/// Tek bir soru kartı widget'ı
 class QuestionCard extends StatefulWidget {
   final QuizQuestion question;
   final int questionNumber;
   final int totalQuestions;
   final int? selectedOptionIndex;
-  final bool shouldPlayAnimation; // Yeni parametre
-  final VoidCallback? onAnimationShown; // Yeni callback
+  final bool shouldPlayAnimation;
+  final VoidCallback? onAnimationShown;
   final Function(int) onOptionSelected;
   final void Function()? onReportIssue;
   final VoidCallback? onSwipeUp;
@@ -227,7 +215,6 @@ class _QuestionCardState extends State<QuestionCard> {
     _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkScrollPosition();
-      // Eğer sayfa ilk açıldığında animasyon oynatılması gerekiyorsa (nadir durum)
       _checkAnimationStatus();
     });
   }
@@ -235,11 +222,8 @@ class _QuestionCardState extends State<QuestionCard> {
   @override
   void didUpdateWidget(QuestionCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Widget güncellendiğinde (cevap verildiğinde) animasyon kontrolü
     if (widget.shouldPlayAnimation && !oldWidget.shouldPlayAnimation) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _checkAnimationStatus();
-      });
+      _checkAnimationStatus();
     }
   }
 
@@ -255,11 +239,10 @@ class _QuestionCardState extends State<QuestionCard> {
 
   void _checkScrollPosition() {
     if (!_scrollController.hasClients) return;
-
+    final pos = _scrollController.position;
     setState(() {
-      _isAtTop = _scrollController.position.pixels <= 0;
-      _isAtBottom = _scrollController.position.pixels >=
-          _scrollController.position.maxScrollExtent - 10;
+      _isAtTop = pos.pixels <= 0;
+      _isAtBottom = pos.pixels >= pos.maxScrollExtent - 10;
     });
   }
 
@@ -274,18 +257,25 @@ class _QuestionCardState extends State<QuestionCard> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        GestureDetector(
-          onVerticalDragEnd: (details) {
-            if (details.primaryVelocity == null) return;
-            final velocity = details.primaryVelocity!;
-            if (velocity < -500 && _isAtBottom) {
-              widget.onSwipeUp?.call();
-            } else if (velocity > 500 && _isAtTop) {
-              widget.onSwipeDown?.call();
+        NotificationListener<ScrollNotification>(
+          onNotification: (notification) {
+            if (notification is ScrollUpdateNotification) {
+              _checkScrollPosition();
             }
+            // Sınırda daha fazla çekme (Overscroll) durumunda sayfa değiştir
+            if (notification is OverscrollNotification) {
+              if (notification.overscroll > 5 && _isAtBottom) {
+                widget.onSwipeUp?.call();
+              } else if (notification.overscroll < -5 && _isAtTop) {
+                widget.onSwipeDown?.call();
+              }
+            }
+            return false;
           },
           child: SingleChildScrollView(
             controller: _scrollController,
+            // OverscrollNotification için Android'de bile Bounce efekti sağlar
+            physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -415,17 +405,12 @@ class _QuestionCardState extends State<QuestionCard> {
                       children: [
                         if (widget.selectedOptionIndex != null)
                           OutlinedButton.icon(
-                            onPressed: () {
-                              _showExplanationBottomSheet(context);
-                            },
+                            onPressed: () => _showExplanationBottomSheet(context),
                             icon: const Icon(Icons.lightbulb_outline_rounded),
                             label: const FittedBox(child: Text("Açıklamayı Gör")),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: const Color(0xFFFF9800),
-                              side: const BorderSide(
-                                color: Color(0xFFFF9800),
-                                width: 1.5,
-                              ),
+                              side: const BorderSide(color: Color(0xFFFF9800), width: 1.5),
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             ),
                           ).animate().fadeIn(delay: 150.ms).slideY(begin: 0.2),
@@ -449,8 +434,6 @@ class _QuestionCardState extends State<QuestionCard> {
             ),
           ),
         ),
-
-        // Sadece shouldPlayAnimation true ise göster
         if (widget.shouldPlayAnimation)
           Center(
             child: IgnorePointer(
@@ -458,9 +441,7 @@ class _QuestionCardState extends State<QuestionCard> {
                 'assets/lotties/firework.json',
                 repeat: false,
                 fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  return const SizedBox.shrink();
-                },
+                errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
               ),
             ),
           ),
@@ -475,9 +456,7 @@ class _QuestionCardState extends State<QuestionCard> {
       useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.9,
-        ),
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.9),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
@@ -512,35 +491,20 @@ class _QuestionCardState extends State<QuestionCard> {
                               color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: Icon(
-                              Icons.lightbulb_rounded,
-                              color: Theme.of(context).colorScheme.onSurface,
-                              size: 28,
-                            ),
+                            child: Icon(Icons.lightbulb_rounded, color: Theme.of(context).colorScheme.onSurface, size: 28),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               "Soru ${widget.questionNumber}",
-                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
                             ),
                           ),
-                          IconButton(
-                            onPressed: () => Navigator.pop(context),
-                            icon: const Icon(Icons.close_rounded),
-                          ),
+                          IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded)),
                         ],
                       ),
                       const SizedBox(height: 24),
-                      Text(
-                        "Soru",
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      Text("Soru", style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),
                       Container(
                         padding: const EdgeInsets.all(16),
@@ -548,56 +512,33 @@ class _QuestionCardState extends State<QuestionCard> {
                           color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: MarkdownWithMath(
-                          data: widget.question.question,
-                          styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)),
-                        ),
+                        child: MarkdownWithMath(data: widget.question.question, styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context))),
                       ),
                       const SizedBox(height: 24),
-                      Text(
-                        "Doğru Cevap",
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      Text("Doğru Cevap", style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
-                            width: 2,
-                          ),
+                          border: Border.all(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3), width: 2),
                         ),
                         child: Row(
                           children: [
                             Container(
                               width: 32,
                               height: 32,
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.onSurface,
-                                shape: BoxShape.circle,
-                              ),
+                              decoration: BoxDecoration(color: Theme.of(context).colorScheme.onSurface, shape: BoxShape.circle),
                               child: Center(
                                 child: Text(
                                   String.fromCharCode(65 + widget.question.correctOptionIndex),
-                                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                    color: Theme.of(context).colorScheme.surface,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                  style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Theme.of(context).colorScheme.surface, fontWeight: FontWeight.bold),
                                 ),
                               ),
                             ),
                             const SizedBox(width: 12),
-                            Expanded(
-                              child: MarkdownWithMath(
-                                data: widget.question.options[widget.question.correctOptionIndex],
-                                styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)),
-                              ),
-                            ),
+                            Expanded(child: MarkdownWithMath(data: widget.question.options[widget.question.correctOptionIndex], styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)))),
                           ],
                         ),
                       ),
@@ -615,10 +556,8 @@ class _QuestionCardState extends State<QuestionCard> {
   }
 }
 
-/// Soru açıklama kartı widget'ı
 class ExplanationCard extends StatelessWidget {
   final String explanation;
-
   const ExplanationCard({super.key, required this.explanation});
 
   @override
@@ -629,40 +568,23 @@ class ExplanationCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: colorScheme.onSurface.withValues(alpha: 0.2),
-          width: 1,
-        ),
+        border: Border.all(color: colorScheme.onSurface.withValues(alpha: 0.2), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(
-                Icons.lightbulb_outline_rounded,
-                color: colorScheme.onSurface,
-                size: 20,
-              ),
+              Icon(Icons.lightbulb_outline_rounded, color: colorScheme.onSurface, size: 20),
               const SizedBox(width: 8),
-              Text(
-                "Açıklama",
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: colorScheme.onSurface,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              Text("Açıklama", style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
             ],
           ),
           const SizedBox(height: 12),
           MarkdownWithMath(
             data: explanation,
             styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
-              p: TextStyle(
-                color: colorScheme.onSurface,
-                height: 1.5,
-                fontSize: 14,
-              ),
+              p: TextStyle(color: colorScheme.onSurface, height: 1.5, fontSize: 14),
             ),
           ),
         ],
@@ -675,21 +597,12 @@ class QuizReviewView extends StatelessWidget {
   final WorkshopModel material;
   final Map<int, int> selectedAnswers;
 
-  const QuizReviewView({
-    super.key,
-    required this.material,
-    required this.selectedAnswers,
-  });
+  const QuizReviewView({super.key, required this.material, required this.selectedAnswers});
 
   @override
   Widget build(BuildContext context) {
     if (material.quiz == null || material.quiz!.isEmpty) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(24.0),
-          child: Text('Quiz oluşturulmadı.', textAlign: TextAlign.center),
-        ),
-      );
+      return const Center(child: Padding(padding: EdgeInsets.all(24.0), child: Text('Quiz oluşturulmadı.', textAlign: TextAlign.center)));
     }
 
     return ListView.builder(
@@ -707,12 +620,7 @@ class QuizReviewView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                MarkdownWithMath(
-                  data: "Soru ${index + 1}: ${question.question}",
-                  styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
-                    p: Theme.of(context).textTheme.titleLarge,
-                  ),
-                ),
+                MarkdownWithMath(data: "Soru ${index + 1}: ${question.question}", styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(p: Theme.of(context).textTheme.titleLarge)),
                 const SizedBox(height: 16),
                 ...List.generate(question.options.length, (optIndex) {
                   return ListTile(
@@ -724,9 +632,7 @@ class QuizReviewView extends StatelessWidget {
                         p: TextStyle(
                           color: optIndex == question.correctOptionIndex
                               ? Theme.of(context).colorScheme.onSurface
-                              : (optIndex == userAnswer && !isCorrect
-                              ? const Color(0xFFE53935)
-                              : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
+                              : (optIndex == userAnswer && !isCorrect ? const Color(0xFFE53935) : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
                         ),
                       ),
                     ),
@@ -736,9 +642,7 @@ class QuizReviewView extends StatelessWidget {
                           : (optIndex == userAnswer && !isCorrect ? Icons.cancel_rounded : Icons.radio_button_unchecked_rounded),
                       color: optIndex == question.correctOptionIndex
                           ? Theme.of(context).colorScheme.onSurface
-                          : (optIndex == userAnswer && !isCorrect
-                          ? const Color(0xFFE53935)
-                          : Theme.of(context).colorScheme.onSurfaceVariant),
+                          : (optIndex == userAnswer && !isCorrect ? const Color(0xFFE53935) : Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   );
                 }),
