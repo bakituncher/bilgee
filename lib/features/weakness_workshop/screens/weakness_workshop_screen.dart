@@ -107,7 +107,7 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
   WorkshopStep _currentStep = WorkshopStep.briefing;
   Map<int, int> _selectedAnswers = {};
   bool _skipStudyView = false;
-  bool _masteredAchieved = false; // bu oturumda ustalık kazan��ldı mı
+  bool _masteredAchieved = false; // bu oturumda ustalık kazanıldı mı
   int _currentQuizPage = 0;
 
   @override
@@ -250,12 +250,12 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
   }
 
   Widget _buildBottomSheetOption(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
+      BuildContext context, {
+        required IconData icon,
+        required String title,
+        required String subtitle,
+        required VoidCallback onTap,
+      }) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
@@ -465,101 +465,109 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
               children: [
                 _WSHeader(
                   showBack: true,
+                  // Results ekranında çarpı ikonu göster
+                  leadingIcon: _currentStep == WorkshopStep.results ? Icons.close_rounded : null,
                   onBack: (){
-                  if(_currentStep == WorkshopStep.briefing){
-                    if (Navigator.of(context).canPop()) {
-                      context.pop();
-                    }
-                  } else if(_currentStep == WorkshopStep.results){
-                    setState(() => _currentStep = WorkshopStep.quiz);
-                  } else if(_currentStep == WorkshopStep.quiz){
-                    // Quiz'den geri dönüş: contentType'a göre karar ver
-                    final contentType = ref.read(_contentTypeProvider);
-                    if (contentType == 'quizOnly') {
-                      // Sadece quiz modundaysa briefing'e dön
+                    if(_currentStep == WorkshopStep.briefing){
+                      if (Navigator.of(context).canPop()) {
+                        context.pop();
+                      }
+                    } else if(_currentStep == WorkshopStep.results){
+                      // Results ekranında çarpı tuşuna basınca ekranı kapat (Ana Sayfaya dön)
+                      // Geri dönülebilir ise pop et, yoksa ana sayfaya git
+                      if (Navigator.of(context).canPop()) {
+                        context.pop();
+                      } else {
+                        context.go(AppRoutes.home);
+                      }
+                    } else if(_currentStep == WorkshopStep.quiz){
+                      // Quiz'den geri dönüş: contentType'a göre karar ver
+                      final contentType = ref.read(_contentTypeProvider);
+                      if (contentType == 'quizOnly') {
+                        // Sadece quiz modundaysa briefing'e dön
+                        _resetToBriefing();
+                      } else {
+                        // Study varsa study'e dön
+                        setState(() => _currentStep = WorkshopStep.study);
+                      }
+                    } else if(_currentStep == WorkshopStep.study){
+                      // Study'den briefing'e dön
                       _resetToBriefing();
                     } else {
-                      // Study varsa study'e dön
-                      setState(() => _currentStep = WorkshopStep.study);
+                      _resetToBriefing();
                     }
-                  } else if(_currentStep == WorkshopStep.study){
-                    // Study'den briefing'e dön
-                    _resetToBriefing();
-                  } else {
-                    _resetToBriefing();
-                  }
-                },
-                onSaved: (_currentStep == WorkshopStep.briefing || _currentStep == WorkshopStep.contentSelection)
-                    ? () => context.push('/ai-hub/weakness-workshop/${AppRoutes.savedWorkshops}')
-                    : null,
-                title: 'Etüt Odası',
-                center: (_currentStep == WorkshopStep.quiz)
-                    ? Consumer(
-                        builder: (context, ref, _) {
-                          final session = ref.watch(workshopSessionProvider).value;
-                          final total = session?.quiz?.length ?? 0;
-                          final safeTotal = total <= 0 ? 1 : total;
-                          final safeIndex = _currentQuizPage.clamp(0, safeTotal - 1);
+                  },
+                  onSaved: (_currentStep == WorkshopStep.briefing || _currentStep == WorkshopStep.contentSelection)
+                      ? () => context.push('/ai-hub/weakness-workshop/${AppRoutes.savedWorkshops}')
+                      : null,
+                  title: 'Etüt Odası',
+                  center: (_currentStep == WorkshopStep.quiz)
+                      ? Consumer(
+                    builder: (context, ref, _) {
+                      final session = ref.watch(workshopSessionProvider).value;
+                      final total = session?.quiz?.length ?? 0;
+                      final safeTotal = total <= 0 ? 1 : total;
+                      final safeIndex = _currentQuizPage.clamp(0, safeTotal - 1);
 
-                          return Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.06),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
-                            ),
-                            child: Text(
-                              '${safeIndex + 1}/$total',
-                              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: Theme.of(context).colorScheme.onSurface,
-                                  ),
-                            ),
-                          );
-                        },
-                      )
-                    : null,
-                trailing: (_currentStep == WorkshopStep.quiz)
-                    ? Consumer(
-                        builder: (context, ref, _) {
-                          final session = ref.watch(workshopSessionProvider).value;
-                          final total = session?.quiz?.length ?? 0;
-                          final safeTotal = total <= 0 ? 1 : total;
-                          final safeIndex = _currentQuizPage.clamp(0, safeTotal - 1);
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.06),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+                        ),
+                        child: Text(
+                          '${safeIndex + 1}/$total',
+                          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                      );
+                    },
+                  )
+                      : null,
+                  trailing: (_currentStep == WorkshopStep.quiz)
+                      ? Consumer(
+                    builder: (context, ref, _) {
+                      final session = ref.watch(workshopSessionProvider).value;
+                      final total = session?.quiz?.length ?? 0;
+                      final safeTotal = total <= 0 ? 1 : total;
+                      final safeIndex = _currentQuizPage.clamp(0, safeTotal - 1);
 
-                          return IconButton(
-                            tooltip: 'Sorunu Bildir',
-                            onPressed: total == 0
-                                ? null
-                                : () {
-                                    final material = session;
-                                    if (material == null) return;
-                                    _openReportSheet(material, safeIndex, _selectedAnswers[safeIndex]);
-                                  },
-                            icon: Icon(
-                              Icons.flag_outlined,
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
-                            style: IconButton.styleFrom(
-                              backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.08),
-                              shape: const CircleBorder(),
-                            ),
-                          );
+                      return IconButton(
+                        tooltip: 'Sorunu Bildir',
+                        onPressed: total == 0
+                            ? null
+                            : () {
+                          final material = session;
+                          if (material == null) return;
+                          _openReportSheet(material, safeIndex, _selectedAnswers[safeIndex]);
                         },
-                      )
-                    : null,
-              ),
-              Expanded(
-                child: AnimatedSwitcher(
-                  duration: 300.ms,
-                  transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
-                  child: _buildCurrentStepView(),
+                        icon: Icon(
+                          Icons.flag_outlined,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.08),
+                          shape: const CircleBorder(),
+                        ),
+                      );
+                    },
+                  )
+                      : null,
                 ),
-              ),
-            ],
-          ),
-        ],
-      ),
+                Expanded(
+                  child: AnimatedSwitcher(
+                    duration: 300.ms,
+                    transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
+                    child: _buildCurrentStepView(),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -665,15 +673,15 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
 
           try {
             final result = await ref.read(firestoreServiceProvider).reportQuestionIssue(
-                  userId: userId,
-                  subject: material.subject,
-                  topic: material.topic,
-                  question: q.question,
-                  options: q.options,
-                  correctIndex: q.correctOptionIndex,
-                  selectedIndex: selected,
-                  reason: reason,
-                );
+              userId: userId,
+              subject: material.subject,
+              topic: material.topic,
+              question: q.question,
+              options: q.options,
+              correctIndex: q.correctOptionIndex,
+              selectedIndex: selected,
+              reason: reason,
+            );
 
             if (mounted) {
               Navigator.pop(context);
@@ -776,9 +784,9 @@ class _LoadingCevherView extends ConsumerWidget {
                     repeat: true,
                   ),
                 ).animate(onPlay: (c) => c.repeat(reverse: true))
-                 .scale(begin: const Offset(0.98, 0.98), end: const Offset(1.02, 1.02), duration: 2000.ms)
-                 .then()
-                 .shimmer(duration: 1500.ms, color: Theme.of(context).colorScheme.secondary.withOpacity(0.3)),
+                    .scale(begin: const Offset(0.98, 0.98), end: const Offset(1.02, 1.02), duration: 2000.ms)
+                    .then()
+                    .shimmer(duration: 1500.ms, color: Theme.of(context).colorScheme.secondary.withOpacity(0.3)),
                 const SizedBox(height: 32),
                 Text(
                   "İçerik hazırlanıyor...",
@@ -788,9 +796,9 @@ class _LoadingCevherView extends ConsumerWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ).animate(onPlay: (c) => c.repeat())
-                 .fadeIn(duration: 800.ms)
-                 .then()
-                 .fadeOut(duration: 800.ms),
+                    .fadeIn(duration: 800.ms)
+                    .then()
+                    .fadeOut(duration: 800.ms),
                 const SizedBox(height: 12),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 32.0),
@@ -813,7 +821,7 @@ class _LoadingCevherView extends ConsumerWidget {
                       minHeight: 6,
                     ),
                   ).animate(onPlay: (c) => c.repeat())
-                   .shimmer(duration: 1800.ms, color: Theme.of(context).colorScheme.secondary.withOpacity(0.5)),
+                      .shimmer(duration: 1800.ms, color: Theme.of(context).colorScheme.secondary.withOpacity(0.5)),
                 ),
               ],
             ),
@@ -935,13 +943,13 @@ class _BriefingView extends ConsumerWidget {
   }
 
   Widget _buildTopicCard(
-    BuildContext context, {
-    required String subject,
-    required String topic,
-    required double accuracy,
-    required int questionCount,
-    required VoidCallback onTap,
-  }) {
+      BuildContext context, {
+        required String subject,
+        required String topic,
+        required double accuracy,
+        required int questionCount,
+        required VoidCallback onTap,
+      }) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -1085,10 +1093,10 @@ class _BriefingView extends ConsumerWidget {
   }
 
   void _showManualTopicSelector(
-    BuildContext context,
-    WidgetRef ref,
-    Function(Map<String, String>) onTopicSelected,
-  ) {
+      BuildContext context,
+      WidgetRef ref,
+      Function(Map<String, String>) onTopicSelected,
+      ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1284,12 +1292,12 @@ class _ActionCard extends StatelessWidget {
         ),
         boxShadow: isPrimary
             ? [
-                BoxShadow(
-                  color: color.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ]
+          BoxShadow(
+            color: color.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ]
             : null,
       ),
       child: Material(
@@ -1332,17 +1340,17 @@ class _ActionCard extends StatelessWidget {
                       Text(
                         title,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         subtitle,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                              fontSize: 12,
-                            ),
+                          color: colorScheme.onSurfaceVariant,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
@@ -1459,15 +1467,15 @@ class _StudyViewState extends ConsumerState<_StudyView> {
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
             child: ElevatedButton.icon(
               icon: _isSaved
-                ? const Icon(Icons.check_circle_rounded, size: 20)
-                : const Icon(Icons.bookmark_add_rounded, size: 20),
+                  ? const Icon(Icons.check_circle_rounded, size: 20)
+                  : const Icon(Icons.bookmark_add_rounded, size: 20),
               label: _isSaving
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : Text(_isSaved ? "Kaydedildi" : "Konuyu Kaydet"),
+                  ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+                  : Text(_isSaved ? "Kaydedildi" : "Konuyu Kaydet"),
               onPressed: (_isSaving || _isSaved) ? null : () async {
                 setState(() => _isSaving = true);
                 final userId = ref.read(authControllerProvider).value!.uid;
@@ -1615,12 +1623,16 @@ class _SummaryView extends ConsumerStatefulWidget {
   ConsumerState<_SummaryView> createState() => _SummaryViewState();
 }
 
-class _SummaryViewState extends ConsumerState<_SummaryView> {
+class _SummaryViewState extends ConsumerState<_SummaryView> with AutomaticKeepAliveClientMixin {
   bool _isSaving = false;
   bool _isSaved = false;
 
   @override
+  bool get wantKeepAlive => true; // Tab değiştiğinde state'i koru
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context); // Mixin için gerekli
     final highScore = widget.score >= 80;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
@@ -1729,7 +1741,7 @@ class _SummaryViewState extends ConsumerState<_SummaryView> {
             title: "Etüdü Kaydet",
             subtitle: "Daha sonra tekrar çalışmak için kaydet",
             icon: _isSaved ? Icons.check_circle_rounded : Icons.bookmark_add_rounded,
-            onTap: (_isSaving || _isSaved) ? (){} : () async {
+            onTap: (_isSaving || _isSaved) ? () {} : () async {
               setState(() => _isSaving = true);
               final userId = ref.read(authControllerProvider).value!.uid;
               final workshopToSave = widget.material.copyWith(id: const Uuid().v4());
@@ -1806,13 +1818,13 @@ class _ResultActionCard extends StatelessWidget {
               const SizedBox(width: 16),
               Expanded(
                   child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: Theme.of(context).textTheme.titleLarge),
-                  Text(subtitle,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
-                ],
-              )),
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, style: Theme.of(context).textTheme.titleLarge),
+                      Text(subtitle,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
+                    ],
+                  )),
               if (child != null) Padding(padding: const EdgeInsets.only(left: 16), child: child),
             ],
           ),
@@ -1966,8 +1978,8 @@ class _DifficultyOption extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: isPrimary
-              ? color.withOpacity(0.1)
-              : colorScheme.surface,
+                ? color.withOpacity(0.1)
+                : colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isPrimary ? color.withOpacity(0.4) : colorScheme.surfaceContainerHighest,
@@ -2119,6 +2131,7 @@ class _WSHeader extends StatelessWidget {
   final String title;
   final Widget? trailing;
   final Widget? center;
+  final IconData? leadingIcon; // Geri tuşu ikonunu değiştirmek için
 
   const _WSHeader({
     required this.showBack,
@@ -2127,6 +2140,7 @@ class _WSHeader extends StatelessWidget {
     required this.title,
     this.trailing,
     this.center,
+    this.leadingIcon,
   });
 
   @override
@@ -2135,29 +2149,30 @@ class _WSHeader extends StatelessWidget {
 
     final left = showBack
         ? IconButton(
-            onPressed: onBack,
-            icon: Icon(Icons.arrow_back_ios_new_rounded, color: Theme.of(context).colorScheme.onSurface),
-            style: IconButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.08),
-              shape: const CircleBorder(),
-            ),
-          )
+      onPressed: onBack,
+      // Eğer leadingIcon verilmişse onu kullan, yoksa varsayılan ok işaretini kullan
+      icon: Icon(leadingIcon ?? Icons.arrow_back_ios_new_rounded, color: Theme.of(context).colorScheme.onSurface),
+      style: IconButton.styleFrom(
+        backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.08),
+        shape: const CircleBorder(),
+      ),
+    )
         : Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.06),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.diamond_rounded, color: Theme.of(context).colorScheme.secondary),
-                const SizedBox(width: 8),
-                Text(title, style: Theme.of(context).textTheme.titleMedium),
-              ],
-            ),
-          );
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.diamond_rounded, color: Theme.of(context).colorScheme.secondary),
+          const SizedBox(width: 8),
+          Text(title, style: Theme.of(context).textTheme.titleMedium),
+        ],
+      ),
+    );
 
     final rightActions = Row(
       mainAxisSize: MainAxisSize.min,
@@ -2243,142 +2258,142 @@ class _ManualTopicSelectorSheetState extends ConsumerState<_ManualTopicSelectorS
             child: Column(
               children: [
                 // Header
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: colorScheme.surfaceContainerHighest,
-                      width: 1,
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: colorScheme.surfaceContainerHighest,
+                        width: 1,
+                      ),
                     ),
                   ),
-                ),
-                child: Column(
-                  children: [
-                    // Drag handle
-                    Container(
-                      width: 40,
-                      height: 4,
-                      margin: const EdgeInsets.only(bottom: 16),
-                      decoration: BoxDecoration(
-                        color: colorScheme.onSurfaceVariant.withOpacity(0.4),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.search_rounded,
-                          color: colorScheme.primary,
-                          size: 28,
+                  child: Column(
+                    children: [
+                      // Drag handle
+                      Container(
+                        width: 40,
+                        height: 4,
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: colorScheme.onSurfaceVariant.withOpacity(0.4),
+                          borderRadius: BorderRadius.circular(2),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'Konu Seç',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
+                      ),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.search_rounded,
+                            color: colorScheme.primary,
+                            size: 28,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Konu Seç',
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
-                        ),
-                        IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: const Icon(Icons.close_rounded),
-                          style: IconButton.styleFrom(
-                            backgroundColor: colorScheme.surfaceContainerHighest,
+                          IconButton(
+                            onPressed: () => Navigator.pop(context),
+                            icon: const Icon(Icons.close_rounded),
+                            style: IconButton.styleFrom(
+                              backgroundColor: colorScheme.surfaceContainerHighest,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      // Search bar
+                      TextField(
+                        decoration: InputDecoration(
+                          hintText: 'Konu ara...',
+                          prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                          filled: true,
+                          fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    // Search bar
-                    TextField(
-                      decoration: InputDecoration(
-                        hintText: 'Konu ara...',
-                        prefixIcon: const Icon(Icons.search_rounded, size: 20),
-                        filled: true,
-                        fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.5),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
+                        onChanged: (value) {
+                          setState(() => _searchQuery = value.toLowerCase());
+                        },
                       ),
-                      onChanged: (value) {
-                        setState(() => _searchQuery = value.toLowerCase());
-                      },
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
 
-              // Content
-              Expanded(
-                child: FutureBuilder<Map<String, List<String>>>(
-                  future: _loadTopicsBySubject(user!.selectedExam!, user.selectedExamSection),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
+                // Content
+                Expanded(
+                  child: FutureBuilder<Map<String, List<String>>>(
+                    future: _loadTopicsBySubject(user!.selectedExam!, user.selectedExamSection),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
 
-                    if (snapshot.hasError || !snapshot.hasData) {
-                      return Center(
-                        child: Text(
-                          'Konular yüklenemedi',
-                          style: TextStyle(color: colorScheme.onSurfaceVariant),
-                        ),
-                      );
-                    }
+                      if (snapshot.hasError || !snapshot.hasData) {
+                        return Center(
+                          child: Text(
+                            'Konular yüklenemedi',
+                            style: TextStyle(color: colorScheme.onSurfaceVariant),
+                          ),
+                        );
+                      }
 
-                    final topicsBySubject = snapshot.data!;
-                    final filteredTopics = _filterTopics(topicsBySubject);
+                      final topicsBySubject = snapshot.data!;
+                      final filteredTopics = _filterTopics(topicsBySubject);
 
-                    // Dersleri ters alfabetik sıraya koy (Z'den A'ya)
-                    final sortedEntries = filteredTopics.entries.toList()
-                      ..sort((a, b) => b.key.compareTo(a.key));
+                      // Dersleri ters alfabetik sıraya koy (Z'den A'ya)
+                      final sortedEntries = filteredTopics.entries.toList()
+                        ..sort((a, b) => b.key.compareTo(a.key));
 
-                    return ListView(
-                      controller: scrollController,
-                      padding: const EdgeInsets.all(16),
-                      children: sortedEntries.map((entry) {
-                        final subject = entry.key;
-                        final topics = entry.value;
+                      return ListView(
+                        controller: scrollController,
+                        padding: const EdgeInsets.all(16),
+                        children: sortedEntries.map((entry) {
+                          final subject = entry.key;
+                          final topics = entry.value;
 
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Ders başlığı
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 12,
-                              ),
-                              child: Text(
-                                subject,
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: colorScheme.primary,
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Ders başlığı
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 12,
+                                ),
+                                child: Text(
+                                  subject,
+                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: colorScheme.primary,
+                                  ),
                                 ),
                               ),
-                            ),
-                            // Konular
-                            ...topics.map((topic) => _buildTopicTile(
-                              context,
-                              subject,
-                              topic,
-                            )),
-                            const SizedBox(height: 8),
-                          ],
-                        );
-                      }).toList(),
-                    );
-                  },
+                              // Konular
+                              ...topics.map((topic) => _buildTopicTile(
+                                context,
+                                subject,
+                                topic,
+                              )),
+                              const SizedBox(height: 8),
+                            ],
+                          );
+                        }).toList(),
+                      );
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
             ),
           ),
         );
@@ -2478,7 +2493,7 @@ class _ManualTopicSelectorSheetState extends ConsumerState<_ManualTopicSelectorS
         if (examEnum == ExamType.yks) {
           sectionsToUse = examData.sections.where((section) {
             return section.name == 'TYT' ||
-                   section.name.toLowerCase() == selectedExamSection.toLowerCase();
+                section.name.toLowerCase() == selectedExamSection.toLowerCase();
           }).toList();
         } else {
           // Diğer sınavlar için: sadece seçilen section
