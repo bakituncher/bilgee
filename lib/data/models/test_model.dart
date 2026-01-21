@@ -95,11 +95,9 @@ extension TestModelSummaryX on TestModel {
     final examTypeUpper = examType.name.toUpperCase();
 
     // 2. KAPSAYICI DERS İSİMLERİ (Tek ders olsa bile tüm sınavı temsil edenler)
-    // YDT (Yabancı Dil) veya ÖABT (Alan Bilgisi) gibi tek derslik sınavları yakalamak için
-    // sadece dersin adına bakarız. Bölüm adını ("Fizik", "Tarih") bilmemize gerek kalmaz.
+    // YDT (Yabancı Dil) gibi tek derslik sınavları yakalamak için sadece dersin adına bakarız.
+    // DÜZELTME: "ALAN BİLGİSİ" kaldırıldı çünkü ÖABT'de bu bir branş denemesi olabilir.
     final comprehensiveSubjectNames = [
-      'ALAN BİLGİSİ',
-      'ALAN BILGISI',
       'YABANCI DİL',
       'YABANCI DIL',
     ];
