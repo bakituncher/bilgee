@@ -879,7 +879,13 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
               // İÇERİK ALANI
               Expanded(
                 child: _isLoadingPreselected
-                    ? const Center(child: CircularProgressIndicator()) // preselectedImage işlenirken
+                    ? Center(
+                        child: Lottie.asset(
+                          'assets/lotties/AI logo Foriday.json',
+                          height: 60,
+                          errorBuilder: (context, error, stackTrace) => Icon(Icons.error, color: Colors.red),
+                        ),
+                      ) // preselectedImage işlenirken
                     : _isAnalyzing
                     ? const SizedBox.expand() // Animasyon resmin üstünde, burada boş alan
                     : _error != null
@@ -1487,25 +1493,30 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
   Widget _buildTypingIndicator(ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
-      child: Row(
-        children: [
-          const SizedBox(width: 12),
-          Lottie.asset(
-            'assets/lotties/loading_dots.json',
-            height: 40,
-            errorBuilder: (context, error, stackTrace) =>
-            const SizedBox(
-              width: 40,
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Lottie.asset(
+              'assets/lotties/AI logo Foriday.json',
               height: 40,
-              child: CircularProgressIndicator(strokeWidth: 2),
+              errorBuilder: (context, error, stackTrace) =>
+                  const SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: Icon(Icons.error, color: Colors.red),
+                  ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            "Cevap yazılıyor...",
-            style: TextStyle(color: theme.colorScheme.outline),
-          ),
-        ],
+            const SizedBox(width: 8),
+            Text(
+              "Cevap yazılıyor",
+              style: TextStyle(color: theme.colorScheme.outline),
+            ),
+            TypingDots(style: TextStyle(color: theme.colorScheme.outline)),
+          ],
+        ),
       ),
     );
   }
@@ -1913,3 +1924,46 @@ class _GridPainter extends CustomPainter {
   bool shouldRepaint(_GridPainter oldDelegate) => false;
 }
 
+// --- TYPING DOTS WIDGET ---
+class TypingDots extends StatefulWidget {
+  final TextStyle? style;
+  const TypingDots({Key? key, this.style}) : super(key: key);
+
+  @override
+  State<TypingDots> createState() => _TypingDotsState();
+}
+
+class _TypingDotsState extends State<TypingDots> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  int _step = 0;
+  final List<String> _dots = [".", "..", "..."];
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    )..addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          _controller.reset();
+          setState(() {
+            _step = (_step + 1) % _dots.length;
+          });
+          _controller.forward();
+        }
+      });
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(_dots[_step], style: widget.style);
+  }
+}
