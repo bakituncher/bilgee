@@ -182,6 +182,10 @@ function isBranchTest(scores, sectionName, examType) {
     const subjectName = scoreKeys[0];
     // İSTİSNA: "Alan Bilgisi" veya "Temel Alan Bilgisi" -> Ana sınav
     if (subjectName === "Alan Bilgisi" || subjectName === "Temel Alan Bilgisi") {
+      // DÜZELTME: Eğer bölüm isminde "(Branş)" ifadesi varsa, bu kesinlikle branş denemesidir.
+      if (sectionName && sectionName.includes("(Branş)")) {
+        return true;
+      }
       return false;
     }
     // Diğer tek derslik durumlar branş denemesidir

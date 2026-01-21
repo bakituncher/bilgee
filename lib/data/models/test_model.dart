@@ -105,6 +105,11 @@ extension TestModelSummaryX on TestModel {
     ];
 
     if (comprehensiveSubjectNames.contains(subjectName)) {
+      // DÜZELTME: Eğer bölüm isminde "(Branş)" ifadesi varsa, bu kesinlikle branş denemesidir.
+      // (Örn: Fen Bilgisi Öğretmenliği -> Alan Bilgisi seçimi)
+      if (sectionUpper.contains('(BRANŞ)')) {
+        return true;
+      }
       return false; // Ana Sınavdır
     }
 

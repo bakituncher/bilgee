@@ -67,16 +67,16 @@ class Step3Summary extends ConsumerWidget {
               notifier.setSaving(true);
 
               // DÜZELTME BAŞLANGICI: İsimlendirme Mantığı
-              // Branş denemesi seçilmiş olsa bile, eğer ders "Alan Bilgisi" veya "Temel Alan Bilgisi" ise,
-              // bu aslında o branşın ana sınavıdır (Örn: Türkçe Öğretmenliği).
-              // Bu yüzden bu özel derslerde, ders adı yerine Section (Bölüm) adını kullanarak kaydediyoruz.
-              // Böylece "Türkçe Öğretmenliği" genel denemesi ile "Alan Bilgisi" denemesi aynı isimde birleşir.
+              // Eğer birden fazla dersten oluşan bir bölümün (Örn: Fen Bilgisi Öğrt.) altından bir ders seçildiyse (Branş Modu),
+              // bu bir Branş Denemesi olarak kaydedilmelidir.
+              // Ancak "Alan Bilgisi" ismi tek başına kullanıldığında sistem bunu Ana Sınav sanabilir (Örn: Türkçe Öğrt. -> Alan Bilgisi).
+              // Bu karışıklığı önlemek için, eğer çoklu dersten gelen bir "Alan Bilgisi" branşı ise sonuna "(Branş)" ekliyoruz.
               String displaySectionName;
               if (state.isBranchMode && state.selectedBranchSubject != null) {
                 if (state.selectedBranchSubject == 'Alan Bilgisi' ||
                     state.selectedBranchSubject == 'Temel Alan Bilgisi') {
-                  // AGS/ÖABT için özel durum: Bölüm adını kullan
-                  displaySectionName = section.name;
+                  // Branş olduğunu belli etmek için ek ekle
+                  displaySectionName = "${state.selectedBranchSubject!} (Branş)";
                 } else {
                   // Diğer dersler (Matematik, Tarih vb.) için ders adını kullan
                   displaySectionName = state.selectedBranchSubject!;
