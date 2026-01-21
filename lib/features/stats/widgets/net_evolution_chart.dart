@@ -19,7 +19,7 @@ class _NetEvolutionChartState extends State<NetEvolutionChart> {
   List<FlSpot> _getSampledSpots(List<FlSpot> originalSpots) {
     if (originalSpots.length <= 50) return originalSpots;
 
-    // 100+ test varsa, akıllı örnekleme yap
+    // 50+ test varsa, akıllı örnekleme yap
     final sampledSpots = <FlSpot>[];
     final step = originalSpots.length / 50;
 
@@ -40,6 +40,8 @@ class _NetEvolutionChartState extends State<NetEvolutionChart> {
     final hasData = spots.isNotEmpty;
 
     double minY = 0, maxY = 1;
+    double yInterval = 1; // Default interval
+
     if (hasData) {
       minY = originalSpots.map((e) => e.y).reduce((a, b) => a < b ? a : b);
       maxY = originalSpots.map((e) => e.y).reduce((a, b) => a > b ? a : b);
@@ -47,17 +49,28 @@ class _NetEvolutionChartState extends State<NetEvolutionChart> {
       // Dinamik padding - veri aralığına göre ayarla
       final range = maxY - minY;
       final padding = range == 0 ? 5.0 : (range * 0.15);
-      minY = (minY - padding).clamp(0, double.infinity);
+
+      // Eksi değerlere izin veriyoruz (clamp kaldırıldı)
+      minY = minY - padding;
       maxY = maxY + padding;
 
       if (minY == maxY) {
-        minY = (minY - 5).clamp(0, double.infinity);
+        minY = minY - 5;
         maxY = maxY + 5;
       }
+
+      // Y EKSENİ DÜZENLEMESİ:
+      // Aralığı grafiğin yüksekliğine (yaklaşık 5-6 dilim) göre ayarla
+      double calculatedRange = maxY - minY;
+      if (calculatedRange <= 0) calculatedRange = 1;
+
+      double rawInterval = calculatedRange / 5;
+      // Interval çok küçükse en az 1 yap, yoksa hesaplanan değeri kullan
+      yInterval = rawInterval < 1 ? 1 : rawInterval;
     }
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Container(
       height: 280,
       decoration: BoxDecoration(
@@ -99,6 +112,7 @@ class _NetEvolutionChartState extends State<NetEvolutionChart> {
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: false,
+                  horizontalInterval: yInterval, // Hesaplanan interval
                   getDrawingHorizontalLine: (value) => FlLine(
                     color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25),
                     strokeWidth: 1,
@@ -110,12 +124,20 @@ class _NetEvolutionChartState extends State<NetEvolutionChart> {
                     sideTitles: SideTitles(
                       showTitles: true,
                       reservedSize: 44,
-                      interval: ((maxY - minY) / 4).abs(),
+                      interval: yInterval, // Hesaplanan interval
                       getTitlesWidget: (value, meta) {
+                        // Sadece tam sayıya çok yakın değerleri göster (çakışmayı önler)
+                        // Örneğin 10.00001 gelirse göster, ama 10.3 gelirse gösterme (grid çizgisi olsa bile)
+                        // Bu, y ekseninin temiz görünmesini sağlar.
+                        if ((value - value.round()).abs() > 0.1) {
+                          return const SizedBox.shrink();
+                        }
+
                         return Text(
                           value.toStringAsFixed(0),
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            fontSize: 11, // Biraz daha okunaklı font
                           ),
                         );
                       },
@@ -154,7 +176,6 @@ class _NetEvolutionChartState extends State<NetEvolutionChart> {
                         if (!shouldShow) return const SizedBox.shrink();
 
                         final date = widget.analysis.sortedTests[i].date;
-                        // 50+ test varsa sadece ay/yıl göster
                         final format = totalTests > 50 ? DateFormat.yM('tr') : DateFormat.MMMd('tr');
 
                         return Padding(
@@ -213,7 +234,7 @@ class _NetEvolutionChartState extends State<NetEvolutionChart> {
                 lineBarsData: [
                   LineChartBarData(
                     spots: spots,
-                    isCurved: originalSpots.length <= 20, // 20+ testte düz çizgi daha okunabilir
+                    isCurved: originalSpots.length <= 20,
                     curveSmoothness: 0.35,
                     barWidth: originalSpots.length > 50 ? 2.5 : 3,
                     isStrokeCapRound: true,
@@ -224,7 +245,7 @@ class _NetEvolutionChartState extends State<NetEvolutionChart> {
                       ],
                     ),
                     dotData: FlDotData(
-                      show: originalSpots.length <= 30, // 30+ testte noktaları gizle
+                      show: originalSpots.length <= 30,
                       getDotPainter: (spot, percent, barData, index) {
                         if (index >= widget.analysis.sortedTests.length) {
                           return FlDotCirclePainter(
@@ -238,7 +259,6 @@ class _NetEvolutionChartState extends State<NetEvolutionChart> {
                         final accuracy = total == 0 ? 0.0 : (test.totalCorrect / total);
                         final isTouched = _touchedIndex == index;
 
-                        // Büyük veri setlerinde sadece dokunulan noktayı vurgula
                         if (originalSpots.length > 15 && !isTouched) {
                           return FlDotCirclePainter(
                             radius: 2.5,
@@ -321,4 +341,3 @@ class _EmptyChartPlaceholder extends StatelessWidget {
     );
   }
 }
-
