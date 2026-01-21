@@ -36,7 +36,8 @@ class TestModel {
   factory TestModel.fromSnapshot(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data()!;
     final scoresData = (data['scores'] as Map<String, dynamic>).map(
-          (key, value) => MapEntry(key, (value as Map<String, dynamic>).cast<String, int>()),
+          (key, value) =>
+          MapEntry(key, (value as Map<String, dynamic>).cast<String, int>()),
     );
 
     return TestModel(
@@ -52,7 +53,8 @@ class TestModel {
       totalCorrect: data['totalCorrect'] ?? 0,
       totalWrong: data['totalWrong'] ?? 0,
       totalBlank: data['totalBlank'] ?? 0,
-      penaltyCoefficient: (data['penaltyCoefficient'] as num?)?.toDouble() ?? 0.25,
+      penaltyCoefficient:
+      (data['penaltyCoefficient'] as num?)?.toDouble() ?? 0.25,
     );
   }
 
@@ -112,15 +114,16 @@ extension TestModelSummaryX on TestModel {
       return false;
     }
 
-    // 4. GENEL ANAHTAR KELİMELER
-    // "Genel" veya "Tümü" kelimeleri geçiyorsa ana sınavdır.
-    // "Deneme" kelimesini hariç tuttum çünkü "Matematik Denemesi" gibi branş denemelerinde de geçebilir.
-    if (sectionUpper.contains('GENEL') || sectionUpper == 'TÜMÜ') {
+    // 4. GENEL ANAHTAR KELİMELER (DÜZELTİLDİ)
+    // "Genel" veya "Tümü" kelimeleri bölüm adının BAŞINDA geçiyorsa ana sınavdır.
+    // contains yerine startsWith kullanıldı. Böylece "Tarih (Genel Kültür)" gibi
+    // parantez içi kullanımlar yanlışlıkla ana sınav sayılmayacak.
+    if (sectionUpper.startsWith('GENEL') || sectionUpper == 'TÜMÜ') {
       return false;
     }
 
     // Yukarıdaki şartların hiçbiri sağlanmadıysa, bu bir branş denemesidir.
-    // (Örn: TYT sınavında sadece "Matematik" çözüldüyse)
+    // (Örn: TYT sınavında sadece "Matematik" çözüldüyse veya KPSS'de sadece "Tarih" çözüldüyse)
     return true;
   }
 
@@ -140,8 +143,10 @@ extension TestModelSummaryX on TestModel {
     final double accuracyContribution = attemptedQuestions > 0
         ? (totalCorrect / attemptedQuestions) * 25
         : 0;
-    final double effortContribution = (attemptedQuestions / totalQuestions) * 15;
-    final double totalScore = netContribution + accuracyContribution + effortContribution;
+    final double effortContribution =
+        (attemptedQuestions / totalQuestions) * 15;
+    final double totalScore =
+        netContribution + accuracyContribution + effortContribution;
     return totalScore.clamp(0, 100);
   }
 
@@ -151,27 +156,32 @@ extension TestModelSummaryX on TestModel {
     if (score > 85) {
       return {
         "title": "Efsanevi Savaşçı",
-        "verdict": "Zirvedeki yerin sarsılmaz. Bilgin bir kılıç gibi keskin, iraden ise bir zırh kadar sağlam. Bu yolda devam et, zafer seni bekliyor."
+        "verdict":
+        "Zirvedeki yerin sarsılmaz. Bilgin bir kılıç gibi keskin, iraden ise bir zırh kadar sağlam. Bu yolda devam et, zafer seni bekliyor."
       };
     } else if (score > 70) {
       return {
         "title": "Usta Stratejist",
-        "verdict": "Savaş meydanını okuyorsun. Güçlü ve zayıf yönlerini biliyorsun. Küçük gedikleri kapatarak yenilmez olacaksın. Potansiyelin parlıyor."
+        "verdict":
+        "Savaş meydanını okuyorsun. Güçlü ve zayıf yönlerini biliyorsun. Küçük gedikleri kapatarak yenilmez olacaksın. Potansiyelin parlıyor."
       };
     } else if (score > 50) {
       return {
         "title": "Yetenekli Savaşçı",
-        "verdict": "Gücün ve cesaretin takdire şayan. Temellerin sağlam, ancak bazı hamlelerinde tereddüt var. Pratik ve odaklanma ile bu savaşı kazanacaksın."
+        "verdict":
+        "Gücün ve cesaretin takdire şayan. Temellerin sağlam, ancak bazı hamlelerinde tereddüt var. Pratik ve odaklanma ile bu savaşı kazanacaksın."
       };
     } else if (score > 30) {
       return {
         "title": "Azimli Acemi",
-        "verdict": "Her büyük savaşçı bu yoldan geçti. Kaybettiğin her mevzi, öğrendiğin yeni bir derstir. Azmin en büyük silahın, pes etme."
+        "verdict":
+        "Her büyük savaşçı bu yoldan geçti. Kaybettiğin her mevzi, öğrendiğin yeni bir derstir. Azmin en büyük silahın, pes etme."
       };
     } else {
       return {
         "title": "Yolun Başındaki Kâşif",
-        "verdict": "Unutma, en uzun yolculuklar tek bir adımla başlar. Bu ilk adımı attın. Şimdi hatalarından öğrenme ve güçlenme zamanı. Yanındayım."
+        "verdict":
+        "Unutma, en uzun yolculuklar tek bir adımla başlar. Bu ilk adımı attın. Şimdi hatalarından öğrenme ve güçlenme zamanı. Yanındayım."
       };
     }
   }
