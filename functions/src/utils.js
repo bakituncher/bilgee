@@ -174,47 +174,40 @@ function getClientIpFromRawRequest(rawRequest) {
 // Branş denemesi kontrolü (Dart'taki TestModel.isBranchTest mantığı)
 function isBranchTest(scores, sectionName, examType) {
   if (!scores || typeof scores !== "object") return false;
-
   const scoreKeys = Object.keys(scores);
 
-  // 1. Eğer sadece 1 ders varsa...
-  if (scoreKeys.length === 1) {
-    const subjectName = scoreKeys[0];
-    // İSTİSNA: "Alan Bilgisi" veya "Temel Alan Bilgisi" -> Ana sınav
-    if (subjectName === "Alan Bilgisi" || subjectName === "Temel Alan Bilgisi") {
-      return false;
-    }
-    // Diğer tek derslik durumlar branş denemesidir
-    return true;
+  // 1. Çoklu ders varsa kesinlikle Ana Sınavdır
+  if (scoreKeys.length > 1) {
+    return false;
   }
 
+  // Buraya geldiysek tek ders var demektir.
+  const subjectName = scoreKeys.length > 0 ? scoreKeys[0].toUpperCase().trim() : "";
   const sectionUpper = (sectionName || "").toUpperCase().trim();
   const examTypeUpper = (examType || "").toUpperCase().trim();
 
-  // 2. Ana sınav bölümleri - Kesin liste
-  const mainSections = ["TYT", "LGS", "KPSS", "AGS", "YDT", "GENEL", "TÜMÜ", "DENEME"];
+  // 2. İSTİSNALAR (Tek ders olsa bile Ana Sınav sayılanlar)
+  const comprehensiveSubjectNames = [
+    "YABANCI DİL", "YABANCI DIL",
+    "ALAN BİLGİSİ", "ALAN BILGISI" // Alan Bilgisi de burada olmalı
+  ];
 
-  // Eğer sectionName direkt sınav türüyle aynıysa -> Ana Deneme
+  if (comprehensiveSubjectNames.includes(subjectName)) {
+    return false; // Ana Sınav
+  }
+
+  // 3. Bölüm Adı == Sınav Türü ise Ana Sınavdır (Örn: YDT == YDT)
   if (sectionUpper === examTypeUpper) {
     return false;
   }
 
-  // Ana sınav isimlerini içeriyorsa -> Ana Deneme
-  if (mainSections.includes(sectionUpper)) {
+  // 4. Genel/Tümü ile başlıyorsa Ana Sınavdır
+  const mainSections = ["TYT", "LGS", "KPSS", "AGS", "GENEL", "TÜMÜ", "DENEME"];
+  if (mainSections.includes(sectionUpper) || sectionUpper.startsWith("GENEL") || sectionUpper.startsWith("AYT")) {
     return false;
   }
 
-  // "TYT GENEL", "TYT DENEME" gibi kombinasyonları yakala
-  if (sectionUpper.includes("GENEL") || (sectionUpper.includes(examTypeUpper) && sectionUpper.includes("DENEME"))) {
-    return false;
-  }
-
-  // AYT ve alt türleri (AYT-SAY, AYT-EA, AYT-SOZ, AYT-DIL, vs.) -> Ana Deneme
-  if (sectionUpper.startsWith("AYT")) {
-    return false;
-  }
-
-  // Diğer her şey branş denemesi
+  // Yukarıdakilerin hiçbiri değilse Branş Denemesidir
   return true;
 }
 
