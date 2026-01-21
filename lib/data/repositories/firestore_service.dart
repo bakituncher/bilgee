@@ -680,37 +680,45 @@ class FirestoreService {
       throw Exception('Bu işlem için yetkiniz yok');
     }
 
+    // KRİTİK: Branş denemesi kontrolü - Cloud Function ile senkronize
+    // Branş denemeleri eklenirken sayaç artırılmadığı için silinirken de azaltılmamalı
+    final bool isBranchTest = data['isBranchTest'] ?? false;
     final double netToRemove = (data['totalNet'] as num?)?.toDouble() ?? 0.0;
 
     final batch = _firestore.batch();
     batch.delete(docRef);
 
-    // Stats güncelle: Deneme sayısı ve toplam neti düşür
-    final statsRef = _userStatsDoc(currentUserId);
-    batch.set(statsRef, {
-      'testCount': FieldValue.increment(-1),
-      'totalNetSum': FieldValue.increment(-netToRemove),
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    // Stats güncelle: SADECE ana sınavlar için deneme sayısı ve toplam neti düşür
+    if (!isBranchTest) {
+      final statsRef = _userStatsDoc(currentUserId);
+      batch.set(statsRef, {
+        'testCount': FieldValue.increment(-1),
+        'totalNetSum': FieldValue.increment(-netToRemove),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    }
 
     await batch.commit();
 
-    // Public profile'ı senkronize et
-    try {
-      // Stats'tan güncel değerleri al
-      final statsSnap = await statsRef.get();
-      final stats = statsSnap.data() ?? {};
+    // Public profile'ı senkronize et (SADECE ana sınavlar için)
+    if (!isBranchTest) {
+      try {
+        // Stats'tan güncel değerleri al
+        final statsRef = _userStatsDoc(currentUserId);
+        final statsSnap = await statsRef.get();
+        final stats = statsSnap.data() ?? {};
 
-      // Public profile'ı güncelle
-      final publicProfileRef = _publicProfileDoc(currentUserId);
-      await publicProfileRef.set({
-        'testCount': stats['testCount'] ?? 0,
-        'totalNetSum': stats['totalNetSum'] ?? 0,
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-    } catch (e) {
-      // Public profile güncellemesi başarısız olsa bile devam et
-      // (Kullanıcı deneyimini etkilemesin)
+        // Public profile'ı güncelle
+        final publicProfileRef = _publicProfileDoc(currentUserId);
+        await publicProfileRef.set({
+          'testCount': stats['testCount'] ?? 0,
+          'totalNetSum': stats['totalNetSum'] ?? 0,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      } catch (e) {
+        // Public profile güncellemesi başarısız olsa bile devam et
+        // (Kullanıcı deneyimini etkilemesin)
+      }
     }
   }
 
