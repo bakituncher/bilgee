@@ -30,10 +30,10 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
   bool _isTyping = false;
   bool _showScrollToBottom = false;
   late AnimationController _backgroundAnimationController;
-  String _currentPromptType = 'user_chat'; // YENİ: Aktif sohbet modunu saklamak için
-  bool _cameWithInitialPrompt = false; // YENİ: Kullanıcı direkt sohbete mi girdi?
+  String _currentPromptType = 'user_chat'; // Aktif sohbet modunu saklamak için
+  bool _cameWithInitialPrompt = false; // Kullanıcı direkt sohbete mi girdi?
 
-  // YENI: Sohbetten Süit ekranına dönüş helper
+  // Sohbetten Süit ekranına dönüş helper
   void _exitToSuite() {
     if (!mounted) return;
     ref.read(chatScreenStateProvider.notifier).state = null; // Süit ekranına dön
@@ -41,7 +41,7 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
     setState(() => _isTyping = false);
   }
 
-  // YENI: Son N mesajdan kısa bir özet üret
+  // Son N mesajdan kısa bir özet üret
   String _buildConversationHistory(List<ChatMessage> history, {int maxTurns = 10, int maxChars = 800}) {
     if (history.isEmpty) return '';
     final recent = history.length > maxTurns ? history.sublist(history.length - maxTurns) : history;
@@ -112,11 +112,10 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
     final tests = ref.read(testsProvider).value!;
     final performance = ref.read(performanceProvider).value!;
 
-    // YENI: Sohbet geçmişini ve son kullanıcı mesajını geçir
+    // Sohbet geçmişini ve son kullanıcı mesajını geçir
     final history = ref.read(chatHistoryProvider);
 
-    // SON MESAJI HARİÇ TUT: Çünkü son mesajı zaten 'lastUserMessage' olarak ayrıca gönderiyoruz.
-    // Geçmişin içinde de gönderirsek yapay zeka aynı mesajı iki kere okur (Biri geçmişte, biri şimdi).
+    // SON MESAJI HARİÇ TUT
     final historyForPrompt = history.length > 1 ? history.sublist(0, history.length - 1) : <ChatMessage>[];
 
     // Özeti son mesaj hariç oluşturuyoruz
@@ -126,7 +125,7 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
       user: user,
       tests: tests,
       performance: performance,
-      promptType: _currentPromptType, // DÜZELTME: 'user_chat' yerine mevcut modu kullan
+      promptType: _currentPromptType,
       emotion: null,
       conversationHistory: historySummary,
       lastUserMessage: text,
@@ -139,26 +138,20 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
   }
 
   Future<void> _onMoodSelected(String moodType, {Map<String, dynamic>? extraContext}) async {
-    if (_isTyping) return; // yeniden tetiklemeyi engelle
+    if (_isTyping) return;
 
-    // Servisleri ve provider'ları en başta tanımla
     final aiService = ref.read(aiServiceProvider);
     final user = ref.read(userProfileProvider).value!;
     final tests = ref.read(testsProvider).value!;
     final performance = ref.read(performanceProvider).value!;
 
-    // Motivasyon chat görevini kaydet (ilk kullanımda)
     ref.read(questNotifierProvider.notifier).userUsedMotivationChat();
-
-    // Seçilen modun hafızasını temizle
     await aiService.clearChatMemory(user.id, moodType);
 
-    // YENİ: Seçilen kişilik türünü state'e kaydet.
     setState(() {
       _currentPromptType = moodType;
     });
 
-    // moodType'a göre ruh halini belirle
     Mood mood = Mood.neutral;
     if (moodType == 'trial_review') {
       if (tests.isNotEmpty && user.testCount > 0) {
@@ -175,7 +168,6 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
     } else if (moodType == 'motivation_corner') {
       mood = Mood.workshop;
     } else {
-      // Eski modlar için geriye dönük uyumluluk
       final Map<String, Mood> moodMapping = {
         'welcome': Mood.neutral, 'new_test_good': Mood.goodResult,
         'new_test_bad': Mood.badResult, 'focused': Mood.focused,
@@ -185,11 +177,9 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
       mood = moodMapping[moodType] ?? Mood.neutral;
     }
 
-    // UI durumunu güncelle
     ref.read(chatScreenStateProvider.notifier).state = mood;
     setState(() => _isTyping = true);
 
-    // AI'dan ilk cevabı al
     final history = ref.read(chatHistoryProvider);
     final historySummary = _buildConversationHistory(history);
 
@@ -206,7 +196,6 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
 
     if (!mounted) return;
 
-    // Sohbet geçmişini AI'nin ilk mesajıyla güncelle
     ref.read(chatHistoryProvider.notifier).state = [ChatMessage(aiResponse, isUser: false)];
     setState(() => _isTyping = false);
     _scrollToBottom(isNewMessage: true);
@@ -229,34 +218,26 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
     final history = ref.watch(chatHistoryProvider);
     final selectedMood = ref.watch(chatScreenStateProvider);
 
-    // DÜZ: arka plan animasyonu yerine sade arka plan
-    // AppTheme odaklı renk paleti
+    // DÜZELTME: Klavye yüksekliğini ve safe area'yı alıyoruz
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final paddingBottom = MediaQuery.of(context).padding.bottom;
 
     return PopScope(
-      // EĞER: Bir mood seçili değilse (menüdeysek) pop işlemine izin ver (true).
-      // VEYA: Kullanıcı direkt sohbete geldiyse (_cameWithInitialPrompt) ve sohbetteyse, pop'a izin ver (önceki ekrana dönecek).
-      // DEĞİLSE: (Menüden sohbete girdiyse) pop işlemini engelle (false) ki biz yönetelim.
       canPop: selectedMood == null || (_cameWithInitialPrompt && selectedMood != null),
       onPopInvokedWithResult: (didPop, result) {
-        // DEBUG: Geri tuşu davranışını izle
-        print('[MotivationChat] PopScope - didPop: $didPop, selectedMood: $selectedMood, _cameWithInitialPrompt: $_cameWithInitialPrompt');
-
-        // Eğer zaten pop işlemi gerçekleştiyse (önceki ekrana döndüyse) bir şey yapma.
         if (didPop) return;
-
-        // Eğer pop engellendiyse (yani menüden sohbete girildiyse ve sohbetteyse):
         if (selectedMood != null && !_cameWithInitialPrompt) {
-          print('[MotivationChat] Going back to menu (Briefing View)');
-          // State'i null yaparak menüye (Briefing View) geri dön
           ref.read(chatScreenStateProvider.notifier).state = null;
           ref.read(chatHistoryProvider.notifier).state = [];
           setState(() => _isTyping = false);
         }
       },
       child: Scaffold(
-        resizeToAvoidBottomInset: true,
+        // DÜZELTME: resizeToAvoidBottomInset'i kapatıp manuel yönetiyoruz.
+        // Bu, klavye açıldığında UI'ın bozulmasını ve inputun gizlenmesini %100 engeller.
+        resizeToAvoidBottomInset: false,
         appBar: AppBar(
-          title: Text(
+          title: const Text(
             'Sohbet',
             style: TextStyle(
               fontWeight: FontWeight.w700,
@@ -272,9 +253,10 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
           children: [
             Column(
               children: [
-                // AI içerik uyarısı
                 if (selectedMood != null)
                   AiContentSafety.buildDisclaimerBanner(context),
+
+                // DÜZELTME: İçeriğin genişlemesi için Expanded kullanıyoruz
                 Expanded(
                   child: AnimatedSwitcher(
                     duration: 200.ms,
@@ -289,6 +271,7 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
                         addAutomaticKeepAlives: false,
                         addRepaintBoundaries: true,
                         addSemanticIndexes: false,
+                        // DÜZELTME: Liste padding'ine klavye boşluğu eklemiyoruz çünkü input kutusu onu yukarı itecek
                         padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
                         itemCount: history.length + (_isTyping ? 1 : 0),
                         itemBuilder: (context, index) {
@@ -303,13 +286,22 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
                     ),
                   ),
                 ),
-                if (selectedMood != null) _buildChatInput(),
+
+                // DÜZELTME: Input alanını Column'un en altına koyuyoruz.
+                // Ve klavye yüksekliği kadar (viewInsets.bottom) padding veriyoruz.
+                if (selectedMood != null)
+                  Padding(
+                    padding: EdgeInsets.only(bottom: bottomInset),
+                    child: _buildChatInput(paddingBottom: paddingBottom, isKeyboardOpen: bottomInset > 0),
+                  ),
               ],
             ),
+
             if (_showScrollToBottom)
               Positioned(
                 right: 16,
-                bottom: (selectedMood != null) ? 88 : 24,
+                // DÜZELTME: Butonun konumunu klavye yüksekliğine göre ayarlıyoruz
+                bottom: ((selectedMood != null) ? 88 : 24) + bottomInset,
                 child: FloatingActionButton.small(
                   heroTag: 'toBottom',
                   backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
@@ -324,99 +316,98 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
     );
   }
 
-  Widget _buildChatInput() {
+  // DÜZELTME: SafeArea widget'ını kaldırdık ve padding'i parametre olarak aldık
+  Widget _buildChatInput({required double paddingBottom, required bool isKeyboardOpen}) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return SafeArea(
-      top: false,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: colorScheme.outline.withOpacity(0.2),
-                    width: 1.5,
-                  ),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                child: TextField(
-                  controller: _controller,
-                  textCapitalization: TextCapitalization.sentences,
-                  keyboardType: TextInputType.multiline,
-                  minLines: 1,
-                  maxLines: 4,
-                  style: theme.textTheme.bodyLarge,
-                  decoration: InputDecoration(
-                    hintText: 'Mesajını yaz...',
-                    hintStyle: TextStyle(
-                      color: colorScheme.onSurfaceVariant.withOpacity(0.6),
-                    ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  onSubmitted: (_) => _sendMessage(),
+    return Container(
+      // DÜZELTME: Eğer klavye açıksa, bottom padding 16px.
+      // Eğer kapalıysa, 16px + Home Indicator (safe area) yüksekliği.
+      padding: EdgeInsets.fromLTRB(16, 12, 16, 16 + (isKeyboardOpen ? 0 : paddingBottom)),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: colorScheme.outline.withOpacity(0.2),
+                  width: 1.5,
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    colorScheme.secondary,
-                    colorScheme.secondary.withOpacity(0.8),
-                  ],
-                ),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: colorScheme.secondary.withOpacity(0.4),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: TextField(
+                controller: _controller,
+                textCapitalization: TextCapitalization.sentences,
+                keyboardType: TextInputType.multiline,
+                minLines: 1,
+                maxLines: 4,
+                style: theme.textTheme.bodyLarge,
+                decoration: InputDecoration(
+                  hintText: 'Mesajını yaz...',
+                  hintStyle: TextStyle(
+                    color: colorScheme.onSurfaceVariant.withOpacity(0.6),
                   ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                onSubmitted: (_) => _sendMessage(),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  colorScheme.secondary,
+                  colorScheme.secondary.withOpacity(0.8),
                 ],
               ),
-              child: IconButton(
-                onPressed: _isTyping ? null : () => _sendMessage(),
-                icon: _isTyping
-                    ? SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.black.withOpacity(0.7),
-                          ),
-                        ),
-                      )
-                    : const Icon(Icons.send_rounded, size: 24),
-                color: Colors.black87,
-                padding: const EdgeInsets.all(14),
-                constraints: const BoxConstraints(minWidth: 52, minHeight: 52),
-              ),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: colorScheme.secondary.withOpacity(0.4),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-          ],
-        ),
+            child: IconButton(
+              onPressed: _isTyping ? null : () => _sendMessage(),
+              icon: _isTyping
+                  ? SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    Colors.black.withOpacity(0.7),
+                  ),
+                ),
+              )
+                  : const Icon(Icons.send_rounded, size: 24),
+              color: Colors.black87,
+              padding: const EdgeInsets.all(14),
+              constraints: const BoxConstraints(minWidth: 52, minHeight: 52),
+            ),
+          ),
+        ],
       ),
     );
   }
-
 }
 
 class _SmartBriefingView extends ConsumerWidget {
@@ -448,13 +439,13 @@ class _SmartBriefingView extends ConsumerWidget {
                         end: Alignment.bottomRight,
                         colors: isDark
                             ? [
-                                colorScheme.primaryContainer.withOpacity(0.25),
-                                colorScheme.tertiaryContainer.withOpacity(0.15),
-                              ]
+                          colorScheme.primaryContainer.withOpacity(0.25),
+                          colorScheme.tertiaryContainer.withOpacity(0.15),
+                        ]
                             : [
-                                colorScheme.primaryContainer.withOpacity(0.5),
-                                colorScheme.tertiaryContainer.withOpacity(0.3),
-                              ],
+                          colorScheme.primaryContainer.withOpacity(0.5),
+                          colorScheme.tertiaryContainer.withOpacity(0.3),
+                        ],
                       ),
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
