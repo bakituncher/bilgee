@@ -88,6 +88,7 @@ class _QuizViewState extends State<QuizView> {
       children: [
         Column(
           children: [
+            // İlerleme Çubuğu
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
               child: Row(
@@ -255,197 +256,226 @@ class _QuestionCardState extends State<QuestionCard> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        NotificationListener<ScrollNotification>(
-          onNotification: (notification) {
-            if (notification is ScrollUpdateNotification) {
-              _checkScrollPosition();
-            }
-            // Sınırda daha fazla çekme (Overscroll) durumunda sayfa değiştir
-            if (notification is OverscrollNotification) {
-              if (notification.overscroll > 5 && _isAtBottom) {
-                widget.onSwipeUp?.call();
-              } else if (notification.overscroll < -5 && _isAtTop) {
-                widget.onSwipeDown?.call();
+    return SizedBox.expand(
+      // 1. SizedBox.expand ile kartın her zaman tüm alanı kaplamasını sağlıyoruz.
+      child: Stack(
+        children: [
+          NotificationListener<ScrollNotification>(
+            onNotification: (notification) {
+              if (notification is ScrollUpdateNotification) {
+                _checkScrollPosition();
               }
-            }
-            return false;
-          },
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            // OverscrollNotification için Android'de bile Bounce efekti sağlar
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 2),
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: MarkdownWithMath(
-                    data: widget.question.question,
-                    styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
-                      p: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        height: 1.4,
+              // Sınırda daha fazla çekme (Overscroll) durumunda sayfa değiştir
+              if (notification is OverscrollNotification) {
+                // Scroll view'ın içeriği kısa olsa bile AlwaysScrollableScrollPhysics
+                // sayesinde overscroll tetiklenir.
+                if (notification.overscroll > 5) {
+                  // Aşağıdan yukarı çekme (Next Question)
+                  // Eğer içerik kısaysa _isAtBottom zaten true'dur.
+                  widget.onSwipeUp?.call();
+                } else if (notification.overscroll < -5) {
+                  // Yukarıdan aşağı çekme (Prev Question)
+                  // Eğer içerik kısaysa _isAtTop zaten true'dur.
+                  widget.onSwipeDown?.call();
+                }
+              }
+              return false;
+            },
+            child: LayoutBuilder(
+              // 2. LayoutBuilder ile ebeveynin (ekranın) boyutlarını alıyoruz.
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    controller: _scrollController,
+                    // 3. AlwaysScrollableScrollPhysics: İçerik kısa olsa bile scroll
+                    // efektinin ve overscroll'un çalışmasını sağlar.
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: ConstrainedBox(
+                      // 4. ConstrainedBox: İçeriğin minimum yüksekliğini ekran yüksekliğine eşitler.
+                      // Böylece boş alana tıklayıp sürüklediğinizde de scroll view bunu algılar.
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
                       ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ...List.generate(widget.question.options.length, (index) {
-                  bool isSelected = widget.selectedOptionIndex == index;
-                  bool isCorrect = widget.question.correctOptionIndex == index;
-                  Color? tileColor;
-                  Color? borderColor;
-                  Color? letterBgColor;
-                  Color? letterTextColor;
-                  final colorScheme = Theme.of(context).colorScheme;
-                  const greenColor = Color(0xFF4CAF50);
-                  const redColor = Color(0xFFE53935);
-
-                  if (widget.selectedOptionIndex != null) {
-                    if (isSelected) {
-                      if (isCorrect) {
-                        tileColor = greenColor.withValues(alpha: 0.1);
-                        borderColor = greenColor;
-                        letterBgColor = greenColor;
-                        letterTextColor = Colors.white;
-                      } else {
-                        tileColor = redColor.withValues(alpha: 0.1);
-                        borderColor = redColor;
-                        letterBgColor = redColor;
-                        letterTextColor = Colors.white;
-                      }
-                    } else if (isCorrect) {
-                      tileColor = greenColor.withValues(alpha: 0.1);
-                      borderColor = greenColor;
-                      letterBgColor = greenColor;
-                      letterTextColor = Colors.white;
-                    } else {
-                      tileColor = colorScheme.surface;
-                      borderColor = colorScheme.onSurface.withValues(alpha: 0.2);
-                      letterBgColor = colorScheme.onSurface.withValues(alpha: 0.1);
-                      letterTextColor = colorScheme.onSurface.withValues(alpha: 0.6);
-                    }
-                  } else {
-                    tileColor = colorScheme.surface;
-                    borderColor = colorScheme.onSurface.withValues(alpha: 0.3);
-                    letterBgColor = colorScheme.onSurface.withValues(alpha: 0.1);
-                    letterTextColor = colorScheme.onSurface;
-                  }
-
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    decoration: BoxDecoration(
-                      color: tileColor,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: borderColor,
-                        width: 1.5,
-                      ),
-                    ),
-                    child: InkWell(
-                      onTap: widget.selectedOptionIndex == null ? () => widget.onOptionSelected(index) : null,
-                      borderRadius: BorderRadius.circular(12),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-                        child: Row(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          // MainAxisAlignment.start kullanarak içeriği yukarı yaslıyoruz,
+                          // ama ConstrainedBox sayesinde tüm alan "tıklanabilir/kaydırılabilir" oluyor.
+                          mainAxisAlignment: MainAxisAlignment.start,
                           children: [
+                            const SizedBox(height: 2),
                             Container(
-                              width: 30,
-                              height: 30,
+                              padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
-                                color: letterBgColor,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  String.fromCharCode(65 + index),
-                                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                    color: letterTextColor,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                  ),
+                                color: Theme.of(context).colorScheme.surface,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
+                                  width: 1.5,
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
                               child: MarkdownWithMath(
-                                data: widget.question.options[index],
+                                data: widget.question.question,
                                 styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
-                                  p: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    fontSize: 14,
+                                  p: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
                                     height: 1.4,
                                   ),
                                 ),
                               ),
                             ),
+                            const SizedBox(height: 16),
+                            ...List.generate(widget.question.options.length, (index) {
+                              bool isSelected = widget.selectedOptionIndex == index;
+                              bool isCorrect = widget.question.correctOptionIndex == index;
+                              Color? tileColor;
+                              Color? borderColor;
+                              Color? letterBgColor;
+                              Color? letterTextColor;
+                              final colorScheme = Theme.of(context).colorScheme;
+                              const greenColor = Color(0xFF4CAF50);
+                              const redColor = Color(0xFFE53935);
+
+                              if (widget.selectedOptionIndex != null) {
+                                if (isSelected) {
+                                  if (isCorrect) {
+                                    tileColor = greenColor.withValues(alpha: 0.1);
+                                    borderColor = greenColor;
+                                    letterBgColor = greenColor;
+                                    letterTextColor = Colors.white;
+                                  } else {
+                                    tileColor = redColor.withValues(alpha: 0.1);
+                                    borderColor = redColor;
+                                    letterBgColor = redColor;
+                                    letterTextColor = Colors.white;
+                                  }
+                                } else if (isCorrect) {
+                                  tileColor = greenColor.withValues(alpha: 0.1);
+                                  borderColor = greenColor;
+                                  letterBgColor = greenColor;
+                                  letterTextColor = Colors.white;
+                                } else {
+                                  tileColor = colorScheme.surface;
+                                  borderColor = colorScheme.onSurface.withValues(alpha: 0.2);
+                                  letterBgColor = colorScheme.onSurface.withValues(alpha: 0.1);
+                                  letterTextColor = colorScheme.onSurface.withValues(alpha: 0.6);
+                                }
+                              } else {
+                                tileColor = colorScheme.surface;
+                                borderColor = colorScheme.onSurface.withValues(alpha: 0.3);
+                                letterBgColor = colorScheme.onSurface.withValues(alpha: 0.1);
+                                letterTextColor = colorScheme.onSurface;
+                              }
+
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                decoration: BoxDecoration(
+                                  color: tileColor,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: borderColor,
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: InkWell(
+                                  onTap: widget.selectedOptionIndex == null ? () => widget.onOptionSelected(index) : null,
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 30,
+                                          height: 30,
+                                          decoration: BoxDecoration(
+                                            color: letterBgColor,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              String.fromCharCode(65 + index),
+                                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                                color: letterTextColor,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: MarkdownWithMath(
+                                            data: widget.question.options[index],
+                                            styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                                              p: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                                fontSize: 14,
+                                                height: 1.4,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }),
+                            if (widget.selectedOptionIndex != null || widget.questionNumber == widget.totalQuestions)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 16),
+                                child: Row(
+                                  children: [
+                                    if (widget.selectedOptionIndex != null)
+                                      OutlinedButton.icon(
+                                        onPressed: () => _showExplanationBottomSheet(context),
+                                        icon: const Icon(Icons.lightbulb_outline_rounded),
+                                        label: const FittedBox(child: Text("Açıklamayı Gör")),
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: const Color(0xFFFF9800),
+                                          side: const BorderSide(color: Color(0xFFFF9800), width: 1.5),
+                                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                        ),
+                                      ).animate().fadeIn(delay: 150.ms).slideY(begin: 0.2),
+                                    const Spacer(),
+                                    if (widget.questionNumber == widget.totalQuestions)
+                                      OutlinedButton.icon(
+                                        onPressed: widget.onSubmit,
+                                        icon: const Icon(Icons.assignment_turned_in_rounded),
+                                        label: const FittedBox(child: Text("Sonuçları Gör")),
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: Theme.of(context).colorScheme.onSurface,
+                                          backgroundColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
+                                          side: BorderSide.none,
+                                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                        ),
+                                      ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2),
+                                  ],
+                                ),
+                              ),
+                            // Alt kısımda ekstra boşluk bırakarak scroll alanını garantile
+                            const SizedBox(height: 50),
                           ],
                         ),
                       ),
                     ),
                   );
-                }),
-                if (widget.selectedOptionIndex != null || widget.questionNumber == widget.totalQuestions)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 16),
-                    child: Row(
-                      children: [
-                        if (widget.selectedOptionIndex != null)
-                          OutlinedButton.icon(
-                            onPressed: () => _showExplanationBottomSheet(context),
-                            icon: const Icon(Icons.lightbulb_outline_rounded),
-                            label: const FittedBox(child: Text("Açıklamayı Gör")),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFFFF9800),
-                              side: const BorderSide(color: Color(0xFFFF9800), width: 1.5),
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            ),
-                          ).animate().fadeIn(delay: 150.ms).slideY(begin: 0.2),
-                        const Spacer(),
-                        if (widget.questionNumber == widget.totalQuestions)
-                          OutlinedButton.icon(
-                            onPressed: widget.onSubmit,
-                            icon: const Icon(Icons.assignment_turned_in_rounded),
-                            label: const FittedBox(child: Text("Sonuçları Gör")),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Theme.of(context).colorScheme.onSurface,
-                              backgroundColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
-                              side: BorderSide.none,
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            ),
-                          ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2),
-                      ],
-                    ),
-                  ),
-              ],
+                }
             ),
           ),
-        ),
-        if (widget.shouldPlayAnimation)
-          Center(
-            child: IgnorePointer(
-              child: Lottie.asset(
-                'assets/lotties/firework.json',
-                repeat: false,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+          if (widget.shouldPlayAnimation)
+            Center(
+              child: IgnorePointer(
+                child: Lottie.asset(
+                  'assets/lotties/firework.json',
+                  repeat: false,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                ),
               ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 
