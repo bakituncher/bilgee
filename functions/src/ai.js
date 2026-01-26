@@ -96,7 +96,7 @@ exports.generateGemini = onCall(
     const requestType = request.data?.requestType || 'chat';
 
     // Premium olmayan kullanıcılar için günlük soru çözme limiti kontrolü
-    if (!isPremium && requestType === 'question_solver') {
+    if (!isPremium && (requestType === 'question_solver' || requestType === 'chat')) {
       const today = new Date().toLocaleString('sv-SE', { timeZone: 'Europe/Istanbul' }).substring(0, 10); // 'YYYY-MM-DD'
       const dailyUsageRef = db.collection("users").doc(request.auth.uid).collection("daily_usage").doc(today);
 
@@ -113,7 +113,7 @@ exports.generateGemini = onCall(
         );
       }
 
-      // Kullanımı artır
+      // Kullanımı artır (hem soru çözümü hem de chat/follow-up sorular için)
       await dailyUsageRef.set({
         questions_solved: admin.firestore.FieldValue.increment(1),
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
@@ -121,11 +121,11 @@ exports.generateGemini = onCall(
     }
 
     // Premium kullanıcılar için özellik kontrolü
-    if (isPremium && requestType !== 'question_solver') {
-      // Premium gerektiren diğer özellikler (workshop, weekly_plan, chat)
+    if (isPremium && (requestType !== 'question_solver' && requestType !== 'chat')) {
+      // Premium gerektiren diğer özellikler (workshop, weekly_plan)
       // Bu özelliklere sadece premium kullanıcılar erişebilir
-    } else if (!isPremium && requestType !== 'question_solver') {
-      // Premium olmayan kullanıcılar sadece question_solver kullanabilir
+    } else if (!isPremium && (requestType !== 'question_solver' && requestType !== 'chat')) {
+      // Premium olmayan kullanıcılar sadece question_solver ve chat kullanabilir (günlük limitle)
       throw new HttpsError("permission-denied", "Bu özellik yalnızca premium kullanıcılara açıktır.");
     }
 

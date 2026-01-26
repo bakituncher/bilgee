@@ -382,24 +382,61 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
   void _activateChatMode() {
     if (_initialSolution == null) return;
 
-    setState(() {
-      _isChatMode = true;
-      // İlk çözümü sohbetin ilk mesajı olarak ekle
-      if (_messages.isEmpty) {
-        _messages.add(SolverMessage(_initialSolution!, isUser: false));
-      }
-    });
+    print('🔵 _activateChatMode çağrıldı');
 
-    // Hafif bir kaydırma efekti ile kullanıcıya odaklanma hissi ver
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
+    // Günlük limit kontrolü
+    final dailyLimitAsync = ref.watch(dailyQuestionLimitProvider);
+    dailyLimitAsync.when(
+      data: (limit) {
+        print('🔵 Limit data: used=${limit.used}, limit=${limit.limit}, hasReached=${limit.hasReachedLimit}, isPremium=${limit.isPremium}');
+
+        if (limit.hasReachedLimit) {
+          print('🔴 Limit doldu, dialog gösteriliyor');
+          _showDailyLimitDialog();
+          return;
+        }
+
+        print('🟢 Chat mode açılıyor');
+        setState(() {
+          _isChatMode = true;
+          // İlk çözümü sohbetin ilk mesajı olarak ekle
+          if (_messages.isEmpty) {
+            _messages.add(SolverMessage(_initialSolution!, isUser: false));
+          }
+        });
+
+        // Hafif bir kaydırma efekti ile kullanıcıya odaklanma hissi ver
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (_scrollController.hasClients) {
+            _scrollController.animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
+        });
+      },
+      loading: () {
+        print('🟡 Provider loading, yine de açılıyor');
+        // Loading durumunda da yine de aç
+        setState(() {
+          _isChatMode = true;
+          if (_messages.isEmpty) {
+            _messages.add(SolverMessage(_initialSolution!, isUser: false));
+          }
+        });
+      },
+      error: (err, stack) {
+        print('🔴 Provider error: $err');
+        // Hata olsa bile aç (güvenli taraf)
+        setState(() {
+          _isChatMode = true;
+          if (_messages.isEmpty) {
+            _messages.add(SolverMessage(_initialSolution!, isUser: false));
+          }
+        });
+      },
+    );
   }
 
   // YENİ: Takip sorusu gönderme
