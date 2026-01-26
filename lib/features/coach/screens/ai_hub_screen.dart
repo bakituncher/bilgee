@@ -321,7 +321,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                     description: 'Sorunu çek, anında\nçözümünü al.',
                     icon: Icons.camera_enhance_rounded,
                     color: const Color(0xFFF59E0B),
-                    isPremium: isPremium,
+                    isPremium: true, // Günlük 3 hak ile herkes kullanabilir
                     height: 180,
                     onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/question-solver', offerData: {
                       'title': 'Soru Çözücü',
@@ -399,6 +399,13 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
   }
 
   void _handleNavigation(BuildContext context, bool isPremium, {required String route, required Map<String, dynamic> offerData}) {
+    // Soru çözücü artık günlük 3 hak ile ücretsiz kullanılabilir
+    if (route == '/ai-hub/question-solver') {
+      context.go(route);
+      return;
+    }
+
+    // Diğer özellikler için premium kontrolü
     if (isPremium) {
       context.go(route);
     } else {
