@@ -73,7 +73,7 @@ class MissionCard extends ConsumerWidget {
           final weakestTopicInfo = analysis.getWeakestTopicWithDetails();
           title = 'Günün Önceliği';
           subtitle = weakestTopicInfo != null
-              ? 'Taktik Tavşan, en zayıf noktanın **\'${weakestTopicInfo['subject']}\'** dersindeki **\'${weakestTopicInfo['topic']}\'** konusu olduğunu tespit etti. Bu eksik konuyu çalışmaya hazır mısın?'
+              ? 'Taktik Tavşan, en zayıf noktanın **${weakestTopicInfo['subject']}** dersindeki **${weakestTopicInfo['topic']}** konusu olduğunu tespit etti. Bu eksik konuyu çalışmaya hazır mısın?'
               : 'Harika gidiyorsun! Şu an belirgin bir zayıf noktan tespit edilmedi. Yeni konu verileri girerek analizi derinleştirebilirsin.';
           onTap = weakestTopicInfo != null
               ? () {
