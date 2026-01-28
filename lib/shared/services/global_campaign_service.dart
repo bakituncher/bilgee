@@ -21,9 +21,10 @@ class GlobalCampaignService {
   })  : _firestore = firestore ?? FirebaseFirestore.instance,
         _auth = auth ?? FirebaseAuth.instance;
 
-  /// Aktif global kampanyaları getir
+  /// Aktif global kampanyaları getir (Future)
   ///
-  /// Kullanıcının daha önce kapattığı kampanyaları filtreler
+  /// Kullanıcının daha önce kapattığı kampanyaları filtreler.
+  /// Okundu durumunu 'readCampaignIds' listesinden kontrol eder.
   Future<List<InAppNotification>> fetchGlobalCampaigns() async {
     final userId = _auth.currentUser?.uid;
     if (userId == null) return [];
@@ -39,27 +40,32 @@ class GlobalCampaignService {
 
       if (campaignsSnap.docs.isEmpty) return [];
 
-      // 2. Kullanıcının kapattığı kampanyaları çek
+      // 2. Kullanıcının kapattığı ve okuduğu kampanyaları çek
       final userDoc = await _firestore.collection('users').doc(userId).get();
-      final List<dynamic> closedCampaigns =
-          userDoc.data()?['closedCampaignIds'] ?? [];
+      final userData = userDoc.data();
+
+      final List<dynamic> closedCampaigns = userData?['closedCampaignIds'] ?? [];
+      final List<dynamic> readCampaigns = userData?['readCampaignIds'] ?? [];
 
       // 3. Kapatılmamış kampanyaları modele çevir
       final campaigns = campaignsSnap.docs
           .where((doc) => !closedCampaigns.contains(doc.id))
           .map((doc) {
-            final data = doc.data();
-            return InAppNotification(
-              id: doc.id,
-              title: data['title'] ?? '',
-              body: data['body'] ?? '',
-              imageUrl: data['imageUrl']?.toString().isNotEmpty == true ? data['imageUrl'] as String : null,
-              route: data['route'] ?? '/home',
-              type: 'global_campaign',
-              read: false, // Global kampanyalar varsayılan okunmamış
-              createdAt: data['createdAt'] as Timestamp?,
-            );
-          })
+        final data = doc.data();
+        // Okundu bilgisini kontrol et
+        final isRead = readCampaigns.contains(doc.id);
+
+        return InAppNotification(
+          id: doc.id,
+          title: data['title'] ?? '',
+          body: data['body'] ?? '',
+          imageUrl: data['imageUrl']?.toString().isNotEmpty == true ? data['imageUrl'] as String : null,
+          route: data['route'] ?? '/home',
+          type: 'global_campaign',
+          read: isRead, // Dinamik okundu durumu
+          createdAt: data['createdAt'] as Timestamp?,
+        );
+      })
           .toList();
 
       return campaigns;
@@ -90,7 +96,7 @@ class GlobalCampaignService {
           .map((doc) => InAppNotification.fromSnapshot(doc))
           .toList();
 
-      // 2. Global kampanyaları çek
+      // 2. Global kampanyaları çek (Güncellenmiş mantıkla)
       final globalCampaigns = await fetchGlobalCampaigns();
 
       // 3. İki listeyi birleştir ve tarihe göre sırala
@@ -108,7 +114,7 @@ class GlobalCampaignService {
     }
   }
 
-  /// Global kampanyayı kapat (kullanıcı dismiss/close yaptığında)
+  /// Global kampanyayı kapat (kullanıcı dismiss/close yaptığında veya sildiğinde)
   ///
   /// [campaignId]: Kapatılacak kampanyanın ID'si
   Future<void> closeGlobalCampaign(String campaignId) async {
@@ -117,35 +123,43 @@ class GlobalCampaignService {
 
     try {
       // Kullanıcının kapattığı kampanyalar listesine ekle
-      await _firestore.collection('users').doc(userId).update({
+      await _firestore.collection('users').doc(userId).set({
         'closedCampaignIds': FieldValue.arrayUnion([campaignId])
-      });
+      }, SetOptions(merge: true));
     } catch (e) {
       print('❌ Kampanya kapatılırken hata: $e');
-      // Hata durumunda da kullanıcı deneyimini bozmamak için sessizce geç
     }
   }
 
   /// Global kampanyayı okundu olarak işaretle
   ///
-  /// Not: Global kampanyalar gerçekten "okundu" işaretlenmez,
-  /// sadece kapatılır. Ama UI tutarlılığı için bu metod da olabilir.
+  /// Bu fonksiyon artık kampanyayı kapatmaz, sadece 'readCampaignIds' listesine ekler.
+  /// Böylece bildirim listesinde görünmeye devam eder ama "okundu" (soluk) görünür.
   Future<void> markGlobalCampaignAsRead(String campaignId) async {
-    // Global kampanyalar için "read" durumu yok,
-    // ama gelecekte eklemek isterseniz burada implement edebilirsiniz.
-    // Şu an için sadece close ediyoruz.
-    await closeGlobalCampaign(campaignId);
+    final userId = _auth.currentUser?.uid;
+    if (userId == null) return;
+
+    try {
+      await _firestore.collection('users').doc(userId).set({
+        'readCampaignIds': FieldValue.arrayUnion([campaignId])
+      }, SetOptions(merge: true));
+    } catch (e) {
+      print('❌ Global kampanya okundu işaretlenirken hata: $e');
+    }
   }
 
-  /// Aktif global kampanyaların sayısını getir (badge için)
+  /// Okunmamış (ve kapatılmamış) global kampanyaların sayısını getir (badge için)
   Future<int> getUnreadGlobalCampaignsCount() async {
     final campaigns = await fetchGlobalCampaigns();
-    return campaigns.length;
+    // fetchGlobalCampaigns zaten kapatılanları filtreler.
+    // Geriye sadece 'read' property'si false olanları saymak kalır.
+    return campaigns.where((c) => !c.read).length;
   }
 
-  /// Global kampanyaları gerçek zamanlı dinle (opsiyonel)
+  /// Global kampanyaları gerçek zamanlı dinle (Stream)
   ///
-  /// UI'da gerçek zamanlı güncelleme istiyorsanız bu stream'i kullanın
+  /// UI'da gerçek zamanlı güncelleme istiyorsanız bu stream'i kullanın.
+  /// Okundu bilgisini de anlık olarak günceller.
   Stream<List<InAppNotification>> watchGlobalCampaigns() {
     final userId = _auth.currentUser?.uid;
     if (userId == null) return Stream.value([]);
@@ -159,28 +173,32 @@ class GlobalCampaignService {
         .asyncMap((snapshot) async {
       if (snapshot.docs.isEmpty) return <InAppNotification>[];
 
-      // Kullanıcının kapattığı kampanyaları çek
+      // Kullanıcının kapattığı ve okuduğu kampanyaları çek
       final userDoc = await _firestore.collection('users').doc(userId).get();
-      final List<dynamic> closedCampaigns =
-          userDoc.data()?['closedCampaignIds'] ?? [];
+      final userData = userDoc.data();
+
+      final List<dynamic> closedCampaigns = userData?['closedCampaignIds'] ?? [];
+      final List<dynamic> readCampaigns = userData?['readCampaignIds'] ?? [];
 
       return snapshot.docs
           .where((doc) => !closedCampaigns.contains(doc.id))
           .map((doc) {
-            final data = doc.data();
-            return InAppNotification(
-              id: doc.id,
-              title: data['title'] ?? '',
-              body: data['body'] ?? '',
-              imageUrl: data['imageUrl']?.toString().isNotEmpty == true ? data['imageUrl'] as String : null,
-              route: data['route'] ?? '/home',
-              type: 'global_campaign',
-              read: false,
-              createdAt: data['createdAt'] as Timestamp?,
-            );
-          })
+        final data = doc.data();
+        // Okundu bilgisini kontrol et
+        final isRead = readCampaigns.contains(doc.id);
+
+        return InAppNotification(
+          id: doc.id,
+          title: data['title'] ?? '',
+          body: data['body'] ?? '',
+          imageUrl: data['imageUrl']?.toString().isNotEmpty == true ? data['imageUrl'] as String : null,
+          route: data['route'] ?? '/home',
+          type: 'global_campaign',
+          read: isRead, // Dinamik okundu durumu
+          createdAt: data['createdAt'] as Timestamp?,
+        );
+      })
           .toList();
     });
   }
 }
-
