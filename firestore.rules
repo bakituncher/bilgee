@@ -110,10 +110,18 @@ service cloud.firestore {
 
       match /in_app_notifications/{notifId} {
         allow read: if request.auth.uid == userId;
+
+        // DÜZELTME 1: Global kampanyalar veya eksik belgeler için 'create' izni eklendi.
+        // Kullanıcı sadece 'read' alanını true olarak ayarlayarak belge oluşturabilir.
+        allow create: if request.auth.uid == userId
+          && request.resource.data.read == true;
+
+        // DÜZELTME 2: 'resource.data.read == false' kontrolü KALDIRILDI.
+        // Artık belge zaten okunmuş olsa bile tekrar okundu isteği gelirse hata vermez (Idempotency).
         allow update: if request.auth.uid == userId
           && request.resource.data.read == true
-          && resource.data.read == false
           && request.resource.data.diff(resource.data).changedKeys().hasOnly(['read','readAt']);
+
         allow delete: if request.auth.uid == userId;
       }
 
