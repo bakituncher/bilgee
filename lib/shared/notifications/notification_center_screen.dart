@@ -272,10 +272,17 @@ class _NotificationTile extends ConsumerWidget {
     return InkWell(
       borderRadius: BorderRadius.circular(14),
       onTap: () async {
+        // DÜZELTME: Try-catch bloğu eklendi
+        // Hata olsa bile (örn: zaten okunmuş, internet yok, izin hatası) akışı bozma
         if (user != null && !item.read) {
-          await ref
-              .read(firestoreServiceProvider)
-              .markInAppNotificationRead(user.uid, item.id);
+          try {
+            await ref
+                .read(firestoreServiceProvider)
+                .markInAppNotificationRead(user.uid, item.id);
+          } catch (e) {
+            // Hata olsa bile detay sayfasını aç
+            debugPrint('Bildirim okundu işaretlenemedi: $e');
+          }
         }
         if (context.mounted) {
           await showModalBottomSheet(
