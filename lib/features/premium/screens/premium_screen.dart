@@ -750,7 +750,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
 
 // --- Pricing Card ---
 
-class _ModernPricingCard extends StatelessWidget {
+class _ModernPricingCard extends StatefulWidget {
   final Package package;
   final bool isSelected;
   final bool isBestValue;
@@ -774,34 +774,61 @@ class _ModernPricingCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final isAnnual = package.packageType == PackageType.annual ||
-        package.identifier.toLowerCase().contains('annual') ||
-        package.identifier.toLowerCase().contains('year');
+  State<_ModernPricingCard> createState() => _ModernPricingCardState();
+}
 
-    final hasTrial = debugTrialOverride || (package.storeProduct.introductoryPrice?.price == 0);
+class _ModernPricingCardState extends State<_ModernPricingCard> {
+  late Timer _badgeTimer;
+  bool _showFirstBadge = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Badge animasyonu için timer
+    _badgeTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      if (mounted) {
+        setState(() {
+          _showFirstBadge = !_showFirstBadge;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _badgeTimer.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isAnnual = widget.package.packageType == PackageType.annual ||
+        widget.package.identifier.toLowerCase().contains('annual') ||
+        widget.package.identifier.toLowerCase().contains('year');
+
+    final hasTrial = widget.debugTrialOverride || (widget.package.storeProduct.introductoryPrice?.price == 0);
 
     String bigPriceDisplay = "";
     String smallSubtext = "";
     String? strikeThroughPrice;
 
     if (isAnnual) {
-      final monthlyEq = package.storeProduct.price / 12;
+      final monthlyEq = widget.package.storeProduct.price / 12;
       bigPriceDisplay = "₺${monthlyEq.toStringAsFixed(2)} /ay";
-      smallSubtext = "Yıllık ${package.storeProduct.priceString} faturalanır";
+      smallSubtext = "Yıllık ${widget.package.storeProduct.priceString} faturalanır";
 
-      if (compareMonthlyPrice != null) {
-        strikeThroughPrice = "₺${compareMonthlyPrice!.toStringAsFixed(2)}";
+      if (widget.compareMonthlyPrice != null) {
+        strikeThroughPrice = "₺${widget.compareMonthlyPrice!.toStringAsFixed(2)}";
       }
     } else {
-      bigPriceDisplay = package.storeProduct.priceString;
+      bigPriceDisplay = widget.package.storeProduct.priceString;
       smallSubtext = "Her ay yenilenir";
     }
 
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
-        onTap();
+        widget.onTap();
       },
       child: Stack(
         clipBehavior: Clip.none,
@@ -809,22 +836,22 @@ class _ModernPricingCard extends StatelessWidget {
           AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             curve: Curves.easeInOut,
-            padding: EdgeInsets.all(isSelected ? 2 : 0),
+            padding: EdgeInsets.all(widget.isSelected ? 2 : 0),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
-              gradient: isSelected
-                  ? LinearGradient(colors: [accentColor, const Color(0xFF9C27B0)])
+              gradient: widget.isSelected
+                  ? LinearGradient(colors: [widget.accentColor, const Color(0xFF9C27B0)])
                   : LinearGradient(colors: [Colors.black.withOpacity(0.05), Colors.black.withOpacity(0.02)]),
-              boxShadow: isSelected
-                  ? [BoxShadow(color: accentColor.withOpacity(0.25), blurRadius: 12, spreadRadius: 0)]
+              boxShadow: widget.isSelected
+                  ? [BoxShadow(color: widget.accentColor.withOpacity(0.25), blurRadius: 12, spreadRadius: 0)]
                   : [],
             ),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
               decoration: BoxDecoration(
-                color: isSelected ? Colors.white : const Color(0xFFFAFAFA),
+                color: widget.isSelected ? Colors.white : const Color(0xFFFAFAFA),
                 borderRadius: BorderRadius.circular(18),
-                border: isSelected ? null : Border.all(color: Colors.black12),
+                border: widget.isSelected ? null : Border.all(color: Colors.black12),
               ),
               child: Row(
                 children: [
@@ -833,13 +860,13 @@ class _ModernPricingCard extends StatelessWidget {
                     width: 24, height: 24,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: isSelected ? accentColor : Colors.transparent,
+                      color: widget.isSelected ? widget.accentColor : Colors.transparent,
                       border: Border.all(
-                          color: isSelected ? accentColor : Colors.grey.withOpacity(0.4),
+                          color: widget.isSelected ? widget.accentColor : Colors.grey.withOpacity(0.4),
                           width: 2
                       ),
                     ),
-                    child: isSelected
+                    child: widget.isSelected
                         ? const Icon(Icons.check, size: 16, color: Colors.white)
                         : null,
                   ),
@@ -855,7 +882,7 @@ class _ModernPricingCard extends StatelessWidget {
                           isAnnual ? "Yıllık Plan" : "Aylık Plan",
                           style: TextStyle(
                               color: const Color(0xFF1A1A1A),
-                              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                              fontWeight: widget.isSelected ? FontWeight.w800 : FontWeight.w600,
                               fontSize: 17
                           ),
                         ),
@@ -870,7 +897,7 @@ class _ModernPricingCard extends StatelessWidget {
                             Text(
                               bigPriceDisplay,
                               style: TextStyle(
-                                color: accentColor,
+                                color: widget.accentColor,
                                 fontSize: 22,
                                 fontWeight: FontWeight.w900,
                                 height: 1,
@@ -915,78 +942,115 @@ class _ModernPricingCard extends StatelessWidget {
             ),
           ),
 
-          // Ücretsiz Deneme Badge - Sağ Üst Köşe
-          if (hasTrial)
+          // Tek Badge - Sadece Fade Geçişi
+          if (hasTrial || (widget.isBestValue && widget.savingsPercent != null))
             Positioned(
               top: -4,
               right: -2,
-              child: Container(
-                width: 115,
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [accentColor, const Color(0xFFFF1744)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: accentColor.withOpacity(0.3),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: const Text(
-                  "7 GÜN ÜCRETSİZ",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.2,
-                  ),
-                ),
-              ),
-            ),
-
-          // Tasarruf Badge - 7 Gün Ücretsiz Badge'inin Altında
-          if (isBestValue && savingsPercent != null)
-            Positioned(
-              top: hasTrial ? 18 : -4,
-              right: -2,
-              child: Container(
-                width: 115,
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [badgeColor, const Color(0xFF66BB6A)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: badgeColor.withOpacity(0.3),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Text(
-                  "%${savingsPercent!.toStringAsFixed(0)} TASARRUF",
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.2,
-                  ),
-                ),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                switchInCurve: Curves.easeInOut,
+                switchOutCurve: Curves.easeInOut,
+                transitionBuilder: (Widget child, Animation<double> animation) {
+                  // Sadece fade - pozisyon değişikliği yok
+                  return FadeTransition(
+                    opacity: animation,
+                    child: child,
+                  );
+                },
+                child: _buildBadge(hasTrial, widget.isBestValue, widget.savingsPercent, widget.accentColor, widget.badgeColor),
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildBadge(bool hasTrial, bool isBestValue, double? savingsPercent, Color accentColor, Color badgeColor) {
+    // Hem deneme hem tasarruf varsa, animasyonla değiştir
+    if (hasTrial && isBestValue && savingsPercent != null) {
+      if (_showFirstBadge) {
+        return _buildTrialBadge(accentColor, key: const ValueKey('trial'));
+      } else {
+        return _buildSavingsBadge(savingsPercent, badgeColor, key: const ValueKey('savings'));
+      }
+    }
+
+    // Sadece deneme varsa
+    if (hasTrial) {
+      return _buildTrialBadge(accentColor, key: const ValueKey('trial'));
+    }
+
+    // Sadece tasarruf varsa
+    if (isBestValue && savingsPercent != null) {
+      return _buildSavingsBadge(savingsPercent, badgeColor, key: const ValueKey('savings'));
+    }
+
+    return const SizedBox.shrink();
+  }
+
+  Widget _buildTrialBadge(Color accentColor, {Key? key}) {
+    return Container(
+      key: key,
+      width: 115,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [accentColor, const Color(0xFFFF1744)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: accentColor.withOpacity(0.3),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: const Text(
+        "7 GÜN ÜCRETSİZ",
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 9,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.2,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSavingsBadge(double savingsPercent, Color badgeColor, {Key? key}) {
+    return Container(
+      key: key,
+      width: 115,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [badgeColor, const Color(0xFF66BB6A)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: badgeColor.withOpacity(0.3),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Text(
+        "%${savingsPercent.toStringAsFixed(0)} TASARRUF",
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 9,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.2,
+        ),
       ),
     );
   }

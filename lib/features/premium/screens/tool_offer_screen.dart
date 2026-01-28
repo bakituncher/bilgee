@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
@@ -7,6 +8,7 @@ import 'package:collection/collection.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
 import 'dart:ui';
+import 'dart:async';
 import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -73,55 +75,12 @@ class _PriceTransparencyFooter extends StatelessWidget {
     final textStyle = theme.textTheme.bodySmall?.copyWith(color: textColor, height: 1.25, fontSize: 9);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
       child: Text(
-        'Abonelik, siz iptal edene kadar seçtiğiniz tarife (aylık/yıllık) üzerinden otomatik olarak yenilenir. '
-            'Ücretsiz deneme süresi (varsa) sonunda ücretlendirme başlar. '
-            'Aboneliğinizi uygulamanın ayarlar sekmesinde bulunan "Abonelik Yönetimi" bölümünden istediğiniz zaman kolayca iptal edebilirsiniz. '
-            'Fiyatlara tüm vergiler dahildir.',
+        'Abonelik otomatik yenilenir, dilediğin zaman iptal edebilirsin.',
         textAlign: TextAlign.center,
         style: textStyle,
       ),
-    );
-  }
-}
-
-class _TrustBadges extends StatelessWidget {
-  const _TrustBadges();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 5.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _TrustRow(icon: Icons.lock_rounded, text: 'Güvenli Ödeme'),
-          SizedBox(width: 14),
-          _TrustRow(icon: Icons.cancel_schedule_send_rounded, text: 'Kolay İptal'),
-        ],
-      ),
-    );
-  }
-}
-
-class _TrustRow extends StatelessWidget {
-  const _TrustRow({required this.icon, required this.text});
-  final IconData icon;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = Theme.of(context).colorScheme.onSurface.withOpacity(0.7);
-    return Row(
-      children: [
-        Icon(icon, color: color, size: 13),
-        const SizedBox(width: 3.5),
-        Text(
-          text,
-          style: TextStyle(color: color, fontWeight: FontWeight.w500, fontSize: 10.5),
-        ),
-      ],
     );
   }
 }
@@ -134,7 +93,7 @@ class _LegalFooter extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final dividerColor = isDark ? Colors.white38 : Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.4);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 4.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 2.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -194,15 +153,20 @@ class _FooterLink extends StatelessWidget {
 
 class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
     with TickerProviderStateMixin {
-  static const double _kButtonHeight = 56.0;
+  static const double _kButtonHeight = 52.0;
   static const double _kButtonBorderRadius = 99.0;
 
   late final AnimationController _fadeController;
   late final AnimationController _cardPopController;
+  late final AnimationController _pulseController;
 
   Package? _selectedPackage;
   bool _isPurchaseInProgress = false;
   bool _hasInitializedPackage = false;
+  bool _debugTrialOverride = false; // Debug için deneme kontrolü
+
+  // Renk tanımlamaları - Premium screen ile aynı
+  final Color _textPrimary = const Color(0xFF1A1A1A);
 
   @override
   void initState() {
@@ -215,6 +179,10 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
       vsync: this,
       duration: const Duration(milliseconds: 500),
     );
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
 
     Future.delayed(const Duration(milliseconds: 100), () {
       if (mounted) {
@@ -223,37 +191,38 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
       }
     });
 
-    _initializeDefaultPackage();
+    // Yıllık planı hemen seç
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeDefaultPackage();
+    });
   }
 
   void _initializeDefaultPackage() {
-    Future.microtask(() {
+    if (!mounted || _hasInitializedPackage) return;
+
+    final offeringsAsyncValue = ref.read(offeringsProvider);
+    offeringsAsyncValue.whenData((offerings) {
       if (!mounted || _hasInitializedPackage) return;
 
-      final offeringsAsyncValue = ref.read(offeringsProvider);
-      offeringsAsyncValue.whenData((offerings) {
-        if (!mounted || _hasInitializedPackage || _selectedPackage != null) return;
+      final current = offerings.current ??
+          offerings.all.values.firstWhereOrNull(
+                (o) => o.availablePackages.isNotEmpty,
+          );
 
-        final current = offerings.current ??
-            offerings.all.values.firstWhereOrNull(
-                  (o) => o.availablePackages.isNotEmpty,
+      if (current != null) {
+        final yearly = current.annual ??
+            current.getPackage('yillik-normal-yeni') ??
+            current.availablePackages.firstWhereOrNull(
+                  (p) => p.packageType == PackageType.annual,
             );
 
-        if (current != null) {
-          final yearly = current.annual ??
-              current.getPackage('yillik-normal-yeni') ??
-              current.availablePackages.firstWhereOrNull(
-                    (p) => p.packageType == PackageType.annual,
-              );
-
-          if (yearly != null && mounted) {
-            setState(() {
-              _selectedPackage = yearly;
-              _hasInitializedPackage = true;
-            });
-          }
+        if (yearly != null && mounted) {
+          setState(() {
+            _selectedPackage = yearly;
+            _hasInitializedPackage = true;
+          });
         }
-      });
+      }
     });
   }
 
@@ -261,6 +230,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
   void dispose() {
     _fadeController.dispose();
     _cardPopController.dispose();
+    _pulseController.dispose();
     super.dispose();
   }
 
@@ -349,7 +319,6 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
   @override
   Widget build(BuildContext context) {
     final offeringsAsyncValue = ref.watch(offeringsProvider);
-    final bottomInset = MediaQuery.of(context).padding.bottom;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -361,181 +330,199 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
             filter: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0),
             child: Container(color: isDark ? Colors.black.withOpacity(0.5) : Colors.white.withOpacity(0.5)),
           ),
-          // ÇÖZÜM: SafeArea ve SingleChildScrollView ile tüm body'yi sarmala
-          SafeArea(
-            child: Column(
-              children: [
-                _buildCustomHeader(context),
-                // ÇÖZÜM: Expanded içinde SingleChildScrollView ile scrollable content
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: EdgeInsets.only(
-                      left: 24,
-                      right: 24,
-                      bottom: MediaQuery.of(context).padding.bottom + 16,
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const SizedBox(height: 20),
-                        _ToolFeatureHeader(
-                          heroTag: widget.heroTag,
-                          icon: widget.resolvedIcon,
-                          color: widget.color,
-                          title: widget.title,
-                          imageAsset: widget.imageAsset,
-                        ),
-                        const SizedBox(height: 20),
-                        _MarketingInfo(
-                          fadeController: _fadeController,
-                          title: widget.marketingTitle,
-                          subtitle: widget.marketingSubtitle,
-                        ),
-                        const SizedBox(height: 20),
-                        // ÇÖZÜM: Purchase section burada, scroll edilebilir
-                        _buildPurchaseSectionContent(offeringsAsyncValue),
-                        const SizedBox(height: 20),
-                      ],
-                    ),
+          // Ana içerik
+          Column(
+            children: [
+              // Header
+              SafeArea(
+                bottom: false,
+                child: _buildCustomHeader(context),
+              ),
+              // Scrollable content
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.only(
+                    left: 16,
+                    right: 16,
+                    top: 8,
+                    bottom: 16, // Bottom bar için alan bırak
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _ToolFeatureHeader(
+                        heroTag: widget.heroTag,
+                        icon: widget.resolvedIcon,
+                        color: widget.color,
+                        title: widget.title,
+                        imageAsset: widget.imageAsset,
+                      ),
+                      const SizedBox(height: 8),
+                      _MarketingInfo(
+                        fadeController: _fadeController,
+                        title: widget.marketingTitle,
+                        subtitle: widget.marketingSubtitle,
+                      ),
+                      const SizedBox(height: 8),
+                      // Purchase options (buton hariç)
+                      _buildPurchaseSectionContent(offeringsAsyncValue),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+              // Sabit bottom bar - Premium screen gibi
+              _buildBottomBar(offeringsAsyncValue),
+            ],
           ),
         ],
       ),
     );
   }
 
-  /// ÇÖZÜM: Purchase section içeriğini ayrı method'a çıkar (scroll içinde olacak)
+  /// Purchase section içeriği - Buton hariç (buton artık sabit bottom bar'da)
   Widget _buildPurchaseSectionContent(AsyncValue<Offerings?> offeringsAsyncValue) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: isDark
-            ? Theme.of(context).scaffoldBackgroundColor.withOpacity(0.8)
-            : Theme.of(context).cardColor.withOpacity(0.95),
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
           color: isDark
-              ? Colors.white.withOpacity(0.1)
-              : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark ? Colors.black.withOpacity(0.5) : Colors.black.withOpacity(0.15),
-            spreadRadius: isDark ? 5 : 2,
-            blurRadius: isDark ? 25 : 15,
+              ? Theme.of(context).scaffoldBackgroundColor.withOpacity(0.6)
+              : Colors.white.withOpacity(0.85),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withOpacity(0.08)
+                : widget.color.withOpacity(0.15),
+            width: 1.5,
           ),
-        ],
-      ),
-      child: offeringsAsyncValue.when(
-        data: (offerings) {
-          return Padding(
-            padding: const EdgeInsets.all(20),
+          boxShadow: [
+            BoxShadow(
+              color: isDark
+                  ? Colors.black.withOpacity(0.3)
+                  : widget.color.withOpacity(0.08),
+              spreadRadius: 0,
+              blurRadius: 30,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: offeringsAsyncValue.when(
+          data: (offerings) {
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildPurchaseOptions(context, ref, offerings),
+                  const SizedBox(height: 12),
+                  _buildTrustBadges(),
+                  const SizedBox(height: 8),
+                  const _PriceTransparencyFooter(),
+                ],
+              ),
+            );
+          },
+          loading: () => const Padding(
+            padding: EdgeInsets.all(40.0),
+            child: Center(
+              child: CircularProgressIndicator(strokeWidth: 3),
+            ),
+          ),
+          error: (error, stack) => Padding(
+            padding: const EdgeInsets.all(40.0),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _buildPurchaseOptions(context, ref, offerings),
+                Icon(
+                  Icons.error_outline_rounded,
+                  color: Theme.of(context).colorScheme.error,
+                  size: 40,
+                ),
                 const SizedBox(height: 12),
-                _buildPurchaseButton(),
-                const SizedBox(height: 10),
-                const _TrustBadges(),
-                const _PriceTransparencyFooter(),
-                const _LegalFooter(),
+                Text(
+                  'Paketler yüklenemedi',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  error.toString(),
+                  style: Theme.of(context).textTheme.bodySmall,
+                  textAlign: TextAlign.center,
+                ),
               ],
             ),
-          );
-        },
-        loading: () => const Padding(
-          padding: EdgeInsets.all(40.0),
-          child: Center(
-            child: CircularProgressIndicator(strokeWidth: 3),
-          ),
-        ),
-        error: (error, stack) => Padding(
-          padding: const EdgeInsets.all(40.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.error_outline_rounded,
-                color: Theme.of(context).colorScheme.error,
-                size: 40,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Paketler yüklenemedi',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                error.toString(),
-                style: Theme.of(context).textTheme.bodySmall,
-                textAlign: TextAlign.center,
-              ),
-            ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTrustBadges() {
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 20,
+      runSpacing: 8,
+      children: [
+        _TrustBadgeCompact(
+          icon: Icons.lock_outline_rounded,
+          label: "Güvenli Ödeme",
+          color: const Color(0xFF4CAF50), // Yeşil
+        ),
+        _TrustBadgeCompact(
+          icon: Icons.cancel_outlined,
+          label: "Kolay İptal",
+          color: const Color(0xFFE91E63), // Deep Pink
+        ),
+      ],
     );
   }
 
   // ESKİ _buildPurchaseSection method'unu kaldır, artık kullanılmıyor
 
   Widget _buildCustomHeader(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-      child: Stack(
-        alignment: Alignment.center,
+    final isSmallScreen = MediaQuery.of(context).size.height < 700;
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: isSmallScreen ? 4 : 8,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Orta - Başlık
-          Text(
-            'Özel Teklif',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
+          IconButton(
+            onPressed: _handleBack,
+            icon: Icon(Icons.close_rounded, color: _textPrimary, size: 28),
+            style: IconButton.styleFrom(backgroundColor: _textPrimary.withOpacity(0.05)),
           ),
-          // Sol - Kapat Butonu
-          Align(
-            alignment: Alignment.centerLeft,
-            child: IconButton(
-              icon: Icon(
-                Icons.close_rounded,
-                size: 28,
-                color: isDark ? Colors.white70 : Theme.of(context).colorScheme.onSurface,
+          Row(
+            children: [
+              // DEBUG BUTONU
+              Container(
+                decoration: BoxDecoration(
+                  color: _debugTrialOverride ? Colors.green.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: IconButton(
+                  onPressed: () {
+                    setState(() => _debugTrialOverride = !_debugTrialOverride);
+                    HapticFeedback.lightImpact();
+                  },
+                  icon: Icon(
+                    _debugTrialOverride ? Icons.check_circle : Icons.science_outlined,
+                    color: _debugTrialOverride ? Colors.green : Colors.grey,
+                    size: 20,
+                  ),
+                  tooltip: 'Test: ${_debugTrialOverride ? "Deneme VAR" : "Deneme YOK"}',
+                ),
               ),
-              tooltip: 'Kapat',
-              onPressed: _handleBack,
-            ),
-          ),
-          // Sağ - Geri Yükle Butonu
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: _isPurchaseInProgress ? null : _restorePurchases,
-              child: _isPurchaseInProgress
-                  ? SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                        ),
-                      ),
-                    )
-                  : Text(
-                      'Geri Yükle',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-            ),
+              const SizedBox(width: 8),
+              TextButton(
+                onPressed: _restorePurchases,
+                child: Text("Geri Yükle", style: TextStyle(color: widget.color, fontSize: 13, fontWeight: FontWeight.w600)),
+              ),
+            ],
           ),
         ],
       ),
@@ -620,10 +607,22 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
       }
     }
 
+    // Eğer henüz seçim yapılmadıysa ve yıllık plan varsa, otomatik seç
+    if (_selectedPackage == null && yearly != null && !_hasInitializedPackage) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _selectedPackage == null) {
+          setState(() {
+            _selectedPackage = yearly;
+            _hasInitializedPackage = true;
+          });
+        }
+      });
+    }
+
     return FadeTransition(
       opacity: _fadeController,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -632,19 +631,19 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w900,
                 color: Theme.of(context).colorScheme.onSurface,
-                fontSize: 22,
+                fontSize: 18,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 3),
             Text(
               'Potansiyelinin zirvesine ulaş',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
-                fontSize: 13,
+                fontSize: 11.5,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 10),
             if (yearly != null)
               _PurchaseOptionCard(
                 animationController: _cardPopController,
@@ -653,14 +652,15 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
                 price: yearly.storeProduct.priceString,
                 billingPeriod: '/ yıl',
                 tag: savePercent != null
-                    ? '%${savePercent.toStringAsFixed(0)} AVANTAJ'
+                    ? '%${savePercent.toStringAsFixed(0)} TASARRUF'
                     : 'EN İYİ DEĞER',
                 isSelected: _selectedPackage == yearly,
                 delay: const Duration(milliseconds: 0),
                 onSelected: (pkg) => setState(() => _selectedPackage = pkg),
                 color: widget.color,
+                debugTrialOverride: _debugTrialOverride,
               ),
-            if (yearly != null && monthly != null) const SizedBox(height: 10),
+            if (yearly != null && monthly != null) const SizedBox(height: 8),
             if (monthly != null)
               _PurchaseOptionCard(
                 animationController: _cardPopController,
@@ -672,6 +672,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
                 delay: const Duration(milliseconds: 100),
                 onSelected: (pkg) => setState(() => _selectedPackage = pkg),
                 color: widget.color,
+                debugTrialOverride: _debugTrialOverride,
               ),
           ],
         ),
@@ -680,33 +681,20 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
   }
 
   Widget _buildPurchaseButton() {
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 300),
-      transitionBuilder: (child, animation) {
-        return FadeTransition(
-          opacity: animation,
-          child: SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 0.5),
-              end: Offset.zero,
-            ).animate(animation),
-            child: child,
-          ),
-        );
-      },
-      child: _selectedPackage == null
-          ? const SizedBox.shrink()
-          : Padding(
-        key: ValueKey(_selectedPackage),
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: GestureDetector(
-          onTap: _isPurchaseInProgress ? null : _purchasePackage,
-          child: AnimatedOpacity(
-            opacity: _isPurchaseInProgress ? 0.7 : 1.0,
-            duration: const Duration(milliseconds: 200),
+    final hasFreeTrial = _debugTrialOverride ||
+                        (_selectedPackage?.storeProduct.introductoryPrice?.price == 0);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: AnimatedBuilder(
+        animation: _pulseController,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: 1.0 + (_pulseController.value * 0.02),
             child: Container(
               height: _kButtonHeight,
               decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(_kButtonBorderRadius),
                 gradient: LinearGradient(
                   colors: [
                     widget.color,
@@ -715,47 +703,92 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 ),
-                borderRadius: BorderRadius.circular(_kButtonBorderRadius),
                 boxShadow: [
                   BoxShadow(
-                    color: widget.color.withOpacity(0.4),
-                    blurRadius: 15,
-                    spreadRadius: 2,
-                    offset: const Offset(0, 5),
+                    color: widget.color.withOpacity(0.5 + (_pulseController.value * 0.2)),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
                   )
                 ],
               ),
-              child: Center(
-                child: _isPurchaseInProgress
-                    ? const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2.5,
-                      ),
-                    ),
-                    SizedBox(width: 10),
-                    Text(
-                      'İşleniyor...',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                )
-                    : Text(
-                  'Abone Ol ve Başla',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onPrimary,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: _isPurchaseInProgress ? null : _purchasePackage,
+                  borderRadius: BorderRadius.circular(_kButtonBorderRadius),
+                  child: Center(
+                    child: _isPurchaseInProgress
+                        ? const CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 3,
+                          )
+                        : Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.diamond_rounded, color: Colors.white, size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                hasFreeTrial ? 'ÜCRETSİZ BAŞLA' : 'HEMEN BAŞLA',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  /// Sabit bottom bar - Premium screen gibi
+  Widget _buildBottomBar(AsyncValue<Offerings?> offeringsAsyncValue) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isSmallScreen = MediaQuery.of(context).size.height < 700;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
+    return SafeArea(
+      top: false,
+      child: ClipRRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Theme.of(context).scaffoldBackgroundColor.withOpacity(0.9)
+                  : Theme.of(context).cardColor.withOpacity(0.95),
+              border: Border(
+                top: BorderSide(
+                  color: widget.color.withOpacity(0.1),
+                  width: 1,
+                ),
+              ),
+            ),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    20,
+                    isSmallScreen ? 10 : 12,
+                    20,
+                    bottomPadding + (isSmallScreen ? 6 : 8),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildPurchaseButton(),
+                      const SizedBox(height: 8),
+                      const _LegalFooter(),
+                    ],
                   ),
                 ),
               ),
@@ -872,8 +905,8 @@ class _ToolFeatureHeader extends StatelessWidget {
         child: Column(
           children: [
             Container(
-              width: 85,
-              height: 85,
+              width: 64,
+              height: 64,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: Theme.of(context).cardColor.withOpacity(0.8),
@@ -889,24 +922,24 @@ class _ToolFeatureHeader extends StatelessWidget {
               child: imageAsset != null
                   ? ClipOval(
                       child: Padding(
-                        padding: const EdgeInsets.all(12.0),
+                        padding: const EdgeInsets.all(9.0),
                         child: Image.asset(
                           imageAsset!,
-                          width: 61,
-                          height: 61,
+                          width: 46,
+                          height: 46,
                           fit: BoxFit.contain,
                         ),
                       ),
                     )
-                  : Icon(icon, size: 42, color: color),
+                  : Icon(icon, size: 32, color: color),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Text(
               title,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: Theme.of(context).colorScheme.onSurface,
-                fontSize: 20,
+                fontSize: 17,
               ),
             ),
           ],
@@ -933,12 +966,12 @@ class _MarketingInfo extends StatelessWidget {
     return FadeTransition(
       opacity: fadeController,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: isDark
               ? Colors.white.withOpacity(0.05)
               : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isDark
                 ? Colors.white.withOpacity(0.1)
@@ -953,16 +986,16 @@ class _MarketingInfo extends StatelessWidget {
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: Theme.of(context).colorScheme.onSurface,
-                fontSize: 15,
+                fontSize: 13,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             Text(
               subtitle,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
                 height: 1.4,
-                fontSize: 13,
+                fontSize: 11.5,
               ),
             ),
           ],
@@ -984,6 +1017,7 @@ class _PurchaseOptionCard extends StatefulWidget {
     required this.onSelected,
     required this.delay,
     required this.color,
+    this.debugTrialOverride = false,
   });
 
   final AnimationController animationController;
@@ -996,17 +1030,20 @@ class _PurchaseOptionCard extends StatefulWidget {
   final ValueChanged<Package> onSelected;
   final Duration delay;
   final Color color;
+  final bool debugTrialOverride;
 
   @override
   State<_PurchaseOptionCard> createState() => _PurchaseOptionCardState();
 }
 
 class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late final AnimationController _innerController;
   late final Animation<double> _scaleAnimation;
   late final Animation<Offset> _slideAnimation;
   late final Animation<double> _fadeAnimation;
+  late Timer _badgeTimer;
+  bool _showFirstBadge = true;
 
   @override
   void initState() {
@@ -1036,11 +1073,21 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
       parent: widget.animationController,
       curve: Interval(delayFraction, 1.0, curve: Curves.easeOut),
     );
+
+    // Badge animasyonu için timer
+    _badgeTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      if (mounted) {
+        setState(() {
+          _showFirstBadge = !_showFirstBadge;
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
     _innerController.dispose();
+    _badgeTimer.cancel();
     super.dispose();
   }
 
@@ -1061,18 +1108,7 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final introPrice = widget.package.storeProduct.introductoryPrice;
-    final hasFreeTrial = introPrice != null && introPrice.price == 0;
-
-    final borderColor = widget.isSelected
-        ? widget.color
-        : (isDark
-        ? Theme.of(context).cardColor.withOpacity(0.5)
-        : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5));
-    final backgroundColor = widget.isSelected
-        ? widget.color.withOpacity(0.15)
-        : (isDark
-        ? Colors.white.withOpacity(0.05)
-        : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.1));
+    final hasFreeTrial = widget.debugTrialOverride || (introPrice != null && introPrice.price == 0);
 
     return SlideTransition(
       position: _slideAnimation,
@@ -1085,93 +1121,113 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
             onTapUp: _onTapUp,
             onTapCancel: _onTapCancel,
             onTap: _onTap,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              decoration: BoxDecoration(
-                color: backgroundColor,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: borderColor,
-                  width: widget.isSelected ? 2.5 : 1.5,
-                ),
-                boxShadow: widget.isSelected
-                    ? [
-                  BoxShadow(
-                    color: widget.color.withOpacity(0.3),
-                    blurRadius: 12,
-                    spreadRadius: 2,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeInOut,
+                  padding: EdgeInsets.all(widget.isSelected ? 2 : 0),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    gradient: widget.isSelected
+                        ? LinearGradient(
+                            colors: [widget.color, widget.color.withOpacity(0.7)],
+                          )
+                        : LinearGradient(
+                            colors: [
+                              Colors.black.withOpacity(isDark ? 0.1 : 0.05),
+                              Colors.black.withOpacity(isDark ? 0.05 : 0.02)
+                            ],
+                          ),
+                    boxShadow: widget.isSelected
+                        ? [
+                            BoxShadow(
+                              color: widget.color.withOpacity(0.25),
+                              blurRadius: 12,
+                              spreadRadius: 0,
+                            )
+                          ]
+                        : [],
                   ),
-                ]
-                    : [],
-              ),
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(14),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                    decoration: BoxDecoration(
+                      color: widget.isSelected
+                          ? (isDark ? const Color(0xFF2A2A2A) : Colors.white)
+                          : (isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFAFAFA)),
+                      borderRadius: BorderRadius.circular(18),
+                      border: widget.isSelected
+                          ? null
+                          : Border.all(
+                              color: isDark
+                                  ? Colors.white.withOpacity(0.1)
+                                  : Colors.black12,
+                            ),
+                    ),
                     child: Row(
                       children: [
+                        // Radio Icon (Sol tarafta)
+                        Container(
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: widget.isSelected ? widget.color : Colors.transparent,
+                            border: Border.all(
+                              color: widget.isSelected
+                                  ? widget.color
+                                  : (isDark ? Colors.grey : Colors.grey.withOpacity(0.4)),
+                              width: 2,
+                            ),
+                          ),
+                          child: widget.isSelected
+                              ? const Icon(Icons.check, size: 16, color: Colors.white)
+                              : null,
+                        ),
+                        const SizedBox(width: 14),
+
+                        // İçerik
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              // Plan Adı
                               Text(
                                 widget.title,
                                 style: TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 16,
-                                  color: Theme.of(context).colorScheme.onSurface,
+                                  color: isDark ? Colors.white : const Color(0xFF1A1A1A),
+                                  fontWeight: widget.isSelected ? FontWeight.w800 : FontWeight.w600,
+                                  fontSize: 17,
                                 ),
                               ),
-                              const SizedBox(height: 4),
-                              // ÜCRETSİZ DENEME VURGUSU - SADECE AYLIK PAKETTE
-                              if (hasFreeTrial && widget.title.toLowerCase().contains('aylık'))
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 6),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 3,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF1BFFFF).withOpacity(0.2),
-                                      borderRadius: BorderRadius.circular(6),
-                                      border: Border.all(
-                                        color: const Color(0xFF1BFFFF).withOpacity(0.4),
-                                      ),
-                                    ),
-                                    child: Text(
-                                      '🎁 İLK 7 GÜN ÜCRETSİZ DENE',
-                                      style: TextStyle(
-                                        color: const Color(0xFF1BFFFF),
-                                        fontWeight: FontWeight.w900,
-                                        fontSize: 9.5,
-                                        letterSpacing: 0.5,
-                                      ),
-                                    ),
-                                  ),
-                                ),
+                              const SizedBox(height: 8),
+
+                              // Fiyat Bilgileri
                               Row(
-                                crossAxisAlignment: CrossAxisAlignment.baseline,
-                                textBaseline: TextBaseline.alphabetic,
+                                crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   Text(
                                     widget.price,
                                     style: TextStyle(
-                                      fontSize: 19,
+                                      color: widget.color,
+                                      fontSize: 22,
                                       fontWeight: FontWeight.w900,
-                                      color: widget.isSelected
-                                          ? widget.color
-                                          : Theme.of(context).colorScheme.onSurface,
+                                      height: 1,
                                     ),
                                   ),
                                   const SizedBox(width: 3),
-                                  Text(
-                                    widget.billingPeriod,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 2),
+                                    child: Text(
+                                      widget.billingPeriod,
+                                      style: TextStyle(
+                                        color: isDark
+                                            ? Colors.grey
+                                            : const Color(0xFF888888),
+                                        fontSize: 11,
+                                        height: 1.2,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -1179,75 +1235,156 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
                             ],
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 200),
-                          transitionBuilder: (child, animation) {
-                            return ScaleTransition(
-                              scale: animation,
-                              child: child,
-                            );
-                          },
-                          child: Icon(
-                            widget.isSelected
-                                ? Icons.check_circle_rounded
-                                : Icons.radio_button_unchecked_rounded,
-                            key: ValueKey(widget.isSelected),
-                            color: widget.isSelected
-                                ? widget.color
-                                : Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.4),
-                            size: 28,
-                          ),
-                        ),
                       ],
                     ),
                   ),
-                  if (widget.tag != null)
-                    Positioned(
-                      top: -12,
-                      right: -8,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: widget.isSelected
-                              ? widget.color
-                              : const Color(0xFFFFB020),
-                          borderRadius: BorderRadius.circular(99),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.8),
-                            width: 1.5,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.3),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            )
-                          ],
-                        ),
-                        child: Text(
-                          widget.tag!,
-                          style: TextStyle(
-                            color: widget.isSelected
-                                ? Colors.white
-                                : (Theme.of(context).brightness == Brightness.dark
-                                ? Theme.of(context).scaffoldBackgroundColor
-                                : Colors.white),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ),
+                ),
+
+                // Tek Badge - Sadece Fade Geçişi
+                if (hasFreeTrial || widget.tag != null)
+                  Positioned(
+                    top: -4,
+                    right: -2,
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      switchInCurve: Curves.easeInOut,
+                      switchOutCurve: Curves.easeInOut,
+                      transitionBuilder: (Widget child, Animation<double> animation) {
+                        // Sadece fade - pozisyon değişikliği yok
+                        return FadeTransition(
+                          opacity: animation,
+                          child: child,
+                        );
+                      },
+                      child: _buildBadge(hasFreeTrial, widget.tag),
                     ),
-                ],
-              ),
+                  ),
+              ],
             ),
           ),
         ),
       ),
     );
   }
+
+  Widget _buildBadge(bool hasFreeTrial, String? tag) {
+    // Hem deneme hem tasarruf varsa, animasyonla değiştir
+    if (hasFreeTrial && tag != null) {
+      if (_showFirstBadge) {
+        return _buildTrialBadge(key: const ValueKey('trial'));
+      } else {
+        return _buildSavingsBadge(tag, key: const ValueKey('savings'));
+      }
+    }
+
+    // Sadece deneme varsa
+    if (hasFreeTrial) {
+      return _buildTrialBadge(key: const ValueKey('trial'));
+    }
+
+    // Sadece tasarruf varsa
+    if (tag != null) {
+      return _buildSavingsBadge(tag, key: const ValueKey('savings'));
+    }
+
+    return const SizedBox.shrink();
+  }
+
+  Widget _buildTrialBadge({Key? key}) {
+    return Container(
+      key: key,
+      width: 115,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [widget.color, const Color(0xFFFF1744)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: widget.color.withOpacity(0.3),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: const Text(
+        "7 GÜN ÜCRETSİZ",
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 9,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.2,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSavingsBadge(String tag, {Key? key}) {
+    return Container(
+      key: key,
+      width: 115,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF4CAF50), Color(0xFF66BB6A)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF4CAF50).withOpacity(0.3),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Text(
+        tag,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 9,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.2,
+        ),
+      ),
+    );
+  }
 }
+
+class _TrustBadgeCompact extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  const _TrustBadgeCompact({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, color: color, size: 16),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFF666666),
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
