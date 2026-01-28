@@ -54,19 +54,34 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
       'desc': "Sorunun fotoğrafını çek, anında çözüm al."
     },
     {
-      'icon': Icons.bolt_rounded,
-      'title': "%300 Daha Hızlı Öğren",
-      'desc': "Yapay zeka ile kişiselleştirilmiş hızlandırılmış plan."
+      'icon': Icons.calendar_month_rounded,
+      'title': "Haftalık Akıllı Planlama",
+      'desc': "Sana özel hızlandırılmış programla hedefine %300 daha hızlı ulaş."
     },
     {
-      'icon': Icons.block_rounded,
-      'title': "Reklamları Yok Et",
-      'desc': "Kesintisiz odaklanma. Sadece dersine odaklan."
+      'icon': Icons.quiz_rounded,
+      'title': "Sınırsız Test Çözümü",
+      'desc': "Reels kaydırır gibi test çöz, kendini sına."
+    },
+    {
+      'icon': Icons.auto_stories_rounded,
+      'title': "Özel Konu Özetleri",
+      'desc': "Her konuyu özetlenmiş haliyle hızlıca öğren."
     },
     {
       'icon': Icons.analytics_rounded,
       'title': "Detaylı Hata Analizi",
       'desc': "Nerede yanlış yaptığını gör, netlerini artır."
+    },
+    {
+      'icon': Icons.save_rounded,
+      'title': "Etütleri Kaydet",
+      'desc': "Etüt odasındaki çalışmalarını kaydet, istediğin zaman tekrar et."
+    },
+    {
+      'icon': Icons.block_rounded,
+      'title': "Reklamları Yok Et",
+      'desc': "Kesintisiz odaklanma. Sadece dersine odaklan."
     },
   ];
 
