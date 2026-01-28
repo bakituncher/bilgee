@@ -116,7 +116,7 @@ class _PremiumWelcomeScreenState extends ConsumerState<PremiumWelcomeScreen> {
 
                   // Fayda Odaklı İkna Edici Metin
                   Text(
-                    'Artık sadece çalışmak değil, kazanmak için oyna. Rakiplerin deneme yanılma ile vakit kaybederken, sen yapay zeka destekli nokta atışı stratejilerle hedefine en kısa yoldan ulaşacaksın.\n\nPotansiyelini zirveye taşıyacak güç artık ellerinde. Sıra fark yaratmakta.',
+                    "Bugün kendine bir iyilik yaptın. Haftalık Plan ile zamanını, Soru Çözücü ile enerjini, Taktik Tavşan ile psikolojini koruma altına aldın. Etüt Odası'nda geçireceğin her dakika, seni o büyük güne daha güçlü hazırlayacak. Hoş geldin, kazanmaya başlıyoruz.",
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.95),
                       fontSize: 17,

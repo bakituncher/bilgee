@@ -46,19 +46,19 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
       final premiumSteps = [
         TutorialStep(
           title: "Taktik Üssüne Hoş Geldin!",
-          text: "Premium özelliklerin hepsi burada emrine amade. Şimdi sana bu araçların sınavını nasıl kazandıracağını tek tek göstereceğim.",
+          text: "Taktik Pro özellikleri burada ve emrine amade. Şimdi sana bu araçların sınavını nasıl kazandıracağını tek tek göstereceğim.",
           buttonText: "Başlayalım",
         ),
         TutorialStep(
           highlightKey: _weeklyPlanKey,
           title: "Kişisel Stratejistin",
-          text: "Sıradan programları unut. Bu yapay zeka, senin boş günlerine ve eksiklerine göre her hafta %100 sana özel, dinamik bir çalışma programı hazırlar.",
+          text: "Sıradan programları unut. Taktik Tavşan, senin boş günlerine ve eksiklerine göre her hafta %100 sana özel, dinamik bir çalışma programı hazırlar.",
           buttonText: "Harika",
         ),
         TutorialStep(
           highlightKey: _solverKey,
           title: "Özel Ders Cebinde",
-          text: "Çözemediğin bir soru mu var? Sadece fotoğrafını çek. Yapay zeka sana cevabı vermekle kalmaz, öğretmenden dinlemiş gibi adım adım mantığını anlatır.",
+          text: "Çözemediğin bir soru mu var? Sadece fotoğrafını çek. Taktik Tavşan sana cevabı vermekle kalmaz, öğretmenden dinlemiş gibi adım adım mantığını anlatır.",
           buttonText: "Süper",
         ),
         TutorialStep(
@@ -70,7 +70,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
         TutorialStep(
           highlightKey: _studyRoomKey,
           title: "Akıllı Etüt Odası",
-          text: "Burası senin eksik kapatma merkezin. Yapay zeka sadece senin zayıf olduğun konulardan sana özel konu özetleri ve testler üretir.",
+          text: "Burası senin eksik kapatma merkezin. Taktik Tavşan senin zayıf olduğun konulardan sana özel konu özetleri ve testler üretir.",
           buttonText: "Anladım",
         ),
         TutorialStep(
