@@ -68,7 +68,8 @@ class _PremiumWelcomeScreenState extends ConsumerState<PremiumWelcomeScreen>
 
   void _handleContinue() {
     HapticFeedback.lightImpact();
-    context.go(AppRoutes.home);
+    // Premium Tur'u başlatmak için AI Hub'a özel parametre ile gidiyoruz
+    context.go('/ai-hub', extra: {'startPremiumTour': true});
   }
 
   String _getSupportMessage(String? exam) {
@@ -304,7 +305,7 @@ class _PremiumWelcomeScreenState extends ConsumerState<PremiumWelcomeScreen>
 
                         // Subtitle
                         Text(
-                          'Geleceğine yatırım yapma cesaretini gösterdin.\nArtık sınırsız potansiyeline ulaşmanın zamanı.',
+                          'Artık sınır yok. Rakiplerinin önüne geçmeni sağlayacak süper güçlerin kilidi açıldı.',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -400,7 +401,7 @@ class _PremiumWelcomeScreenState extends ConsumerState<PremiumWelcomeScreen>
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                'Keşfetmeye Başla',
+                                'Güçlerimi Göster',
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 18,
