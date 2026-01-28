@@ -49,7 +49,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
   // Feature Data
   final List<Map<String, dynamic>> _features = [
     {
-      'icon': Icons.school_rounded,
+      'icon': Icons.camera_enhance_rounded,
       'title': "Saniyeler İçinde Çözdür",
       'desc': "Sorunun fotoğrafını çek, anında çözüm al."
     },
@@ -921,7 +921,7 @@ class _ModernPricingCard extends StatelessWidget {
               top: -4,
               right: -2,
               child: Container(
-                constraints: const BoxConstraints(minWidth: 130),
+                width: 115,
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -957,7 +957,7 @@ class _ModernPricingCard extends StatelessWidget {
               top: hasTrial ? 18 : -4,
               right: -2,
               child: Container(
-                constraints: const BoxConstraints(minWidth: 130),
+                width: 115,
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
