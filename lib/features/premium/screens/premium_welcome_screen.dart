@@ -68,7 +68,8 @@ class _PremiumWelcomeScreenState extends ConsumerState<PremiumWelcomeScreen>
 
   void _handleContinue() {
     HapticFeedback.lightImpact();
-    context.go(AppRoutes.home);
+    // Hemen Keşfet'e basınca AI Hub'a gidip turu başlatıyoruz
+    context.go(AppRoutes.aiHub, extra: {'startTour': true});
   }
 
   String _getSupportMessage(String? exam) {
@@ -400,7 +401,7 @@ class _PremiumWelcomeScreenState extends ConsumerState<PremiumWelcomeScreen>
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                'Keşfetmeye Başla',
+                                'Hemen Keşfet',
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 18,

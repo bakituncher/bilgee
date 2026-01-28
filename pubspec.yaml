@@ -39,6 +39,7 @@ dependencies:
   # Grafikler
   fl_chart: ^0.68.0
   confetti: ^0.7.0
+  tutorial_coach_mark: ^1.2.9
   lottie: ^3.1.2
   url_launcher: ^6.3.1
 

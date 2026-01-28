@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
 import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:taktik/data/providers/shared_prefs_provider.dart';
@@ -17,15 +18,153 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
   static const String _prefsKeyHasSeenOffer = 'has_seen_ai_hub_offer';
   bool _welcomeSheetTriggeredThisSession = false;
 
+  // GlobalKeys for Guided Tour
+  final GlobalKey _tavsanKey = GlobalKey();
+  final GlobalKey _planKey = GlobalKey();
+  final GlobalKey _solverKey = GlobalKey();
+  final GlobalKey _analysisKey = GlobalKey();
+  final GlobalKey _etutKey = GlobalKey();
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndStartTour();
       _checkAndShowWelcomeOffer();
     });
   }
 
+  void _checkAndStartTour() {
+    final state = GoRouterState.of(context);
+    final extra = state.extra;
+
+    if (extra is Map && extra['startTour'] == true) {
+      // Start the tutorial
+      _createTutorial();
+    }
+  }
+
+  void _createTutorial() {
+    final targets = [
+      _createTarget(
+        key: _tavsanKey,
+        title: "Taktik Tavşan",
+        description: "Sınav Koçun Burada! Stres yönetimi ve motivasyon için her an yanında.",
+        align: ContentAlign.bottom,
+      ),
+      _createTarget(
+        key: _planKey,
+        title: "Haftalık Plan",
+        description: "Rotanı Belirle! Eksiklerine göre sana özel haftalık ders programı.",
+        align: ContentAlign.bottom,
+      ),
+      _createTarget(
+        key: _solverKey,
+        title: "Soru Çözücü",
+        description: "Anında Çözüm! Takıldığın soruyu çek, adım adım çözümünü öğren.",
+        align: ContentAlign.bottom,
+      ),
+      _createTarget(
+        key: _analysisKey,
+        title: "Analiz & Strateji",
+        description: "Verilerle Konuş! Netlerini artırmak için nokta atışı tespitler.",
+        align: ContentAlign.top,
+      ),
+      _createTarget(
+        key: _etutKey,
+        title: "Etüt Odası",
+        description: "Eksiklerini Kapat! Sana özel üretilen konu özetleri ve testler.",
+        align: ContentAlign.top,
+      ),
+    ];
+
+    TutorialCoachMark(
+      targets: targets,
+      colorShadow: Colors.black,
+      textSkip: "ATLA",
+      paddingFocus: 10,
+      opacityShadow: 0.8,
+      onFinish: () {
+        // Optional: Save that tour is completed if needed
+      },
+      onClickTarget: (target) {
+        // Continue to next target on click
+      },
+      onSkip: () {
+        return true;
+      },
+    ).show(context: context);
+  }
+
+  TargetFocus _createTarget({
+    required GlobalKey key,
+    required String title,
+    required String description,
+    required ContentAlign align,
+  }) {
+    return TargetFocus(
+      identify: title,
+      keyTarget: key,
+      alignSkip: Alignment.topRight,
+      contents: [
+        TargetContent(
+          align: align,
+          builder: (context, controller) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontSize: 24.0,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 10.0),
+                  child: Text(
+                    description,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16.0,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 20.0),
+                  child: OutlinedButton(
+                    onPressed: () {
+                      controller.next();
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      side: const BorderSide(color: Colors.white),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    ),
+                    child: const Text("DEVAM ET"),
+                  ),
+                )
+              ],
+            );
+          },
+        ),
+      ],
+      shape: ShapeLightFocus.RRect,
+      radius: 24,
+    );
+  }
+
   Future<void> _checkAndShowWelcomeOffer() async {
+    // If tour is running, maybe delay this? But for now let's keep logic simple.
+    // The tour overlay will likely be on top anyway.
+
+    // Check if we just started a tour, if so, skip this sheet for now
+    final state = GoRouterState.of(context);
+    final extra = state.extra;
+    if (extra is Map && extra['startTour'] == true) return;
+
     if (_welcomeSheetTriggeredThisSession) return;
     final isPremium = ref.read(premiumStatusProvider);
     if (isPremium) return;
@@ -260,6 +399,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
 
             // --- 1. HERO COACH (Tavşan) ---
             _HeroCoachCard(
+              key: _tavsanKey,
               isPremium: isPremium,
               onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/motivation-chat', offerData: {
                 'title': 'Taktik Tavşan',
@@ -295,6 +435,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
               children: [
                 Expanded(
                   child: _BentoCard(
+                    key: _planKey,
                     title: 'Haftalık\nPlan',
                     // ÇOK NET: Ne işe yarar? Program oluşturur.
                     description: 'Senin verilerin ile \nsana özel',
@@ -316,6 +457,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                 const SizedBox(width: gap),
                 Expanded(
                   child: _BentoCard(
+                    key: _solverKey,
                     title: 'Soru\nÇözücü',
                     // ÇOK NET: Ne işe yarar? Çözümü gösterir.
                     description: 'Sorunu çek, anında\nçözümünü al.',
@@ -344,6 +486,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
               children: [
                 Expanded(
                   child: _BentoCard(
+                    key: _analysisKey,
                     title: 'Analiz &\nStrateji',
                     // ÇOK NET: Ne işe yarar? Sebebi bulur.
                     description: 'Nasıl daha çok net\nyapacağını söyler.',
@@ -365,6 +508,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                 const SizedBox(width: gap),
                 Expanded(
                   child: _BentoCard(
+                    key: _etutKey,
                     title: 'Etüt\nOdası',
                     // ÇOK NET: Ne işe yarar? Materyal verir.
                     description: 'Eksik konularına özel\nçalışma setleri.',
@@ -489,6 +633,7 @@ class _BentoCard extends StatelessWidget {
   final VoidCallback onTap;
 
   const _BentoCard({
+    super.key, // Allow key
     required this.title,
     required this.description,
     required this.icon,
@@ -620,7 +765,7 @@ class _HeroCoachCard extends StatelessWidget {
   final bool isPremium;
   final VoidCallback onTap;
 
-  const _HeroCoachCard({required this.isPremium, required this.onTap});
+  const _HeroCoachCard({super.key, required this.isPremium, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -799,4 +944,3 @@ class _MinimalDisclaimer extends StatelessWidget {
     );
   }
 }
-
