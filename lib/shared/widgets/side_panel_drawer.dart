@@ -258,60 +258,66 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
             ),
           ),
         ),
-        Row(
-          children: [
-            // WhatsApp
-            Expanded(
-              child: _socialIconButton(
-                context,
-                icon: FontAwesomeIcons.whatsapp,
-                color: const Color(0xFF25D366),
-                onTap: () async {
-                  Navigator.of(context).pop();
-                  String channelUrl = 'https://whatsapp.com/channel/0029VbBdCY96BIEo5XqCbK1V';
-                  if (user?.selectedExam != null) {
-                    final exam = user!.selectedExam.toString().toLowerCase();
-                    if (exam.contains('yks') || exam.contains('tyt') || exam.contains('ayt')) {
-                      channelUrl = 'https://whatsapp.com/channel/0029VbB9FtNDp2Q09xHfAq0E';
-                    } else if (exam.contains('lgs')) {
-                      channelUrl = 'https://whatsapp.com/channel/0029VbBVIRTKbYMJI3tqsl3u';
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            color: colorScheme.surfaceContainerHighest.withOpacity(.2),
+          ),
+          child: Row(
+            children: [
+              // WhatsApp
+              Expanded(
+                child: _socialIconButton(
+                  context,
+                  icon: FontAwesomeIcons.whatsapp,
+                  color: const Color(0xFF25D366),
+                  onTap: () async {
+                    Navigator.of(context).pop();
+                    String channelUrl = 'https://whatsapp.com/channel/0029VbBdCY96BIEo5XqCbK1V';
+                    if (user?.selectedExam != null) {
+                      final exam = user!.selectedExam.toString().toLowerCase();
+                      if (exam.contains('yks') || exam.contains('tyt') || exam.contains('ayt')) {
+                        channelUrl = 'https://whatsapp.com/channel/0029VbB9FtNDp2Q09xHfAq0E';
+                      } else if (exam.contains('lgs')) {
+                        channelUrl = 'https://whatsapp.com/channel/0029VbBVIRTKbYMJI3tqsl3u';
+                      }
                     }
-                  }
-                  await _launchURL(channelUrl);
-                },
+                    await _launchURL(channelUrl);
+                  },
+                ),
               ),
-            ),
 
-            buildDivider(), // AYIRICI
+              buildDivider(), // AYIRICI
 
-            // Instagram
-            Expanded(
-              child: _socialIconButton(
-                context,
-                icon: FontAwesomeIcons.instagram,
-                color: const Color(0xFFE1306C),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _launchURL('https://www.instagram.com/taktik_tr?igsh=NTdvaTh1amN0MHB4');
-                },
+              // Instagram
+              Expanded(
+                child: _socialIconButton(
+                  context,
+                  icon: FontAwesomeIcons.instagram,
+                  color: const Color(0xFFE1306C),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _launchURL('https://www.instagram.com/taktik_tr?igsh=NTdvaTh1amN0MHB4');
+                  },
+                ),
               ),
-            ),
 
-            buildDivider(), // AYIRICI
+              buildDivider(), // AYIRICI
 
-            // TikTok
-            Expanded(
-              child: _socialIconButton(
-                context,
-                icon: FontAwesomeIcons.tiktok,
-                color: theme.brightness == Brightness.dark ? Colors.white : Colors.black,
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _launchURL('https://www.tiktok.com/@tr_taktik?_r=1&_t=ZS-91pXgBzmmkq');
-                },
+              // TikTok
+              Expanded(
+                child: _socialIconButton(
+                  context,
+                  icon: FontAwesomeIcons.tiktok,
+                  color: theme.brightness == Brightness.dark ? Colors.white : Colors.black,
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _launchURL('https://www.tiktok.com/@tr_taktik?_r=1&_t=ZS-91pXgBzmmkq');
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
@@ -354,16 +360,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              gradient: LinearGradient(
-                colors: [
-                  Colors.amber.withOpacity(0.15),
-                  Colors.orange.withOpacity(0.15),
-                ],
-              ),
-              border: Border.all(
-                color: Colors.amber.withOpacity(0.3),
-                width: 1,
-              ),
+              color: colorScheme.surfaceContainerHighest.withOpacity(.2),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
