@@ -161,11 +161,8 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                   // Footer actions (Taktik PRO)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(8, 10, 8, 10),
-                    child: _actionTileCompact(
-                      context,
-                      icon: isPremium ? Icons.verified_rounded : Icons.workspace_premium_rounded,
-                      title: 'Taktik Pro',
-                      iconColor: isPremium ? const Color(0xFF10B981) : colorScheme.primary,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(14),
                       onTap: () {
                         Navigator.of(context).pop();
                         if (isPremium) {
@@ -174,6 +171,53 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                           context.go('/premium');
                         }
                       },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          color: colorScheme.surfaceContainerHighest.withOpacity(.2),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Image.asset(
+                              'assets/images/bunnyy.png',
+                              width: 24,
+                              height: 24,
+                              fit: BoxFit.contain,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Taktik',
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 14,
+                                letterSpacing: 0.3,
+                                color: Colors.black,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.amber.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: Colors.amber.withOpacity(0.5), width: 1),
+                              ),
+                              child: const Text(
+                                'PRO',
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w900,
+                                  fontFamily: 'Poppins',
+                                  color: Colors.amber,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -551,42 +595,6 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
     );
   }
 
-  Widget _actionTileCompact(
-      BuildContext context, {
-        required IconData icon,
-        required String title,
-        Color? iconColor,
-        required VoidCallback onTap,
-      }) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          color: colorScheme.surfaceContainerHighest.withOpacity(.2),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 19, color: iconColor ?? colorScheme.onSurfaceVariant),
-            const SizedBox(width: 8),
-            Text(
-              title,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w800,
-                fontSize: 13,
-                color: iconColor ?? colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 class _Avatar extends StatelessWidget {
