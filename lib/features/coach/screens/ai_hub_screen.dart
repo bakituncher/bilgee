@@ -905,6 +905,69 @@ class _PremiumTourDialogState extends State<_PremiumTourDialog> {
     }
   }
 
+  // Kart pozisyonunu güvenli şekilde hesapla
+  double _calculateCardPosition(BuildContext context, Rect? highlightRect) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final topPadding = MediaQuery.of(context).padding.top;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
+    const cardHeight = 250.0; // Tahmini kart yüksekliği
+    const minTopMargin = 60.0; // Skip button için boşluk
+    const minBottomMargin = 40.0;
+    const spacingFromHighlight = 24.0; // Vurgulanan alandan boşluk
+
+    // Eğer highlight yoksa ortala
+    if (highlightRect == null) {
+      return (screenHeight - cardHeight) / 2;
+    }
+
+    final highlightTop = highlightRect.top;
+    final highlightBottom = highlightRect.bottom;
+    final highlightCenter = highlightRect.center.dy;
+
+    // Üstte yeterli alan var mı?
+    final spaceAbove = highlightTop - topPadding - minTopMargin;
+    // Altta yeterli alan var mı?
+    final spaceBelow = screenHeight - highlightBottom - bottomPadding - minBottomMargin;
+
+    double cardTop;
+
+    // 1. Vurgulanan alan ekranın üst yarısındaysa -> Kartı ALTA koy
+    if (highlightCenter < screenHeight / 2) {
+      cardTop = highlightBottom + spacingFromHighlight;
+
+      // Ekrandan taşma kontrolü
+      if (cardTop + cardHeight > screenHeight - bottomPadding - minBottomMargin) {
+        // Taşıyorsa, ekranın altına hizala
+        cardTop = screenHeight - cardHeight - bottomPadding - minBottomMargin;
+      }
+    }
+    // 2. Vurgulanan alan ekranın alt yarısındaysa -> Kartı ÜSTE koy
+    else {
+      cardTop = highlightTop - cardHeight - spacingFromHighlight;
+
+      // Ekrandan taşma kontrolü
+      if (cardTop < topPadding + minTopMargin) {
+        // Taşıyorsa, ekranın üstüne hizala
+        cardTop = topPadding + minTopMargin;
+      }
+    }
+
+    // Son güvenlik kontrolü: Kart vurgulanan alanla çakışıyor mu?
+    if ((cardTop < highlightBottom && cardTop + cardHeight > highlightTop)) {
+      // Çakışma var, en güvenli konuma al
+      if (spaceBelow > spaceAbove) {
+        // Altında daha çok yer var
+        cardTop = highlightBottom + spacingFromHighlight;
+      } else {
+        // Üstte daha çok yer var
+        cardTop = highlightTop - cardHeight - spacingFromHighlight;
+      }
+    }
+
+    return cardTop;
+  }
+
   @override
   Widget build(BuildContext context) {
     final step = widget.steps[_currentIndex];
@@ -935,12 +998,8 @@ class _PremiumTourDialogState extends State<_PremiumTourDialog> {
 
         // 2. Açıklama Kartı
         Positioned(
-          // Kartın konumunu dinamik ayarla (Vurgulanan alanın altında veya üstünde)
-          top: highlightRect != null
-              ? (highlightRect.center.dy > MediaQuery.of(context).size.height / 2
-                  ? highlightRect.top - 230 // Alan ekranın altındaysa kartı üste koy
-                  : highlightRect.bottom + 30) // Alan ekranın üstündeyse kartı alta koy
-              : MediaQuery.of(context).size.height / 2 - 100,
+          // Kartın konumunu dinamik ve güvenli şekilde ayarla
+          top: _calculateCardPosition(context, highlightRect),
           left: 24,
           right: 24,
           child: Material(

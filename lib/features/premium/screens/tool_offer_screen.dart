@@ -825,15 +825,8 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
         }
 
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Harika! Premium özellikler aktif ediliyor...'),
-            backgroundColor: Theme.of(context).colorScheme.secondary,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-        // Başarılı satın alma sonrası AI Hub ekranına yönlendir
-        context.go(AppRoutes.aiHub);
+        // Başarılı satın alma sonrası Premium Welcome ekranına yönlendir
+        context.go(AppRoutes.premiumWelcome);
         return;
       }
 
