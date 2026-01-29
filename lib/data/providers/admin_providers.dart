@@ -15,12 +15,22 @@ final adminClaimProvider = FutureProvider<bool>((ref) async {
     return false;
   }
 
-  // Force a refresh of the token to get the latest claims.
-  final tokenResult = await user.getIdTokenResult(true);
-  final claims = tokenResult.claims ?? {};
+  try {
+    // Force a refresh of the token to get the latest claims.
+    final tokenResult = await user.getIdTokenResult(true);
+    final claims = tokenResult.claims ?? {};
 
-  // Return true if the 'admin' claim is set to true.
-  return claims['admin'] == true;
+    // Return true if the 'admin' claim is set to true.
+    return claims['admin'] == true;
+  } on FirebaseAuthException catch (e) {
+    // Network errors or unexpected stream end - return false safely
+    print('Error getting admin claim: ${e.code} ${e.message}');
+    return false;
+  } catch (e) {
+    // Any other unexpected error - return false safely
+    print('Unexpected error getting admin claim: $e');
+    return false;
+  }
 });
 
 final superAdminProvider = FutureProvider<bool>((ref) async {

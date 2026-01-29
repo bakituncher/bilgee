@@ -781,8 +781,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       }
     });
 
-    final user = ref.watch(userProfileProvider).value;
-    final isAdmin = ref.watch(adminClaimProvider).value ?? false;
+    final user = ref.watch(userProfileProvider).valueOrNull;
+    final isAdmin = ref.watch(adminClaimProvider).valueOrNull ?? false;
 
     // Alt navigasyon çubuğu için güvenli alan boşluğu
     final bottomPadding = MediaQuery.of(context).padding.bottom;
