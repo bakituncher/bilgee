@@ -1061,12 +1061,16 @@ class _PriceTransparencyText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 10),
-      child: Text(
-        'Abonelik otomatik yenilenir, dilediğin zaman iptal edebilirsin.',
-        textAlign: TextAlign.center,
-        style: TextStyle(color: Color(0xFF666666), fontSize: 9, height: 1.4),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          'Abonelik otomatik yenilenir, dilediğin zaman iptal edebilirsin.',
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          style: const TextStyle(color: Color(0xFF666666), fontSize: 9, height: 1.4),
+        ),
       ),
     );
   }

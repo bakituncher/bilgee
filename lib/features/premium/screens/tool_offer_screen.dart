@@ -76,10 +76,14 @@ class _PriceTransparencyFooter extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-      child: Text(
-        'Abonelik otomatik yenilenir, dilediğin zaman iptal edebilirsin.',
-        textAlign: TextAlign.center,
-        style: textStyle,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          'Abonelik otomatik yenilenir, dilediğin zaman iptal edebilirsin.',
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          style: textStyle,
+        ),
       ),
     );
   }
