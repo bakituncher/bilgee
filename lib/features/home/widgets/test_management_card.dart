@@ -4,7 +4,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
-import 'package:taktik/data/providers/premium_provider.dart';
 
 class TestManagementCard extends ConsumerWidget {
   const TestManagementCard({super.key});
@@ -25,7 +24,6 @@ class TestManagementCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isPremium = ref.watch(premiumStatusProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -98,20 +96,7 @@ class TestManagementCard extends ConsumerWidget {
                   // İstenen Mavi Renk Geçişi
                   gradientColors: const [Color(0xFF3B82F6), Color(0xFF2563EB)],
                   onTap: () {
-                    if (isPremium) {
-                      context.push('/ai-hub/question-solver');
-                    } else {
-                      context.push('/ai-hub/offer', extra: {
-                        'title': 'Soru Çözücü',
-                        'subtitle': 'Anında çözüm cebinde.',
-                        'icon': Icons.camera_enhance_rounded,
-                        'color': Colors.orangeAccent,
-                        'marketingTitle': 'Soruda Takılma!',
-                        'marketingSubtitle':
-                        'Yapamadığın sorunun fotoğrafını çek, Taktik Tavşan adım adım çözümünü anlatsın.',
-                        'redirectRoute': '/ai-hub/question-solver',
-                      });
-                    }
+                    context.push('/ai-hub/question-solver');
                   },
                 ),
               ),
