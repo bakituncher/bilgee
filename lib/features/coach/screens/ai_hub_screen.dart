@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
+// Proje içi importlar (Senin yapına uygun)
 import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:taktik/data/providers/shared_prefs_provider.dart';
 import 'package:taktik/features/coach/widgets/ai_hub_welcome_sheet.dart';
 import 'package:taktik/features/onboarding/models/tutorial_step.dart';
-import 'package:taktik/features/onboarding/widgets/tutorial_painter.dart';
+// TutorialPainter bu dosya içinde tanımlandığı için import'a gerek yok,
+// ama senin projende ayrı dosyadaysa import kalabilir.
 
 // --- KEY TANIMLAMALARI (Spotlight için) ---
 final GlobalKey _weeklyPlanKey = GlobalKey();
@@ -114,9 +116,8 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
     }
   }
 
-  // --- BİLGİ VE SATIŞ EKRANI (NET VE İKNA EDİCİ) ---
+  // --- BİLGİ VE SATIŞ EKRANI ---
   void _showInfoSheet(ThemeData theme) {
-    // Şık ve uyumlu bir pembe tonu tanımlıyoruz
     const pinkColor = Color(0xFFE11D48);
     final isPremium = ref.read(premiumStatusProvider);
 
@@ -136,7 +137,6 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
         builder: (context, scrollController) {
           return Column(
             children: [
-              // Tutamaç
               const SizedBox(height: 16),
               Container(
                 width: 48,
@@ -146,14 +146,11 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-
-              // İÇERİK
               Expanded(
                 child: ListView(
                   controller: scrollController,
                   padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
                   children: [
-                    // Başlık
                     Text(
                       "Bu Özellikler Ne İşe Yarar?",
                       style: TextStyle(
@@ -175,10 +172,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                       ),
                       textAlign: TextAlign.center,
                     ),
-
                     const SizedBox(height: 40),
-
-                    // ÖZELLİKLER (SOMUT FAYDA ODAKLI)
                     _ProFeatureRow(
                       theme: theme,
                       icon: Icons.calendar_month_rounded,
@@ -186,7 +180,6 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                       title: "Kişiye Özel Ders Programı",
                       description: "Eksik olduğun konulara ve boş günlerine göre sana özel, haftalık ders çalışma programı hazırlar.",
                     ),
-
                     _ProFeatureRow(
                       theme: theme,
                       icon: Icons.camera_alt_rounded,
@@ -194,7 +187,6 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                       title: "Fotoğraflı Soru Çözümü",
                       description: "Çözemediğin sorunun fotoğrafını çek, yapay zeka adım adım nasıl çözüleceğini anlatsın.",
                     ),
-
                     _ProFeatureRow(
                       theme: theme,
                       icon: Icons.radar_rounded,
@@ -202,7 +194,6 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                       title: "Net Arttırma Analizi",
                       description: "Deneme sonuçlarını inceler ve netlerinin neden artmadığını tespit edip çözüm önerir.",
                     ),
-
                     _ProFeatureRow(
                       theme: theme,
                       icon: Icons.menu_book_rounded,
@@ -213,8 +204,6 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                   ],
                 ),
               ),
-
-              // SABİT BUTON (Action - PEMBE VE PREMİUM YÖNLENDİRMELİ)
               if (!isPremium)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 10, 24, 40),
@@ -222,14 +211,14 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                     width: double.infinity,
                     child: FilledButton(
                       onPressed: () {
-                        Navigator.pop(context); // Sheet'i kapat
-                        context.push('/premium'); // Premium ekranına git
+                        Navigator.pop(context);
+                        context.push('/premium');
                       },
                       style: FilledButton.styleFrom(
-                        backgroundColor: pinkColor, // İstenilen pembe renk
+                        backgroundColor: pinkColor,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 18),
-                        elevation: 8, // Biraz gölge ile şıklık
+                        elevation: 8,
                         shadowColor: pinkColor.withOpacity(0.4),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
@@ -259,7 +248,6 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
   Widget build(BuildContext context) {
     final isPremium = ref.watch(premiumStatusProvider);
     final theme = Theme.of(context);
-
     const double gap = 14.0;
 
     return Scaffold(
@@ -323,7 +311,6 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             // --- 1. HERO COACH (Tavşan) ---
             KeyedSubtree(
               key: _coachKey,
@@ -357,8 +344,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
               ),
             ),
 
-            // --- 2. BENTO GRID (NET VE SATIŞ ODAKLI METİNLER) ---
-
+            // --- 2. BENTO GRID ---
             // Satır 1
             Row(
               children: [
@@ -367,12 +353,11 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                     key: _weeklyPlanKey,
                     child: _BentoCard(
                       title: 'Haftalık\nPlan',
-                      // ÇOK NET: Ne işe yarar? Program oluşturur.
                       description: 'Senin verilerin ile \nsana özel',
                       icon: Icons.calendar_month_rounded,
                       color: const Color(0xFF10B981),
                       isPremium: isPremium,
-                      height: 180, // Rahat sığsın diye
+                      height: 180,
                       onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/strategic-planning', offerData: {
                         'title': 'Haftalık Stratejist',
                         'subtitle': 'Sana özel ders programı.',
@@ -391,7 +376,6 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                     key: _solverKey,
                     child: _BentoCard(
                       title: 'Soru\nÇözücü',
-                      // ÇOK NET: Ne işe yarar? Çözümü gösterir.
                       description: 'Sorunu çek, anında\nçözümünü al.',
                       icon: Icons.camera_enhance_rounded,
                       color: const Color(0xFFF59E0B),
@@ -422,7 +406,6 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                     key: _analysisKey,
                     child: _BentoCard(
                       title: 'Analiz &\nStrateji',
-                      // ÇOK NET: Ne işe yarar? Sebebi bulur.
                       description: 'Nasıl daha çok net\nyapacağını söyler.',
                       icon: Icons.radar_rounded,
                       color: const Color(0xFFF43F5E),
@@ -446,7 +429,6 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                     key: _studyRoomKey,
                     child: _BentoCard(
                       title: 'Etüt\nOdası',
-                      // ÇOK NET: Ne işe yarar? Materyal verir.
                       description: 'Eksik konularına özel\nçalışma setleri.',
                       icon: Icons.menu_book_rounded,
                       color: const Color(0xFF8B5CF6),
@@ -489,8 +471,219 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
 }
 
 // -----------------------------------------------------------------------------
-// BİLGİ EKRANI SATIRI (Şık ve Okunaklı)
+// DÜZELTİLMİŞ PREMIUM TOUR DIALOG (Anchor Mantığı)
 // -----------------------------------------------------------------------------
+class _PremiumTourDialog extends StatefulWidget {
+  final List<TutorialStep> steps;
+  const _PremiumTourDialog({required this.steps});
+
+  @override
+  State<_PremiumTourDialog> createState() => _PremiumTourDialogState();
+}
+
+class _PremiumTourDialogState extends State<_PremiumTourDialog> {
+  int _currentIndex = 0;
+
+  void _next() {
+    if (_currentIndex < widget.steps.length - 1) {
+      setState(() {
+        _currentIndex++;
+      });
+    } else {
+      Navigator.of(context).pop();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final step = widget.steps[_currentIndex];
+    final key = step.highlightKey;
+
+    // Highlight (Vurgulanan alan) hesaplaması
+    Rect? highlightRect;
+    if (key != null && key.currentContext != null) {
+      final renderBox = key.currentContext!.findRenderObject() as RenderBox;
+      final offset = renderBox.localToGlobal(Offset.zero);
+      highlightRect = Rect.fromLTWH(offset.dx, offset.dy, renderBox.size.width, renderBox.size.height);
+    }
+
+    // Ekran Boyutları
+    final size = MediaQuery.of(context).size;
+    final topPadding = MediaQuery.of(context).padding.top;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
+    // --- AKILLI KONUMLANDIRMA MANTIĞI ---
+    bool placeBelow = true; // Varsayılan olarak alta koy
+    double? topPos;
+    double? bottomPos;
+
+    // Kartın vurgulanan alandan ne kadar uzak olacağı
+    const double spacing = 24.0;
+
+    if (highlightRect != null) {
+      final spaceAbove = highlightRect.top - topPadding;
+      final spaceBelow = size.height - highlightRect.bottom - bottomPadding;
+
+      // Eğer aşağıda daha çok yer varsa VEYA yukarıdaki yer çok darsa (200px altı) -> Alta koy
+      if (spaceBelow >= spaceAbove || spaceAbove < 200) {
+        placeBelow = true;
+        // Kartın ÜST kenarı = Vurgulanan alanın ALT kenarı + boşluk
+        topPos = highlightRect.bottom + spacing;
+        bottomPos = null; // Bottom null olmalı ki kart aşağı doğru uzayabilsin
+      } else {
+        placeBelow = false;
+        // Kartın ALT kenarı = (Ekran Boyu - Vurgulanan alanın ÜST kenarı) + boşluk
+        // Positioned.bottom kullandığımız için, ekranın altından olan mesafeyi veriyoruz.
+        bottomPos = (size.height - highlightRect.top) + spacing;
+        topPos = null;
+      }
+    } else {
+      // Highlight yoksa (ilk adım gibi), ekranın ortasına yakın koy
+      topPos = size.height * 0.35;
+    }
+
+    return Stack(
+      children: [
+        // 1. SAHNE IŞIĞI (Spotlight)
+        GestureDetector(
+          onTap: _next,
+          child: CustomPaint(
+            size: size,
+            painter: _SpotlightPainter(
+              highlightRect: highlightRect,
+              overlayColor: Colors.black.withOpacity(0.85),
+              glowColor: const Color(0xFFFFD700),
+            ),
+          ),
+        ),
+
+        // 2. AÇIKLAMA KARTI
+        Positioned(
+          // Sol ve Sağ kenarlardan boşluk
+          left: 24,
+          right: 24,
+          // Çakışmayı önleyen dinamik konumlandırma
+          top: topPos,
+          bottom: bottomPos,
+
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1E2C).withOpacity(0.98), // Neredeyse opak
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.5), width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.5),
+                    blurRadius: 30,
+                    spreadRadius: 5,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min, // İçerik kadar yer kapla
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFD700).withOpacity(0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.auto_awesome, color: Color(0xFFFFD700), size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          step.title,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    step.text,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 15,
+                      height: 1.5,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: FilledButton.icon(
+                      onPressed: _next,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFFFFD700),
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                      label: Text(
+                        step.buttonText.toUpperCase(),
+                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12, letterSpacing: 1),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )
+                .animate(key: ValueKey(_currentIndex)) // Her adımda animasyon yeniden başlar
+                .fadeIn(duration: 300.ms)
+                .slide(
+              // Aşağıdaysa aşağıdan yukarı, yukarıdaysa yukarıdan aşağı gelsin
+                begin: placeBelow ? const Offset(0, 0.1) : const Offset(0, -0.1),
+                end: Offset.zero,
+                duration: 400.ms,
+                curve: Curves.easeOutBack
+            ),
+          ),
+        ),
+
+        // 3. ÇIKIŞ BUTONU
+        Positioned(
+          top: MediaQuery.of(context).padding.top + 10,
+          right: 16,
+          child: SafeArea(
+            child: TextButton.icon(
+              onPressed: () => Navigator.of(context).pop(),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white.withOpacity(0.8),
+                backgroundColor: Colors.black.withOpacity(0.3),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              ),
+              icon: const Icon(Icons.close_rounded, size: 18),
+              label: const Text(
+                "Turu Kapat",
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// -----------------------------------------------------------------------------
+// HELPER WIDGETS
+// -----------------------------------------------------------------------------
+
 class _ProFeatureRow extends StatelessWidget {
   final ThemeData theme;
   final IconData icon;
@@ -513,7 +706,6 @@ class _ProFeatureRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // İkon Kutusu
           Container(
             height: 52,
             width: 52,
@@ -524,7 +716,6 @@ class _ProFeatureRow extends StatelessWidget {
             child: Icon(icon, color: color, size: 26),
           ),
           const SizedBox(width: 18),
-          // Yazılar
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -557,9 +748,6 @@ class _ProFeatureRow extends StatelessWidget {
   }
 }
 
-// -----------------------------------------------------------------------------
-// BENTO KART (SATIŞ ODAKLI)
-// -----------------------------------------------------------------------------
 class _BentoCard extends StatelessWidget {
   final String title;
   final String description;
@@ -613,7 +801,6 @@ class _BentoCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           child: Stack(
             children: [
-              // Hafif Renkli Arkaplan
               Positioned.fill(
                 child: DecoratedBox(
                   decoration: BoxDecoration(
@@ -635,7 +822,6 @@ class _BentoCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // İkon ve Kilit
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -652,8 +838,6 @@ class _BentoCard extends StatelessWidget {
                           Icon(Icons.lock_rounded, size: 18, color: theme.colorScheme.onSurface.withOpacity(0.2)),
                       ],
                     ),
-
-                    // Başlık + Açıklama (alt blok)
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
@@ -669,7 +853,6 @@ class _BentoCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        // Açıklama (Teşvik Edici)
                         Text(
                           description,
                           style: TextStyle(
@@ -694,9 +877,6 @@ class _BentoCard extends StatelessWidget {
   }
 }
 
-// -----------------------------------------------------------------------------
-// HERO KART (TEMİZ VE ŞIK)
-// -----------------------------------------------------------------------------
 class _HeroCoachCard extends StatelessWidget {
   final bool isPremium;
   final VoidCallback onTap;
@@ -722,8 +902,6 @@ class _HeroCoachCard extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            // Arka plan temizlendi (kafa yok)
-
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 0, 16),
               child: Row(
@@ -773,7 +951,6 @@ class _HeroCoachCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  // Tavşan Resmi
                   Expanded(
                     flex: 1,
                     child: Padding(
@@ -794,9 +971,6 @@ class _HeroCoachCard extends StatelessWidget {
   }
 }
 
-// -----------------------------------------------------------------------------
-// PREMIUM BANNER
-// -----------------------------------------------------------------------------
 class _StylishPremiumBanner extends StatelessWidget {
   const _StylishPremiumBanner();
 
@@ -881,241 +1055,7 @@ class _MinimalDisclaimer extends StatelessWidget {
   }
 }
 
-// -----------------------------------------------------------------------------
-// PREMIUM TUR DİALOG (Standalone Tour Widget)
-// -----------------------------------------------------------------------------
-class _PremiumTourDialog extends StatefulWidget {
-  final List<TutorialStep> steps;
-  const _PremiumTourDialog({required this.steps});
-
-  @override
-  State<_PremiumTourDialog> createState() => _PremiumTourDialogState();
-}
-
-class _PremiumTourDialogState extends State<_PremiumTourDialog> {
-  int _currentIndex = 0;
-
-  void _next() {
-    if (_currentIndex < widget.steps.length - 1) {
-      setState(() {
-        _currentIndex++;
-      });
-    } else {
-      Navigator.of(context).pop(); // Turu bitir
-    }
-  }
-
-  // Kart pozisyonunu güvenli şekilde hesapla
-  double _calculateCardPosition(BuildContext context, Rect? highlightRect) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final topPadding = MediaQuery.of(context).padding.top;
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
-
-    const cardHeight = 250.0; // Tahmini kart yüksekliği
-    const minTopMargin = 60.0; // Skip button için boşluk
-    const minBottomMargin = 40.0;
-    const spacingFromHighlight = 24.0; // Vurgulanan alandan boşluk
-
-    // Eğer highlight yoksa ortala
-    if (highlightRect == null) {
-      return (screenHeight - cardHeight) / 2;
-    }
-
-    final highlightTop = highlightRect.top;
-    final highlightBottom = highlightRect.bottom;
-    final highlightCenter = highlightRect.center.dy;
-
-    // Üstte yeterli alan var mı?
-    final spaceAbove = highlightTop - topPadding - minTopMargin;
-    // Altta yeterli alan var mı?
-    final spaceBelow = screenHeight - highlightBottom - bottomPadding - minBottomMargin;
-
-    double cardTop;
-
-    // 1. Vurgulanan alan ekranın üst yarısındaysa -> Kartı ALTA koy
-    if (highlightCenter < screenHeight / 2) {
-      cardTop = highlightBottom + spacingFromHighlight;
-
-      // Ekrandan taşma kontrolü
-      if (cardTop + cardHeight > screenHeight - bottomPadding - minBottomMargin) {
-        // Taşıyorsa, ekranın altına hizala
-        cardTop = screenHeight - cardHeight - bottomPadding - minBottomMargin;
-      }
-    }
-    // 2. Vurgulanan alan ekranın alt yarısındaysa -> Kartı ÜSTE koy
-    else {
-      cardTop = highlightTop - cardHeight - spacingFromHighlight;
-
-      // Ekrandan taşma kontrolü
-      if (cardTop < topPadding + minTopMargin) {
-        // Taşıyorsa, ekranın üstüne hizala
-        cardTop = topPadding + minTopMargin;
-      }
-    }
-
-    // Son güvenlik kontrolü: Kart vurgulanan alanla çakışıyor mu?
-    if ((cardTop < highlightBottom && cardTop + cardHeight > highlightTop)) {
-      // Çakışma var, en güvenli konuma al
-      if (spaceBelow > spaceAbove) {
-        // Altında daha çok yer var
-        cardTop = highlightBottom + spacingFromHighlight;
-      } else {
-        // Üstte daha çok yer var
-        cardTop = highlightTop - cardHeight - spacingFromHighlight;
-      }
-    }
-
-    return cardTop;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final step = widget.steps[_currentIndex];
-    final key = step.highlightKey;
-    Rect? highlightRect;
-
-    if (key != null && key.currentContext != null) {
-      final renderBox = key.currentContext!.findRenderObject() as RenderBox;
-      final offset = renderBox.localToGlobal(Offset.zero);
-      highlightRect = Rect.fromLTWH(offset.dx, offset.dy, renderBox.size.width, renderBox.size.height);
-    }
-
-    return Stack(
-      children: [
-        // 1. SAHNE IŞIĞI VE KARARTMA (Spotlight Effect)
-        GestureDetector(
-          onTap: _next,
-          child: CustomPaint(
-            size: MediaQuery.of(context).size,
-            // Özel Spotlight Painter kullanıyoruz
-            painter: _SpotlightPainter(
-              highlightRect: highlightRect,
-              overlayColor: Colors.black.withOpacity(0.85), // Arka plan daha koyu (Odak artar)
-              glowColor: const Color(0xFFFFD700), // Altın sarısı glow
-            ),
-          ),
-        ),
-
-        // 2. Açıklama Kartı
-        Positioned(
-          // Kartın konumunu dinamik ve güvenli şekilde ayarla
-          top: _calculateCardPosition(context, highlightRect),
-          left: 24,
-          right: 24,
-          child: Material(
-            color: Colors.transparent,
-            child: Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E1E2C).withOpacity(0.95), // Kart arka planı
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.5), width: 1.5),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.5),
-                    blurRadius: 30,
-                    spreadRadius: 5,
-                    offset: const Offset(0, 10),
-                  ),
-                  // Kartın kendisine de hafif bir glow ekleyelim
-                  BoxShadow(
-                    color: const Color(0xFFFFD700).withOpacity(0.1),
-                    blurRadius: 20,
-                    spreadRadius: 0,
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFD700).withOpacity(0.2),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.auto_awesome, color: Color(0xFFFFD700), size: 20),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          step.title,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    step.text,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 15,
-                      height: 1.6,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: SizedBox(
-                      height: 44,
-                      child: FilledButton.icon(
-                        onPressed: _next,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFFFFD700),
-                          foregroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          elevation: 10,
-                          shadowColor: const Color(0xFFFFD700).withOpacity(0.4),
-                        ),
-                        icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-                        label: Text(
-                          step.buttonText.toUpperCase(),
-                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, letterSpacing: 1),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            )
-              .animate(key: ValueKey(_currentIndex)) // Her adımda animasyon sıfırlanır
-              .fadeIn(duration: 400.ms)
-              .slideY(begin: 0.1, end: 0, duration: 400.ms, curve: Curves.easeOutBack),
-          ),
-        ),
-
-        // 3. Skip Button (Sağ üst köşe)
-        Positioned(
-          top: MediaQuery.of(context).padding.top + 10,
-          right: 16,
-          child: TextButton.icon(
-            onPressed: () => Navigator.of(context).pop(),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.white.withOpacity(0.6),
-            ),
-            icon: const Icon(Icons.close_rounded, size: 20),
-            label: const Text(
-              "Turu Kapat",
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// --- SEKTÖR STANDARDI SPOTLIGHT PAINTER ---
+// --- SPOTLIGHT PAINTER ---
 class _SpotlightPainter extends CustomPainter {
   final Rect? highlightRect;
   final Color overlayColor;
@@ -1129,44 +1069,32 @@ class _SpotlightPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // 1. Tüm ekranı kaplayan yol
     final backgroundPath = Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
 
-    // Eğer highlight yoksa sadece karanlık yap
     if (highlightRect == null) {
       canvas.drawPath(backgroundPath, Paint()..color = overlayColor);
       return;
     }
 
-    // 2. Odaklanılacak alanı biraz genişlet (padding)
-    // inflate(8) -> Kutuya yapışık olmasın, biraz nefes alsın
     final cutoutRect = highlightRect!.inflate(8);
-
-    // 3. Yumuşak köşeli dikdörtgen (RRect) oluştur
     final cutoutPath = Path()..addRRect(RRect.fromRectAndRadius(cutoutRect, const Radius.circular(24)));
 
-    // 4. Fark işlemesi (Background - Cutout) = Delikli Arkaplan
     final overlayPath = Path.combine(
       PathOperation.difference,
       backgroundPath,
       cutoutPath,
     );
 
-    // 5. Arkaplanı çiz
     canvas.drawPath(overlayPath, Paint()..color = overlayColor);
 
-    // --- GLOW EFEKTİ (Sahne Işığı) ---
-
-    // Dışarıya doğru yayılan bulanık ışık (Glow)
     final glowPaint = Paint()
-      ..color = glowColor.withOpacity(0.6) // Işığın rengi ve parlaklığı
+      ..color = glowColor.withOpacity(0.6)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 6 // Işığın yayılma kalınlığı
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 20); // Bulanıklık miktarı
+      ..strokeWidth = 6
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 20);
 
     canvas.drawPath(cutoutPath, glowPaint);
 
-    // İç kenar çizgisi (Keskin hat, daha premium durur)
     final borderPaint = Paint()
       ..color = glowColor.withOpacity(0.4)
       ..style = PaintingStyle.stroke
@@ -1180,4 +1108,3 @@ class _SpotlightPainter extends CustomPainter {
     return oldDelegate.highlightRect != highlightRect;
   }
 }
-
