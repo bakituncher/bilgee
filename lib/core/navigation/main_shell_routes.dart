@@ -133,7 +133,11 @@ StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
         GoRoute(
             path: AppRoutes.aiHub,
             name: 'AIHub',
-            pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: const AiHubScreen()),
+            pageBuilder: (context, state) => buildPageWithFadeTransition(
+              context: context,
+              state: state,
+              child: AiHubScreen(extra: state.extra as Map<String, dynamic>?),
+            ),
             routes: [
               GoRoute(
                   path: AppRoutes.strategicPlanning,

@@ -1,13 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
+// Proje içi importlar (Senin yapına uygun)
 import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:taktik/data/providers/shared_prefs_provider.dart';
 import 'package:taktik/features/coach/widgets/ai_hub_welcome_sheet.dart';
+import 'package:taktik/features/onboarding/models/tutorial_step.dart';
+// TutorialPainter bu dosya içinde tanımlandığı için import'a gerek yok,
+// ama senin projende ayrı dosyadaysa import kalabilir.
+
+// --- KEY TANIMLAMALARI (Spotlight için) ---
+final GlobalKey _weeklyPlanKey = GlobalKey();
+final GlobalKey _solverKey = GlobalKey();
+final GlobalKey _analysisKey = GlobalKey();
+final GlobalKey _studyRoomKey = GlobalKey();
+final GlobalKey _coachKey = GlobalKey();
 
 class AiHubScreen extends ConsumerStatefulWidget {
-  const AiHubScreen({super.key});
+  // Router üzerinden gelen extra parametre
+  final Map<String, dynamic>? extra;
+
+  const AiHubScreen({super.key, this.extra});
 
   @override
   ConsumerState<AiHubScreen> createState() => _AiHubScreenState();
@@ -22,7 +37,60 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAndShowWelcomeOffer();
+      _checkAndStartPremiumTour();
     });
+  }
+
+  void _checkAndStartPremiumTour() {
+    // Eğer Welcome ekranından "startPremiumTour: true" geldiyse
+    if (widget.extra != null && widget.extra!['startPremiumTour'] == true) {
+      // Tur adımlarını hazırla
+      final premiumSteps = [
+        TutorialStep(
+          title: "Taktik Üssüne Hoş Geldin!",
+          text: "Taktik Pro özellikleri burada ve emrine amade. Şimdi sana bu araçların sınavını nasıl kazandıracağını tek tek göstereceğim.",
+          buttonText: "Başlayalım",
+        ),
+        TutorialStep(
+          highlightKey: _weeklyPlanKey,
+          title: "Kişisel Stratejistin",
+          text: "Sıradan programları unut. Taktik Tavşan, senin boş günlerine ve eksiklerine göre her hafta %100 sana özel, dinamik bir çalışma programı hazırlar.",
+          buttonText: "Harika",
+        ),
+        TutorialStep(
+          highlightKey: _solverKey,
+          title: "Özel Ders Cebinde",
+          text: "Çözemediğin bir soru mu var? Sadece fotoğrafını çek. Taktik Tavşan sana cevabı vermekle kalmaz, öğretmenden dinlemiş gibi adım adım mantığını anlatır.",
+          buttonText: "Süper",
+        ),
+        TutorialStep(
+          highlightKey: _analysisKey,
+          title: "Net Arttırma Uzmanı",
+          text: "Deneme analizlerinle 'Neden netlerim artmıyor?' sorusuna son. Seni tuzağa düşüren konuları tespit eder ve nokta atışı uyarılar yapar.",
+          buttonText: "Devam",
+        ),
+        TutorialStep(
+          highlightKey: _studyRoomKey,
+          title: "Akıllı Etüt Odası",
+          text: "Burası senin eksik kapatma merkezin. Taktik Tavşan senin zayıf olduğun konulardan sana özel konu özetleri ve testler üretir.",
+          buttonText: "Anladım",
+        ),
+        TutorialStep(
+          highlightKey: _coachKey,
+          title: "Psikolojik Üstünlük",
+          text: "Sınav sadece bilgi değildir. Motivasyonun düştüğünde veya stres olduğunda Taktik Tavşan seni mental olarak ayağa kaldırmak için burada.",
+          buttonText: "Keşfetmeye Başla",
+        ),
+      ];
+
+      showDialog(
+        context: context,
+        useSafeArea: false,
+        barrierDismissible: false,
+        barrierColor: Colors.transparent,
+        builder: (context) => _PremiumTourDialog(steps: premiumSteps),
+      );
+    }
   }
 
   Future<void> _checkAndShowWelcomeOffer() async {
@@ -48,9 +116,8 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
     }
   }
 
-  // --- BİLGİ VE SATIŞ EKRANI (NET VE İKNA EDİCİ) ---
+  // --- BİLGİ VE SATIŞ EKRANI ---
   void _showInfoSheet(ThemeData theme) {
-    // Şık ve uyumlu bir pembe tonu tanımlıyoruz
     const pinkColor = Color(0xFFE11D48);
     final isPremium = ref.read(premiumStatusProvider);
 
@@ -70,7 +137,6 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
         builder: (context, scrollController) {
           return Column(
             children: [
-              // Tutamaç
               const SizedBox(height: 16),
               Container(
                 width: 48,
@@ -80,14 +146,11 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-
-              // İÇERİK
               Expanded(
                 child: ListView(
                   controller: scrollController,
                   padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
                   children: [
-                    // Başlık
                     Text(
                       "Bu Özellikler Ne İşe Yarar?",
                       style: TextStyle(
@@ -109,10 +172,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                       ),
                       textAlign: TextAlign.center,
                     ),
-
                     const SizedBox(height: 40),
-
-                    // ÖZELLİKLER (SOMUT FAYDA ODAKLI)
                     _ProFeatureRow(
                       theme: theme,
                       icon: Icons.calendar_month_rounded,
@@ -120,7 +180,6 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                       title: "Kişiye Özel Ders Programı",
                       description: "Eksik olduğun konulara ve boş günlerine göre sana özel, haftalık ders çalışma programı hazırlar.",
                     ),
-
                     _ProFeatureRow(
                       theme: theme,
                       icon: Icons.camera_alt_rounded,
@@ -128,7 +187,6 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                       title: "Fotoğraflı Soru Çözümü",
                       description: "Çözemediğin sorunun fotoğrafını çek, yapay zeka adım adım nasıl çözüleceğini anlatsın.",
                     ),
-
                     _ProFeatureRow(
                       theme: theme,
                       icon: Icons.radar_rounded,
@@ -136,7 +194,6 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                       title: "Net Arttırma Analizi",
                       description: "Deneme sonuçlarını inceler ve netlerinin neden artmadığını tespit edip çözüm önerir.",
                     ),
-
                     _ProFeatureRow(
                       theme: theme,
                       icon: Icons.menu_book_rounded,
@@ -147,8 +204,6 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                   ],
                 ),
               ),
-
-              // SABİT BUTON (Action - PEMBE VE PREMİUM YÖNLENDİRMELİ)
               if (!isPremium)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 10, 24, 40),
@@ -156,14 +211,14 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                     width: double.infinity,
                     child: FilledButton(
                       onPressed: () {
-                        Navigator.pop(context); // Sheet'i kapat
-                        context.push('/premium'); // Premium ekranına git
+                        Navigator.pop(context);
+                        context.push('/premium');
                       },
                       style: FilledButton.styleFrom(
-                        backgroundColor: pinkColor, // İstenilen pembe renk
+                        backgroundColor: pinkColor,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 18),
-                        elevation: 8, // Biraz gölge ile şıklık
+                        elevation: 8,
                         shadowColor: pinkColor.withOpacity(0.4),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
@@ -193,7 +248,6 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
   Widget build(BuildContext context) {
     final isPremium = ref.watch(premiumStatusProvider);
     final theme = Theme.of(context);
-
     const double gap = 14.0;
 
     return Scaffold(
@@ -257,20 +311,22 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             // --- 1. HERO COACH (Tavşan) ---
-            _HeroCoachCard(
-              isPremium: isPremium,
-              onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/motivation-chat', offerData: {
-                'title': 'Taktik Tavşan',
-                'subtitle': 'Sınav stresi ve motivasyon koçu.',
-                'iconName': 'psychology',
-                'color': Colors.indigoAccent,
-                'marketingTitle': 'Koçun Cebinde!',
-                'marketingSubtitle': 'Sınav sadece bilgi değil, psikolojidir. Taktik Tavşan seni mental olarak sınava hazırlar.',
-                'redirectRoute': '/ai-hub/motivation-chat',
-                'imageAsset': 'assets/images/bunnyy.png',
-              }),
+            KeyedSubtree(
+              key: _coachKey,
+              child: _HeroCoachCard(
+                isPremium: isPremium,
+                onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/motivation-chat', offerData: {
+                  'title': 'Taktik Tavşan',
+                  'subtitle': 'Sınav stresi ve motivasyon koçu.',
+                  'iconName': 'psychology',
+                  'color': Colors.indigoAccent,
+                  'marketingTitle': 'Koçun Cebinde!',
+                  'marketingSubtitle': 'Sınav sadece bilgi değil, psikolojidir. Taktik Tavşan seni mental olarak sınava hazırlar.',
+                  'redirectRoute': '/ai-hub/motivation-chat',
+                  'imageAsset': 'assets/images/bunnyy.png',
+                }),
+              ),
             ),
 
             const SizedBox(height: 24),
@@ -288,29 +344,30 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
               ),
             ),
 
-            // --- 2. BENTO GRID (NET VE SATIŞ ODAKLI METİNLER) ---
-
+            // --- 2. BENTO GRID ---
             // Satır 1
             Row(
               children: [
                 Expanded(
-                  child: _BentoCard(
-                    title: 'Haftalık\nPlan',
-                    // ÇOK NET: Ne işe yarar? Program oluşturur.
-                    description: 'Senin verilerin ile \nsana özel',
-                    icon: Icons.calendar_month_rounded,
-                    color: const Color(0xFF10B981),
-                    isPremium: isPremium,
-                    height: 180, // Rahat sığsın diye
-                    onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/strategic-planning', offerData: {
-                      'title': 'Haftalık Stratejist',
-                      'subtitle': 'Sana özel ders programı.',
-                      'iconName': 'calendar_month',
-                      'color': const Color(0xFF10B981),
-                      'marketingTitle': 'Programın Hazır!',
-                      'marketingSubtitle': 'Eksik konularına ve müsait zamanına göre sana en uygun haftalık ders çalışma programını saniyeler içinde oluştur.',
-                      'redirectRoute': '/ai-hub/strategic-planning',
-                    }),
+                  child: KeyedSubtree(
+                    key: _weeklyPlanKey,
+                    child: _BentoCard(
+                      title: 'Haftalık\nPlan',
+                      description: 'Senin verilerin ile \nsana özel',
+                      icon: Icons.calendar_month_rounded,
+                      color: const Color(0xFF10B981),
+                      isPremium: isPremium,
+                      height: 180,
+                      onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/strategic-planning', offerData: {
+                        'title': 'Haftalık Stratejist',
+                        'subtitle': 'Sana özel ders programı.',
+                        'iconName': 'calendar_month',
+                        'color': const Color(0xFF10B981),
+                        'marketingTitle': 'Programın Hazır!',
+                        'marketingSubtitle': 'Eksik konularına ve müsait zamanına göre sana en uygun haftalık ders çalışma programını saniyeler içinde oluştur.',
+                        'redirectRoute': '/ai-hub/strategic-planning',
+                      }),
+                    ),
                   ),
                 ),
                 const SizedBox(width: gap),
@@ -343,44 +400,48 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
             Row(
               children: [
                 Expanded(
-                  child: _BentoCard(
-                    title: 'Analiz &\nStrateji',
-                    // ÇOK NET: Ne işe yarar? Sebebi bulur.
-                    description: 'Nasıl daha çok net\nyapacağını söyler.',
-                    icon: Icons.radar_rounded,
-                    color: const Color(0xFFF43F5E),
-                    isPremium: isPremium,
-                    height: 160,
-                    onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/analysis-strategy', offerData: {
-                      'title': 'Analiz & Strateji',
-                      'subtitle': 'Verilerle konuşan koç.',
-                      'iconName': 'radar',
-                      'color': const Color(0xFFF43F5E),
-                      'marketingTitle': 'Tuzağı Fark Et!',
-                      'marketingSubtitle': 'Denemelerde sürekli aynı yanlışları mı yapıyorsun? Seni aşağı çeken konuları nokta atışı tespit et.',
-                      'redirectRoute': '/ai-hub/analysis-strategy',
-                    }),
+                  child: KeyedSubtree(
+                    key: _analysisKey,
+                    child: _BentoCard(
+                      title: 'Analiz &\nStrateji',
+                      description: 'Nasıl daha çok net\nyapacağını söyler.',
+                      icon: Icons.radar_rounded,
+                      color: const Color(0xFFF43F5E),
+                      isPremium: isPremium,
+                      height: 160,
+                      onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/analysis-strategy', offerData: {
+                        'title': 'Analiz & Strateji',
+                        'subtitle': 'Verilerle konuşan koç.',
+                        'iconName': 'radar',
+                        'color': const Color(0xFFF43F5E),
+                        'marketingTitle': 'Tuzağı Fark Et!',
+                        'marketingSubtitle': 'Denemelerde sürekli aynı yanlışları mı yapıyorsun? Seni aşağı çeken konuları nokta atışı tespit et.',
+                        'redirectRoute': '/ai-hub/analysis-strategy',
+                      }),
+                    ),
                   ),
                 ),
                 const SizedBox(width: gap),
                 Expanded(
-                  child: _BentoCard(
-                    title: 'Etüt\nOdası',
-                    // ÇOK NET: Ne işe yarar? Materyal verir.
-                    description: 'Eksik konularına özel\nçalışma setleri.',
-                    icon: Icons.menu_book_rounded,
-                    color: const Color(0xFF8B5CF6),
-                    isPremium: isPremium,
-                    height: 160,
-                    onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/weakness-workshop', offerData: {
-                      'title': 'Etüt Odası',
-                      'subtitle': 'Kişiye özel çalışma materyalleri.',
-                      'iconName': 'menu_book',
-                      'color': const Color(0xFF8B5CF6),
-                      'marketingTitle': 'Eksiklerini Kapat!',
-                      'marketingSubtitle': 'Yapay zeka sadece eksik olduğun konulara özel konu özeti ve test soruları üretsin.',
-                      'redirectRoute': '/ai-hub/weakness-workshop',
-                    }),
+                  child: KeyedSubtree(
+                    key: _studyRoomKey,
+                    child: _BentoCard(
+                      title: 'Etüt\nOdası',
+                      description: 'Eksik konularına özel\nçalışma setleri.',
+                      icon: Icons.menu_book_rounded,
+                      color: const Color(0xFF8B5CF6),
+                      isPremium: isPremium,
+                      height: 160,
+                      onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/weakness-workshop', offerData: {
+                        'title': 'Etüt Odası',
+                        'subtitle': 'Kişiye özel çalışma materyalleri.',
+                        'iconName': 'menu_book',
+                        'color': const Color(0xFF8B5CF6),
+                        'marketingTitle': 'Eksiklerini Kapat!',
+                        'marketingSubtitle': 'Yapay zeka sadece eksik olduğun konulara özel konu özeti ve test soruları üretsin.',
+                        'redirectRoute': '/ai-hub/weakness-workshop',
+                      }),
+                    ),
                   ),
                 ),
               ],
@@ -415,8 +476,219 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
 }
 
 // -----------------------------------------------------------------------------
-// BİLGİ EKRANI SATIRI (Şık ve Okunaklı)
+// DÜZELTİLMİŞ PREMIUM TOUR DIALOG (Anchor Mantığı)
 // -----------------------------------------------------------------------------
+class _PremiumTourDialog extends StatefulWidget {
+  final List<TutorialStep> steps;
+  const _PremiumTourDialog({required this.steps});
+
+  @override
+  State<_PremiumTourDialog> createState() => _PremiumTourDialogState();
+}
+
+class _PremiumTourDialogState extends State<_PremiumTourDialog> {
+  int _currentIndex = 0;
+
+  void _next() {
+    if (_currentIndex < widget.steps.length - 1) {
+      setState(() {
+        _currentIndex++;
+      });
+    } else {
+      Navigator.of(context).pop();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final step = widget.steps[_currentIndex];
+    final key = step.highlightKey;
+
+    // Highlight (Vurgulanan alan) hesaplaması
+    Rect? highlightRect;
+    if (key != null && key.currentContext != null) {
+      final renderBox = key.currentContext!.findRenderObject() as RenderBox;
+      final offset = renderBox.localToGlobal(Offset.zero);
+      highlightRect = Rect.fromLTWH(offset.dx, offset.dy, renderBox.size.width, renderBox.size.height);
+    }
+
+    // Ekran Boyutları
+    final size = MediaQuery.of(context).size;
+    final topPadding = MediaQuery.of(context).padding.top;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
+    // --- AKILLI KONUMLANDIRMA MANTIĞI ---
+    bool placeBelow = true; // Varsayılan olarak alta koy
+    double? topPos;
+    double? bottomPos;
+
+    // Kartın vurgulanan alandan ne kadar uzak olacağı
+    const double spacing = 24.0;
+
+    if (highlightRect != null) {
+      final spaceAbove = highlightRect.top - topPadding;
+      final spaceBelow = size.height - highlightRect.bottom - bottomPadding;
+
+      // Eğer aşağıda daha çok yer varsa VEYA yukarıdaki yer çok darsa (200px altı) -> Alta koy
+      if (spaceBelow >= spaceAbove || spaceAbove < 200) {
+        placeBelow = true;
+        // Kartın ÜST kenarı = Vurgulanan alanın ALT kenarı + boşluk
+        topPos = highlightRect.bottom + spacing;
+        bottomPos = null; // Bottom null olmalı ki kart aşağı doğru uzayabilsin
+      } else {
+        placeBelow = false;
+        // Kartın ALT kenarı = (Ekran Boyu - Vurgulanan alanın ÜST kenarı) + boşluk
+        // Positioned.bottom kullandığımız için, ekranın altından olan mesafeyi veriyoruz.
+        bottomPos = (size.height - highlightRect.top) + spacing;
+        topPos = null;
+      }
+    } else {
+      // Highlight yoksa (ilk adım gibi), ekranın ortasına yakın koy
+      topPos = size.height * 0.35;
+    }
+
+    return Stack(
+      children: [
+        // 1. SAHNE IŞIĞI (Spotlight)
+        GestureDetector(
+          onTap: _next,
+          child: CustomPaint(
+            size: size,
+            painter: _SpotlightPainter(
+              highlightRect: highlightRect,
+              overlayColor: Colors.black.withOpacity(0.85),
+              glowColor: const Color(0xFFFFD700),
+            ),
+          ),
+        ),
+
+        // 2. AÇIKLAMA KARTI
+        Positioned(
+          // Sol ve Sağ kenarlardan boşluk
+          left: 24,
+          right: 24,
+          // Çakışmayı önleyen dinamik konumlandırma
+          top: topPos,
+          bottom: bottomPos,
+
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1E2C).withOpacity(0.98), // Neredeyse opak
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.5), width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.5),
+                    blurRadius: 30,
+                    spreadRadius: 5,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min, // İçerik kadar yer kapla
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFD700).withOpacity(0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.auto_awesome, color: Color(0xFFFFD700), size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          step.title,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    step.text,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 15,
+                      height: 1.5,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: FilledButton.icon(
+                      onPressed: _next,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFFFFD700),
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                      label: Text(
+                        step.buttonText.toUpperCase(),
+                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12, letterSpacing: 1),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )
+                .animate(key: ValueKey(_currentIndex)) // Her adımda animasyon yeniden başlar
+                .fadeIn(duration: 300.ms)
+                .slide(
+              // Aşağıdaysa aşağıdan yukarı, yukarıdaysa yukarıdan aşağı gelsin
+                begin: placeBelow ? const Offset(0, 0.1) : const Offset(0, -0.1),
+                end: Offset.zero,
+                duration: 400.ms,
+                curve: Curves.easeOutBack
+            ),
+          ),
+        ),
+
+        // 3. ÇIKIŞ BUTONU
+        Positioned(
+          top: MediaQuery.of(context).padding.top + 10,
+          right: 16,
+          child: SafeArea(
+            child: TextButton.icon(
+              onPressed: () => Navigator.of(context).pop(),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white.withOpacity(0.8),
+                backgroundColor: Colors.black.withOpacity(0.3),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              ),
+              icon: const Icon(Icons.close_rounded, size: 18),
+              label: const Text(
+                "Turu Kapat",
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// -----------------------------------------------------------------------------
+// HELPER WIDGETS
+// -----------------------------------------------------------------------------
+
 class _ProFeatureRow extends StatelessWidget {
   final ThemeData theme;
   final IconData icon;
@@ -439,7 +711,6 @@ class _ProFeatureRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // İkon Kutusu
           Container(
             height: 52,
             width: 52,
@@ -450,7 +721,6 @@ class _ProFeatureRow extends StatelessWidget {
             child: Icon(icon, color: color, size: 26),
           ),
           const SizedBox(width: 18),
-          // Yazılar
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -483,9 +753,6 @@ class _ProFeatureRow extends StatelessWidget {
   }
 }
 
-// -----------------------------------------------------------------------------
-// BENTO KART (SATIŞ ODAKLI)
-// -----------------------------------------------------------------------------
 class _BentoCard extends StatelessWidget {
   final String title;
   final String description;
@@ -539,7 +806,6 @@ class _BentoCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           child: Stack(
             children: [
-              // Hafif Renkli Arkaplan
               Positioned.fill(
                 child: DecoratedBox(
                   decoration: BoxDecoration(
@@ -561,7 +827,6 @@ class _BentoCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // İkon ve Kilit
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -578,8 +843,6 @@ class _BentoCard extends StatelessWidget {
                           Icon(Icons.lock_rounded, size: 18, color: theme.colorScheme.onSurface.withOpacity(0.2)),
                       ],
                     ),
-
-                    // Başlık + Açıklama (alt blok)
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
@@ -595,7 +858,6 @@ class _BentoCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        // Açıklama (Teşvik Edici)
                         Text(
                           description,
                           style: TextStyle(
@@ -620,9 +882,6 @@ class _BentoCard extends StatelessWidget {
   }
 }
 
-// -----------------------------------------------------------------------------
-// HERO KART (TEMİZ VE ŞIK)
-// -----------------------------------------------------------------------------
 class _HeroCoachCard extends StatelessWidget {
   final bool isPremium;
   final VoidCallback onTap;
@@ -648,8 +907,6 @@ class _HeroCoachCard extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            // Arka plan temizlendi (kafa yok)
-
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 0, 16),
               child: Row(
@@ -699,7 +956,6 @@ class _HeroCoachCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  // Tavşan Resmi
                   Expanded(
                     flex: 1,
                     child: Padding(
@@ -720,9 +976,6 @@ class _HeroCoachCard extends StatelessWidget {
   }
 }
 
-// -----------------------------------------------------------------------------
-// PREMIUM BANNER
-// -----------------------------------------------------------------------------
 class _StylishPremiumBanner extends StatelessWidget {
   const _StylishPremiumBanner();
 
@@ -807,3 +1060,56 @@ class _MinimalDisclaimer extends StatelessWidget {
   }
 }
 
+// --- SPOTLIGHT PAINTER ---
+class _SpotlightPainter extends CustomPainter {
+  final Rect? highlightRect;
+  final Color overlayColor;
+  final Color glowColor;
+
+  _SpotlightPainter({
+    required this.highlightRect,
+    required this.overlayColor,
+    required this.glowColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final backgroundPath = Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
+
+    if (highlightRect == null) {
+      canvas.drawPath(backgroundPath, Paint()..color = overlayColor);
+      return;
+    }
+
+    final cutoutRect = highlightRect!.inflate(8);
+    final cutoutPath = Path()..addRRect(RRect.fromRectAndRadius(cutoutRect, const Radius.circular(24)));
+
+    final overlayPath = Path.combine(
+      PathOperation.difference,
+      backgroundPath,
+      cutoutPath,
+    );
+
+    canvas.drawPath(overlayPath, Paint()..color = overlayColor);
+
+    final glowPaint = Paint()
+      ..color = glowColor.withOpacity(0.6)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 6
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 20);
+
+    canvas.drawPath(cutoutPath, glowPaint);
+
+    final borderPaint = Paint()
+      ..color = glowColor.withOpacity(0.4)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+
+    canvas.drawPath(cutoutPath, borderPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _SpotlightPainter oldDelegate) {
+    return oldDelegate.highlightRect != highlightRect;
+  }
+}

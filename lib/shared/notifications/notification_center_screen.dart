@@ -176,7 +176,8 @@ class NotificationCenterScreen extends ConsumerWidget {
                         }
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Bildirim silindi')));
+                              const SnackBar(
+                                  content: Text('Bildirim silindi')));
                         }
                         return true;
                       } catch (e) {
@@ -272,10 +273,25 @@ class _NotificationTile extends ConsumerWidget {
     return InkWell(
       borderRadius: BorderRadius.circular(14),
       onTap: () async {
+        // DÜZELTME: Try-catch bloğu eklendi
+        // Hata olsa bile (örn: zaten okunmuş, internet yok, izin hatası) akışı bozma
         if (user != null && !item.read) {
-          await ref
-              .read(firestoreServiceProvider)
-              .markInAppNotificationRead(user.uid, item.id);
+          try {
+            // DÜZELTME BAŞLANGICI: Bildirim türüne göre doğru servisi çağır
+            if (item.type == 'global_campaign') {
+              await ref
+                  .read(globalCampaignServiceProvider)
+                  .markGlobalCampaignAsRead(item.id);
+            } else {
+              await ref
+                  .read(firestoreServiceProvider)
+                  .markInAppNotificationRead(user.uid, item.id);
+            }
+            // DÜZELTME BİTİŞİ
+          } catch (e) {
+            // Hata olsa bile detay sayfasını aç
+            debugPrint('Bildirim okundu işaretlenemedi: $e');
+          }
         }
         if (context.mounted) {
           await showModalBottomSheet(
@@ -415,7 +431,9 @@ class _NotificationDetailSheet extends ConsumerWidget {
                           child: CircularProgressIndicator(strokeWidth: 2))),
                   errorWidget: (ctx, _, __) => Center(
                       child: Icon(Icons.broken_image_rounded,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurfaceVariant)),
                 ),
               ),
             ),
@@ -453,13 +471,15 @@ class _NotificationDetailSheet extends ConsumerWidget {
               Expanded(
                 child: FilledButton.icon(
                   style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 12),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                   onPressed: () async {
                     Navigator.of(context).maybePop();
 
-                    if (item.route == '/store' || item.route == 'UPDATE_APP') {
+                    if (item.route == '/store' ||
+                        item.route == 'UPDATE_APP') {
                       final appId = Platform.isAndroid
                           ? 'com.codenzi.taktik'
                           : 'YOUR_IOS_APP_ID';
