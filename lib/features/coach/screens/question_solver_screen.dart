@@ -242,12 +242,14 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
       // Encode et
       final rotatedBytes = Uint8List.fromList(img.encodeJpg(image, quality: 85));
 
+      if (!mounted) return;
       setState(() {
         _rawImageBytes = rotatedBytes;
         _rotationAngle = (_rotationAngle + 90) % 360;
         _isCropping = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _isCropping = false;
         _error = 'Döndürme hatası: $e';
@@ -259,7 +261,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
     try {
       final XFile? image = await _picker.pickImage(source: source);
 
-      if (image != null) {
+      if (image != null && mounted) {
         // OPTİMİZASYON: Resmi ham haliyle okumak yerine sıkıştırarak okuyoruz.
         // Bu işlem 10MB'lık fotoyu ~300KB'a düşürür, crop ekranı uçak gibi açılır.
         final Uint8List? compressedBytes = await FlutterImageCompress.compressWithFile(
@@ -269,6 +271,8 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
           quality: 85,    // Kalite kaybı fark edilmez ama boyut çok düşer
           format: CompressFormat.jpeg,
         );
+
+        if (!mounted) return;
 
         if (compressedBytes != null) {
           setState(() {
@@ -283,6 +287,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
         } else {
           // Sıkıştırma başarısız olursa orijinali kullan (Fallback)
           final originalBytes = await image.readAsBytes();
+          if (!mounted) return;
           setState(() {
             _rawImageBytes = originalBytes;
             _initialSolution = null;
@@ -293,8 +298,9 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
         }
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
-        _error = 'Görsel y��klenirken hata oluştu: $e';
+        _error = 'Görsel yüklenirken hata oluştu: $e';
       });
     }
   }
@@ -315,6 +321,8 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
       // Byte verisini dosyaya yaz
       await file.writeAsBytes(croppedData);
 
+      if (!mounted) return;
+
       setState(() {
         _finalImageFile = XFile(file.path);
         _isCropping = false;
@@ -324,6 +332,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
         _solveQuestion();
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _isCropping = false;
         _error = 'Görsel işlenemedi: $e';
