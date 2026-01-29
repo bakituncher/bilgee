@@ -8,24 +8,24 @@ const { processAudienceInBatches } = require("./users");
 // ---- 1. GENİŞLETİLMİŞ GENEL MOTİVASYON VE ETKİLEŞİM HAVUZU ----
 // Samimi, özellik odaklı ve aksiyona yönlendiren mesajlar.
 const GENERAL_MESSAGES = [
-  // 📸 SORU ÇÖZÜCÜ - Direkt /ai-hub/question-solver'a yönlendir (En yüksek oran)
-  { title: 'Bi soru mu takıldı kafana? 📸', body: 'Fotoğrafını çek, anında çözümünü al. Tıpkı yanında öğretmen varmış gibi!', route: '/ai-hub/question-solver' },
-  { title: 'O soruyu çözemeyince sinir oluyorsun, biliyorum 😤', body: 'Fotoğrafla, saniyeler içinde adım adım çözümünü gör. Dene bi kere!', route: '/ai-hub/question-solver' },
-  { title: 'Çözemediğin soru korkun olmasın! 💪', body: 'Kamerayı aç, soruyu çek. Gerisini Taktik Tavşan halleder, söz.', route: '/ai-hub/question-solver' },
-  { title: 'Matematikte mi takıldın? Türkçe\'de mi? 🤔', body: 'Fark etmez! Soru Çözücü her dersten anlıyor. Hemen dene!', route: '/ai-hub/question-solver' },
-  { title: 'Yardım lazım mı? 🐰', body: 'Çözemediğin soruyu fotoğrafla, sana öğretmenden dinlemiş gibi anlatalım!', route: '/ai-hub/question-solver' },
+  // 📸 SORU ÇÖZÜCÜ - /ai-hub'a yönlendir (En yüksek oran)
+  { title: 'Bi soru mu takıldı kafana? 📸', body: 'Fotoğrafını çek, anında çözümünü al. Tıpkı yanında öğretmen varmış gibi!', route: '/ai-hub' },
+  { title: 'O soruyu çözemeyince sinir oluyorsun, biliyorum 😤', body: 'Fotoğrafla, saniyeler içinde adım adım çözümünü gör. Dene bi kere!', route: '/ai-hub' },
+  { title: 'Çözemediğin soru korkun olmasın! 💪', body: 'Kamerayı aç, soruyu çek. Gerisini Taktik Tavşan halleder, söz.', route: '/ai-hub' },
+  { title: 'Matematikte mi takıldın? Türkçe\'de mi? 🤔', body: 'Fark etmez! Soru Çözücü her dersten anlıyor. Hemen dene!', route: '/ai-hub' },
+  { title: 'Yardım lazım mı? 🐰', body: 'Çözemediğin soruyu fotoğrafla, sana öğretmenden dinlemiş gibi anlatalım!', route: '/ai-hub' },
 
-  // 📚 ETÜT ODASI - Direkt /ai-hub/weakness-workshop'a yönlendir (Yüksek oran)
-  { title: 'Hangi konuda zorlanıyorsun? 📚', body: 'Söyle, sana özel konu anlatımı ve sorular hazırlayayım!', route: '/ai-hub/weakness-workshop' },
-  { title: 'Eksik konuların canını mı sıkıyor? 😩', body: 'Etüt Odası\'na gel, zayıf konularını güçlü yap. Sana özel çalışma seti hazır!', route: '/ai-hub/weakness-workshop' },
-  { title: 'Konu çalışmak sıkıcı gelebilir ama... ✨', body: 'Etüt Odası ile bambaşka! Sana özel anlatım, sana özel sorular. Gel dene!', route: '/ai-hub/weakness-workshop' },
-  { title: 'Zayıf konun ne, söyle bakalım 🎯', body: 'O konuyu beraber çözeriz. Etüt Odası seni bekliyor, hadi!', route: '/ai-hub/weakness-workshop' },
+  // 📚 ETÜT ODASI - /ai-hub'a yönlendir (Yüksek oran)
+  { title: 'Hangi konuda zorlanıyorsun? 📚', body: 'Söyle, sana özel konu anlatımı ve sorular hazırlayayım!', route: '/ai-hub' },
+  { title: 'Eksik konuların canını mı sıkıyor? 😩', body: 'Etüt Odası\'na gel, zayıf konularını güçlü yap. Sana özel çalışma seti hazır!', route: '/ai-hub' },
+  { title: 'Konu çalışmak sıkıcı gelebilir ama... ✨', body: 'Etüt Odası ile bambaşka! Sana özel anlatım, sana özel sorular. Gel dene!', route: '/ai-hub' },
+  { title: 'Zayıf konun ne, söyle bakalım 🎯', body: 'O konuyu beraber çözeriz. Etüt Odası seni bekliyor, hadi!', route: '/ai-hub' },
 
-  // 📅 HAFTALIK PLAN YAPICI - Direkt /ai-hub/strategic-planning'e yönlendir (Orta-yüksek oran)
-  { title: 'Bu hafta ne çalışacağını biliyor musun? 📅', body: 'Bilmiyorsan sorun değil! Sana özel haftalık plan oluşturalım.', route: '/ai-hub/strategic-planning' },
-  { title: 'Rastgele çalışmaya son! 🎯', body: 'Boş zamanlarına ve eksiklerine göre kişisel haftalık plan hazırlayalım.', route: '/ai-hub/strategic-planning' },
-  { title: 'Plan yapmak zor geliyor mu? 🤯', body: 'Merak etme, ben yaparım! Müsait saatlerini söyle, programın hazır.', route: '/ai-hub/strategic-planning' },
-  { title: 'Neyi, ne zaman çalışacağını ben söyleyeyim 📋', body: 'Haftalık Plan Yapıcı ile verimli çalış, boşa zaman harcama!', route: '/ai-hub/strategic-planning' },
+  // 📅 HAFTALIK PLAN YAPICI - /ai-hub'a yönlendir (Orta-yüksek oran)
+  { title: 'Bu hafta ne çalışacağını biliyor musun? 📅', body: 'Bilmiyorsan sorun değil! Sana özel haftalık plan oluşturalım.', route: '/ai-hub' },
+  { title: 'Rastgele çalışmaya son! 🎯', body: 'Boş zamanlarına ve eksiklerine göre kişisel haftalık plan hazırlayalım.', route: '/ai-hub' },
+  { title: 'Plan yapmak zor geliyor mu? 🤯', body: 'Merak etme, ben yaparım! Müsait saatlerini söyle, programın hazır.', route: '/ai-hub' },
+  { title: 'Neyi, ne zaman çalışacağını ben söyleyeyim 📋', body: 'Haftalık Plan Yapıcı ile verimli çalış, boşa zaman harcama!', route: '/ai-hub' },
 
   // 📊 VERİ GİRİŞİ TEŞVİKİ - Deneme Ekleme
   { title: 'Bugün deneme mi çözdün? 📝', body: 'Hemen kaydet! Analiz etmeden geçen deneme, boşa giden emek demek.', route: '/home/add-test' },
@@ -61,61 +61,61 @@ const PREMIUM_SALES_MESSAGES = [
   {
     title: 'Takıldığın soru mu var? 📸',
     body: 'Fotoğrafını çek, saniyeler içinde adım adım çözümünü gör! Artık hiçbir soru çözümsüz kalmayacak.',
-    route: '/ai-hub/question-solver'
+    route: '/ai-hub'
   },
   {
     title: 'Özel öğretmenin artık cebinde! 👨‍🏫',
     body: 'Çözemediğin soruyu fotoğrafla, tıpkı öğretmen anlatır gibi adım adım çözümünü al.',
-    route: '/ai-hub/question-solver'
+    route: '/ai-hub'
   },
   {
     title: 'O zor soruyu bi çek bakalım 📷',
     body: 'Matematiğinden Türkçe\'sine, her sorunun çözümü saniyeler içinde elinde!',
-    route: '/ai-hub/question-solver'
+    route: '/ai-hub'
   },
   {
     title: 'Soru çözerken takıldın mı? 🤔',
     body: 'Fotoğrafla, yapay zeka sana adım adım anlatsın. Daha kolay öğrenmenin yolu bu!',
-    route: '/ai-hub/question-solver'
+    route: '/ai-hub'
   },
 
   // 📚 ETÜT ODASI - Zayıf konulara özel çalışma setleri
   {
     title: 'Eksik konuların için özel set hazırladım! 📚',
     body: 'Etüt Odası\'nda zayıf konularına özel konu anlatımı ve sorular seni bekliyor.',
-    route: '/ai-hub/weakness-workshop'
+    route: '/ai-hub'
   },
   {
     title: 'Zayıf konuları güçlü yap! 💪',
     body: 'Hangi konuda zorlanıyorsun? O konuyu kavrayana kadar sana özel içerik üretiyorum.',
-    route: '/ai-hub/weakness-workshop'
+    route: '/ai-hub'
   },
   {
     title: 'Konu çalışmak hiç bu kadar kolay olmadı ✨',
     body: 'Eksik konun ne? Söyle, sana özel anlatım ve pratik sorular hazırlayayım!',
-    route: '/ai-hub/weakness-workshop'
+    route: '/ai-hub'
   },
   {
     title: 'Konuyu anlamadıysan sorun değil 🎯',
     body: 'Etüt Odası\'na gel, sana farklı bir şekilde anlatayım. Bu sefer anlayacaksın!',
-    route: '/ai-hub/weakness-workshop'
+    route: '/ai-hub'
   },
 
   // 📅 HAFTALIK PLAN YAPICI - Kişiye özel program
   {
     title: 'Plan yapmakla uğraşma, ben yaparım! 📅',
     body: 'Boş zamanlarına ve eksik konularına göre sana özel haftalık program oluşturayım.',
-    route: '/ai-hub/strategic-planning'
+    route: '/ai-hub'
   },
   {
     title: 'Her hafta sana özel strateji 🎯',
     body: 'Ne zaman müsaitsin? Hangi konularda eksiksin? Söyle, en verimli planını çıkarayım!',
-    route: '/ai-hub/strategic-planning'
+    route: '/ai-hub'
   },
   {
     title: 'Rastgele değil, stratejik çalış! 🗓️',
     body: 'Taktik Tavşan senin için kişisel haftalık plan yapıyor. Verimsizliğe son!',
-    route: '/ai-hub/strategic-planning'
+    route: '/ai-hub'
   },
 
   // 🐰 TAKTİK PRO GENEL
