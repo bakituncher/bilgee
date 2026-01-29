@@ -16,8 +16,9 @@ import 'dart:ui';
 
 class TestResultSummaryScreen extends ConsumerWidget {
   final TestModel test;
+  final bool fromArchive;
 
-  const TestResultSummaryScreen({super.key, required this.test});
+  const TestResultSummaryScreen({super.key, required this.test, this.fromArchive = false});
 
   double _subjectNet(Map<String, int> s) =>
       (s['dogru'] ?? 0) - (s['yanlis'] ?? 0) * test.penaltyCoefficient;
@@ -37,9 +38,6 @@ class TestResultSummaryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final bool fromArchive =
-        GoRouterState.of(context).uri.queryParameters['fromArchive'] == 'true';
-
     final wisdomScore = test.wisdomScore;
     final verdict = test.expertVerdict;
     final keySubjects = test.findKeySubjects();
@@ -903,11 +901,12 @@ class _CompactFeatureChip extends StatelessWidget {
 
 class TestResultSummaryEntry extends ConsumerWidget {
   final TestModel? test;
-  const TestResultSummaryEntry({super.key, this.test});
+  final bool fromArchive;
+  const TestResultSummaryEntry({super.key, this.test, this.fromArchive = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (test != null) return TestResultSummaryScreen(test: test!);
+    if (test != null) return TestResultSummaryScreen(test: test!, fromArchive: fromArchive);
 
     final user = ref.watch(authControllerProvider).value;
     if (user == null) {
