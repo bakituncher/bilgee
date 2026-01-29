@@ -105,21 +105,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final emailController = TextEditingController(text: _emailController.text.trim());
     final formKey = GlobalKey<FormState>();
     bool sending = false;
+    bool dialogClosed = false;
 
     showDialog(
       context: context,
-      builder: (context) {
-        return StatefulBuilder(builder: (context, setState) {
+      builder: (dialogContext) {
+        return StatefulBuilder(builder: (builderContext, setDialogState) {
           Future<void> submit() async {
             if (!formKey.currentState!.validate()) return;
-            setState(() => sending = true);
+            setDialogState(() => sending = true);
             try {
               await ref.read(authControllerProvider.notifier).resetPassword(emailController.text.trim());
-              if (mounted) {
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Şifre sıfırlama e-postası gönderildi. Gelen kutunuzu kontrol edin.')),
-                );
+              if (!dialogClosed && builderContext.mounted) {
+                dialogClosed = true;
+                Navigator.of(dialogContext).pop();
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Şifre sıfırlama e-postası gönderildi. Gelen kutunuzu kontrol edin.')),
+                  );
+                }
               }
             } catch (e) {
               if (mounted) {
@@ -128,7 +132,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 );
               }
             } finally {
-              if (mounted) setState(() => sending = false);
+              if (!dialogClosed && builderContext.mounted) {
+                setDialogState(() => sending = false);
+              }
             }
           }
 
@@ -148,7 +154,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
             actions: [
               TextButton(
-                onPressed: sending ? null : () => Navigator.of(context).pop(),
+                onPressed: sending ? null : () => Navigator.of(dialogContext).pop(),
                 child: const Text('İptal'),
               ),
               ElevatedButton(
