@@ -180,13 +180,18 @@ exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => 
 
 // ---- YARDIMCI FONKSİYONLAR ----
 
-function getRandomItem(array) {
-  return array[Math.floor(Math.random() * array.length)];
+// Tarihe göre sırayla bildirim seç (DB gerektirmez)
+// Her gün + her slot farklı bildirim gönderir
+function getRotatingItem(array, slotId = 0) {
+  const today = new Date();
+  const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+  const index = (dayOfYear * 3 + slotId) % array.length;
+  return array[index];
 }
 
-async function sendTopicNotification(topic = 'general') {
-  const payload = getRandomItem(GENERAL_MESSAGES);
-  logger.info('Sending generic topic push', { topic, title: payload.title });
+async function sendTopicNotification(topic = 'general', slotId = 0) {
+  const payload = getRotatingItem(GENERAL_MESSAGES, slotId);
+  logger.info('Sending topic push', { topic, title: payload.title, slot: slotId });
 
   const message = {
     topic: topic,
@@ -208,15 +213,15 @@ async function sendTopicNotification(topic = 'general') {
 // ---- ZAMANLANMIŞ GENEL BİLDİRİMLER (SIFIR MALİYET - HERKESE) ----
 
 exports.dispatchInactivityMorning = onSchedule({schedule: "0 9 * * *", timeZone: 'Europe/Istanbul'}, async () => {
-  await sendTopicNotification('general');
+  await sendTopicNotification('general', 0); // Sabah slot
 });
 
 exports.dispatchInactivityAfternoon = onSchedule({schedule: "0 15 * * *", timeZone: 'Europe/Istanbul'}, async () => {
-  await sendTopicNotification('general');
+  await sendTopicNotification('general', 1); // Öğlen slot
 });
 
 exports.dispatchInactivityEvening = onSchedule({schedule: "30 20 * * *", timeZone: 'Europe/Istanbul'}, async () => {
-  await sendTopicNotification('general');
+  await sendTopicNotification('general', 2); // Akşam slot
 });
 
 // ====================================================================================
@@ -232,7 +237,10 @@ exports.dispatchPremiumSalesPush = onSchedule({
 }, async (event) => {
   logger.info('💰 Premium Sales Push Started');
 
-  const payload = getRandomItem(PREMIUM_SALES_MESSAGES);
+  // Basit rastgele seçim - premium için karmaşık sistem gereksiz
+  const payload = PREMIUM_SALES_MESSAGES[Math.floor(Math.random() * PREMIUM_SALES_MESSAGES.length)];
+
+  logger.info('Premium bildirim seçildi', { title: payload.title });
 
   const baseMessage = {
     notification: { title: payload.title, body: payload.body },
