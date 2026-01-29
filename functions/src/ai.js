@@ -80,17 +80,54 @@ exports.generateGemini = onCall(
       throw new HttpsError("unauthenticated", "Oturum gerekli");
     }
 
-    // Premium kontrolü
+    // Kullanıcı bilgilerini al
     const userDoc = await db.collection("users").doc(request.auth.uid).get();
-    if (!userDoc.exists || !userDoc.data().isPremium) {
-      throw new HttpsError("permission-denied", "Bu özellik yalnızca premium kullanıcılara açıktır.");
+    if (!userDoc.exists) {
+      throw new HttpsError("not-found", "Kullanıcı bulunamadı.");
     }
+
+    const userData = userDoc.data();
+    const isPremium = userData.isPremium || false;
 
     const prompt = request.data?.prompt;
     const expectJson = !!request.data?.expectJson;
 
     // YENİ: İstemciden gelen işlem türünü al, varsayılan 'chat'
     const requestType = request.data?.requestType || 'chat';
+
+    // Premium olmayan kullanıcılar için günlük soru çözme limiti kontrolü
+    if (!isPremium && (requestType === 'question_solver' || requestType === 'chat')) {
+      const today = new Date().toLocaleString('sv-SE', { timeZone: 'Europe/Istanbul' }).substring(0, 10); // 'YYYY-MM-DD'
+      const dailyUsageRef = db.collection("users").doc(request.auth.uid).collection("daily_usage").doc(today);
+
+      const dailyUsageDoc = await dailyUsageRef.get();
+      const dailyUsageData = dailyUsageDoc.exists ? dailyUsageDoc.data() : {};
+      const questionsSolvedToday = dailyUsageData.questions_solved || 0;
+
+      const DAILY_FREE_QUESTION_LIMIT = 3;
+
+      if (questionsSolvedToday >= DAILY_FREE_QUESTION_LIMIT) {
+        throw new HttpsError(
+          "permission-denied",
+          `Günlük ${DAILY_FREE_QUESTION_LIMIT} soru hakkınız doldu. Premium üyelik ile sınırsız soru çözebilirsiniz!`
+        );
+      }
+
+      // Kullanımı artır (hem soru çözümü hem de chat/follow-up sorular için)
+      await dailyUsageRef.set({
+        questions_solved: admin.firestore.FieldValue.increment(1),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+    }
+
+    // Premium kullanıcılar için özellik kontrolü
+    if (isPremium && (requestType !== 'question_solver' && requestType !== 'chat')) {
+      // Premium gerektiren diğer özellikler (workshop, weekly_plan)
+      // Bu özelliklere sadece premium kullanıcılar erişebilir
+    } else if (!isPremium && (requestType !== 'question_solver' && requestType !== 'chat')) {
+      // Premium olmayan kullanıcılar sadece question_solver ve chat kullanabilir (günlük limitle)
+      throw new HttpsError("permission-denied", "Bu özellik yalnızca premium kullanıcılara açıktır.");
+    }
 
     // YENİ: Soru çözücü görseli (base64, data uri değil)
     const imageBase64 = typeof request.data?.imageBase64 === 'string' ? request.data.imageBase64.trim() : null;
@@ -178,34 +215,37 @@ exports.generateGemini = onCall(
       );
     }
 
-    // --- YENİ AYLIK KOTA SİSTEMİ ---
-    const currentMonth = new Date().toLocaleString('sv-SE', { timeZone: 'Europe/Istanbul' }).substring(0, 7); // 'YYYY-MM'
-    const usageRef = db.collection("users").doc(request.auth.uid).collection("monthly_usage").doc(currentMonth);
+    // --- YENİ AYLIK KOTA SİSTEMİ (Sadece Premium Kullanıcılar için) ---
+    // Premium olmayan kullanıcılar günlük limitle kısıtlandığı için aylık limit kontrolü yapmıyoruz
+    if (isPremium) {
+      const currentMonth = new Date().toLocaleString('sv-SE', { timeZone: 'Europe/Istanbul' }).substring(0, 7); // 'YYYY-MM'
+      const usageRef = db.collection("users").doc(request.auth.uid).collection("monthly_usage").doc(currentMonth);
 
-    await db.runTransaction(async (tx) => {
-      const usageDoc = await tx.get(usageRef);
-      const usageData = usageDoc.exists ? usageDoc.data() : {};
+      await db.runTransaction(async (tx) => {
+        const usageDoc = await tx.get(usageRef);
+        const usageData = usageDoc.exists ? usageDoc.data() : {};
 
-      const currentUsage = usageData[requestType] || 0;
-      const limit = MONTHLY_LIMITS[requestType];
+        const currentUsage = usageData[requestType] || 0;
+        const limit = MONTHLY_LIMITS[requestType];
 
-      if (currentUsage >= limit) {
-        let featureName = "";
-        switch(requestType) {
-          case 'workshop': featureName = "Etüt Odası"; break;
-          case 'weekly_plan': featureName = "Haftalık Plan"; break;
-          case 'question_solver': featureName = "Soru Çözücü"; break;
-          default: featureName = "Sohbet"; break;
+        if (currentUsage >= limit) {
+          let featureName = "";
+          switch(requestType) {
+            case 'workshop': featureName = "Etüt Odası"; break;
+            case 'weekly_plan': featureName = "Haftalık Plan"; break;
+            case 'question_solver': featureName = "Soru Çözücü"; break;
+            default: featureName = "Sohbet"; break;
+          }
+          throw new HttpsError("resource-exhausted", `Bu ayki ${featureName} limitinize (${limit}) ulaştınız. Limitler her ayın başında yenilenir.`);
         }
-        throw new HttpsError("resource-exhausted", `Bu ayki ${featureName} limitinize (${limit}) ulaştınız. Limitler her ayın başında yenilenir.`);
-      }
 
-      // Kullanımı artır
-      tx.set(usageRef, {
-        [requestType]: admin.firestore.FieldValue.increment(1),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
-    });
+        // Kullanımı artır
+        tx.set(usageRef, {
+          [requestType]: admin.firestore.FieldValue.increment(1),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+      });
+    }
     // ----------------------------------
 
     try {

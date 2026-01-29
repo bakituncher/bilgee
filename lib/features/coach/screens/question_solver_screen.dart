@@ -14,6 +14,7 @@ import 'package:image/image.dart' as img;
 import 'package:lottie/lottie.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:taktik/features/coach/providers/saved_solutions_provider.dart';
+import 'package:taktik/features/coach/providers/daily_question_limit_provider.dart';
 import 'package:taktik/features/coach/screens/saved_solutions_screen.dart';
 import 'package:taktik/features/coach/services/question_solver_service.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
@@ -22,6 +23,7 @@ import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/core/utils/exam_utils.dart';
 import 'package:taktik/shared/widgets/full_screen_image_viewer.dart';
+import 'package:taktik/core/navigation/app_routes.dart';
 
 // Basit mesaj modeli
 class SolverMessage {
@@ -356,10 +358,22 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
       }
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _error = e.toString().replaceAll('Exception:', '').trim();
-          _isAnalyzing = false;
-        });
+        final errorMessage = e.toString().replaceAll('Exception:', '').trim();
+
+        // Günlük limit hatası kontrolü
+        if (errorMessage.contains('Günlük') && errorMessage.contains('soru hakkınız doldu')) {
+          setState(() {
+            _isAnalyzing = false;
+          });
+
+          // Premium ekranına yönlendir
+          _showDailyLimitDialog();
+        } else {
+          setState(() {
+            _error = errorMessage;
+            _isAnalyzing = false;
+          });
+        }
       }
     }
   }
@@ -368,24 +382,61 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
   void _activateChatMode() {
     if (_initialSolution == null) return;
 
-    setState(() {
-      _isChatMode = true;
-      // İlk çözümü sohbetin ilk mesajı olarak ekle
-      if (_messages.isEmpty) {
-        _messages.add(SolverMessage(_initialSolution!, isUser: false));
-      }
-    });
+    print('🔵 _activateChatMode çağrıldı');
 
-    // Hafif bir kaydırma efekti ile kullanıcıya odaklanma hissi ver
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
+    // Günlük limit kontrolü
+    final dailyLimitAsync = ref.watch(dailyQuestionLimitProvider);
+    dailyLimitAsync.when(
+      data: (limit) {
+        print('🔵 Limit data: used=${limit.used}, limit=${limit.limit}, hasReached=${limit.hasReachedLimit}, isPremium=${limit.isPremium}');
+
+        if (limit.hasReachedLimit) {
+          print('🔴 Limit doldu, dialog gösteriliyor');
+          _showDailyLimitDialog();
+          return;
+        }
+
+        print('🟢 Chat mode açılıyor');
+        setState(() {
+          _isChatMode = true;
+          // İlk çözümü sohbetin ilk mesajı olarak ekle
+          if (_messages.isEmpty) {
+            _messages.add(SolverMessage(_initialSolution!, isUser: false));
+          }
+        });
+
+        // Hafif bir kaydırma efekti ile kullanıcıya odaklanma hissi ver
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (_scrollController.hasClients) {
+            _scrollController.animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
+        });
+      },
+      loading: () {
+        print('🟡 Provider loading, yine de açılıyor');
+        // Loading durumunda da yine de aç
+        setState(() {
+          _isChatMode = true;
+          if (_messages.isEmpty) {
+            _messages.add(SolverMessage(_initialSolution!, isUser: false));
+          }
+        });
+      },
+      error: (err, stack) {
+        print('🔴 Provider error: $err');
+        // Hata olsa bile aç (güvenli taraf)
+        setState(() {
+          _isChatMode = true;
+          if (_messages.isEmpty) {
+            _messages.add(SolverMessage(_initialSolution!, isUser: false));
+          }
+        });
+      },
+    );
   }
 
   // YENİ: Takip sorusu gönderme
@@ -621,6 +672,79 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
     );
   }
 
+  void _showDailyLimitDialog() {
+    final theme = Theme.of(context);
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(Icons.info_outline, color: theme.colorScheme.primary, size: 28),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Günlük Limit Doldu',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Günlük 3 soru çözme hakkınızı kullandınız.',
+              style: TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.workspace_premium, color: theme.colorScheme.primary),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'Premium üyelikle sınırsız soru çözebilirsiniz!',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pop(context); // Question solver ekranından da çık
+            },
+            child: const Text('Daha Sonra'),
+          ),
+          FilledButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              context.push(AppRoutes.premium);
+            },
+            icon: const Icon(Icons.workspace_premium, size: 20),
+            label: const Text('Premium\'a Geç'),
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showImageSourceSheet() {
     final theme = Theme.of(context);
     showModalBottomSheet(
@@ -778,7 +902,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
+    final dailyLimitAsync = ref.watch(dailyQuestionLimitProvider);
 
     // DURUM 1: Henüz fotoğraf seçilmediyse veya sonuç ekranındaysak
     if (_rawImageBytes == null) {
@@ -798,6 +922,47 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
             style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
           ),
           actions: [
+            // Günlük limit göstergesi (premium olmayan kullanıcılar için)
+            dailyLimitAsync.when(
+              data: (limit) {
+                if (limit.isPremium) return const SizedBox.shrink();
+                return Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: limit.hasReachedLimit
+                        ? theme.colorScheme.error.withOpacity(0.1)
+                        : theme.colorScheme.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        limit.hasReachedLimit ? Icons.block : Icons.check_circle,
+                        size: 16,
+                        color: limit.hasReachedLimit
+                            ? theme.colorScheme.error
+                            : theme.colorScheme.primary,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${limit.remaining}/${limit.limit}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          color: limit.hasReachedLimit
+                              ? theme.colorScheme.error
+                              : theme.colorScheme.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+            ),
             if (_initialSolution != null)
               IconButton(
                 icon: Icon(

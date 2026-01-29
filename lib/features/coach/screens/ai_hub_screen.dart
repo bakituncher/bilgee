@@ -372,25 +372,23 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                 ),
                 const SizedBox(width: gap),
                 Expanded(
-                  child: KeyedSubtree(
-                    key: _solverKey,
-                    child: _BentoCard(
-                      title: 'Soru\nÇözücü',
-                      description: 'Sorunu çek, anında\nçözümünü al.',
-                      icon: Icons.camera_enhance_rounded,
-                      color: const Color(0xFFF59E0B),
-                      isPremium: isPremium,
-                      height: 180,
-                      onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/question-solver', offerData: {
-                        'title': 'Soru Çözücü',
-                        'subtitle': 'Anında çözüm cebinde.',
-                        'iconName': 'camera_enhance',
-                        'color': Colors.orangeAccent,
-                        'marketingTitle': 'Soruda Takılma!',
-                        'marketingSubtitle': 'Yapamadığın sorunun fotoğrafını çek, Taktik Tavşan adım adım çözümünü anlatsın.',
-                        'redirectRoute': '/ai-hub/question-solver',
-                      }),
-                    ),
+                  child: _BentoCard(
+                    title: 'Soru\nÇözücü',
+                    // ÇOK NET: Ne işe yarar? Çözümü gösterir.
+                    description: 'Sorunu çek, anında\nçözümünü al.',
+                    icon: Icons.camera_enhance_rounded,
+                    color: const Color(0xFFF59E0B),
+                    isPremium: true, // Günlük 3 hak ile herkes kullanabilir
+                    height: 180,
+                    onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/question-solver', offerData: {
+                      'title': 'Soru Çözücü',
+                      'subtitle': 'Anında çözüm cebinde.',
+                      'iconName': 'camera_enhance',
+                      'color': Colors.orangeAccent,
+                      'marketingTitle': 'Soruda Takılma!',
+                      'marketingSubtitle': 'Yapamadığın sorunun fotoğrafını çek, Taktik Tavşan adım adım çözümünü anlatsın.',
+                      'redirectRoute': '/ai-hub/question-solver',
+                    }),
                   ),
                 ),
               ],
@@ -462,6 +460,13 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
   }
 
   void _handleNavigation(BuildContext context, bool isPremium, {required String route, required Map<String, dynamic> offerData}) {
+    // Soru çözücü artık günlük 3 hak ile ücretsiz kullanılabilir
+    if (route == '/ai-hub/question-solver') {
+      context.go(route);
+      return;
+    }
+
+    // Diğer özellikler için premium kontrolü
     if (isPremium) {
       context.go(route);
     } else {
