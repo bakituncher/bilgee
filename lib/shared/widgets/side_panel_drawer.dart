@@ -1,7 +1,6 @@
 // lib/shared/widgets/side_panel_drawer.dart
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
-import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -159,42 +158,22 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
 
                   const Divider(height: 1),
 
-                  // Footer actions (Taktik PRO ve Çıkış)
+                  // Footer actions (Taktik PRO)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(8, 10, 8, 10),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: _actionTileCompact(
-                            context,
-                            icon: isPremium ? Icons.verified_rounded : Icons.workspace_premium_rounded,
-                            title: 'Taktik Pro',
-                            iconColor: isPremium ? const Color(0xFF10B981) : colorScheme.primary,
-                            onTap: () {
-                              Navigator.of(context).pop();
-                              if (isPremium) {
-                                context.go('/premium-welcome');
-                              } else {
-                                context.go('/premium');
-                              }
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _actionTileCompact(
-                            context,
-                            icon: Icons.logout_rounded,
-                            title: 'Çıkış',
-                            iconColor: colorScheme.error,
-                            onTap: () async {
-                              Navigator.of(context).pop();
-                              await fb.FirebaseAuth.instance.signOut();
-                              if (context.mounted) context.go('/');
-                            },
-                          ),
-                        ),
-                      ],
+                    child: _actionTileCompact(
+                      context,
+                      icon: isPremium ? Icons.verified_rounded : Icons.workspace_premium_rounded,
+                      title: 'Taktik Pro',
+                      iconColor: isPremium ? const Color(0xFF10B981) : colorScheme.primary,
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        if (isPremium) {
+                          context.go('/premium-welcome');
+                        } else {
+                          context.go('/premium');
+                        }
+                      },
                     ),
                   ),
                 ],
