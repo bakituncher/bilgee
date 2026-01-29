@@ -120,21 +120,17 @@ class _FooterLink extends StatelessWidget {
     final linkColor = isDark ? Colors.white70 : Theme.of(context).colorScheme.onSurfaceVariant;
     return GestureDetector(
       onTap: () async {
-        final uri = Uri.parse(url);
-        if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-          if (context.mounted) {
+        try {
+          final uri = Uri.parse(url);
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+          } else if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Bağlantı açılamadı: $url'),
-                action: SnackBarAction(
-                  label: 'Tekrar',
-                  onPressed: () async {
-                    await launchUrl(uri, mode: LaunchMode.externalApplication);
-                  },
-                ),
-              ),
+              SnackBar(content: Text('Bağlantı açılamadı: $url')),
             );
           }
+        } catch (_) {
+          // URL açılamasa bile crash olmasın
         }
       },
       child: Text(

@@ -478,36 +478,40 @@ class _NotificationDetailSheet extends ConsumerWidget {
                   onPressed: () async {
                     Navigator.of(context).maybePop();
 
-                    if (item.route == '/store' ||
-                        item.route == 'UPDATE_APP') {
-                      final appId = Platform.isAndroid
-                          ? 'com.codenzi.taktik'
-                          : 'YOUR_IOS_APP_ID';
-                      final url = Uri.parse(Platform.isAndroid
-                          ? "market://details?id=$appId"
-                          : "https://apps.apple.com/app/id$appId");
-                      if (await canLaunchUrl(url)) {
-                        await launchUrl(url,
-                            mode: LaunchMode.externalApplication);
-                      } else {
-                        final webUrl = Uri.parse(Platform.isAndroid
-                            ? "https://play.google.com/store/apps/details?id=$appId"
+                    try {
+                      if (item.route == '/store' ||
+                          item.route == 'UPDATE_APP') {
+                        final appId = Platform.isAndroid
+                            ? 'com.codenzi.taktik'
+                            : 'YOUR_IOS_APP_ID';
+                        final url = Uri.parse(Platform.isAndroid
+                            ? "market://details?id=$appId"
                             : "https://apps.apple.com/app/id$appId");
-                        if (await canLaunchUrl(webUrl)) {
-                          await launchUrl(webUrl,
+                        if (await canLaunchUrl(url)) {
+                          await launchUrl(url,
+                              mode: LaunchMode.externalApplication);
+                        } else {
+                          final webUrl = Uri.parse(Platform.isAndroid
+                              ? "https://play.google.com/store/apps/details?id=$appId"
+                              : "https://apps.apple.com/app/id$appId");
+                          if (await canLaunchUrl(webUrl)) {
+                            await launchUrl(webUrl,
+                                mode: LaunchMode.externalApplication);
+                          }
+                        }
+                        return;
+                      }
+
+                      if (item.route.startsWith('http')) {
+                        final uri = Uri.parse(item.route);
+                        if (await canLaunchUrl(uri)) {
+                          await launchUrl(uri,
                               mode: LaunchMode.externalApplication);
                         }
+                        return;
                       }
-                      return;
-                    }
-
-                    if (item.route.startsWith('http')) {
-                      final uri = Uri.parse(item.route);
-                      if (await canLaunchUrl(uri)) {
-                        await launchUrl(uri,
-                            mode: LaunchMode.externalApplication);
-                      }
-                      return;
+                    } catch (_) {
+                      // URL açılamasa bile crash olmasın
                     }
 
                     if (context.mounted) {

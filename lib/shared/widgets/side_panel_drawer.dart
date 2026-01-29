@@ -317,9 +317,13 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
         InkWell(
           onTap: () async {
             Navigator.of(context).pop();
-            final url = Uri.parse('https://play.google.com/store/apps/details?id=com.codenzi.taktik');
-            if (await canLaunchUrl(url)) {
-              await launchUrl(url, mode: LaunchMode.externalApplication);
+            try {
+              final url = Uri.parse('https://play.google.com/store/apps/details?id=com.codenzi.taktik');
+              if (await canLaunchUrl(url)) {
+                await launchUrl(url, mode: LaunchMode.externalApplication);
+              }
+            } catch (_) {
+              // URL açılamasa bile crash olmasın
             }
           },
           borderRadius: BorderRadius.circular(12),
@@ -391,9 +395,13 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
   }
 
   Future<void> _launchURL(String urlString) async {
-    final Uri url = Uri.parse(urlString);
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
+    try {
+      final Uri url = Uri.parse(urlString);
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      }
+    } catch (_) {
+      // URL açılamasa bile crash olmasın
     }
   }
 

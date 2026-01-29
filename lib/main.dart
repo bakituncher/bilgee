@@ -322,44 +322,48 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
       router.routerDelegate.addListener(_routerListener!);
 
       NotificationService.instance.initialize(onNavigate: (route) async {
-        // 1. Mağaza Yönlendirmesi Kontrolü
-        if (route == '/store' || route == 'UPDATE_APP') {
-          if (Platform.isAndroid || Platform.isIOS) {
-            // Android Paket Adı: com.codenzi.taktik
-            // iOS App Store ID: 6755930518
-            final appId = Platform.isAndroid ? 'com.codenzi.taktik' : '6755930518';
+        try {
+          // 1. Mağaza Yönlendirmesi Kontrolü
+          if (route == '/store' || route == 'UPDATE_APP') {
+            if (Platform.isAndroid || Platform.isIOS) {
+              // Android Paket Adı: com.codenzi.taktik
+              // iOS App Store ID: 6755930518
+              final appId = Platform.isAndroid ? 'com.codenzi.taktik' : '6755930518';
 
-            final url = Uri.parse(
-              Platform.isAndroid
-                ? "market://details?id=$appId"
-                : "https://apps.apple.com/app/id$appId"
-            );
-
-            // Önce market protokolü ile açmayı dene (Mağaza uygulaması açılır)
-            if (await canLaunchUrl(url)) {
-              await launchUrl(url, mode: LaunchMode.externalApplication);
-            } else {
-              // Olmazsa web linki olarak aç
-              final webUrl = Uri.parse(
+              final url = Uri.parse(
                 Platform.isAndroid
-                  ? "https://play.google.com/store/apps/details?id=$appId"
+                  ? "market://details?id=$appId"
                   : "https://apps.apple.com/app/id$appId"
               );
-              if (await canLaunchUrl(webUrl)) {
-                 await launchUrl(webUrl, mode: LaunchMode.externalApplication);
+
+              // Önce market protokolü ile açmayı dene (Mağaza uygulaması açılır)
+              if (await canLaunchUrl(url)) {
+                await launchUrl(url, mode: LaunchMode.externalApplication);
+              } else {
+                // Olmazsa web linki olarak aç
+                final webUrl = Uri.parse(
+                  Platform.isAndroid
+                    ? "https://play.google.com/store/apps/details?id=$appId"
+                    : "https://apps.apple.com/app/id$appId"
+                );
+                if (await canLaunchUrl(webUrl)) {
+                   await launchUrl(webUrl, mode: LaunchMode.externalApplication);
+                }
               }
             }
+            return;
           }
-          return;
-        }
 
-        // 2. HTTP Link Kontrolü (Web sitesine yönlendirme gerekirse)
-        if (route.startsWith('http')) {
-           final uri = Uri.parse(route);
-           if (await canLaunchUrl(uri)) {
-             await launchUrl(uri, mode: LaunchMode.externalApplication);
-           }
-           return;
+          // 2. HTTP Link Kontrolü (Web sitesine yönlendirme gerekirse)
+          if (route.startsWith('http')) {
+             final uri = Uri.parse(route);
+             if (await canLaunchUrl(uri)) {
+               await launchUrl(uri, mode: LaunchMode.externalApplication);
+             }
+             return;
+          }
+        } catch (_) {
+          // URL açılamasa bile crash olmasın
         }
 
         // 3. Premium Gate Kontrolü - AI Hub özellikleri için
