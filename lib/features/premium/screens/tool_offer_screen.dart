@@ -244,10 +244,12 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
 
   Future<void> _restorePurchases() async {
     if (_isPurchaseInProgress) return; // Zaten bir işlem varsa tekrar tetikleme
+    if (!mounted) return; // Widget ağaçtan kaldırıldıysa işlemi durdur
 
     setState(() => _isPurchaseInProgress = true);
 
     // Kullanıcıya işlemin başladığını bildir
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Satın alımlar kontrol ediliyor ve sunucuyla eşitleniyor...'),
@@ -265,50 +267,47 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
       final callable = functions.httpsCallable('premium-syncRevenueCatPremiumCallable');
       await callable.call();
 
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Kontrol tamamlandı. Premium durumunuz güncellendi.'),
-            backgroundColor: Theme.of(context).colorScheme.secondary, // Başarılı rengi
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Kontrol tamamlandı. Premium durumunuz güncellendi.'),
+          backgroundColor: Theme.of(context).colorScheme.secondary, // Başarılı rengi
+        ),
+      );
     } on FirebaseFunctionsException catch (e) {
       // ✅ ÖZEL HATA YAKALAMA: Rate Limit (resource-exhausted)
-      if (mounted) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
-        if (e.code == 'resource-exhausted') {
-          // Backend'den gelen "Lütfen XX saniye bekleyin" mesajını göster
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(e.message ?? 'Çok sık işlem yaptınız. Lütfen biraz bekleyin.'),
-              backgroundColor: Colors.orange, // Uyarı rengi (Kırmızı değil)
-              duration: const Duration(seconds: 4),
-            ),
-          );
-        } else {
-          // Diğer Firebase hataları
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Sunucu hatası: ${e.message}'),
-              backgroundColor: Theme.of(context).colorScheme.error
-            ),
-          );
-        }
+      if (e.code == 'resource-exhausted') {
+        // Backend'den gelen "Lütfen XX saniye bekleyin" mesajını göster
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message ?? 'Çok sık işlem yaptınız. Lütfen biraz bekleyin.'),
+            backgroundColor: Colors.orange, // Uyarı rengi (Kırmızı değil)
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      } else {
+        // Diğer Firebase hataları
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Sunucu hatası: ${e.message}'),
+            backgroundColor: Theme.of(context).colorScheme.error
+          ),
+        );
       }
     } catch (e) {
       // ✅ GENEL HATA
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Bir hata oluştu: ${e.toString()}'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Bir hata oluştu: ${e.toString()}'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() => _isPurchaseInProgress = false);
