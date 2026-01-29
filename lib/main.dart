@@ -29,6 +29,7 @@ import 'package:taktik/core/services/firebase_analytics_service.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:taktik/features/coach/models/saved_solution_model.dart';
+import 'package:taktik/data/providers/premium_provider.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -361,7 +362,48 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
            return;
         }
 
-        // 3. Uygulama İçi Rota (Mevcut davranış)
+        // 3. Premium Gate Kontrolü - AI Hub özellikleri için
+        // Kullanıcı premium değilse, offer ekranına yönlendir
+        final premiumRoutes = {
+          '/ai-hub/question-solver': {
+            'title': 'Soru Çözücü',
+            'subtitle': 'Anında çözüm cebinde.',
+            'icon': Icons.camera_enhance_rounded,
+            'color': Colors.orangeAccent,
+            'marketingTitle': 'Soruda Takılma!',
+            'marketingSubtitle': 'Yapamadığın sorunun fotoğrafını çek, Taktik Tavşan adım adım çözümünü anlatsın.',
+            'redirectRoute': '/ai-hub/question-solver',
+          },
+          '/ai-hub/weakness-workshop': {
+            'title': 'Etüt Odası',
+            'subtitle': 'Kişiye özel çalışma materyalleri.',
+            'iconName': 'menu_book',
+            'color': const Color(0xFF8B5CF6),
+            'marketingTitle': 'Eksiklerini Kapat!',
+            'marketingSubtitle': 'Yapay zeka sadece eksik olduğun konulara özel konu özeti ve test soruları üretsin.',
+            'redirectRoute': '/ai-hub/weakness-workshop',
+          },
+          '/ai-hub/strategic-planning': {
+            'title': 'Haftalık Stratejist',
+            'subtitle': 'Sana özel ders programı.',
+            'iconName': 'calendar_month',
+            'color': const Color(0xFF10B981),
+            'marketingTitle': 'Programın Hazır!',
+            'marketingSubtitle': 'Eksik konularına ve müsait zamanına göre sana en uygun haftalık ders çalışma programını saniyeler içinde oluştur.',
+            'redirectRoute': '/ai-hub/strategic-planning',
+          },
+        };
+
+        if (premiumRoutes.containsKey(route)) {
+          final isPremium = ref.read(premiumStatusProvider);
+          if (!isPremium) {
+            // Premium değilse offer ekranına yönlendir
+            router.go('/ai-hub/offer', extra: premiumRoutes[route]);
+            return;
+          }
+        }
+
+        // 4. Uygulama İçi Rota (Mevcut davranış)
         if (route.isNotEmpty) {
            router.go(route);
         }
