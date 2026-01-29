@@ -80,6 +80,10 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
   bool _isLoadingPreselected = false; // preselectedImage işlenirken true
   String? _error;
 
+  // Takip sorusu sayacı (maksimum 10)
+  int _followUpQuestionCount = 0;
+  static const int _maxFollowUpQuestions = 10;
+
   final ImagePicker _picker = ImagePicker();
 
   @override
@@ -144,8 +148,10 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
 
             // Mevcut çözümü parse et: Eğer sohbet formatındaysa (--- ile ayrılmışsa) parse et
             if (widget.existingSolutionText!.contains('\n---\n')) {
-              // Sohbet geçmi��i formatında kaydedilmiş
+              // Sohbet geçmişi formatında kaydedilmiş
               final parts = widget.existingSolutionText!.split('\n---\n');
+              int userMessageCount = 0; // Kullanıcı mesaj sayacı
+
               for (final part in parts) {
                 if (part.trim().isEmpty) continue;
 
@@ -154,6 +160,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
                 if (trimmedPart.startsWith('Soru:')) {
                   final text = trimmedPart.substring(5).trim();
                   _messages.add(SolverMessage(text, isUser: true));
+                  userMessageCount++; // Kullanıcı mesajı sayılır
                 } else if (trimmedPart.startsWith('Çözüm:')) {
                   final text = trimmedPart.substring(6).trim();
                   _messages.add(SolverMessage(text, isUser: false));
@@ -162,9 +169,18 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
                   _messages.add(SolverMessage(trimmedPart, isUser: false));
                 }
               }
+
+              // İlk mesaj asistan mesajıysa (orijinal çözüm), kullanıcı mesajlarının sayısını ayarla
+              // Yoksa tüm kullanıcı mesajlarını say
+              if (_messages.isNotEmpty && !_messages.first.isUser) {
+                _followUpQuestionCount = userMessageCount; // Takip soruları
+              } else {
+                _followUpQuestionCount = userMessageCount > 0 ? userMessageCount : 0;
+              }
             } else {
               // Tek bir çözüm metni, direkt ekle (prefix olmadan)
               _messages.add(SolverMessage(_initialSolution!, isUser: false));
+              _followUpQuestionCount = 0; // Yeni sohbet, sayaç 0
             }
           });
 
@@ -379,64 +395,30 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
   }
 
   // BUTONA BASILINCA ÇAĞRILACAK: Sohbet Modunu Başlat
+  // NOT: "Anlamadığın yeri sor" özelliği sınırsızdır ve hiçbir hak tüketmez
   void _activateChatMode() {
     if (_initialSolution == null) return;
 
-    print('🔵 _activateChatMode çağrıldı');
+    print('🔵 _activateChatMode çağrıldı - Chat mode açılıyor (limit kontrolü yok)');
 
-    // Günlük limit kontrolü
-    final dailyLimitAsync = ref.watch(dailyQuestionLimitProvider);
-    dailyLimitAsync.when(
-      data: (limit) {
-        print('🔵 Limit data: used=${limit.used}, limit=${limit.limit}, hasReached=${limit.hasReachedLimit}, isPremium=${limit.isPremium}');
+    setState(() {
+      _isChatMode = true;
+      // İlk çözümü sohbetin ilk mesajı olarak ekle
+      if (_messages.isEmpty) {
+        _messages.add(SolverMessage(_initialSolution!, isUser: false));
+      }
+    });
 
-        if (limit.hasReachedLimit) {
-          print('🔴 Limit doldu, dialog gösteriliyor');
-          _showDailyLimitDialog();
-          return;
-        }
-
-        print('🟢 Chat mode açılıyor');
-        setState(() {
-          _isChatMode = true;
-          // İlk çözümü sohbetin ilk mesajı olarak ekle
-          if (_messages.isEmpty) {
-            _messages.add(SolverMessage(_initialSolution!, isUser: false));
-          }
-        });
-
-        // Hafif bir kaydırma efekti ile kullanıcıya odaklanma hissi ver
-        Future.delayed(const Duration(milliseconds: 100), () {
-          if (_scrollController.hasClients) {
-            _scrollController.animateTo(
-              _scrollController.position.maxScrollExtent,
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOut,
-            );
-          }
-        });
-      },
-      loading: () {
-        print('🟡 Provider loading, yine de açılıyor');
-        // Loading durumunda da yine de aç
-        setState(() {
-          _isChatMode = true;
-          if (_messages.isEmpty) {
-            _messages.add(SolverMessage(_initialSolution!, isUser: false));
-          }
-        });
-      },
-      error: (err, stack) {
-        print('🔴 Provider error: $err');
-        // Hata olsa bile aç (güvenli taraf)
-        setState(() {
-          _isChatMode = true;
-          if (_messages.isEmpty) {
-            _messages.add(SolverMessage(_initialSolution!, isUser: false));
-          }
-        });
-      },
-    );
+    // Hafif bir kaydırma efekti ile kullanıcıya odaklanma hissi ver
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 
   // YENİ: Takip sorusu gönderme
@@ -444,10 +426,22 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
     final text = _chatController.text.trim();
     if (text.isEmpty || _isChatLoading) return;
 
+    // Limit kontrolü
+    if (_followUpQuestionCount >= _maxFollowUpQuestions) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Bir sohbette maksimum 10 soru sorabilirsiniz'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
     // 1. Kullanıcı mesajını ekle
     setState(() {
       _messages.add(SolverMessage(text, isUser: true));
       _isChatLoading = true;
+      _followUpQuestionCount++; // Sayacı artır
     });
     _chatController.clear();
     FocusScope.of(context).unfocus(); // Klavyeyi kapat
@@ -1615,8 +1609,10 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
   }
 
   Widget _buildInputArea(ThemeData theme) {
+    final isDisabled = _followUpQuestionCount >= _maxFollowUpQuestions;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
         boxShadow: [
@@ -1627,32 +1623,65 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
           )
         ],
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _chatController,
-              decoration: InputDecoration(
-                hintText: 'Anlamadığın yeri sor...',
-                filled: true,
-                fillColor: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      child: isDisabled
+          ? Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(16),
               ),
-              textCapitalization: TextCapitalization.sentences,
-              onSubmitted: (_) => _sendFollowUpMessage(),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    color: theme.colorScheme.onSurface.withOpacity(0.6),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Bir sohbette maksimum 10 soru sorabilirsiniz',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: theme.colorScheme.onSurface.withOpacity(0.8),
+                        ),
+                        maxLines: 1,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _chatController,
+                    enabled: !_isChatLoading,
+                    decoration: InputDecoration(
+                      hintText: 'Anlamadığın yeri sor...',
+                      filled: true,
+                      fillColor: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    ),
+                    textCapitalization: TextCapitalization.sentences,
+                    onSubmitted: (_) => _sendFollowUpMessage(),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton.filled(
+                  onPressed: _isChatLoading ? null : _sendFollowUpMessage,
+                  icon: const Icon(Icons.send_rounded),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(width: 8),
-          IconButton.filled(
-            onPressed: _isChatLoading ? null : _sendFollowUpMessage,
-            icon: const Icon(Icons.send_rounded),
-          ),
-        ],
-      ),
     );
   }
 

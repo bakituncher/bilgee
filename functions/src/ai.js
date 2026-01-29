@@ -96,7 +96,9 @@ exports.generateGemini = onCall(
     const requestType = request.data?.requestType || 'chat';
 
     // Premium olmayan kullanıcılar için günlük soru çözme limiti kontrolü
-    if (!isPremium && (requestType === 'question_solver' || requestType === 'chat')) {
+    // NOT: Sadece yeni soru çözümlerinde (question_solver) limit tüketilir
+    // Chat/takip soruları (anlamadığın yeri sor) limiti tüketmez
+    if (!isPremium && requestType === 'question_solver') {
       const today = new Date().toLocaleString('sv-SE', { timeZone: 'Europe/Istanbul' }).substring(0, 10); // 'YYYY-MM-DD'
       const dailyUsageRef = db.collection("users").doc(request.auth.uid).collection("daily_usage").doc(today);
 
@@ -113,7 +115,7 @@ exports.generateGemini = onCall(
         );
       }
 
-      // Kullanımı artır (hem soru çözümü hem de chat/follow-up sorular için)
+      // Kullanımı artır (sadece yeni soru çözümlerinde)
       await dailyUsageRef.set({
         questions_solved: admin.firestore.FieldValue.increment(1),
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
