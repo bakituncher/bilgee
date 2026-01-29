@@ -93,7 +93,7 @@ class _LegalFooter extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final dividerColor = isDark ? Colors.white38 : Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.4);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 2.0),
+      padding: const EdgeInsets.only(top: 2.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -341,14 +341,13 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
               // Scrollable content
               Expanded(
                 child: SingleChildScrollView(
-                  padding: EdgeInsets.only(
+                  padding: const EdgeInsets.only(
                     left: 16,
                     right: 16,
-                    top: 8,
-                    bottom: 16, // Bottom bar için alan bırak
+                    top: 4,
+                    bottom: 8,
                   ),
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       _ToolFeatureHeader(
                         heroTag: widget.heroTag,
@@ -357,13 +356,13 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
                         title: widget.title,
                         imageAsset: widget.imageAsset,
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
                       _MarketingInfo(
                         fadeController: _fadeController,
                         title: widget.marketingTitle,
                         subtitle: widget.marketingSubtitle,
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
                       // Purchase options (buton hariç)
                       _buildPurchaseSectionContent(offeringsAsyncValue),
                     ],
@@ -382,9 +381,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
   /// Purchase section içeriği - Buton hariç (buton artık sabit bottom bar'da)
   Widget _buildPurchaseSectionContent(AsyncValue<Offerings?> offeringsAsyncValue) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
+    return Container(
         width: double.infinity,
         decoration: BoxDecoration(
           color: isDark
@@ -455,8 +452,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildTrustBadges() {
@@ -486,7 +482,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: 16,
-        vertical: isSmallScreen ? 4 : 8,
+        vertical: isSmallScreen ? 4 : 6,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -621,30 +617,28 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
 
     return FadeTransition(
       opacity: _fadeController,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Sınırları Kaldır',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w900,
-                color: Theme.of(context).colorScheme.onSurface,
-                fontSize: 18,
-              ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'Sınırları Kaldır',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w900,
+              color: Theme.of(context).colorScheme.onSurface,
+              fontSize: 19,
             ),
-            const SizedBox(height: 3),
-            Text(
-              'Potansiyelinin zirvesine ulaş',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                fontSize: 11.5,
-              ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Potansiyelinin zirvesine ulaş',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 12.5,
             ),
-            const SizedBox(height: 10),
-            if (yearly != null)
+          ),
+          const SizedBox(height: 16),
+          if (yearly != null)
               _PurchaseOptionCard(
                 animationController: _cardPopController,
                 package: yearly,
@@ -674,8 +668,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
                 color: widget.color,
                 debugTrialOverride: _debugTrialOverride,
               ),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -685,7 +678,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
                         (_selectedPackage?.storeProduct.introductoryPrice?.price == 0);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       child: AnimatedBuilder(
         animation: _pulseController,
         builder: (context, child) {
@@ -754,42 +747,39 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
     final isSmallScreen = MediaQuery.of(context).size.height < 700;
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
-    return SafeArea(
-      top: false,
-      child: ClipRRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Theme.of(context).scaffoldBackgroundColor.withOpacity(0.9)
-                  : Theme.of(context).cardColor.withOpacity(0.95),
-              border: Border(
-                top: BorderSide(
-                  color: widget.color.withOpacity(0.1),
-                  width: 1,
-                ),
+    return ClipRRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: isDark
+                ? Theme.of(context).scaffoldBackgroundColor.withOpacity(0.9)
+                : Theme.of(context).cardColor.withOpacity(0.95),
+            border: Border(
+              top: BorderSide(
+                color: widget.color.withOpacity(0.1),
+                width: 1,
               ),
             ),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 600),
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    20,
-                    isSmallScreen ? 10 : 12,
-                    20,
-                    bottomPadding + (isSmallScreen ? 6 : 8),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _buildPurchaseButton(),
-                      const SizedBox(height: 8),
-                      const _LegalFooter(),
-                    ],
-                  ),
+          ),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  isSmallScreen ? 8 : 10,
+                  16,
+                  bottomPadding > 0 ? bottomPadding : (isSmallScreen ? 8 : 12),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildPurchaseButton(),
+                    const SizedBox(height: 6),
+                    const _LegalFooter(),
+                  ],
                 ),
               ),
             ),
@@ -898,41 +888,34 @@ class _ToolFeatureHeader extends StatelessWidget {
         child: Column(
           children: [
             Container(
-              width: 64,
-              height: 64,
+              width: 72,
+              height: 72,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: Theme.of(context).cardColor.withOpacity(0.8),
                 border: Border.all(color: color, width: 2.5),
-                boxShadow: [
-                  BoxShadow(
-                    color: color.withOpacity(0.4),
-                    blurRadius: 18,
-                    spreadRadius: 2,
-                  ),
-                ],
               ),
               child: imageAsset != null
                   ? ClipOval(
                       child: Padding(
-                        padding: const EdgeInsets.all(9.0),
+                        padding: const EdgeInsets.all(10.0),
                         child: Image.asset(
                           imageAsset!,
-                          width: 46,
-                          height: 46,
+                          width: 52,
+                          height: 52,
                           fit: BoxFit.contain,
                         ),
                       ),
                     )
-                  : Icon(icon, size: 32, color: color),
+                  : Icon(icon, size: 36, color: color),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Text(
               title,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: Theme.of(context).colorScheme.onSurface,
-                fontSize: 17,
+                fontSize: 18,
               ),
             ),
           ],
@@ -959,12 +942,12 @@ class _MarketingInfo extends StatelessWidget {
     return FadeTransition(
       opacity: fadeController,
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isDark
               ? Colors.white.withOpacity(0.05)
               : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isDark
                 ? Colors.white.withOpacity(0.1)
@@ -979,16 +962,16 @@ class _MarketingInfo extends StatelessWidget {
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: Theme.of(context).colorScheme.onSurface,
-                fontSize: 13,
+                fontSize: 15,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 6),
             Text(
               subtitle,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
-                height: 1.4,
-                fontSize: 11.5,
+                height: 1.5,
+                fontSize: 13.5,
               ),
             ),
           ],
@@ -1144,7 +1127,7 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
                         : [],
                   ),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: widget.isSelected
                           ? (isDark ? const Color(0xFF2A2A2A) : Colors.white)
@@ -1162,8 +1145,8 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
                       children: [
                         // Radio Icon (Sol tarafta)
                         Container(
-                          width: 24,
-                          height: 24,
+                          width: 26,
+                          height: 26,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: widget.isSelected ? widget.color : Colors.transparent,
@@ -1171,14 +1154,14 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
                               color: widget.isSelected
                                   ? widget.color
                                   : (isDark ? Colors.grey : Colors.grey.withOpacity(0.4)),
-                              width: 2,
+                              width: 2.5,
                             ),
                           ),
                           child: widget.isSelected
-                              ? const Icon(Icons.check, size: 16, color: Colors.white)
+                              ? const Icon(Icons.check, size: 17, color: Colors.white)
                               : null,
                         ),
-                        const SizedBox(width: 14),
+                        const SizedBox(width: 16),
 
                         // İçerik
                         Expanded(
@@ -1191,10 +1174,10 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
                                 style: TextStyle(
                                   color: isDark ? Colors.white : const Color(0xFF1A1A1A),
                                   fontWeight: widget.isSelected ? FontWeight.w800 : FontWeight.w600,
-                                  fontSize: 17,
+                                  fontSize: 16.5,
                                 ),
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 6),
 
                               // Fiyat Bilgileri
                               Row(
@@ -1204,22 +1187,23 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
                                     widget.price,
                                     style: TextStyle(
                                       color: widget.color,
-                                      fontSize: 22,
+                                      fontSize: 24,
                                       fontWeight: FontWeight.w900,
                                       height: 1,
                                     ),
                                   ),
-                                  const SizedBox(width: 3),
+                                  const SizedBox(width: 4),
                                   Padding(
-                                    padding: const EdgeInsets.only(bottom: 2),
+                                    padding: const EdgeInsets.only(bottom: 3),
                                     child: Text(
                                       widget.billingPeriod,
                                       style: TextStyle(
                                         color: isDark
                                             ? Colors.grey
                                             : const Color(0xFF888888),
-                                        fontSize: 11,
+                                        fontSize: 12,
                                         height: 1.2,
+                                        fontWeight: FontWeight.w500,
                                       ),
                                     ),
                                   ),
@@ -1236,8 +1220,8 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
                 // Tek Badge - Sadece Fade Geçişi
                 if (hasFreeTrial || widget.tag != null)
                   Positioned(
-                    top: -4,
-                    right: -2,
+                    top: -6,
+                    right: -4,
                     child: AnimatedSwitcher(
                       duration: const Duration(milliseconds: 300),
                       switchInCurve: Curves.easeInOut,
@@ -1286,15 +1270,15 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
   Widget _buildTrialBadge({Key? key}) {
     return Container(
       key: key,
-      width: 115,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      width: 120,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [widget.color, const Color(0xFFFF1744)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
             color: widget.color.withOpacity(0.3),
@@ -1308,9 +1292,9 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
         textAlign: TextAlign.center,
         style: TextStyle(
           color: Colors.white,
-          fontSize: 9,
+          fontSize: 9.5,
           fontWeight: FontWeight.w800,
-          letterSpacing: 0.2,
+          letterSpacing: 0.3,
         ),
       ),
     );
@@ -1319,15 +1303,15 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
   Widget _buildSavingsBadge(String tag, {Key? key}) {
     return Container(
       key: key,
-      width: 115,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      width: 120,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFF4CAF50), Color(0xFF66BB6A)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF4CAF50).withOpacity(0.3),
@@ -1341,9 +1325,9 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
         textAlign: TextAlign.center,
         style: const TextStyle(
           color: Colors.white,
-          fontSize: 9,
+          fontSize: 9.5,
           fontWeight: FontWeight.w800,
-          letterSpacing: 0.2,
+          letterSpacing: 0.3,
         ),
       ),
     );
