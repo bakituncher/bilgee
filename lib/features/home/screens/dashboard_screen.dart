@@ -146,6 +146,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       // Premium olmayan kullanıcılar için satış ekranı
       final lastShownDate = prefs.getString('premium_screen_last_shown') ?? '';
 
+      // İlk gün (hiç gösterilmemişse) sadece tarihi kaydet, gösterme
+      if (lastShownDate.isEmpty) {
+        await prefs.setString('premium_screen_last_shown', today);
+        return;
+      }
+
       // Bugün zaten gösterildiyse tekrar gösterme
       if (lastShownDate == today) return;
 
