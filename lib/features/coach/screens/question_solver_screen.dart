@@ -803,18 +803,22 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: [
-                                  theme.colorScheme.primary.withOpacity(0.2),
-                                  theme.colorScheme.tertiary.withOpacity(0.1),
+                                  Color(0xFFF0F7FF), // Çok açık mavi
+                                  Color(0xFFE3F2FD), // Açık mavi
                                 ],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
                               shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Color(0xFF1565C0),
+                                width: 2,
+                              ),
                             ),
                             child: Icon(
                               Icons.bolt_rounded,
                               size: 48,
-                              color: theme.colorScheme.primary,
+                              color: Color(0xFF1565C0), // Koyu mavi
                             ),
                           ),
                           const SizedBox(height: 24),
@@ -834,7 +838,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
 
                           // Açıklama - Merkezi
                           Text(
-                            'Günlük 3 soru çözme hakkınızı kullandınız.',
+                            'Günlük 3 soru çözüm hakkınızı kullandınız.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 15,
@@ -846,26 +850,35 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
 
                           // Pro Vurgu Kutusu - Simetrik
                           Container(
-                            padding: const EdgeInsets.all(16),
+                            padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: [
-                                  theme.colorScheme.primaryContainer.withOpacity(0.5),
-                                  theme.colorScheme.secondaryContainer.withOpacity(0.3),
+                                  Color(0xFFF0F7FF), // Çok açık mavi
+                                  Color(0xFFE3F2FD), // Açık mavi
                                 ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
                               ),
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: theme.colorScheme.primary.withOpacity(0.3),
-                                width: 1.5,
+                                color: Color(0xFF1565C0), // Koyu mavi - Tutarlı ton
+                                width: 2,
                               ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Color(0xFF1565C0).withOpacity(0.15),
+                                  blurRadius: 8,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
                             ),
                             child: Column(
                               children: [
                                 Icon(
                                   Icons.workspace_premium_rounded,
-                                  color: theme.colorScheme.primary,
-                                  size: 32,
+                                  color: Color(0xFF1565C0), // Koyu mavi
+                                  size: 36,
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
@@ -873,17 +886,19 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                    color: theme.colorScheme.primary,
+                                    fontSize: 17,
+                                    color: Color(0xFF0D47A1), // Çok koyu mavi
+                                    letterSpacing: 0.2,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Tüm sorularını çöz, sınırı unut!',
+                                  'Tüm sorularını çözdür, sınırı unut!',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontSize: 13,
-                                    color: theme.colorScheme.onSurfaceVariant,
+                                    color: Color(0xFF1976D2), // Orta koyu mavi
+                                    fontWeight: FontWeight.w500,
                                   ),
                                 ),
                               ],
@@ -905,14 +920,16 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
                                       borderRadius: BorderRadius.circular(14),
                                     ),
                                     side: BorderSide(
-                                      color: theme.colorScheme.outline.withOpacity(0.5),
+                                      color: Colors.grey.shade400,
                                     ),
+                                    foregroundColor: Colors.grey.shade700,
                                   ),
-                                  child: const Text(
+                                  child: Text(
                                     'Daha Sonra',
                                     style: TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w600,
+                                      color: Colors.grey.shade700,
                                     ),
                                   ),
                                 ),
@@ -929,7 +946,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(14),
                                     ),
-                                    backgroundColor: theme.colorScheme.primary,
+                                    backgroundColor: Color(0xFF1565C0), // Koyu mavi - Tutarlı ton
                                   ),
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
@@ -937,7 +954,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
                                       Icon(
                                         Icons.workspace_premium,
                                         size: 18,
-                                        color: theme.colorScheme.onPrimary,
+                                        color: Colors.white,
                                       ),
                                       const SizedBox(width: 6),
                                       Text(
@@ -945,7 +962,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
                                         style: TextStyle(
                                           fontSize: 15,
                                           fontWeight: FontWeight.bold,
-                                          color: theme.colorScheme.onPrimary,
+                                          color: Colors.white,
                                         ),
                                       ),
                                     ],
