@@ -83,8 +83,13 @@ StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
                 name: 'TestResultSummary',
                 parentNavigatorKey: rootNavigatorKey,
                 pageBuilder: (context, state) {
-                  final test = state.extra as TestModel?; // null güvenli
-                  return buildPageWithFadeTransition(context: context, state: state, child: TestResultSummaryEntry(test: test));
+                  final test = state.extra as TestModel?;
+                  final fromArchive = state.uri.queryParameters['fromArchive'] == 'true';
+                  return buildPageWithFadeTransition(
+                    context: context,
+                    state: state,
+                    child: TestResultSummaryEntry(test: test, fromArchive: fromArchive),
+                  );
                 },
               ),
               GoRoute(

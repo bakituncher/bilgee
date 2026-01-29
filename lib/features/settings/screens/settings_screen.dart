@@ -730,7 +730,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     // Hesap silme işlemlerini dinle ve loading dialog'u yönet
-    ref.listen<SettingsState>(settingsNotifierProvider, (previous, next) {
+    ref.listen<SettingsState>(settingsNotifierProvider, (previous, next) async {
       final wasLoading = previous?.isLoading ?? false;
       final isLoading = next.isLoading;
 
@@ -777,12 +777,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
         // Kullanıcıyı geri bildirim formuna yönlendir
         final feedbackUrl = Uri.parse('https://docs.google.com/forms/d/e/1FAIpQLScT2SmlQHXiL17Yj_p2s3L8kwe3BwqffRPaTMtAP9shaW0cdQ/viewform?usp=dialog');
-        launchUrl(feedbackUrl, mode: LaunchMode.externalApplication);
+        try {
+          final canLaunch = await canLaunchUrl(feedbackUrl);
+          if (canLaunch) {
+            await launchUrl(feedbackUrl, mode: LaunchMode.externalApplication);
+          }
+        } catch (_) {
+          // URL açılamasa bile crash olmasın
+        }
       }
     });
 
-    final user = ref.watch(userProfileProvider).value;
-    final isAdmin = ref.watch(adminClaimProvider).value ?? false;
+    final user = ref.watch(userProfileProvider).valueOrNull;
+    final isAdmin = ref.watch(adminClaimProvider).valueOrNull ?? false;
 
     // Alt navigasyon çubuğu için güvenli alan boşluğu
     final bottomPadding = MediaQuery.of(context).padding.bottom;

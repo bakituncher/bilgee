@@ -6,84 +6,132 @@ const { dayKeyIstanbul } = require("./utils");
 const { processAudienceInBatches } = require("./users");
 
 // ---- 1. GENİŞLETİLMİŞ GENEL MOTİVASYON VE ETKİLEŞİM HAVUZU ----
-// Görsel yok, sadece vurucu metinler.
+// Samimi, özellik odaklı ve aksiyona yönlendiren mesajlar.
 const GENERAL_MESSAGES = [
-  // 🟢 Motivasyon & Başlangıç
-  { title: 'Bugün senin günün! 🌟', body: 'Dünü geride bırak. Bugün atacağın tek bir adım bile seni zirveye yaklaştırır.', route: '/home' },
-  { title: 'Hayallerin beklemez 🚀', body: 'Şu an masaya oturanlar kazanıyor. Sen neredesin?', route: '/home' },
-  { title: 'Yüzde 1 Kuralı 📈', body: 'Her gün sadece %1 daha iyi olsan, yıl sonunda 37 kat daha iyi olursun. Hadi başla!', route: '/home' },
-  { title: 'Mazeret yok! 💪', body: 'Zorlandığın an, geliştiğin andır. Pes etme, devam et.', route: '/home' },
-  { title: 'Gelecekteki Sen Mesaj Attı 📩', body: '"Bugün çalıştığın için teşekkür ederim." demek istiyor. Onu mahcup etme.', route: '/home' },
-  { title: 'Sadece 15 Dakika ⏱️', body: 'Gözünde büyütme. Sadece 15 dakika odaklan, gerisi kendiliğinden gelecek.', route: '/home' },
+  // 📸 SORU ÇÖZÜCÜ - /ai-hub'a yönlendir (En yüksek oran)
+  { title: 'Bi soru mu takıldı kafana? 📸', body: 'Fotoğrafını çek, anında çözümünü al. Tıpkı yanında öğretmen varmış gibi!', route: '/ai-hub' },
+  { title: 'O soruyu çözemeyince sinir oluyorsun, biliyorum 😤', body: 'Fotoğrafla, saniyeler içinde adım adım çözümünü gör. Dene bi kere!', route: '/ai-hub' },
+  { title: 'Çözemediğin soru korkun olmasın! 💪', body: 'Kamerayı aç, soruyu çek. Gerisini Taktik Tavşan halleder, söz.', route: '/ai-hub' },
+  { title: 'Matematikte mi takıldın? Türkçe\'de mi? 🤔', body: 'Fark etmez! Soru Çözücü her dersten anlıyor. Hemen dene!', route: '/ai-hub' },
+  { title: 'Yardım lazım mı? 🐰', body: 'Çözemediğin soruyu fotoğrafla, sana öğretmenden dinlemiş gibi anlatalım!', route: '/ai-hub' },
 
-  // 🔵 Rekabet & Arena
-  { title: 'Rakiplerin çalışıyor 👀', body: 'Sen dinlenirken sıralamada birileri seni geçiyor olabilir. Arena\'ya dön!', route: '/arena' },
-  { title: 'Meydan okuma zamanı ⚔️', body: 'Bugün kimseyi yendin mi? Liderlik tablosunda yükselmek için şimdi tam zamanı.', route: '/arena' },
-  { title: 'Sıralama değişti! 📉', body: 'Yerini korumak istiyorsan harekete geçmelisin. Sıralamaya göz at.', route: '/arena' },
-  { title: 'Kürsüde yerin boş 🏆', body: 'İlk 3\'e girmek senin elinde. Bir test çöz ve puanları topla.', route: '/arena' },
+  // 📚 ETÜT ODASI - /ai-hub'a yönlendir (Yüksek oran)
+  { title: 'Hangi konuda zorlanıyorsun? 📚', body: 'Söyle, sana özel konu anlatımı ve sorular hazırlayayım!', route: '/ai-hub' },
+  { title: 'Eksik konuların canını mı sıkıyor? 😩', body: 'Etüt Odası\'na gel, zayıf konularını güçlü yap. Sana özel çalışma seti hazır!', route: '/ai-hub' },
+  { title: 'Konu çalışmak sıkıcı gelebilir ama... ✨', body: 'Etüt Odası ile bambaşka! Sana özel anlatım, sana özel sorular. Gel dene!', route: '/ai-hub' },
+  { title: 'Zayıf konun ne, söyle bakalım 🎯', body: 'O konuyu beraber çözeriz. Etüt Odası seni bekliyor, hadi!', route: '/ai-hub' },
 
-  // 🟠 Taktik & Eksik Kapama
-  { title: 'Zayıf halkanı bul 💎', body: 'Seni en çok zorlayan konu aslında en çok net getirecek konudur. Etüt Odası\'na bak.', route: '/ai-hub' },
-  { title: 'Netlerin neden artmıyor? 🤔', body: 'Belki de yanlış yere odaklanıyorsun. Yapay zeka analizine göz at.', route: '/home/stats' },
-  { title: 'Taktik Tavşan fısıldıyor... 🐰', body: '"Çok çalışmak yetmez, akıllı çalışmalısın." Stratejini kontrol et.', route: '/ai-hub' },
-  { title: 'Deneme Analizi Yaptın mı? 📊', body: 'Çözdüğün denemeyi sisteme gir, eksiklerini nokta atışı belirleyelim.', route: '/home/add-test' },
+  // 📅 HAFTALIK PLAN YAPICI - /ai-hub'a yönlendir (Orta-yüksek oran)
+  { title: 'Bu hafta ne çalışacağını biliyor musun? 📅', body: 'Bilmiyorsan sorun değil! Sana özel haftalık plan oluşturalım.', route: '/ai-hub' },
+  { title: 'Rastgele çalışmaya son! 🎯', body: 'Boş zamanlarına ve eksiklerine göre kişisel haftalık plan hazırlayalım.', route: '/ai-hub' },
+  { title: 'Plan yapmak zor geliyor mu? 🤯', body: 'Merak etme, ben yaparım! Müsait saatlerini söyle, programın hazır.', route: '/ai-hub' },
+  { title: 'Neyi, ne zaman çalışacağını ben söyleyeyim 📋', body: 'Haftalık Plan Yapıcı ile verimli çalış, boşa zaman harcama!', route: '/ai-hub' },
 
-  // 🟣 Odaklanma & Planlama
-  { title: 'Domates tekniği? 🍅', body: '25 dakika odaklan, 5 dakika dinlen. Pomodoro sayacını senin için hazırladık.', route: '/home/pomodoro' },
-  { title: 'Haftalık hedefin tehlikede ⚠️', body: 'Programının gerisinde kalma. Toparlamak için harika bir akşam.', route: '/ai-hub' },
-  { title: 'Yatmadan önce son bir tekrar 🌙', body: 'Uyumadan önce çözülen 10 soru, sabah akılda kalan 10 bilgidir.', route: '/home/add-test' },
-  { title: 'Telefonu bırak, teste başla 📵', body: 'Bu bildirimden sonra yapacağın en iyi şey uygulamaya girmek.', route: '/home' }
+  // 📊 VERİ GİRİŞİ TEŞVİKİ - Deneme Ekleme
+  { title: 'Bugün deneme mi çözdün? 📝', body: 'Hemen kaydet! Analiz etmeden geçen deneme, boşa giden emek demek.', route: '/home/add-test' },
+  { title: 'Son denemenin sonucunu girdin mi? 👀', body: 'Girmezsen gelişimini takip edemeyiz! Hadi, çok kolay.', route: '/home/add-test' },
+  { title: 'Her deneme kaydı = Daha iyi analiz 📈', body: 'Çözdüğün son denemeyi sisteme ekle, zayıf noktaları bulalım!', route: '/home/add-test' },
+  { title: 'Kayıt tutmak şampiyonların işi 🏆', body: 'Deneme sonucunu gir, eksiklerini beraber bulalım!', route: '/home/add-test' },
+
+  // 📈 GELİŞİM GRAFİKLERİ - İstatistikler & Genel Bakış
+  { title: 'Net grafiğine göz attın mı? 📊', body: 'Son 1 ayda ne kadar yol aldığını gör! Motivasyon garantili.', route: '/home/stats' },
+  { title: 'Yükseliştesin, biliyor musun? 🚀', body: 'Grafiklerini incele, hangi derste patlama yaptığını gör!', route: '/home/stats' },
+  { title: 'Nereden nereye geldiğini görmek ister misin? 📏', body: 'Deneme gelişim grafiğin hazır. Kendini motive et!', route: '/home/stats' },
+  { title: 'Performansının röntgenini çekelim 🔍', body: 'Tüm istatistiklerini tek ekranda gör, stratejini belirle!', route: '/stats/overview' },
+  { title: 'Hangi ders yükseliyor, hangisi düşüyor? 📉', body: 'Genel bakış ekranında trend analizini incele!', route: '/stats/overview' },
+
+  // 🗂️ DENEME ARŞİVİ
+  { title: 'Eski denemelerine bi göz at 🗂️', body: 'Aynı hataları tekrarlıyor musun? Deneme arşivinde cevap var!', route: '/library' },
+  { title: 'Geçmiş denemelerin seni bekliyor 📂', body: 'Arşive dal, ilerleme yolculuğunu gör!', route: '/library' },
+
+  // 📦 SORU KUTUSU
+  { title: 'Zorlandığın soruları kaybetme! 📦', body: 'Soru kutusuna at, sonra toplu halde tekrar et. Çok işe yarıyor!', route: '/question-box' },
+  { title: 'Soru kutun seni bekliyor 🎯', body: 'Çözemediğin soruları biriktir, sonra fethet!', route: '/question-box' },
+
+  // 🍅 POMODORO - Odaklanma (Düşük oran - sadece 2 mesaj)
+  { title: 'Sadece 25 dakika, söz! 🍅', body: 'Bir pomodoro aç, odaklan. Mola zamanı gelince haber veririm!', route: '/home/pomodoro' },
+  { title: 'Telefonla savaşmak zor, biliyorum 📱', body: 'Pomodoro sayacını aç, 25 dakika sadece çalışmaya odaklan!', route: '/home/pomodoro' }
 ];
 
-// ---- 2. YÜKSEK DÖNÜŞÜMLÜ PREMIUM SATIŞ MESAJLARI (Stratejik & Zeki Tüccar) ----
+// ---- 2. YÜKSEK DÖNÜŞÜMLÜ PREMIUM SATIŞ MESAJLARI (Stratejik & Samimi) ----
 // Pazar, Çarşamba, Cuma 22:00'de sadece Premium olmayanlara gidecek.
-// DÜZELTME: route: '/premium' olarak güncellendi.
+// AIHub özellikleri odaklı: Soru Çözücü, Etüt Odası, Haftalık Plan Yapıcı
 const PREMIUM_SALES_MESSAGES = [
-  // 💎 Kanca: ETÜT ODASI & DEĞER (Uygulamanın kalbi burası)
+  // 📸 SORU ÇÖZÜCÜ - Fotoğraf çek, anında çözüm al
   {
-    title: 'Taktik Tavşan ile tanış, planını kap, istersen iptal et 🏃',
-    body: '7 Günlük Bedava Taktik Pro hakkınla tüm eksiklerini analiz ettir, haftalık planını hazırlat. Beğenmezsen iptal et.',
-    route: '/premium'
+    title: 'Takıldığın soru mu var? 📸',
+    body: 'Fotoğrafını çek, saniyeler içinde adım adım çözümünü gör! Artık hiçbir soru çözümsüz kalmayacak.',
+    route: '/ai-hub'
   },
   {
-    title: 'Sırrımız bu analizlerde saklı 🤫',
-    body: 'Herkes körü körüne çalışırken, biz senin "gizli desenini" çözdük. Taktik Tavşan koçluğunu aç, hangi konuya yüklenmen gerektiğini şıp diye söyleyeyim. 🐰',
-    route: '/premium'
-  },
-
-  // 🌸 Kanca: PLANLAMA & KONFOR (Bestie desteği: "Sen yorulma ben yaparım")
-  {
-    title: 'Plan yapmakla yorulma dostum 📅',
-    body: 'Sen kahveni iç, dersine odaklan; en verimli haftalık planını ben saniyeler içinde hazırlayayım. Enerjini sadece başarmaya sakla, gerisi bende! ☕',
-    route: '/premium'
+    title: 'Özel öğretmenin artık cebinde! 👨‍🏫',
+    body: 'Çözemediğin soruyu fotoğrafla, tıpkı öğretmen anlatır gibi adım adım çözümünü al.',
+    route: '/ai-hub'
   },
   {
-    title: 'Bırak yükünü hafifleteyim ✨',
-    body: 'Sınav maratonu zaten zor, bir de planlama ile uğraşma. Pro\'a geç, kişisel koçun olarak rotanı ben çizeyim. Sen sadece gaza bas! 🚀',
-    route: '/premium'
+    title: 'O zor soruyu bi çek bakalım 📷',
+    body: 'Matematiğinden Türkçe\'sine, her sorunun çözümü saniyeler içinde elinde!',
+    route: '/ai-hub'
+  },
+  {
+    title: 'Soru çözerken takıldın mı? 🤔',
+    body: 'Fotoğrafla, yapay zeka sana adım adım anlatsın. Daha kolay öğrenmenin yolu bu!',
+    route: '/ai-hub'
   },
 
-  // 🚀 Kanca: POTANSİYEL & İNANÇ (Saygılı ve Motive Edici Baskı)
+  // 📚 ETÜT ODASI - Zayıf konulara özel çalışma setleri
   {
-    title: 'Sende o ışığı görüyorum! 🌟',
-    body: 'Potansiyelin o kadar yüksek ki, harcanmasına gönlüm razı değil. Gel şu işi profesyonelce yapalım, hak ettiğin o yere ismini yazdıralım. Hadi!',
-    route: '/premium'
+    title: 'Eksik konuların için özel set hazırladım! 📚',
+    body: 'Etüt Odası\'nda zayıf konularına özel konu anlatımı ve sorular seni bekliyor.',
+    route: '/ai-hub'
   },
   {
-    title: 'Kendine bu iyiliği yapmalısın 💖',
-    body: 'Geleceğin için attığın her adım kıymetli. Küçük bir yatırımla sınırsız Taktik Tavşan desteğini yanına al. Beraber çok daha güçlü olacağız.',
-    route: '/premium'
+    title: 'Zayıf konuları güçlü yap! 💪',
+    body: 'Hangi konuda zorlanıyorsun? O konuyu kavrayana kadar sana özel içerik üretiyorum.',
+    route: '/ai-hub'
+  },
+  {
+    title: 'Konu çalışmak hiç bu kadar kolay olmadı ✨',
+    body: 'Eksik konun ne? Söyle, sana özel anlatım ve pratik sorular hazırlayayım!',
+    route: '/ai-hub'
+  },
+  {
+    title: 'Konuyu anlamadıysan sorun değil 🎯',
+    body: 'Etüt Odası\'na gel, sana farklı bir şekilde anlatayım. Bu sefer anlayacaksın!',
+    route: '/ai-hub'
   },
 
-  // 🐰 Kanca: TAKTİK TAVŞAN & AİDİYET (Marka Yüzüyle Bağ Kurma)
+  // 📅 HAFTALIK PLAN YAPICI - Kişiye özel program
   {
-    title: 'Taktik Tavşan yanında! 🐰',
-    body: 'Sadece bir uygulama değil, sınav yolculuğundaki en sadık yol arkadaşınım. Premium ile tüm güçlerimi senin için açıyorum. Bu takımı bozmayalım! 💪',
+    title: 'Plan yapmakla uğraşma, ben yaparım! 📅',
+    body: 'Boş zamanlarına ve eksik konularına göre sana özel haftalık program oluşturayım.',
+    route: '/ai-hub'
+  },
+  {
+    title: 'Her hafta sana özel strateji 🎯',
+    body: 'Ne zaman müsaitsin? Hangi konularda eksiksin? Söyle, en verimli planını çıkarayım!',
+    route: '/ai-hub'
+  },
+  {
+    title: 'Rastgele değil, stratejik çalış! 🗓️',
+    body: 'Taktik Tavşan senin için kişisel haftalık plan yapıyor. Verimsizliğe son!',
+    route: '/ai-hub'
+  },
+
+  // 🐰 TAKTİK PRO GENEL
+  {
+    title: 'Taktik Pro\'yu 7 gün bedava dene! 🐰',
+    body: 'Soru Çözücü, Etüt Odası, Haftalık Plan... Hepsini dene, beğenmezsen iptal et!',
     route: '/premium'
   },
   {
-    title: 'Zirve sana çok yakışacak 👑',
-    body: 'Arena\'da rakiplerin hızlanırken biz de vites artıralım. Gelişmiş analiz raporlarını aç, farkını ortaya koy. Şampiyonlar ligine hoş geldin!',
+    title: 'Akıllı çalışmanın sırrı burada 🔓',
+    body: 'Yapay zeka destekli soru çözümü, konu analizi ve kişisel plan. Tüm araçlar emrinde!',
+    route: '/premium'
+  },
+  {
+    title: 'Bu yolda yalnız değilsin! 💪',
+    body: 'Soru çözümünden haftalık plana, sınav koçun olarak hep yanındayım.',
     route: '/premium'
   }
 ];
@@ -132,13 +180,18 @@ exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => 
 
 // ---- YARDIMCI FONKSİYONLAR ----
 
-function getRandomItem(array) {
-  return array[Math.floor(Math.random() * array.length)];
+// Tarihe göre sırayla bildirim seç (DB gerektirmez)
+// Her gün + her slot farklı bildirim gönderir
+function getRotatingItem(array, slotId = 0) {
+  const today = new Date();
+  const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+  const index = (dayOfYear * 3 + slotId) % array.length;
+  return array[index];
 }
 
-async function sendTopicNotification(topic = 'general') {
-  const payload = getRandomItem(GENERAL_MESSAGES);
-  logger.info('Sending generic topic push', { topic, title: payload.title });
+async function sendTopicNotification(topic = 'general', slotId = 0) {
+  const payload = getRotatingItem(GENERAL_MESSAGES, slotId);
+  logger.info('Sending topic push', { topic, title: payload.title, slot: slotId });
 
   const message = {
     topic: topic,
@@ -160,15 +213,15 @@ async function sendTopicNotification(topic = 'general') {
 // ---- ZAMANLANMIŞ GENEL BİLDİRİMLER (SIFIR MALİYET - HERKESE) ----
 
 exports.dispatchInactivityMorning = onSchedule({schedule: "0 9 * * *", timeZone: 'Europe/Istanbul'}, async () => {
-  await sendTopicNotification('general');
+  await sendTopicNotification('general', 0); // Sabah slot
 });
 
 exports.dispatchInactivityAfternoon = onSchedule({schedule: "0 15 * * *", timeZone: 'Europe/Istanbul'}, async () => {
-  await sendTopicNotification('general');
+  await sendTopicNotification('general', 1); // Öğlen slot
 });
 
 exports.dispatchInactivityEvening = onSchedule({schedule: "30 20 * * *", timeZone: 'Europe/Istanbul'}, async () => {
-  await sendTopicNotification('general');
+  await sendTopicNotification('general', 2); // Akşam slot
 });
 
 // ====================================================================================
@@ -184,7 +237,10 @@ exports.dispatchPremiumSalesPush = onSchedule({
 }, async (event) => {
   logger.info('💰 Premium Sales Push Started');
 
-  const payload = getRandomItem(PREMIUM_SALES_MESSAGES);
+  // Basit rastgele seçim - premium için karmaşık sistem gereksiz
+  const payload = PREMIUM_SALES_MESSAGES[Math.floor(Math.random() * PREMIUM_SALES_MESSAGES.length)];
+
+  logger.info('Premium bildirim seçildi', { title: payload.title });
 
   const baseMessage = {
     notification: { title: payload.title, body: payload.body },

@@ -27,13 +27,18 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
     super.initState();
     // This timer automatically checks for verification status
     _verificationTimer = Timer.periodic(const Duration(seconds: 5), (timer) async {
-      await FirebaseAuth.instance.currentUser?.reload();
-      final user = FirebaseAuth.instance.currentUser;
-      if (user?.emailVerified ?? false) {
-        timer.cancel();
-        if (mounted) {
-          ref.invalidate(authControllerProvider);
+      try {
+        await FirebaseAuth.instance.currentUser?.reload();
+        final user = FirebaseAuth.instance.currentUser;
+        if (user?.emailVerified ?? false) {
+          timer.cancel();
+          if (mounted) {
+            ref.invalidate(authControllerProvider);
+          }
         }
+      } catch (e) {
+        // Silently handle network errors in background check
+        // User can still manually trigger check if needed
       }
     });
   }
@@ -66,19 +71,31 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
 
   Future<void> _handleManualCheck() async {
     setState(() => _isChecking = true);
-    await FirebaseAuth.instance.currentUser?.reload();
-    final user = FirebaseAuth.instance.currentUser;
-    if (!mounted) return;
+    try {
+      await FirebaseAuth.instance.currentUser?.reload();
+      final user = FirebaseAuth.instance.currentUser;
+      if (!mounted) return;
 
-    setState(() => _isChecking = false);
-    if (user?.emailVerified ?? false) {
-      _verificationTimer?.cancel();
-      ref.invalidate(authControllerProvider);
-    } else {
+      setState(() => _isChecking = false);
+      if (user?.emailVerified ?? false) {
+        _verificationTimer?.cancel();
+        ref.invalidate(authControllerProvider);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('E-posta adresiniz henüz doğrulanmamış. Lütfen gelen kutunuzu kontrol edin.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isChecking = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('E-posta adresiniz henüz doğrulanmamış. Lütfen gelen kutunuzu kontrol edin.'),
+        SnackBar(
+          content: Text('Bağlantı hatası. Lütfen internet bağlantınızı kontrol edin ve tekrar deneyin.'),
           behavior: SnackBarBehavior.floating,
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
     }

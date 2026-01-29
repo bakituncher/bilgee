@@ -108,9 +108,16 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
     _scrollToBottom(isNewMessage: true);
 
     final aiService = ref.read(aiServiceProvider);
-    final user = ref.read(userProfileProvider).value!;
-    final tests = ref.read(testsProvider).value!;
-    final performance = ref.read(performanceProvider).value!;
+    final user = ref.read(userProfileProvider).value;
+    final tests = ref.read(testsProvider).value;
+    final performance = ref.read(performanceProvider).value;
+
+    // Veriler henüz yüklenmediyse güvenli çıkış yap
+    if (user == null || tests == null || performance == null) {
+      debugPrint('[MotivationChat] _sendMessage: Veriler henüz yüklenmedi, işlem iptal.');
+      setState(() => _isTyping = false);
+      return;
+    }
 
     // Sohbet geçmişini ve son kullanıcı mesajını geçir
     final history = ref.read(chatHistoryProvider);
@@ -141,9 +148,15 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
     if (_isTyping) return;
 
     final aiService = ref.read(aiServiceProvider);
-    final user = ref.read(userProfileProvider).value!;
-    final tests = ref.read(testsProvider).value!;
-    final performance = ref.read(performanceProvider).value!;
+    final user = ref.read(userProfileProvider).value;
+    final tests = ref.read(testsProvider).value;
+    final performance = ref.read(performanceProvider).value;
+
+    // Veriler henüz yüklenmediyse güvenli çıkış yap
+    if (user == null || tests == null || performance == null) {
+      debugPrint('[MotivationChat] _onMoodSelected: Veriler henüz yüklenmedi, işlem iptal.');
+      return;
+    }
 
     ref.read(questNotifierProvider.notifier).userUsedMotivationChat();
     await aiService.clearChatMemory(user.id, moodType);

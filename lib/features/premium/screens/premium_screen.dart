@@ -1083,7 +1083,16 @@ class _FooterLink extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => launchUrl(Uri.parse(url)),
+      onTap: () async {
+        try {
+          final uri = Uri.parse(url);
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(uri);
+          }
+        } catch (_) {
+          // URL açılamasa bile crash olmasın
+        }
+      },
       child: Text(text, style: const TextStyle(color: Color(0xFF666666), fontSize: 11, decoration: TextDecoration.underline)),
     );
   }
