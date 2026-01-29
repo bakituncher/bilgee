@@ -376,20 +376,10 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
       if (mounted) {
         final errorMessage = e.toString().replaceAll('Exception:', '').trim();
 
-        // Günlük limit hatası kontrolü
-        if (errorMessage.contains('Günlük') && errorMessage.contains('soru hakkınız doldu')) {
-          setState(() {
-            _isAnalyzing = false;
-          });
-
-          // Premium ekranına yönlendir
-          _showDailyLimitDialog();
-        } else {
-          setState(() {
-            _error = errorMessage;
-            _isAnalyzing = false;
-          });
-        }
+        setState(() {
+          _error = errorMessage;
+          _isAnalyzing = false;
+        });
       }
     }
   }
@@ -666,80 +656,8 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
     );
   }
 
-  void _showDailyLimitDialog() {
-    final theme = Theme.of(context);
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Icon(Icons.info_outline, color: theme.colorScheme.primary, size: 28),
-            const SizedBox(width: 12),
-            const Expanded(
-              child: Text(
-                'Günlük Limit Doldu',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Günlük 3 soru çözme hakkınızı kullandınız.',
-              style: TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.workspace_premium, color: theme.colorScheme.primary),
-                  const SizedBox(width: 8),
-                  const Expanded(
-                    child: Text(
-                      'Premium üyelikle sınırsız soru çözebilirsiniz!',
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context); // Question solver ekranından da çık
-            },
-            child: const Text('Daha Sonra'),
-          ),
-          FilledButton.icon(
-            onPressed: () {
-              Navigator.pop(context);
-              context.push(AppRoutes.premium);
-            },
-            icon: const Icon(Icons.workspace_premium, size: 20),
-            label: const Text('Premium\'a Geç'),
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  void _showImageSourceSheet() async {
 
-  void _showImageSourceSheet() {
     final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
@@ -829,7 +747,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
     );
   }
 
-  // Premium FAB (Floating Action Button) Tasarımı
+  // Pro FAB (Floating Action Button) Tasarımı
   Widget _buildStylishFAB(ThemeData theme) {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
@@ -861,7 +779,193 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: _showImageSourceSheet,
+          onTap: () async {
+            // AI kullanım hakkını kontrol et
+            final dailyLimit = await ref.read(dailyQuestionLimitProvider.future);
+
+            // Pro değilse ve limit dolduysa pro dialogu göster
+            if (!dailyLimit.isPremium && dailyLimit.hasReachedLimit) {
+              if (mounted) {
+                final theme = Theme.of(context);
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (context) => Dialog(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Üst İkon - Simetrik ve Merkezi
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  theme.colorScheme.primary.withOpacity(0.2),
+                                  theme.colorScheme.tertiary.withOpacity(0.1),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.bolt_rounded,
+                              size: 48,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Başlık - Merkezi ve Kalın
+                          Text(
+                            'Günlük Limit Doldu',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.onSurface,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Açıklama - Merkezi
+                          Text(
+                            'Günlük 3 soru çözme hakkınızı kullandınız.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: theme.colorScheme.onSurfaceVariant,
+                              height: 1.4,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Pro Vurgu Kutusu - Simetrik
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  theme.colorScheme.primaryContainer.withOpacity(0.5),
+                                  theme.colorScheme.secondaryContainer.withOpacity(0.3),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: theme.colorScheme.primary.withOpacity(0.3),
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Column(
+                              children: [
+                                Icon(
+                                  Icons.workspace_premium_rounded,
+                                  color: theme.colorScheme.primary,
+                                  size: 32,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Pro ile Sınırsız',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Tüm sorularını çöz, sınırı unut!',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 28),
+
+                          // Butonlar - Simetrik ve Modern
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                  },
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(vertical: 14),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                    side: BorderSide(
+                                      color: theme.colorScheme.outline.withOpacity(0.5),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Daha Sonra',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: FilledButton(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                    context.push(AppRoutes.premium);
+                                  },
+                                  style: FilledButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(vertical: 14),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                    backgroundColor: theme.colorScheme.primary,
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.workspace_premium,
+                                        size: 18,
+                                        color: theme.colorScheme.onPrimary,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'Pro\'ya Geç',
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.bold,
+                                          color: theme.colorScheme.onPrimary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }
+              return;
+            }
+
+            // Limit kontrolünden geçtiyse fotoğraf kaynak seçim ekranını göster
+            _showImageSourceSheet();
+          },
           borderRadius: BorderRadius.circular(30),
           splashColor: Colors.white.withOpacity(0.2),
           highlightColor: Colors.transparent,
@@ -896,7 +1000,6 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final dailyLimitAsync = ref.watch(dailyQuestionLimitProvider);
 
     // DURUM 1: Henüz fotoğraf seçilmediyse veya sonuç ekranındaysak
     if (_rawImageBytes == null) {
@@ -916,47 +1019,6 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
             style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
           ),
           actions: [
-            // Günlük limit göstergesi (premium olmayan kullanıcılar için)
-            dailyLimitAsync.when(
-              data: (limit) {
-                if (limit.isPremium) return const SizedBox.shrink();
-                return Container(
-                  margin: const EdgeInsets.only(right: 8),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: limit.hasReachedLimit
-                        ? theme.colorScheme.error.withOpacity(0.1)
-                        : theme.colorScheme.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        limit.hasReachedLimit ? Icons.block : Icons.check_circle,
-                        size: 16,
-                        color: limit.hasReachedLimit
-                            ? theme.colorScheme.error
-                            : theme.colorScheme.primary,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${limit.remaining}/${limit.limit}',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                          color: limit.hasReachedLimit
-                              ? theme.colorScheme.error
-                              : theme.colorScheme.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-              loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
-            ),
             if (_initialSolution != null)
               IconButton(
                 icon: Icon(
@@ -1278,6 +1340,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
           ).animate().fadeIn().slideY(begin: 0.2, end: 0),
 
           const SizedBox(height: 20),
+
 
           Text(
             "Nasıl Çalışır?",
