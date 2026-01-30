@@ -1,71 +1,80 @@
 // lib/main.dart
-//Rahman ve Rahim olan Allah'ın adıyla
-//Bismilahirrahmanirrahim
+// Rahman ve Rahim olan Allah'ın adıyla
+// Bismilahirrahmanirrahim
+
 import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
-import 'package:taktik/core/navigation/app_router.dart';
-import 'package:taktik/core/theme/app_theme.dart';
-import 'package:taktik/core/theme/theme_provider.dart';
-import 'package:firebase_app_check/firebase_app_check.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:firebase_analytics/firebase_analytics.dart';
+
+// Core Imports
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'firebase_options.dart';
-import 'package:taktik/core/prompts/strategy_prompts.dart';
+import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+
+// Firebase Imports
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'shared/notifications/notification_service.dart';
+import 'firebase_options.dart';
+
+// Project Imports
+import 'package:taktik/core/navigation/app_router.dart';
+import 'package:taktik/core/theme/app_theme.dart';
+import 'package:taktik/core/theme/theme_provider.dart';
+import 'package:taktik/core/prompts/strategy_prompts.dart';
 import 'package:taktik/core/prompts/prompt_remote.dart';
 import 'package:taktik/core/services/revenuecat_service.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:taktik/core/services/connectivity_service.dart';
-import 'package:taktik/shared/screens/no_internet_screen.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:taktik/core/services/firebase_analytics_service.dart';
-import 'package:go_router/go_router.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:taktik/shared/notifications/notification_service.dart';
+import 'package:taktik/shared/screens/no_internet_screen.dart';
 import 'package:taktik/features/coach/models/saved_solution_model.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
 
+/// Firebase Messaging Arka Plan İşleyicisi
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   try {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  } catch (_) {}
+  } catch (_) {
+    // Firebase zaten başlatılmış olabilir, hatayı yutuyoruz.
+  }
+  // Bildirim servisine devret
   await NotificationService.firebaseMessagingBackgroundHandler(message);
 }
 
 void main() async {
-  // Bindings'i en başta başlatmak en güvenli yoldur.
+  // 1. Flutter Motorunu Başlat
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Tüm uygulamayı Hata Yakalama Bölgesi (Zone) içinde çalıştır
   await runZonedGuarded(() async {
-    // 1. .env yükle
+    // 2. Çevresel Değişkenleri (.env) Yükle
     try {
       await dotenv.load(fileName: ".env").timeout(
         const Duration(seconds: 2),
         onTimeout: () {
-          if (kDebugMode) debugPrint('[Init] .env yükleme timeout');
+          if (kDebugMode) debugPrint('[Init] .env yükleme zaman aşımı (timeout)');
         },
       );
     } catch (e) {
-      if (kDebugMode) {
-        debugPrint('[Init] .env dosyası yüklenemedi: $e');
-      }
+      if (kDebugMode) debugPrint('[Init] .env dosyası yüklenemedi: $e');
     }
 
-    // 1.5. HIVE BAŞLATMA (Firebase'den önce)
+    // 3. HIVE Veritabanını Başlat (Firebase'den önce)
     try {
       await Hive.initFlutter();
+      // Adapter'ı kaydet (TypeID çakışmalarına dikkat edin)
       Hive.registerAdapter(SavedSolutionAdapter());
       await Hive.openBox<SavedSolutionModel>('saved_solutions_box');
-      if (kDebugMode) {
-        debugPrint('[Hive] ✅ Başarıyla başlatıldı');
-      }
+      if (kDebugMode) debugPrint('[Hive] ✅ Başarıyla başlatıldı');
     } catch (e, st) {
       if (kDebugMode) {
         debugPrint('[Hive] ❌ Başlatılamadı: $e');
@@ -73,7 +82,7 @@ void main() async {
       }
     }
 
-    // 2. Firebase Başlat
+    // 4. Firebase Başlat
     try {
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
@@ -88,11 +97,12 @@ void main() async {
         debugPrint('[Init] Firebase başlatılamadı: $e');
         debugPrint(st.toString());
       }
-      runApp(const ErrorApp(message: 'Başlatma hatası: Firebase yüklenemedi.'));
+      // Firebase olmadan uygulama çalışamaz, hata ekranı göster.
+      runApp(const ErrorApp(message: 'Başlatma hatası: Bağlantı servisleri yüklenemedi.'));
       return;
     }
 
-    // --- KRİTİK: FCM Background Handler (runApp'ten ÖNCE) ---
+    // 5. FCM Background Handler Kaydı (runApp'ten ÖNCE yapılmalı)
     try {
       FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
       if (kDebugMode) debugPrint('[FCM] Background handler kaydedildi.');
@@ -100,9 +110,9 @@ void main() async {
       if (kDebugMode) debugPrint('[FCM] Background handler kaydedilemedi: $e');
     }
 
-    // --- KRİTİK: Crashlytics Tanımlamaları Firebase Başladıktan SONRA ---
+    // 6. Hata Raporlama (Crashlytics) Ayarları
 
-    // Global hata yakalama (Flutter ve Dart)
+    // Flutter framework hataları
     FlutterError.onError = (details) {
       FlutterError.presentError(details);
       if (kDebugMode) {
@@ -112,16 +122,18 @@ void main() async {
       FirebaseCrashlytics.instance.recordFlutterFatalError(details);
     };
 
+    // Asenkron platform hataları
     PlatformDispatcher.instance.onError = (error, stack) {
       FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
       return true;
     };
 
-    // Firebase servislerini yapılandır
-    FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(!kDebugMode);
-    FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(true);
+    // Debug modunda loglamayı kapat, Prod modunda aç
+    await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(!kDebugMode);
+    await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(true);
+
     if (kDebugMode) {
-      // DebugView için debug buildlerde etiket ve kısa oturum ayarı
+      // DebugView testi için
       try {
         await FirebaseAnalytics.instance.setSessionTimeoutDuration(const Duration(minutes: 5));
         await FirebaseAnalytics.instance.logEvent(name: 'debug_app_start', parameters: {
@@ -130,137 +142,88 @@ void main() async {
       } catch (_) {}
     }
 
-    // 3. APP CHECK (SMART HYBRID & SECURE WARM-UP)
+    // 7. App Check (Güvenlik) - Smart Hybrid Yöntemi
     try {
-      if (kDebugMode) debugPrint('[AppCheck] Aktivasyon ve Token Alma başlıyor...');
+      if (kDebugMode) debugPrint('[AppCheck] Başlatılıyor...');
 
-      // A) Activate
       await FirebaseAppCheck.instance.activate(
-        androidProvider: kDebugMode
-            ? AndroidProvider.debug
-            : AndroidProvider.playIntegrity,
-        appleProvider: kDebugMode
-            ? AppleProvider.debug
-            : AppleProvider.appAttest,
+        androidProvider: kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+        appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
       ).timeout(const Duration(seconds: 5));
 
-      // B) Token Refresh Aç
       await FirebaseAppCheck.instance.setTokenAutoRefreshEnabled(true);
 
-      // C) MANUEL TOKEN WARM-UP (Smart Hybrid Yöntemi)
+      // Token Warm-up: Önce cache dene, olmazsa sunucuya git
       if (!kDebugMode) {
         try {
-          // ADIM 1: Önce cache'e güven (Hızlı ve Kotasız - false)
-          await FirebaseAppCheck.instance.getToken(false).timeout(
-            const Duration(seconds: 3),
-          );
+          await FirebaseAppCheck.instance.getToken(false).timeout(const Duration(seconds: 3));
         } catch (e) {
-          // ADIM 2: Sadece cache patlarsa sunucuya git (Fail-Safe - true)
           if (kDebugMode) debugPrint('[AppCheck] Cache fail, forcing refresh...');
           try {
             await FirebaseAppCheck.instance.getToken(true).timeout(
               const Duration(seconds: 4),
-              onTimeout: () {
-                throw TimeoutException('AppCheck force refresh timeout');
-              },
+              onTimeout: () => throw TimeoutException('Force refresh timeout'),
             );
           } catch (_) {}
         }
       } else {
-        // Debug modda test için
         await FirebaseAppCheck.instance.getToken(false);
       }
-
-      if (kDebugMode) debugPrint('[AppCheck] ✅ Token mekanizması tamamlandı.');
-
+      if (kDebugMode) debugPrint('[AppCheck] ✅ Tamamlandı.');
     } catch (e) {
-      if (kDebugMode) {
-        debugPrint('[AppCheck] Kritik Hata: $e');
-      }
-      FirebaseCrashlytics.instance.recordError(e, StackTrace.current, reason: 'AppCheck Token Fetch Failed');
+      if (kDebugMode) debugPrint('[AppCheck] Hata: $e');
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current, reason: 'AppCheck Failed');
     }
 
-    // 4. REVENUECAT BAŞLATMA
+    // 8. RevenueCat (Abonelik) Başlatma
+    // Bu işlem, bildirimlerden gelen premium yönlendirmelerinin
+    // doğru çalışması için runApp'ten önce yapılmalıdır.
     try {
-      if (kDebugMode) {
-        debugPrint('[RevenueCat] Başlatılıyor...');
-      }
+      if (kDebugMode) debugPrint('[RevenueCat] Başlatılıyor...');
 
       await RevenueCatService.init().timeout(
         const Duration(seconds: 8),
         onTimeout: () {
-          if (kDebugMode) debugPrint('[RevenueCat] Initialization timeout');
+          if (kDebugMode) debugPrint('[RevenueCat] Timeout');
           throw TimeoutException('RevenueCat initialization timeout');
         },
       );
 
-      if (kDebugMode) {
-        debugPrint('[RevenueCat] ✅ Başarıyla başlatıldı');
-      }
+      if (kDebugMode) debugPrint('[RevenueCat] ✅ Başarıyla başlatıldı');
     } catch (e, stackTrace) {
-      if (kDebugMode) {
-        debugPrint('[RevenueCat] ❌ Initialization failed: $e');
-        debugPrint('[RevenueCat] Stack trace: $stackTrace');
-      }
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'RevenueCat initialization failed',
-        fatal: false,
-      );
+      if (kDebugMode) debugPrint('[RevenueCat] ❌ Başarısız: $e');
+      FirebaseCrashlytics.instance.recordError(e, stackTrace, reason: 'RevenueCat Failed', fatal: false);
     }
 
-    // 5. UYGULAMAYI BAŞLAT
+    // 9. Uygulamayı Başlat
     runApp(const ProviderScope(child: BilgeAiApp()));
 
-    // --- Diğer "Non-Kritik" Servisler Arka Planda Başlatılabilir ---
-
-    // Tarih Yerelleştirme
+    // 10. Arka Plan İşlemleri (UI bloklamaması için microtask)
     Future.microtask(() async {
+      // Tarih formatı
       try {
-        await initializeDateFormatting('tr_TR', null).timeout(
-          const Duration(seconds: 2),
-          onTimeout: () {
-            if (kDebugMode) debugPrint('[Intl] Tarih format timeout');
-          },
-        );
-      } catch (e) {
-        if (kDebugMode) debugPrint('[Intl] Tarih format başlatılamadı: $e');
-      }
-    });
+        await initializeDateFormatting('tr_TR', null).timeout(const Duration(seconds: 2));
+      } catch (_) {}
 
-    // Preload İşlemleri
-    Future.microtask(() async {
+      // Prompt ve Strateji Preload
       try {
         await Future.wait([
           RemotePrompts.preloadAndWatch(),
           StrategyPrompts.preload(),
-        ]).timeout(
-          const Duration(seconds: 10),
-          onTimeout: () {
-            if (kDebugMode) debugPrint('[Preload] Timeout - devam ediyor');
-            return <void>[];
-          },
-        );
-      } catch (e, st) {
-        if (kDebugMode) {
-          debugPrint('[Preload] Hata: $e');
-          debugPrint(st.toString());
-        }
+        ]).timeout(const Duration(seconds: 10));
+      } catch (e) {
+        if (kDebugMode) debugPrint('[Preload] Hata: $e');
       }
     });
+
   }, (error, stack) {
+    // Zone Guard: Yakalanmamış en üst düzey hatalar
     if (kDebugMode) {
-      debugPrint('[Zoned] Yakalanmamış hata: $error');
+      debugPrint('[Zoned] Kritik Hata: $error');
       debugPrint(stack.toString());
     }
-
-    // Güvenlik Kontrolü: Firebase initialize edilmeden Crashlytics çağrılırsa
-    // uygulama tekrar crash olur.
     if (Firebase.apps.isNotEmpty) {
       FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-    } else {
-      if (kDebugMode) debugPrint('[Zoned] Firebase hazır değil, Crashlytics atlandı.');
     }
   });
 }
@@ -279,148 +242,154 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
+    // Router ve Deep Link İşlemleri
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final router = ref.read(goRouterProvider);
+      _initializeRouterAnalyticsAndDeepLinks();
+    });
+  }
 
-      // Navigation analytics: listen to route changes and log screen views
-      void logCurrentRoute() {
-        try {
-          final config = router.routerDelegate.currentConfiguration;
-          // Varsayılan bir değer atayalım
-          String screenName = router.routeInformationProvider.value.location ?? '/';
+  void _initializeRouterAnalyticsAndDeepLinks() {
+    final router = ref.read(goRouterProvider);
 
-          if (config.isNotEmpty) {
-            final last = config.last;
+    // 1. Ekran İzleme (Analytics) Fonksiyonu
+    void logCurrentRoute() {
+      try {
+        final config = router.routerDelegate.currentConfiguration;
+        String screenName = router.routeInformationProvider.value.location ?? '/';
 
-            // Öncelik: GoRouter'da tanımlı olan 'name' özelliğini kullan
-            if (last.route is GoRoute && (last.route as GoRoute).name != null) {
-              screenName = (last.route as GoRoute).name!;
-            } else {
-              // Eğer name yoksa, slash işaretini temizleyerek path'i kullan
-              String location = last.matchedLocation;
-              if (location.startsWith('/')) {
-                location = location.substring(1);
-              }
-              // Kök dizin boş kalırsa 'Splash' veya 'Home' deyin
-              if (location.isEmpty) {
-                location = 'Splash';
-              }
-              screenName = location;
-            }
-          }
-
-          // screen_view (manual)
-          FirebaseAnalyticsService.logScreenView(screenName: screenName);
-        } catch (e) {
-          if (kDebugMode) {
-            debugPrint('[Analytics] route log error: $e');
+        if (config.isNotEmpty) {
+          final last = config.last;
+          if (last.route is GoRoute && (last.route as GoRoute).name != null) {
+            screenName = (last.route as GoRoute).name!;
+          } else {
+            String location = last.matchedLocation;
+            if (location.startsWith('/')) location = location.substring(1);
+            if (location.isEmpty) location = 'Splash';
+            screenName = location;
           }
         }
+        FirebaseAnalyticsService.logScreenView(screenName: screenName);
+      } catch (e) {
+        if (kDebugMode) debugPrint('[Analytics] Log hatası: $e');
       }
+    }
 
-      // Log initial
-      logCurrentRoute();
-      // Listen ongoing changes via routerDelegate (ChangeNotifier)
-      _routerListener = logCurrentRoute;
-      router.routerDelegate.addListener(_routerListener!);
+    // İlk açılış logu
+    logCurrentRoute();
 
-      NotificationService.instance.initialize(onNavigate: (route) async {
-        try {
-          // 1. Mağaza Yönlendirmesi Kontrolü
-          if (route == '/store' || route == 'UPDATE_APP') {
-            if (Platform.isAndroid || Platform.isIOS) {
-              // Android Paket Adı: com.codenzi.taktik
-              // iOS App Store ID: 6755930518
-              final appId = Platform.isAndroid ? 'com.codenzi.taktik' : '6755930518';
+    // Değişiklikleri dinle
+    _routerListener = logCurrentRoute;
+    router.routerDelegate.addListener(_routerListener!);
 
-              final url = Uri.parse(
-                  Platform.isAndroid
-                      ? "market://details?id=$appId"
-                      : "https://apps.apple.com/app/id$appId"
-              );
-
-              // Önce market protokolü ile açmayı dene (Mağaza uygulaması açılır)
-              if (await canLaunchUrl(url)) {
-                await launchUrl(url, mode: LaunchMode.externalApplication);
-              } else {
-                // Olmazsa web linki olarak aç
-                final webUrl = Uri.parse(
-                    Platform.isAndroid
-                        ? "https://play.google.com/store/apps/details?id=$appId"
-                        : "https://apps.apple.com/app/id$appId"
-                );
-                if (await canLaunchUrl(webUrl)) {
-                  await launchUrl(webUrl, mode: LaunchMode.externalApplication);
-                }
-              }
-            }
-            return;
-          }
-
-          // 2. HTTP Link Kontrolü (Web sitesine yönlendirme gerekirse)
-          if (route.startsWith('http')) {
-            final uri = Uri.parse(route);
-            if (await canLaunchUrl(uri)) {
-              await launchUrl(uri, mode: LaunchMode.externalApplication);
-            }
-            return;
-          }
-        } catch (_) {
-          // URL açılamasa bile crash olmasın
+    // 2. Bildirim ve Deep Link Yönlendirme Mantığı
+    NotificationService.instance.initialize(onNavigate: (route) async {
+      try {
+        // A) Mağaza Yönlendirmeleri
+        if (route == '/store' || route == 'UPDATE_APP') {
+          await _handleStoreRedirect();
+          return;
         }
 
-        // 3. Premium Gate Kontrolü - AI Hub özellikleri için
-        // Kullanıcı premium değilse, offer ekranına yönlendir
-        final premiumRoutes = {
-          '/ai-hub/question-solver': {
-            'title': 'Soru Çözücü',
-            'subtitle': 'Anında çözüm cebinde.',
-            'icon': Icons.camera_enhance_rounded,
-            'color': Colors.orangeAccent,
-            'marketingTitle': 'Soruda Takılma!',
-            'marketingSubtitle': 'Yapamadığın sorunun fotoğrafını çek, Taktik Tavşan adım adım çözümünü anlatsın.',
-            'redirectRoute': '/ai-hub/question-solver',
-          },
-          '/ai-hub/weakness-workshop': {
-            'title': 'Etüt Odası',
-            'subtitle': 'Kişiye özel çalışma materyalleri.',
-            'iconName': 'menu_book',
-            'color': const Color(0xFF8B5CF6),
-            'marketingTitle': 'Eksiklerini Kapat!',
-            'marketingSubtitle': 'Yapay zeka sadece eksik olduğun konulara özel konu özeti ve test soruları üretsin.',
-            'redirectRoute': '/ai-hub/weakness-workshop',
-          },
-          '/ai-hub/strategic-planning': {
-            'title': 'Haftalık Stratejist',
-            'subtitle': 'Sana özel ders programı.',
-            'iconName': 'calendar_month',
-            'color': const Color(0xFF10B981),
-            'marketingTitle': 'Programın Hazır!',
-            'marketingSubtitle': 'Eksik konularına ve müsait zamanına göre sana en uygun haftalık ders çalışma programını saniyeler içinde oluştur.',
-            'redirectRoute': '/ai-hub/strategic-planning',
-          },
-        };
+        // B) Dış Linkler (Web)
+        if (route.startsWith('http')) {
+          final uri = Uri.parse(route);
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+          }
+          return;
+        }
 
-        if (premiumRoutes.containsKey(route)) {
+        // C) Premium Kilitli Rotalar (AI Hub)
+        if (_isPremiumRoute(route)) {
           final isPremium = ref.read(premiumStatusProvider);
           if (!isPremium) {
-            // Premium değilse offer ekranına yönlendir
-            router.go('/ai-hub/offer', extra: premiumRoutes[route]);
+            // Premium değilse teklif ekranına yönlendir
+            final offerExtra = _getPremiumRouteDetails(route);
+            router.go('/ai-hub/offer', extra: offerExtra);
             return;
           }
         }
 
-        // 4. Uygulama İçi Rota (Mevcut davranış)
+        // D) Standart Uygulama İçi Rota
         if (route.isNotEmpty) {
           router.go(route);
         }
-      });
+      } catch (e) {
+        if (kDebugMode) debugPrint('[Navigation] Yönlendirme hatası: $e');
+      }
     });
+  }
+
+  /// Premium kontrolü gerektiren rotalar
+  bool _isPremiumRoute(String route) {
+    return _premiumRoutesMap.containsKey(route);
+  }
+
+  /// Premium rotası için UI detaylarını getir
+  Map<String, dynamic>? _getPremiumRouteDetails(String route) {
+    return _premiumRoutesMap[route];
+  }
+
+  /// Premium rotaların tanımları
+  static final Map<String, Map<String, dynamic>> _premiumRoutesMap = {
+    '/ai-hub/question-solver': {
+      'title': 'Soru Çözücü',
+      'subtitle': 'Anında çözüm cebinde.',
+      'icon': Icons.camera_enhance_rounded,
+      'color': Colors.orangeAccent,
+      'marketingTitle': 'Soruda Takılma!',
+      'marketingSubtitle': 'Yapamadığın sorunun fotoğrafını çek, Taktik Tavşan adım adım çözümünü anlatsın.',
+      'redirectRoute': '/ai-hub/question-solver',
+    },
+    '/ai-hub/weakness-workshop': {
+      'title': 'Etüt Odası',
+      'subtitle': 'Kişiye özel çalışma materyalleri.',
+      'iconName': 'menu_book',
+      'color': const Color(0xFF8B5CF6),
+      'marketingTitle': 'Eksiklerini Kapat!',
+      'marketingSubtitle': 'Yapay zeka sadece eksik olduğun konulara özel konu özeti ve test soruları üretsin.',
+      'redirectRoute': '/ai-hub/weakness-workshop',
+    },
+    '/ai-hub/strategic-planning': {
+      'title': 'Haftalık Stratejist',
+      'subtitle': 'Sana özel ders programı.',
+      'iconName': 'calendar_month',
+      'color': const Color(0xFF10B981),
+      'marketingTitle': 'Programın Hazır!',
+      'marketingSubtitle': 'Eksik konularına ve müsait zamanına göre sana en uygun haftalık ders çalışma programını saniyeler içinde oluştur.',
+      'redirectRoute': '/ai-hub/strategic-planning',
+    },
+  };
+
+  /// Mağazaya yönlendirme işlemi
+  Future<void> _handleStoreRedirect() async {
+    if (!Platform.isAndroid && !Platform.isIOS) return;
+
+    final appId = Platform.isAndroid ? 'com.codenzi.taktik' : '6755930518';
+    final marketUrl = Uri.parse(
+        Platform.isAndroid
+            ? "market://details?id=$appId"
+            : "https://apps.apple.com/app/id$appId"
+    );
+
+    if (await canLaunchUrl(marketUrl)) {
+      await launchUrl(marketUrl, mode: LaunchMode.externalApplication);
+    } else {
+      final webUrl = Uri.parse(
+          Platform.isAndroid
+              ? "https://play.google.com/store/apps/details?id=$appId"
+              : "https://apps.apple.com/app/id$appId"
+      );
+      if (await canLaunchUrl(webUrl)) {
+        await launchUrl(webUrl, mode: LaunchMode.externalApplication);
+      }
+    }
   }
 
   @override
   void dispose() {
-    // Detach router listener if attached
+    // Dinleyiciyi temizle
     try {
       final router = ref.read(goRouterProvider);
       if (_routerListener != null) {
@@ -446,13 +415,13 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
     final router = ref.watch(goRouterProvider);
     final themeMode = ref.watch(themeModeNotifierProvider);
 
-    // İnternet bağlantısını izle
+    // İnternet bağlantısı durumu
     final connectivityAsync = ref.watch(connectivityProvider);
-    // Varsayılan olarak 'bağlı' kabul ediyoruz ki açılışta veya loading'de ekran kararmasın.
-    // Sadece kesin olarak false ise offline sayıyoruz.
+    // Eğer null ise (ilk açılış), 'bağlı' varsayalım ki ekran flash yapmasın.
+    // Sadece kesin olarak false dönerse offline ekranı gösterilsin.
     final isOffline = connectivityAsync.valueOrNull == false;
 
-    // Tema her değiştiğinde (açık, koyu veya sistem) doğru UI overlay'i ayarla
+    // Sistem UI Overlay Ayarı (Status bar rengi vb.)
     final Brightness currentBrightness;
     switch (themeMode) {
       case ThemeMode.light:
@@ -467,9 +436,6 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
     }
     AppTheme.configureSystemUI(currentBrightness);
 
-    // ÇÖZÜM: Tek bir MaterialApp.router döndürüp,
-    // builder içinde NoInternet ekranını overlay (üst katman) olarak ekliyoruz.
-    // Bu sayede alttaki Navigator state'i korunuyor.
     return MaterialApp.router(
       title: 'Taktik',
       debugShowCheckedModeBanner: false,
@@ -477,16 +443,17 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
       routerConfig: router,
+      // Builder ile tüm sayfaların üzerine global widget'lar (Overlay) ekliyoruz
       builder: (context, child) {
         return Stack(
           children: [
-            // 1. Asıl Uygulama (Navigator/GoRouter)
+            // 1. Uygulama İçeriği
             if (child != null) child,
 
-            // 2. İnternet Yok Ekranı (Üstüne biner, state'i silmez)
+            // 2. İnternet Yok Ekranı (Overlay)
+            // Stack'in en üstünde durur, state kaybettirmez.
             if (isOffline)
               const Positioned.fill(
-                // Scaffold veya tam ekran kaplayan bir widget olmalı
                 child: NoInternetScreen(),
               ),
           ],
@@ -496,6 +463,7 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
   }
 }
 
+/// Kritik Hata Ekranı (Firebase vb. yüklenemezse)
 class ErrorApp extends StatelessWidget {
   const ErrorApp({super.key, required this.message});
   final String message;
@@ -508,12 +476,21 @@ class ErrorApp extends StatelessWidget {
       theme: AppTheme.darkTheme,
       darkTheme: AppTheme.darkTheme,
       home: Scaffold(
+        backgroundColor: Colors.black,
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
-            child: Text(
-              message,
-              textAlign: TextAlign.center,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, color: Colors.redAccent, size: 48),
+                const SizedBox(height: 16),
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white70, fontSize: 16),
+                ),
+              ],
             ),
           ),
         ),
