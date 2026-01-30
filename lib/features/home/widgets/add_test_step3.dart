@@ -8,7 +8,8 @@ import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/home/logic/add_test_notifier.dart';
 import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
-import 'package:taktik/features/stats/logic/stats_analysis.dart';
+// StatsAnalysis importunu kaldırdık çünkü artık burada işlem yapmıyoruz
+// import 'package:taktik/features/stats/logic/stats_analysis.dart';
 import 'package:lottie/lottie.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
@@ -66,26 +67,17 @@ class Step3Summary extends ConsumerWidget {
               if (user == null) return;
               notifier.setSaving(true);
 
-              // DÜZELTME BAŞLANGICI: İsimlendirme Mantığı
-              // Branş denemesi seçilmiş olsa bile, eğer ders "Alan Bilgisi" veya "Temel Alan Bilgisi" ise,
-              // bu aslında o branşın ana sınavıdır (Örn: Türkçe Öğretmenliği).
-              // Bu yüzden bu özel derslerde, ders adı yerine Section (Bölüm) adını kullanarak kaydediyoruz.
-              // Böylece "Türkçe Öğretmenliği" genel denemesi ile "Alan Bilgisi" denemesi aynı isimde birleşir.
               String displaySectionName;
               if (state.isBranchMode && state.selectedBranchSubject != null) {
                 if (state.selectedBranchSubject == 'Alan Bilgisi' ||
                     state.selectedBranchSubject == 'Temel Alan Bilgisi') {
-                  // AGS/ÖABT için özel durum: Bölüm adını kullan
                   displaySectionName = section.name;
                 } else {
-                  // Diğer dersler (Matematik, Tarih vb.) için ders adını kullan
                   displaySectionName = state.selectedBranchSubject!;
                 }
               } else {
-                // Genel mod: Bölüm adını kullan
                 displaySectionName = section.name;
               }
-              // DÜZELTME BİTİŞİ
 
               final newTest = TestModel(
                 id: const Uuid().v4(),
@@ -104,50 +96,33 @@ class Step3Summary extends ConsumerWidget {
               );
 
               try {
+                // 1. Cloud Function ile kaydet (Hızlı)
                 await ref.read(firestoreServiceProvider).addTestResult(newTest);
 
-                // Yeni test eklendiği için analizi yeniden çalıştırıp özeti kaydet
-                try {
-                  final updatedTests = await ref.read(firestoreServiceProvider).getTestResultsPaginated(user.id, limit: 1000);
-                  final examData = await ExamData.getExamByType(ExamType.values.byName(user.selectedExam!));
-                  final analysis = StatsAnalysis(updatedTests, examData, ref.read(firestoreServiceProvider), user: user);
-                  await ref.read(firestoreServiceProvider).updateAnalysisSummary(user.id, analysis);
-                } catch (e, st) {
-                  // Hata günlüğe kaydedilir ancak kullanıcı akışı engellenmez.
-                  debugPrint('Performans özeti güncellenirken hata oluştu: $e\n$st');
-                }
+                // --- DEĞİŞİKLİK: AĞIR ANALİZ KODU KALDIRILDI ---
+                // Kullanıcı burada 1000 testin çekilip analiz edilmesini beklemeyecek.
 
-                // Yeni FutureProvider verisini yenile (invalidate)
+                // 2. UI'ı güncellemesi için Provider'ı geçersiz kıl (Bu, arka planda veri çekimini tetikler)
                 ref.invalidate(testsProvider);
 
-                // --- GÜNCELLENDİ: Sadece 'test gönderimi' eylemini bildir ---
                 ref.read(questNotifierProvider.notifier).userSubmittedTest();
 
-                // Başarılı kaydın ardından şık bir Lottie onayı göster
                 if (context.mounted) {
                   await _showSuccessDialog(context);
                 }
 
-                // Akıllı monetizasyon sistemi: Her 5 testin 4'ü reklam, 1'i paywall
                 final isPremium = ref.read(premiumStatusProvider);
 
                 if (!isPremium && context.mounted) {
-                  // Premium değilse, akıllı sistem karar verir
                   final monetizationManager = ref.read(monetizationManagerProvider);
                   final action = monetizationManager.getActionAfterTestSubmission();
 
                   if (action == MonetizationAction.showPaywall) {
-                    // Paywall göster
                     await context.push(AppRoutes.premium);
                   }
-                  // showNothing veya showAd durumunda hiçbir şey yapma
                 }
 
                 if (context.mounted) {
-                  // pushReplacement kullanarak bu ekranı (AddTestScreen)
-                  // yığından kaldırıp yerine özet ekranını koyuyoruz.
-                  // Bu sayede geri tuşuna basıldığında Dashboard'a dönülür,
-                  // aynı denemenin tekrar kaydedilmesi engellenir.
                   context.pushReplacement('/home/test-result-summary', extra: newTest);
                 }
               } catch (e, s) {
@@ -217,7 +192,6 @@ class _SummaryRow extends StatelessWidget {
   }
 }
 
-// Başarı animasyonu için küçük ve şık bir dialog
 Future<void> _showSuccessDialog(BuildContext context) async {
   await showDialog(
     context: context,
@@ -252,7 +226,6 @@ class _SuccessDialogState extends State<_SuccessDialog> {
               'assets/lotties/Check blue.json',
               repeat: false,
               onLoaded: (composition) {
-                // Animasyon tamamlandıktan kısa bir süre sonra dialog'u kapat
                 Future.delayed(composition.duration + const Duration(milliseconds: 200), () {
                   if (mounted) Navigator.of(context).pop();
                 });
