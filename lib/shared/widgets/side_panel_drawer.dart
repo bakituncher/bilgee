@@ -9,6 +9,7 @@ import 'package:taktik/features/profile/logic/rank_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
+import 'package:in_app_review/in_app_review.dart';
 
 class SidePanelDrawer extends ConsumerStatefulWidget {
   const SidePanelDrawer({super.key});
@@ -334,7 +335,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
         Padding(
           padding: const EdgeInsets.only(left: 4, bottom: 4),
           child: Text(
-            'BİZİ DEĞERLENDİRİR MİSİN?',
+            'UYGULAMAYI SEVDİN Mİ?',
             style: theme.textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.w800,
               color: colorScheme.onSurfaceVariant.withOpacity(0.7),
@@ -347,12 +348,17 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
           onTap: () async {
             Navigator.of(context).pop();
             try {
-              final url = Uri.parse('https://play.google.com/store/apps/details?id=com.codenzi.taktik');
-              if (await canLaunchUrl(url)) {
-                await launchUrl(url, mode: LaunchMode.externalApplication);
+              final InAppReview inAppReview = InAppReview.instance;
+
+              if (await inAppReview.isAvailable()) {
+                await inAppReview.requestReview();
+              } else {
+                await inAppReview.openStoreListing(
+                  appStoreId: '6755930518',
+                );
               }
             } catch (_) {
-              // URL açılamasa bile crash olmasın
+              // Hata durumunda sessiz kal
             }
           },
           borderRadius: BorderRadius.circular(12),
@@ -366,13 +372,13 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  Icons.star_rounded,
-                  color: Colors.amber,
+                  Icons.favorite_rounded,
+                  color: Colors.red,
                   size: 20,
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Mağazada Değerlendir',
+                  'Değerlendir',
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                     fontSize: 13,
@@ -381,7 +387,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                 ),
                 const SizedBox(width: 4),
                 Icon(
-                  Icons.open_in_new_rounded,
+                  Icons.arrow_forward_rounded,
                   color: colorScheme.onSurfaceVariant,
                   size: 16,
                 ),
