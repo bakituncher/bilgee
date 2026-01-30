@@ -1,7 +1,6 @@
 // lib/shared/widgets/side_panel_drawer.dart
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
-import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -159,42 +158,66 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
 
                   const Divider(height: 1),
 
-                  // Footer actions (Taktik PRO ve Çıkış)
+                  // Footer actions (Taktik PRO)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(8, 10, 8, 10),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: _actionTileCompact(
-                            context,
-                            icon: isPremium ? Icons.verified_rounded : Icons.workspace_premium_rounded,
-                            title: 'Taktik Pro',
-                            iconColor: isPremium ? const Color(0xFF10B981) : colorScheme.primary,
-                            onTap: () {
-                              Navigator.of(context).pop();
-                              if (isPremium) {
-                                context.go('/premium-welcome');
-                              } else {
-                                context.go('/premium');
-                              }
-                            },
-                          ),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(14),
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        if (isPremium) {
+                          context.go('/premium-welcome');
+                        } else {
+                          context.go('/premium');
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          color: colorScheme.surfaceContainerHighest.withOpacity(.2),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _actionTileCompact(
-                            context,
-                            icon: Icons.logout_rounded,
-                            title: 'Çıkış',
-                            iconColor: colorScheme.error,
-                            onTap: () async {
-                              Navigator.of(context).pop();
-                              await fb.FirebaseAuth.instance.signOut();
-                              if (context.mounted) context.go('/');
-                            },
-                          ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Image.asset(
+                              'assets/images/bunnyy.png',
+                              width: 24,
+                              height: 24,
+                              fit: BoxFit.contain,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Taktik',
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 14,
+                                letterSpacing: 0.3,
+                                color: Colors.black,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.amber.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: Colors.amber.withOpacity(0.5), width: 1),
+                              ),
+                              child: const Text(
+                                'PRO',
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w900,
+                                  fontFamily: 'Poppins',
+                                  color: Colors.amber,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ],
@@ -235,60 +258,66 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
             ),
           ),
         ),
-        Row(
-          children: [
-            // WhatsApp
-            Expanded(
-              child: _socialIconButton(
-                context,
-                icon: FontAwesomeIcons.whatsapp,
-                color: const Color(0xFF25D366),
-                onTap: () async {
-                  Navigator.of(context).pop();
-                  String channelUrl = 'https://whatsapp.com/channel/0029VbBdCY96BIEo5XqCbK1V';
-                  if (user?.selectedExam != null) {
-                    final exam = user!.selectedExam.toString().toLowerCase();
-                    if (exam.contains('yks') || exam.contains('tyt') || exam.contains('ayt')) {
-                      channelUrl = 'https://whatsapp.com/channel/0029VbB9FtNDp2Q09xHfAq0E';
-                    } else if (exam.contains('lgs')) {
-                      channelUrl = 'https://whatsapp.com/channel/0029VbBVIRTKbYMJI3tqsl3u';
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            color: colorScheme.surfaceContainerHighest.withOpacity(.2),
+          ),
+          child: Row(
+            children: [
+              // WhatsApp
+              Expanded(
+                child: _socialIconButton(
+                  context,
+                  icon: FontAwesomeIcons.whatsapp,
+                  color: const Color(0xFF25D366),
+                  onTap: () async {
+                    Navigator.of(context).pop();
+                    String channelUrl = 'https://whatsapp.com/channel/0029VbBdCY96BIEo5XqCbK1V';
+                    if (user?.selectedExam != null) {
+                      final exam = user!.selectedExam.toString().toLowerCase();
+                      if (exam.contains('yks') || exam.contains('tyt') || exam.contains('ayt')) {
+                        channelUrl = 'https://whatsapp.com/channel/0029VbB9FtNDp2Q09xHfAq0E';
+                      } else if (exam.contains('lgs')) {
+                        channelUrl = 'https://whatsapp.com/channel/0029VbBVIRTKbYMJI3tqsl3u';
+                      }
                     }
-                  }
-                  await _launchURL(channelUrl);
-                },
+                    await _launchURL(channelUrl);
+                  },
+                ),
               ),
-            ),
 
-            buildDivider(), // AYIRICI
+              buildDivider(), // AYIRICI
 
-            // Instagram
-            Expanded(
-              child: _socialIconButton(
-                context,
-                icon: FontAwesomeIcons.instagram,
-                color: const Color(0xFFE1306C),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _launchURL('https://www.instagram.com/taktik_tr?igsh=NTdvaTh1amN0MHB4');
-                },
+              // Instagram
+              Expanded(
+                child: _socialIconButton(
+                  context,
+                  icon: FontAwesomeIcons.instagram,
+                  color: const Color(0xFFE1306C),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _launchURL('https://www.instagram.com/taktik_tr?igsh=NTdvaTh1amN0MHB4');
+                  },
+                ),
               ),
-            ),
 
-            buildDivider(), // AYIRICI
+              buildDivider(), // AYIRICI
 
-            // TikTok
-            Expanded(
-              child: _socialIconButton(
-                context,
-                icon: FontAwesomeIcons.tiktok,
-                color: theme.brightness == Brightness.dark ? Colors.white : Colors.black,
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _launchURL('https://www.tiktok.com/@tr_taktik?_r=1&_t=ZS-91pXgBzmmkq');
-                },
+              // TikTok
+              Expanded(
+                child: _socialIconButton(
+                  context,
+                  icon: FontAwesomeIcons.tiktok,
+                  color: theme.brightness == Brightness.dark ? Colors.white : Colors.black,
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _launchURL('https://www.tiktok.com/@tr_taktik?_r=1&_t=ZS-91pXgBzmmkq');
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
@@ -331,16 +360,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              gradient: LinearGradient(
-                colors: [
-                  Colors.amber.withOpacity(0.15),
-                  Colors.orange.withOpacity(0.15),
-                ],
-              ),
-              border: Border.all(
-                color: Colors.amber.withOpacity(0.3),
-                width: 1,
-              ),
+              color: colorScheme.surfaceContainerHighest.withOpacity(.2),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -572,42 +592,6 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
     );
   }
 
-  Widget _actionTileCompact(
-      BuildContext context, {
-        required IconData icon,
-        required String title,
-        Color? iconColor,
-        required VoidCallback onTap,
-      }) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          color: colorScheme.surfaceContainerHighest.withOpacity(.2),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 19, color: iconColor ?? colorScheme.onSurfaceVariant),
-            const SizedBox(width: 8),
-            Text(
-              title,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w800,
-                fontSize: 13,
-                color: iconColor ?? colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 class _Avatar extends StatelessWidget {

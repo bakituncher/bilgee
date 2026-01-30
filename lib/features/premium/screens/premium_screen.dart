@@ -33,7 +33,6 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
   Package? _selectedPackage;
   int _currentCarouselIndex = 0;
   bool _userInteracting = false;
-  bool _debugTrialOverride = false; // Debug için deneme kontrolü
 
   // Modern Brand Colors - Premium Pink Theme (Instagram/Google Level)
   final Color _bgLight = const Color(0xFFFFFBFE);
@@ -301,26 +300,6 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                           ),
                           Row(
                             children: [
-                              // DEBUG BUTONU
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: _debugTrialOverride ? Colors.green.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: IconButton(
-                                  onPressed: () {
-                                    setState(() => _debugTrialOverride = !_debugTrialOverride);
-                                    HapticFeedback.lightImpact();
-                                  },
-                                  icon: Icon(
-                                    _debugTrialOverride ? Icons.check_circle : Icons.science_outlined,
-                                    color: _debugTrialOverride ? Colors.green : Colors.grey,
-                                    size: 20,
-                                  ),
-                                  tooltip: 'Test: ${_debugTrialOverride ? "Deneme VAR" : "Deneme YOK"}',
-                                ),
-                              ),
-                              const SizedBox(width: 8),
                               TextButton(
                                 onPressed: _restorePurchases,
                                 child: Text("Geri Yükle", style: TextStyle(color: _deepPink, fontSize: 13, fontWeight: FontWeight.w600)),
@@ -489,7 +468,6 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                                         onTap: () => setState(() => _selectedPackage = yearly),
                                         accentColor: _primaryPink,
                                         badgeColor: _successColor,
-                                        debugTrialOverride: _debugTrialOverride,
                                       ),
                                     const SizedBox(height: 12),
                                     if (monthly != null)
@@ -501,7 +479,6 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                                         onTap: () => setState(() => _selectedPackage = monthly),
                                         accentColor: _primaryPink,
                                         badgeColor: _successColor,
-                                        debugTrialOverride: _debugTrialOverride,
                                       ),
 
                                     const SizedBox(height: 16),
@@ -603,7 +580,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                                               const Icon(Icons.diamond_rounded, color: Colors.white, size: 20),
                                               const SizedBox(width: 8),
                                               Text(
-                                                (_debugTrialOverride || _selectedPackage?.storeProduct.introductoryPrice?.price == 0)
+                                                _selectedPackage?.storeProduct.introductoryPrice?.price == 0
                                                     ? "ÜCRETSİZ BAŞLA"
                                                     : "HEMEN BAŞLA",
                                                 style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800, letterSpacing: 0.5),
@@ -759,7 +736,6 @@ class _ModernPricingCard extends StatefulWidget {
   final Color badgeColor;
   final double? savingsPercent;
   final double? compareMonthlyPrice;
-  final bool debugTrialOverride;
 
   const _ModernPricingCard({
     required this.package,
@@ -770,7 +746,6 @@ class _ModernPricingCard extends StatefulWidget {
     required this.badgeColor,
     this.savingsPercent,
     this.compareMonthlyPrice,
-    this.debugTrialOverride = false,
   });
 
   @override
@@ -806,7 +781,7 @@ class _ModernPricingCardState extends State<_ModernPricingCard> {
         widget.package.identifier.toLowerCase().contains('annual') ||
         widget.package.identifier.toLowerCase().contains('year');
 
-    final hasTrial = widget.debugTrialOverride || (widget.package.storeProduct.introductoryPrice?.price == 0);
+    final hasTrial = widget.package.storeProduct.introductoryPrice?.price == 0;
 
     String bigPriceDisplay = "";
     String smallSubtext = "";

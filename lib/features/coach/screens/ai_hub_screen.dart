@@ -3,23 +3,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-// Proje içi importlar (Senin yapına uygun)
+// Proje içi importlar
 import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:taktik/data/providers/shared_prefs_provider.dart';
 import 'package:taktik/features/coach/widgets/ai_hub_welcome_sheet.dart';
 import 'package:taktik/features/onboarding/models/tutorial_step.dart';
-// TutorialPainter bu dosya içinde tanımlandığı için import'a gerek yok,
-// ama senin projende ayrı dosyadaysa import kalabilir.
 
 // --- KEY TANIMLAMALARI (Spotlight için) ---
 final GlobalKey _weeklyPlanKey = GlobalKey();
-final GlobalKey _solverKey = GlobalKey();
+final GlobalKey _solverKey = GlobalKey(); // Bu key tanımlı ama aşağıda kullanılmamıştı
 final GlobalKey _analysisKey = GlobalKey();
 final GlobalKey _studyRoomKey = GlobalKey();
 final GlobalKey _coachKey = GlobalKey();
 
 class AiHubScreen extends ConsumerStatefulWidget {
-  // Router üzerinden gelen extra parametre
   final Map<String, dynamic>? extra;
 
   const AiHubScreen({super.key, this.extra});
@@ -42,9 +39,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
   }
 
   void _checkAndStartPremiumTour() {
-    // Eğer Welcome ekranından "startPremiumTour: true" geldiyse
     if (widget.extra != null && widget.extra!['startPremiumTour'] == true) {
-      // Tur adımlarını hazırla
       final premiumSteps = [
         TutorialStep(
           title: "Taktik Üssüne Hoş Geldin!",
@@ -58,7 +53,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
           buttonText: "Harika",
         ),
         TutorialStep(
-          highlightKey: _solverKey,
+          highlightKey: _solverKey, // Burada referans veriliyor
           title: "Özel Ders Cebinde",
           text: "Çözemediğin bir soru mu var? Sadece fotoğrafını çek. Taktik Tavşan sana cevabı vermekle kalmaz, öğretmenden dinlemiş gibi adım adım mantığını anlatır.",
           buttonText: "Süper",
@@ -116,7 +111,6 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
     }
   }
 
-  // --- BİLGİ VE SATIŞ EKRANI ---
   void _showInfoSheet(ThemeData theme) {
     const pinkColor = Color(0xFFE11D48);
     final isPremium = ref.read(premiumStatusProvider);
@@ -372,23 +366,26 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                 ),
                 const SizedBox(width: gap),
                 Expanded(
-                  child: _BentoCard(
-                    title: 'Soru\nÇözücü',
-                    // ÇOK NET: Ne işe yarar? Çözümü gösterir.
-                    description: 'Sorunu çek, anında\nçözümünü al.',
-                    icon: Icons.camera_enhance_rounded,
-                    color: const Color(0xFFF59E0B),
-                    isPremium: true, // Günlük 3 hak ile herkes kullanabilir
-                    height: 180,
-                    onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/question-solver', offerData: {
-                      'title': 'Soru Çözücü',
-                      'subtitle': 'Anında çözüm cebinde.',
-                      'iconName': 'camera_enhance',
-                      'color': Colors.orangeAccent,
-                      'marketingTitle': 'Soruda Takılma!',
-                      'marketingSubtitle': 'Yapamadığın sorunun fotoğrafını çek, Taktik Tavşan adım adım çözümünü anlatsın.',
-                      'redirectRoute': '/ai-hub/question-solver',
-                    }),
+                  // --- DÜZELTME BURADA YAPILDI ---
+                  child: KeyedSubtree(
+                    key: _solverKey, // Bu Key eksikti!
+                    child: _BentoCard(
+                      title: 'Soru\nÇözücü',
+                      description: 'Sorunu çek, anında\nçözümünü al.',
+                      icon: Icons.camera_enhance_rounded,
+                      color: const Color(0xFFF59E0B),
+                      isPremium: true,
+                      height: 180,
+                      onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/question-solver', offerData: {
+                        'title': 'Soru Çözücü',
+                        'subtitle': 'Anında çözüm cebinde.',
+                        'iconName': 'camera_enhance',
+                        'color': Colors.orangeAccent,
+                        'marketingTitle': 'Soruda Takılma!',
+                        'marketingSubtitle': 'Yapamadığın sorunun fotoğrafını çek, Taktik Tavşan adım adım çözümünü anlatsın.',
+                        'redirectRoute': '/ai-hub/question-solver',
+                      }),
+                    ),
                   ),
                 ),
               ],
@@ -460,13 +457,11 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
   }
 
   void _handleNavigation(BuildContext context, bool isPremium, {required String route, required Map<String, dynamic> offerData}) {
-    // Soru çözücü artık günlük 3 hak ile ücretsiz kullanılabilir
     if (route == '/ai-hub/question-solver') {
       context.go(route);
       return;
     }
 
-    // Diğer özellikler için premium kontrolü
     if (isPremium) {
       context.go(route);
     } else {
@@ -476,7 +471,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
 }
 
 // -----------------------------------------------------------------------------
-// DÜZELTİLMİŞ PREMIUM TOUR DIALOG (Anchor Mantığı)
+// PREMIUM TOUR DIALOG
 // -----------------------------------------------------------------------------
 class _PremiumTourDialog extends StatefulWidget {
   final List<TutorialStep> steps;
@@ -504,7 +499,6 @@ class _PremiumTourDialogState extends State<_PremiumTourDialog> {
     final step = widget.steps[_currentIndex];
     final key = step.highlightKey;
 
-    // Highlight (Vurgulanan alan) hesaplaması
     Rect? highlightRect;
     if (key != null && key.currentContext != null) {
       final renderBox = key.currentContext!.findRenderObject() as RenderBox;
@@ -512,44 +506,35 @@ class _PremiumTourDialogState extends State<_PremiumTourDialog> {
       highlightRect = Rect.fromLTWH(offset.dx, offset.dy, renderBox.size.width, renderBox.size.height);
     }
 
-    // Ekran Boyutları
     final size = MediaQuery.of(context).size;
     final topPadding = MediaQuery.of(context).padding.top;
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
-    // --- AKILLI KONUMLANDIRMA MANTIĞI ---
-    bool placeBelow = true; // Varsayılan olarak alta koy
+    bool placeBelow = true;
     double? topPos;
     double? bottomPos;
 
-    // Kartın vurgulanan alandan ne kadar uzak olacağı
     const double spacing = 24.0;
 
     if (highlightRect != null) {
       final spaceAbove = highlightRect.top - topPadding;
       final spaceBelow = size.height - highlightRect.bottom - bottomPadding;
 
-      // Eğer aşağıda daha çok yer varsa VEYA yukarıdaki yer çok darsa (200px altı) -> Alta koy
       if (spaceBelow >= spaceAbove || spaceAbove < 200) {
         placeBelow = true;
-        // Kartın ÜST kenarı = Vurgulanan alanın ALT kenarı + boşluk
         topPos = highlightRect.bottom + spacing;
-        bottomPos = null; // Bottom null olmalı ki kart aşağı doğru uzayabilsin
+        bottomPos = null;
       } else {
         placeBelow = false;
-        // Kartın ALT kenarı = (Ekran Boyu - Vurgulanan alanın ÜST kenarı) + boşluk
-        // Positioned.bottom kullandığımız için, ekranın altından olan mesafeyi veriyoruz.
         bottomPos = (size.height - highlightRect.top) + spacing;
         topPos = null;
       }
     } else {
-      // Highlight yoksa (ilk adım gibi), ekranın ortasına yakın koy
       topPos = size.height * 0.35;
     }
 
     return Stack(
       children: [
-        // 1. SAHNE IŞIĞI (Spotlight)
         GestureDetector(
           onTap: _next,
           child: CustomPaint(
@@ -562,21 +547,17 @@ class _PremiumTourDialogState extends State<_PremiumTourDialog> {
           ),
         ),
 
-        // 2. AÇIKLAMA KARTI
         Positioned(
-          // Sol ve Sağ kenarlardan boşluk
           left: 24,
           right: 24,
-          // Çakışmayı önleyen dinamik konumlandırma
           top: topPos,
           bottom: bottomPos,
-
           child: Material(
             color: Colors.transparent,
             child: Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: const Color(0xFF1E1E2C).withOpacity(0.98), // Neredeyse opak
+                color: const Color(0xFF1E1E2C).withOpacity(0.98),
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.5), width: 1.5),
                 boxShadow: [
@@ -589,7 +570,7 @@ class _PremiumTourDialogState extends State<_PremiumTourDialog> {
                 ],
               ),
               child: Column(
-                mainAxisSize: MainAxisSize.min, // İçerik kadar yer kapla
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
@@ -647,10 +628,9 @@ class _PremiumTourDialogState extends State<_PremiumTourDialog> {
                 ],
               ),
             )
-                .animate(key: ValueKey(_currentIndex)) // Her adımda animasyon yeniden başlar
+                .animate(key: ValueKey(_currentIndex))
                 .fadeIn(duration: 300.ms)
                 .slide(
-              // Aşağıdaysa aşağıdan yukarı, yukarıdaysa yukarıdan aşağı gelsin
                 begin: placeBelow ? const Offset(0, 0.1) : const Offset(0, -0.1),
                 end: Offset.zero,
                 duration: 400.ms,
@@ -659,7 +639,6 @@ class _PremiumTourDialogState extends State<_PremiumTourDialog> {
           ),
         ),
 
-        // 3. ÇIKIŞ BUTONU
         Positioned(
           top: MediaQuery.of(context).padding.top + 10,
           right: 16,
@@ -1060,7 +1039,6 @@ class _MinimalDisclaimer extends StatelessWidget {
   }
 }
 
-// --- SPOTLIGHT PAINTER ---
 class _SpotlightPainter extends CustomPainter {
   final Rect? highlightRect;
   final Color overlayColor;
