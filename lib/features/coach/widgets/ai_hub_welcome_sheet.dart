@@ -163,9 +163,9 @@ class _AiHubWelcomeSheetState extends State<AiHubWelcomeSheet>
                     const SizedBox(width: 12),
                     Expanded(
                       child: _FeatureItem(
-                        icon: Icons.analytics_outlined,
-                        title: 'Deneme Analizi',
-                        color: const Color(0xFFF43F5E),
+                        icon: Icons.camera_alt_rounded,
+                        title: 'Soru Çözücü',
+                        color: const Color(0xFFF59E0B),
                         textColor: textPrimary,
                         subtitleColor: textSecondary,
                       ),
@@ -187,8 +187,8 @@ class _AiHubWelcomeSheetState extends State<AiHubWelcomeSheet>
                     const SizedBox(width: 12),
                     Expanded(
                       child: _FeatureItem(
-                        icon: Icons.diamond_outlined,
-                        title: 'Eksik Analizi',
+                        icon: Icons.menu_book_rounded,
+                        title: 'Etüt Odası',
                         color: const Color(0xFF8B5CF6),
                         textColor: textPrimary,
                         subtitleColor: textSecondary,
