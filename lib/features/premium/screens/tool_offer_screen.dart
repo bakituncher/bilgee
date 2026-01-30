@@ -292,8 +292,8 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
         // Diğer Firebase hataları
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Sunucu hatası: ${e.message}'),
-            backgroundColor: Theme.of(context).colorScheme.error
+              content: Text('Sunucu hatası: ${e.message}'),
+              backgroundColor: Theme.of(context).colorScheme.error
           ),
         );
       }
@@ -380,77 +380,77 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
   Widget _buildPurchaseSectionContent(AsyncValue<Offerings?> offeringsAsyncValue) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: isDark
+            ? Theme.of(context).scaffoldBackgroundColor.withOpacity(0.6)
+            : Colors.white.withOpacity(0.85),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
           color: isDark
-              ? Theme.of(context).scaffoldBackgroundColor.withOpacity(0.6)
-              : Colors.white.withOpacity(0.85),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: isDark
-                ? Colors.white.withOpacity(0.08)
-                : widget.color.withOpacity(0.15),
-            width: 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: isDark
-                  ? Colors.black.withOpacity(0.3)
-                  : widget.color.withOpacity(0.08),
-              spreadRadius: 0,
-              blurRadius: 30,
-              offset: const Offset(0, 10),
-            ),
-          ],
+              ? Colors.white.withOpacity(0.08)
+              : widget.color.withOpacity(0.15),
+          width: 1.5,
         ),
-        child: offeringsAsyncValue.when(
-          data: (offerings) {
-            return Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildPurchaseOptions(context, ref, offerings),
-                  const SizedBox(height: 12),
-                  _buildTrustBadges(),
-                  const SizedBox(height: 8),
-                  const _PriceTransparencyFooter(),
-                ],
-              ),
-            );
-          },
-          loading: () => const Padding(
-            padding: EdgeInsets.all(40.0),
-            child: Center(
-              child: CircularProgressIndicator(strokeWidth: 3),
-            ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withOpacity(0.3)
+                : widget.color.withOpacity(0.08),
+            spreadRadius: 0,
+            blurRadius: 30,
+            offset: const Offset(0, 10),
           ),
-          error: (error, stack) => Padding(
-            padding: const EdgeInsets.all(40.0),
+        ],
+      ),
+      child: offeringsAsyncValue.when(
+        data: (offerings) {
+          return Padding(
+            padding: const EdgeInsets.all(16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.error_outline_rounded,
-                  color: Theme.of(context).colorScheme.error,
-                  size: 40,
-                ),
+                _buildPurchaseOptions(context, ref, offerings),
                 const SizedBox(height: 12),
-                Text(
-                  'Paketler yüklenemedi',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
+                _buildTrustBadges(),
                 const SizedBox(height: 8),
-                Text(
-                  error.toString(),
-                  style: Theme.of(context).textTheme.bodySmall,
-                  textAlign: TextAlign.center,
-                ),
+                const _PriceTransparencyFooter(),
               ],
             ),
+          );
+        },
+        loading: () => const Padding(
+          padding: EdgeInsets.all(40.0),
+          child: Center(
+            child: CircularProgressIndicator(strokeWidth: 3),
           ),
         ),
-      );
+        error: (error, stack) => Padding(
+          padding: const EdgeInsets.all(40.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.error_outline_rounded,
+                color: Theme.of(context).colorScheme.error,
+                size: 40,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Paketler yüklenemedi',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                error.toString(),
+                style: Theme.of(context).textTheme.bodySmall,
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildTrustBadges() {
@@ -617,44 +617,40 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
           ),
           const SizedBox(height: 16),
           if (yearly != null)
-              _PurchaseOptionCard(
-                animationController: _cardPopController,
-                package: yearly,
-                title: 'Yıllık PRO Plan',
-                price: yearly.storeProduct.priceString,
-                billingPeriod: '/ yıl',
-                tag: savePercent != null
-                    ? '%${savePercent.toStringAsFixed(0)} TASARRUF'
-                    : 'EN İYİ DEĞER',
-                isSelected: _selectedPackage == yearly,
-                delay: const Duration(milliseconds: 0),
-                onSelected: (pkg) => setState(() => _selectedPackage = pkg),
-                color: widget.color,
-              ),
-            if (yearly != null && monthly != null) const SizedBox(height: 8),
-            if (monthly != null)
-              _PurchaseOptionCard(
-                animationController: _cardPopController,
-                package: monthly,
-                title: 'Aylık PRO Plan',
-                price: monthly.storeProduct.priceString,
-                billingPeriod: '/ ay',
-                isSelected: _selectedPackage == monthly,
-                delay: const Duration(milliseconds: 100),
-                onSelected: (pkg) => setState(() => _selectedPackage = pkg),
-                color: widget.color,
-              ),
+            _PurchaseOptionCard(
+              animationController: _cardPopController,
+              package: yearly,
+              title: 'Yıllık PRO Plan',
+              price: yearly.storeProduct.priceString,
+              billingPeriod: '/ yıl',
+              tag: savePercent != null
+                  ? '%${savePercent.toStringAsFixed(0)} TASARRUF'
+                  : 'EN İYİ DEĞER',
+              isSelected: _selectedPackage == yearly,
+              delay: const Duration(milliseconds: 0),
+              onSelected: (pkg) => setState(() => _selectedPackage = pkg),
+              color: widget.color,
+            ),
+          if (yearly != null && monthly != null) const SizedBox(height: 8),
+          if (monthly != null)
+            _PurchaseOptionCard(
+              animationController: _cardPopController,
+              package: monthly,
+              title: 'Aylık PRO Plan',
+              price: monthly.storeProduct.priceString,
+              billingPeriod: '/ ay',
+              isSelected: _selectedPackage == monthly,
+              delay: const Duration(milliseconds: 100),
+              onSelected: (pkg) => setState(() => _selectedPackage = pkg),
+              color: widget.color,
+            ),
         ],
       ),
     );
   }
 
   Widget _buildPurchaseButton() {
-    final introPrice = _selectedPackage?.storeProduct.introductoryPrice;
-    // Ücretsiz deneme kontrolü: introductoryPrice var mı, fiyatı 0 mı ve geçerli bir süre var mı?
-    final hasFreeTrial = introPrice != null &&
-        introPrice.price == 0 &&
-        introPrice.periodNumberOfUnits > 0;
+    final hasFreeTrial = _selectedPackage?.storeProduct.introductoryPrice?.price == 0;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -691,25 +687,25 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
                   child: Center(
                     child: _isPurchaseInProgress
                         ? const CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 3,
-                          )
+                      color: Colors.white,
+                      strokeWidth: 3,
+                    )
                         : Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.diamond_rounded, color: Colors.white, size: 20),
-                              const SizedBox(width: 8),
-                              Text(
-                                hasFreeTrial ? 'ÜCRETSİZ BAŞLA' : 'HEMEN BAŞLA',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ],
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.diamond_rounded, color: Colors.white, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          hasFreeTrial ? 'ÜCRETSİZ BAŞLA' : 'HEMEN BAŞLA',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.5,
                           ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -876,16 +872,16 @@ class _ToolFeatureHeader extends StatelessWidget {
               ),
               child: imageAsset != null
                   ? ClipOval(
-                      child: Padding(
-                        padding: const EdgeInsets.all(10.0),
-                        child: Image.asset(
-                          imageAsset!,
-                          width: 52,
-                          height: 52,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    )
+                child: Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Image.asset(
+                    imageAsset!,
+                    width: 52,
+                    height: 52,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              )
                   : Icon(icon, size: 36, color: color),
             ),
             const SizedBox(height: 10),
@@ -1061,10 +1057,7 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final introPrice = widget.package.storeProduct.introductoryPrice;
-    // Ücretsiz deneme kontrolü: introductoryPrice var mı, fiyatı 0 mı ve geçerli bir süre var mı?
-    final hasFreeTrial = introPrice != null &&
-        introPrice.price == 0 &&
-        introPrice.periodNumberOfUnits > 0;
+    final hasFreeTrial = introPrice != null && introPrice.price == 0;
 
     return SlideTransition(
       position: _slideAnimation,
@@ -1088,22 +1081,22 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
                     borderRadius: BorderRadius.circular(20),
                     gradient: widget.isSelected
                         ? LinearGradient(
-                            colors: [widget.color, widget.color.withOpacity(0.7)],
-                          )
+                      colors: [widget.color, widget.color.withOpacity(0.7)],
+                    )
                         : LinearGradient(
-                            colors: [
-                              Colors.black.withOpacity(isDark ? 0.1 : 0.05),
-                              Colors.black.withOpacity(isDark ? 0.05 : 0.02)
-                            ],
-                          ),
+                      colors: [
+                        Colors.black.withOpacity(isDark ? 0.1 : 0.05),
+                        Colors.black.withOpacity(isDark ? 0.05 : 0.02)
+                      ],
+                    ),
                     boxShadow: widget.isSelected
                         ? [
-                            BoxShadow(
-                              color: widget.color.withOpacity(0.25),
-                              blurRadius: 12,
-                              spreadRadius: 0,
-                            )
-                          ]
+                      BoxShadow(
+                        color: widget.color.withOpacity(0.25),
+                        blurRadius: 12,
+                        spreadRadius: 0,
+                      )
+                    ]
                         : [],
                   ),
                   child: Container(
@@ -1116,10 +1109,10 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
                       border: widget.isSelected
                           ? null
                           : Border.all(
-                              color: isDark
-                                  ? Colors.white.withOpacity(0.1)
-                                  : Colors.black12,
-                            ),
+                        color: isDark
+                            ? Colors.white.withOpacity(0.1)
+                            : Colors.black12,
+                      ),
                     ),
                     child: Row(
                       children: [
@@ -1344,4 +1337,3 @@ class _TrustBadgeCompact extends StatelessWidget {
     );
   }
 }
-
