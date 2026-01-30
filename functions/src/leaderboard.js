@@ -205,6 +205,7 @@ exports.onUserProfileChanged = onDocumentWritten({
 
     const newExam = after?.selectedExam || null;
     const name = after?.name || "";
+    const username = after?.username || "";
     const avatarStyle = after?.avatarStyle || null;
     const avatarSeed = after?.avatarSeed || null;
 
@@ -214,26 +215,28 @@ exports.onUserProfileChanged = onDocumentWritten({
     // 2. Liderlik Tablosu Senkronizasyonu (Sadece Metadata)
     // KRİTİK DÜZELTME: Buradan 'score' alanını kaldırdık.
     // Puanlar sadece 'onUserStatsWritten' trigger'ı ile güncellenir.
-    // Burada sadece kullanıcının adı ve avatarı değişirse tabloda güncelliyoruz.
+    // Burada sadece kullanıcının adı, kullanıcı adı ve avatarı değişirse tabloda güncelliyoruz.
 
     const dayKey = dayKeyIstanbul();
     const weekKey = weekKeyIstanbul();
     const base = db.collection("leaderboard_scores").doc(String(newExam));
 
     await Promise.all([
-      // Günlük Tabloda İsim/Avatar Güncelle
+      // Günlük Tabloda İsim/Username/Avatar Güncelle
       base.collection("daily").doc(dayKey).collection("users").doc(uid).set({
         userId: uid,
         userName: name,
+        username: username,
         avatarStyle,
         avatarSeed,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       }, { merge: true }),
 
-      // Haftalık Tabloda İsim/Avatar Güncelle
+      // Haftalık Tabloda İsim/Username/Avatar Güncelle
       base.collection("weekly").doc(weekKey).collection("users").doc(uid).set({
         userId: uid,
         userName: name,
+        username: username,
         avatarStyle,
         avatarSeed,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
