@@ -40,24 +40,10 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 void main() async {
-  // Global hata yakalama (Flutter ve Dart)
-  FlutterError.onError = (details) {
-    FlutterError.presentError(details);
-    if (kDebugMode) {
-      debugPrint('[FlutterError] ${details.exceptionAsString()}');
-      debugPrint(details.stack?.toString());
-    }
-    FirebaseCrashlytics.instance.recordFlutterFatalError(details);
-  };
-
-  PlatformDispatcher.instance.onError = (error, stack) {
-    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-    return true;
-  };
+  // Bindings'i en başta başlatmak en güvenli yoldur.
+  WidgetsFlutterBinding.ensureInitialized();
 
   await runZonedGuarded(() async {
-    WidgetsFlutterBinding.ensureInitialized();
-
     // 1. .env yükle
     try {
       await dotenv.load(fileName: ".env").timeout(
@@ -85,12 +71,6 @@ void main() async {
         debugPrint('[Hive] ❌ Başlatılamadı: $e');
         debugPrint(st.toString());
       }
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        st,
-        reason: 'Hive initialization failed',
-        fatal: false,
-      );
     }
 
     // 2. Firebase Başlat
@@ -111,6 +91,31 @@ void main() async {
       runApp(const ErrorApp(message: 'Başlatma hatası: Firebase yüklenemedi.'));
       return;
     }
+
+    // --- KRİTİK: FCM Background Handler (runApp'ten ÖNCE) ---
+    try {
+      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+      if (kDebugMode) debugPrint('[FCM] Background handler kaydedildi.');
+    } catch (e) {
+      if (kDebugMode) debugPrint('[FCM] Background handler kaydedilemedi: $e');
+    }
+
+    // --- KRİTİK: Crashlytics Tanımlamaları Firebase Başladıktan SONRA ---
+
+    // Global hata yakalama (Flutter ve Dart)
+    FlutterError.onError = (details) {
+      FlutterError.presentError(details);
+      if (kDebugMode) {
+        debugPrint('[FlutterError] ${details.exceptionAsString()}');
+        debugPrint(details.stack?.toString());
+      }
+      FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+    };
+
+    PlatformDispatcher.instance.onError = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
+    };
 
     // Firebase servislerini yapılandır
     FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(!kDebugMode);
@@ -146,25 +151,20 @@ void main() async {
       if (!kDebugMode) {
         try {
           // ADIM 1: Önce cache'e güven (Hızlı ve Kotasız - false)
-          // SDK akıllıdır; token süresi dolmuşsa false parametresi olsa bile yenisini ister.
           await FirebaseAppCheck.instance.getToken(false).timeout(
             const Duration(seconds: 3),
           );
         } catch (e) {
           // ADIM 2: Sadece cache patlarsa sunucuya git (Fail-Safe - true)
-          // Stability önceliği burada devreye girer.
           if (kDebugMode) debugPrint('[AppCheck] Cache fail, forcing refresh...');
           try {
             await FirebaseAppCheck.instance.getToken(true).timeout(
               const Duration(seconds: 4),
               onTimeout: () {
-                // null yerine exception fırlatarak catch bloğuna düşmesini garantiliyoruz.
                 throw TimeoutException('AppCheck force refresh timeout');
               },
             );
-          } catch (_) {
-            // İki türlü de alınamazsa sessizce devam et, uygulama açılmalı.
-          }
+          } catch (_) {}
         }
       } else {
         // Debug modda test için
@@ -215,15 +215,6 @@ void main() async {
 
     // --- Diğer "Non-Kritik" Servisler Arka Planda Başlatılabilir ---
 
-    // FCM Handler
-    Future.microtask(() {
-      try {
-        FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-      } catch (e) {
-        if (kDebugMode) debugPrint('[FCM] Background handler kaydedilemedi: $e');
-      }
-    });
-
     // Tarih Yerelleştirme
     Future.microtask(() async {
       try {
@@ -263,7 +254,14 @@ void main() async {
       debugPrint('[Zoned] Yakalanmamış hata: $error');
       debugPrint(stack.toString());
     }
-    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+
+    // Güvenlik Kontrolü: Firebase initialize edilmeden Crashlytics çağrılırsa
+    // uygulama tekrar crash olur.
+    if (Firebase.apps.isNotEmpty) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    } else {
+      if (kDebugMode) debugPrint('[Zoned] Firebase hazır değil, Crashlytics atlandı.');
+    }
   });
 }
 
@@ -448,8 +446,11 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
     final router = ref.watch(goRouterProvider);
     final themeMode = ref.watch(themeModeNotifierProvider);
 
-    // İnternet bağlantısını kontrol et
+    // İnternet bağlantısını izle
     final connectivityAsync = ref.watch(connectivityProvider);
+    // Varsayılan olarak 'bağlı' kabul ediyoruz ki açılışta veya loading'de ekran kararmasın.
+    // Sadece kesin olarak false ise offline sayıyoruz.
+    final isOffline = connectivityAsync.valueOrNull == false;
 
     // Tema her değiştiğinde (açık, koyu veya sistem) doğru UI overlay'i ayarla
     final Brightness currentBrightness;
@@ -466,49 +467,31 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
     }
     AppTheme.configureSystemUI(currentBrightness);
 
-    // İnternet bağlantısı yoksa NoInternetScreen göster
-    return connectivityAsync.when(
-      data: (isConnected) {
-        if (!isConnected) {
-          return MaterialApp(
-            title: 'Taktik',
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode: themeMode,
-            home: const NoInternetScreen(),
-          );
-        }
+    // ÇÖZÜM: Tek bir MaterialApp.router döndürüp,
+    // builder içinde NoInternet ekranını overlay (üst katman) olarak ekliyoruz.
+    // Bu sayede alttaki Navigator state'i korunuyor.
+    return MaterialApp.router(
+      title: 'Taktik',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeMode,
+      routerConfig: router,
+      builder: (context, child) {
+        return Stack(
+          children: [
+            // 1. Asıl Uygulama (Navigator/GoRouter)
+            if (child != null) child,
 
-        return MaterialApp.router(
-          title: 'Taktik',
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          themeMode: themeMode,
-          routerConfig: router,
+            // 2. İnternet Yok Ekranı (Üstüne biner, state'i silmez)
+            if (isOffline)
+              const Positioned.fill(
+                // Scaffold veya tam ekran kaplayan bir widget olmalı
+                child: NoInternetScreen(),
+              ),
+          ],
         );
       },
-      loading: () => MaterialApp(
-        title: 'Taktik',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: themeMode,
-        home: const Scaffold(
-          body: Center(
-            child: CircularProgressIndicator(),
-          ),
-        ),
-      ),
-      error: (_, __) => MaterialApp.router(
-        title: 'Taktik',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: themeMode,
-        routerConfig: router,
-      ),
     );
   }
 }
