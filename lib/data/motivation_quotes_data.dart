@@ -121,7 +121,7 @@ class MotivationQuotesData {
     ('Hedef belirlemek, başarının ilk adımıdır.', 'Anonim'),
     ('Zamanınızı yönetin, hayatınızı yönetin.', 'Alan Lakein'),
     ('Öncelikleriniz, değerlerinizi yansıtır.', 'Stephen Covey'),
-    ('Bugünü planla, yarını kaz an.', 'Anonim'),
+    ('Bugünü planla, yarını kazan.', 'Anonim'),
     ('Stratejik düşün, taktiksel hareket et.', 'Anonim'),
     ('Her başarılı günün arkasında iyi bir plan vardır.', 'Anonim'),
     ('Hedeflerinizi yazın, başarınızı çizin.', 'Anonim'),
