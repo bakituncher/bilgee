@@ -125,9 +125,62 @@ void main() async {
       } catch (_) {}
     }
 
-    // 3. REVENUECAT BAŞLATMA (KRİTİK - BURAYA TAŞINDI)
-    // UI çizilmeden önce RevenueCat'in hazır olması şarttır, aksi takdirde iOS'ta çökme yaşanır.
-    // Başlatma sırasını garanti altına almak için await kullanıyoruz.
+    // 3. APP CHECK (SMART HYBRID & SECURE WARM-UP)
+    try {
+      if (kDebugMode) debugPrint('[AppCheck] Aktivasyon ve Token Alma başlıyor...');
+
+      // A) Activate
+      await FirebaseAppCheck.instance.activate(
+        androidProvider: kDebugMode
+            ? AndroidProvider.debug
+            : AndroidProvider.playIntegrity,
+        appleProvider: kDebugMode
+            ? AppleProvider.debug
+            : AppleProvider.appAttest,
+      ).timeout(const Duration(seconds: 5));
+
+      // B) Token Refresh Aç
+      await FirebaseAppCheck.instance.setTokenAutoRefreshEnabled(true);
+
+      // C) MANUEL TOKEN WARM-UP (Smart Hybrid Yöntemi)
+      if (!kDebugMode) {
+        try {
+          // ADIM 1: Önce cache'e güven (Hızlı ve Kotasız - false)
+          // SDK akıllıdır; token süresi dolmuşsa false parametresi olsa bile yenisini ister.
+          await FirebaseAppCheck.instance.getToken(false).timeout(
+            const Duration(seconds: 3),
+          );
+        } catch (e) {
+          // ADIM 2: Sadece cache patlarsa sunucuya git (Fail-Safe - true)
+          // Stability önceliği burada devreye girer.
+          if (kDebugMode) debugPrint('[AppCheck] Cache fail, forcing refresh...');
+          try {
+            await FirebaseAppCheck.instance.getToken(true).timeout(
+              const Duration(seconds: 4),
+              onTimeout: () {
+                // null yerine exception fırlatarak catch bloğuna düşmesini garantiliyoruz.
+                throw TimeoutException('AppCheck force refresh timeout');
+              },
+            );
+          } catch (_) {
+            // İki türlü de alınamazsa sessizce devam et, uygulama açılmalı.
+          }
+        }
+      } else {
+        // Debug modda test için
+        await FirebaseAppCheck.instance.getToken(false);
+      }
+
+      if (kDebugMode) debugPrint('[AppCheck] ✅ Token mekanizması tamamlandı.');
+
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[AppCheck] Kritik Hata: $e');
+      }
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current, reason: 'AppCheck Token Fetch Failed');
+    }
+
+    // 4. REVENUECAT BAŞLATMA
     try {
       if (kDebugMode) {
         debugPrint('[RevenueCat] Başlatılıyor...');
@@ -149,7 +202,6 @@ void main() async {
         debugPrint('[RevenueCat] ❌ Initialization failed: $e');
         debugPrint('[RevenueCat] Stack trace: $stackTrace');
       }
-      // RevenueCat hatası uygulamanın açılmasını engellememeli ama loglanmalı
       FirebaseCrashlytics.instance.recordError(
         e,
         stackTrace,
@@ -158,53 +210,10 @@ void main() async {
       );
     }
 
-    // 4. UYGULAMAYI BAŞLAT
+    // 5. UYGULAMAYI BAŞLAT
     runApp(const ProviderScope(child: BilgeAiApp()));
 
     // --- Diğer "Non-Kritik" Servisler Arka Planda Başlatılabilir ---
-
-    // App Check
-    Future.microtask(() async {
-      try {
-        await FirebaseAppCheck.instance.activate(
-          androidProvider: kDebugMode
-              ? AndroidProvider.debug
-              : AndroidProvider.playIntegrity,
-          appleProvider: kDebugMode
-              ? AppleProvider.debug
-              : AppleProvider.appAttest,
-        ).timeout(
-          const Duration(seconds: 5),
-          onTimeout: () {
-            if (kDebugMode) debugPrint('[AppCheck] Activation timeout');
-          },
-        );
-      } catch (e) {
-        try {
-          await FirebaseAppCheck.instance.activate(
-            androidProvider: kDebugMode
-                ? AndroidProvider.debug
-                : AndroidProvider.playIntegrity,
-            appleProvider: kDebugMode
-                ? AppleProvider.debug
-                : AppleProvider.deviceCheck,
-          ).timeout(const Duration(seconds: 5));
-        } catch (e2) {
-          if (kDebugMode) {
-            debugPrint('[AppCheck] Fallback failed: $e2');
-          }
-        }
-      }
-
-      try {
-        await FirebaseAppCheck.instance.setTokenAutoRefreshEnabled(true);
-        try {
-          await FirebaseAppCheck.instance.getToken().timeout(const Duration(seconds: 3));
-        } catch (e) {
-          if (kDebugMode) debugPrint('[AppCheck] İlk token alınamadı: $e');
-        }
-      } catch (_) {}
-    });
 
     // FCM Handler
     Future.microtask(() {
@@ -285,14 +294,11 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
           if (config.isNotEmpty) {
             final last = config.last;
 
-            // --- DEĞİŞİKLİK BURADA ---
-            // Öncelik: GoRouter'da tanımlı olan 'name' özelliğini kullan (Örn: 'Library', 'Settings')
-            // Bu sayede /blog/yazi-1 ve /blog/yazi-2 tek bir 'BlogDetail' olarak görünür.
+            // Öncelik: GoRouter'da tanımlı olan 'name' özelliğini kullan
             if (last.route is GoRoute && (last.route as GoRoute).name != null) {
               screenName = (last.route as GoRoute).name!;
             } else {
               // Eğer name yoksa, slash işaretini temizleyerek path'i kullan
-              // Örn: "/library" -> "library"
               String location = last.matchedLocation;
               if (location.startsWith('/')) {
                 location = location.substring(1);
@@ -303,7 +309,6 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
               }
               screenName = location;
             }
-            // -------------------------
           }
 
           // screen_view (manual)
@@ -331,9 +336,9 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
               final appId = Platform.isAndroid ? 'com.codenzi.taktik' : '6755930518';
 
               final url = Uri.parse(
-                Platform.isAndroid
-                  ? "market://details?id=$appId"
-                  : "https://apps.apple.com/app/id$appId"
+                  Platform.isAndroid
+                      ? "market://details?id=$appId"
+                      : "https://apps.apple.com/app/id$appId"
               );
 
               // Önce market protokolü ile açmayı dene (Mağaza uygulaması açılır)
@@ -342,12 +347,12 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
               } else {
                 // Olmazsa web linki olarak aç
                 final webUrl = Uri.parse(
-                  Platform.isAndroid
-                    ? "https://play.google.com/store/apps/details?id=$appId"
-                    : "https://apps.apple.com/app/id$appId"
+                    Platform.isAndroid
+                        ? "https://play.google.com/store/apps/details?id=$appId"
+                        : "https://apps.apple.com/app/id$appId"
                 );
                 if (await canLaunchUrl(webUrl)) {
-                   await launchUrl(webUrl, mode: LaunchMode.externalApplication);
+                  await launchUrl(webUrl, mode: LaunchMode.externalApplication);
                 }
               }
             }
@@ -356,11 +361,11 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
 
           // 2. HTTP Link Kontrolü (Web sitesine yönlendirme gerekirse)
           if (route.startsWith('http')) {
-             final uri = Uri.parse(route);
-             if (await canLaunchUrl(uri)) {
-               await launchUrl(uri, mode: LaunchMode.externalApplication);
-             }
-             return;
+            final uri = Uri.parse(route);
+            if (await canLaunchUrl(uri)) {
+              await launchUrl(uri, mode: LaunchMode.externalApplication);
+            }
+            return;
           }
         } catch (_) {
           // URL açılamasa bile crash olmasın
@@ -409,7 +414,7 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
 
         // 4. Uygulama İçi Rota (Mevcut davranış)
         if (route.isNotEmpty) {
-           router.go(route);
+          router.go(route);
         }
       });
     });
