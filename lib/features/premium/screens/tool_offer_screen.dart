@@ -163,7 +163,6 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
   Package? _selectedPackage;
   bool _isPurchaseInProgress = false;
   bool _hasInitializedPackage = false;
-  bool _debugTrialOverride = false; // Debug için deneme kontrolü
 
   // Renk tanımlamaları - Premium screen ile aynı
   final Color _textPrimary = const Color(0xFF1A1A1A);
@@ -493,26 +492,6 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
           ),
           Row(
             children: [
-              // DEBUG BUTONU
-              Container(
-                decoration: BoxDecoration(
-                  color: _debugTrialOverride ? Colors.green.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: IconButton(
-                  onPressed: () {
-                    setState(() => _debugTrialOverride = !_debugTrialOverride);
-                    HapticFeedback.lightImpact();
-                  },
-                  icon: Icon(
-                    _debugTrialOverride ? Icons.check_circle : Icons.science_outlined,
-                    color: _debugTrialOverride ? Colors.green : Colors.grey,
-                    size: 20,
-                  ),
-                  tooltip: 'Test: ${_debugTrialOverride ? "Deneme VAR" : "Deneme YOK"}',
-                ),
-              ),
-              const SizedBox(width: 8),
               TextButton(
                 onPressed: _restorePurchases,
                 child: Text("Geri Yükle", style: TextStyle(color: widget.color, fontSize: 13, fontWeight: FontWeight.w600)),
@@ -651,7 +630,6 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
                 delay: const Duration(milliseconds: 0),
                 onSelected: (pkg) => setState(() => _selectedPackage = pkg),
                 color: widget.color,
-                debugTrialOverride: _debugTrialOverride,
               ),
             if (yearly != null && monthly != null) const SizedBox(height: 8),
             if (monthly != null)
@@ -665,7 +643,6 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
                 delay: const Duration(milliseconds: 100),
                 onSelected: (pkg) => setState(() => _selectedPackage = pkg),
                 color: widget.color,
-                debugTrialOverride: _debugTrialOverride,
               ),
         ],
       ),
@@ -673,8 +650,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
   }
 
   Widget _buildPurchaseButton() {
-    final hasFreeTrial = _debugTrialOverride ||
-                        (_selectedPackage?.storeProduct.introductoryPrice?.price == 0);
+    final hasFreeTrial = _selectedPackage?.storeProduct.introductoryPrice?.price == 0;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -992,7 +968,6 @@ class _PurchaseOptionCard extends StatefulWidget {
     required this.onSelected,
     required this.delay,
     required this.color,
-    this.debugTrialOverride = false,
   });
 
   final AnimationController animationController;
@@ -1005,7 +980,6 @@ class _PurchaseOptionCard extends StatefulWidget {
   final ValueChanged<Package> onSelected;
   final Duration delay;
   final Color color;
-  final bool debugTrialOverride;
 
   @override
   State<_PurchaseOptionCard> createState() => _PurchaseOptionCardState();
@@ -1083,7 +1057,7 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final introPrice = widget.package.storeProduct.introductoryPrice;
-    final hasFreeTrial = widget.debugTrialOverride || (introPrice != null && introPrice.price == 0);
+    final hasFreeTrial = introPrice != null && introPrice.price == 0;
 
     return SlideTransition(
       position: _slideAnimation,
