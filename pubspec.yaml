@@ -86,7 +86,7 @@ dependencies:
   google_mobile_ads: ^6.0.0
 
   # In-App Review
-  in_app_review: ^2.0.10
+  in_app_review: ^2.0.11
 
   # Connectivity
   connectivity_plus: ^6.1.2
