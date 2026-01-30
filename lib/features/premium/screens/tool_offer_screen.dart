@@ -650,7 +650,11 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
   }
 
   Widget _buildPurchaseButton() {
-    final hasFreeTrial = _selectedPackage?.storeProduct.introductoryPrice?.price == 0;
+    final introPrice = _selectedPackage?.storeProduct.introductoryPrice;
+    // Ücretsiz deneme kontrolü: introductoryPrice var mı, fiyatı 0 mı ve geçerli bir süre var mı?
+    final hasFreeTrial = introPrice != null &&
+        introPrice.price == 0 &&
+        introPrice.periodNumberOfUnits > 0;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -1057,7 +1061,10 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final introPrice = widget.package.storeProduct.introductoryPrice;
-    final hasFreeTrial = introPrice != null && introPrice.price == 0;
+    // Ücretsiz deneme kontrolü: introductoryPrice var mı, fiyatı 0 mı ve geçerli bir süre var mı?
+    final hasFreeTrial = introPrice != null &&
+        introPrice.price == 0 &&
+        introPrice.periodNumberOfUnits > 0;
 
     return SlideTransition(
       position: _slideAnimation,

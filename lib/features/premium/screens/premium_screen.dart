@@ -580,9 +580,13 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                                               const Icon(Icons.diamond_rounded, color: Colors.white, size: 20),
                                               const SizedBox(width: 8),
                                               Text(
-                                                _selectedPackage?.storeProduct.introductoryPrice?.price == 0
-                                                    ? "ÜCRETSİZ BAŞLA"
-                                                    : "HEMEN BAŞLA",
+                                                () {
+                                                  final introPrice = _selectedPackage?.storeProduct.introductoryPrice;
+                                                  final hasFreeTrial = introPrice != null &&
+                                                      introPrice.price == 0 &&
+                                                      introPrice.periodNumberOfUnits > 0;
+                                                  return hasFreeTrial ? "ÜCRETSİZ BAŞLA" : "HEMEN BAŞLA";
+                                                }(),
                                                 style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800, letterSpacing: 0.5),
                                               ),
                                             ],
@@ -781,7 +785,10 @@ class _ModernPricingCardState extends State<_ModernPricingCard> {
         widget.package.identifier.toLowerCase().contains('annual') ||
         widget.package.identifier.toLowerCase().contains('year');
 
-    final hasTrial = widget.package.storeProduct.introductoryPrice?.price == 0;
+    final introPrice = widget.package.storeProduct.introductoryPrice;
+    final hasTrial = introPrice != null &&
+        introPrice.price == 0 &&
+        introPrice.periodNumberOfUnits > 0;
 
     String bigPriceDisplay = "";
     String smallSubtext = "";
