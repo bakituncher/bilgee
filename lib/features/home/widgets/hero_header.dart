@@ -8,9 +8,18 @@ import 'package:taktik/features/profile/logic/rank_service.dart';
 import 'package:taktik/features/home/providers/home_providers.dart';
 import 'package:taktik/features/quests/logic/optimized_quests_provider.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
+import 'package:taktik/shared/providers/avatar_svg_provider.dart';
 
 class HeroHeader extends ConsumerWidget {
   const HeroHeader({super.key});
+
+  // Dicebear URL helper (seed encode).
+  String? _avatarUrl(String? style, String? seed) {
+    if (style == null || seed == null) return null;
+    final s = style.trim();
+    final sd = Uri.encodeComponent(seed);
+    return 'https://api.dicebear.com/9.x/$s/svg?seed=$sd';
+  }
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
@@ -142,6 +151,8 @@ class HeroHeader extends ConsumerWidget {
         final theme = Theme.of(context);
         final isDark = theme.brightness == Brightness.dark;
 
+        final avatarUrl = _avatarUrl(user.avatarStyle, user.avatarSeed);
+
         return Container(
           decoration: BoxDecoration(
             color: theme.cardColor,
@@ -193,16 +204,23 @@ class HeroHeader extends ConsumerWidget {
                               radius: 20,
                               backgroundColor: theme.cardColor,
                               child: ClipOval(
-                                child: (user.avatarStyle != null && user.avatarSeed != null)
-                                    ? SvgPicture.network(
-                                        'https://api.dicebear.com/9.x/${user.avatarStyle}/svg?seed=${user.avatarSeed}',
-                                        fit: BoxFit.cover,
-                                        width: 40,
-                                        height: 40,
-                                        placeholderBuilder: (_) => const SizedBox(
+                                child: (avatarUrl != null)
+                                    ? ref.watch(avatarSvgProvider(avatarUrl)).when(
+                                        data: (svg) => SvgPicture.string(
+                                          svg,
+                                          fit: BoxFit.cover,
+                                          width: 40,
+                                          height: 40,
+                                        ),
+                                        loading: () => const SizedBox(
                                           width: 14,
                                           height: 14,
                                           child: CircularProgressIndicator(strokeWidth: 1.5),
+                                        ),
+                                        error: (_, __) => Icon(
+                                          Icons.person_rounded,
+                                          size: 20,
+                                          color: theme.colorScheme.primary,
                                         ),
                                       )
                                     : Icon(
