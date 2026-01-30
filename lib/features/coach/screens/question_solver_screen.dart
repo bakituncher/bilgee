@@ -81,9 +81,9 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
   bool _isLoadingPreselected = false; // preselectedImage işlenirken true
   String? _error;
 
-  // Takip sorusu sayacı (maksimum 10)
+  // Takip sorusu sayacı (maksimum 7)
   int _followUpQuestionCount = 0;
-  static const int _maxFollowUpQuestions = 10;
+  static const int _maxFollowUpQuestions = 7;
 
   final ImagePicker _picker = ImagePicker();
 
@@ -430,7 +430,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
     if (_followUpQuestionCount >= _maxFollowUpQuestions) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Bir sohbette maksimum 10 soru sorabilirsiniz'),
+          content: Text('Bir sohbette maksimum 7 soru sorabilirsiniz'),
           duration: Duration(seconds: 3),
         ),
       );
@@ -1548,7 +1548,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        'Bir sohbette maksimum 10 soru sorabilirsiniz',
+                        'Bir sohbette maksimum 7 soru sorabilirsiniz',
                         style: TextStyle(
                           fontSize: 14,
                           color: theme.colorScheme.onSurface.withOpacity(0.8),
