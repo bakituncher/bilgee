@@ -12,7 +12,6 @@ import 'package:taktik/data/providers/temporary_access_provider.dart';
 import 'package:taktik/features/stats/widgets/fortress_tab_selector.dart';
 import 'package:taktik/features/stats/widgets/cached_analysis_view.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
-import 'package:taktik/shared/widgets/logo_loader.dart';
 
 final selectedTabIndexProvider = StateProvider<int>((ref) => 0);
 
@@ -48,7 +47,12 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
   }
 
   // Yükleme/hata/boş state'lerde sadece içerik döndür.
-  Widget _buildLoadingState() => const Center(child: LogoLoader());
+  Widget _buildLoadingState() => Center(
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+      );
 
   Widget _buildErrorState(String error) => Center(child: Text(error));
 
@@ -444,35 +448,20 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                   child: GestureDetector(
                     onTap: () => context.push('/premium'),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                        ),
-                        borderRadius: BorderRadius.circular(10),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.amber.withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
+                        color: Colors.amber.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.amber.withOpacity(0.5), width: 1),
                       ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.workspace_premium_rounded, size: 14, color: Colors.black87),
-                          SizedBox(width: 4),
-                          Text(
-                            'PRO',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.black87,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ],
+                      child: const Text(
+                        'PRO',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.amber,
+                          letterSpacing: 0.5,
+                        ),
                       ),
                     ),
                   ),

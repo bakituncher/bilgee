@@ -164,8 +164,11 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
   bool _isPurchaseInProgress = false;
   bool _hasInitializedPackage = false;
 
-  // Renk tanımlamaları - Premium screen ile aynı
-  final Color _textPrimary = const Color(0xFF1A1A1A);
+  // Renk tanımlamaları - Premium screen ile aynı - temaya duyarlı
+  Color get _textPrimary {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return isDark ? const Color(0xFFE0E0E0) : const Color(0xFF1A1A1A);
+  }
 
   @override
   void initState() {

@@ -194,7 +194,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                                 fontWeight: FontWeight.w900,
                                 fontSize: 14,
                                 letterSpacing: 0.3,
-                                color: Colors.black,
+                                color: colorScheme.onSurface,
                                 fontFamily: 'Poppins',
                               ),
                             ),
