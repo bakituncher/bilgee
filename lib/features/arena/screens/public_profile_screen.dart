@@ -44,26 +44,29 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
     final double totalNetSum = (data['totalNetSum'] as num?)?.toDouble() ?? 0.0;
     final double avgNet = testCount > 0 ? totalNetSum / testCount : 0.0;
 
-    // Deneme sayısı madalyaları (5 puan toplam)
-    if (testCount >= 1) count++;  // İlk Adım (1 puan)
-    if (testCount >= 5) count++;  // Acemi Savaşçı (1 puan)
-    if (testCount >= 15) count++;  // Kıdemli Savaşçı (1 puan)
-    if (testCount >= 50) count += 2; // Deneme Fatihi (2 puan)
+    // Deneme sayısı madalyaları (4 madalya)
+    if (testCount >= 1) count++;  // İlk Adım
+    if (testCount >= 5) count++;  // Acemi Savaşçı
+    if (testCount >= 15) count++;  // Kıdemli Savaşçı
+    if (testCount >= 50) count++; // Deneme Fatihi
 
-    // Streak madalyaları (5 puan toplam)
-    if (streak >= 3) count++;  // Kıvılcım (1 puan)
-    if (streak >= 14) count += 2; // Alev Ustası (2 puan)
-    if (streak >= 30) count += 2; // Durdurulamaz (2 puan)
+    // Streak madalyaları (3 madalya)
+    if (streak >= 3) count++;  // Kıvılcım
+    if (streak >= 14) count++; // Alev Ustası
+    if (streak >= 30) count++; // Durdurulamaz
 
-    // Net ortalaması madalyaları (4 puan toplam)
-    if (avgNet > 50) count++;  // Yükseliş (1 puan)
-    if (avgNet > 90) count++;  // Usta Nişancı (1 puan)
-    if (avgNet > 100) count += 2; // Taktik Nişancı (2 puan)
+    // Net ortalaması madalyaları (3 madalya)
+    if (avgNet > 50) count++;  // Yükseliş
+    if (avgNet > 90) count++;  // Usta Nişancı
+    if (avgNet > 100) count++; // Taktik Nişancı
 
-    // Arena madalyası (1 puan)
-    if (engagement > 0) count++; // Arena Gladyatörü (1 puan)
+    // Arena madalyası (1 madalya)
+    if (engagement > 0) count++; // Arena Gladyatörü
 
-    // Toplam maksimum: 5 + 5 + 4 + 1 = 15 puan ✓
+    // Public profile'da hesaplanabilen 11 madalyanın kaç tanesi açık?
+    // Kalan 4 madalya (Günlük Görev Ustası, Odaklanma Ninjası, İlk Etüt, Efsane)
+    // public profile'da görünmez/kilitli kalır.
+    // Toplam gösterim: "count/15" formatında olacak
 
     return count;
   }
@@ -236,8 +239,9 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
               : nextRank.requiredScore;
 
           final int unlockedBadges = _calculateUnlockedBadges(data);
-          // Public profile'da hesaplanabilen maksimum madalya sayısı
-          // Bazı madalyalar 2 puan değerinde (toplam 15)
+          // Public profile'daki toplam madalya sayısı profile screen ile tutarlı olmalı
+          // (Bazı madalyalar public profile'da kilitli görünecek çünkü
+          // günlük görevler, focus sessions ve etüt bilgisi public değil)
           final int totalBadges = 15;
 
           return Container(
