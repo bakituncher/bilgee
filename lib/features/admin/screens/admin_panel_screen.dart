@@ -77,6 +77,14 @@ class AdminPanelScreen extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/admin/user-reports'),
           ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.system_update_alt),
+            title: const Text('Versiyon Yönetimi'),
+            subtitle: const Text('Zorunlu güncelleme ayarları'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/admin/version-management'),
+          ),
         ],
       ),
     );

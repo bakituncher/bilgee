@@ -35,8 +35,10 @@ import 'package:taktik/core/services/connectivity_service.dart';
 import 'package:taktik/core/services/firebase_analytics_service.dart';
 import 'package:taktik/shared/notifications/notification_service.dart';
 import 'package:taktik/shared/screens/no_internet_screen.dart';
+import 'package:taktik/shared/screens/force_update_screen.dart';
 import 'package:taktik/features/coach/models/saved_solution_model.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
+import 'package:taktik/data/providers/version_check_provider.dart';
 
 /// Firebase Messaging Arka Plan İşleyicisi
 @pragma('vm:entry-point')
@@ -445,14 +447,27 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
       routerConfig: router,
       // Builder ile tüm sayfaların üzerine global widget'lar (Overlay) ekliyoruz
       builder: (context, child) {
+        // Versiyon kontrolü
+        final versionCheckAsync = ref.watch(versionCheckProvider);
+
         return Stack(
           children: [
             // 1. Uygulama İçeriği
             if (child != null) child,
 
-            // 2. İnternet Yok Ekranı (Overlay)
+            // 2. Zorunlu Güncelleme Ekranı (En Üst Öncelik)
+            // Eğer güncelleme zorunluysa, tüm uygulamanın üzerini kaplar
+            if (versionCheckAsync.valueOrNull?.updateRequired == true)
+              Positioned.fill(
+                child: ForceUpdateScreen(
+                  versionInfo: versionCheckAsync.value!,
+                ),
+              ),
+
+            // 3. İnternet Yok Ekranı (Overlay)
             // Stack'in en üstünde durur, state kaybettirmez.
-            if (isOffline)
+            // Zorunlu güncelleme yoksa gösterilir
+            if (isOffline && versionCheckAsync.valueOrNull?.updateRequired != true)
               const Positioned.fill(
                 child: NoInternetScreen(),
               ),
