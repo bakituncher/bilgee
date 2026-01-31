@@ -282,7 +282,7 @@ class PremiumHeroCard extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            '${(progressPercentage * 100).toInt()}%',
+                            '%${(progressPercentage * 100).toInt()}',
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w900,
