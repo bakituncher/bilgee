@@ -27,6 +27,7 @@ import 'package:taktik/data/providers/firestore_providers.dart' as providers;
 import 'dart:ui' as ui;
 import 'package:taktik/shared/widgets/logo_loader.dart';
 import 'package:taktik/features/stats/utils/stats_calculator.dart';
+import 'package:taktik/shared/widgets/pro_badge.dart';
 
 final focusSessionsProvider = StreamProvider.autoDispose<List<FocusSessionModel>>((ref) {
   final user = ref.watch(authControllerProvider).value;
@@ -506,7 +507,7 @@ class _ProfileView extends ConsumerWidget {
                                   ),
                                   if (isPremium) ...[
                                     const SizedBox(width: 8),
-                                    const _PremiumStatusBadge()
+                                    const ProBadge()
                                         .animate()
                                         .fadeIn(duration: 400.ms, delay: 200.ms)
                                         .scale(begin: const Offset(0.5, 0.5), duration: 600.ms, curve: Curves.elasticOut),
@@ -1729,61 +1730,6 @@ class _ActionNeoState extends State<_ActionNeo> {
 
 extension _ColorOpacityXProfile on Color { Color o(double factor) => withValues(alpha: (a * factor).toDouble()); }
 
-class _PremiumStatusBadge extends StatelessWidget {
-  const _PremiumStatusBadge();
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final gold = Colors.amber.shade600;
-
-    return Tooltip(
-      message: 'Premium Üye',
-      child: Container(
-        padding: const EdgeInsets.all(2),
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: LinearGradient(
-            colors: [
-              gold,
-              Colors.amber.shade400,
-            ],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: gold.withOpacity(0.5),
-              blurRadius: 16,
-              spreadRadius: 2,
-            ),
-          ],
-        ),
-        child: Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: colorScheme.surface,
-          ),
-          child: Icon(
-            Icons.workspace_premium_rounded,
-            color: gold,
-            size: 20,
-          ),
-        ),
-      ).animate(onPlay: (c) => c.repeat(reverse: true))
-          .scale(
-        begin: const Offset(1.0, 1.0),
-        end: const Offset(1.15, 1.15),
-        duration: const Duration(milliseconds: 2000),
-        curve: Curves.easeInOut,
-      )
-          .then()
-          .shimmer(
-        duration: const Duration(milliseconds: 1500),
-        color: Colors.white.withOpacity(0.3),
-      ),
-    );
-  }
-}
 
 // =============================================================================
 // AVATAR PICKER SHEET - Modern & User-Friendly Design
