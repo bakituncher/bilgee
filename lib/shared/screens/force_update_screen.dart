@@ -28,7 +28,7 @@ class ForceUpdateScreen extends StatelessWidget {
             children: [
               // Animation
               Lottie.asset(
-                'assets/lotties/Data Analysis.json',
+                'assets/lotties/Davsan.json',
                 width: 200,
                 height: 200,
                 fit: BoxFit.contain,
@@ -37,7 +37,7 @@ class ForceUpdateScreen extends StatelessWidget {
 
               // Title
               Text(
-                'Güncelleme Gerekli',
+                'İyi Haber! Uygulamanın Yeni Bir Sürümü Var',
                 style: theme.textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: colorScheme.onSurface,
