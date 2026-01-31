@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:taktik/features/stats/logic/stats_analysis_provider.dart';
 import 'package:taktik/features/stats/screens/subject_stats_screen.dart';
-import 'package:taktik/shared/widgets/logo_loader.dart';
 import 'package:taktik/features/stats/widgets/title_widget.dart';
 import 'package:taktik/features/stats/widgets/net_evolution_chart.dart';
 import 'package:taktik/features/stats/widgets/key_stats_grid.dart';
@@ -28,7 +27,7 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
   late TabController _tabController;
 
   @override
-  bool get wantKeepAlive => false; // PageView cache'ini devre dışı bırak
+  bool get wantKeepAlive => true; // Widget'ı cache'de tut
 
   @override
   void initState() {
@@ -51,12 +50,23 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
   Widget build(BuildContext context) {
     super.build(context); // AutomaticKeepAliveClientMixin için gerekli
     final analysisAsync = ref.watch(statsAnalysisForSectionProvider(widget.sectionName));
-    final previous = analysisAsync.asData?.value;
 
+    // Önceki veriyi sakla - loading durumunda bile eski veriyi göster
     return analysisAsync.when(
-      loading: () => previous != null
-          ? _buildBody(context, previous)
-          : const LogoLoader(),
+      loading: () {
+        // Eğer önceden yüklenmiş veri varsa onu göster, yoksa basit bir progress göster
+        final previous = analysisAsync.asData?.value;
+        if (previous != null) {
+          return _buildBody(context, previous);
+        }
+        // İlk yükleme için daha minimalist bir loading göstergesi
+        return Center(
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        );
+      },
       error: (e, st) => Center(child: Text('Analiz yüklenemedi: $e')),
       data: (analysis) {
         if (analysis == null) {
