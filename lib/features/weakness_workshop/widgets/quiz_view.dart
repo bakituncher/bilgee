@@ -35,6 +35,9 @@ class _QuizViewState extends State<QuizView> {
   bool _showHint = false;
   final Set<int> _shownAnimations = {};
 
+  // Sayfa geçişlerini çok hızlı tetiklemeyi önlemek için
+  DateTime? _lastSwitchTime;
+
   @override
   void initState() {
     super.initState();
@@ -66,6 +69,34 @@ class _QuizViewState extends State<QuizView> {
         setState(() {
           _showHint = true;
         });
+      }
+    }
+  }
+
+  void _handlePageSwitch(int direction) {
+    // Debounce: Çok hızlı üst üste geçişleri engelle (500ms bekleme süresi)
+    final now = DateTime.now();
+    if (_lastSwitchTime != null &&
+        now.difference(_lastSwitchTime!) < const Duration(milliseconds: 500)) {
+      return;
+    }
+    _lastSwitchTime = now;
+
+    if (direction > 0) { // Aşağı çekme (Önceki Sayfa)
+      if (_currentPage > 0) {
+        _pageController.animateToPage(
+          _currentPage - 1,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+        );
+      }
+    } else { // Yukarı çekme (Sonraki Sayfa)
+      if (_currentPage < (widget.material.quiz?.length ?? 0) - 1) {
+        _pageController.animateToPage(
+          _currentPage + 1,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+        );
       }
     }
   }
@@ -112,6 +143,8 @@ class _QuizViewState extends State<QuizView> {
               child: PageView.builder(
                 controller: _pageController,
                 scrollDirection: Axis.vertical,
+                // DÜZELTME 1: PageView'ı kilitliyoruz.
+                // Böylece kaydırma önceliği tamamen içeriğe (QuestionCard) geçiyor.
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: quizLength,
                 itemBuilder: (context, index) {
@@ -132,24 +165,9 @@ class _QuizViewState extends State<QuizView> {
                       }
                     },
                     onReportIssue: () => widget.onReportIssue(index),
-                    onSwipeUp: () {
-                      if (_currentPage < quizLength - 1) {
-                        _pageController.animateToPage(
-                          _currentPage + 1,
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        );
-                      }
-                    },
-                    onSwipeDown: () {
-                      if (_currentPage > 0) {
-                        _pageController.animateToPage(
-                          _currentPage - 1,
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        );
-                      }
-                    },
+                    // Sayfa geçişlerini burada yakalıyoruz
+                    onSwipeUp: () => _handlePageSwitch(-1), // Sonraki soru
+                    onSwipeDown: () => _handlePageSwitch(1), // Önceki soru
                     onSubmit: widget.onSubmit,
                     onAnimationShown: () {
                       _shownAnimations.add(index);
@@ -182,8 +200,8 @@ class QuestionCard extends StatefulWidget {
   final VoidCallback? onAnimationShown;
   final Function(int) onOptionSelected;
   final void Function()? onReportIssue;
-  final VoidCallback? onSwipeUp;
-  final VoidCallback? onSwipeDown;
+  final VoidCallback? onSwipeUp;   // Sonraki soru için
+  final VoidCallback? onSwipeDown; // Önceki soru için
   final VoidCallback? onSubmit;
 
   const QuestionCard({
@@ -207,15 +225,11 @@ class QuestionCard extends StatefulWidget {
 
 class _QuestionCardState extends State<QuestionCard> {
   final ScrollController _scrollController = ScrollController();
-  bool _isAtTop = true;
-  bool _isAtBottom = false;
 
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkScrollPosition();
       _checkAnimationStatus();
     });
   }
@@ -234,22 +248,8 @@ class _QuestionCardState extends State<QuestionCard> {
     }
   }
 
-  void _onScroll() {
-    _checkScrollPosition();
-  }
-
-  void _checkScrollPosition() {
-    if (!_scrollController.hasClients) return;
-    final pos = _scrollController.position;
-    setState(() {
-      _isAtTop = pos.pixels <= 0;
-      _isAtBottom = pos.pixels >= pos.maxScrollExtent - 10;
-    });
-  }
-
   @override
   void dispose() {
-    _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
   }
@@ -257,41 +257,39 @@ class _QuestionCardState extends State<QuestionCard> {
   @override
   Widget build(BuildContext context) {
     return SizedBox.expand(
-      // 1. SizedBox.expand ile kartın her zaman tüm alanı kaplamasını sağlıyoruz.
       child: Stack(
         children: [
+          // DÜZELTME 2: NotificationListener ile "Taşma" (Overscroll) olaylarını dinliyoruz.
+          // PageView kilitli olduğu için, içerik sonuna gelindiğinde kullanıcı sürüklemeye
+          // devam ederse OverscrollNotification tetiklenir.
           NotificationListener<ScrollNotification>(
             onNotification: (notification) {
-              if (notification is ScrollUpdateNotification) {
-                _checkScrollPosition();
-              }
-              // Sınırda daha fazla çekme (Overscroll) durumunda sayfa değiştir
-              if (notification is OverscrollNotification) {
-                // Scroll view'ın içeriği kısa olsa bile AlwaysScrollableScrollPhysics
-                // sayesinde overscroll tetiklenir.
-                if (notification.overscroll > 5) {
-                  // Aşağıdan yukarı çekme (Next Question)
-                  // Eğer içerik kısaysa _isAtBottom zaten true'dur.
+              // Sadece kullanıcı parmağıyla sürüklüyorsa (dragDetails != null) işlem yap.
+              // Böylece "fırlatma" (momentum) efektleri yanlışlıkla sayfa değiştirmez.
+              if (notification is OverscrollNotification && notification.dragDetails != null) {
+                // overscroll > 0 : Listenin sonundayız, aşağıdan yukarı çekiliyor -> Sonraki Soru
+                if (notification.overscroll > 0) {
                   widget.onSwipeUp?.call();
-                } else if (notification.overscroll < -5) {
-                  // Yukarıdan aşağı çekme (Prev Question)
-                  // Eğer içerik kısaysa _isAtTop zaten true'dur.
+                }
+                // overscroll < 0 : Listenin başındayız, yukarıdan aşağı çekiliyor -> Önceki Soru
+                else if (notification.overscroll < 0) {
                   widget.onSwipeDown?.call();
                 }
               }
               return false;
             },
             child: LayoutBuilder(
-              // 2. LayoutBuilder ile ebeveynin (ekranın) boyutlarını alıyoruz.
                 builder: (context, constraints) {
                   return SingleChildScrollView(
                     controller: _scrollController,
-                    // 3. AlwaysScrollableScrollPhysics: İçerik kısa olsa bile scroll
-                    // efektinin ve overscroll'un çalışmasını sağlar.
-                    physics: const AlwaysScrollableScrollPhysics(),
+                    // DÜZELTME 3: AlwaysScrollableScrollPhysics + ClampingScrollPhysics
+                    // AlwaysScrollable: İçerik ekrana sığsa bile scroll mekanizmasının çalışmasını sağlar (böylece swipe çalışır).
+                    // Clamping: iOS'teki "bouncing" efektini kapatır. Böylece kullanıcı sona geldiğinde
+                    // "duvara toslar" ve hemen ardından OverscrollNotification tetiklenir.
+                    physics: const AlwaysScrollableScrollPhysics(
+                      parent: ClampingScrollPhysics(),
+                    ),
                     child: ConstrainedBox(
-                      // 4. ConstrainedBox: İçeriğin minimum yüksekliğini ekran yüksekliğine eşitler.
-                      // Böylece boş alana tıklayıp sürüklediğinizde de scroll view bunu algılar.
                       constraints: BoxConstraints(
                         minHeight: constraints.maxHeight,
                       ),
@@ -299,8 +297,6 @@ class _QuestionCardState extends State<QuestionCard> {
                         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          // MainAxisAlignment.start kullanarak içeriği yukarı yaslıyoruz,
-                          // ama ConstrainedBox sayesinde tüm alan "tıklanabilir/kaydırılabilir" oluyor.
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
                             const SizedBox(height: 2),
