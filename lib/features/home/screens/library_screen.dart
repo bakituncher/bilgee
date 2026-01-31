@@ -15,6 +15,10 @@ import 'package:taktik/shared/widgets/logo_loader.dart';
 import 'package:lottie/lottie.dart';
 import 'dart:ui';
 
+// --- CACHE PROVIDER ---
+// Bu provider indirilen denemeleri hafızada tutar. Sayfadan çıkılsa bile silinmez.
+final libraryCacheProvider = StateProvider<List<TestModel>?>((ref) => null);
+
 class LibraryScreen extends ConsumerStatefulWidget {
   const LibraryScreen({super.key});
 
@@ -27,7 +31,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   final List<TestModel> _tests = [];
   bool _isLoading = false;
   bool _hasMore = true;
-  static const int _pageSize = 10;
+
+  // Performans için 50 yaptık. Çoğu kullanıcı için "Hepsini Getir" gibi çalışır.
+  static const int _pageSize = 50;
+
   DocumentSnapshot? _lastVisible;
 
   String _searchQuery = '';
@@ -39,6 +46,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     super.initState();
     _scrollController.addListener(_onScroll);
     _loadInitial();
+
     WidgetsBinding.instance.addPostFrameCallback((_){
       if (!mounted) return;
       ref.read(questNotifierProvider.notifier).userVisitedLibrary();
@@ -65,12 +73,40 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       _lastVisible = null;
       return;
     }
-    final lastId = _tests.last.id;
-    final snap = await FirebaseFirestore.instance.collection('tests').doc(lastId).get();
-    _lastVisible = snap;
+    // Pagination devam edebilsin diye son item'ın snapshot'ını alıyoruz
+    try {
+      final lastId = _tests.last.id;
+      final snap = await FirebaseFirestore.instance.collection('tests').doc(lastId).get();
+      _lastVisible = snap;
+    } catch (_) {
+      // Hata olursa sessizce geç, pagination bir sonraki seferde düzelir
+    }
   }
 
   Future<void> _loadInitial({bool showLoader = true}) async {
+    // 1. ÖNCE CACHE KONTROLÜ
+    // Eğer hafızada veri varsa, direkt onu kullan ve internete çıkma.
+    final cachedTests = ref.read(libraryCacheProvider);
+
+    if (cachedTests != null && cachedTests.isNotEmpty) {
+      if (mounted) {
+        setState(() {
+          _tests.clear();
+          _tests.addAll(cachedTests);
+          // Cache'den geldiyse, pagination riskli olabileceği için hasMore'u kapalı tutabiliriz
+          // veya kullanıcı "yenile" diyene kadar böyle kalabilir.
+          _hasMore = cachedTests.length == _pageSize;
+          _isLoading = false;
+        });
+
+        // Pagination için son dökümanı senkronize etmeye çalışalım
+        await _syncLastVisibleFromLastItem();
+      }
+      return; // İnternete çıkmadan fonksiyonu bitir.
+    }
+
+    // --- CACHE BOŞSA FİRESTORE'A GİT ---
+
     final service = ref.read(firestoreServiceProvider);
     final userId = service.getUserId();
     if (userId == null) return;
@@ -81,6 +117,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
 
     try {
       final items = await service.getTestResultsPaginated(userId, limit: _pageSize);
+
+      // Veriyi Cache'e yedekle
+      ref.read(libraryCacheProvider.notifier).state = items;
+
       setState(() {
         _tests.clear();
         _tests.addAll(items);
@@ -99,20 +139,29 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     final service = ref.read(firestoreServiceProvider);
     final userId = service.getUserId();
     if (userId == null) return;
+
     setState(() => _isLoading = true);
+
     try {
       if (_lastVisible == null && _tests.isNotEmpty) {
         await _syncLastVisibleFromLastItem();
       }
+
       final items = await service.getTestResultsPaginated(userId, lastVisible: _lastVisible, limit: _pageSize);
+
       if (items.isEmpty) {
         setState(() => _hasMore = false);
         return;
       }
+
       setState(() {
         _tests.addAll(items);
         _hasMore = items.length == _pageSize;
       });
+
+      // Cache'i de güncelle (Listenin son halini kaydet)
+      ref.read(libraryCacheProvider.notifier).state = [..._tests];
+
       await _syncLastVisibleFromLastItem();
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -121,7 +170,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
 
   // --- YARDIMCI METODLAR ---
 
-  // AGS Ortak sınav bölümleri (ÖABT'den ayırt etmek için)
+  // AGS Ortak sınav bölümleri
   static const _agsCommonSections = {
     'Genel Yetenek',
     'Genel Kültür ve Eğitim Bilgisi',
@@ -129,19 +178,17 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     'AGS Ortak',
   };
 
-  // Filtreleme için kategori belirleme (UI'da göstermiyoruz ama filtrede kullanıyoruz)
+  // Filtreleme için kategori belirleme
   String _getDisplayCategory(TestModel test) {
     if (test.isBranchTest) {
-      return test.smartDisplayName; // "Türkçe", "Matematik" vb.
+      return test.smartDisplayName;
     }
 
     // AGS - ÖABT ayrımı
     if (test.examType == ExamType.ags) {
-      // sectionName AGS ortak bölümlerinden biri mi kontrol et
       if (_agsCommonSections.contains(test.sectionName)) {
         return 'AGS';
       }
-      // Değilse ÖABT branşı
       return 'ÖABT';
     }
 
@@ -150,26 +197,23 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       final sectionUpper = test.sectionName.toUpperCase();
       final testNameUpper = test.testName.toUpperCase();
 
-      // sectionName'e göre TYT mi AYT mi kontrol et
       if (sectionUpper.contains('TYT')) {
         return 'TYT';
       } else if (sectionUpper.contains('AYT')) {
         return 'AYT';
-      } else if (sectionUpper.contains('YDT')) { // - YDT kontrolü eklendi
+      } else if (sectionUpper.contains('YDT')) {
         return 'YDT';
       }
 
-      // Eğer sectionName'de bulamazsak, testName'e bakalım
       if (testNameUpper.contains('TYT')) {
         return 'TYT';
       } else if (testNameUpper.contains('AYT')) {
         return 'AYT';
-      } else if (testNameUpper.contains('YDT')) { // - YDT kontrolü eklendi
+      } else if (testNameUpper.contains('YDT')) {
         return 'YDT';
       }
     }
 
-    // Ana deneme ise Sınav Türünü kullan (Örn: KPSS Lisans)
     return test.examType.displayName;
   }
 
@@ -354,11 +398,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   }
 
   Widget _buildBody(TextTheme textTheme) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     // Cihazın alt güvenli alan boşluğunu alıyoruz
     final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     if (_tests.isEmpty && _isLoading) {
       return const LogoLoader();
@@ -390,7 +433,12 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                 ).animate(delay: 300.ms).fadeIn(duration: 400.ms).slideY(begin: 0.1, duration: 500.ms),
                 const SizedBox(height: 32),
                 InkWell(
-                  onTap: () => context.push('/home/add-test'),
+                  onTap: () async {
+                    // Deneme eklendikten sonra cache'i temizle ki geri dönünce yenilensin
+                    await context.push('/home/add-test');
+                    ref.read(libraryCacheProvider.notifier).state = null;
+                    _loadInitial(showLoader: false);
+                  },
                   borderRadius: BorderRadius.circular(20),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
@@ -545,6 +593,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
         Expanded(
           child: RefreshIndicator(
             onRefresh: () async {
+              // Refresh yapıldığında cache'i temizleyip yeniden çekiyoruz
+              ref.read(libraryCacheProvider.notifier).state = null;
               _lastVisible = null;
               await _loadInitial(showLoader: false);
             },
@@ -552,7 +602,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
               physics: const AlwaysScrollableScrollPhysics(),
               controller: _scrollController,
               // GÜVENLİ ALAN DÜZELTMESİ:
-              // Standart 24 padding'e ek olarak bottomPadding ekliyoruz.
               padding: EdgeInsets.fromLTRB(20, 8, 20, 24 + bottomPadding),
               itemCount: filtered.length + (_isLoading && filtered.isNotEmpty ? 1 : 0),
               separatorBuilder: (_, __) => const SizedBox(height: 12),
@@ -576,6 +625,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                 return _ArchiveListTile(
                   test: test,
                   onDeleted: () async {
+                    // Silme işleminde cache'i sıfırla ve yeniden yükle
+                    ref.read(libraryCacheProvider.notifier).state = null;
                     _lastVisible = null;
                     await _loadInitial(showLoader: false);
                   },
