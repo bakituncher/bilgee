@@ -106,18 +106,28 @@ class _ArenaScreenState extends ConsumerState<ArenaScreen> {
   }
 }
 
-class _LeaderboardView extends ConsumerWidget {
+class _LeaderboardView extends ConsumerStatefulWidget {
   final String period; // 'daily' | 'weekly'
   const _LeaderboardView({required this.period});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_LeaderboardView> createState() => _LeaderboardViewState();
+}
+
+class _LeaderboardViewState extends ConsumerState<_LeaderboardView>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context); // AutomaticKeepAliveClientMixin için gerekli
     final currentUserId = ref.watch(authControllerProvider).value?.uid;
     final currentUser = ref.watch(userProfileProvider).value;
     final currentUserExam = currentUser?.selectedExam;
 
     if (currentUserExam == null) return const SizedBox.shrink();
-    final leaderboardAsync = period == 'weekly'
+    final leaderboardAsync = widget.period == 'weekly'
         ? ref.watch(leaderboardWeeklyProvider(currentUserExam))
         : ref.watch(leaderboardDailyProvider(currentUserExam));
     final colorScheme = Theme.of(context).colorScheme;
@@ -127,7 +137,7 @@ class _LeaderboardView extends ConsumerWidget {
       backgroundColor: colorScheme.surface,
       onRefresh: () async {
         HapticFeedback.lightImpact();
-        if (period == 'weekly') {
+        if (widget.period == 'weekly') {
           ref.invalidate(leaderboardWeeklyProvider(currentUserExam));
         } else {
           ref.invalidate(leaderboardDailyProvider(currentUserExam));
