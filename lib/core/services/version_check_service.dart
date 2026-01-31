@@ -8,6 +8,11 @@ import 'package:package_info_plus/package_info_plus.dart';
 class VersionCheckService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  /// Package bilgisini getirir (internal helper)
+  static Future<PackageInfo> getPackageInfo() async {
+    return await PackageInfo.fromPlatform();
+  }
+
   /// Uygulama versiyonunu kontrol eder ve zorunlu güncelleme gerekip gerekmediğini döner
   static Future<VersionCheckResult> checkVersion() async {
     try {
