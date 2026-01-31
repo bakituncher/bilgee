@@ -35,7 +35,6 @@ class ForceUpdateScreen extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 24.0),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Animation with container
                 Container(
@@ -46,12 +45,12 @@ class ForceUpdateScreen extends StatelessWidget {
                   ),
                   child: Lottie.asset(
                     'assets/lotties/Davsan.json',
-                    width: 180,
-                    height: 180,
+                    width: 150,
+                    height: 150,
                     fit: BoxFit.contain,
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
 
                 // Title with gradient - iki satır
                 Padding(
@@ -98,33 +97,37 @@ class ForceUpdateScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
 
-                // Message card
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: colorScheme.surface,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: colorScheme.primary.withValues(alpha: 0.1),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Text(
-                    versionInfo.updateMessage ??
-                    'Uygulamayı kullanmaya devam etmek için lütfen en son sürüme güncelleyin.',
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: colorScheme.onSurface.withValues(alpha: 0.8),
-                      height: 1.5,
+                // Message card - Scrollable
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surface,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: colorScheme.primary.withValues(alpha: 0.1),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
                     ),
-                    textAlign: TextAlign.center,
+                    child: SingleChildScrollView(
+                      child: Text(
+                        versionInfo.updateMessage ??
+                        'Uygulamayı kullanmaya devam etmek için lütfen en son sürüme güncelleyin.',
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: colorScheme.onSurface.withValues(alpha: 0.8),
+                          height: 1.5,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 48),
+                const SizedBox(height: 24),
 
-                // Update button with gradient
+                // Update button with gradient - Fixed at bottom
                 Container(
                   width: double.infinity,
                   height: 60,
