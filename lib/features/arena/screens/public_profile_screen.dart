@@ -41,15 +41,29 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
     final int testCount = (data['testCount'] as num?)?.toInt() ?? 0;
     final int streak = (data['streak'] as num?)?.toInt() ?? 0;
     final int engagement = (data['engagementScore'] as num?)?.toInt() ?? 0;
+    final double totalNetSum = (data['totalNetSum'] as num?)?.toDouble() ?? 0.0;
+    final double avgNet = testCount > 0 ? totalNetSum / testCount : 0.0;
 
-    if (testCount >= 1) count++;
-    if (testCount >= 5) count++;
-    if (testCount >= 15) count++;
-    if (testCount >= 50) count++;
-    if (streak >= 3) count++;
-    if (streak >= 14) count++;
-    if (streak >= 30) count++;
-    if (engagement > 0) count++;
+    // Deneme sayısı madalyaları (5 puan toplam)
+    if (testCount >= 1) count++;  // İlk Adım (1 puan)
+    if (testCount >= 5) count++;  // Acemi Savaşçı (1 puan)
+    if (testCount >= 15) count++;  // Kıdemli Savaşçı (1 puan)
+    if (testCount >= 50) count += 2; // Deneme Fatihi (2 puan)
+
+    // Streak madalyaları (5 puan toplam)
+    if (streak >= 3) count++;  // Kıvılcım (1 puan)
+    if (streak >= 14) count += 2; // Alev Ustası (2 puan)
+    if (streak >= 30) count += 2; // Durdurulamaz (2 puan)
+
+    // Net ortalaması madalyaları (4 puan toplam)
+    if (avgNet > 50) count++;  // Yükseliş (1 puan)
+    if (avgNet > 90) count++;  // Usta Nişancı (1 puan)
+    if (avgNet > 100) count += 2; // Taktik Nişancı (2 puan)
+
+    // Arena madalyası (1 puan)
+    if (engagement > 0) count++; // Arena Gladyatörü (1 puan)
+
+    // Toplam maksimum: 5 + 5 + 4 + 1 = 15 puan ✓
 
     return count;
   }
@@ -222,7 +236,9 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
               : nextRank.requiredScore;
 
           final int unlockedBadges = _calculateUnlockedBadges(data);
-          final int totalBadges = 8;
+          // Public profile'da hesaplanabilen maksimum madalya sayısı
+          // Bazı madalyalar 2 puan değerinde (toplam 15)
+          final int totalBadges = 15;
 
           return Container(
             decoration: BoxDecoration(
