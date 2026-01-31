@@ -8,6 +8,7 @@ import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:taktik/data/providers/shared_prefs_provider.dart';
 import 'package:taktik/features/coach/widgets/ai_hub_welcome_sheet.dart';
 import 'package:taktik/features/onboarding/models/tutorial_step.dart';
+import 'package:taktik/shared/widgets/pro_badge.dart';
 
 // --- KEY TANIMLAMALARI (Spotlight için) ---
 final GlobalKey _weeklyPlanKey = GlobalKey();
@@ -264,18 +265,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
             ),
             if (isPremium) ...[
               const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.amber.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: Colors.amber.withOpacity(0.5), width: 1),
-                ),
-                child: const Text(
-                  'PRO',
-                  style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.amber),
-                ),
-              ),
+              const ProBadge(),
             ]
           ],
         ),

@@ -27,6 +27,7 @@ import 'package:taktik/data/providers/firestore_providers.dart' as providers;
 import 'dart:ui' as ui;
 import 'package:taktik/shared/widgets/logo_loader.dart';
 import 'package:taktik/features/stats/utils/stats_calculator.dart';
+import 'package:taktik/shared/widgets/pro_badge.dart';
 
 final focusSessionsProvider = StreamProvider.autoDispose<List<FocusSessionModel>>((ref) {
   final user = ref.watch(authControllerProvider).value;
@@ -506,7 +507,7 @@ class _ProfileView extends ConsumerWidget {
                                   ),
                                   if (isPremium) ...[
                                     const SizedBox(width: 8),
-                                    const _PremiumStatusBadge()
+                                    const ProBadge()
                                         .animate()
                                         .fadeIn(duration: 400.ms, delay: 200.ms)
                                         .scale(begin: const Offset(0.5, 0.5), duration: 600.ms, curve: Curves.elasticOut),
