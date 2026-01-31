@@ -1734,52 +1734,16 @@ class _PremiumStatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final gold = Colors.amber.shade600;
-
-    return Tooltip(
-      message: 'Premium Üye',
-      child: Container(
-        padding: const EdgeInsets.all(2),
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: LinearGradient(
-            colors: [
-              gold,
-              Colors.amber.shade400,
-            ],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: gold.withOpacity(0.5),
-              blurRadius: 16,
-              spreadRadius: 2,
-            ),
-          ],
-        ),
-        child: Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: colorScheme.surface,
-          ),
-          child: Icon(
-            Icons.workspace_premium_rounded,
-            color: gold,
-            size: 20,
-          ),
-        ),
-      ).animate(onPlay: (c) => c.repeat(reverse: true))
-          .scale(
-        begin: const Offset(1.0, 1.0),
-        end: const Offset(1.15, 1.15),
-        duration: const Duration(milliseconds: 2000),
-        curve: Curves.easeInOut,
-      )
-          .then()
-          .shimmer(
-        duration: const Duration(milliseconds: 1500),
-        color: Colors.white.withOpacity(0.3),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.amber.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: Colors.amber.withOpacity(0.5), width: 1),
+      ),
+      child: const Text(
+        'PRO',
+        style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.amber),
       ),
     );
   }
